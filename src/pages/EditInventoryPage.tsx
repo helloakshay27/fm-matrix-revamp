@@ -64,12 +64,16 @@ export const EditInventoryPage = () => {
           }
           .MuiOutlinedInput-root {
             border-radius: 6px !important;
+            width: 100% !important;
           }
           .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
             border-color: #C72030 !important;
           }
           .MuiInputLabel-root.Mui-focused {
             color: #C72030 !important;
+          }
+          .MuiTextField-root {
+            width: 100% !important;
           }
         `}
       </style>
@@ -85,7 +89,7 @@ export const EditInventoryPage = () => {
             <span>&gt;</span>
             <span>Edit Inventory</span>
           </div>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-[#1a1a1a]">Edit Inventory</h1>
             <div className="flex items-center gap-3">
               <Button 
@@ -144,6 +148,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('assetName')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Inventory Name"
@@ -151,6 +156,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('inventoryName')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Inventory Code"
@@ -158,6 +164,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('inventoryCode')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Serial Number"
@@ -165,6 +172,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('serialNumber')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Quantity"
@@ -173,6 +181,7 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     type="number"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Cost"
@@ -181,6 +190,7 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     type="number"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Unit"
@@ -188,6 +198,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('unit')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Expiry Date"
@@ -204,6 +215,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('category')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Vendor"
@@ -211,6 +223,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('vendor')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Max Stock Level"
@@ -219,6 +232,7 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     type="number"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Min Stock Level"
@@ -227,6 +241,7 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     type="number"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Min Order Level"
@@ -235,6 +250,7 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     type="number"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Inventory Type"
@@ -242,6 +258,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('inventoryType')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="Criticality"
@@ -249,6 +266,7 @@ export const EditInventoryPage = () => {
                     onChange={handleInputChange('criticality')}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{ shrink: true }}
                   />
                   <div className="flex items-center">
                     <FormControlLabel
@@ -317,6 +335,7 @@ export const EditInventoryPage = () => {
                         onChange={handleInputChange('sacHsnCode')}
                         fullWidth
                         variant="outlined"
+                        InputLabelProps={{ shrink: true }}
                       />
                       <TextField
                         label="SGST Rate (%)"
@@ -325,6 +344,7 @@ export const EditInventoryPage = () => {
                         fullWidth
                         variant="outlined"
                         type="number"
+                        InputLabelProps={{ shrink: true }}
                       />
                       <TextField
                         label="CGST Rate (%)"
@@ -333,6 +353,7 @@ export const EditInventoryPage = () => {
                         fullWidth
                         variant="outlined"
                         type="number"
+                        InputLabelProps={{ shrink: true }}
                       />
                       <TextField
                         label="IGST Rate (%)"
@@ -341,6 +362,7 @@ export const EditInventoryPage = () => {
                         fullWidth
                         variant="outlined"
                         type="number"
+                        InputLabelProps={{ shrink: true }}
                       />
                     </>
                   )}
