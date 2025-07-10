@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { TextField } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const AddInventoryPage = () => {
@@ -38,6 +37,10 @@ export const AddInventoryPage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
+    setFormData(prev => ({ ...prev, [field]: event.target.value }));
+  };
+
   const handleEcoFriendlyChange = (checked: boolean | "indeterminate") => {
     setEcoFriendly(checked === true);
   };
@@ -61,7 +64,7 @@ export const AddInventoryPage = () => {
     navigate(-1);
   };
 
-  // Consistent field styling for MUI TextFields
+  // Consistent field styling for MUI TextFields and Selects
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input': {
@@ -167,16 +170,21 @@ export const AddInventoryPage = () => {
               {/* Form Grid */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="assetName" className="text-sm font-medium">Select Asset Name</Label>
-                  <Select value={formData.assetName} onValueChange={(value) => handleInputChange('assetName', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an Option..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="asset1">Asset 1</SelectItem>
-                      <SelectItem value="asset2">Asset 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="asset-name-label">Select Asset Name</InputLabel>
+                    <MuiSelect
+                      labelId="asset-name-label"
+                      value={formData.assetName}
+                      onChange={handleSelectChange('assetName')}
+                      label="Select Asset Name"
+                    >
+                      <MenuItem value="">
+                        <em>Select an Option...</em>
+                      </MenuItem>
+                      <MenuItem value="asset1">Asset 1</MenuItem>
+                      <MenuItem value="asset2">Asset 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="space-y-2">
@@ -247,17 +255,22 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="unit" className="text-sm font-medium">Select Unit</Label>
-                  <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pcs">Pieces</SelectItem>
-                      <SelectItem value="kg">Kilograms</SelectItem>
-                      <SelectItem value="liters">Liters</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="unit-label">Select Unit</InputLabel>
+                    <MuiSelect
+                      labelId="unit-label"
+                      value={formData.unit}
+                      onChange={handleSelectChange('unit')}
+                      label="Select Unit"
+                    >
+                      <MenuItem value="">
+                        <em>Select Unit</em>
+                      </MenuItem>
+                      <MenuItem value="pcs">Pieces</MenuItem>
+                      <MenuItem value="kg">Kilograms</MenuItem>
+                      <MenuItem value="liters">Liters</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="space-y-2">
@@ -275,29 +288,39 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category" className="text-sm font-medium">Select Category</Label>
-                  <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an Option..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="category1">Category 1</SelectItem>
-                      <SelectItem value="category2">Category 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="category-label">Select Category</InputLabel>
+                    <MuiSelect
+                      labelId="category-label"
+                      value={formData.category}
+                      onChange={handleSelectChange('category')}
+                      label="Select Category"
+                    >
+                      <MenuItem value="">
+                        <em>Select an Option...</em>
+                      </MenuItem>
+                      <MenuItem value="category1">Category 1</MenuItem>
+                      <MenuItem value="category2">Category 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="vendor" className="text-sm font-medium">Vendor</Label>
-                  <Select value={formData.vendor} onValueChange={(value) => handleInputChange('vendor', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vendor1">Vendor 1</SelectItem>
-                      <SelectItem value="vendor2">Vendor 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="vendor-label">Vendor</InputLabel>
+                    <MuiSelect
+                      labelId="vendor-label"
+                      value={formData.vendor}
+                      onChange={handleSelectChange('vendor')}
+                      label="Vendor"
+                    >
+                      <MenuItem value="">
+                        <em>Select Vendor</em>
+                      </MenuItem>
+                      <MenuItem value="vendor1">Vendor 1</MenuItem>
+                      <MenuItem value="vendor2">Vendor 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
 
