@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -132,8 +133,7 @@ export const AddMenuItemModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-lg font-semibold flex items-center gap-2" style={{ color: '#C72030' }}>
-            <span className="text-white rounded-full w-6 h-6 flex items-center justify-center text-sm" style={{ backgroundColor: '#C72030' }}>1</span>
+          <DialogTitle className="text-lg font-semibold flex items-center gap-2 text-black">
             ADD PRODUCT
           </DialogTitle>
           <Button
