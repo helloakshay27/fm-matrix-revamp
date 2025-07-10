@@ -1,115 +1,105 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 interface AddStatusModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (status: { status: string; fixedState: string; color: string; order: string }) => void;
+  onSave: (status: any) => void;
 }
 
-export const AddStatusModal = ({ isOpen, onClose, onSubmit }: AddStatusModalProps) => {
-  const { toast } = useToast();
+export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
-    status: "",
-    fixedState: "",
-    color: "#000000",
-    order: ""
+    statusName: '',
+    statusType: '',
+    description: ''
   });
 
-  const handleSubmit = () => {
-    if (formData.status.trim() && formData.fixedState && formData.order) {
-      onSubmit(formData);
-      toast({
-        title: "Success",
-        description: "Status added successfully!",
-      });
-      setFormData({ status: "", fixedState: "", color: "#000000", order: "" });
-      onClose();
-    }
+  const handleSave = () => {
+    onSave(formData);
+    setFormData({ statusName: '', statusType: '', description: '' });
+    onClose();
   };
 
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
     },
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Add Status</DialogTitle>
+          <DialogTitle>Add Status</DialogTitle>
         </DialogHeader>
-
         <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <TextField
-              placeholder="Enter status"
-              value={formData.status}
-              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+          <TextField
+            label="Status Name"
+            placeholder="Status Name"
+            value={formData.statusName}
+            onChange={(e) => setFormData(prev => ({ ...prev, statusName: e.target.value }))}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            sx={fieldStyles}
+          />
+          
+          <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+            <InputLabel shrink>Status Type</InputLabel>
+            <Select
+              value={formData.statusType}
+              onChange={(e) => setFormData(prev => ({ ...prev, statusType: e.target.value }))}
+              label="Status Type"
+              notched
+            >
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+            </Select>
+          </FormControl>
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="fixed-state-label" shrink>Fixed State</InputLabel>
-              <MuiSelect
-                labelId="fixed-state-label"
-                label="Fixed State"
-                displayEmpty
-                value={formData.fixedState}
-                onChange={(e) => setFormData(prev => ({ ...prev, fixedState: e.target.value }))}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Fixed State</em></MenuItem>
-                <MenuItem value="state1">State 1</MenuItem>
-                <MenuItem value="state2">State 2</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <TextField
-              placeholder="Enter status order"
-              value={formData.order}
-              onChange={(e) => setFormData(prev => ({ ...prev, order: e.target.value }))}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <div className="flex items-center gap-2">
-              <TextField
-                type="color"
-                value={formData.color}
-                onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                InputProps={{ sx: { ...fieldStyles, width: '60px' } }}
-                sx={{ mt: 1 }}
-              />
-              <div 
-                className="w-10 h-10 border rounded"
-                style={{ backgroundColor: formData.color }}
-              />
-            </div>
-          </div>
+          <TextField
+            label="Description"
+            placeholder="Description"
+            value={formData.description}
+            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={3}
+            InputLabelProps={{ shrink: true }}
+            sx={fieldStyles}
+          />
         </div>
-
-        <div className="flex justify-center pt-4">
-          <Button 
-            onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-          >
-            Submit
+        
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} className="bg-[#C72030] hover:bg-[#C72030]/90">
+            Save
           </Button>
         </div>
       </DialogContent>
