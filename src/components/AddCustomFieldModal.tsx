@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent } from '@mui/material';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 
 interface AddCustomFieldModalProps {
   isOpen: boolean;
@@ -109,12 +108,19 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
         </div>
 
         <div className="flex justify-center gap-4 pt-4">
-          <Button onClick={handleCancel} variant="outline" className="px-8 py-2">
+          <button
+            onClick={handleCancel}
+            className="px-8 py-2 border border-[#C72030] text-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm"
+          >
             Cancel
-          </Button>
-          <Button onClick={handleAddField} className="px-8 py-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
-            + Add Field
-          </Button>
+          </button>
+          <button
+            onClick={handleAddField}
+            className="px-8 py-2 bg-[#F6F4EE] text-[#C72030] rounded-md hover:bg-[#F0EBE0] transition-colors text-sm flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Field
+          </button>
         </div>
       </DialogContent>
     </Dialog>
