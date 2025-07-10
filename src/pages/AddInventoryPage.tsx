@@ -95,7 +95,7 @@ export const AddInventoryPage = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+    <div className="p-6  min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
