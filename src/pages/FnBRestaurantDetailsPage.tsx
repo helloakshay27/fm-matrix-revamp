@@ -151,11 +151,11 @@ export const FnBRestaurantDetailsPage = () => {
 
   const fieldStyles = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 0,
+      borderRadius: '6px',
       backgroundColor: '#FFFFFF',
       '& fieldset': {
         borderColor: '#E0E0E0',
-        borderRadius: 0,
+        borderRadius: '6px',
       },
       '&:hover fieldset': {
         borderColor: '#1A1A1A',
@@ -523,7 +523,7 @@ export const FnBRestaurantDetailsPage = () => {
               <CardContent>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">Menu management functionality would be implemented here</p>
-                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C7030]/90 text-white">
+                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
                     Add Menu Items
                   </Button>
                 </div>
