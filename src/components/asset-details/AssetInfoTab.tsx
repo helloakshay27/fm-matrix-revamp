@@ -10,7 +10,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
     <div className="space-y-6 min-h-full ">
       <div className="flex gap-6">
         {/* Location Details - 80% width */}
-        <div className="w-4/5 bg-white rounded-lg p-6 shadow-sm border-2">
+        <div className="w-4/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <MapPin className="w-4 h-4 text-white" />
