@@ -35,16 +35,8 @@ export const AddSubCategoryModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold" style={{ color: '#C72030' }}>
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-6 h-6 rounded-sm flex items-center justify-center"
-                style={{ backgroundColor: '#C72030' }}
-              >
-                <span className="text-white text-xs font-bold">+</span>
-              </div>
-              ADD Category
-            </div>
+          <DialogTitle className="text-lg font-semibold" style={{ color: '#000000' }}>
+            ADD Category
           </DialogTitle>
         </DialogHeader>
 
@@ -55,7 +47,7 @@ export const AddSubCategoryModal = ({
               sx={{ 
                 color: '#666',
                 fontSize: '14px',
-                '&.Mui-focused': { color: '#C72030' }
+                '&.Mui-focused': { color: '#000000' }
               }}
             >
               Category
@@ -77,7 +69,7 @@ export const AddSubCategoryModal = ({
                     borderColor: '#9ca3af',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#000000',
                   },
                 },
                 '& .MuiSelect-select': {
@@ -113,14 +105,14 @@ export const AddSubCategoryModal = ({
                   borderColor: '#9ca3af',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#C72030',
+                  borderColor: '#000000',
                 },
               },
               '& .MuiInputLabel-root': {
                 color: '#666',
                 fontSize: '14px',
                 '&.Mui-focused': {
-                  color: '#C72030',
+                  color: '#000000',
                 },
               },
               '& .MuiInputBase-input': {
@@ -148,14 +140,14 @@ export const AddSubCategoryModal = ({
                   borderColor: '#9ca3af',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#C72030',
+                  borderColor: '#000000',
                 },
               },
               '& .MuiInputLabel-root': {
                 color: '#666',
                 fontSize: '14px',
                 '&.Mui-focused': {
-                  color: '#C72030',
+                  color: '#000000',
                 },
               },
               '& .MuiInputBase-input': {
@@ -169,7 +161,7 @@ export const AddSubCategoryModal = ({
         <div className="flex justify-center pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            className="bg-black hover:bg-gray-800 text-white px-8"
           >
             Submit
           </Button>
