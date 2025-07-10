@@ -1201,7 +1201,7 @@ export const AddSchedulePage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
             <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">
-              <span className="text-[#C72030] text-xs">⚙</span>
+              <span className="text-[#ffff] text-xs">4</span>
             </span>
             Cron form
           </CardTitle>
