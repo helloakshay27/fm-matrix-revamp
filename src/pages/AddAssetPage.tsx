@@ -453,13 +453,13 @@ const AddAssetPage = () => {
                   <label className="text-sm font-medium text-[#C72030] mb-2 block">Status</label>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="status-inuse" name="status" value="inuse" defaultChecked className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="status-inuse" name="status" value="inuse" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="status-inuse" className="text-sm">In Use</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="status-breakdown" name="status" value="breakdown" className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="status-breakdown" name="status" value="breakdown" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
@@ -603,13 +603,13 @@ const AddAssetPage = () => {
                   <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="meter-type-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="meter-type-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="meter-type-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="meter-type-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
@@ -624,13 +624,13 @@ const AddAssetPage = () => {
                   <span className="text-[#C72030] font-medium text-sm sm:text-base">CRITICAL</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="critical-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="critical-no" className="text-sm">No</label>
@@ -648,7 +648,9 @@ const AddAssetPage = () => {
                   const IconComponent = option.icon;
                   return <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
                           <div className="flex items-center justify-center space-x-2">
-                            <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                            <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" style={{
+                              accentColor: '#C72030'
+                            }} />
                             <IconComponent className="w-4 h-4 text-gray-600" />
                             <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                           </div>
@@ -662,7 +664,9 @@ const AddAssetPage = () => {
                   const IconComponent = option.icon;
                   return <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
                             <div className="flex items-center justify-center space-x-2">
-                              <input type="radio" id={`board-${option.value}`} name="boardRatioCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                              <input type="radio" id={`board-${option.value}`} name="boardRatioCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" style={{
+                                accentColor: '#C72030'
+                              }} />
                               <IconComponent className="w-4 h-4 text-gray-600" />
                               <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                             </div>
@@ -676,7 +680,9 @@ const AddAssetPage = () => {
                   const IconComponent = option.icon;
                   return <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
                             <div className="flex items-center justify-center space-x-2">
-                              <input type="radio" id={`renewable-${option.value}`} name="renewableCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                              <input type="radio" id={`renewable-${option.value}`} name="renewableCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" style={{
+                                accentColor: '#C72030'
+                              }} />
                               <IconComponent className="w-4 h-4 text-gray-600" />
                               <label htmlFor={`renewable-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                             </div>
@@ -720,13 +726,13 @@ const AddAssetPage = () => {
                   <label className="text-sm font-medium text-gray-700 mb-2 block">Under Warranty</label>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="warranty-yes" name="underWarranty" value="yes" className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="warranty-yes" name="underWarranty" value="yes" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="warranty-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="warranty-no" name="underWarranty" value="no" className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                      <input type="radio" id="warranty-no" name="underWarranty" value="no" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                     accentColor: '#C72030'
                   }} />
                       <label htmlFor="warranty-no" className="text-sm">No</label>
