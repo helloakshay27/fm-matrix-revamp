@@ -255,6 +255,9 @@ export const InventoryDashboard = () => {
       </div>
 
       <div className="flex flex-wrap gap-3 items-center mb-6">
+        <Button onClick={handleAddInventory} className="bg-[#C72030] hover:bg-[#A61B2A] text-white">
+          <Plus className="w-4 h-4 mr-2" /> Add
+        </Button>
         <Button onClick={() => setShowBulkUpload(true)} className="bg-[#C72030] hover:bg-[#A61B2A] text-white">
           <Upload className="w-4 h-4 mr-2" /> Import
         </Button>
@@ -269,9 +272,6 @@ export const InventoryDashboard = () => {
         </Button>
         <Button onClick={() => setShowFilter(true)} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
           <Filter className="w-4 h-4 mr-2" /> Filters
-        </Button>
-        <Button onClick={handleAddInventory} className="bg-[#C72030] hover:bg-[#A61B2A] text-white">
-          <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
 
         <div className="relative ml-auto w-full sm:w-64">
