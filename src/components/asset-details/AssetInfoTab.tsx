@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
 
@@ -294,7 +295,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Movement Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-white" />
             </div>
@@ -305,34 +306,37 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
             {/* Movement Timeline */}
             <div className="relative">
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <div className="ml-4">
-                    <div className="text-sm text-gray-500">Site</div>
-                    <div className="font-medium">Assuretech Infoline</div>
-                    <div className="text-sm text-gray-500 mt-1">Location</div>
-                    <div className="text-sm">Marathon Tower / A-Wing / 05th Flr / West / R 504</div>
+                {/* From Location */}
+                <div className="flex items-start flex-col">
+                  <div className="flex items-center mb-4">
+                    <MapPin className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div className="text-gray-500 text-sm mb-1">Site</div>
+                  <div className="font-medium text-gray-800 mb-3">Assuretech Infoline</div>
+                  <div className="text-gray-500 text-sm mb-1">Location</div>
+                  <div className="text-sm text-gray-800">Marathon Tower / A-Wing / 05<sup>th</sup> Flr / West / R 504</div>
+                </div>
+                
+                {/* Date and Arrow */}
+                <div className="flex flex-col items-center mx-8">
+                  <div className="text-blue-600 font-medium text-sm mb-2">28/08/2019</div>
+                  <div className="flex items-center">
+                    <div className="w-12 h-px bg-blue-500"></div>
+                    <div className="w-0 h-0 border-l-4 border-l-blue-500 border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1"></div>
                   </div>
                 </div>
                 
-                <div className="text-center">
-                  <div className="text-blue-600 font-medium">28/08/2019</div>
-                </div>
-                
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <div className="ml-4">
-                    <div className="text-sm text-gray-500">Site</div>
-                    <div className="font-medium">Haven Infoline</div>
-                    <div className="text-sm text-gray-500 mt-1">Location</div>
-                    <div className="text-sm">Jyoti Tower / J-Wing / 02nd Flr / East / R 202</div>
+                {/* To Location */}
+                <div className="flex items-start flex-col">
+                  <div className="flex items-center mb-4">
+                    <MapPin className="w-5 h-5 text-blue-500" />
                   </div>
+                  <div className="text-gray-500 text-sm mb-1">Site</div>
+                  <div className="font-medium text-gray-800 mb-3">Haven Infoline</div>
+                  <div className="text-gray-500 text-sm mb-1">Location</div>
+                  <div className="text-sm text-gray-800">Jyoti Tower / J-Wing / 02<sup>nd</sup> Flr / East / R 202</div>
                 </div>
               </div>
-              
-              {/* Arrow line */}
-              <div className="absolute top-1/2 left-1/4 right-1/4 h-px bg-blue-300 transform -translate-y-1/2"></div>
-              <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-blue-500 transform -translate-y-1/2 rotate-45"></div>
             </div>
           </div>
         </div>
