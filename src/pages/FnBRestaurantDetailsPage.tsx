@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
 import { ArrowLeft, Save } from 'lucide-react';
 import { StatusSetupTable } from '../components/StatusSetupTable';
 import { CategoriesSetupTable } from '../components/CategoriesSetupTable';
@@ -149,6 +149,31 @@ export const FnBRestaurantDetailsPage = () => {
     toast.success('Restaurant details saved successfully!');
   };
 
+  const fieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
   const timeOptions = Array.from({ length: 24 }, (_, i) => {
     const hour = i.toString().padStart(2, '0');
     return `${hour}:00`;
@@ -210,48 +235,63 @@ export const FnBRestaurantDetailsPage = () => {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <Label htmlFor="restaurant-name" className="text-sm font-medium">Restaurant Name</Label>
-                  <Input
-                    id="restaurant-name"
+                  <TextField
+                    label="Restaurant Name"
+                    placeholder="Restaurant Name"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="address" className="text-sm font-medium">Address</Label>
-                  <Input
-                    id="address"
+                  <TextField
+                    label="Address"
+                    placeholder="Address"
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="cuisines" className="text-sm font-medium">Cuisines</Label>
-                  <Input
-                    id="cuisines"
+                  <TextField
+                    label="Cuisines"
+                    placeholder="Cuisines"
                     value={formData.cuisines}
                     onChange={(e) => handleInputChange('cuisines', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="delivery-time" className="text-sm font-medium">Delivery Time</Label>
-                  <Input
-                    id="delivery-time"
+                  <TextField
+                    label="Delivery Time"
+                    placeholder="Delivery Time"
                     value={formData.deliveryTime}
                     onChange={(e) => handleInputChange('deliveryTime', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="cost-for-two" className="text-sm font-medium">Cost for Two</Label>
-                  <Input
-                    id="cost-for-two"
+                  <TextField
+                    label="Cost for Two"
+                    placeholder="Cost for Two"
                     value={formData.costForTwo}
                     onChange={(e) => handleInputChange('costForTwo', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
               </CardContent>
@@ -397,12 +437,15 @@ export const FnBRestaurantDetailsPage = () => {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <Label htmlFor="phone-number" className="text-sm font-medium">Phone Number</Label>
-                  <Input
-                    id="phone-number"
+                  <TextField
+                    label="Phone Number"
+                    placeholder="Phone Number"
                     value={formData.phoneNumber}
                     onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
                 <div>
@@ -425,21 +468,27 @@ export const FnBRestaurantDetailsPage = () => {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="cancel-before-schedule" className="text-sm font-medium">Cancel Before Schedule</Label>
-                  <Input
-                    id="cancel-before-schedule"
+                  <TextField
+                    label="Cancel Before Schedule"
+                    placeholder="Cancel Before Schedule"
                     value={formData.cancelBeforeSchedule}
                     onChange={(e) => handleInputChange('cancelBeforeSchedule', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="closing-message" className="text-sm font-medium">Closing Message</Label>
-                  <Input
-                    id="closing-message"
+                  <TextField
+                    label="Closing Message"
+                    placeholder="Closing Message"
                     value={formData.closingMessage}
                     onChange={(e) => handleInputChange('closingMessage', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
               </CardContent>
