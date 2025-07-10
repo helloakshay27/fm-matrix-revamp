@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
 
 interface AddGroupDialogProps {
   open: boolean;
@@ -22,44 +21,29 @@ export const AddGroupDialog = ({ open, onOpenChange }: AddGroupDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] p-0">
-        <DialogHeader className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-medium text-gray-900">ADD Group</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Group</DialogTitle>
         </DialogHeader>
-        
-        <div className="px-6 py-4 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="groupName" className="text-sm font-medium text-gray-700">
-              Group Name
-            </Label>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="groupName">Group Name</Label>
             <Input
               id="groupName"
-              placeholder="Enter Group Name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              className="w-full"
+              placeholder="Enter group name"
             />
           </div>
         </div>
-
-        <div className="flex justify-end px-6 py-4 border-t border-gray-200">
-          <Button
-            onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-6"
-          >
-            Submit
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
           </Button>
-        </div>
+          <Button onClick={handleSubmit} className="bg-purple-700 hover:bg-purple-800">
+            Add Group
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
