@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, ChevronDown } from 'lucide-react';
 import { AssetInfoTab } from '@/components/asset-details/AssetInfoTab';
 import { AMCDetailsTab } from '@/components/asset-details/AMCDetailsTab';
 import { PPMTab } from '@/components/asset-details/PPMTab';
@@ -27,8 +27,8 @@ export const AssetDetailsPage = () => {
 
   const asset = {
     id: id || '203696',
-    name: 'sdcsdc',
-    code: '026dd95aa50be420318ea',
+    name: 'DELL LAPTOP',
+    code: '#3423',
     status: 'In Use'
   };
 
@@ -62,65 +62,50 @@ export const AssetDetailsPage = () => {
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 flex-wrap">
           <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4" />
-            Assets List
+            Assets
           </button>
           <span>&gt;</span>
           <span>Asset Details</span>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
-            {asset.name.toUpperCase()} (#{asset.id})
-          </h1>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                {asset.name} ({asset.code})
+              </h1>
+              
+              <div className="relative">
+                <select className="appearance-none bg-green-500 text-white px-4 py-2 pr-8 rounded font-medium text-sm cursor-pointer">
+                  <option>In Use</option>
+                  <option>Breakdown</option>
+                  <option>Under Maintenance</option>
+                  <option>Retired</option>
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+              </div>
+            </div>
+            
+            <div className="text-sm text-gray-600">
+              Created by Rakesh • Last updated by Rakesh on 06/01/2022, 12:22pm
+            </div>
+          </div>
 
-          <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-  <div className="flex items-center gap-2">
-    <span className="text-sm text-gray-600">Breakdown</span>
-
-    <div className="flex items-center">
-      <div
-        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-          isInUse ? 'bg-green-500' : 'bg-gray-300'
-        }`}
-        onClick={() => setIsInUse(prev => {
-          const next = !prev;
-          handleSwitchChange(next);
-          return next;
-        })}
-      >
-        <span
-          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-            isInUse ? 'translate-x-6' : 'translate-x-1'
-          }`}
-        />
-      </div>
-    </div>
-
-    <span className="text-sm text-gray-600">In Use</span>
-  </div>
-
+          <div className="flex items-center gap-3">
             <Button
-              onClick={handleEditClick}
-              variant="outline"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+              onClick={handleCreateChecklist}
+              className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-2" />
+              Checklist
             </Button>
 
             <Button
               onClick={handleEditDetails}
               variant="outline"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
             >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Details
-            </Button>
-
-            <Button
-              onClick={handleCreateChecklist}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            >
-              Create a Checklist
+              <Edit className="w-4 h-4" />
             </Button>
           </div>
         </div>
