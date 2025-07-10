@@ -1,21 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, QrCode } from 'lucide-react';
+import { ArrowLeft, QrCode, Edit } from 'lucide-react';
+import { EditInventoryModal } from '@/components/EditInventoryModal';
+
 export const InventoryDetailsPage = () => {
-  const {
-    id
-  } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const handleBack = () => {
     navigate('/maintenance/inventory');
   };
+
   const handleFeeds = () => {
     navigate(`/maintenance/inventory/feeds/${id}`);
   };
-  return <div className="p-6 min-h-screen bg-white">
+
+  const handleEdit = () => {
+    setIsEditModalOpen(true);
+  };
+
+  return (
+    <div className="p-6 min-h-screen bg-white">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
@@ -28,11 +37,19 @@ export const InventoryDetailsPage = () => {
         </div>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">test12</h1>
-          <Button onClick={handleFeeds} style={{
-          backgroundColor: '#C72030'
-        }} className="text-white hover:bg-[#C72030]/90">
-            Feeds
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={handleEdit}
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+            <Button onClick={handleFeeds} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+              Feeds
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -41,12 +58,8 @@ export const InventoryDetailsPage = () => {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="border-b bg-white">
-              <CardTitle className="flex items-center gap-2" style={{
-              color: '#C72030'
-            }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{
-                backgroundColor: '#C72030'
-              }}>!</div>
+              <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>!</div>
                 INVENTORY DETAIL
               </CardTitle>
             </CardHeader>
@@ -147,12 +160,8 @@ export const InventoryDetailsPage = () => {
           {/* Asset Information Section */}
           <Card className="mt-6">
             <CardHeader className="border-b bg-white">
-              <CardTitle className="flex items-center gap-2" style={{
-              color: '#C72030'
-            }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{
-                backgroundColor: '#C72030'
-              }}>i</div>
+              <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>i</div>
                 ASSET INFORMATION
               </CardTitle>
             </CardHeader>
@@ -203,9 +212,7 @@ export const InventoryDetailsPage = () => {
         <div>
           <Card>
             <CardHeader className="border-b bg-white">
-              <CardTitle className="flex items-center gap-2" style={{
-              color: '#C72030'
-            }}>
+              <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
                 <QrCode className="w-5 h-5" />
                 QR Code
               </CardTitle>
@@ -218,5 +225,35 @@ export const InventoryDetailsPage = () => {
           </Card>
         </div>
       </div>
-    </div>;
+
+      {/* Edit Modal */}
+      <EditInventoryModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        inventoryData={{
+          assetName: '',
+          inventoryName: 'test12',
+          inventoryCode: '123987',
+          serialNumber: '',
+          quantity: '8.0',
+          cost: '',
+          unit: '',
+          expiryDate: '',
+          category: '',
+          vendor: '',
+          maxStockLevel: '',
+          minStockLevel: '',
+          minOrderLevel: '',
+          inventoryType: 'consumable',
+          criticality: 'critical',
+          ecoFriendly: false,
+          taxApplicable: false,
+          sacHsnCode: '',
+          sgstRate: '',
+          cgstRate: '',
+          igstRate: ''
+        }}
+      />
+    </div>
+  );
 };
