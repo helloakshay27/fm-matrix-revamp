@@ -96,10 +96,14 @@ export const AddSubCategoryModal = ({
 
           <TextField
             fullWidth
+            variant="outlined"
             label="SubCategory"
             placeholder="Enter SubCategory"
             value={formData.subCategory}
             onChange={(e) => setFormData(prev => ({ ...prev, subCategory: e.target.value }))}
+            InputLabelProps={{
+              shrink: true,
+            }}
             sx={{
               '& .MuiInputBase-root': {
                 height: { xs: '36px', sm: '45px' },
@@ -133,12 +137,16 @@ export const AddSubCategoryModal = ({
 
           <TextField
             fullWidth
+            variant="outlined"
             label="Description"
             placeholder="Description"
             multiline
             rows={3}
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            InputLabelProps={{
+              shrink: true,
+            }}
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: '6px',
