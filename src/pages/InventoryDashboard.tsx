@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, Download, FileText, Filter, Search, Eye } from 'lucide-react';
+import { Upload, Download, FileText, Filter, Search, Eye, Plus } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { InventoryFilterDialog } from '@/components/InventoryFilterDialog';
 import {
@@ -239,6 +239,10 @@ export const InventoryDashboard = () => {
     alert(`Printing QR codes for ${itemsToPrint.length} items`);
   };
 
+  const handleAddInventory = () => {
+    navigate('/maintenance/inventory/add');
+  };
+
   return (
     <div className="p-4 sm:p-6 min-h-screen">
       <div className="mb-6">
@@ -265,6 +269,9 @@ export const InventoryDashboard = () => {
         </Button>
         <Button onClick={() => setShowFilter(true)} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
           <Filter className="w-4 h-4 mr-2" /> Filters
+        </Button>
+        <Button onClick={handleAddInventory} className="bg-[#C72030] hover:bg-[#A61B2A] text-white">
+          <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
 
         <div className="relative ml-auto w-full sm:w-64">
