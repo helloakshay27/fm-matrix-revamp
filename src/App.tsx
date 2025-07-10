@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { LayoutProvider } from './contexts/LayoutContext';
 import NotFound from './pages/NotFound';
 import { AssetGroupsPage } from './pages/setup/AssetGroupsPage';
+import { ApprovalMatrixPage } from './pages/settings/ApprovalMatrixPage';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route path="settings/asset-setup/asset-groups" element={<AssetGroupsPage />} />
+            <Route path="settings/approval-matrix" element={<ApprovalMatrixPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
