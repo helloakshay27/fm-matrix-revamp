@@ -253,6 +253,7 @@ const modulesByPackage = {
       ]
     },
     { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
+    { name: 'Asset Setup', icon: Building, href: '/settings/asset-setup' },
     { 
       name: 'Module 1', 
       icon: Package, 
