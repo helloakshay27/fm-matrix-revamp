@@ -190,7 +190,7 @@ export const DepreciationTab = () => {
                 <div className="mt-2">
                   <div className="text-sm text-gray-500">ACTUAL COST</div>
                   <div className="text-2xl font-bold">₹ 00,000</div>
-                  <div className="w-full h-1 bg-orange-500 mt-1"></div>
+                  <div className="w-full h-1 bg-[#C72030] mt-1"></div>
                 </div>
               </div>
             </CardContent>
