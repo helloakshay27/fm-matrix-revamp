@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -270,11 +269,12 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required>Serves Alcohol</InputLabel>
+                <InputLabel required shrink>Serves Alcohol</InputLabel>
                 <Select
                   value={formData.servesAlcohol}
                   onChange={(e) => setFormData(prev => ({ ...prev, servesAlcohol: e.target.value }))}
                   label="Serves Alcohol"
+                  displayEmpty
                 >
                   <MenuItem value="">Select</MenuItem>
                   <MenuItem value="yes">Yes</MenuItem>
@@ -284,11 +284,12 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required>Wheelchair Accessible</InputLabel>
+                <InputLabel required shrink>Wheelchair Accessible</InputLabel>
                 <Select
                   value={formData.wheelchairAccessible}
                   onChange={(e) => setFormData(prev => ({ ...prev, wheelchairAccessible: e.target.value }))}
                   label="Wheelchair Accessible"
+                  displayEmpty
                 >
                   <MenuItem value="">Select</MenuItem>
                   <MenuItem value="yes">Yes</MenuItem>
@@ -298,11 +299,12 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required>Cash on Delivery</InputLabel>
+                <InputLabel required shrink>Cash on Delivery</InputLabel>
                 <Select
                   value={formData.cashOnDelivery}
                   onChange={(e) => setFormData(prev => ({ ...prev, cashOnDelivery: e.target.value }))}
                   label="Cash on Delivery"
+                  displayEmpty
                 >
                   <MenuItem value="">Select</MenuItem>
                   <MenuItem value="yes">Yes</MenuItem>
@@ -312,11 +314,12 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required>Pure Veg</InputLabel>
+                <InputLabel required shrink>Pure Veg</InputLabel>
                 <Select
                   value={formData.pureVeg}
                   onChange={(e) => setFormData(prev => ({ ...prev, pureVeg: e.target.value }))}
                   label="Pure Veg"
+                  displayEmpty
                 >
                   <MenuItem value="yes">Yes</MenuItem>
                   <MenuItem value="no">No</MenuItem>
