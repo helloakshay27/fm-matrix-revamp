@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { X } from 'lucide-react';
 
 interface AddStatusModalProps {
   isOpen: boolean;
@@ -51,8 +52,16 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader className="relative">
           <DialogTitle>Add Status</DialogTitle>
+          <button
+            onClick={onClose}
+            className="absolute right-0 top-0 p-2 hover:bg-gray-100 rounded-full transition-colors"
+            tabIndex={-1}
+            aria-label="Close"
+          >
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <TextField
