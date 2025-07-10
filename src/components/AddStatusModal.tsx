@@ -28,7 +28,7 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
     '& .MuiOutlinedInput-root': {
       borderRadius: '6px',
       backgroundColor: '#FFFFFF',
-      height: '45px', // Desktop height
+      height: { xs: '36px', sm: '45px' },
       '& fieldset': {
         borderColor: '#E0E0E0',
         borderRadius: '6px',
@@ -40,10 +40,6 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
         borderColor: '#C72030',
         borderWidth: 2,
       },
-      // Mobile responsive height
-      '@media (max-width: 768px)': {
-        height: '36px',
-      },
     },
     '& .MuiInputLabel-root': {
       color: '#1A1A1A',
@@ -51,6 +47,10 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
       '&.Mui-focused': {
         color: '#C72030',
       },
+    },
+    '& .MuiInputBase-input': {
+      padding: '8px 14px',
+      fontSize: '14px',
     },
   };
 
@@ -76,6 +76,10 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
       '&.Mui-focused': {
         color: '#C72030',
       },
+    },
+    '& .MuiInputBase-input': {
+      padding: '8px 14px',
+      fontSize: '14px',
     },
   };
 
