@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, ChevronUp, Percent, Grid2X2, Package, Settings, Paperclip, Plus, X } from 'lucide-react';
@@ -23,6 +24,8 @@ const fieldStyles = {
     }
   }
 };
+
+const radioButtonStyles = "w-4 h-4 text-[#C72030] bg-white border-2 border-gray-300 focus:ring-4 focus:ring-[#C72030]/20 focus:ring-opacity-20 checked:bg-[#C72030] checked:border-[#C72030] hover:border-[#C72030] transition-colors";
 
 export const EditAssetDetailsPage = () => {
   const { id } = useParams();
@@ -402,7 +405,7 @@ export const EditAssetDetailsPage = () => {
                         value="yes"
                         checked={formData.underWarranty === 'yes'}
                         onChange={(e) => handleInputChange('underWarranty', e.target.value)}
-                        className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                        className={radioButtonStyles}
                       />
                       <label htmlFor="warranty-yes" className="text-sm">Yes</label>
                     </div>
@@ -414,7 +417,7 @@ export const EditAssetDetailsPage = () => {
                         value="no"
                         checked={formData.underWarranty === 'no'}
                         onChange={(e) => handleInputChange('underWarranty', e.target.value)}
-                        className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                        className={radioButtonStyles}
                       />
                       <label htmlFor="warranty-no" className="text-sm">No</label>
                     </div>
@@ -477,7 +480,7 @@ export const EditAssetDetailsPage = () => {
                         value="straight-line"
                         checked={depreciationMethod === 'straight-line'}
                         onChange={(e) => setDepreciationMethod(e.target.value)}
-                        className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                        className={radioButtonStyles}
                       />
                       <label htmlFor="method-straight-line" className="text-sm">Straight Line</label>
                     </div>
@@ -489,7 +492,7 @@ export const EditAssetDetailsPage = () => {
                         value="wdv"
                         checked={depreciationMethod === 'wdv'}
                         onChange={(e) => setDepreciationMethod(e.target.value)}
-                        className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                        className={radioButtonStyles}
                       />
                       <label htmlFor="method-wdv" className="text-sm">WDV</label>
                     </div>
@@ -549,7 +552,7 @@ export const EditAssetDetailsPage = () => {
                     value="this-only"
                     checked={depreciationScope === 'this-only'}
                     onChange={(e) => setDepreciationScope(e.target.value)}
-                    className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                    className={radioButtonStyles}
                   />
                   <label htmlFor="scope-this-only" className="text-sm">Configure Depreciation Only For This</label>
                 </div>
@@ -561,7 +564,7 @@ export const EditAssetDetailsPage = () => {
                     value="similar"
                     checked={depreciationScope === 'similar'}
                     onChange={(e) => setDepreciationScope(e.target.value)}
-                    className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                    className={radioButtonStyles}
                   />
                   <label htmlFor="scope-similar" className="text-sm">For Similar Product</label>
                 </div>
@@ -596,7 +599,7 @@ export const EditAssetDetailsPage = () => {
                         value="department"
                         checked={assetAllocationData.basedOn === 'department'}
                         onChange={(e) => handleAssetAllocationChange('basedOn', e.target.value)}
-                        className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                        className={radioButtonStyles}
                       />
                       <label htmlFor="allocation-department" className="text-sm">Department</label>
                     </div>
@@ -608,7 +611,7 @@ export const EditAssetDetailsPage = () => {
                         value="users"
                         checked={assetAllocationData.basedOn === 'users'}
                         onChange={(e) => handleAssetAllocationChange('basedOn', e.target.value)}
-                        className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]"
+                        className={radioButtonStyles}
                       />
                       <label htmlFor="allocation-users" className="text-sm">Users</label>
                     </div>
