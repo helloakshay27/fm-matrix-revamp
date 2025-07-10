@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
 
@@ -9,74 +8,87 @@ interface AssetInfoTabProps {
 export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
   return (
     <div className="space-y-6 bg-gray-50 min-h-full p-6">
-      {/* Location Details */}
+      {/* Location Details & QR Code Combined */}
       <div className="bg-white rounded-lg p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-            <MapPin className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">Location Details</h3>
           </div>
-          <h3 className="text-lg font-semibold text-blue-600 uppercase">Location Details</h3>
-          <div className="flex-1 flex items-center justify-end">
+          
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
               <QrCode className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase ml-3">QR Code</h3>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">QR Code</h3>
           </div>
         </div>
 
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            {/* Location Timeline */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center space-x-8">
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                  <div className="text-xs text-gray-500 mb-1">Site</div>
-                  <div className="text-sm font-medium">Haven Infoline</div>
-                </div>
-                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                  <div className="text-xs text-gray-500 mb-1">Building</div>
-                  <div className="text-sm font-medium">Jyoti Tower</div>
-                </div>
-                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                  <div className="text-xs text-gray-500 mb-1">Wing</div>
-                  <div className="text-sm font-medium">J - Wing</div>
-                </div>
-                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                  <div className="text-xs text-gray-500 mb-1">Floor</div>
-                  <div className="text-sm font-medium">02nd</div>
-                </div>
-                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                  <div className="text-xs text-gray-500 mb-1">Area</div>
-                  <div className="text-sm font-medium">East</div>
-                </div>
-                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                  <div className="text-xs text-gray-500 mb-1">Room</div>
-                  <div className="text-sm font-medium">R 202</div>
-                </div>
+        <div className="flex justify-between items-center">
+          {/* Location Timeline */}
+          <div className="flex-1 mr-12">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                <div className="text-xs text-gray-500 mb-1">Site</div>
+                <div className="text-sm font-medium text-center">Haven Infoline</div>
+              </div>
+              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                <div className="text-xs text-gray-500 mb-1">Building</div>
+                <div className="text-sm font-medium text-center">Jyoti Tower</div>
+              </div>
+              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                <div className="text-xs text-gray-500 mb-1">Wing</div>
+                <div className="text-sm font-medium text-center">J - Wing</div>
+              </div>
+              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                <div className="text-xs text-gray-500 mb-1">Floor</div>
+                <div className="text-sm font-medium text-center">02nd</div>
+              </div>
+              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                <div className="text-xs text-gray-500 mb-1">Area</div>
+                <div className="text-sm font-medium text-center">East</div>
+              </div>
+              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                <div className="text-xs text-gray-500 mb-1">Room</div>
+                <div className="text-sm font-medium text-center">R 202</div>
               </div>
             </div>
           </div>
           
           {/* QR Code */}
-          <div className="ml-8 flex flex-col items-center">
-            <div className="w-24 h-24 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center mb-3">
-              <div className="w-20 h-20 bg-black text-white flex items-center justify-center text-xs font-mono">
-                QR CODE
+          <div className="flex flex-col items-center">
+            <div className="w-32 h-32 bg-white border border-gray-300 rounded flex items-center justify-center mb-3">
+              <div className="w-28 h-28 bg-black flex items-center justify-center">
+                <div className="w-24 h-24 bg-white grid grid-cols-8 gap-px p-1">
+                  {/* QR Code Pattern */}
+                  {Array.from({ length: 64 }).map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-full h-full ${
+                        [0, 1, 2, 5, 6, 7, 8, 14, 16, 23, 24, 30, 32, 39, 40, 41, 42, 45, 46, 47, 48, 49, 50, 53, 54, 55, 56, 62, 63].includes(i) 
+                          ? 'bg-black' 
+                          : 'bg-white'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-            <button className="bg-gray-600 text-white px-4 py-1 rounded text-sm hover:bg-gray-700">
-              <span className="inline-block w-4 h-4 mr-1">📄</span>
+            <button className="bg-gray-600 text-white px-4 py-1 rounded text-sm hover:bg-gray-700 flex items-center gap-1">
+              📄
             </button>
           </div>
         </div>
