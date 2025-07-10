@@ -322,7 +322,7 @@ const AddAssetPage = () => {
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-          <button onClick={handleGoBack} aria-label="Go back" className="flex items-center justify-center w-8 h-8 rounded-md ">
+          <button onClick={handleGoBack} aria-label="Go back" className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors">
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
           <span>Asset List</span>
