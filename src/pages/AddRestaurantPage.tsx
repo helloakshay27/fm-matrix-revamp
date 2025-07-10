@@ -33,6 +33,13 @@ const fieldStyles = {
   }
 };
 
+const checkboxStyles = {
+  color: '#C72030',
+  '&.Mui-checked': {
+    color: '#C72030',
+  },
+};
+
 interface Schedule {
   day: string;
   enabled: boolean;
@@ -410,6 +417,7 @@ export const AddRestaurantPage = () => {
                                 checked={item.enabled}
                                 onChange={(e) => updateSchedule(index, 'enabled', e.target.checked)}
                                 size="small"
+                                sx={checkboxStyles}
                               />
                             }
                             label={item.day}
@@ -526,6 +534,7 @@ export const AddRestaurantPage = () => {
                           checked={item.bookingAllowed}
                           onChange={(e) => updateSchedule(index, 'bookingAllowed', e.target.checked)}
                           size="small"
+                          sx={checkboxStyles}
                         />
                       </td>
                       <td className="p-2">
@@ -533,6 +542,7 @@ export const AddRestaurantPage = () => {
                           checked={item.orderAllowed}
                           onChange={(e) => updateSchedule(index, 'orderAllowed', e.target.checked)}
                           size="small"
+                          sx={checkboxStyles}
                         />
                       </td>
                       <td className="p-2">
@@ -592,6 +602,7 @@ export const AddRestaurantPage = () => {
                         onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
                           i === index ? { ...item, orderBlocked: e.target.checked } : item
                         ))}
+                        sx={checkboxStyles}
                       />
                     }
                     label="Order Blocked"
@@ -603,6 +614,7 @@ export const AddRestaurantPage = () => {
                         onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
                           i === index ? { ...item, bookingBlocked: e.target.checked } : item
                         ))}
+                        sx={checkboxStyles}
                       />
                     }
                     label="Booking Blocked"

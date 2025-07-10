@@ -216,6 +216,10 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               id="mustHave"
               checked={mustHave}
               onCheckedChange={handleMustHaveChange}
+              style={{
+                borderColor: '#C72030',
+                backgroundColor: mustHave ? '#C72030' : 'transparent'
+              }}
             />
             <label htmlFor="mustHave" className="text-sm font-medium">
               Must Have
