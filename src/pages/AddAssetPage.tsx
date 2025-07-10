@@ -454,13 +454,13 @@ const AddAssetPage = () => {
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="status-inuse" name="status" value="inuse" defaultChecked className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="status-inuse" className="text-sm">In Use</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="status-breakdown" name="status" value="breakdown" className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
                     </div>
@@ -604,13 +604,13 @@ const AddAssetPage = () => {
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="meter-type-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="meter-type-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
                     </div>
@@ -625,13 +625,13 @@ const AddAssetPage = () => {
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="critical-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="critical-no" className="text-sm">No</label>
                     </div>
@@ -721,13 +721,13 @@ const AddAssetPage = () => {
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="warranty-yes" name="underWarranty" value="yes" className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="warranty-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="warranty-no" name="underWarranty" value="no" className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
+                    accentColor: '#C72030'
                   }} />
                       <label htmlFor="warranty-no" className="text-sm">No</label>
                     </div>
