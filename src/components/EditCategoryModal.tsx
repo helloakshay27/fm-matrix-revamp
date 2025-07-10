@@ -75,7 +75,7 @@ export const EditCategoryModal = ({
 
   return (
     <>
-      <style jsx global>{`
+      <style>{`
         .MuiInputLabel-root {
           font-size: 16px !important;
         }
