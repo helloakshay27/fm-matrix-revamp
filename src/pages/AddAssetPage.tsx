@@ -326,7 +326,7 @@ const AddAssetPage = () => {
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <button 
             onClick={handleGoBack}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
