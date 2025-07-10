@@ -212,7 +212,7 @@ export const FnBRestaurantDetailsPage = () => {
       {/* Tabs */}
       <Tabs defaultValue="restaurant" className="w-full">
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 bg-gray-100 gap-1 sm:gap-2 p-1 h-auto">
-          <TabsTrigger value="restaurant" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+          <TabsTrigger value="restaurant" className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
             Restaurant
           </TabsTrigger>
           <TabsTrigger value="status-setup" className="whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
