@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -11,8 +12,7 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical, Mail, TrendingUp, ListTodo,
-  Recycle
+  Archive, TreePine, FlaskConical
 } from 'lucide-react';
 
 const modulesByPackage = {
@@ -94,72 +94,13 @@ const modulesByPackage = {
         { name: 'Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
-    },
-    {
-      name: 'Checklist Setup',
-      icon: ListTodo,
-      href: '/maintenance/checklist-setup',
-      subItems: [
-        { name: 'Checklist Group and Sub Group', href: '/maintenance/checklist-setup/groups', color: 'text-[#1a1a1a]' },
-        { name: 'Email Rule', href: '/maintenance/checklist-setup/email-rule', color: 'text-[#1a1a1a]' },
-        { name: 'Task Escalation', href: '/maintenance/checklist-setup/task-escalation', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    {
-      name: 'Ticket Management',
-      icon: FileText,
-      href: '/maintenance/ticket-management',
-      subItems: [
-        { name: 'Setup', href: '/maintenance/ticket-management/setup', color: 'text-[#1a1a1a]' },
-        { name: 'Escalation Matrix', href: '/maintenance/ticket-management/escalation-matrix', color: 'text-[#1a1a1a]' },
-        { name: 'Cost Approval', href: '/maintenance/ticket-management/cost-approval', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    {
-      name: 'Inventory Management',
-      icon: Package,
-      href: '/maintenance/inventory-management',
-      subItems: [
-        { name: 'SAC/HSN Code', href: '/maintenance/inventory-management/sac-hsn-code', color: 'text-[#1a1a1a]' }
-      ]
     }
   ],
   'Safety': [
     { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
     { name: 'Permit to Work', icon: FileText, href: '/safety/permit' },
     { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
-    { name: 'Training List', icon: BookOpen, href: '/safety/training-list' },
-    {
-      name: 'Safety',
-      icon: Shield,
-      href: '/safety/safety-management',
-      subItems: [
-        { 
-          name: 'Permit', 
-          href: '/safety/safety-management/permit', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Permit Setup', href: '/safety/safety-management/permit/setup', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { 
-          name: 'Incident', 
-          href: '/safety/safety-management/incident', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Setup', href: '/safety/safety-management/incident/setup', color: 'text-[#1a1a1a]' }
-          ]
-        }
-      ]
-    },
-    {
-      name: 'Waste Management',
-      icon: Recycle,
-      href: '/safety/waste-management',
-      subItems: [
-        { name: 'Setup', href: '/safety/waste-management/setup', color: 'text-[#1a1a1a]' }
-      ]
-    }
+    { name: 'Training List', icon: BookOpen, href: '/safety/training-list' }
   ],
   'Finance': [
     { 
@@ -513,6 +454,7 @@ export const Sidebar = () => {
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
                 className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+
               >
                 <option value="">Select Department</option>
                 <option value="engineering">Engineering</option>
@@ -528,7 +470,7 @@ export const Sidebar = () => {
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
               >
                 <option value="">Select Role</option>
                 <option value="manager">Manager</option>
