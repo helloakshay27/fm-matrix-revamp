@@ -150,6 +150,10 @@ export const FnBRestaurantDetailsPage = () => {
   };
 
   const fieldStyles = {
+    '& .MuiInputBase-root': {
+      height: { xs: '36px', sm: '45px' },
+      borderRadius: '6px',
+    },
     '& .MuiOutlinedInput-root': {
       borderRadius: '6px',
       backgroundColor: '#FFFFFF',
@@ -171,6 +175,10 @@ export const FnBRestaurantDetailsPage = () => {
       '&.Mui-focused': {
         color: '#C72030',
       },
+    },
+    '& .MuiInputBase-input': {
+      padding: '8px 14px',
+      fontSize: '14px',
     },
   };
 
