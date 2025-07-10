@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { X } from 'lucide-react';
 
 interface AddSubCategoryModalProps {
   isOpen: boolean;
@@ -35,9 +36,17 @@ export const AddSubCategoryModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold" style={{ color: '#000000' }}>
-            ADD Category
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-semibold" style={{ color: '#000000' }}>
+              ADD Category
+            </DialogTitle>
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
