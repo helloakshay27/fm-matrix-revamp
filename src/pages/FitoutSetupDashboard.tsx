@@ -417,7 +417,7 @@ export const FitoutSetupDashboard = () => {
       <AddStatusModal
         isOpen={isAddStatusOpen}
         onClose={() => setIsAddStatusOpen(false)}
-        onSubmit={handleAddStatus}
+        onSave={handleAddStatus}
       />
     </div>
   );

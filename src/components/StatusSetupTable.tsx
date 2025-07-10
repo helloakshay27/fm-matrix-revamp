@@ -178,7 +178,7 @@ export const StatusSetupTable = () => {
       <AddStatusModal 
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddStatus}
+        onSave={handleAddStatus}
       />
 
       <EditStatusModal 
