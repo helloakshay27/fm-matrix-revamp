@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
 
@@ -10,9 +8,9 @@ interface AssetInfoTabProps {
 export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
   return (
     <div className="space-y-6 bg-gray-50 min-h-full p-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Location Details */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+      <div className="flex gap-6">
+        {/* Location Details - 80% width */}
+        <div className="w-4/5 bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
               <MapPin className="w-4 h-4 text-white" />
@@ -83,8 +81,8 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
           </div>
         </div>
 
-        {/* QR Code */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        {/* QR Code - 20% width */}
+        <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
               <QrCode className="w-4 h-4 text-white" />
@@ -384,4 +382,3 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
     </div>
   );
 };
-
