@@ -59,6 +59,84 @@ export const EditSubCategoryModal = ({
     onClose();
   };
 
+  const fieldStyles = {
+    '& .MuiInputBase-root': {
+      height: { xs: '36px', sm: '45px' },
+      borderRadius: '6px',
+    },
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '6px',
+      '& fieldset': {
+        borderColor: '#d1d5db',
+      },
+      '&:hover fieldset': {
+        borderColor: '#9ca3af',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#000000',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#666',
+      fontSize: '16px',
+      '&.Mui-focused': {
+        color: '#000000',
+      },
+    },
+    '& .MuiInputBase-input': {
+      padding: '8px 14px',
+      fontSize: '14px',
+    }
+  };
+
+  const selectStyles = {
+    height: { xs: '36px', sm: '45px' },
+    borderRadius: '6px',
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '6px',
+      '& fieldset': {
+        borderColor: '#d1d5db',
+      },
+      '&:hover fieldset': {
+        borderColor: '#9ca3af',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#000000',
+      },
+    },
+    '& .MuiSelect-select': {
+      padding: '8px 14px',
+      display: 'flex',
+      alignItems: 'center',
+    }
+  };
+
+  const textAreaStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '6px',
+      '& fieldset': {
+        borderColor: '#d1d5db',
+      },
+      '&:hover fieldset': {
+        borderColor: '#9ca3af',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#000000',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#666',
+      fontSize: '16px',
+      '&.Mui-focused': {
+        color: '#000000',
+      },
+    },
+    '& .MuiInputBase-input': {
+      padding: '8px 14px',
+      fontSize: '14px',
+    }
+  };
+
   return (
     <>
       <style>{`
@@ -94,26 +172,7 @@ export const EditSubCategoryModal = ({
                 value={formData.category}
                 label="Category"
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                sx={{
-                  borderRadius: '6px',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '6px',
-                    '& fieldset': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#9ca3af',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#000000',
-                    },
-                  },
-                  '& .MuiSelect-select': {
-                    padding: '8px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }
-                }}
+                sx={selectStyles}
               >
                 {categories.map(category => (
                   <MenuItem key={category} value={category}>{category}</MenuItem>
@@ -131,34 +190,7 @@ export const EditSubCategoryModal = ({
               InputLabelProps={{
                 shrink: true,
               }}
-              sx={{
-                '& .MuiInputBase-root': {
-                  borderRadius: '6px',
-                },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '6px',
-                  '& fieldset': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#000000',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#666',
-                  fontSize: '16px',
-                  '&.Mui-focused': {
-                    color: '#000000',
-                  },
-                },
-                '& .MuiInputBase-input': {
-                  padding: '8px 14px',
-                  fontSize: '14px',
-                }
-              }}
+              sx={fieldStyles}
             />
 
             <TextField
@@ -173,31 +205,7 @@ export const EditSubCategoryModal = ({
               InputLabelProps={{
                 shrink: true,
               }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '6px',
-                  '& fieldset': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#000000',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#666',
-                  fontSize: '16px',
-                  '&.Mui-focused': {
-                    color: '#000000',
-                  },
-                },
-                '& .MuiInputBase-input': {
-                  padding: '8px 14px',
-                  fontSize: '14px',
-                }
-              }}
+              sx={textAreaStyles}
             />
           </div>
 
