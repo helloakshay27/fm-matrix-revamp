@@ -392,13 +392,16 @@ import { AddAddressPage } from './pages/AddAddressPage';
 // Import Edit Address page
 import { EditAddressPage } from './pages/EditAddressPage';
 
+// Import Asset Setup Approval Matrix
+import { AssetSetupApprovalMatrix } from './pages/settings/AssetSetupApprovalMatrix';
+
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <Router>
-      <QueryClientProvider client={queryClient}>
-        <LayoutProvider>
+      <LayoutProvider>
+        <div className="App">
           <Routes>
             {/* Login Route */}
             <Route path="/login" element={<LoginPage />} />
@@ -415,7 +418,12 @@ function App() {
               <Route path="/settings/users/edit-details/:id" element={<EditFMUserDetailsPage />} />
               <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
               <Route path="/settings/account" element={<AccountDashboard />} />
-              <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
+              <Route path="/settings/approval-matrix" element={<Layout />}>
+                <Route index element={<ApprovalMatrixDashboard />} />
+              </Route>
+              <Route path="/settings/asset-setup/approval-matrix" element={<Layout />}>
+                <Route index element={<AssetSetupApprovalMatrix />} />
+              </Route>
               <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
               <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
@@ -735,9 +743,9 @@ function App() {
               <Route path="/setup/export" element={<ExportDashboard />} />
             </Route>
           </Routes>
-          <Toaster />
-        </LayoutProvider>
-      </QueryClientProvider>
+        </div>
+        <Toaster />
+      </LayoutProvider>
     </Router>
   );
 }
