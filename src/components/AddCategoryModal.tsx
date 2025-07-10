@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CustomTextField } from '@/components/ui/custom-text-field';
+import { TextField } from '@mui/material';
+import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddCategoryModalProps {
@@ -55,35 +56,142 @@ export const AddCategoryModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">ADD Category</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">ADD Category</DialogTitle>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <CustomTextField
+          <TextField
+            fullWidth
+            variant="outlined"
             label="Category Name"
             placeholder="Enter Category Name"
             value={formData.category}
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-            fullWidth
+            InputLabelProps={{
+              shrink: true,
+            }}
+            sx={{
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '45px' },
+                borderRadius: '6px',
+              },
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '6px',
+                '& fieldset': {
+                  borderColor: '#d1d5db',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#9ca3af',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#000000',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#666',
+                fontSize: '16px',
+                '&.Mui-focused': {
+                  color: '#000000',
+                },
+              },
+              '& .MuiInputBase-input': {
+                padding: '8px 14px',
+                fontSize: '14px',
+              }
+            }}
           />
 
           {showTimings && (
-            <CustomTextField
+            <TextField
+              fullWidth
+              variant="outlined"
               label="Timings"
               placeholder="Enter Timings"
               value={formData.timings}
               onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
-              fullWidth
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={{
+                '& .MuiInputBase-root': {
+                  height: { xs: '36px', sm: '45px' },
+                  borderRadius: '6px',
+                },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '6px',
+                  '& fieldset': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#000000',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#666',
+                  fontSize: '16px',
+                  '&.Mui-focused': {
+                    color: '#000000',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  padding: '8px 14px',
+                  fontSize: '14px',
+                }
+              }}
             />
           )}
 
           {showAmount && (
-            <CustomTextField
+            <TextField
+              fullWidth
+              variant="outlined"
               label="Amount"
               placeholder="Enter Amount"
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              fullWidth
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={{
+                '& .MuiInputBase-root': {
+                  height: { xs: '36px', sm: '45px' },
+                  borderRadius: '6px',
+                },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '6px',
+                  '& fieldset': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#000000',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#666',
+                  fontSize: '16px',
+                  '&.Mui-focused': {
+                    color: '#000000',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  padding: '8px 14px',
+                  fontSize: '14px',
+                }
+              }}
             />
           )}
         </div>
