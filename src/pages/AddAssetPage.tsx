@@ -1113,7 +1113,7 @@ const AddAssetPage = () => {
   <button onClick={() => {
             setCustomFieldModalOpen(false);
             setNewFieldName('');
-          }} className="px-6 py-2 border border-[#C72030] text-gray-700 rounded-md hover:bg-gray-50 text-sm">
+          }} className="px-6 py-2 border border-[#C72030] rounded-md hover:bg-gray-50 text-sm text-orange-700">
     Cancel
   </button>
   <button onClick={handleAddCustomField} className="px-6 py-2 rounded-md text-sm bg-[#f6f4ee] text-red-700">
