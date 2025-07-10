@@ -1382,23 +1382,24 @@ const AddAssetPage = () => {
               }}
             />
           </div>
-          <DialogFooter>
-            <button
-              onClick={() => {
-                setCustomFieldModalOpen(false);
-                setNewFieldName('');
-              }}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddCustomField}
-              className="px-6 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#A01B28] text-sm"
-            >
-              Add Field
-            </button>
-          </DialogFooter>
+          <DialogFooter className="flex justify-center gap-4">
+  <button
+    onClick={() => {
+      setCustomFieldModalOpen(false);
+      setNewFieldName('');
+    }}
+    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm"
+  >
+    Cancel
+  </button>
+  <button
+    onClick={handleAddCustomField}
+    className="px-6 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#A01B28] text-sm"
+  >
+    Add Field
+  </button>
+</DialogFooter>
+
         </DialogContent>
       </Dialog>
 
