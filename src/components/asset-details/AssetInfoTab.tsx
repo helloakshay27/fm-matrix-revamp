@@ -214,9 +214,9 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Movement Details */}
-        <div className="w-4/5 bg-white rounded-lg p-6 shadow-sm border">
+        <div className="w-full lg:w-4/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <TrendingUp className="w-5 h-5 text-white" />
@@ -246,7 +246,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
 
             {/* Movement Timeline */}
             <div className="relative">
-              <div className="flex items-center">
+              <div className="flex flex-col md:flex-row md:items-center gap-8 md:gap-0">
                 {/* Requested Stage */}
                 <div className="flex flex-col items-center flex-1">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#C72030' }}>
@@ -264,7 +264,8 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
                 </div>
 
                 {/* Connecting line */}
-                <div className="flex-1 h-px mx-4" style={{ backgroundColor: '#C72030' }}></div>
+                <div className="hidden md:block flex-1 h-px mx-4" style={{ backgroundColor: '#C72030' }}></div>
+                <div className="md:hidden w-px h-8 mx-auto" style={{ backgroundColor: '#C72030' }}></div>
 
                 {/* Approved Stage */}
                 <div className="flex flex-col items-center flex-1">
@@ -283,7 +284,8 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
                 </div>
 
                 {/* Connecting line */}
-                <div className="flex-1 h-px bg-gray-300 mx-4"></div>
+                <div className="hidden md:block flex-1 h-px bg-gray-300 mx-4"></div>
+                <div className="md:hidden w-px h-8 bg-gray-300 mx-auto"></div>
 
                 {/* Received Stage */}
                 <div className="flex flex-col items-center flex-1">
@@ -306,7 +308,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
 
         {/* Vendor Contact Details */}
-        <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm border">
+        <div className="w-full lg:w-1/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <User className="w-4 h-4 text-white" />
@@ -315,7 +317,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
           </div>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
               <div>
                 <div className="text-sm text-gray-500 mb-1">Name</div>
                 <div className="font-medium">Croma Electronics</div>
@@ -326,7 +328,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
               <div>
                 <div className="text-sm text-gray-500 mb-1">PAN No.</div>
                 <div className="font-medium">AJD102D34</div>
