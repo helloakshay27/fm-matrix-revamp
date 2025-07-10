@@ -2,8 +2,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Grid3X3, FileDown } from 'lucide-react';
-import { Edit } from 'lucide-react';
+import { Search, Grid3X3, FileDown, Edit } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export const AssetSetupApprovalMatrix = () => {
   const approvals = [
@@ -30,9 +37,7 @@ export const AssetSetupApprovalMatrix = () => {
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
           <span>Setup</span>
           <span>&gt;</span>
-          <span>Asset Setup</span>
-          <span>&gt;</span>
-          <span>Approval Matrix</span>
+          <span>Invoice Approvals</span>
         </div>
         <h1 className="text-2xl font-semibold text-gray-900 mb-4">INVOICE APPROVALS</h1>
         
@@ -40,7 +45,7 @@ export const AssetSetupApprovalMatrix = () => {
         <div className="flex items-center justify-between mb-4">
           <Button 
             onClick={handleAddClick}
-            className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 text-sm"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 text-sm"
           >
             + Add
           </Button>
@@ -50,13 +55,13 @@ export const AssetSetupApprovalMatrix = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search"
-                className="pl-10 w-80 bg-white"
+                className="pl-10 w-80 bg-white border-gray-300"
               />
             </div>
-            <Button variant="outline" size="icon" className="bg-white">
+            <Button variant="outline" size="icon" className="bg-white border-gray-300">
               <Grid3X3 className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="icon" className="bg-white">
+            <Button variant="outline" size="icon" className="bg-white border-gray-300">
               <FileDown className="w-4 h-4" />
             </Button>
           </div>
@@ -65,47 +70,45 @@ export const AssetSetupApprovalMatrix = () => {
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-100 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Edit</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Id</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Function</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Created On</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Created by</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {approvals.map((approval, index) => (
-                <tr key={approval.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-gray-600 hover:text-gray-900 p-1"
-                      onClick={() => handleEditClick(approval.id)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
-                    {approval.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {approval.function}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {approval.createdOn}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {approval.createdBy}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-gray-700 font-medium">Edit</TableHead>
+              <TableHead className="text-gray-700 font-medium">Id</TableHead>
+              <TableHead className="text-gray-700 font-medium">Function</TableHead>
+              <TableHead className="text-gray-700 font-medium">Created On</TableHead>
+              <TableHead className="text-gray-700 font-medium">Created by</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {approvals.map((approval, index) => (
+              <TableRow key={approval.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-gray-600 hover:text-gray-900 p-1"
+                    onClick={() => handleEditClick(approval.id)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </TableCell>
+                <TableCell className="text-blue-600 font-medium">
+                  {approval.id}
+                </TableCell>
+                <TableCell className="text-gray-900">
+                  {approval.function}
+                </TableCell>
+                <TableCell className="text-gray-900">
+                  {approval.createdOn}
+                </TableCell>
+                <TableCell className="text-gray-900">
+                  {approval.createdBy}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
