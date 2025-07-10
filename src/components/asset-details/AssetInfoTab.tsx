@@ -1,261 +1,352 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
 
 interface AssetInfoTabProps {
   assetId: string;
 }
 
-export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({ assetId }) => {
+export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 bg-gray-50 min-h-full p-6">
       {/* Location Details */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
-          <h3 className="text-lg font-semibold text-[#C72030] uppercase">Location Details</h3>
-        </div>
-        
-        {/* Location Timeline */}
-       <div className="flex items-center justify-between mb-6 relative z-[1]">
-          <div className="absolute top-4 left-0 right-0 h-0.5 bg-[#C72030]"></div>
-          {['Site', 'Building', 'Wing', 'Floor', 'Area', 'Room'].map((item, index) => (
-            <div key={item} className="flex flex-col items-center relative z-10">
-              <div className="w-3 h-3 bg-[#C72030] rounded-full mb-2"></div>
-              <span className="text-sm font-medium text-gray-700">{item}</span>
-              <span className="text-xs text-gray-500">
-                {item === 'Site' ? 'Loccated' : item === 'Building' ? 'sebc' : 'NA'}
-              </span>
+      <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <MapPin className="w-4 h-4 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-blue-600 uppercase">Location Details</h3>
+          <div className="flex-1 flex items-center justify-end">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-white" />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Asset Details */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs font-bold">2</div>
-            <h3 className="text-lg font-semibold text-[#C72030] uppercase">Asset Details</h3>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase ml-3">QR Code</h3>
           </div>
         </div>
-        
-        <div className="grid grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-600">Customer Name</label>
-              <p className="font-medium">-</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Asset Number</label>
-              <p className="font-medium">sdcsdc</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Model Number</label>
-              <p className="font-medium">tested</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Location Type</label>
-              <p className="font-medium">N/A</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Ethical Status</label>
-              <p className="font-medium">-</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Breakdown Date</label>
-              <p className="font-medium">N/A</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Purchase Cost</label>
-              <p className="font-medium">TBD</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Subgroup</label>
-              <p className="font-medium">Electric Meter</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Meter Category</label>
-              <p className="font-medium">Energy Meter</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Description</label>
-              <p className="font-medium">-</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Life Left (yy:mm:dd)</label>
-              <p className="font-medium">-</p>
+
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            {/* Location Timeline */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-8">
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                  <div className="text-xs text-gray-500 mb-1">Site</div>
+                  <div className="text-sm font-medium">Haven Infoline</div>
+                </div>
+                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                  <div className="text-xs text-gray-500 mb-1">Building</div>
+                  <div className="text-sm font-medium">Jyoti Tower</div>
+                </div>
+                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                  <div className="text-xs text-gray-500 mb-1">Wing</div>
+                  <div className="text-sm font-medium">J - Wing</div>
+                </div>
+                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                  <div className="text-xs text-gray-500 mb-1">Floor</div>
+                  <div className="text-sm font-medium">02nd</div>
+                </div>
+                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                  <div className="text-xs text-gray-500 mb-1">Area</div>
+                  <div className="text-sm font-medium">East</div>
+                </div>
+                <div className="flex-1 h-px bg-blue-300 mx-4"></div>
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
+                  <div className="text-xs text-gray-500 mb-1">Room</div>
+                  <div className="text-sm font-medium">R 202</div>
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Middle Column */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-600">Asset Name</label>
-              <p className="font-medium">sdcsdc</p>
+          
+          {/* QR Code */}
+          <div className="ml-8 flex flex-col items-center">
+            <div className="w-24 h-24 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center mb-3">
+              <div className="w-20 h-20 bg-black text-white flex items-center justify-center text-xs font-mono">
+                QR CODE
+              </div>
             </div>
-            <div>
-              <label className="text-sm text-gray-600">Asset Code</label>
-              <p className="font-medium">026dd95aa50be420318ea</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Serial No.</label>
-              <p className="font-medium">sdcsdc</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Meter Type</label>
-              <p className="font-medium">-</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Purchased on</label>
-              <p className="font-medium">26/05/2024</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Created On</label>
-              <p className="font-medium">28/02/2025 1:00 PM</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Group</label>
-              <p className="font-medium">Electrical</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Critical</label>
-              <p className="font-medium">No</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Updated On</label>
-              <p className="font-medium">29/04/2025 1:28 PM</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Consumer No.</label>
-              <p className="font-medium">-</p>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-600">Meter Type</label>
-              <p className="font-medium">Adam Electric Meter Parent/Meter</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Asset Type</label>
-              <p className="font-medium">Comprehensive</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Manufactured</label>
-              <p className="font-medium">-</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Meter Category Name</label>
-              <p className="font-medium">Transformer</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Date Of Installation</label>
-              <p className="font-medium">N/A</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Capacity</label>
-              <p className="font-medium">10 10</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Equipment Id</label>
-              <p className="font-medium">-</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Meter Applicable</label>
-              <p className="font-medium">Yes</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Comments</label>
-              <p className="font-medium">-</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600">Total Cost Of Repair</label>
-              <p className="font-medium">-</p>
-            </div>
+            <button className="bg-gray-600 text-white px-4 py-1 rounded text-sm hover:bg-gray-700">
+              <span className="inline-block w-4 h-4 mr-1">📄</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* QR Code and Warranty */}
-      <div className="grid grid-cols-2 gap-8">
-        {/* QR Code */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs font-bold">3</div>
-              <h3 className="text-lg font-semibold text-[#C72030] uppercase">QR Code</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Asset Details */}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <Settings className="w-4 h-4 text-white" />
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              download
-            </Button>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Details</h3>
           </div>
-          <div className="w-32 h-32 border-2 border-gray-300 rounded-lg flex items-center justify-center">
-            <span className="text-gray-400">QR Code</span>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Asset No.</div>
+                <div className="font-medium">Asset02</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Model No.</div>
+                <div className="font-medium">330n</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Serial No.</div>
+                <div className="font-medium">1234567889</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Manufacturer</div>
+                <div className="font-medium">Dell</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Group</div>
+                <div className="font-medium">IT Devices</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Sub Group</div>
+                <div className="font-medium">Laptop</div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <div className="text-sm font-medium text-blue-600 mb-3">System Details</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">OS</div>
+                  <div className="font-medium">Windows 10 Home</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Total Memory</div>
+                  <div className="font-medium">4 GB</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Processor</div>
+                  <div className="font-medium">Ryzen 3 Dual Core</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <div className="text-sm font-medium text-blue-600 mb-3">Hard Disk Details</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Model</div>
+                  <div className="font-medium">#12345ba283</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Serial No.</div>
+                  <div className="font-medium">#12345ba283</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Capacity</div>
+                  <div className="font-medium">1 TB</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Commissioning Date</div>
+                <div className="font-medium">01/09/2019</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Allocation based on</div>
+                <div className="font-medium">Department</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Department</div>
+                <div className="font-medium">Technical, Finance</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Warranty Details */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs font-bold">4</div>
-            <h3 className="text-lg font-semibold text-[#C72030] uppercase">Warranty Details</h3>
+        {/* Purchase Details & Asset Loaned */}
+        <div className="space-y-6">
+          {/* Purchase Details */}
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-blue-600 uppercase">Purchase Details</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Purchase Cost</div>
+                  <div className="font-medium">₹ 100000</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Current Date Cost</div>
+                  <div className="font-medium">₹ 52000 <span className="text-sm text-gray-500">(Straight Line)</span></div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Purchase Date</div>
+                  <div className="font-medium">01/02/2019</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Under Warranty</div>
+                  <div className="font-medium">Yes</div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Period</div>
+                  <div className="font-medium">2 years</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Warranty Expires On</div>
+                  <div className="font-medium">10/02/2022</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Under Warranty</span>
-              <span className="font-medium">No</span>
+
+          {/* Asset Loaned */}
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <UserCheck className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Loaned</h3>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Commissioning Date</span>
-              <span className="font-medium">17/03/2025</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Warranty Expires on</span>
-              <span className="font-medium">10/03/2025</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Warranty Start Date</span>
-              <span className="font-medium">N/A</span>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Vendor</div>
+                  <div className="font-medium">Croma Electronics</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Agreement From</div>
+                  <div className="font-medium">01/02/2019</div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">Agreement To</div>
+                  <div className="font-medium">01/02/2021</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Supplier Contact Details */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs font-bold">5</div>
-          <h3 className="text-lg font-semibold text-[#C72030] uppercase">Supplier Contact Details</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Movement Details */}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">Movement Details</h3>
+          </div>
+
+          <div className="space-y-6">
+            {/* Movement Timeline */}
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <div className="ml-4">
+                    <div className="text-sm text-gray-500">Site</div>
+                    <div className="font-medium">Assuretech Infoline</div>
+                    <div className="text-sm text-gray-500 mt-1">Location</div>
+                    <div className="text-sm">Marathon Tower / A-Wing / 05th Flr / West / R 504</div>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-blue-600 font-medium">28/08/2019</div>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <div className="ml-4">
+                    <div className="text-sm text-gray-500">Site</div>
+                    <div className="font-medium">Haven Infoline</div>
+                    <div className="text-sm text-gray-500 mt-1">Location</div>
+                    <div className="text-sm">Jyoti Tower / J-Wing / 02nd Flr / East / R 202</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Arrow line */}
+              <div className="absolute top-1/2 left-1/4 right-1/4 h-px bg-blue-300 transform -translate-y-1/2"></div>
+              <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-blue-500 transform -translate-y-1/2 rotate-45"></div>
+            </div>
+          </div>
         </div>
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Name</span>
-            <span className="font-medium">Reliance Digital</span>
+
+        {/* Vendor Contact Details */}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">Vendor Contact Details</h3>
           </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Mobile Number</span>
-            <span className="font-medium">9850264875</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Email</span>
-            <span className="font-medium">rdi@mail.com</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">PAN Number</span>
-            <span className="font-medium">N/A</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">GSTIN Number</span>
-            <span className="font-medium">N/A</span>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Name</div>
+                <div className="font-medium">Croma Electronics</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Mobile No.</div>
+                <div className="font-medium">9989998999</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">PAN No.</div>
+                <div className="font-medium">AJD102D34</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">GSTIN No.</div>
+                <div className="font-medium">NA</div>
+              </div>
+            </div>
+            
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Email ID</div>
+              <div className="font-medium">demo@croma.com</div>
+            </div>
           </div>
         </div>
       </div>
