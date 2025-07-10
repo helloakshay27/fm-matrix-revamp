@@ -1,11 +1,11 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const AddInventoryPage = () => {
@@ -37,6 +37,10 @@ export const AddInventoryPage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
+    setFormData(prev => ({ ...prev, [field]: event.target.value }));
+  };
+
   const handleEcoFriendlyChange = (checked: boolean | "indeterminate") => {
     setEcoFriendly(checked === true);
   };
@@ -60,8 +64,38 @@ export const AddInventoryPage = () => {
     navigate(-1);
   };
 
+  // Consistent field styling for MUI TextFields and Selects
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-6 bg-[#f6f4ee] min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
@@ -136,150 +170,201 @@ export const AddInventoryPage = () => {
               {/* Form Grid */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="assetName" className="text-sm font-medium">Select Asset Name</Label>
-                  <Select value={formData.assetName} onValueChange={(value) => handleInputChange('assetName', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an Option..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="asset1">Asset 1</SelectItem>
-                      <SelectItem value="asset2">Asset 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="asset-name-label" shrink>Select Asset Name</InputLabel>
+                    <MuiSelect
+                      labelId="asset-name-label"
+                      value={formData.assetName}
+                      onChange={handleSelectChange('assetName')}
+                      label="Select Asset Name"
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>Select an Option...</em>
+                      </MenuItem>
+                      <MenuItem value="asset1">Asset 1</MenuItem>
+                      <MenuItem value="asset2">Asset 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="inventoryName" className="text-sm font-medium">Inventory Name*</Label>
-                  <Input
-                    id="inventoryName"
+                  <TextField
+                    label="Inventory Name*"
                     placeholder="Name"
                     value={formData.inventoryName}
                     onChange={(e) => handleInputChange('inventoryName', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="inventoryCode" className="text-sm font-medium">Inventory Code*</Label>
-                  <Input
-                    id="inventoryCode"
+                  <TextField
+                    label="Inventory Code*"
                     placeholder="code"
                     value={formData.inventoryCode}
                     onChange={(e) => handleInputChange('inventoryCode', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="serialNumber" className="text-sm font-medium">Serial Number</Label>
-                  <Input
-                    id="serialNumber"
+                  <TextField
+                    label="Serial Number"
                     placeholder="Serial Number"
                     value={formData.serialNumber}
                     onChange={(e) => handleInputChange('serialNumber', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="quantity" className="text-sm font-medium">Quantity*</Label>
-                  <Input
-                    id="quantity"
+                  <TextField
+                    label="Quantity*"
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="cost" className="text-sm font-medium">Cost</Label>
-                  <Input
-                    id="cost"
+                  <TextField
+                    label="Cost"
                     placeholder="Cost"
                     value={formData.cost}
                     onChange={(e) => handleInputChange('cost', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="unit" className="text-sm font-medium">Select Unit</Label>
-                  <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pcs">Pieces</SelectItem>
-                      <SelectItem value="kg">Kilograms</SelectItem>
-                      <SelectItem value="liters">Liters</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="unit-label" shrink>Select Unit</InputLabel>
+                    <MuiSelect
+                      labelId="unit-label"
+                      value={formData.unit}
+                      onChange={handleSelectChange('unit')}
+                      label="Select Unit"
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>Select Unit</em>
+                      </MenuItem>
+                      <MenuItem value="pcs">Pieces</MenuItem>
+                      <MenuItem value="kg">Kilograms</MenuItem>
+                      <MenuItem value="liters">Liters</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="expiryDate" className="text-sm font-medium">Expiry Date</Label>
-                  <Input
-                    id="expiryDate"
+                  <TextField
+                    label="Expiry Date"
                     type="date"
                     placeholder="Date of Expiry"
                     value={formData.expiryDate}
                     onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category" className="text-sm font-medium">Select Category</Label>
-                  <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an Option..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="category1">Category 1</SelectItem>
-                      <SelectItem value="category2">Category 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="category-label" shrink>Select Category</InputLabel>
+                    <MuiSelect
+                      labelId="category-label"
+                      value={formData.category}
+                      onChange={handleSelectChange('category')}
+                      label="Select Category"
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>Select an Option...</em>
+                      </MenuItem>
+                      <MenuItem value="category1">Category 1</MenuItem>
+                      <MenuItem value="category2">Category 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="vendor" className="text-sm font-medium">Vendor</Label>
-                  <Select value={formData.vendor} onValueChange={(value) => handleInputChange('vendor', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vendor1">Vendor 1</SelectItem>
-                      <SelectItem value="vendor2">Vendor 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                    <InputLabel id="vendor-label" shrink>Vendor</InputLabel>
+                    <MuiSelect
+                      labelId="vendor-label"
+                      value={formData.vendor}
+                      onChange={handleSelectChange('vendor')}
+                      label="Vendor"
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>Select Vendor</em>
+                      </MenuItem>
+                      <MenuItem value="vendor1">Vendor 1</MenuItem>
+                      <MenuItem value="vendor2">Vendor 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="maxStockLevel" className="text-sm font-medium">Max.Stock Level</Label>
-                  <Input
-                    id="maxStockLevel"
+                  <TextField
+                    label="Max.Stock Level"
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
                     onChange={(e) => handleInputChange('maxStockLevel', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="minStockLevel" className="text-sm font-medium">Min.Stock Level*</Label>
-                  <Input
-                    id="minStockLevel"
+                  <TextField
+                    label="Min.Stock Level*"
                     placeholder="Min Stock"
                     value={formData.minStockLevel}
                     onChange={(e) => handleInputChange('minStockLevel', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="minOrderLevel" className="text-sm font-medium">Min.Order Level</Label>
-                  <Input
-                    id="minOrderLevel"
+                  <TextField
+                    label="Min.Order Level"
                     placeholder="Min order"
                     value={formData.minOrderLevel}
                     onChange={(e) => handleInputChange('minOrderLevel', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
               </div>
