@@ -8,6 +8,7 @@ import { AssetGroupsPage } from './pages/setup/AssetGroupsPage';
 import { ApprovalMatrixPage } from './pages/settings/ApprovalMatrixPage';
 import { AssetSetupApprovalMatrixPage } from './pages/setup/AssetSetupApprovalMatrixPage';
 import { ChecklistGroupsPage } from './pages/settings/ChecklistGroupsPage';
+import { EmailRulePage } from './pages/settings/EmailRulePage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="settings/asset-setup/approval-matrix" element={<AssetSetupApprovalMatrixPage />} />
             <Route path="settings/approval-matrix" element={<ApprovalMatrixPage />} />
             <Route path="settings/checklist-setup/groups" element={<ChecklistGroupsPage />} />
+            <Route path="settings/checklist-setup/email-rule" element={<EmailRulePage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
