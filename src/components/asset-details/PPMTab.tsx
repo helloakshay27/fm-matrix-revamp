@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,7 +101,7 @@ export const PPMTab = () => {
   return (
     <div className="space-y-6">
       {/* Status Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statusCards.map((card, index) => {
           const IconComponent = card.icon;
           return (
@@ -136,14 +137,14 @@ export const PPMTab = () => {
           </Select>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-64 min-w-[200px]"
             />
           </div>
           <Button variant="outline" size="sm">
@@ -159,7 +160,7 @@ export const PPMTab = () => {
       </div>
 
       {/* PPM Table */}
-      <div className="bg-white rounded-lg border">
+      <div className="bg-white rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
