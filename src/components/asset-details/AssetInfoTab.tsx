@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
+import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User, FileText, CheckCircle, Box, Clock, UserIcon } from 'lucide-react';
 
 interface AssetInfoTabProps {
   assetId: string;
@@ -295,49 +295,87 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Movement Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
-              <TrendingUp className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Movement Details</h3>
+            <h3 className="text-lg font-semibold uppercase text-blue-500">Movement Details</h3>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* From/To Sites */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">From Site</span>
+                </div>
+                <div className="font-semibold text-gray-800 text-lg">Sai Radhe, Bund Garden</div>
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">To Site</span>
+                </div>
+                <div className="font-semibold text-gray-800 text-lg">Sai Radhe, Bund Garden</div>
+              </div>
+            </div>
+
             {/* Movement Timeline */}
             <div className="relative">
-              <div className="flex items-center justify-between">
-                {/* From Location */}
-                <div className="flex items-start flex-col">
-                  <div className="flex items-center mb-4">
-                    <MapPin className="w-5 h-5" style={{ color: '#C72030' }} />
+              <div className="flex items-center">
+                {/* Requested Stage */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mb-4">
+                    <FileText className="w-6 h-6 text-white" />
                   </div>
-                  <div className="text-gray-500 text-sm mb-1">Site</div>
-                  <div className="font-medium text-gray-800 mb-3">Assuretech Infoline</div>
-                  <div className="text-gray-500 text-sm mb-1">Location</div>
-                  <div className="text-sm text-gray-800">Marathon Tower / A-Wing / 05<sup>th</sup> Flr / West / R 504</div>
-                </div>
-                
-                {/* Date and Arrow */}
-                <div className="flex flex-col items-center mx-8">
-                  <div className="font-medium text-sm mb-2" style={{ color: '#C72030' }}>28/08/2019</div>
-                  <div className="flex items-center">
-                    <div className="w-12 h-px" style={{ backgroundColor: '#C72030' }}></div>
-                    <div className="w-0 h-0 ml-1" style={{ 
-                      borderLeft: '4px solid #C72030',
-                      borderTop: '2px solid transparent',
-                      borderBottom: '2px solid transparent'
-                    }}></div>
+                  <div className="text-base font-semibold text-blue-500 mb-2">Requested</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>19/06/2025 , 11:00 AM</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Abdul Ghaffar</span>
                   </div>
                 </div>
-                
-                {/* To Location */}
-                <div className="flex items-start flex-col">
-                  <div className="flex items-center mb-4">
-                    <MapPin className="w-5 h-5" style={{ color: '#C72030' }} />
+
+                {/* Connecting line */}
+                <div className="flex-1 h-px bg-blue-500 mx-4"></div>
+
+                {/* Approved Stage */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mb-4">
+                    <CheckCircle className="w-6 h-6 text-white" />
                   </div>
-                  <div className="text-gray-500 text-sm mb-1">Site</div>
-                  <div className="font-medium text-gray-800 mb-3">Haven Infoline</div>
-                  <div className="text-gray-500 text-sm mb-1">Location</div>
-                  <div className="text-sm text-gray-800">Jyoti Tower / J-Wing / 02<sup>nd</sup> Flr / East / R 202</div>
+                  <div className="text-base font-semibold text-blue-500 mb-2">Approved</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>20/06/2025 , 11:10 AM</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Chetan Bafna</span>
+                  </div>
+                </div>
+
+                {/* Connecting line */}
+                <div className="flex-1 h-px bg-gray-300 mx-4"></div>
+
+                {/* Received Stage */}
+                <div className="flex flex-col items-center flex-1">
+                  <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mb-4">
+                    <Box className="w-6 h-6 text-gray-500" />
+                  </div>
+                  <div className="text-base font-semibold text-gray-400 mb-2">Received</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>Pending</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Awaiting</span>
+                  </div>
                 </div>
               </div>
             </div>
