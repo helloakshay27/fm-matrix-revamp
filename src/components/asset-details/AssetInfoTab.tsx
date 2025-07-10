@@ -7,7 +7,7 @@ interface AssetInfoTabProps {
 
 export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
   return (
-    <div className="space-y-6 bg-gray-50 min-h-full p-6">
+    <div className="space-y-6 min-h-full ">
       <div className="flex gap-6">
         {/* Location Details - 80% width */}
         <div className="w-4/5 bg-white rounded-lg p-6 shadow-sm">
