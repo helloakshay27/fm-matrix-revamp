@@ -116,7 +116,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
       </div>
 
       {/* Asset Details - Full Width */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
+      <div className="bg-white rounded-lg p-6 shadow-sm border-2">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
             <Settings className="w-4 h-4 text-white" />
