@@ -12,10 +12,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Location Details - 80% width */}
         <div className="w-4/5 bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <MapPin className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">Location Details</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Location Details</h3>
           </div>
 
           {/* Location Timeline */}
@@ -23,57 +23,57 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
             <div className="relative flex items-center">
               {/* Site */}
               <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C72030' }}></div>
                 <div className="text-xs text-gray-500 mt-2 mb-1">Site</div>
                 <div className="text-sm font-medium text-center">Haven Infoline</div>
               </div>
               
               {/* Connecting line */}
-              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              <div className="flex-1 h-px mx-6" style={{ backgroundColor: '#C72030' }}></div>
               
               {/* Building */}
               <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C72030' }}></div>
                 <div className="text-xs text-gray-500 mt-2 mb-1">Building</div>
                 <div className="text-sm font-medium text-center">Jyoti Tower</div>
               </div>
               
               {/* Connecting line */}
-              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              <div className="flex-1 h-px mx-6" style={{ backgroundColor: '#C72030' }}></div>
               
               {/* Wing */}
               <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C72030' }}></div>
                 <div className="text-xs text-gray-500 mt-2 mb-1">Wing</div>
                 <div className="text-sm font-medium text-center">J - Wing</div>
               </div>
               
               {/* Connecting line */}
-              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              <div className="flex-1 h-px mx-6" style={{ backgroundColor: '#C72030' }}></div>
               
               {/* Floor */}
               <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C72030' }}></div>
                 <div className="text-xs text-gray-500 mt-2 mb-1">Floor</div>
                 <div className="text-sm font-medium text-center">02<sup>nd</sup></div>
               </div>
               
               {/* Connecting line */}
-              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              <div className="flex-1 h-px mx-6" style={{ backgroundColor: '#C72030' }}></div>
               
               {/* Area */}
               <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C72030' }}></div>
                 <div className="text-xs text-gray-500 mt-2 mb-1">Area</div>
                 <div className="text-sm font-medium text-center">East</div>
               </div>
               
               {/* Connecting line */}
-              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              <div className="flex-1 h-px mx-6" style={{ backgroundColor: '#C72030' }}></div>
               
               {/* Room */}
               <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C72030' }}></div>
                 <div className="text-xs text-gray-500 mt-2 mb-1">Room</div>
                 <div className="text-sm font-medium text-center">R 202</div>
               </div>
@@ -84,10 +84,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* QR Code - 20% width */}
         <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <QrCode className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">QR Code</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>QR Code</h3>
           </div>
           
           <div className="flex flex-col items-center">
@@ -118,10 +118,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
       {/* Asset Details - Full Width */}
       <div className="bg-white rounded-lg p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
             <Settings className="w-4 h-4 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Details</h3>
+          <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Asset Details</h3>
         </div>
 
         <div className="space-y-8">
@@ -158,7 +158,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
 
           {/* System Details Section */}
           <div className="border-t pt-6">
-            <div className="text-base font-semibold text-blue-600 mb-6">System Details</div>
+            <div className="text-base font-semibold mb-6" style={{ color: '#C72030' }}>System Details</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
               <div>
                 <div className="text-sm text-gray-500 mb-2">OS</div>
@@ -177,7 +177,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
 
           {/* Hard Disk Details Section */}
           <div className="border-t pt-6">
-            <div className="text-base font-semibold text-blue-600 mb-6">Hard Disk Details</div>
+            <div className="text-base font-semibold mb-6" style={{ color: '#C72030' }}>Hard Disk Details</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
               <div>
                 <div className="text-sm text-gray-500 mb-2">Model</div>
@@ -218,10 +218,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Purchase Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <CreditCard className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">Purchase Details</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Purchase Details</h3>
           </div>
 
           <div className="space-y-4">
@@ -263,10 +263,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Asset Loaned */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <UserCheck className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Loaned</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Asset Loaned</h3>
           </div>
 
           <div className="space-y-4">
@@ -295,10 +295,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Movement Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <TrendingUp className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">Movement Details</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Movement Details</h3>
           </div>
 
           <div className="space-y-6">
@@ -308,7 +308,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
                 {/* From Location */}
                 <div className="flex items-start flex-col">
                   <div className="flex items-center mb-4">
-                    <MapPin className="w-5 h-5 text-blue-500" />
+                    <MapPin className="w-5 h-5" style={{ color: '#C72030' }} />
                   </div>
                   <div className="text-gray-500 text-sm mb-1">Site</div>
                   <div className="font-medium text-gray-800 mb-3">Assuretech Infoline</div>
@@ -318,17 +318,21 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
                 
                 {/* Date and Arrow */}
                 <div className="flex flex-col items-center mx-8">
-                  <div className="text-blue-600 font-medium text-sm mb-2">28/08/2019</div>
+                  <div className="font-medium text-sm mb-2" style={{ color: '#C72030' }}>28/08/2019</div>
                   <div className="flex items-center">
-                    <div className="w-12 h-px bg-blue-500"></div>
-                    <div className="w-0 h-0 border-l-4 border-l-blue-500 border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1"></div>
+                    <div className="w-12 h-px" style={{ backgroundColor: '#C72030' }}></div>
+                    <div className="w-0 h-0 ml-1" style={{ 
+                      borderLeft: '4px solid #C72030',
+                      borderTop: '2px solid transparent',
+                      borderBottom: '2px solid transparent'
+                    }}></div>
                   </div>
                 </div>
                 
                 {/* To Location */}
                 <div className="flex items-start flex-col">
                   <div className="flex items-center mb-4">
-                    <MapPin className="w-5 h-5 text-blue-500" />
+                    <MapPin className="w-5 h-5" style={{ color: '#C72030' }} />
                   </div>
                   <div className="text-gray-500 text-sm mb-1">Site</div>
                   <div className="font-medium text-gray-800 mb-3">Haven Infoline</div>
@@ -343,10 +347,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Vendor Contact Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <User className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">Vendor Contact Details</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Vendor Contact Details</h3>
           </div>
 
           <div className="space-y-4">
