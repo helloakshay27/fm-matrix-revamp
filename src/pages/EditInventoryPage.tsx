@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TextField, Button, Checkbox, FormControlLabel, Typography, Box, Collapse, IconButton } from '@mui/material';
@@ -49,9 +48,9 @@ export const EditInventoryPage = () => {
     }));
   };
 
-  const handleSave = () => {
-    console.log('Saving inventory data:', formData);
-    // Handle save logic here
+  const handleSubmit = () => {
+    console.log('Submitting inventory data:', formData);
+    // Handle submit logic here
     navigate(`/maintenance/inventory/details/${id}`);
   };
 
@@ -99,34 +98,6 @@ export const EditInventoryPage = () => {
           </div>
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-[#1a1a1a]">Edit Inventory</h1>
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={handleBack}
-                variant="outlined"
-                sx={{ 
-                  borderColor: '#C72030',
-                  color: '#C72030',
-                  '&:hover': {
-                    backgroundColor: '#C72030',
-                    color: 'white'
-                  }
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSave}
-                sx={{ 
-                  backgroundColor: '#C72030',
-                  '&:hover': {
-                    backgroundColor: '#A01A28'
-                  }
-                }}
-                variant="contained"
-              >
-                Save
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -299,7 +270,7 @@ export const EditInventoryPage = () => {
           </Card>
 
           {/* Tax Details Section */}
-          <Card>
+          <Card className="mb-6">
             <CardHeader 
               className="border-b bg-white cursor-pointer"
               onClick={() => setTaxDetailsOpen(!taxDetailsOpen)}
@@ -378,6 +349,25 @@ export const EditInventoryPage = () => {
               </CardContent>
             </Collapse>
           </Card>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSubmit}
+              sx={{ 
+                backgroundColor: '#C72030',
+                '&:hover': {
+                  backgroundColor: '#A01A28'
+                },
+                paddingX: 4,
+                paddingY: 1.5
+              }}
+              variant="contained"
+              size="large"
+            >
+              Submit
+            </Button>
+          </div>
         </div>
       </div>
     </>
