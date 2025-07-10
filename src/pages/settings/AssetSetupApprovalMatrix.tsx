@@ -29,7 +29,7 @@ export const AssetSetupApprovalMatrix = () => {
       <div className="mb-4">
         <nav className="text-sm text-gray-600">
           <span>Setup</span>
-          <span className="mx-2">></span>
+          <span className="mx-2">&gt;</span>
           <span>Invoice Approvals</span>
         </nav>
       </div>
