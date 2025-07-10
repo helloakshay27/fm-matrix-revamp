@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -12,7 +11,7 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical, Cog
+  Archive, TreePine, FlaskConical
 } from 'lucide-react';
 
 const modulesByPackage = {
@@ -254,15 +253,6 @@ const modulesByPackage = {
       ]
     },
     { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
-    { 
-      name: 'Asset Setup', 
-      icon: Cog, 
-      href: '/settings/asset-setup',
-      subItems: [
-        { name: 'Approval Matrix', href: '/settings/asset-setup/approval-matrix', color: 'text-[#1a1a1a]' },
-        { name: 'Asset Group & Sub Group', href: '/settings/asset-setup/groups', color: 'text-[#1a1a1a]' }
-      ]
-    },
     { 
       name: 'Module 1', 
       icon: Package, 
