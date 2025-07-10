@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User, FileText, CheckCircle, Box, Clock, UserIcon } from 'lucide-react';
 
@@ -295,10 +296,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Movement Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-blue-500">Movement Details</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Movement Details</h3>
           </div>
 
           <div className="space-y-8">
@@ -326,10 +327,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
               <div className="flex items-center">
                 {/* Requested Stage */}
                 <div className="flex flex-col items-center flex-1">
-                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#C72030' }}>
                     <FileText className="w-6 h-6 text-white" />
                   </div>
-                  <div className="text-base font-semibold text-blue-500 mb-2">Requested</div>
+                  <div className="text-base font-semibold mb-2" style={{ color: '#C72030' }}>Requested</div>
                   <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
                     <Clock className="w-4 h-4" />
                     <span>19/06/2025 , 11:00 AM</span>
@@ -341,14 +342,14 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
                 </div>
 
                 {/* Connecting line */}
-                <div className="flex-1 h-px bg-blue-500 mx-4"></div>
+                <div className="flex-1 h-px mx-4" style={{ backgroundColor: '#C72030' }}></div>
 
                 {/* Approved Stage */}
                 <div className="flex flex-col items-center flex-1">
-                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#C72030' }}>
                     <CheckCircle className="w-6 h-6 text-white" />
                   </div>
-                  <div className="text-base font-semibold text-blue-500 mb-2">Approved</div>
+                  <div className="text-base font-semibold mb-2" style={{ color: '#C72030' }}>Approved</div>
                   <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
                     <Clock className="w-4 h-4" />
                     <span>20/06/2025 , 11:10 AM</span>
