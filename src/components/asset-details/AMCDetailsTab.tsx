@@ -55,10 +55,10 @@ export const AMCDetailsTab = () => {
       {/* AMC Details Section */}
       <div className="bg-white rounded-lg border-2 p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
             <X className="w-4 h-4 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-blue-500 uppercase">AMC Details</h3>
+          <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>AMC Details</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
@@ -107,10 +107,10 @@ export const AMCDetailsTab = () => {
         {/* AMC History Section */}
         <div className="bg-white rounded-lg border-2 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <History className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-500 uppercase">AMC History</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>AMC History</h3>
           </div>
 
           <Table>
@@ -138,19 +138,19 @@ export const AMCDetailsTab = () => {
         {/* Logs Section */}
         <div className="bg-white rounded-lg border-2 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <FileText className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-500 uppercase">Logs</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Logs</h3>
           </div>
 
           <div className="space-y-6">
             {logsData.map((log, index) => (
               <div key={index} className="flex gap-4">
                 <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#C72030' }}></div>
                   {index < logsData.length - 1 && (
-                    <div className="w-0.5 h-12 bg-blue-200 mt-2"></div>
+                    <div className="w-0.5 h-12 mt-2" style={{ backgroundColor: '#C72030', opacity: '0.3' }}></div>
                   )}
                 </div>
                 <div className="flex-1 pb-4">
