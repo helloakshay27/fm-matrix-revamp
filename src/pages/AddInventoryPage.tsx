@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -57,15 +58,15 @@ export const AddInventoryPage = () => {
     navigate(-1);
   };
 
-  // Consistent field styling for MUI components
+  // Consistent field styling for MUI components with rounded corners and larger labels
   const fieldStyles = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 0,
+      borderRadius: '6px', // rounded-md equivalent
       backgroundColor: '#FFFFFF',
       height: 45,
       '& fieldset': {
         borderColor: '#E0E0E0',
-        borderRadius: 0,
+        borderRadius: '6px',
       },
       '&:hover fieldset': {
         borderColor: '#1A1A1A',
@@ -78,6 +79,7 @@ export const AddInventoryPage = () => {
     '& .MuiInputLabel-root': {
       color: '#1A1A1A',
       fontWeight: 500,
+      fontSize: '16px', // Increased from default 14px
       '&.Mui-focused': {
         color: '#C72030',
       },
