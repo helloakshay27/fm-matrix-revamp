@@ -220,10 +220,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Purchase Details */}
         <div className="w-full lg:w-1/2 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#4A90E2' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <CreditCard className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#4A90E2]">Purchase Details</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Purchase Details</h3>
           </div>
 
           <div className="space-y-4">
@@ -265,10 +265,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         {/* Asset Loaned */}
         <div className="w-full lg:w-1/2 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#4A90E2' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <UserCheck className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#4A90E2]">Asset Loaned</h3>
+            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Asset Loaned</h3>
           </div>
 
           <div className="space-y-4">
