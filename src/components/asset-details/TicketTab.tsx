@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,11 +10,11 @@ export const TicketTab = () => {
   const [statusFilter, setStatusFilter] = useState('All');
 
   const statusCards = [
-    { count: 8, label: 'Open', icon: Lock, bgColor: '#FF6B5A', textColor: 'white' },
-    { count: 4, label: 'Closed', icon: Lock, bgColor: '#2DD4BF', textColor: 'white' },
-    { count: 8, label: 'Complaints', icon: MessageSquareHeart, bgColor: '#E879A7', textColor: 'white' },
-    { count: 2, label: 'Suggestion', icon: AlertTriangle, bgColor: '#FFA726', textColor: 'white' },
-    { count: 12, label: 'Requests', icon: FileText, bgColor: '#7C3AED', textColor: 'white' }
+    { count: 8, label: 'Open', icon: Lock },
+    { count: 4, label: 'Closed', icon: Lock },
+    { count: 8, label: 'Complaints', icon: MessageSquareHeart },
+    { count: 2, label: 'Suggestion', icon: AlertTriangle },
+    { count: 12, label: 'Requests', icon: FileText }
   ];
 
   const ticketData = [
@@ -81,16 +80,16 @@ export const TicketTab = () => {
             <div 
               key={index} 
               className="p-4 rounded-lg flex items-center gap-3"
-              style={{ backgroundColor: card.bgColor }}
+              style={{ backgroundColor: '#F6F4EE' }}
             >
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <IconComponent className="w-5 h-5" style={{ color: card.textColor }} />
+                <IconComponent className="w-5 h-5" style={{ color: '#C72030' }} />
               </div>
               <div>
-                <div className="text-2xl font-bold" style={{ color: card.textColor }}>
+                <div className="text-2xl font-bold text-black">
                   {card.count.toString().padStart(2, '0')}
                 </div>
-                <div className="text-sm font-medium" style={{ color: card.textColor }}>
+                <div className="text-sm font-medium text-black">
                   {card.label}
                 </div>
               </div>
