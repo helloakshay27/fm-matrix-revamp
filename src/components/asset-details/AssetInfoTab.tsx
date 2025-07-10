@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User, FileText, CheckCircle, Box, Clock, UserIcon } from 'lucide-react';
 
@@ -215,10 +214,10 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
       </div>
 
-      {/* Purchase Details and Asset Loaned - New sections */}
+      {/* Purchase Details and Asset Loaned - Updated width distribution */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Purchase Details */}
-        <div className="w-full lg:w-1/2 bg-white rounded-lg p-6 shadow-sm border">
+        {/* Purchase Details - 80% width */}
+        <div className="w-full lg:w-4/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <CreditCard className="w-4 h-4 text-white" />
@@ -227,7 +226,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
           </div>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <div>
                 <div className="text-sm text-gray-500 mb-1">Purchase Cost</div>
                 <div className="font-medium">₹ 1,00000</div>
@@ -236,9 +235,6 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
                 <div className="text-sm text-gray-500 mb-1">Current Date Cost</div>
                 <div className="font-medium">₹ 52000 (Straight Line)</div>
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="text-sm text-gray-500 mb-1">Purchase Date</div>
                 <div className="font-medium">01/02/2019</div>
@@ -249,7 +245,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <div>
                 <div className="text-sm text-gray-500 mb-1">Period</div>
                 <div className="font-medium">2 years</div>
@@ -262,8 +258,8 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
           </div>
         </div>
 
-        {/* Asset Loaned */}
-        <div className="w-full lg:w-1/2 bg-white rounded-lg p-6 shadow-sm border">
+        {/* Asset Loaned - 20% width */}
+        <div className="w-full lg:w-1/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <UserCheck className="w-4 h-4 text-white" />
@@ -272,22 +268,17 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
           </div>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Vendor</div>
-                <div className="font-medium">Croma Electronics</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Agreement From</div>
-                <div className="font-medium">01/02/2019</div>
-              </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Vendor</div>
+              <div className="font-medium">Croma Electronics</div>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Agreement To</div>
-                <div className="font-medium">01/02/2021</div>
-              </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Agreement From</div>
+              <div className="font-medium">01/02/2019</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Agreement To</div>
+              <div className="font-medium">01/02/2021</div>
             </div>
           </div>
         </div>
