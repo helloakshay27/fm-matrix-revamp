@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
 
@@ -116,183 +115,176 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
       </div>
 
+      {/* Asset Details - Full Width */}
+      <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <Settings className="w-4 h-4 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Details</h3>
+        </div>
+
+        <div className="space-y-8">
+          {/* Main Asset Information */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+            <div>
+              <div className="text-sm text-gray-500 mb-2">Asset No.</div>
+              <div className="font-medium text-gray-800">Asset02</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-2">Model No.</div>
+              <div className="font-medium text-gray-800">330n</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-2">Serial No.</div>
+              <div className="font-medium text-gray-800">1234567889</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-2">Manufacturer</div>
+              <div className="font-medium text-gray-800">Dell</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-2">Group</div>
+              <div className="font-medium text-gray-800">IT Devices</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+            <div>
+              <div className="text-sm text-gray-500 mb-2">Sub Group</div>
+              <div className="font-medium text-gray-800">Laptop</div>
+            </div>
+          </div>
+
+          {/* System Details Section */}
+          <div className="border-t pt-6">
+            <div className="text-base font-semibold text-blue-600 mb-6">System Details</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+              <div>
+                <div className="text-sm text-gray-500 mb-2">OS</div>
+                <div className="font-medium text-gray-800">Windows 10 Home</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Total Memory</div>
+                <div className="font-medium text-gray-800">4 GB</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Processor</div>
+                <div className="font-medium text-gray-800">Ryzen 3 Dual Core</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Hard Disk Details Section */}
+          <div className="border-t pt-6">
+            <div className="text-base font-semibold text-blue-600 mb-6">Hard Disk Details</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Model</div>
+                <div className="font-medium text-gray-800">#12345ba283</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Serial No.</div>
+                <div className="font-medium text-gray-800">#12345ba283</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Capacity</div>
+                <div className="font-medium text-gray-800">1 TB</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Details */}
+          <div className="border-t pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Commissioning Date</div>
+                <div className="font-medium text-gray-800">01/09/2019</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Allocation based on</div>
+                <div className="font-medium text-gray-800">Department</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-2">Department</div>
+                <div className="font-medium text-gray-800">Technical, Finance</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Asset Details */}
+        {/* Purchase Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
+              <CreditCard className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Details</h3>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">Purchase Details</h3>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-gray-500 mb-1">Asset No.</div>
-                <div className="font-medium">Asset02</div>
+                <div className="text-sm text-gray-500 mb-1">Purchase Cost</div>
+                <div className="font-medium">₹ 100000</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500 mb-1">Model No.</div>
-                <div className="font-medium">330n</div>
+                <div className="text-sm text-gray-500 mb-1">Current Date Cost</div>
+                <div className="font-medium">₹ 52000 <span className="text-sm text-gray-500">(Straight Line)</span></div>
               </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-gray-500 mb-1">Serial No.</div>
-                <div className="font-medium">1234567889</div>
+                <div className="text-sm text-gray-500 mb-1">Purchase Date</div>
+                <div className="font-medium">01/02/2019</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500 mb-1">Manufacturer</div>
-                <div className="font-medium">Dell</div>
+                <div className="text-sm text-gray-500 mb-1">Under Warranty</div>
+                <div className="font-medium">Yes</div>
               </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-gray-500 mb-1">Group</div>
-                <div className="font-medium">IT Devices</div>
+                <div className="text-sm text-gray-500 mb-1">Period</div>
+                <div className="font-medium">2 years</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500 mb-1">Sub Group</div>
-                <div className="font-medium">Laptop</div>
-              </div>
-            </div>
-
-            <div className="border-t pt-4 mt-4">
-              <div className="text-sm font-medium text-blue-600 mb-3">System Details</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">OS</div>
-                  <div className="font-medium">Windows 10 Home</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Total Memory</div>
-                  <div className="font-medium">4 GB</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Processor</div>
-                  <div className="font-medium">Ryzen 3 Dual Core</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-4 mt-4">
-              <div className="text-sm font-medium text-blue-600 mb-3">Hard Disk Details</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Model</div>
-                  <div className="font-medium">#12345ba283</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Serial No.</div>
-                  <div className="font-medium">#12345ba283</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Capacity</div>
-                  <div className="font-medium">1 TB</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Commissioning Date</div>
-                <div className="font-medium">01/09/2019</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Allocation based on</div>
-                <div className="font-medium">Department</div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Department</div>
-                <div className="font-medium">Technical, Finance</div>
+                <div className="text-sm text-gray-500 mb-1">Warranty Expires On</div>
+                <div className="font-medium">10/02/2022</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Purchase Details & Asset Loaned */}
-        <div className="space-y-6">
-          {/* Purchase Details */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <CreditCard className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-blue-600 uppercase">Purchase Details</h3>
+        {/* Asset Loaned */}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <UserCheck className="w-4 h-4 text-white" />
             </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Purchase Cost</div>
-                  <div className="font-medium">₹ 100000</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Current Date Cost</div>
-                  <div className="font-medium">₹ 52000 <span className="text-sm text-gray-500">(Straight Line)</span></div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Purchase Date</div>
-                  <div className="font-medium">01/02/2019</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Under Warranty</div>
-                  <div className="font-medium">Yes</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Period</div>
-                  <div className="font-medium">2 years</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Warranty Expires On</div>
-                  <div className="font-medium">10/02/2022</div>
-                </div>
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Loaned</h3>
           </div>
 
-          {/* Asset Loaned */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <UserCheck className="w-4 h-4 text-white" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Vendor</div>
+                <div className="font-medium">Croma Electronics</div>
               </div>
-              <h3 className="text-lg font-semibold text-blue-600 uppercase">Asset Loaned</h3>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Agreement From</div>
+                <div className="font-medium">01/02/2019</div>
+              </div>
             </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Vendor</div>
-                  <div className="font-medium">Croma Electronics</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Agreement From</div>
-                  <div className="font-medium">01/02/2019</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Agreement To</div>
-                  <div className="font-medium">01/02/2021</div>
-                </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Agreement To</div>
+                <div className="font-medium">01/02/2021</div>
               </div>
             </div>
           </div>
