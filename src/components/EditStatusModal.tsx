@@ -7,8 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
 
 interface EditStatusModalProps {
@@ -22,6 +21,31 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
   const handleSubmit = () => {
     console.log('Selected status:', selectedStatus);
     onClose();
+  };
+
+  const fieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
   };
 
   return (
@@ -39,20 +63,20 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Select Status</Label>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="in-use">In Use</SelectItem>
-                <SelectItem value="breakdown">Breakdown</SelectItem>
-                <SelectItem value="maintenance">Under Maintenance</SelectItem>
-                <SelectItem value="retired">Retired</SelectItem>
-              </SelectContent>
+          <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+            <InputLabel shrink>Select Status</InputLabel>
+            <Select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              label="Select Status"
+              notched
+            >
+              <MenuItem value="in-use">In Use</MenuItem>
+              <MenuItem value="breakdown">Breakdown</MenuItem>
+              <MenuItem value="maintenance">Under Maintenance</MenuItem>
+              <MenuItem value="retired">Retired</MenuItem>
             </Select>
-          </div>
+          </FormControl>
 
           <div className="flex justify-end pt-4">
             <Button 
