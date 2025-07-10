@@ -157,7 +157,7 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
           </div>
         </div>
         
-        <div className="flex justify-end gap-2 pt-4">
+        <div className="flex justify-center gap-2 pt-4">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
