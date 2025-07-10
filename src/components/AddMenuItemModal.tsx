@@ -1,9 +1,7 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from "lucide-react";
@@ -94,6 +92,34 @@ export const AddMenuItemModal = ({
     '& .MuiInputLabel-root': {
       color: '#1A1A1A',
       fontWeight: 500,
+      fontSize: '16px',
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
+  const textareaFieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '6px',
+      backgroundColor: '#FFFFFF',
+      minHeight: '80px',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: '6px',
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      fontSize: '16px',
       '&.Mui-focused': {
         color: '#C72030',
       },
@@ -123,6 +149,7 @@ export const AddMenuItemModal = ({
     '& .MuiInputLabel-root': {
       color: '#1A1A1A',
       fontWeight: 500,
+      fontSize: '16px',
       '&.Mui-focused': {
         color: '#C72030',
       },
@@ -316,14 +343,17 @@ export const AddMenuItemModal = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm">
-              Description
-            </Label>
-            <Textarea
-              id="description"
+            <TextField
+              label="Description"
+              placeholder="Enter description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full h-20 resize-none"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={3}
+              InputLabelProps={{ shrink: true }}
+              sx={textareaFieldStyles}
             />
           </div>
 
