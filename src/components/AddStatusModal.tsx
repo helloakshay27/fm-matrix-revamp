@@ -28,6 +28,36 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
     '& .MuiOutlinedInput-root': {
       borderRadius: 0,
       backgroundColor: '#FFFFFF',
+      height: '45px', // Desktop height
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+      // Mobile responsive height
+      '@media (max-width: 768px)': {
+        height: '36px',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
+  const descriptionFieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
       '& fieldset': {
         borderColor: '#E0E0E0',
         borderRadius: 0,
@@ -99,7 +129,7 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
             multiline
             rows={3}
             InputLabelProps={{ shrink: true }}
-            sx={fieldStyles}
+            sx={descriptionFieldStyles}
           />
         </div>
         
