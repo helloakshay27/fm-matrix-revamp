@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TextField, Button, Checkbox, FormControlLabel, Typography, Box, Collapse, IconButton } from '@mui/material';
@@ -354,7 +355,7 @@ export const EditInventoryPage = () => {
           <div className="flex justify-center mt-8">
             <button 
               onClick={handleSubmit}
-              className="bg-[#F2EEE9] text-[#C72030] px-8 py-3 rounded-none font-medium text-base hover:bg-[#E8E0D5] transition-colors duration-200 min-w-[120px] border-0"
+              className="bg-[#F2EEE9] text-[#C72030] px-8 py-2 rounded-none font-medium text-base hover:bg-[#E8E0D5] transition-colors duration-200 min-w-[120px] border-0 h-9"
             >
               Submit
             </button>
