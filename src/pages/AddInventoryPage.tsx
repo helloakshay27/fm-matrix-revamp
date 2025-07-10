@@ -1,11 +1,12 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const AddInventoryPage = () => {
@@ -58,6 +59,36 @@ export const AddInventoryPage = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  // Consistent field styling for MUI TextFields
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
   };
 
   return (
@@ -149,54 +180,69 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="inventoryName" className="text-sm font-medium">Inventory Name*</Label>
-                  <Input
-                    id="inventoryName"
+                  <TextField
+                    label="Inventory Name*"
                     placeholder="Name"
                     value={formData.inventoryName}
                     onChange={(e) => handleInputChange('inventoryName', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="inventoryCode" className="text-sm font-medium">Inventory Code*</Label>
-                  <Input
-                    id="inventoryCode"
+                  <TextField
+                    label="Inventory Code*"
                     placeholder="code"
                     value={formData.inventoryCode}
                     onChange={(e) => handleInputChange('inventoryCode', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="serialNumber" className="text-sm font-medium">Serial Number</Label>
-                  <Input
-                    id="serialNumber"
+                  <TextField
+                    label="Serial Number"
                     placeholder="Serial Number"
                     value={formData.serialNumber}
                     onChange={(e) => handleInputChange('serialNumber', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="quantity" className="text-sm font-medium">Quantity*</Label>
-                  <Input
-                    id="quantity"
+                  <TextField
+                    label="Quantity*"
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="cost" className="text-sm font-medium">Cost</Label>
-                  <Input
-                    id="cost"
+                  <TextField
+                    label="Cost"
                     placeholder="Cost"
                     value={formData.cost}
                     onChange={(e) => handleInputChange('cost', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
@@ -215,13 +261,16 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="expiryDate" className="text-sm font-medium">Expiry Date</Label>
-                  <Input
-                    id="expiryDate"
+                  <TextField
+                    label="Expiry Date"
                     type="date"
                     placeholder="Date of Expiry"
                     value={formData.expiryDate}
                     onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
@@ -254,32 +303,41 @@ export const AddInventoryPage = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="maxStockLevel" className="text-sm font-medium">Max.Stock Level</Label>
-                  <Input
-                    id="maxStockLevel"
+                  <TextField
+                    label="Max.Stock Level"
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
                     onChange={(e) => handleInputChange('maxStockLevel', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="minStockLevel" className="text-sm font-medium">Min.Stock Level*</Label>
-                  <Input
-                    id="minStockLevel"
+                  <TextField
+                    label="Min.Stock Level*"
                     placeholder="Min Stock"
                     value={formData.minStockLevel}
                     onChange={(e) => handleInputChange('minStockLevel', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="minOrderLevel" className="text-sm font-medium">Min.Order Level</Label>
-                  <Input
-                    id="minOrderLevel"
+                  <TextField
+                    label="Min.Order Level"
                     placeholder="Min order"
                     value={formData.minOrderLevel}
                     onChange={(e) => handleInputChange('minOrderLevel', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
               </div>
