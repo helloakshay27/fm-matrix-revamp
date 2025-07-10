@@ -213,7 +213,7 @@ export const AddOperationalAuditSchedulePage = () => {
     switch (activeTab) {
       case 'Minutes':
         return (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center space-x-2">
               <input
                 type="radio"
@@ -223,10 +223,10 @@ export const AddOperationalAuditSchedulePage = () => {
                 onChange={() => setCronSettings(prev => ({ ...prev, minuteOption: 'specific' }))}
                 className="text-red-600"
               />
-              <Label htmlFor="specific-minute" className="text-sm">Specific minute (choose one or many)</Label>
+              <Label htmlFor="specific-minute" className="text-xs sm:text-sm">Specific minute (choose one or many)</Label>
             </div>
             
-            <div className="grid grid-cols-10 gap-2">
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1 sm:gap-2">
               {Array.from({ length: 60 }, (_, i) => (
                 <div key={i} className="flex items-center space-x-1">
                   <Checkbox
@@ -241,7 +241,7 @@ export const AddOperationalAuditSchedulePage = () => {
               ))}
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
               <input
                 type="radio"
                 id="every-minute"
@@ -250,7 +250,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 onChange={() => setCronSettings(prev => ({ ...prev, minuteOption: 'range' }))}
                 className="text-red-600"
               />
-              <Label htmlFor="every-minute" className="text-sm">Every minute between minute</Label>
+              <Label htmlFor="every-minute" className="text-xs sm:text-sm">Every minute between minute</Label>
               <FormControl variant="outlined" sx={{ ...fieldStyles, minWidth: 80 }}>
                 <MuiSelect
                   value="00"
@@ -260,7 +260,7 @@ export const AddOperationalAuditSchedulePage = () => {
                   <MenuItem value="00">00</MenuItem>
                 </MuiSelect>
               </FormControl>
-              <span className="text-sm">and minute</span>
+              <span className="text-xs sm:text-sm">and minute</span>
               <FormControl variant="outlined" sx={{ ...fieldStyles, minWidth: 80 }}>
                 <MuiSelect
                   value="59"
@@ -275,8 +275,8 @@ export const AddOperationalAuditSchedulePage = () => {
         );
       case 'Hours':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-12 gap-2">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-1 sm:gap-2">
               {Array.from({ length: 24 }, (_, i) => (
                 <div key={i} className="flex items-center space-x-1">
                   <Checkbox
@@ -294,8 +294,8 @@ export const AddOperationalAuditSchedulePage = () => {
         );
       case 'Day':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-10 gap-2">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1 sm:gap-2">
               {Array.from({ length: 31 }, (_, i) => (
                 <div key={i + 1} className="flex items-center space-x-1">
                   <Checkbox
@@ -314,8 +314,8 @@ export const AddOperationalAuditSchedulePage = () => {
       case 'Month':
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-6 gap-2">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1 sm:gap-2">
               {Array.from({ length: 12 }, (_, i) => (
                 <div key={i + 1} className="flex items-center space-x-1">
                   <Checkbox
@@ -349,15 +349,15 @@ export const AddOperationalAuditSchedulePage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+    <div className="p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         <div>
-          <div className="text-sm text-gray-600 mb-1">Operational Audit</div>
-          <h1 className="text-xl sm:text-2xl font-bold">Add Operational Audit Schedule</h1>
+          <div className="text-xs sm:text-sm text-gray-600 mb-1">Operational Audit</div>
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Add Operational Audit Schedule</h1>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-6">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6">
         <div className="flex items-center space-x-2">
           <Switch 
             checked={createNew} 
@@ -365,7 +365,7 @@ export const AddOperationalAuditSchedulePage = () => {
             id="create-new"
             className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
           />
-          <Label htmlFor="create-new">Create New</Label>
+          <Label htmlFor="create-new" className="text-sm">Create New</Label>
         </div>
         <div className="flex items-center space-x-2">
           <Switch 
@@ -374,7 +374,7 @@ export const AddOperationalAuditSchedulePage = () => {
             id="create-ticket"
             className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
           />
-          <Label htmlFor="create-ticket">Create Ticket</Label>
+          <Label htmlFor="create-ticket" className="text-sm">Create Ticket</Label>
         </div>
         <div className="flex items-center space-x-2">
           <Switch 
@@ -383,12 +383,12 @@ export const AddOperationalAuditSchedulePage = () => {
             id="weightage"
             className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
           />
-          <Label htmlFor="weightage">Weightage</Label>
+          <Label htmlFor="weightage" className="text-sm">Weightage</Label>
         </div>
       </div>
 
       {createNew && (
-        <Card><CardContent className="pt-6">
+        <Card><CardContent className="pt-4 sm:pt-6">
           <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
             <InputLabel id="template-label" shrink>Select from the existing Template</InputLabel>
             <MuiSelect
@@ -410,9 +410,9 @@ export const AddOperationalAuditSchedulePage = () => {
       )}
 
       {createTicket && (
-        <Card><CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
+        <Card><CardContent className="pt-4 sm:pt-6">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="flex items-center space-x-2">
                 <input
                   type="radio" 
@@ -423,7 +423,7 @@ export const AddOperationalAuditSchedulePage = () => {
                   onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
                   className="focus:outline-none focus:ring-0"
                 />
-                <Label htmlFor="checklist-level">Checklist Level</Label>
+                <Label htmlFor="checklist-level" className="text-sm">Checklist Level</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <input
@@ -435,11 +435,11 @@ export const AddOperationalAuditSchedulePage = () => {
                   onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
                   className="focus:outline-none focus:ring-0"
                 />
-                <Label htmlFor="question-level">Question Level</Label>
+                <Label htmlFor="question-level" className="text-sm">Question Level</Label>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                   <InputLabel id="assigned-to-label" shrink>Select Assigned To</InputLabel>
@@ -489,14 +489,14 @@ export const AddOperationalAuditSchedulePage = () => {
             Basic Info
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CardContent className="space-y-3 sm:space-y-4 lg:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             <div>
-              <Label className="text-sm font-medium mb-3 block">Type</Label>
+              <Label className="text-sm font-medium mb-2 sm:mb-3 block">Type</Label>
               <RadioGroup 
                 value={basicInfo.type} 
                 onValueChange={(value) => setBasicInfo(prev => ({ ...prev, type: value }))}
-                className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+                className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3"
               >
                 {['PPM', 'AMC', 'Preparedness'].map((type) => (
                   <div key={type} className="flex items-center space-x-2">
@@ -508,11 +508,11 @@ export const AddOperationalAuditSchedulePage = () => {
             </div>
 
             <div>
-              <Label className="text-sm font-medium mb-3 block">Schedule For</Label>
+              <Label className="text-sm font-medium mb-2 sm:mb-3 block">Schedule For</Label>
               <RadioGroup 
                 value={basicInfo.scheduleFor} 
                 onValueChange={(value) => setBasicInfo(prev => ({ ...prev, scheduleFor: value }))}
-                className="grid grid-cols-2 gap-2"
+                className="grid grid-cols-2 gap-2 sm:gap-3"
               >
                 {['Asset', 'Service', 'Vendor', 'Training'].map((schedule) => (
                   <div key={schedule} className="flex items-center space-x-2">
@@ -524,7 +524,7 @@ export const AddOperationalAuditSchedulePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             <TextField
               label="Activity Name"
               placeholder="Enter Activity Name"
@@ -553,7 +553,7 @@ export const AddOperationalAuditSchedulePage = () => {
       {/* Task Section */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
             <CardTitle className="flex items-center gap-2 text-[#C72030]">
               <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
               Task
@@ -561,16 +561,16 @@ export const AddOperationalAuditSchedulePage = () => {
             <Button 
               onClick={handleAddSection}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90"
+              className="text-white hover:opacity-90 w-full sm:w-auto"
             >
               + Add Section
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {taskSections.map((section, index) => (
-            <div key={section.id} className="space-y-4 border-b pb-6 last:border-b-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div key={section.id} className="space-y-3 sm:space-y-4 border-b pb-4 sm:pb-6 last:border-b-0">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                 <FormControl variant="outlined" sx={fieldStyles}>
                   <InputLabel shrink>Select Group</InputLabel>
                   <MuiSelect
@@ -600,7 +600,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 </FormControl>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                 <TextField
                   label="Task"
                   placeholder="Enter Task"
@@ -626,7 +626,7 @@ export const AddOperationalAuditSchedulePage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 xl:col-span-1">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       checked={section.mandatory}
@@ -676,13 +676,13 @@ export const AddOperationalAuditSchedulePage = () => {
             Schedule
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           <div>
-            <Label className="text-sm font-medium mb-3 block">Checklist Type</Label>
+            <Label className="text-sm font-medium mb-2 sm:mb-3 block">Checklist Type</Label>
             <RadioGroup 
               value={scheduleInfo.checklistType} 
               onValueChange={(value) => setScheduleInfo(prev => ({ ...prev, checklistType: value }))}
-              className="flex gap-6"
+              className="flex flex-col sm:flex-row gap-4 sm:gap-6"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Individual" id="individual" />
@@ -695,7 +695,7 @@ export const AddOperationalAuditSchedulePage = () => {
             </RadioGroup>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             <FormControl variant="outlined" sx={fieldStyles}>
               <InputLabel shrink>Select Asset</InputLabel>
               <MuiSelect
@@ -739,7 +739,7 @@ export const AddOperationalAuditSchedulePage = () => {
             </FormControl>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             <FormControl variant="outlined" sx={fieldStyles}>
               <InputLabel shrink>Select Plan Duration</InputLabel>
               <MuiSelect
@@ -784,7 +784,7 @@ export const AddOperationalAuditSchedulePage = () => {
             </FormControl>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             <FormControl variant="outlined" sx={fieldStyles}>
               <InputLabel shrink>Select Supervisors</InputLabel>
               <MuiSelect
@@ -824,7 +824,7 @@ export const AddOperationalAuditSchedulePage = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <TextField
               label="Enter Grace Time"
               placeholder="Enter Grace Time"
@@ -875,7 +875,7 @@ export const AddOperationalAuditSchedulePage = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <TextField
               label="End At"
               type="date"
@@ -897,71 +897,71 @@ export const AddOperationalAuditSchedulePage = () => {
             Cron form
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4 mb-4">
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4 mb-3 sm:mb-4">
             {['Minutes', 'Hours', 'Day', 'Month'].map((tab) => (
               <Button
                 key={tab}
                 variant={cronSettings.activeTab === tab ? "default" : "outline"}
                 onClick={() => setCronSettings(prev => ({ ...prev, activeTab: tab }))}
                 style={cronSettings.activeTab === tab ? { backgroundColor: '#C72030' } : {}}
-                className={cronSettings.activeTab === tab ? "text-white hover:bg-[#A01A28]" : ""}
+                className={`${cronSettings.activeTab === tab ? "text-white hover:bg-[#A01A28]" : ""} flex-1 sm:flex-initial`}
               >
                 {tab}
               </Button>
             ))}
           </div>
 
-          <div className="p-4 rounded-lg bg-white border">
+          <div className="p-3 sm:p-4 rounded-lg bg-white border">
             {renderCronTabContent()}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-4 sm:mt-6">
             <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
-            <div className="mt-2 p-3 bg-gray-100 rounded border text-lg font-mono">
+            <div className="mt-2 p-3 bg-gray-100 rounded border text-sm sm:text-lg font-mono break-all">
               {generateCronExpression()}
             </div>
           </div>
 
-          <div className="grid grid-cols-5 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 text-center">
             <div>
-              <Label className="text-sm font-medium">Minutes</Label>
-              <div className="mt-1 text-lg">
+              <Label className="text-xs sm:text-sm font-medium">Minutes</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
                 {cronSettings.selectedMinutes.length > 0 ? cronSettings.selectedMinutes.join(',') : '*'}
               </div>
             </div>
             <div>
-              <Label className="text-sm font-medium">Hours</Label>
-              <div className="mt-1 text-lg">
+              <Label className="text-xs sm:text-sm font-medium">Hours</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
                 {cronSettings.selectedHours.length > 0 ? cronSettings.selectedHours.join(',') : '*'}
               </div>
             </div>
             <div>
-              <Label className="text-sm font-medium">Day Of Month</Label>
-              <div className="mt-1 text-lg">
+              <Label className="text-xs sm:text-sm font-medium">Day Of Month</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
                 {cronSettings.selectedDays.length > 0 ? cronSettings.selectedDays.join(',') : '*'}
               </div>
             </div>
             <div>
-              <Label className="text-sm font-medium">Month</Label>
-              <div className="mt-1 text-lg">
+              <Label className="text-xs sm:text-sm font-medium">Month</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
                 {cronSettings.selectedMonths.length > 0 ? cronSettings.selectedMonths.join(',') : '*'}
               </div>
             </div>
-            <div>
-              <Label className="text-sm font-medium">Day Of Week</Label>
-              <div className="mt-1 text-lg">*</div>
+            <div className="col-span-2 sm:col-span-3 lg:col-span-1">
+              <Label className="text-xs sm:text-sm font-medium">Day Of Week</Label>
+              <div className="mt-1 text-sm sm:text-lg">*</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Submit Button */}
-      <div className="flex justify-center pt-6">
+      <div className="flex justify-center pt-4 sm:pt-6">
         <Button 
           onClick={handleSubmit}
           style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90 px-8 py-3"
+          className="text-white hover:opacity-90 px-6 sm:px-8 py-2 sm:py-3 w-full sm:w-auto"
           size="lg"
         >
           Submit
