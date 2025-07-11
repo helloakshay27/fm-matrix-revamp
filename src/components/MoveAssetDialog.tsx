@@ -57,6 +57,31 @@ const dropdownTheme = createTheme({
         },
       },
     },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: '#f5f5f5',
+          },
+          '&.Mui-selected': {
+            backgroundColor: '#C72030',
+            color: '#FFFFFF',
+            '&:hover': {
+              backgroundColor: '#B01E2F',
+            },
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FFFFFF',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          borderRadius: '6px',
+        },
+      },
+    },
   },
 });
 
@@ -181,6 +206,15 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   InputLabelProps={{
                     shrink: true,
                   }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (!selected) {
+                        return <span style={{ color: '#9CA3AF' }}>Select Site</span>;
+                      }
+                      return selected;
+                    },
+                  }}
                 >
                   {siteOptions.map((option) => (
                     <MenuItem key={option} value={option}>
@@ -199,6 +233,15 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   placeholder="Select Building"
                   InputLabelProps={{
                     shrink: true,
+                  }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (!selected) {
+                        return <span style={{ color: '#9CA3AF' }}>Select Building</span>;
+                      }
+                      return selected;
+                    },
                   }}
                 >
                   {buildingOptions.map((option) => (
@@ -219,6 +262,15 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   InputLabelProps={{
                     shrink: true,
                   }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (!selected) {
+                        return <span style={{ color: '#9CA3AF' }}>Select Wing</span>;
+                      }
+                      return selected;
+                    },
+                  }}
                 >
                   {wingOptions.map((option) => (
                     <MenuItem key={option} value={option}>
@@ -237,6 +289,15 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   placeholder="Select Area"
                   InputLabelProps={{
                     shrink: true,
+                  }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (!selected) {
+                        return <span style={{ color: '#9CA3AF' }}>Select Area</span>;
+                      }
+                      return selected;
+                    },
                   }}
                 >
                   {areaOptions.map((option) => (
@@ -257,6 +318,15 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   InputLabelProps={{
                     shrink: true,
                   }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (!selected) {
+                        return <span style={{ color: '#9CA3AF' }}>Select Floor</span>;
+                      }
+                      return selected;
+                    },
+                  }}
                 >
                   {floorOptions.map((option) => (
                     <MenuItem key={option} value={option}>
@@ -275,6 +345,15 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   placeholder="Select Room"
                   InputLabelProps={{
                     shrink: true,
+                  }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    renderValue: (selected) => {
+                      if (!selected) {
+                        return <span style={{ color: '#9CA3AF' }}>Select Room</span>;
+                      }
+                      return selected;
+                    },
                   }}
                 >
                   {roomOptions.map((option) => (
