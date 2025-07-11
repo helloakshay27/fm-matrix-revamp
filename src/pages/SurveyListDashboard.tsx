@@ -1,18 +1,14 @@
 
 import React, { useState } from 'react';
 import { SurveyListTable } from '../components/SurveyListTable';
+import { AddSurveyForm } from '../components/AddSurveyForm';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, Filter, Download, RotateCcw, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 export const SurveyListDashboard = () => {
-  const navigate = useNavigate();
+  const [isAddSurveyOpen, setIsAddSurveyOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const handleAddSurvey = () => {
-    navigate('/add-survey');
-  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -30,7 +26,7 @@ export const SurveyListDashboard = () => {
         {/* Left side buttons */}
         <div className="flex flex-wrap items-center gap-2 md:gap-4">
           <Button 
-            onClick={handleAddSurvey}
+            onClick={() => setIsAddSurveyOpen(true)}
             className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
           >
             <Plus className="w-4 h-4" />
@@ -75,6 +71,12 @@ export const SurveyListDashboard = () => {
 
       {/* Survey List Table */}
       <SurveyListTable searchTerm={searchTerm} />
+
+      {/* Add Survey Form Modal */}
+      <AddSurveyForm 
+        isOpen={isAddSurveyOpen} 
+        onClose={() => setIsAddSurveyOpen(false)} 
+      />
     </div>
   );
 };
