@@ -1,14 +1,20 @@
+
 import React from 'react';
 import { Switch } from '@/components/ui/switch';
+
 interface SurveyHeaderProps {
   createTicket: boolean;
   setCreateTicket: (value: boolean) => void;
 }
+
 export const SurveyHeader: React.FC<SurveyHeaderProps> = ({
   createTicket,
   setCreateTicket
 }) => {
-  return <div className="p-6 border-b border-gray-200 bg-white">
+  const [isFeedback, setIsFeedback] = React.useState(false);
+
+  return (
+    <div className="p-6 border-b border-gray-200 bg-white">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="text-2xl font-semibold text-black mb-2">
@@ -26,16 +32,12 @@ export const SurveyHeader: React.FC<SurveyHeaderProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <span className="text-sm">Type:</span>
             <span className="text-sm font-medium">Survey</span>
-            <Switch checked={true} onCheckedChange={() => {}} />
-          </div>
-          
-          <div className="flex items-center gap-2">
+            <Switch checked={isFeedback} onCheckedChange={setIsFeedback} />
             <span className="text-sm font-medium">Feedback</span>
-            <Switch checked={true} onCheckedChange={() => {}} />
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
