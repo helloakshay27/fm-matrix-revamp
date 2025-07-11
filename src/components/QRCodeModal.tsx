@@ -26,7 +26,10 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent 
+        className="max-w-md" 
+        style={{ backgroundColor: '#F6F4EE8F' }}
+      >
         <DialogHeader>
           <DialogTitle className="text-center">QR Code</DialogTitle>
         </DialogHeader>
