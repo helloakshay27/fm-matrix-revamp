@@ -142,8 +142,8 @@ export const BookingSetupDashboard = () => {
                       <Eye className="w-4 h-4" />
                     </Button>
                   </TableCell>
-                  <TableCell className="text-blue-600 font-medium">{booking.id}</TableCell>
-                  <TableCell className="text-blue-600">{booking.name}</TableCell>
+                  <TableCell className="text-black font-medium">{booking.id}</TableCell>
+                  <TableCell className="text-black">{booking.name}</TableCell>
                   <TableCell>{booking.type}</TableCell>
                   <TableCell>{booking.department}</TableCell>
                   <TableCell>{booking.bookBy}</TableCell>
