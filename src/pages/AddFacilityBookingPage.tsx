@@ -2,16 +2,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { TextField, MenuItem } from '@mui/material';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -30,8 +29,31 @@ export const AddFacilityBookingPage = () => {
       selectedDate,
       comment
     });
-    // Add your submission logic here
     navigate('/vas/booking/list');
+  };
+
+  const fieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '0.375rem',
+      height: {
+        xs: '36px',
+        sm: '45px'
+      },
+      '& fieldset': {
+        borderColor: '#d1d5db',
+      },
+      '&:hover fieldset': {
+        borderColor: '#9ca3af',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#3b82f6',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#3b82f6',
+      },
+    },
   };
 
   return (
@@ -70,32 +92,36 @@ export const AddFacilityBookingPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* User Selection */}
           <div className="space-y-2">
-            <Label htmlFor="user">User</Label>
-            <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select User" className="text-orange-500" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user1">User 1</SelectItem>
-                <SelectItem value="user2">User 2</SelectItem>
-                <SelectItem value="user3">User 3</SelectItem>
-              </SelectContent>
-            </Select>
+            <TextField
+              select
+              label="User"
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              variant="outlined"
+              fullWidth
+              sx={fieldStyles}
+            >
+              <MenuItem value="user1">User 1</MenuItem>
+              <MenuItem value="user2">User 2</MenuItem>
+              <MenuItem value="user3">User 3</MenuItem>
+            </TextField>
           </div>
 
           {/* Facility Selection */}
           <div className="space-y-2">
-            <Label htmlFor="facility">Facility</Label>
-            <Select value={selectedFacility} onValueChange={setSelectedFacility}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Facility" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="meeting-room">Meeting Room</SelectItem>
-                <SelectItem value="conference-hall">Conference Hall</SelectItem>
-                <SelectItem value="board-room">Board Room</SelectItem>
-              </SelectContent>
-            </Select>
+            <TextField
+              select
+              label="Facility"
+              value={selectedFacility}
+              onChange={(e) => setSelectedFacility(e.target.value)}
+              variant="outlined"
+              fullWidth
+              sx={fieldStyles}
+            >
+              <MenuItem value="meeting-room">Meeting Room</MenuItem>
+              <MenuItem value="conference-hall">Conference Hall</MenuItem>
+              <MenuItem value="board-room">Board Room</MenuItem>
+            </TextField>
           </div>
 
           {/* Date Selection */}
@@ -106,7 +132,7 @@ export const AddFacilityBookingPage = () => {
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal h-9 sm:h-11 rounded-md",
                     !selectedDate && "text-muted-foreground"
                   )}
                 >
@@ -129,13 +155,21 @@ export const AddFacilityBookingPage = () => {
 
         {/* Comment */}
         <div className="space-y-2">
-          <Label htmlFor="comment">Comment</Label>
-          <Textarea
-            id="comment"
+          <TextField
+            label="Comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Enter your comment here..."
-            className="min-h-[100px]"
+            variant="outlined"
+            fullWidth
+            multiline
+            rows={4}
+            sx={{
+              ...fieldStyles,
+              '& .MuiOutlinedInput-root': {
+                ...fieldStyles['& .MuiOutlinedInput-root'],
+                height: 'auto',
+              },
+            }}
           />
         </div>
 
