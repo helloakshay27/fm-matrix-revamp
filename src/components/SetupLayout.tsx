@@ -1,8 +1,5 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { SetupSidebar } from './SetupSidebar';
-import { SetupHeader } from './SetupHeader';
 
 interface SetupLayoutProps {
   children: React.ReactNode;
@@ -10,14 +7,8 @@ interface SetupLayoutProps {
 
 export const SetupLayout = ({ children }: SetupLayoutProps) => {
   return (
-    <div className="flex min-h-screen bg-[#f6f4ee]">
-      <SetupSidebar />
-      <div className="flex-1 ml-64">
-        <SetupHeader />
-        <main className="p-8">
-          <Outlet />
-        </main>
-      </div>
+    <div className="flex-1 ml-64 p-6 bg-gray-50 min-h-screen">
+      {children}
     </div>
   );
 };
