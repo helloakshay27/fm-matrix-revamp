@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Trash2, QrCode, LogIn, X, Users, Package } from 'lucide-react';
@@ -25,7 +24,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     onClearSelection();
   };
 
-  return <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-sm shadow-lg z-50 flex items-center px-4 py-3">
+  return <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-sm shadow-lg z-50 flex items-center px-4 py-4">
       <div className="flex items-center gap-10">
         <div className="flex items-center gap-2">
           <div className="text-white rounded-lg w-10 flex items-center justify-center text-sm font-bold self-stretch py-2 bg-red-700">
