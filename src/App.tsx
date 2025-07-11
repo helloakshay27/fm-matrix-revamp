@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
-import { HomePage } from './pages/HomePage';
 import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
 import { AssetGroupsPage } from './pages/AssetGroupsPage';
 
@@ -17,7 +16,6 @@ function App() {
         <Router>
           <Layout>
             <Routes>
-              <Route path="/" element={<HomePage />} />
               <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
               <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsPage />} />
             </Routes>
