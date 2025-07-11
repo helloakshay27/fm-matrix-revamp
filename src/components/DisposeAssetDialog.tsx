@@ -7,19 +7,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AttachmentsSection } from './AttachmentsSection';
 import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
-import { X, ChevronDown } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -28,6 +20,83 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { CustomTextField } from '@/components/ui/custom-text-field';
+import { 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  TextField,
+  createTheme, 
+  ThemeProvider 
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+
+// Custom theme for MUI components
+const muiTheme = createTheme({
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '6px', // rounded-md
+            backgroundColor: '#FFFFFF',
+            height: '45px',
+            '@media (max-width: 768px)': {
+              height: '36px',
+            },
+            '& fieldset': {
+              borderColor: '#E0E0E0',
+            },
+            '&:hover fieldset': {
+              borderColor: '#1A1A1A',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#C72030',
+              borderWidth: 2,
+            },
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: '#1A1A1A',
+          fontWeight: 500,
+          '&.Mui-focused': {
+            color: '#C72030',
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          borderRadius: '6px', // rounded-md
+          backgroundColor: '#FFFFFF',
+          height: '45px',
+          '@media (max-width: 768px)': {
+            height: '36px',
+          },
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '6px', // rounded-md
+            height: '45px',
+            '@media (max-width: 768px)': {
+              height: '36px',
+            },
+          },
+        },
+      },
+    },
+  },
+});
 
 interface DisposeAssetDialogProps {
   isOpen: boolean;
@@ -45,6 +114,8 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
   const [handedOverTo, setHandedOverTo] = useState('vendor');
   const [vendor, setVendor] = useState('');
   const [comments, setComments] = useState('');
+  const [assetStatus, setAssetStatus] = useState('Disposed');
+  const [soldValue, setSoldValue] = useState('');
 
   const handleSubmit = () => {
     console.log('Dispose Asset submitted:', {
@@ -53,7 +124,9 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
       handedOverTo,
       vendor,
       comments,
-      selectedAssets
+      selectedAssets,
+      assetStatus,
+      soldValue
     });
     onClose();
   };
@@ -96,175 +169,206 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
   ];
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-none min-w-[95%] max-h-[95vh] overflow-y-auto p-0">
-        <DialogHeader className="flex flex-row items-center justify-between p-6 pb-4 border-b">
-          <DialogTitle className="text-xl font-semibold text-gray-900 uppercase">
-            DISPOSE ASSET
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6 rounded-none hover:bg-gray-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </DialogHeader>
+    <ThemeProvider theme={muiTheme}>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="w-full max-w-none min-w-[95%] max-h-[95vh] overflow-y-auto p-0">
+          <DialogHeader className="flex flex-row items-center justify-between p-6 pb-4 border-b">
+            <DialogTitle className="text-xl font-semibold text-gray-900 uppercase">
+              DISPOSE ASSET
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-6 w-6 rounded-none hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
 
-        <div className="p-6 space-y-6">
-          {/* Assets Table */}
-          <div className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[15%]">Asset Name</TableHead>
-                  <TableHead className="w-[20%]">Asset Code</TableHead>
-                  <TableHead className="w-[15%]">Asset Status</TableHead>
-                  <TableHead className="w-[12%]">Site</TableHead>
-                  <TableHead className="w-[13%]">Purchase Cost</TableHead>
-                  <TableHead className="w-[13%]">Current Book Value</TableHead>
-                  <TableHead className="w-[12%]">Sold Value</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockAssets.map((asset, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{asset.name}</TableCell>
-                    <TableCell>{asset.code}</TableCell>
-                    <TableCell>
-                      <Select defaultValue={asset.status}>
-                        <SelectTrigger className="w-full bg-purple-600 text-white border-0 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>{asset.site}</TableCell>
-                    <TableCell>{asset.purchaseCost}</TableCell>
-                    <TableCell>{asset.currentBookValue}</TableCell>
-                    <TableCell>
-                      <Input 
-                        placeholder="Enter Sold Value"
-                        defaultValue={asset.soldValue}
-                        className="w-full h-8 text-sm"
-                      />
-                    </TableCell>
+          <div className="p-6 space-y-6">
+            {/* Assets Table */}
+            <div className="w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[15%]">Asset Name</TableHead>
+                    <TableHead className="w-[20%]">Asset Code</TableHead>
+                    <TableHead className="w-[15%]">Asset Status</TableHead>
+                    <TableHead className="w-[12%]">Site</TableHead>
+                    <TableHead className="w-[13%]">Purchase Cost</TableHead>
+                    <TableHead className="w-[13%]">Current Book Value</TableHead>
+                    <TableHead className="w-[12%]">Sold Value</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {mockAssets.map((asset, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{asset.name}</TableCell>
+                      <TableCell>{asset.code}</TableCell>
+                      <TableCell>
+                        <FormControl fullWidth size="small">
+                          <InputLabel shrink>Status</InputLabel>
+                          <Select
+                            value={assetStatus}
+                            onChange={(e) => setAssetStatus(e.target.value)}
+                            label="Status"
+                            sx={{
+                              backgroundColor: '#9333ea',
+                              color: 'white',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                border: 'none',
+                              },
+                              '& .MuiSelect-icon': {
+                                color: 'white',
+                              },
+                            }}
+                          >
+                            {statusOptions.map((status) => (
+                              <MenuItem key={status} value={status}>
+                                {status}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                      <TableCell>{asset.site}</TableCell>
+                      <TableCell>{asset.purchaseCost}</TableCell>
+                      <TableCell>{asset.currentBookValue}</TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          placeholder="Enter Sold Value"
+                          value={soldValue}
+                          onChange={(e) => setSoldValue(e.target.value)}
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          fullWidth
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
-          {/* Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Dispose Date */}
-            <div className="space-y-2">
-              <Label htmlFor="dispose-date" className="text-sm font-medium text-gray-700">
-                Dispose Date
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Dispose Date */}
+              <div className="space-y-2">
+                <Label htmlFor="dispose-date" className="text-sm font-medium text-gray-700">
+                  Dispose Date
+                </Label>
+                <ResponsiveDatePicker
+                  value={disposeDate}
+                  onChange={setDisposeDate}
+                  placeholder="Select Date"
+                  className="w-full"
+                />
+              </div>
+
+              {/* Dispose Reason */}
+              <div className="space-y-2">
+                <FormControl fullWidth>
+                  <InputLabel shrink>Dispose Reason *</InputLabel>
+                  <Select
+                    value={disposeReason}
+                    onChange={(e) => setDisposeReason(e.target.value)}
+                    label="Dispose Reason *"
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>
+                      Select Reason
+                    </MenuItem>
+                    {disposeReasons.map((reason) => (
+                      <MenuItem key={reason} value={reason}>
+                        {reason}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+            </div>
+
+            {/* Handed Over To */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium text-gray-700">
+                Handed Over To
               </Label>
-              <ResponsiveDatePicker
-                value={disposeDate}
-                onChange={setDisposeDate}
-                placeholder="Select Date"
-                className="w-full"
+              <RadioGroup
+                value={handedOverTo}
+                onValueChange={setHandedOverTo}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="vendor" id="vendor" />
+                  <Label htmlFor="vendor" className="text-sm">Vendor</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="user" id="user" />
+                  <Label htmlFor="user" className="text-sm">User</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Vendor Selection */}
+            <div className="space-y-2">
+              <FormControl className="max-w-sm">
+                <InputLabel shrink>Vendor *</InputLabel>
+                <Select
+                  value={vendor}
+                  onChange={(e) => setVendor(e.target.value)}
+                  label="Vendor *"
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    Select Vendor
+                  </MenuItem>
+                  {vendors.map((vendorName) => (
+                    <MenuItem key={vendorName} value={vendorName}>
+                      {vendorName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+
+            {/* Comments */}
+            <div className="space-y-2">
+              <TextField
+                label="Comments"
+                multiline
+                rows={4}
+                placeholder="Type a comment.."
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: 'auto',
+                    minHeight: '96px',
+                  },
+                }}
               />
             </div>
 
-            {/* Dispose Reason */}
-            <div className="space-y-2">
-              <Label htmlFor="dispose-reason" className="text-sm font-medium text-gray-700">
-                Dispose Reason <span className="text-red-500">*</span>
-              </Label>
-              <Select value={disposeReason} onValueChange={setDisposeReason}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Reason" />
-                </SelectTrigger>
-                <SelectContent>
-                  {disposeReasons.map((reason) => (
-                    <SelectItem key={reason} value={reason}>
-                      {reason}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Attachments */}
+            <AttachmentsSection />
+
+            {/* Submit Button */}
+            <div className="flex justify-center pt-6">
+              <Button
+                onClick={handleSubmit}
+                className="bg-blue-900 hover:bg-blue-800 text-white px-12 py-3 text-sm font-medium uppercase tracking-wide"
+              >
+                SUBMIT
+              </Button>
             </div>
           </div>
-
-          {/* Handed Over To */}
-          <div className="space-y-4">
-            <Label className="text-sm font-medium text-gray-700">
-              Handed Over To
-            </Label>
-            <RadioGroup
-              value={handedOverTo}
-              onValueChange={setHandedOverTo}
-              className="flex gap-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="vendor" id="vendor" />
-                <Label htmlFor="vendor" className="text-sm">Vendor</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="user" id="user" />
-                <Label htmlFor="user" className="text-sm">User</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Vendor Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="vendor-select" className="text-sm font-medium text-gray-700">
-              Vendor <span className="text-red-500">*</span>
-            </Label>
-            <Select value={vendor} onValueChange={setVendor}>
-              <SelectTrigger className="w-full max-w-sm">
-                <SelectValue placeholder="Select Vendor" />
-              </SelectTrigger>
-              <SelectContent>
-                {vendors.map((vendorName) => (
-                  <SelectItem key={vendorName} value={vendorName}>
-                    {vendorName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Comments */}
-          <div className="space-y-2">
-            <Label htmlFor="comments" className="text-sm font-medium text-gray-700">
-              Comments
-            </Label>
-            <textarea
-              id="comments"
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-              placeholder="Type a comment.."
-              className="w-full p-3 border border-gray-300 rounded-none resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Attachments */}
-          <AttachmentsSection />
-
-          {/* Submit Button */}
-          <div className="flex justify-center pt-6">
-            <Button
-              onClick={handleSubmit}
-              className="bg-blue-900 hover:bg-blue-800 text-white px-12 py-3 text-sm font-medium uppercase tracking-wide"
-            >
-              SUBMIT
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </ThemeProvider>
   );
 };
