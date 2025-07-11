@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -260,7 +258,7 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
                 <Label htmlFor="dispose-date" className="text-sm font-medium text-gray-700">
                   Dispose Date
                 </Label>
-                <div className="h-[45px] md:h-[45px] mobile:h-[36px]">
+                <div className="h-[45px]">
                   <ResponsiveDatePicker
                     value={disposeDate}
                     onChange={setDisposeDate}
@@ -380,4 +378,3 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
     </ThemeProvider>
   );
 };
-
