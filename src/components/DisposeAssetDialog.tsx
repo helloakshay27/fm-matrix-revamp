@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -350,11 +349,14 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
             </div>
 
             {/* Comments and Attachments in one row */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6 items-start">
               {/* Comments - 50% width */}
               <div className="space-y-2">
+                <Label htmlFor="comments" className="text-sm font-medium text-gray-700">
+                  Comments
+                </Label>
                 <TextField
-                  label="Comments"
+                  id="comments"
                   multiline
                   rows={4}
                   placeholder="Type a comment.."
@@ -362,7 +364,6 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
                   onChange={(e) => setComments(e.target.value)}
                   variant="outlined"
                   fullWidth
-                  InputLabelProps={{ shrink: true }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       height: 'auto',
