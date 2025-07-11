@@ -69,7 +69,6 @@ export const FacilityBookingForm: React.FC<FacilityBookingFormProps> = ({ isOpen
                 onChange={(e) => setSelectedUser(e.target.value)}
                 variant="outlined"
                 fullWidth
-                displayEmpty
                 placeholder="Select User"
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -109,7 +108,6 @@ export const FacilityBookingForm: React.FC<FacilityBookingFormProps> = ({ isOpen
                 onChange={(e) => setSelectedFacility(e.target.value)}
                 variant="outlined"
                 fullWidth
-                displayEmpty
                 placeholder="Select Facility"
                 sx={{
                   '& .MuiOutlinedInput-root': {
