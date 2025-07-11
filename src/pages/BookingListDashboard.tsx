@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Plus, Filter, Download, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -137,12 +138,28 @@ const exportColumns = [
   { id: 'comment', label: 'Comment' }
 ];
 
+const tableColumns = [
+  { id: 'id', label: 'ID' },
+  { id: 'bookedBy', label: 'Booked By' },
+  { id: 'bookedFor', label: 'Booked For' },
+  { id: 'companyName', label: 'Company Name' },
+  { id: 'facility', label: 'Facility' },
+  { id: 'facilityType', label: 'Facility Type' },
+  { id: 'scheduledDate', label: 'Scheduled Date' },
+  { id: 'scheduledTime', label: 'Scheduled Time' },
+  { id: 'bookingStatus', label: 'Booking Status' },
+  { id: 'createdOn', label: 'Created On' },
+  { id: 'source', label: 'Source' }
+];
+
 const BookingListDashboard = () => {
   const [bookings] = useState<BookingData[]>(mockBookingData);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
+  const [isFilterColumnsPopoverOpen, setIsFilterColumnsPopoverOpen] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'bookedBy']);
+  const [visibleTableColumns, setVisibleTableColumns] = useState<string[]>(['id', 'bookedBy', 'bookedFor', 'companyName', 'facility', 'facilityType', 'scheduledDate', 'scheduledTime', 'bookingStatus', 'createdOn', 'source']);
   const [filters, setFilters] = useState({
     facilityName: '',
     status: '',
@@ -211,9 +228,22 @@ const BookingListDashboard = () => {
     }
   };
 
+  const handleTableColumnToggle = (columnId: string) => {
+    setVisibleTableColumns(prev => 
+      prev.includes(columnId) 
+        ? prev.filter(id => id !== columnId)
+        : [...prev, columnId]
+    );
+  };
+
   const handleDownload = () => {
     console.log('Downloading selected columns:', selectedColumns);
     setIsExportPopoverOpen(false);
+  };
+
+  const handleApplyColumnFilter = () => {
+    console.log('Applying column filter:', visibleTableColumns);
+    setIsFilterColumnsPopoverOpen(false);
   };
 
   const isAllSelected = selectedColumns.length === exportColumns.length - 1;
@@ -294,9 +324,43 @@ const BookingListDashboard = () => {
 
       {/* Filter Columns Button */}
       <div>
-        <Button variant="outline" className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white">
-          Filter Columns
-        </Button>
+        <Popover open={isFilterColumnsPopoverOpen} onOpenChange={setIsFilterColumnsPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white">
+              Filter Columns
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4 bg-white border border-gray-200 shadow-lg z-50" align="start">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Select columns to display:</h3>
+              
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {tableColumns.map((column) => (
+                  <div key={column.id} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={`table-${column.id}`}
+                      checked={visibleTableColumns.includes(column.id)}
+                      onCheckedChange={() => handleTableColumnToggle(column.id)}
+                    />
+                    <label 
+                      htmlFor={`table-${column.id}`} 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {column.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              
+              <Button 
+                onClick={handleApplyColumnFilter}
+                className="w-full bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+              >
+                Apply Column Filter
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Table */}
@@ -305,17 +369,17 @@ const BookingListDashboard = () => {
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold">View</TableHead>
-              <TableHead className="font-semibold">ID</TableHead>
-              <TableHead className="font-semibold">Booked By</TableHead>
-              <TableHead className="font-semibold">Booked For</TableHead>
-              <TableHead className="font-semibold">Company Name</TableHead>
-              <TableHead className="font-semibold">Facility</TableHead>
-              <TableHead className="font-semibold">Facility Type</TableHead>
-              <TableHead className="font-semibold">Scheduled Date</TableHead>
-              <TableHead className="font-semibold">Scheduled Time</TableHead>
-              <TableHead className="font-semibold">Booking Status</TableHead>
-              <TableHead className="font-semibold">Created On</TableHead>
-              <TableHead className="font-semibold">Source</TableHead>
+              {visibleTableColumns.includes('id') && <TableHead className="font-semibold">ID</TableHead>}
+              {visibleTableColumns.includes('bookedBy') && <TableHead className="font-semibold">Booked By</TableHead>}
+              {visibleTableColumns.includes('bookedFor') && <TableHead className="font-semibold">Booked For</TableHead>}
+              {visibleTableColumns.includes('companyName') && <TableHead className="font-semibold">Company Name</TableHead>}
+              {visibleTableColumns.includes('facility') && <TableHead className="font-semibold">Facility</TableHead>}
+              {visibleTableColumns.includes('facilityType') && <TableHead className="font-semibold">Facility Type</TableHead>}
+              {visibleTableColumns.includes('scheduledDate') && <TableHead className="font-semibold">Scheduled Date</TableHead>}
+              {visibleTableColumns.includes('scheduledTime') && <TableHead className="font-semibold">Scheduled Time</TableHead>}
+              {visibleTableColumns.includes('bookingStatus') && <TableHead className="font-semibold">Booking Status</TableHead>}
+              {visibleTableColumns.includes('createdOn') && <TableHead className="font-semibold">Created On</TableHead>}
+              {visibleTableColumns.includes('source') && <TableHead className="font-semibold">Source</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -326,21 +390,23 @@ const BookingListDashboard = () => {
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
-                <TableCell className="font-medium">{booking.id}</TableCell>
-                <TableCell>{booking.bookedBy}</TableCell>
-                <TableCell>{booking.bookedFor}</TableCell>
-                <TableCell>{booking.companyName}</TableCell>
-                <TableCell>{booking.facility}</TableCell>
-                <TableCell>{booking.facilityType}</TableCell>
-                <TableCell>{booking.scheduledDate}</TableCell>
-                <TableCell>{booking.scheduledTime}</TableCell>
-                <TableCell>
-                  <Badge variant={getStatusBadgeVariant(booking.bookingStatus)}>
-                    {booking.bookingStatus}
-                  </Badge>
-                </TableCell>
-                <TableCell>{booking.createdOn}</TableCell>
-                <TableCell>{booking.source}</TableCell>
+                {visibleTableColumns.includes('id') && <TableCell className="font-medium">{booking.id}</TableCell>}
+                {visibleTableColumns.includes('bookedBy') && <TableCell>{booking.bookedBy}</TableCell>}
+                {visibleTableColumns.includes('bookedFor') && <TableCell>{booking.bookedFor}</TableCell>}
+                {visibleTableColumns.includes('companyName') && <TableCell>{booking.companyName}</TableCell>}
+                {visibleTableColumns.includes('facility') && <TableCell>{booking.facility}</TableCell>}
+                {visibleTableColumns.includes('facilityType') && <TableCell>{booking.facilityType}</TableCell>}
+                {visibleTableColumns.includes('scheduledDate') && <TableCell>{booking.scheduledDate}</TableCell>}
+                {visibleTableColumns.includes('scheduledTime') && <TableCell>{booking.scheduledTime}</TableCell>}
+                {visibleTableColumns.includes('bookingStatus') && (
+                  <TableCell>
+                    <Badge variant={getStatusBadgeVariant(booking.bookingStatus)}>
+                      {booking.bookingStatus}
+                    </Badge>
+                  </TableCell>
+                )}
+                {visibleTableColumns.includes('createdOn') && <TableCell>{booking.createdOn}</TableCell>}
+                {visibleTableColumns.includes('source') && <TableCell>{booking.source}</TableCell>}
               </TableRow>
             ))}
           </TableBody>
