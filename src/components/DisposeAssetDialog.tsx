@@ -62,6 +62,13 @@ const muiTheme = createTheme({
               borderColor: '#C72030',
               borderWidth: 2,
             },
+            '&.MuiOutlinedInput-multiline': {
+              height: 'auto',
+              minHeight: '96px',
+              '@media (max-width: 768px)': {
+                minHeight: '80px',
+              },
+            },
           },
         },
       },
@@ -97,6 +104,13 @@ const muiTheme = createTheme({
             height: '45px',
             '@media (max-width: 768px)': {
               height: '36px',
+            },
+            '&.MuiOutlinedInput-multiline': {
+              height: 'auto',
+              minHeight: '96px',
+              '@media (max-width: 768px)': {
+                minHeight: '80px',
+              },
             },
           },
         },
@@ -359,7 +373,6 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
                 {/* Comments - 50% width */}
                 <div className="space-y-2">
                   <FormControl fullWidth>
-                    <InputLabel shrink>Comments</InputLabel>
                     <TextField
                       multiline
                       rows={4}
@@ -369,12 +382,7 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
                       variant="outlined"
                       fullWidth
                       label="Comments"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          height: 'auto',
-                          minHeight: '96px',
-                        },
-                      }}
+                      InputLabelProps={{ shrink: true }}
                     />
                   </FormControl>
                 </div>
