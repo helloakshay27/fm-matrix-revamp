@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -183,26 +182,27 @@ export const AddSurveyPage = () => {
 
               {/* Questions */}
               {section.questions.map((question, questionIndex) => (
-                <div key={question.id} className="border-l-4 border-red-600 pl-6 py-4 mb-4 relative">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-4">
-                        <Input
-                          value={question.text}
-                          onChange={(e) => setSections(sections.map(s => 
-                            s.id === section.id 
-                              ? {
-                                  ...s,
-                                  questions: s.questions.map(q => 
-                                    q.id === question.id ? { ...q, text: e.target.value } : q
-                                  )
-                                }
-                              : s
-                          ))}
-                          className="flex-1 border-b border-gray-300 border-t-0 border-l-0 border-r-0 rounded-none p-0 focus-visible:ring-0"
-                          placeholder="Question"
-                        />
-                        
+                <div key={question.id} className="border border-gray-200 rounded-lg mb-4">
+                  {/* Question Header */}
+                  <div className="border-b border-gray-200 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <Input
+                        value={question.text}
+                        onChange={(e) => setSections(sections.map(s => 
+                          s.id === section.id 
+                            ? {
+                                ...s,
+                                questions: s.questions.map(q => 
+                                  q.id === question.id ? { ...q, text: e.target.value } : q
+                                )
+                              }
+                            : s
+                        ))}
+                        className="border-none p-0 focus-visible:ring-0 bg-transparent font-medium"
+                        placeholder="Question"
+                      />
+                      
+                      <div className="flex items-center gap-2">
                         <Select 
                           value={question.type} 
                           onValueChange={(value) => setSections(sections.map(s => 
@@ -216,7 +216,7 @@ export const AddSurveyPage = () => {
                               : s
                           ))}
                         >
-                          <SelectTrigger className="w-48">
+                          <SelectTrigger className="w-40 h-8">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -230,17 +230,24 @@ export const AddSurveyPage = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
-                      <div className="text-gray-500 text-sm mb-4">
-                        {question.type} text
-                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2 ml-4">
+                  </div>
+                  
+                  {/* Question Content */}
+                  <div className="px-4 py-6">
+                    <div className="text-gray-400 text-sm mb-4">
+                      {question.type} text
+                    </div>
+                  </div>
+                  
+                  {/* Question Footer */}
+                  <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => duplicateQuestion(section.id, question.id)}
+                        className="p-2"
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
@@ -248,25 +255,51 @@ export const AddSurveyPage = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteQuestion(section.id, question.id)}
+                        className="p-2"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`required-${question.id}`}>Required</Label>
-                        <Switch
-                          id={`required-${question.id}`}
-                          checked={question.required}
-                          onCheckedChange={(checked) => setSections(sections.map(s => 
-                            s.id === section.id 
-                              ? {
-                                  ...s,
-                                  questions: s.questions.map(q => 
-                                    q.id === question.id ? { ...q, required: checked } : q
-                                  )
-                                }
-                              : s
-                          ))}
-                        />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Required</span>
+                      <div className="relative">
+                        {question.required ? (
+                          <div className="w-6 h-3 bg-red-600 rounded-full relative cursor-pointer"
+                               onClick={() => setSections(sections.map(s => 
+                                 s.id === section.id 
+                                   ? {
+                                       ...s,
+                                       questions: s.questions.map(q => 
+                                         q.id === question.id ? { ...q, required: false } : q
+                                       )
+                                     }
+                                   : s
+                               ))}>
+                            <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                          </div>
+                        ) : (
+                          <div className="w-6 h-3 bg-gray-300 rounded-full relative cursor-pointer"
+                               onClick={() => setSections(sections.map(s => 
+                                 s.id === section.id 
+                                   ? {
+                                       ...s,
+                                       questions: s.questions.map(q => 
+                                         q.id === question.id ? { ...q, required: true } : q
+                                       )
+                                     }
+                                   : s
+                               ))}>
+                            <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
