@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Eye, Upload, Filter, Download, Search, RotateCcw } from 'lucide-react';
+import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -86,7 +86,7 @@ export const SurveyResponsePage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
           <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">●</span>
+            <Activity className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="text-2xl font-bold text-[#C72030]">20</div>
@@ -96,7 +96,7 @@ export const SurveyResponsePage = () => {
 
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
           <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">👍</span>
+            <ThumbsUp className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="text-2xl font-bold text-[#C72030]">10</div>
@@ -106,7 +106,7 @@ export const SurveyResponsePage = () => {
 
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
           <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">📋</span>
+            <ClipboardList className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="text-2xl font-bold text-[#C72030]">10</div>
