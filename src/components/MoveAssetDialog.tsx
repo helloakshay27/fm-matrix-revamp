@@ -34,7 +34,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[80vw] xl:max-w-[75vw] 2xl:max-w-[70vw] max-h-[90vh] overflow-hidden p-0 rounded-none">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[80vw] xl:max-w-[75vw] 2xl:max-w-[70vw] max-h-[90vh] p-0 rounded-none flex flex-col">
         <DialogHeader className="px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">
@@ -51,7 +51,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 min-h-0">
           {/* Asset Table */}
           <div className="mb-6">
             <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
@@ -201,7 +201,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
         </div>
 
         {/* Submit Button - Fixed at bottom */}
-        <div className="border-t border-gray-200 px-4 sm:px-6 py-4 flex justify-center flex-shrink-0">
+        <div className="border-t border-gray-200 px-4 sm:px-6 py-4 flex justify-center flex-shrink-0 bg-white">
           <Button 
             onClick={handleSubmit}
             className="bg-red-600 hover:bg-red-700 text-white px-8 sm:px-12 py-2 text-sm font-medium rounded-none w-full sm:w-auto"
