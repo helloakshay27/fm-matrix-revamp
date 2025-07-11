@@ -30,6 +30,7 @@ export const AddFacilityBookingPage = () => {
   const fieldStyles = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '0.375rem',
+      backgroundColor: 'white',
       height: {
         xs: '36px',
         sm: '45px'
@@ -68,7 +69,7 @@ export const AddFacilityBookingPage = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
         {/* User Type Selection */}
         <div>
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
