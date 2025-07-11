@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,9 +67,11 @@ const mockResponseData = [
 export const SurveyResponsePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleViewDetails = (id: number) => {
     console.log('Viewing details for survey:', id);
+    navigate(`/maintenance/survey/response/${id}`);
   };
 
   const handleFilterClick = () => {
