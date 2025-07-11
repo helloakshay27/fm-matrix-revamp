@@ -268,6 +268,7 @@ const modulesByPackage = {
       href: '/settings/checklist-setup',
       subItems: [
         { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/group', color: 'text-[#1a1a1a]' },
+        { name: 'Email Rule', href: '/settings/checklist-setup/email-rule', color: 'text-[#1a1a1a]' },
         { name: 'Task Escalation', icon: AlertTriangle, href: '/settings/checklist-setup/task-escalation', color: 'text-[#1a1a1a]' }
       ]
     },
@@ -490,7 +491,6 @@ export const Sidebar = () => {
           {item.name}
         </button>
         
-        {/* Show dropdowns for Roles (RACI) when on that page */}
         {showDropdowns && (
           <div className="mt-4 space-y-3 px-3">
             <div>
