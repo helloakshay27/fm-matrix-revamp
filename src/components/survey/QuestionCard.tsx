@@ -19,7 +19,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onDelete
 }) => {
   return (
-    <div className="border border-gray-200 rounded-lg mb-4 bg-white">
+    <div className="border border-gray-200 rounded-lg mb-4 bg-white relative">
+      {/* Red vertical line on the left side */}
+      <div className="absolute left-0 top-0 w-1 h-full bg-red-600 rounded-l-lg"></div>
+      
       <QuestionHeader
         question={question}
         onQuestionChange={onQuestionChange}
