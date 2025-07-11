@@ -26,6 +26,7 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
       <div className="flex flex-col sm:flex-row gap-4 items-end">
         {/* Location */}
         <div className="flex-1 min-w-0">
+          <Typography variant="subtitle2" className="mb-2 text-center sm:text-left">Location</Typography>
           <FormControl fullWidth size="small">
             <InputLabel>Location</InputLabel>
             <Select
