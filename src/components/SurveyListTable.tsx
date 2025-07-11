@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Edit, Copy, Eye, Share2, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -110,6 +109,11 @@ const mockSurveyData = [
 export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
   const { toast } = useToast();
   const [surveys, setSurveys] = useState(mockSurveyData);
+
+  console.log('Survey data:', surveys);
+  console.log('First survey status:', surveys[0]?.status);
+  console.log('First survey validFrom:', surveys[0]?.validFrom);
+  console.log('First survey validTo:', surveys[0]?.validTo);
 
   const handleTicketCreationToggle = (index: number) => {
     setSurveys(prevSurveys => 
@@ -251,74 +255,83 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredSurveys.map((survey, index) => (
-              <TableRow key={`${survey.id}-${index}`}>
-                <TableCell>
-                  <button 
-                    onClick={() => handleAction('Edit', survey.id)}
-                    className="p-1 text-gray-600 hover:text-gray-800"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                </TableCell>
-                <TableCell>
-                  <button 
-                    onClick={() => handleAction('Copy', survey.id)}
-                    className="p-1 text-gray-600 hover:text-gray-800"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </TableCell>
-                <TableCell>
-                  <button 
-                    onClick={() => handleAction('View', survey.id)}
-                    className="p-1 text-gray-600 hover:text-gray-800"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </TableCell>
-                <TableCell>
-                  <button 
-                    onClick={() => handleAction('Share', survey.id)}
-                    className="p-1 text-gray-600 hover:text-gray-800"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                </TableCell>
-                <TableCell className="font-medium">{survey.id}</TableCell>
-                <TableCell>{survey.title}</TableCell>
-                <TableCell>
-                  <div className="flex items-center">
-                    <div 
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                        survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
-                      }`} 
-                      onClick={() => handleTicketCreationToggle(index)}
+            {filteredSurveys.map((survey, index) => {
+              console.log(`Rendering survey ${index}:`, {
+                id: survey.id,
+                status: survey.status,
+                validFrom: survey.validFrom,
+                validTo: survey.validTo
+              });
+              
+              return (
+                <TableRow key={`${survey.id}-${index}`}>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Edit', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
                     >
-                      <span 
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                          survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Copy', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('View', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Share', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell className="font-medium">{survey.id}</TableCell>
+                  <TableCell>{survey.title}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <div 
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                          survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
                         }`} 
-                      />
+                        onClick={() => handleTicketCreationToggle(index)}
+                      >
+                        <span 
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                            survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
+                          }`} 
+                        />
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>{survey.ticketCategory}</TableCell>
-                <TableCell>{survey.ticketLevel}</TableCell>
-                <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
-                <TableCell>{survey.typeOfSurvey}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className={`font-medium ${getStatusColor(survey.status)}`}>
-                      {survey.status}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  </div>
-                </TableCell>
-                <TableCell>{survey.validFrom}</TableCell>
-                <TableCell>{survey.validTo}</TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell>{survey.ticketCategory}</TableCell>
+                  <TableCell>{survey.ticketLevel}</TableCell>
+                  <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
+                  <TableCell>{survey.typeOfSurvey}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${getStatusColor(survey.status)}`}>
+                        {survey.status}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </TableCell>
+                  <TableCell>{survey.validFrom}</TableCell>
+                  <TableCell>{survey.validTo}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
