@@ -177,6 +177,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   onChange={(e) => setSite(e.target.value)}
                   variant="outlined"
                   size="small"
+                  placeholder="Select Site"
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -195,6 +196,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   onChange={(e) => setBuilding(e.target.value)}
                   variant="outlined"
                   size="small"
+                  placeholder="Select Building"
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -213,6 +215,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   onChange={(e) => setWing(e.target.value)}
                   variant="outlined"
                   size="small"
+                  placeholder="Select Wing"
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -231,6 +234,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   onChange={(e) => setArea(e.target.value)}
                   variant="outlined"
                   size="small"
+                  placeholder="Select Area"
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -249,6 +253,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   onChange={(e) => setFloor(e.target.value)}
                   variant="outlined"
                   size="small"
+                  placeholder="Select Floor"
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -267,6 +272,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   onChange={(e) => setRoom(e.target.value)}
                   variant="outlined"
                   size="small"
+                  placeholder="Select Room"
                   InputLabelProps={{
                     shrink: true,
                   }}
