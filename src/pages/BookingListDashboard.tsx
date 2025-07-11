@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Plus, Filter, Download, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -336,10 +337,10 @@ const BookingListDashboard = () => {
                     height: { xs: '36px', sm: '45px' }
                   },
                   '& .MuiInputLabel-root': {
-                    color: '#ef4444'
+                    color: '#000000'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#ef4444'
+                    color: '#000000'
                   }
                 }}
               >
@@ -363,10 +364,10 @@ const BookingListDashboard = () => {
                     height: { xs: '36px', sm: '45px' }
                   },
                   '& .MuiInputLabel-root': {
-                    color: '#ef4444'
+                    color: '#000000'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#ef4444'
+                    color: '#000000'
                   }
                 }}
               >
