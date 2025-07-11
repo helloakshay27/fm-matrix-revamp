@@ -31,8 +31,8 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   return (
     <div className="mb-8">
       {/* Section Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">
+      <div className="flex items-start gap-4 mb-6">
+        <div className="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium whitespace-nowrap">
           Section {sectionIndex + 1} of {totalSections}
         </div>
       </div>
@@ -41,13 +41,13 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         <Input
           value={section.title}
           onChange={(e) => onSectionChange(section.id, 'title', e.target.value)}
-          className="text-lg font-medium border-none p-0 focus-visible:ring-0 bg-transparent mb-2"
-          placeholder="Section Title"
+          className="text-xl font-semibold border-none p-0 focus-visible:ring-0 bg-transparent mb-3 text-black"
+          placeholder="Untitled Section"
         />
         <Textarea
           value={section.description}
           onChange={(e) => onSectionChange(section.id, 'description', e.target.value)}
-          className="border-none p-0 focus-visible:ring-0 bg-transparent resize-none text-gray-600"
+          className="border-none p-0 focus-visible:ring-0 bg-transparent resize-none text-gray-600 text-base"
           placeholder="Description"
           rows={1}
         />
