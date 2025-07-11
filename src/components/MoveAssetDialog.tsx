@@ -34,10 +34,10 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-hidden p-0 rounded-none">
-        <DialogHeader className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[90vh] overflow-hidden p-0 rounded-none">
+        <DialogHeader className="px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold text-gray-900">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">
               MOVE ASSET
             </DialogTitle>
             <Button
@@ -51,58 +51,58 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
           {/* Asset Table */}
           <div className="mb-6">
             <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1200px]">
+                <table className="w-full min-w-[800px] sm:min-w-[1000px] lg:min-w-[1200px]">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Name</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Code</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Status</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Site</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Building</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Wing</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Floor</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Area</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Room</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Department/User</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Name</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Code</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Status</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Site</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Building</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Wing</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Floor</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Area</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Room</th>
+                      <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Department/User</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
                     <tr className="border-t border-gray-200">
-                      <td className="px-3 py-2 text-xs text-gray-900">Dell Laptop</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">#3423</td>
-                      <td className="px-3 py-2">
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Dell Laptop</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">#3423</td>
+                      <td className="px-2 sm:px-3 py-2">
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
                           In Use
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-gray-900">Haven Infoline</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">Jyoti Tower</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">J</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">2</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">East</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">R 202</td>
-                      <td className="px-3 py-2 text-xs text-blue-600">👤 Technical</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Haven Infoline</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Jyoti Tower</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">J</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">2</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">East</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">R 202</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-blue-600">👤 Technical</td>
                     </tr>
                     <tr className="border-t border-gray-200">
-                      <td className="px-3 py-2 text-xs text-gray-900">Computer Table</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">#1233</td>
-                      <td className="px-3 py-2">
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Computer Table</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">#1233</td>
+                      <td className="px-2 sm:px-3 py-2">
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
                           Breakdown
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-gray-900">Haven Infoline</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">Jyoti Tower</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">J</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">2</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">East</td>
-                      <td className="px-3 py-2 text-xs text-gray-900">R 202</td>
-                      <td className="px-3 py-2 text-xs text-orange-600">👤 Rakesh K.</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Haven Infoline</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Jyoti Tower</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">J</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">2</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">East</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">R 202</td>
+                      <td className="px-2 sm:px-3 py-2 text-xs text-orange-600">👤 Rakesh K.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -112,8 +112,8 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
           {/* Movement To Section */}
           <div className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900 mb-3">Movement To</h3>
-            <div className="grid grid-cols-6 gap-2">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3">Movement To</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
               <div>
                 <CustomTextField
                   label="Site*"
@@ -173,10 +173,10 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
           {/* Allocate To Section */}
           <div className="mb-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-3">Allocate To</h3>
-            <div className="flex items-start gap-8">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3">Allocate To</h3>
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-8">
               <div>
-                <RadioGroup value={allocateTo} onValueChange={setAllocateTo} className="flex gap-6">
+                <RadioGroup value={allocateTo} onValueChange={setAllocateTo} className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="department" id="department" />
                     <Label htmlFor="department" className="text-sm">Department</Label>
@@ -187,7 +187,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   </div>
                 </RadioGroup>
               </div>
-              <div className="flex-1 max-w-xs">
+              <div className="flex-1 max-w-full sm:max-w-xs">
                 <CustomTextField
                   label="Department*"
                   value={department}
@@ -201,10 +201,10 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
         </div>
 
         {/* Submit Button - Fixed at bottom */}
-        <div className="border-t border-gray-200 px-6 py-4 flex justify-center flex-shrink-0">
+        <div className="border-t border-gray-200 px-4 sm:px-6 py-4 flex justify-center flex-shrink-0">
           <Button 
             onClick={handleSubmit}
-            className="bg-red-600 hover:bg-red-700 text-white px-12 py-2 text-sm font-medium rounded-none"
+            className="bg-red-600 hover:bg-red-700 text-white px-8 sm:px-12 py-2 text-sm font-medium rounded-none w-full sm:w-auto"
           >
             SUBMIT
           </Button>
