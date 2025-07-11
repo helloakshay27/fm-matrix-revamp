@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -186,7 +187,7 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
   return (
     <ThemeProvider theme={muiTheme}>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-full max-w-none min-w-[95%] max-h-[95vh] overflow-y-auto p-0">
+        <DialogContent className="w-full max-w-none min-w-[95%] max-h-[80vh] overflow-y-auto p-0">
           <DialogHeader className="flex flex-row items-center justify-between p-6 pb-4 border-b">
             <DialogTitle className="text-xl font-semibold text-gray-900 uppercase">
               DISPOSE ASSET
