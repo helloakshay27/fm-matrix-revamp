@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Eye, Plus, Filter, Download, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,6 +33,7 @@ import {
 } from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField, MenuItem } from '@mui/material';
+import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 
 interface BookingData {
   id: number;
@@ -158,6 +158,7 @@ const BookingListDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
   const [isFilterColumnsPopoverOpen, setIsFilterColumnsPopoverOpen] = useState(false);
+  const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'bookedBy']);
   const [visibleTableColumns, setVisibleTableColumns] = useState<string[]>(['id', 'bookedBy', 'bookedFor', 'companyName', 'facility', 'facilityType', 'scheduledDate', 'scheduledTime', 'bookingStatus', 'createdOn', 'source']);
   const [filters, setFilters] = useState({
@@ -316,7 +317,10 @@ const BookingListDashboard = () => {
           </PopoverContent>
         </Popover>
 
-        <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
+        <Button 
+          className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+          onClick={() => setIsExportByCentreModalOpen(true)}
+        >
           <Download className="w-4 h-4 mr-2" />
           Export (By Centre)
         </Button>
@@ -574,6 +578,12 @@ const BookingListDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Export By Centre Modal */}
+      <ExportByCentreModal
+        isOpen={isExportByCentreModalOpen}
+        onClose={() => setIsExportByCentreModalOpen(false)}
+      />
     </div>
   );
 };
