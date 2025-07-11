@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Trash2, QrCode, LogIn, X, Users, Package } from 'lucide-react';
+
 interface AssetSelectionPanelProps {
   selectedCount: number;
   onMoveAsset: () => void;
@@ -10,6 +11,7 @@ interface AssetSelectionPanelProps {
   onCheckIn: () => void;
   onClearSelection: () => void;
 }
+
 export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   selectedCount,
   onMoveAsset,
@@ -18,6 +20,11 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   onCheckIn,
   onClearSelection
 }) => {
+  const handleClearClick = () => {
+    console.log('X button clicked - clearing selection');
+    onClearSelection();
+  };
+
   return <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-sm shadow-lg z-50 flex items-center px-4 py-3">
       <div className="flex items-center gap-10">
         <div className="flex items-center gap-2">
@@ -57,7 +64,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
           
           <div className="w-px h-8 bg-gray-300 mx-1"></div>
           
-          <Button variant="ghost" size="icon" onClick={onClearSelection} className="text-gray-600 hover:bg-gray-100 w-8 h-8">
+          <Button variant="ghost" size="icon" onClick={handleClearClick} className="text-gray-600 hover:bg-gray-100 w-8 h-8">
             <X className="w-4 h-4" />
           </Button>
         </div>
