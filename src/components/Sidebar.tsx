@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -12,7 +11,7 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical
+  Archive, TreePine, FlaskConical, Mail, ClipboardList
 } from 'lucide-react';
 
 const modulesByPackage = {
@@ -261,6 +260,53 @@ const modulesByPackage = {
       subItems: [
         { name: 'Approval Matrix', href: '/settings/asset-setup/approval-matrix', color: 'text-[#1a1a1a]' },
         { name: 'Asset Group & Sub Group', href: '/settings/asset-setup/asset-groups', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Checklist Setup',
+      icon: CheckSquare,
+      href: '/settings/checklist-setup',
+      subItems: [
+        { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/group', color: 'text-[#1a1a1a]' },
+        { name: 'Email Rule', icon: Mail, href: '/settings/checklist-setup/email-rule', color: 'text-[#1a1a1a]' },
+        { name: 'Task Escalation', icon: AlertTriangle, href: '/settings/checklist-setup/task-escalation', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Ticket Management',
+      icon: FileText,
+      href: '/settings/ticket-management',
+      subItems: [
+        { name: 'Setup', href: '/settings/ticket-management/setup', color: 'text-[#1a1a1a]' },
+        { name: 'Escalation Matrix', icon: ClipboardList, href: '/settings/ticket-management/escalation-matrix', color: 'text-[#1a1a1a]' },
+        { name: 'Cost Approval', href: '/settings/ticket-management/cost-approval', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Inventory Management',
+      icon: Package,
+      href: '/settings/inventory-management',
+      subItems: [
+        { name: 'SAC/HSN Code', href: '/settings/inventory-management/sac-hsn-code', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Safety',
+      icon: Shield,
+      href: '/settings/safety',
+      subItems: [
+        { name: 'Permit', href: '/settings/safety/permit', color: 'text-[#1a1a1a]' },
+        { name: 'Permit Setup', href: '/settings/safety/permit-setup', color: 'text-[#1a1a1a]' },
+        { name: 'Incident', href: '/settings/safety/incident', color: 'text-[#1a1a1a]' },
+        { name: 'Setup', href: '/settings/safety/setup', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Waste Management',
+      icon: Trash2,
+      href: '/settings/waste-management',
+      subItems: [
+        { name: 'Setup', href: '/settings/waste-management/setup', color: 'text-[#1a1a1a]' }
       ]
     },
     { 
