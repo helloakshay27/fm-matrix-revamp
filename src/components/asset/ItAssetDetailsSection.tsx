@@ -21,6 +21,8 @@ const fieldStyles = {
 interface ItAssetDetailsProps {
   isExpanded: boolean;
   onToggle: () => void;
+  isToggleOn: boolean;
+  onToggleChange: (value: boolean) => void;
   itAssetData: {
     os: string;
     totalMemory: string;
@@ -44,6 +46,8 @@ interface ItAssetDetailsProps {
 export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
   isExpanded,
   onToggle,
+  isToggleOn,
+  onToggleChange,
   itAssetData,
   onItAssetChange,
   itCustomFields,
@@ -51,10 +55,9 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
   onRemoveItCustomField,
   onOpenCustomFieldModal
 }) => {
-  const [isToggleOn, setIsToggleOn] = React.useState(true);
-
-  const handleToggleChange = () => {
-    setIsToggleOn(!isToggleOn);
+  const handleToggleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleChange(!isToggleOn);
   };
 
   return (
@@ -66,13 +69,12 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
           </span>
           IT Asset Details
           <div className="flex items-center gap-2 ml-4">
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer" onClick={handleToggleClick}>
               <input 
                 type="checkbox" 
                 className="sr-only peer" 
                 checked={isToggleOn}
-                onChange={handleToggleChange}
-                onClick={(e) => e.stopPropagation()}
+                onChange={() => {}}
               />
               <div className={`w-11 h-6 ${isToggleOn ? 'bg-green-400' : 'bg-gray-300'} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
             </label>

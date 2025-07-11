@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, ChevronUp, Percent, Grid2X2, Package, Settings, Paperclip, Plus, X } from 'lucide-react';
@@ -33,16 +32,17 @@ export const EditAssetDetailsPage = () => {
   
   const {
     expandedSections,
+    toggleStates,
     locationData,
     formData,
     itAssetData,
     toggleSection,
+    handleToggleChange,
     handleLocationChange,
     handleInputChange,
     handleItAssetChange
   } = useAssetForm();
 
-  const [meterDetailsApplicable, setMeterDetailsApplicable] = useState(true);
   const [meterType, setMeterType] = useState('parent');
   const [critical, setCritical] = useState('yes');
   const [meterCategoryType, setMeterCategoryType] = useState('');
@@ -76,7 +76,6 @@ export const EditAssetDetailsPage = () => {
     purchaseInvoice: [],
     amc: []
   });
-  const [depreciationApplicable, setDepreciationApplicable] = useState(true);
   const [depreciationMethod, setDepreciationMethod] = useState('straight-line');
   const [depreciationData, setDepreciationData] = useState({
     usefulLife: '',
@@ -88,7 +87,6 @@ export const EditAssetDetailsPage = () => {
     basedOn: 'department',
     department: ''
   });
-  const [assetLoanedApplicable, setAssetLoanedApplicable] = useState(true);
   const [assetLoanedData, setAssetLoanedData] = useState({
     vendorName: '',
     agreementStartDate: '',
@@ -329,6 +327,8 @@ export const EditAssetDetailsPage = () => {
         <ItAssetDetailsSection
           isExpanded={expandedSections.warranty}
           onToggle={() => toggleSection('warranty')}
+          isToggleOn={toggleStates.itAssetApplicable}
+          onToggleChange={(value) => handleToggleChange('itAssetApplicable', value)}
           itAssetData={itAssetData}
           onItAssetChange={handleItAssetChange}
           itCustomFields={itCustomFields}
@@ -341,8 +341,8 @@ export const EditAssetDetailsPage = () => {
         <MeterDetailsSection
           isExpanded={expandedSections.meterCategory}
           onToggle={() => toggleSection('meterCategory')}
-          meterDetailsApplicable={meterDetailsApplicable}
-          setMeterDetailsApplicable={setMeterDetailsApplicable}
+          meterDetailsApplicable={toggleStates.meterDetailsApplicable}
+          onMeterDetailsToggle={(value) => handleToggleChange('meterDetailsApplicable', value)}
           meterType={meterType}
           setMeterType={setMeterType}
           critical={critical}
@@ -455,17 +455,17 @@ export const EditAssetDetailsPage = () => {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    checked={depreciationApplicable}
-                    onChange={(e) => setDepreciationApplicable(e.target.checked)}
+                    checked={toggleStates.depreciationApplicable}
+                    onChange={(e) => handleToggleChange('depreciationApplicable', e.target.checked)}
                   />
-                  <div className="w-11 h-6 bg-green-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className={`w-11 h-6 ${toggleStates.depreciationApplicable ? 'bg-green-400' : 'bg-gray-300'} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
                 </label>
                 <span className="text-sm text-gray-600">If Applicable</span>
               </div>
             </div>
             {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.nonConsumption && (
+          {expandedSections.nonConsumption && toggleStates.depreciationApplicable && (
             <div className="p-4 sm:p-6">
               {/* Method Section */}
               <div className="mb-6">
@@ -656,17 +656,17 @@ export const EditAssetDetailsPage = () => {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    checked={assetLoanedApplicable}
-                    onChange={(e) => setAssetLoanedApplicable(e.target.checked)}
+                    checked={toggleStates.assetLoanedApplicable}
+                    onChange={(e) => handleToggleChange('assetLoanedApplicable', e.target.checked)}
                   />
-                  <div className="w-11 h-6 bg-green-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className={`w-11 h-6 ${toggleStates.assetLoanedApplicable ? 'bg-green-400' : 'bg-gray-300'} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
                 </label>
                 <span className="text-sm text-gray-600">If Applicable</span>
               </div>
             </div>
             {expandedSections.assetLoaned ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.assetLoaned && (
+          {expandedSections.assetLoaned && toggleStates.assetLoanedApplicable && (
             <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>

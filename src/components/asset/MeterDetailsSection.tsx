@@ -6,7 +6,7 @@ interface MeterDetailsProps {
   isExpanded: boolean;
   onToggle: () => void;
   meterDetailsApplicable: boolean;
-  setMeterDetailsApplicable: (value: boolean) => void;
+  onMeterDetailsToggle: (value: boolean) => void;
   meterType: string;
   setMeterType: (value: string) => void;
   critical: string;
@@ -21,7 +21,7 @@ export const MeterDetailsSection: React.FC<MeterDetailsProps> = ({
   isExpanded,
   onToggle,
   meterDetailsApplicable,
-  setMeterDetailsApplicable,
+  onMeterDetailsToggle,
   meterType,
   setMeterType,
   critical,
@@ -31,6 +31,11 @@ export const MeterDetailsSection: React.FC<MeterDetailsProps> = ({
   subCategoryType,
   setSubCategoryType
 }) => {
+  const handleToggleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onMeterDetailsToggle(!meterDetailsApplicable);
+  };
+
   const getMeterCategoryOptions = () => [
     { value: 'board', label: 'Board', icon: <BarChart3 className="w-4 h-4" /> },
     { value: 'dg', label: 'DG', icon: <Zap className="w-4 h-4" /> },
@@ -74,12 +79,12 @@ export const MeterDetailsSection: React.FC<MeterDetailsProps> = ({
           </span>
           METER DETAILS
           <div className="flex items-center gap-2 ml-4">
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer" onClick={handleToggleClick}>
               <input
                 type="checkbox"
                 className="sr-only peer"
                 checked={meterDetailsApplicable}
-                onChange={(e) => setMeterDetailsApplicable(e.target.checked)}
+                onChange={() => {}}
               />
               <div className={`w-11 h-6 ${meterDetailsApplicable ? 'bg-green-400' : 'bg-gray-300'} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
             </label>

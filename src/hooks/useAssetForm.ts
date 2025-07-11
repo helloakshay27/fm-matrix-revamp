@@ -15,6 +15,13 @@ export const useAssetForm = () => {
     attachments: true
   });
 
+  const [toggleStates, setToggleStates] = useState({
+    itAssetApplicable: true,
+    meterDetailsApplicable: true,
+    depreciationApplicable: true,
+    assetLoanedApplicable: true
+  });
+
   const [locationData, setLocationData] = useState({
     site: 'Lockated',
     building: 'sebc',
@@ -67,6 +74,13 @@ export const useAssetForm = () => {
     }));
   };
 
+  const handleToggleChange = (toggleName: string, value: boolean) => {
+    setToggleStates(prev => ({
+      ...prev,
+      [toggleName]: value
+    }));
+  };
+
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
@@ -90,10 +104,12 @@ export const useAssetForm = () => {
 
   return {
     expandedSections,
+    toggleStates,
     locationData,
     formData,
     itAssetData,
     toggleSection,
+    handleToggleChange,
     handleLocationChange,
     handleInputChange,
     handleItAssetChange
