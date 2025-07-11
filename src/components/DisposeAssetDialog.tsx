@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -335,29 +336,34 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
               </FormControl>
             </div>
 
-            {/* Comments */}
-            <div className="space-y-2">
-              <TextField
-                label="Comments"
-                multiline
-                rows={4}
-                placeholder="Type a comment.."
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: 'auto',
-                    minHeight: '96px',
-                  },
-                }}
-              />
-            </div>
+            {/* Comments and Attachments in one row */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Comments - 50% width */}
+              <div className="space-y-2">
+                <TextField
+                  label="Comments"
+                  multiline
+                  rows={4}
+                  placeholder="Type a comment.."
+                  value={comments}
+                  onChange={(e) => setComments(e.target.value)}
+                  variant="outlined"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: 'auto',
+                      minHeight: '96px',
+                    },
+                  }}
+                />
+              </div>
 
-            {/* Attachments */}
-            <AttachmentsSection />
+              {/* Attachments - 50% width */}
+              <div className="space-y-2">
+                <AttachmentsSection />
+              </div>
+            </div>
 
             {/* Submit Button */}
             <div className="flex justify-center pt-6">
@@ -374,3 +380,4 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
     </ThemeProvider>
   );
 };
+
