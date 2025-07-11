@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -126,14 +125,28 @@ export const AssetDashboard = () => {
         onColumnChange={handleColumnChange}
       />
 
-      <AssetDataTable
-        assets={filteredAssets}
-        selectedAssets={selectedAssets}
-        visibleColumns={visibleColumns}
-        onSelectAll={handleSelectAll}
-        onSelectAsset={handleSelectAsset}
-        onViewAsset={handleViewAsset}
-      />
+      <div className="relative">
+        <AssetDataTable
+          assets={filteredAssets}
+          selectedAssets={selectedAssets}
+          visibleColumns={visibleColumns}
+          onSelectAll={handleSelectAll}
+          onSelectAsset={handleSelectAsset}
+          onViewAsset={handleViewAsset}
+        />
+
+        {/* Selection Panel - positioned as overlay within table container */}
+        {selectedAssets.length > 0 && (
+          <AssetSelectionPanel
+            selectedCount={selectedAssets.length}
+            onMoveAsset={handleMoveAsset}
+            onDisposeAsset={handleDisposeAsset}
+            onPrintQRCode={handlePrintQRCode}
+            onCheckIn={handleCheckIn}
+            onClearSelection={handleClearSelection}
+          />
+        )}
+      </div>
 
       <div className="mt-6">
         <Pagination>
@@ -206,18 +219,6 @@ export const AssetDashboard = () => {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
       />
-
-      {/* Selection Panel - only show when assets are selected */}
-      {selectedAssets.length > 0 && (
-        <AssetSelectionPanel
-          selectedCount={selectedAssets.length}
-          onMoveAsset={handleMoveAsset}
-          onDisposeAsset={handleDisposeAsset}
-          onPrintQRCode={handlePrintQRCode}
-          onCheckIn={handleCheckIn}
-          onClearSelection={handleClearSelection}
-        />
-      )}
     </div>
   );
 };

@@ -21,61 +21,65 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   onClearSelection
 }) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-4">
-          <div className="bg-[#1e3a8a] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-[#1e3a8a] text-white rounded-lg shadow-lg z-50 px-4 py-3">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <div className="bg-white text-[#1e3a8a] rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
             {selectedCount}
           </div>
-          <span className="text-gray-600">
+          <span className="text-sm text-white">
             Assets Selected
           </span>
-          <span className="text-gray-800 font-medium">
+          <span className="text-sm text-white font-medium">
             Dell Laptop
           </span>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={onMoveAsset}
-            className="flex items-center gap-2 px-4 py-2 border-gray-300"
+            className="text-white hover:bg-white/20 flex flex-col items-center gap-1 px-3 py-2 h-auto"
           >
             <RotateCcw className="w-4 h-4" />
-            Move Asset
+            <span className="text-xs">Move Asset</span>
           </Button>
           
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={onDisposeAsset}
-            className="flex items-center gap-2 px-4 py-2 border-gray-300"
+            className="text-white hover:bg-white/20 flex flex-col items-center gap-1 px-3 py-2 h-auto"
           >
             <Trash2 className="w-4 h-4" />
-            Dispose Asset
+            <span className="text-xs">Dispose Asset</span>
           </Button>
           
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={onPrintQRCode}
-            className="flex items-center gap-2 px-4 py-2 border-gray-300"
+            className="text-white hover:bg-white/20 flex flex-col items-center gap-1 px-3 py-2 h-auto"
           >
             <QrCode className="w-4 h-4" />
-            Print QR Code
+            <span className="text-xs">Print QR Code</span>
           </Button>
           
           <Button
+            size="sm"
             onClick={onCheckIn}
-            className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 px-6 py-2"
+            className="bg-green-500 hover:bg-green-600 text-white flex flex-col items-center gap-1 px-4 py-2 h-auto"
           >
             <LogIn className="w-4 h-4" />
-            CHECK IN
+            <span className="text-xs font-bold">CHECK IN</span>
           </Button>
           
           <Button
             variant="ghost"
             size="icon"
             onClick={onClearSelection}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-white hover:bg-white/20 w-6 h-6"
           >
             <X className="w-4 h-4" />
           </Button>

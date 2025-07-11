@@ -58,7 +58,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden relative">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
