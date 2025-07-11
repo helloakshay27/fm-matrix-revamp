@@ -4,15 +4,61 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
 import { CustomTextField } from '@/components/ui/custom-text-field';
+import { TextField, MenuItem, ThemeProvider, createTheme } from '@mui/material';
 
 interface MoveAssetDialogProps {
   isOpen: boolean;
   onClose: () => void;
   selectedAssets: any[];
 }
+
+// Custom theme for MUI dropdowns
+const dropdownTheme = createTheme({
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          width: '100%',
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '6px', // rounded-md
+            backgroundColor: '#FFFFFF',
+            height: '45px', // Desktop height
+            '@media (max-width: 768px)': {
+              height: '36px', // Mobile height
+            },
+            '& fieldset': {
+              borderColor: '#E0E0E0',
+              borderRadius: '6px',
+            },
+            '&:hover fieldset': {
+              borderColor: '#1A1A1A',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#C72030',
+              borderWidth: 2,
+            },
+          },
+          '& .MuiInputLabel-root': {
+            color: '#1A1A1A',
+            fontWeight: 500,
+            '&.Mui-focused': {
+              color: '#C72030',
+            },
+          },
+          '& .MuiSelect-select': {
+            color: '#1A1A1A',
+            fontSize: '14px',
+            '@media (max-width: 768px)': {
+              fontSize: '12px',
+            },
+          },
+        },
+      },
+    },
+  },
+});
 
 export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
   isOpen,
@@ -122,98 +168,117 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           {/* Movement To Section */}
           <div className="mb-6">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">Movement To</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-              <div className="w-full">
-                <Label className="text-sm font-medium text-gray-900 mb-2 block">Site*</Label>
-                <Select value={site} onValueChange={setSite}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Site" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {siteOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <ThemeProvider theme={dropdownTheme}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+                <TextField
+                  select
+                  label="Site*"
+                  value={site}
+                  onChange={(e) => setSite(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                >
+                  {siteOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Building*"
+                  value={building}
+                  onChange={(e) => setBuilding(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                >
+                  {buildingOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Wing*"
+                  value={wing}
+                  onChange={(e) => setWing(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                >
+                  {wingOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Area*"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                >
+                  {areaOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Floor*"
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                >
+                  {floorOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Room*"
+                  value={room}
+                  onChange={(e) => setRoom(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                >
+                  {roomOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </div>
-              <div className="w-full">
-                <Label className="text-sm font-medium text-gray-900 mb-2 block">Building*</Label>
-                <Select value={building} onValueChange={setBuilding}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buildingOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full">
-                <Label className="text-sm font-medium text-gray-900 mb-2 block">Wing*</Label>
-                <Select value={wing} onValueChange={setWing}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {wingOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full">
-                <Label className="text-sm font-medium text-gray-900 mb-2 block">Area*</Label>
-                <Select value={area} onValueChange={setArea}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {areaOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full">
-                <Label className="text-sm font-medium text-gray-900 mb-2 block">Floor*</Label>
-                <Select value={floor} onValueChange={setFloor}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {floorOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full">
-                <Label className="text-sm font-medium text-gray-900 mb-2 block">Room*</Label>
-                <Select value={room} onValueChange={setRoom}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Room" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roomOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            </ThemeProvider>
           </div>
 
           {/* Allocate To Section */}
