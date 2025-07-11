@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
 import { CustomTextField } from '@/components/ui/custom-text-field';
 
@@ -32,9 +33,17 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
     onClose();
   };
 
+  // Sample options for dropdowns
+  const siteOptions = ['Haven Infoline', 'Site 2', 'Site 3'];
+  const buildingOptions = ['Jyoti Tower', 'Building 2', 'Building 3'];
+  const wingOptions = ['J', 'A', 'B', 'C'];
+  const areaOptions = ['East', 'West', 'North', 'South'];
+  const floorOptions = ['1', '2', '3', '4', '5'];
+  const roomOptions = ['R 101', 'R 102', 'R 201', 'R 202', 'R 301'];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[80vw] xl:max-w-[75vw] 2xl:max-w-[70vw] max-h-[90vh] p-0 rounded-none flex flex-col">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[80vw] xl:max-w-[75vw] 2xl:max-w-[70vw] max-h-[90vh] flex flex-col">
         <DialogHeader className="px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">
@@ -51,7 +60,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 min-h-0">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
           {/* Asset Table */}
           <div className="mb-6">
             <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
@@ -115,58 +124,94 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">Movement To</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               <div className="w-full">
-                <CustomTextField
-                  label="Site*"
-                  value={site}
-                  onChange={(e) => setSite(e.target.value)}
-                  placeholder="Select Site"
-                  size="small"
-                />
+                <Label className="text-sm font-medium text-gray-900 mb-2 block">Site*</Label>
+                <Select value={site} onValueChange={setSite}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Site" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {siteOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="w-full">
-                <CustomTextField
-                  label="Building*"
-                  value={building}
-                  onChange={(e) => setBuilding(e.target.value)}
-                  placeholder="Select Building"
-                  size="small"
-                />
+                <Label className="text-sm font-medium text-gray-900 mb-2 block">Building*</Label>
+                <Select value={building} onValueChange={setBuilding}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Building" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildingOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="w-full">
-                <CustomTextField
-                  label="Wing*"
-                  value={wing}
-                  onChange={(e) => setWing(e.target.value)}
-                  placeholder="Select Wing"
-                  size="small"
-                />
+                <Label className="text-sm font-medium text-gray-900 mb-2 block">Wing*</Label>
+                <Select value={wing} onValueChange={setWing}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Wing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {wingOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="w-full">
-                <CustomTextField
-                  label="Area*"
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  placeholder="Select Area"
-                  size="small"
-                />
+                <Label className="text-sm font-medium text-gray-900 mb-2 block">Area*</Label>
+                <Select value={area} onValueChange={setArea}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Area" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {areaOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="w-full">
-                <CustomTextField
-                  label="Floor*"
-                  value={floor}
-                  onChange={(e) => setFloor(e.target.value)}
-                  placeholder="Select Floor"
-                  size="small"
-                />
+                <Label className="text-sm font-medium text-gray-900 mb-2 block">Floor*</Label>
+                <Select value={floor} onValueChange={setFloor}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Floor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {floorOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="w-full">
-                <CustomTextField
-                  label="Room*"  
-                  value={room}
-                  onChange={(e) => setRoom(e.target.value)}
-                  placeholder="Select Room"
-                  size="small"
-                />
+                <Label className="text-sm font-medium text-gray-900 mb-2 block">Room*</Label>
+                <Select value={room} onValueChange={setRoom}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Room" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roomOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
