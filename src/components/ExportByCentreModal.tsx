@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { TextField, createTheme, ThemeProvider, MenuItem } from '@mui/material';
+import { TextField, createTheme, ThemeProvider } from '@mui/material';
 import { X } from 'lucide-react';
 import { AsyncSearchableDropdown } from './AsyncSearchableDropdown';
 
@@ -74,17 +74,6 @@ const textFieldTheme = createTheme({
     },
   },
 });
-
-// Date options for dropdown
-const dateOptions = [
-  { value: 'today', label: 'Today' },
-  { value: 'yesterday', label: 'Yesterday' },
-  { value: 'last-7-days', label: 'Last 7 Days' },
-  { value: 'last-30-days', label: 'Last 30 Days' },
-  { value: 'this-month', label: 'This Month' },
-  { value: 'last-month', label: 'Last Month' },
-  { value: 'custom', label: 'Custom Date' }
-];
 
 // Available sites/centers data
 const availableSites = [
@@ -159,7 +148,7 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
               <h3 className="text-lg font-semibold mb-4">Select Date Range</h3>
               <div className="space-y-4">
                 <TextField
-                  select
+                  type="date"
                   label="Start"
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
@@ -168,16 +157,10 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
                   InputLabelProps={{ 
                     shrink: true,
                   }}
-                >
-                  {dateOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                />
                 
                 <TextField
-                  select
+                  type="date"
                   label="End"
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
@@ -186,13 +169,7 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
                   InputLabelProps={{ 
                     shrink: true,
                   }}
-                >
-                  {dateOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                />
               </div>
             </div>
 
