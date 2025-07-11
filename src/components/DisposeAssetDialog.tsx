@@ -138,37 +138,45 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-8">
             {/* Assets Table */}
-            <DisposalAssetTable
-              selectedAssets={selectedAssets}
-              breakdown={breakdown}
-              onBreakdownChange={setBreakdown}
-              soldValue={soldValue}
-              onSoldValueChange={setSoldValue}
-            />
+            <div className="space-y-4">
+              <DisposalAssetTable
+                selectedAssets={selectedAssets}
+                breakdown={breakdown}
+                onBreakdownChange={setBreakdown}
+                soldValue={soldValue}
+                onSoldValueChange={setSoldValue}
+              />
+            </div>
 
             {/* Form Fields */}
-            <DisposalFormFields
-              disposeDate={disposeDate}
-              onDisposeDateChange={setDisposeDate}
-              disposeReason={disposeReason}
-              onDisposeReasonChange={setDisposeReason}
-            />
+            <div className="space-y-4">
+              <DisposalFormFields
+                disposeDate={disposeDate}
+                onDisposeDateChange={setDisposeDate}
+                disposeReason={disposeReason}
+                onDisposeReasonChange={setDisposeReason}
+              />
+            </div>
 
             {/* Handed Over To Section */}
-            <HandedOverToSection
-              handedOverTo={handedOverTo}
-              onHandedOverToChange={setHandedOverTo}
-              vendor={vendor}
-              onVendorChange={setVendor}
-            />
+            <div className="space-y-4">
+              <HandedOverToSection
+                handedOverTo={handedOverTo}
+                onHandedOverToChange={setHandedOverTo}
+                vendor={vendor}
+                onVendorChange={setVendor}
+              />
+            </div>
 
             {/* Comments and Attachments */}
-            <CommentsAttachmentsSection
-              comments={comments}
-              onCommentsChange={setComments}
-            />
+            <div className="space-y-4">
+              <CommentsAttachmentsSection
+                comments={comments}
+                onCommentsChange={setComments}
+              />
+            </div>
           </div>
 
           {/* Submit Button - Fixed at bottom */}
