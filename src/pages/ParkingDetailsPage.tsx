@@ -1,30 +1,83 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-
 const ParkingDetailsPage = () => {
-  const { clientId } = useParams();
+  const {
+    clientId
+  } = useParams();
   const navigate = useNavigate();
 
   // Sample data - in a real app, this would come from an API or state management
   const parkingData = {
-    "HSBC": { clientName: "HSBC", twoWheeler: 0, fourWheeler: 0, freeParking: 10, paidParking: 20, availableSlots: 30, leasePeriod: "01/07/2024 - 29/09/2024" },
-    "localized": { clientName: "localized", twoWheeler: 0, fourWheeler: 0, freeParking: 20, paidParking: 40, availableSlots: 40, leasePeriod: "01/06/2024 - 30/08/2024" },
-    "demo": { clientName: "demo", twoWheeler: 0, fourWheeler: 0, freeParking: 2, paidParking: 5, availableSlots: 7, leasePeriod: "15/05/2024 - 15/07/2024" },
-    "Sohail Ansari": { clientName: "Sohail Ansari", twoWheeler: 0, fourWheeler: 0, freeParking: 5, paidParking: 5, availableSlots: 10, leasePeriod: "01/04/2024 - 30/06/2024" },
-    "Deepak Jain": { clientName: "Deepak Jain", twoWheeler: 0, fourWheeler: 0, freeParking: 5, paidParking: 2, availableSlots: 7, leasePeriod: "10/03/2024 - 10/05/2024" },
-    "Mahendra Lungare": { clientName: "Mahendra Lungare", twoWheeler: 0, fourWheeler: 0, freeParking: 2, paidParking: 1, availableSlots: 3, leasePeriod: "01/02/2024 - 31/03/2024" },
-    "Rajnish Patil": { clientName: "Rajnish Patil", twoWheeler: 0, fourWheeler: 0, freeParking: 5, paidParking: 2, availableSlots: 7, leasePeriod: "15/01/2024 - 15/03/2024" }
+    "HSBC": {
+      clientName: "HSBC",
+      twoWheeler: 0,
+      fourWheeler: 0,
+      freeParking: 10,
+      paidParking: 20,
+      availableSlots: 30,
+      leasePeriod: "01/07/2024 - 29/09/2024"
+    },
+    "localized": {
+      clientName: "localized",
+      twoWheeler: 0,
+      fourWheeler: 0,
+      freeParking: 20,
+      paidParking: 40,
+      availableSlots: 40,
+      leasePeriod: "01/06/2024 - 30/08/2024"
+    },
+    "demo": {
+      clientName: "demo",
+      twoWheeler: 0,
+      fourWheeler: 0,
+      freeParking: 2,
+      paidParking: 5,
+      availableSlots: 7,
+      leasePeriod: "15/05/2024 - 15/07/2024"
+    },
+    "Sohail Ansari": {
+      clientName: "Sohail Ansari",
+      twoWheeler: 0,
+      fourWheeler: 0,
+      freeParking: 5,
+      paidParking: 5,
+      availableSlots: 10,
+      leasePeriod: "01/04/2024 - 30/06/2024"
+    },
+    "Deepak Jain": {
+      clientName: "Deepak Jain",
+      twoWheeler: 0,
+      fourWheeler: 0,
+      freeParking: 5,
+      paidParking: 2,
+      availableSlots: 7,
+      leasePeriod: "10/03/2024 - 10/05/2024"
+    },
+    "Mahendra Lungare": {
+      clientName: "Mahendra Lungare",
+      twoWheeler: 0,
+      fourWheeler: 0,
+      freeParking: 2,
+      paidParking: 1,
+      availableSlots: 3,
+      leasePeriod: "01/02/2024 - 31/03/2024"
+    },
+    "Rajnish Patil": {
+      clientName: "Rajnish Patil",
+      twoWheeler: 0,
+      fourWheeler: 0,
+      freeParking: 5,
+      paidParking: 2,
+      availableSlots: 7,
+      leasePeriod: "15/01/2024 - 15/03/2024"
+    }
   };
-
   const clientData = parkingData[clientId as keyof typeof parkingData];
-
   if (!clientData) {
-    return (
-      <div className="p-6 bg-[#f6f4ee] min-h-screen">
+    return <div className="p-6 bg-[#f6f4ee] min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Client Not Found</h1>
           <Button onClick={() => navigate('/vas/parking')} className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white">
@@ -32,18 +85,11 @@ const ParkingDetailsPage = () => {
             Back to Parking Dashboard
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+  return <div className="p-6 min-h-screen bg-white">
       <div className="flex items-center mb-6">
-        <Button 
-          onClick={() => navigate('/vas/parking')} 
-          variant="ghost" 
-          className="mr-4 p-2"
-        >
+        <Button onClick={() => navigate('/vas/parking')} variant="ghost" className="mr-4 p-2">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h1 className="text-xl font-bold text-gray-900">Parking</h1>
@@ -80,8 +126,6 @@ const ParkingDetailsPage = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default ParkingDetailsPage;
