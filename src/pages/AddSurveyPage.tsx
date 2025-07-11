@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Copy, Trash2, Eye, Plus, MapPin } from 'lucide-react';
+import { CalendarIcon, Copy, Trash2, Eye, Plus, MapPin, Minus, AlignLeft, Circle, Square, ChevronDown, Upload, BarChart3, Star, Grid3X3, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -220,13 +221,78 @@ export const AddSurveyPage = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Short answer">Short answer</SelectItem>
-                            <SelectItem value="Long answer">Long answer</SelectItem>
-                            <SelectItem value="Multiple choice">Multiple choice</SelectItem>
-                            <SelectItem value="Checkboxes">Checkboxes</SelectItem>
-                            <SelectItem value="Dropdown">Dropdown</SelectItem>
-                            <SelectItem value="Rating">Rating</SelectItem>
-                            <SelectItem value="Date">Date</SelectItem>
+                            <SelectItem value="Short answer">
+                              <div className="flex items-center gap-2">
+                                <Minus className="w-4 h-4" />
+                                Short answer
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Paragraph">
+                              <div className="flex items-center gap-2">
+                                <AlignLeft className="w-4 h-4" />
+                                Paragraph
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Multiple choice">
+                              <div className="flex items-center gap-2">
+                                <Circle className="w-4 h-4" />
+                                Multiple choice
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Checkboxes">
+                              <div className="flex items-center gap-2">
+                                <Square className="w-4 h-4" />
+                                Checkboxes
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Dropdown">
+                              <div className="flex items-center gap-2">
+                                <ChevronDown className="w-4 h-4" />
+                                Dropdown
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="File Upload">
+                              <div className="flex items-center gap-2">
+                                <Upload className="w-4 h-4" />
+                                File Upload
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Linear scale">
+                              <div className="flex items-center gap-2">
+                                <BarChart3 className="w-4 h-4" />
+                                Linear scale
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Rating">
+                              <div className="flex items-center gap-2">
+                                <Star className="w-4 h-4" />
+                                Rating
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Multiple choice grid">
+                              <div className="flex items-center gap-2">
+                                <Grid3X3 className="w-4 h-4" />
+                                Multiple choice grid
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Tick box grid">
+                              <div className="flex items-center gap-2">
+                                <Grid3X3 className="w-4 h-4" />
+                                Tick box grid
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Date">
+                              <div className="flex items-center gap-2">
+                                <CalendarIcon className="w-4 h-4" />
+                                Date
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Time">
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                Time
+                              </div>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
