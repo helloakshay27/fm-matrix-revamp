@@ -9,7 +9,7 @@ import {
   Button,
   Box,
   Typography,
-  Grid,
+  Grid2 as Grid,
 } from '@mui/material';
 import { X } from 'lucide-react';
 
@@ -113,7 +113,7 @@ export const SurveyResponseFilterModal: React.FC<SurveyResponseFilterModalProps>
           </Typography>
           
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={6}>
+            <Grid xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Survey Title"
@@ -129,7 +129,7 @@ export const SurveyResponseFilterModal: React.FC<SurveyResponseFilterModalProps>
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Survey Type"
@@ -160,7 +160,7 @@ export const SurveyResponseFilterModal: React.FC<SurveyResponseFilterModalProps>
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid xs={12} md={6}>
               <TextField
                 fullWidth
                 label="From"
@@ -180,7 +180,7 @@ export const SurveyResponseFilterModal: React.FC<SurveyResponseFilterModalProps>
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid xs={12} md={6}>
               <TextField
                 fullWidth
                 label="To"
