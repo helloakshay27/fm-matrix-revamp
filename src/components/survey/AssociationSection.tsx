@@ -23,9 +23,9 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
     <div className="p-6 border-t border-gray-200">
       <Typography variant="h6" className="mb-4">Association</Typography>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex flex-col sm:flex-row gap-4 items-end">
         {/* Location */}
-        <div>
+        <div className="flex-1 min-w-0">
           <FormControl fullWidth size="small">
             <InputLabel>Location</InputLabel>
             <Select
@@ -39,12 +39,12 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
         </div>
         
         {/* Validity Dates */}
-        <div>
-          <Typography variant="subtitle2" className="mb-2">Validity</Typography>
+        <div className="flex-2 min-w-0">
+          <Typography variant="subtitle2" className="mb-2 text-center sm:text-left">Validity</Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Box className="flex items-center gap-2">
-              <div className="flex-1">
-                <Typography variant="caption" className="text-gray-500">Start Date</Typography>
+            <Box className="flex flex-col sm:flex-row items-center gap-2">
+              <div className="flex-1 min-w-0 w-full sm:w-auto">
+                <Typography variant="caption" className="text-gray-500 block">Start Date</Typography>
                 <DatePicker
                   value={startDate}
                   onChange={(newValue) => onStartDateChange(newValue || undefined)}
@@ -59,10 +59,10 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
                 />
               </div>
               
-              <span className="text-gray-500 mt-4">To</span>
+              <span className="text-gray-500 text-sm px-2 hidden sm:inline">To</span>
               
-              <div className="flex-1">
-                <Typography variant="caption" className="text-gray-500">End Date</Typography>
+              <div className="flex-1 min-w-0 w-full sm:w-auto">
+                <Typography variant="caption" className="text-gray-500 block">End Date</Typography>
                 <DatePicker
                   value={endDate}
                   onChange={(newValue) => onEndDateChange(newValue || undefined)}
