@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -187,7 +186,7 @@ export const AddSurveyPage = () => {
                 <div key={question.id} className="border border-gray-200 rounded-lg mb-4">
                   {/* Question Header */}
                   <div className="border-b border-gray-200 px-4 py-3">
-                    <div className="space-y-3">
+                    <div className="flex items-center justify-between">
                       <Input
                         value={question.text}
                         onChange={(e) => setSections(sections.map(s => 
@@ -200,11 +199,11 @@ export const AddSurveyPage = () => {
                               }
                             : s
                         ))}
-                        className="border-none p-0 focus-visible:ring-0 bg-transparent font-medium text-lg"
+                        className="border-none p-0 focus-visible:ring-0 bg-transparent font-medium"
                         placeholder="Question"
                       />
                       
-                      <div className="flex justify-end">
+                      <div className="flex items-center gap-2">
                         <Select 
                           value={question.type} 
                           onValueChange={(value) => setSections(sections.map(s => 
