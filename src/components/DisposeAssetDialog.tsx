@@ -91,7 +91,7 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[98vw] w-[98vw] max-h-[95vh] overflow-y-auto p-0">
         <DialogHeader className="flex flex-row items-center justify-between p-6 pb-4 border-b">
           <DialogTitle className="text-xl font-semibold text-gray-900 uppercase">
             DISPOSE ASSET
@@ -108,17 +108,17 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
 
         <div className="p-6 space-y-6">
           {/* Assets Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[1200px]">
+          <div className="w-full">
+            <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 min-w-[120px]">Asset Name</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 min-w-[100px]">Asset Code</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 min-w-[120px]">Asset Status</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 min-w-[120px]">Site</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 min-w-[120px]">Purchase Cost</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 min-w-[140px]">Current Book Value</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 min-w-[100px]">Sold Value</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Asset Name</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[10%]">Asset Code</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Asset Status</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Site</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Purchase Cost</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Current Book Value</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Sold Value</th>
                 </tr>
               </thead>
               <tbody>
