@@ -1,8 +1,6 @@
 
 import React from 'react';
-import { Label } from '@/components/ui/label';
-import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 interface DisposalFormFieldsProps {
   disposeDate?: Date;
@@ -26,21 +24,39 @@ export const DisposalFormFields: React.FC<DisposalFormFieldsProps> = ({
     'Other'
   ];
 
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    if (value) {
+      onDisposeDateChange(new Date(value));
+    } else {
+      onDisposeDateChange(undefined);
+    }
+  };
+
+  const formatDate = (date: Date | undefined) => {
+    if (!date) return '';
+    return date.toISOString().split('T')[0];
+  };
+
   return (
     <div className="grid grid-cols-2 gap-6 items-start">
       {/* Dispose Date */}
       <div className="space-y-2">
-        <Label htmlFor="dispose-date" className="text-sm font-medium text-gray-700">
-          Dispose Date
-        </Label>
-        <div className="h-[45px]">
-          <ResponsiveDatePicker
-            value={disposeDate}
-            onChange={onDisposeDateChange}
-            placeholder="Select Date"
-            className="w-full h-full"
-          />
-        </div>
+        <TextField
+          label="Dispose Date"
+          type="date"
+          value={formatDate(disposeDate)}
+          onChange={handleDateChange}
+          fullWidth
+          InputLabelProps={{
+            shrink: true,
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              height: '45px',
+            }
+          }}
+        />
       </div>
 
       {/* Dispose Reason */}
