@@ -1,9 +1,16 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Trash2, QrCode, LogIn, X, Users, Package } from 'lucide-react';
 
+interface Asset {
+  id: string;
+  name: string;
+}
+
 interface AssetSelectionPanelProps {
   selectedCount: number;
+  selectedAssets: Asset[];
   onMoveAsset: () => void;
   onDisposeAsset: () => void;
   onPrintQRCode: () => void;
@@ -13,6 +20,7 @@ interface AssetSelectionPanelProps {
 
 export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   selectedCount,
+  selectedAssets,
   onMoveAsset,
   onDisposeAsset,
   onPrintQRCode,
@@ -22,6 +30,15 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   const handleClearClick = () => {
     console.log('X button clicked - clearing selection');
     onClearSelection();
+  };
+
+  const getDisplayText = () => {
+    if (selectedAssets.length === 0) return '';
+    if (selectedAssets.length === 1) return selectedAssets[0].name;
+    if (selectedAssets.length <= 3) {
+      return selectedAssets.map(asset => asset.name).join(', ');
+    }
+    return `${selectedAssets.slice(0, 2).map(asset => asset.name).join(', ')} and ${selectedAssets.length - 2} more`;
   };
 
   return <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-sm shadow-lg z-50 flex items-center px-4 py-4">
@@ -34,8 +51,8 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
             <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
               Assets Selected
             </span>
-            <span className="text-xs text-gray-500">
-              Dell Laptop
+            <span className="text-xs text-gray-500 max-w-48 truncate">
+              {getDisplayText()}
             </span>
           </div>
         </div>

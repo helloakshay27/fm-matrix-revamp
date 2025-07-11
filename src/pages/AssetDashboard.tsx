@@ -54,6 +54,12 @@ export const AssetDashboard = () => {
     handleSelectAsset
   } = useAssetData();
 
+  // Get selected asset objects with id and name
+  const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
+    id: asset.id,
+    name: asset.name
+  }));
+
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
   };
@@ -148,6 +154,7 @@ export const AssetDashboard = () => {
         {selectedAssets.length > 0 && (
           <AssetSelectionPanel
             selectedCount={selectedAssets.length}
+            selectedAssets={selectedAssetObjects}
             onMoveAsset={handleMoveAsset}
             onDisposeAsset={handleDisposeAsset}
             onPrintQRCode={handlePrintQRCode}
