@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, File, Image } from 'lucide-react';
@@ -14,6 +13,16 @@ interface FileUploadSectionProps {
   onFilesChange: (files: File[]) => void;
 }
 
+// Map section numbers to display numbers
+const getSectionDisplayNumber = (sectionNumber: number): number => {
+  const sectionMap: { [key: number]: number } = {
+    4: 1, // Cover section
+    5: 2, // Menu section
+    6: 3  // Gallery section
+  };
+  return sectionMap[sectionNumber] || sectionNumber;
+};
+
 export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   title,
   sectionNumber,
@@ -25,6 +34,7 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   onFilesChange
 }) => {
   const [dragOver, setDragOver] = useState(false);
+  const displayNumber = getSectionDisplayNumber(sectionNumber);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
@@ -71,7 +81,7 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       {/* Section Header */}
       <div className="flex items-center gap-2 mb-4">
         <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
-          {sectionNumber}
+          {displayNumber}
         </span>
         <h3 className="text-lg font-medium text-[#C72030] uppercase">{title}</h3>
       </div>
