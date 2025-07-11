@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-hidden p-0 rounded-none">
+      <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-hidden p-0 rounded-none">
         <DialogHeader className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-bold text-gray-900">
