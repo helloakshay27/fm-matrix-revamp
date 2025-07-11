@@ -1,78 +1,163 @@
 
 import React, { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 
-const mockMappingData = [{
-  id: 1,
-  title: "Building A Survey",
-  site: "Main Campus",
-  building: "Building A",
-  wing: "North Wing",
-  area: "Reception",
-  floor: "Ground Floor",
-  room: "Room 101",
-  status: "Active",
-  active: true,
-  qrCode: "QR001"
-}, {
-  id: 2,
-  title: "Cafeteria Survey",
-  site: "Main Campus",
-  building: "Building B",
-  wing: "South Wing",
-  area: "Food Court",
-  floor: "First Floor",
-  room: "Cafeteria",
-  status: "Active",
-  active: true,
-  qrCode: "QR002"
-}];
+const mockMappingData = [
+  {
+    id: 1,
+    serviceId: "12345",
+    serviceName: "Survey Title 123",
+    site: "Lockated",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "Basement",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR001"
+  },
+  {
+    id: 2,
+    serviceId: "12345",
+    serviceName: "Survey Title 123", 
+    site: "Panchashil",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "Third",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR002"
+  },
+  {
+    id: 3,
+    serviceId: "12345",
+    serviceName: "Survey Title 123",
+    site: "Lockated",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "Basement",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR003"
+  },
+  {
+    id: 4,
+    serviceId: "12345",
+    serviceName: "Survey Title 123",
+    site: "Panchashil",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "First",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR004"
+  },
+  {
+    id: 5,
+    serviceId: "12345",
+    serviceName: "Survey Title 123",
+    site: "Panchashil",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "Basement",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR005"
+  },
+  {
+    id: 6,
+    serviceId: "12345",
+    serviceName: "Survey Title 123",
+    site: "Lockated",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "Second",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR006"
+  },
+  {
+    id: 7,
+    serviceId: "12345",
+    serviceName: "Survey Title 123",
+    site: "Lockated",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "Basement",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR007"
+  },
+  {
+    id: 8,
+    serviceId: "12345",
+    serviceName: "Survey Title 123",
+    site: "Panchashil",
+    building: "Tower A",
+    wing: "Wing A",
+    area: "Area A",
+    floor: "Third",
+    room: "EV Room",
+    status: true,
+    createdOn: "01/07/2025",
+    qrCode: "QR008"
+  }
+];
 
-export const SurveyMappingTable = () => {
+interface SurveyMappingTableProps {
+  searchTerm: string;
+}
+
+export const SurveyMappingTable: React.FC<SurveyMappingTableProps> = ({ searchTerm }) => {
   const [mappings, setMappings] = useState(mockMappingData);
-
-  const handleDownloadQRCode = () => {
-    console.log('Downloading QR Code...');
-    // QR Code download functionality would be implemented here
-  };
 
   const handleStatusToggle = (mappingId: number) => {
     console.log(`Toggling status for Survey Mapping ${mappingId}`);
-    setMappings(prev => prev.map(mapping => mapping.id === mappingId ? {
-      ...mapping,
-      status: mapping.status === 'Active' ? 'Inactive' : 'Active'
-    } : mapping));
+    setMappings(prev => prev.map(mapping => 
+      mapping.id === mappingId 
+        ? { ...mapping, status: !mapping.status }
+        : mapping
+    ));
   };
 
-  const handleActiveToggle = (mappingId: number) => {
-    console.log(`Toggling active status for Survey Mapping ${mappingId}`);
-    setMappings(prev => prev.map(mapping => mapping.id === mappingId ? {
-      ...mapping,
-      active: !mapping.active
-    } : mapping));
-  };
+  const filteredMappings = mappings.filter(mapping =>
+    mapping.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.wing.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.floor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.room.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  return <div className="space-y-4">
-      {/* Action Buttons */}
-      <div className="flex items-center gap-4">
-        <button onClick={handleDownloadQRCode} className="flex items-center text-[#BF213E] px-6 rounded-md transition-colors bg-sidebar-DEFAULT bg-[#F2EEE9] h-[36px]">
-          <Download className="w-4 h-4 mr-2" style={{
-          color: '#BF213E'
-        }} />
-          Download QR Code
-        </button>
-      </div>
-
+  return (
+    <div className="space-y-4">
       {/* Table */}
       <div className="bg-white rounded-lg border border-[#D5DbDB]">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
+              <TableHead className="w-12">
                 <input type="checkbox" className="rounded" />
               </TableHead>
-              <TableHead>Title</TableHead>
+              <TableHead className="w-16">View</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>Service Name</TableHead>
               <TableHead>Site</TableHead>
               <TableHead>Building</TableHead>
               <TableHead>Wing</TableHead>
@@ -80,16 +165,23 @@ export const SurveyMappingTable = () => {
               <TableHead>Floor</TableHead>
               <TableHead>Room</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead>QR Code</TableHead>
+              <TableHead>Created On</TableHead>
+              <TableHead>QR</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mappings.map(mapping => <TableRow key={mapping.id}>
+            {filteredMappings.map(mapping => (
+              <TableRow key={mapping.id}>
                 <TableCell>
                   <input type="checkbox" className="rounded" />
                 </TableCell>
-                <TableCell className="font-medium">{mapping.title}</TableCell>
+                <TableCell>
+                  <button className="text-gray-600 hover:text-gray-800">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">{mapping.serviceId}</TableCell>
+                <TableCell>{mapping.serviceName}</TableCell>
                 <TableCell>{mapping.site}</TableCell>
                 <TableCell>{mapping.building}</TableCell>
                 <TableCell>{mapping.wing}</TableCell>
@@ -97,23 +189,28 @@ export const SurveyMappingTable = () => {
                 <TableCell>{mapping.floor}</TableCell>
                 <TableCell>{mapping.room}</TableCell>
                 <TableCell>
-                  <div className="flex items-center">
-                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${mapping.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleStatusToggle(mapping.id)}>
-                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${mapping.status === 'Active' ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </div>
-                  </div>
+                  <Switch
+                    checked={mapping.status}
+                    onCheckedChange={() => handleStatusToggle(mapping.id)}
+                  />
                 </TableCell>
+                <TableCell>{mapping.createdOn}</TableCell>
                 <TableCell>
-                  <div className="flex items-center">
-                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${mapping.active ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleActiveToggle(mapping.id)}>
-                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${mapping.active ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <div className="w-8 h-8 bg-black flex items-center justify-center">
+                    <div className="w-6 h-6 bg-white grid grid-cols-3 gap-px">
+                      {Array.from({ length: 9 }).map((_, i) => (
+                        <div key={i} className="bg-black" style={{ 
+                          backgroundColor: Math.random() > 0.5 ? 'black' : 'white' 
+                        }}></div>
+                      ))}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{mapping.qrCode}</TableCell>
-              </TableRow>)}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
-    </div>;
+    </div>
+  );
 };
