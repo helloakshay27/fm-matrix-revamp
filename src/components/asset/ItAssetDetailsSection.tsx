@@ -51,6 +51,12 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
   onRemoveItCustomField,
   onOpenCustomFieldModal
 }) => {
+  const [isToggleOn, setIsToggleOn] = React.useState(true);
+
+  const handleToggleChange = () => {
+    setIsToggleOn(!isToggleOn);
+  };
+
   return (
     <div className="bg-white shadow-sm rounded-lg overflow-hidden">
       <div onClick={onToggle} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
@@ -61,7 +67,13 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
           IT Asset Details
           <div className="flex items-center gap-2 ml-4">
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <input 
+                type="checkbox" 
+                className="sr-only peer" 
+                checked={isToggleOn}
+                onChange={handleToggleChange}
+                onClick={(e) => e.stopPropagation()}
+              />
               <div className="w-11 h-6 bg-green-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
             </label>
             <span className="text-sm text-gray-600">If Applicable</span>
@@ -81,7 +93,7 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
           {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
         </div>
       </div>
-      {isExpanded && (
+      {isExpanded && isToggleOn && (
         <div className="p-4 sm:p-6">
           {/* System Details Section */}
           <div className="mb-6">
@@ -136,7 +148,7 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
                   />
                   <button
                     onClick={() => onRemoveItCustomField(field.id)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -198,7 +210,7 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
                   />
                   <button
                     onClick={() => onRemoveItCustomField(field.id)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
                   >
                     <X className="w-3 h-3" />
                   </button>
