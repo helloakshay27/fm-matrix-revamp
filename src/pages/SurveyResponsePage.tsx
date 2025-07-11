@@ -71,7 +71,7 @@ export const SurveyResponsePage = () => {
   };
 
   return (
-    <div className="flex-1 p-6 bg-white min-h-screen">
+    <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
@@ -79,53 +79,53 @@ export const SurveyResponsePage = () => {
           <span className="mx-2">{'>'}</span>
           <span>Response</span>
         </nav>
-        <h1 className="text-2xl font-semibold text-gray-800 mb-6">Response List</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response List</h1>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="relative w-12 h-12 flex items-center justify-center">
+          <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
             <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
             <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" />
             </div>
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">20</div>
-            <div className="text-sm text-gray-600">Total Active</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">20</div>
+            <div className="text-sm text-gray-600 truncate">Total Active</div>
           </div>
         </div>
 
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="relative w-12 h-12 flex items-center justify-center">
+          <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
             <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
             <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
               <ThumbsUp className="w-4 h-4 text-white" />
             </div>
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">10</div>
-            <div className="text-sm text-gray-600">Feedback</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
+            <div className="text-sm text-gray-600 truncate">Feedback</div>
           </div>
         </div>
 
-        <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="relative w-12 h-12 flex items-center justify-center">
+        <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3 sm:col-span-2 lg:col-span-1">
+          <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
             <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
             <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
               <ClipboardList className="w-4 h-4 text-white" />
             </div>
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">10</div>
-            <div className="text-sm text-gray-600">Survey</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
+            <div className="text-sm text-gray-600 truncate">Survey</div>
           </div>
         </div>
       </div>
 
       {/* Search and Action Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
             <Upload className="w-4 h-4 mr-2" />
@@ -141,18 +141,18 @@ export const SurveyResponsePage = () => {
           </Button>
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+        <div className="flex gap-2 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search services..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none"
+              className="w-full h-[28px] sm:h-[36px] pl-10 pr-4 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none text-sm"
             />
           </div>
-          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
+          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white flex-shrink-0">
             <RotateCcw className="w-4 h-4 mr-2" />
             Reset
           </Button>
@@ -161,37 +161,39 @@ export const SurveyResponsePage = () => {
 
       {/* Data Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-gray-600 font-medium">View</TableHead>
-              <TableHead className="text-gray-600 font-medium">ID</TableHead>
-              <TableHead className="text-gray-600 font-medium">Survey Title</TableHead>
-              <TableHead className="text-gray-600 font-medium">No. Of Responses</TableHead>
-              <TableHead className="text-gray-600 font-medium">No. Of Tickets</TableHead>
-              <TableHead className="text-gray-600 font-medium">Expiry Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockResponseData.map((item, index) => (
-              <TableRow key={index} className="hover:bg-gray-50">
-                <TableCell>
-                  <button
-                    onClick={() => handleViewDetails(item.id)}
-                    className="text-gray-600 hover:text-[#C72030] transition-colors"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </TableCell>
-                <TableCell className="font-medium text-gray-900">{item.id}</TableCell>
-                <TableCell className="text-gray-700">{item.surveyTitle}</TableCell>
-                <TableCell className="text-center text-gray-700">{item.responses}</TableCell>
-                <TableCell className="text-center text-gray-700">{item.tickets}</TableCell>
-                <TableCell className="text-gray-700">{item.expiryDate}</TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-gray-600 font-medium whitespace-nowrap">View</TableHead>
+                <TableHead className="text-gray-600 font-medium whitespace-nowrap">ID</TableHead>
+                <TableHead className="text-gray-600 font-medium whitespace-nowrap">Survey Title</TableHead>
+                <TableHead className="text-gray-600 font-medium whitespace-nowrap">No. Of Responses</TableHead>
+                <TableHead className="text-gray-600 font-medium whitespace-nowrap">No. Of Tickets</TableHead>
+                <TableHead className="text-gray-600 font-medium whitespace-nowrap">Expiry Date</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {mockResponseData.map((item, index) => (
+                <TableRow key={index} className="hover:bg-gray-50">
+                  <TableCell>
+                    <button
+                      onClick={() => handleViewDetails(item.id)}
+                      className="text-gray-600 hover:text-[#C72030] transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell className="font-medium text-gray-900">{item.id}</TableCell>
+                  <TableCell className="text-gray-700">{item.surveyTitle}</TableCell>
+                  <TableCell className="text-center text-gray-700">{item.responses}</TableCell>
+                  <TableCell className="text-center text-gray-700">{item.tickets}</TableCell>
+                  <TableCell className="text-gray-700">{item.expiryDate}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );
