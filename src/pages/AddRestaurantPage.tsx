@@ -776,7 +776,7 @@ export const AddRestaurantPage = () => {
               acceptedTypes="image/*"
               multiple={false}
               buttonText="Upload Cover Image"
-              description="Cover image upload functionality would be implemented here"
+              description="Drag and drop files here or click to browse"
               files={coverImages}
               onFilesChange={setCoverImages}
             />
@@ -787,7 +787,7 @@ export const AddRestaurantPage = () => {
               acceptedTypes="image/*,.pdf,.doc,.docx"
               multiple={true}
               buttonText="Add Menu Items"
-              description="Menu management functionality would be implemented here"
+              description="Drag and drop files here or click to browse"
               files={menuFiles}
               onFilesChange={setMenuFiles}
             />
@@ -798,7 +798,7 @@ export const AddRestaurantPage = () => {
               acceptedTypes="image/*"
               multiple={true}
               buttonText="Add Gallery Images"
-              description="Gallery management functionality would be implemented here"
+              description="Drag and drop files here or click to browse"
               files={galleryImages}
               onFilesChange={setGalleryImages}
             />
