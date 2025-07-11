@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,28 +19,46 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onDuplicate,
   onDelete
 }) => {
+  const [isSelected, setIsSelected] = useState(false);
+
+  const handleCardClick = () => {
+    setIsSelected(true);
+  };
+
+  const handleClickOutside = (e: React.MouseEvent) => {
+    // If clicking outside the card, deselect it
+    if (e.target === e.currentTarget) {
+      setIsSelected(false);
+    }
+  };
+
   return (
-    <div className="flex items-start gap-3 mb-4">
-      {/* Left Toolbar */}
-      <div className="flex flex-col items-center bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-2 hover:bg-gray-100 w-8 h-8"
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-2 hover:bg-gray-100 w-8 h-8"
-        >
-          <Menu className="w-4 h-4" />
-        </Button>
-      </div>
+    <div className="flex items-start gap-3 mb-4" onClick={handleClickOutside}>
+      {/* Left Toolbar - Only show when selected */}
+      {isSelected && (
+        <div className="flex flex-col items-center bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 hover:bg-gray-100 w-8 h-8"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 hover:bg-gray-100 w-8 h-8"
+          >
+            <Menu className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Question Card */}
-      <div className="flex-1 border border-gray-200 rounded-lg bg-white">
+      <div 
+        className="flex-1 border border-gray-200 rounded-lg bg-white cursor-pointer"
+        onClick={handleCardClick}
+      >
         {/* Question Header */}
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-4">
