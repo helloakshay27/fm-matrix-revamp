@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
+import { CustomTextField } from '@/components/ui/custom-text-field';
 
 interface MoveAssetDialogProps {
   isOpen: boolean;
@@ -18,6 +19,13 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
   selectedAssets
 }) => {
   const [allocateTo, setAllocateTo] = useState('department');
+  const [site, setSite] = useState('');
+  const [building, setBuilding] = useState('');
+  const [wing, setWing] = useState('');
+  const [area, setArea] = useState('');
+  const [floor, setFloor] = useState('');
+  const [room, setRoom] = useState('');
+  const [department, setDepartment] = useState('');
 
   const handleSubmit = () => {
     console.log('Moving assets:', selectedAssets);
@@ -107,89 +115,58 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
             <h3 className="text-base font-semibold text-gray-900 mb-3">Movement To</h3>
             <div className="grid grid-cols-6 gap-2">
               <div>
-                <Label htmlFor="site" className="text-xs font-medium text-gray-700 mb-1 block">
-                  Site<span className="text-red-500">*</span>
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Site" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="haven">Haven Infoline</SelectItem>
-                    <SelectItem value="other">Other Site</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomTextField
+                  label="Site*"
+                  value={site}
+                  onChange={(e) => setSite(e.target.value)}
+                  placeholder="Select Site"
+                  size="small"
+                />
               </div>
               <div>
-                <Label htmlFor="building" className="text-xs font-medium text-gray-700 mb-1 block">
-                  Building<span className="text-red-500">*</span>
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="jyoti">Jyoti Tower</SelectItem>
-                    <SelectItem value="other">Other Building</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomTextField
+                  label="Building*"
+                  value={building}
+                  onChange={(e) => setBuilding(e.target.value)}
+                  placeholder="Select Building"
+                  size="small"
+                />
               </div>
               <div>
-                <Label htmlFor="wing" className="text-xs font-medium text-gray-700 mb-1 block">
-                  Wing<span className="text-red-500">*</span>
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="j">J</SelectItem>
-                    <SelectItem value="k">K</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomTextField
+                  label="Wing*"
+                  value={wing}
+                  onChange={(e) => setWing(e.target.value)}
+                  placeholder="Select Wing"
+                  size="small"
+                />
               </div>
               <div>
-                <Label htmlFor="area" className="text-xs font-medium text-gray-700 mb-1 block">
-                  Area<span className="text-red-500">*</span>
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="east">East</SelectItem>
-                    <SelectItem value="west">West</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomTextField
+                  label="Area*"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  placeholder="Select Area"
+                  size="small"
+                />
               </div>
               <div>
-                <Label htmlFor="floor" className="text-xs font-medium text-gray-700 mb-1 block">
-                  Floor<span className="text-red-500">*</span>
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1</SelectItem>
-                    <SelectItem value="2">2</SelectItem>
-                    <SelectItem value="3">3</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomTextField
+                  label="Floor*"
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
+                  placeholder="Select Floor"
+                  size="small"
+                />
               </div>
               <div>
-                <Label htmlFor="room" className="text-xs font-medium text-gray-700 mb-1 block">
-                  Room<span className="text-red-500">*</span>
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Room" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="r202">R 202</SelectItem>
-                    <SelectItem value="r203">R 203</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomTextField
+                  label="Room*"
+                  value={room}
+                  onChange={(e) => setRoom(e.target.value)}
+                  placeholder="Select Room"
+                  size="small"
+                />
               </div>
             </div>
           </div>
@@ -211,19 +188,13 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                 </RadioGroup>
               </div>
               <div className="flex-1 max-w-xs">
-                <Label htmlFor="department-select" className="text-xs font-medium text-gray-700 mb-1 block">
-                  Department<span className="text-red-500">*</span>
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
-                    <SelectItem value="finance">Finance</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomTextField
+                  label="Department*"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  placeholder="Select Department"
+                  size="small"
+                />
               </div>
             </div>
           </div>
