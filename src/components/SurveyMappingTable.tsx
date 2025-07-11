@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Eye } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { QRCodeModal } from './QRCodeModal';
 
 const mockMappingData = [
   {
@@ -125,6 +125,11 @@ interface SurveyMappingTableProps {
 
 export const SurveyMappingTable: React.FC<SurveyMappingTableProps> = ({ searchTerm }) => {
   const [mappings, setMappings] = useState(mockMappingData);
+  const [selectedQR, setSelectedQR] = useState<{
+    qrCode: string;
+    serviceName: string;
+    site: string;
+  } | null>(null);
 
   const handleStatusToggle = (mappingId: number) => {
     console.log(`Toggling status for Survey Mapping ${mappingId}`);
@@ -133,6 +138,14 @@ export const SurveyMappingTable: React.FC<SurveyMappingTableProps> = ({ searchTe
         ? { ...mapping, status: !mapping.status }
         : mapping
     ));
+  };
+
+  const handleQRClick = (mapping: any) => {
+    setSelectedQR({
+      qrCode: mapping.qrCode,
+      serviceName: mapping.serviceName,
+      site: mapping.site
+    });
   };
 
   const filteredMappings = mappings.filter(mapping =>
@@ -196,7 +209,10 @@ export const SurveyMappingTable: React.FC<SurveyMappingTableProps> = ({ searchTe
                 </TableCell>
                 <TableCell>{mapping.createdOn}</TableCell>
                 <TableCell>
-                  <div className="w-8 h-8 bg-black flex items-center justify-center">
+                  <button 
+                    onClick={() => handleQRClick(mapping)}
+                    className="w-8 h-8 bg-black flex items-center justify-center hover:opacity-80 transition-opacity"
+                  >
                     <div className="w-6 h-6 bg-white grid grid-cols-3 gap-px">
                       {Array.from({ length: 9 }).map((_, i) => (
                         <div key={i} className="bg-black" style={{ 
@@ -204,13 +220,22 @@ export const SurveyMappingTable: React.FC<SurveyMappingTableProps> = ({ searchTe
                         }}></div>
                       ))}
                     </div>
-                  </div>
+                  </button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={!!selectedQR}
+        onClose={() => setSelectedQR(null)}
+        qrCode={selectedQR?.qrCode || ''}
+        serviceName={selectedQR?.serviceName || ''}
+        site={selectedQR?.site || ''}
+      />
     </div>
   );
 };
