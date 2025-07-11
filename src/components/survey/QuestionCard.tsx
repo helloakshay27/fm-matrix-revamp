@@ -21,26 +21,28 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onDelete
 }) => {
   return (
-    <div className="border border-gray-200 rounded-lg mb-4">
+    <div className="border border-gray-200 rounded-lg mb-4 bg-white">
       {/* Question Header */}
-      <div className="border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <Input
-            value={question.text}
-            onChange={(e) => onQuestionChange(question.id, 'text', e.target.value)}
-            className="border-none p-0 focus-visible:ring-0 bg-transparent font-medium"
-            placeholder="Question"
-          />
+      <div className="px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex-1 mr-4">
+            <Input
+              value={question.text}
+              onChange={(e) => onQuestionChange(question.id, 'text', e.target.value)}
+              className="border-none border-b-2 border-b-red-600 rounded-none p-0 focus-visible:ring-0 bg-transparent font-medium text-base pb-2"
+              placeholder="Question"
+            />
+          </div>
           
           <div className="flex items-center gap-2">
             <Select 
               value={question.type} 
               onValueChange={(value) => onQuestionChange(question.id, 'type', value)}
             >
-              <SelectTrigger className="w-48 h-8">
+              <SelectTrigger className="w-48 h-10 border border-gray-300">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
                 <SelectItem value="Short answer">
                   <div className="flex items-center gap-2">
                     <Minus className="w-4 h-4" />
@@ -123,13 +125,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       <QuestionContent questionType={question.type} />
       
       {/* Question Footer */}
-      <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between bg-gray-50">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onDuplicate(question.id)}
-            className="p-2"
+            className="p-2 hover:bg-gray-200"
           >
             <Copy className="w-4 h-4" />
           </Button>
@@ -137,31 +139,31 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => onDelete(question.id)}
-            className="p-2"
+            className="p-2 hover:bg-gray-200"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="p-2"
+            className="p-2 hover:bg-gray-200"
           >
             <Eye className="w-4 h-4" />
           </Button>
         </div>
         
-        <div className="flex items-center gap-2">
-          <span className="text-sm">Required</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium">Required</span>
           <div className="relative">
             {question.required ? (
-              <div className="w-6 h-3 bg-red-600 rounded-full relative cursor-pointer"
+              <div className="w-10 h-6 bg-red-600 rounded-full relative cursor-pointer flex items-center"
                    onClick={() => onQuestionChange(question.id, 'required', false)}>
-                <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                <div className="w-4 h-4 bg-white rounded-full absolute right-1 transition-all duration-200"></div>
               </div>
             ) : (
-              <div className="w-6 h-3 bg-gray-300 rounded-full relative cursor-pointer"
+              <div className="w-10 h-6 bg-gray-300 rounded-full relative cursor-pointer flex items-center"
                    onClick={() => onQuestionChange(question.id, 'required', true)}>
-                <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                <div className="w-4 h-4 bg-white rounded-full absolute left-1 transition-all duration-200"></div>
               </div>
             )}
           </div>
