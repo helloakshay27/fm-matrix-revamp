@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Edit, Copy, Eye, Share2 } from 'lucide-react';
+import { Edit, Copy, Eye, Share2, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -16,7 +16,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Survey",
     noOfAssociation: 2,
-    typeOfSurvey: "QR"
+    typeOfSurvey: "QR",
+    status: "Inactive",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   },
   {
     id: "12345",
@@ -25,7 +28,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Survey",
     noOfAssociation: 3,
-    typeOfSurvey: "Link"
+    typeOfSurvey: "Link",
+    status: "Draft",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   },
   {
     id: "12345",
@@ -34,7 +40,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Question",
     noOfAssociation: 4,
-    typeOfSurvey: "Link"
+    typeOfSurvey: "Link",
+    status: "Published",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   },
   {
     id: "12345",
@@ -43,7 +52,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Survey",
     noOfAssociation: 3,
-    typeOfSurvey: "QR"
+    typeOfSurvey: "QR",
+    status: "Inactive",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   },
   {
     id: "12345",
@@ -52,7 +64,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Question",
     noOfAssociation: 0,
-    typeOfSurvey: "Link"
+    typeOfSurvey: "Link",
+    status: "Draft",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   },
   {
     id: "12345",
@@ -61,7 +76,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Survey",
     noOfAssociation: 5,
-    typeOfSurvey: "QR"
+    typeOfSurvey: "QR",
+    status: "Published",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   },
   {
     id: "12345",
@@ -70,7 +88,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Question",
     noOfAssociation: 2,
-    typeOfSurvey: "Link"
+    typeOfSurvey: "Link",
+    status: "Inactive",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   },
   {
     id: "12345",
@@ -79,7 +100,10 @@ const mockSurveyData = [
     ticketCategory: "Category 123",
     ticketLevel: "Survey",
     noOfAssociation: 1,
-    typeOfSurvey: "QR"
+    typeOfSurvey: "QR",
+    status: "Draft",
+    validFrom: "30/06/2025",
+    validTo: "01/07/2025"
   }
 ];
 
@@ -111,6 +135,19 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
     survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.ticketCategory.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Published':
+        return 'text-green-600';
+      case 'Draft':
+        return 'text-yellow-600';
+      case 'Inactive':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
@@ -156,6 +193,21 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
                 <span className="text-gray-500">Type:</span>
                 <p className="font-medium">{survey.typeOfSurvey}</p>
               </div>
+              <div>
+                <span className="text-gray-500">Status:</span>
+                <div className="flex items-center gap-1">
+                  <p className={`font-medium ${getStatusColor(survey.status)}`}>{survey.status}</p>
+                  <ChevronDown className="w-3 h-3 text-gray-400" />
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-500">Valid From:</span>
+                <p className="font-medium">{survey.validFrom}</p>
+              </div>
+              <div className="col-span-2">
+                <span className="text-gray-500">Valid To:</span>
+                <p className="font-medium">{survey.validTo}</p>
+              </div>
             </div>
             
             <div className="flex justify-between items-center mt-3">
@@ -193,6 +245,9 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
               <TableHead className="min-w-[100px]">Ticket Level</TableHead>
               <TableHead className="w-24 lg:w-32 text-center">No. Of Association</TableHead>
               <TableHead className="min-w-[100px]">Type Of Survey</TableHead>
+              <TableHead className="min-w-[100px]">Status</TableHead>
+              <TableHead className="min-w-[100px]">Valid From</TableHead>
+              <TableHead className="min-w-[100px]">Valid To</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -252,6 +307,16 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
                 <TableCell>{survey.ticketLevel}</TableCell>
                 <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
                 <TableCell>{survey.typeOfSurvey}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-medium ${getStatusColor(survey.status)}`}>
+                      {survey.status}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  </div>
+                </TableCell>
+                <TableCell>{survey.validFrom}</TableCell>
+                <TableCell>{survey.validTo}</TableCell>
               </TableRow>
             ))}
           </TableBody>
