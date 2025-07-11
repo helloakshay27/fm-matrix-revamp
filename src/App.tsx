@@ -403,6 +403,9 @@ import { EditAddressPage } from './pages/EditAddressPage';
 // Import ChecklistGroupDashboard for setup and settings
 import { ChecklistGroupDashboard } from './pages/setup/ChecklistGroupDashboard';
 
+// Import Booking List page
+import BookingListDashboard from './pages/BookingListDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -714,6 +717,9 @@ function App() {
               <Route path="/market-place/loyalty-rule-engine" element={<LoyaltyRuleEngineDetailPage />} />
               <Route path="/market-place/cloud-telephony" element={<CloudTelephonyDetailPage />} />
               <Route path="/market-place/accounting" element={<AccountingDetailPage />} />
+
+              {/* VAS Booking Routes */}
+              <Route path="/vas/booking/list" element={<BookingListDashboard />} />
 
               <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
               <Route path="*" element={<NotFound />} />
