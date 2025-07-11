@@ -103,7 +103,7 @@ export const AddSurveyPage = () => {
 
   return (
     <div className="min-h-screen min-w-full bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm">
+      <div className="mx-auto bg-white rounded-lg shadow-sm">
         <SurveyHeader 
           createTicket={createTicket}
           setCreateTicket={setCreateTicket}
