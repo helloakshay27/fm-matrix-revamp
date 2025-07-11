@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Edit, Copy, Eye, Share2, Switch } from 'lucide-react';
+import { Edit, Copy, Eye, Share2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
