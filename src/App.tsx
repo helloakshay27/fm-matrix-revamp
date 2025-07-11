@@ -1,15 +1,14 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Header } from './components/Header';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { AssetGroupsDashboard } from './pages/setup/AssetGroupsDashboard';
-import { AddAssetGroupDashboard } from './pages/setup/AddAssetGroupDashboard';
-import { EditAssetGroupDashboard } from './pages/setup/EditAssetGroupDashboard';
 import { ChecklistGroupDashboard } from './pages/setup/ChecklistGroupDashboard';
 import { EmailRuleDashboard } from './pages/setup/EmailRuleDashboard';
-import { AddApprovalMatrixDashboard } from './pages/setup/AddApprovalMatrixDashboard';
-import { EditApprovalMatrixDashboard } from './pages/setup/EditApprovalMatrixDashboard';
+import { AddApprovalMatrixDashboard } from './pages/settings/AddApprovalMatrixDashboard';
+import { EditApprovalMatrixDashboard } from './pages/settings/EditApprovalMatrixDashboard';
 
 function App() {
   return (
@@ -135,8 +134,6 @@ function App() {
               <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
               <Route path="/setup/meter-type" element={<div>Meter Type</div>} />
               <Route path="/setup/asset-groups" element={<AssetGroupsDashboard />} />
-              <Route path="/setup/asset-groups/add" element={<AddAssetGroupDashboard />} />
-              <Route path="/setup/asset-groups/edit/:id" element={<EditAssetGroupDashboard />} />
               <Route path="/setup/checklist-group" element={<div>Checklist Group</div>} />
               <Route path="/setup/ticket/setup" element={<div>Ticket Setup</div>} />
               <Route path="/setup/ticket/escalation" element={<div>Ticket Escalation</div>} />
