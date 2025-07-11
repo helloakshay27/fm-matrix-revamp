@@ -15,6 +15,7 @@ import { AssetStats } from '@/components/AssetStats';
 import { AssetActions } from '@/components/AssetActions';
 import { AssetDataTable } from '@/components/AssetDataTable';
 import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
+import { MoveAssetDialog } from '@/components/MoveAssetDialog';
 import { useAssetData } from '@/hooks/useAssetData';
 
 export const AssetDashboard = () => {
@@ -22,6 +23,7 @@ export const AssetDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMoveAssetOpen, setIsMoveAssetOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -79,6 +81,9 @@ export const AssetDashboard = () => {
   // Selection panel handlers
   const handleMoveAsset = () => {
     console.log('Move asset clicked for', selectedAssets.length, 'assets');
+    setIsMoveAssetOpen(true);
+    // Clear selection to close the panel
+    handleSelectAll(false);
   };
 
   const handleDisposeAsset = () => {
@@ -95,7 +100,6 @@ export const AssetDashboard = () => {
 
   const handleClearSelection = () => {
     console.log('Clear selection called, current selected assets:', selectedAssets.length);
-    // Simply call handleSelectAll with false to clear all selections
     handleSelectAll(false);
     console.log('Selection cleared using handleSelectAll(false)');
   };
@@ -218,6 +222,12 @@ export const AssetDashboard = () => {
       <AssetFilterDialog 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
+      />
+
+      <MoveAssetDialog
+        isOpen={isMoveAssetOpen}
+        onClose={() => setIsMoveAssetOpen(false)}
+        selectedAssets={selectedAssets}
       />
     </div>
   );
