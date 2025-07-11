@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { TextField, createTheme, ThemeProvider } from '@mui/material';
 import { X } from 'lucide-react';
+import { AsyncSearchableDropdown } from './AsyncSearchableDropdown';
 
 interface ExportByCentreModalProps {
   isOpen: boolean;
@@ -74,11 +75,26 @@ const textFieldTheme = createTheme({
   },
 });
 
+// Available sites/centers data
+const availableSites = [
+  { value: 'lockated', label: 'Lockated' },
+  { value: 'godrej-eternity', label: 'Godrej Eternity' },
+  { value: 'godrej-summit-gurgaon', label: 'Godrej Summit,Gurgaon' },
+  { value: 'godrej-prime-gurgaon', label: 'Godrej Prime,Gurgaon' },
+  { value: 'runwal-elegante', label: 'Runwal Elegante' },
+  { value: 'runwal-the-reserve', label: 'Runwal The Reserve' },
+  { value: 'runwal-my-city', label: 'Runwal My City' },
+  { value: 'godrej-oasis', label: 'Godrej Oasis' },
+  { value: 'sai-radhe-bund-garden', label: 'Sai Radhe, Bund Garden' },
+  { value: 'delhi', label: 'Delhi' },
+  { value: 'suneel-test', label: 'Suneel Test' }
+];
+
 export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
-    sites: ''
+    sites: null as any
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -86,6 +102,24 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleSiteSelection = (selectedSite: any) => {
+    setFormData(prev => ({
+      ...prev,
+      sites: selectedSite
+    }));
+  };
+
+  const handleSiteSearch = async (searchTerm: string) => {
+    // Filter sites based on search term
+    if (!searchTerm.trim()) {
+      return availableSites;
+    }
+    
+    return availableSites.filter(site => 
+      site.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
 
   const handleExport = () => {
@@ -141,18 +175,13 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
 
             <div>
               <h3 className="text-lg font-semibold mb-4">Choose Sites</h3>
-              <TextField
-                label="Select sites"
-                value={formData.sites}
-                onChange={(e) => handleInputChange('sites', e.target.value)}
-                variant="outlined"
-                fullWidth
-                multiline
-                rows={3}
-                InputLabelProps={{ 
-                  shrink: true,
-                }}
-                placeholder="Enter site names or select from dropdown"
+              <AsyncSearchableDropdown
+                placeholder="Select sites"
+                onSearch={handleSiteSearch}
+                onChange={handleSiteSelection}
+                defaultOptions={availableSites}
+                className="w-full"
+                noOptionsMessage="No sites found"
               />
             </div>
 
