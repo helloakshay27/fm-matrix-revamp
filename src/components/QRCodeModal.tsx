@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from 'lucide-react';
 
@@ -30,10 +30,6 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
         className="max-w-md" 
         style={{ backgroundColor: '#F6F4EE8F' }}
       >
-        <DialogHeader>
-          <DialogTitle className="text-center">QR Code</DialogTitle>
-        </DialogHeader>
-        
         <div className="flex flex-col items-center space-y-4 p-4">
           {/* Large QR Code Display */}
           <div className="w-48 h-48 bg-white border-2 border-gray-200 flex items-center justify-center">
@@ -50,12 +46,6 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
                 ))}
               </div>
             </div>
-          </div>
-          
-          {/* Service Info */}
-          <div className="text-center text-sm text-gray-600">
-            <div className="font-medium">{serviceName}</div>
-            <div>{site}</div>
           </div>
           
           {/* Download Button */}
