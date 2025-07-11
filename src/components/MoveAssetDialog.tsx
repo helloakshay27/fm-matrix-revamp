@@ -212,7 +212,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                       if (!selected) {
                         return <span style={{ color: '#9CA3AF' }}>Select Site</span>;
                       }
-                      return selected;
+                      return selected as string;
                     },
                   }}
                 >
@@ -240,7 +240,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                       if (!selected) {
                         return <span style={{ color: '#9CA3AF' }}>Select Building</span>;
                       }
-                      return selected;
+                      return selected as string;
                     },
                   }}
                 >
@@ -268,7 +268,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                       if (!selected) {
                         return <span style={{ color: '#9CA3AF' }}>Select Wing</span>;
                       }
-                      return selected;
+                      return selected as string;
                     },
                   }}
                 >
@@ -296,7 +296,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                       if (!selected) {
                         return <span style={{ color: '#9CA3AF' }}>Select Area</span>;
                       }
-                      return selected;
+                      return selected as string;
                     },
                   }}
                 >
@@ -324,7 +324,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                       if (!selected) {
                         return <span style={{ color: '#9CA3AF' }}>Select Floor</span>;
                       }
-                      return selected;
+                      return selected as string;
                     },
                   }}
                 >
@@ -352,7 +352,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                       if (!selected) {
                         return <span style={{ color: '#9CA3AF' }}>Select Room</span>;
                       }
-                      return selected;
+                      return selected as string;
                     },
                   }}
                 >
