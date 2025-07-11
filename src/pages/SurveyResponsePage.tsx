@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
-import { useNavigate } from 'react-router-dom';
 
 const mockResponseData = [
   {
@@ -65,13 +64,11 @@ const mockResponseData = [
 ];
 
 export const SurveyResponsePage = () => {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const handleViewDetails = (id: number) => {
     console.log('Viewing details for survey:', id);
-    navigate('/maintenance/survey/response/detail');
   };
 
   const handleFilterClick = () => {
