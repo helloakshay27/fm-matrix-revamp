@@ -95,12 +95,9 @@ export const AssetDashboard = () => {
 
   const handleClearSelection = () => {
     console.log('Clear selection called, current selected assets:', selectedAssets.length);
-    // Clear all selections
-    filteredAssets.forEach(asset => {
-      console.log('Clearing selection for asset:', asset.id);
-      handleSelectAsset(asset.id, false);
-    });
-    console.log('Selection cleared, new count should be 0');
+    // Simply call handleSelectAll with false to clear all selections
+    handleSelectAll(false);
+    console.log('Selection cleared using handleSelectAll(false)');
   };
 
   return (
