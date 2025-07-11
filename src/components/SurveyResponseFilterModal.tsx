@@ -5,6 +5,7 @@ import { TextField, FormControl, InputLabel, Select, MenuItem, Box } from '@mui/
 import { DateField } from '@mui/x-date-pickers/DateField';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { X } from 'lucide-react';
 
 interface FilterModalProps {
   open: boolean;
@@ -95,8 +96,14 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
+          <DialogHeader className="relative">
             <DialogTitle className="text-xl text-slate-950 font-normal">FILTER BY</DialogTitle>
+            <button
+              onClick={onClose}
+              className="absolute right-0 top-0 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </DialogHeader>
           
           <div className="py-4">
