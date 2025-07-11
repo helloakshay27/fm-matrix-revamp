@@ -2,10 +2,13 @@
 import React, { useState } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
   TextField,
   FormControl,
   InputLabel,
@@ -13,9 +16,7 @@ import {
   MenuItem,
   Box
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
 
 interface FilterModalProps {
   open: boolean;
@@ -63,182 +64,120 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
     }));
   };
 
+  // Common field styling for consistent height across desktop and mobile
+  const fieldSx = {
+    '& .MuiOutlinedInput-root': {
+      height: { xs: '36px', sm: '45px' },
+      borderRadius: '6px',
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+    },
+  };
+
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Dialog 
-        open={open} 
-        onClose={onClose}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            padding: 2
-          }
-        }}
-      >
-        <DialogTitle sx={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 'bold',
-          color: '#C72030',
-          pb: 2
-        }}>
-          Filter Survey Responses
-        </DialogTitle>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-[#C72030]">
+            Filter Survey Responses
+          </DialogTitle>
+        </DialogHeader>
         
-        <DialogContent>
-          <Box sx={{ 
-            mt: 2,
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-            gap: 3
-          }}>
-            {/* Survey Title Filter */}
-            <Box>
-              <TextField
-                fullWidth
-                label="Survey Title"
-                variant="outlined"
-                value={filters.surveyTitle}
-                onChange={(e) => handleInputChange('surveyTitle', e.target.value)}
-                placeholder="Enter survey title..."
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#C72030',
-                  },
-                }}
-              />
-            </Box>
+        <div className="py-4">
+          {/* Survey Details Section */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-[#C72030] mb-4">Survey Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Survey Title Filter */}
+              <Box>
+                <TextField
+                  fullWidth
+                  label="Survey Title"
+                  variant="outlined"
+                  value={filters.surveyTitle}
+                  onChange={(e) => handleInputChange('surveyTitle', e.target.value)}
+                  placeholder="Enter Title"
+                  sx={fieldSx}
+                />
+              </Box>
 
-            {/* Survey Type Filter */}
-            <Box>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel
-                  sx={{
-                    '&.Mui-focused': {
-                      color: '#C72030',
-                    },
-                  }}
-                >
-                  Survey Type
-                </InputLabel>
-                <Select
-                  value={filters.surveyType}
-                  onChange={(e) => handleInputChange('surveyType', e.target.value)}
-                  label="Survey Type"
-                  sx={{
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                  }}
-                >
-                  <MenuItem value="">All Types</MenuItem>
-                  <MenuItem value="feedback">Feedback</MenuItem>
-                  <MenuItem value="evaluation">Evaluation</MenuItem>
-                  <MenuItem value="satisfaction">Satisfaction</MenuItem>
-                  <MenuItem value="research">Research</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
+              {/* Survey Type Filter */}
+              <Box>
+                <FormControl fullWidth variant="outlined" sx={fieldSx}>
+                  <InputLabel>Survey Type</InputLabel>
+                  <Select
+                    value={filters.surveyType}
+                    onChange={(e) => handleInputChange('surveyType', e.target.value)}
+                    label="Survey Type"
+                  >
+                    <MenuItem value="">All Types</MenuItem>
+                    <MenuItem value="feedback">Feedback</MenuItem>
+                    <MenuItem value="evaluation">Evaluation</MenuItem>
+                    <MenuItem value="satisfaction">Satisfaction</MenuItem>
+                    <MenuItem value="research">Research</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </div>
+          </div>
 
-            {/* Start Date Filter */}
-            <Box>
-              <DatePicker
-                label="Start Date"
-                value={filters.startDate}
-                onChange={(date) => handleInputChange('startDate', date)}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: 'outlined',
-                    sx: {
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: '#C72030',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#C72030',
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#C72030',
-                      },
-                    }
-                  }
-                }}
-              />
-            </Box>
+          {/* Date Range Section */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-[#C72030] mb-4">Date Range</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* From Date */}
+              <Box>
+                <ResponsiveDatePicker
+                  value={filters.startDate}
+                  onChange={(date) => handleInputChange('startDate', date)}
+                  placeholder="dd/mm/yyyy"
+                  className="h-[36px] sm:h-[45px] rounded-md"
+                />
+                <div className="text-sm text-gray-600 mt-1">From</div>
+              </Box>
 
-            {/* End Date Filter */}
-            <Box>
-              <DatePicker
-                label="End Date"
-                value={filters.endDate}
-                onChange={(date) => handleInputChange('endDate', date)}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: 'outlined',
-                    sx: {
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: '#C72030',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#C72030',
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#C72030',
-                      },
-                    }
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-        </DialogContent>
+              {/* To Date */}
+              <Box>
+                <ResponsiveDatePicker
+                  value={filters.endDate}
+                  onChange={(date) => handleInputChange('endDate', date)}
+                  placeholder="dd/mm/yyyy"
+                  className="h-[36px] sm:h-[45px] rounded-md"
+                />
+                <div className="text-sm text-gray-600 mt-1">To</div>
+              </Box>
+            </div>
+          </div>
+        </div>
 
-        <DialogActions sx={{ p: 3, gap: 2 }}>
+        <DialogFooter className="flex justify-end gap-3">
           <Button
             onClick={handleReset}
-            variant="outlined"
-            sx={{
-              borderColor: '#C72030',
-              color: '#C72030',
-              '&:hover': {
-                borderColor: '#C72030',
-                backgroundColor: 'rgba(199, 32, 48, 0.04)',
-              },
-            }}
+            variant="outline"
+            className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white px-8"
           >
             Reset
           </Button>
           <Button
             onClick={handleApply}
-            variant="contained"
-            sx={{
-              backgroundColor: '#C72030',
-              '&:hover': {
-                backgroundColor: '#A01828',
-              },
-            }}
+            className="bg-[#C72030] text-white hover:bg-[#A01828] px-8"
           >
-            Apply Filters
+            Apply
           </Button>
-        </DialogActions>
-      </Dialog>
-    </LocalizationProvider>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
