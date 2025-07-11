@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   useReactTable,
   getCoreRowModel,
-  flexRender,
-  getPaginationRowModel,
+  flexRender
 } from "@tanstack/react-table";
 
 // Custom Components
@@ -210,18 +209,7 @@ const IssuesTable = () => {
       state.fetchTasks || { fetchTasks: [], loading: false, error: null }
   );
 
-  const {
-    fetchIssueType: issueType,
-    loading: loadingIssueType,
-    error: issueTypeFetchError,
-  } = useSelector(
-    (state) =>
-      state.fetchIssueType || {
-        fetchIssueType: [],
-        loading: false,
-        error: null,
-      }
-  );
+  const { fetchIssueType: issueType, loading: loadingIssueType, error: issueTypeFetchError, } = useSelector((state) => state.fetchIssueType);
 
   const { fetchProjectDetails: projectDetails } = useSelector(
     (state) =>
@@ -246,9 +234,11 @@ const IssuesTable = () => {
   const [newIssuesProjectId, setNewIssuesProjectId] = useState(null);
   const [newIssuesMilestoneId, setNewIssuesMilestoneId] = useState(null);
   const [newIssuesTaskId, setNewIssuesTaskId] = useState(null);
+  const [newIssuesSubtaskId, setNewIssuesSubtaskId] = useState(null);
   const [projectOptions, setProjectOptions] = useState([]);
   const [milestoneOptions, setMilestoneOptions] = useState([]);
   const [taskOptions, setTaskOptions] = useState([]);
+  const [subtaskOptions, setSubtaskOptions] = useState([]);
   const [issueTypeOptions, setIssueTypeOptions] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [isSavingIssues, setIsSavingIssues] = useState(false);
@@ -284,12 +274,14 @@ const IssuesTable = () => {
     }
   }, [dispatch, loadingIssueType, issueType, issueTypeFetchError, token]);
 
+  console.log(issueType)
+
   // Set issue type options
-  useEffect(() => {
-    if (!loadingIssueType && issueType?.length > 0 && !issueTypeFetchError) {
-      setIssueTypeOptions(issueType.map((i) => i.name));
-    }
-  }, [issueType, loadingIssueType, issueTypeFetchError]);
+  // useEffect(() => {
+  //   if (!loadingIssueType && issueType?.length > 0 && !issueTypeFetchError) {
+  //     setIssueTypeOptions(issueType.map((i) => i.name));
+  //   }
+  // }, [issueType, loadingIssueType, issueTypeFetchError]);
 
   // Fetch issues
   useEffect(() => {
@@ -327,18 +319,24 @@ const IssuesTable = () => {
     }));
   }, [current_page]);
 
-  // Fetch tasks when milestone changes
+  // Fetch tasks
   useEffect(() => {
-    if (!loadingMilestone && !milestoneFetchError && newIssuesMilestoneId) {
-      dispatch(fetchTasks({ id: newIssuesMilestoneId, token }));
+    if (!loadingTasks && !tasksFetchError) {
+      if (newIssuesMilestoneId) {
+        dispatch(fetchTasks({ id: newIssuesMilestoneId, token }));
+      } else if (!newIssuesProjectId && !newIssuesMilestoneId) {
+        // Fetch all tasks when no project or milestone is selected
+        dispatch(fetchTasks({ id: "", token }));
+      }
       setNewIssuesTaskId(null);
       setTaskOptions([]);
+      setNewIssuesSubtaskId(null);
+      setSubtaskOptions([]);
     }
   }, [
     dispatch,
-    loadingMilestone,
-    milestoneFetchError,
     newIssuesMilestoneId,
+    newIssuesProjectId,
     token,
   ]);
 
@@ -354,6 +352,25 @@ const IssuesTable = () => {
     }
   }, [tasks, loadingTasks, tasksFetchError]);
 
+  // Set subtask options
+  useEffect(() => {
+    if (newIssuesTaskId && tasks.length > 0) {
+      const selectedTask = tasks.find((t) => t.id === newIssuesTaskId);
+      if (selectedTask && Array.isArray(selectedTask.sub_tasks_managements)) {
+        setSubtaskOptions(
+          selectedTask.sub_tasks_managements.map((st) => ({
+            value: st.id,
+            label: st.title,
+          }))
+        );
+      } else {
+        setSubtaskOptions([]);
+      }
+    } else {
+      setSubtaskOptions([]);
+    }
+  }, [newIssuesTaskId, tasks]);
+
   // Fetch milestones when project changes
   useEffect(() => {
     if (newIssuesProjectId && !loadingProjects && !projectsFetchError) {
@@ -362,6 +379,8 @@ const IssuesTable = () => {
       setMilestoneOptions([]);
       setNewIssuesTaskId(null);
       setTaskOptions([]);
+      setNewIssuesSubtaskId(null);
+      setSubtaskOptions([]);
     }
   }, [
     dispatch,
@@ -479,7 +498,7 @@ const IssuesTable = () => {
         status: issue.status || "open",
         responsiblePerson: issue.responsible_person?.name || "Unassigned",
         responsiblePersonId: issue.responsible_person?.id || null,
-        issueType: issue.issue_type || "None",
+        issueType: Number(issue.issue_type),
         startDate: issue.start_date
           ? new Date(issue.start_date).toLocaleDateString("en-CA")
           : null,
@@ -490,6 +509,7 @@ const IssuesTable = () => {
         projectName: issue.project_management_name || "",
         milestoneName: issue.milstone_name || "",
         taskName: issue.task_management_name || "",
+        subtaskName: issue.sub_task_management_name || "",
         comments: issue.comments?.length
           ? issue.comments[issue.comments.length - 1].body
           : "",
@@ -533,6 +553,7 @@ const IssuesTable = () => {
     setNewIssuesProjectId(null);
     setNewIssuesMilestoneId(null);
     setNewIssuesTaskId(null);
+    setNewIssuesSubtaskId(null);
     setValidator(false);
   }, []);
 
@@ -574,6 +595,7 @@ const IssuesTable = () => {
     );
     formData.append("issue[milestone_id]", newIssuesMilestoneId || "");
     formData.append("issue[task_management_id]", newIssuesTaskId || "");
+    formData.append("issue[subtask_management_id]", newIssuesSubtaskId || "");
     formData.append("issue[start_date]", newIssuesStartDate || "");
     formData.append("issue[end_date]", newIssuesEndDate || "");
     formData.append("issue[priority]", newIssuesPriority);
@@ -624,6 +646,7 @@ const IssuesTable = () => {
     newIssuesProjectId,
     newIssuesMilestoneId,
     newIssuesTaskId,
+    newIssuesSubtaskId,
     attachments,
     token,
     pagination.pageIndex,
@@ -668,6 +691,8 @@ const IssuesTable = () => {
               item.selectedProjects.length > 0 ? item.selectedProjects : [],
             "q[task_management_id_in][]":
               item.selectedTasks.length > 0 ? item.selectedTasks : [],
+            "q[subtask_management_id_in][]":
+              item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
           };
           const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
           await dispatch(
@@ -763,6 +788,8 @@ const IssuesTable = () => {
               item.selectedProjects.length > 0 ? item.selectedProjects : [],
             "q[task_management_id_in][]":
               item.selectedTasks.length > 0 ? item.selectedTasks : [],
+            "q[subtask_management_id_in][]":
+              item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
           };
           const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
           await dispatch(
@@ -918,6 +945,13 @@ const IssuesTable = () => {
         accessorKey: "taskName",
         header: "Task Name",
         size: 150,
+        cell: ({ getValue }) => getValue() || "Not selected",
+      },
+      {
+        accessorKey: "subtaskName",
+        header: "Subtask Name",
+        size: 150,
+        cell: ({ getValue }) => getValue() || "Not selected",
       },
       {
         accessorKey: "issueTitle",
@@ -972,14 +1006,25 @@ const IssuesTable = () => {
       {
         accessorKey: "issueType",
         header: "Type",
-        size: 100,
+        size: 150,
         cell: ({ row }) => (
-          <StatusBadge
-            status={row.original.issueType}
-            statusOptions={issueTypeOptions}
-            onStatusChange={(newStatus) =>
-              handleUpdateIssues(row.original.id, "issue_type", newStatus)
+          <SelectBox
+            options={
+              issueType.map((i) => ({
+                value: i.id,
+                label: i.name,
+              }))
             }
+            value={row.original.issueType}
+            onChange={(selectedOptionValue) =>
+              handleUpdateIssues(
+                row.original.id,
+                "issue_type_id",
+                selectedOptionValue
+              )
+            }
+            className="w-full"
+            table={true}
           />
         ),
       },
@@ -1058,7 +1103,7 @@ const IssuesTable = () => {
         },
       },
     ],
-    [handleUpdateIssues, handleUpdateComment, userOptionsForSelectBox, issueTypeOptions]
+    [handleUpdateIssues, handleUpdateComment, userOptionsForSelectBox, issueType]
   );
 
   const table = useReactTable({
@@ -1205,7 +1250,6 @@ const IssuesTable = () => {
                           }
                           placeholder="Select Project"
                           table={true}
-                          validator={validator}
                         />
                       )}
                     </td>
@@ -1218,7 +1262,6 @@ const IssuesTable = () => {
                         }
                         placeholder="Select Milestone"
                         table={true}
-                        validator={validator}
                       />
                     </td>
                     <td className="border p-1 text-xs text-gray-400 align-middle">
@@ -1229,6 +1272,15 @@ const IssuesTable = () => {
                         placeholder="Select Task"
                         table={true}
                         validator={validator}
+                      />
+                    </td>
+                    <td className="border p-1 text-xs text-gray-400 align-middle">
+                      <SelectBox
+                        options={subtaskOptions}
+                        value={newIssuesSubtaskId}
+                        onChange={(selected) => setNewIssuesSubtaskId(selected)}
+                        placeholder="Select Subtask"
+                        table={true}
                       />
                     </td>
                     <td className="border p-1 align-middle">
@@ -1270,10 +1322,23 @@ const IssuesTable = () => {
                       />
                     </td>
                     <td className="border p-1 align-middle">
-                      <StatusBadge
+                      {/* <StatusBadge
                         status={newIssuesType}
                         statusOptions={globalTypesOptions}
                         onStatusChange={setNewIssuesType}
+                      /> */}
+                      <SelectBox
+                        options={
+                          issueType.map(type => (
+                            {
+                              label: type.name,
+                              value: type.id
+                            }
+                          ))
+                        }
+                        value={newIssuesType}
+                        onChange={setNewIssuesType}
+                        table={true}
                       />
                     </td>
                     <td className="border p-1 align-middle">

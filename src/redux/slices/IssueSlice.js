@@ -28,16 +28,19 @@ const createApiSlice = (name, fetchThunk) => createSlice({
                 state.error = null;
             })
             .addCase(fetchThunk.fulfilled, (state, action) => {
-                const { issues, pagination } = action.payload || {};
+                const payload = action.payload;
+                const issues = payload?.issues ?? payload ?? []; // fallback to raw payload
+                const pagination = payload?.pagination || {
+                    current_page: 1,
+                    total_pages: 1,
+                    total_count: Array.isArray(issues) ? issues.length : 0,
+                };
+
                 state.loading = false;
                 state.success = true;
                 state.error = null;
-                state[name] = issues || [];
-                state.pagination = pagination || {
-                    current_page: 1,
-                    total_pages: 1,
-                    total_count: issues?.length || 0,
-                };
+                state[name] = issues;
+                state.pagination = pagination;
             })
             .addCase(fetchThunk.rejected, (state, action) => {
                 state.loading = false;
