@@ -31,17 +31,7 @@ const groupsData = [
   { id: 19, srNo: 19, groupName: 'Innovation', status: true },
   { id: 20, srNo: 20, groupName: 'Reporting', status: true },
   { id: 21, srNo: 21, groupName: 'Management Leadership', status: true },
-  { id: 22, srNo: 22, groupName: 'Others', status: true },
-  { id: 23, srNo: 23, groupName: 'What went well', status: true },
-  { id: 24, srNo: 24, groupName: 'Improvement Plan', status: true },
-  { id: 25, srNo: 25, groupName: 'General Feedback', status: true },
-  { id: 26, srNo: 26, groupName: 'Business Overview', status: true },
-  { id: 27, srNo: 27, groupName: 'References and Reputation', status: true },
-  { id: 28, srNo: 28, groupName: 'Financial Stability', status: true },
-  { id: 29, srNo: 29, groupName: 'Capabilities and Expertise', status: true },
-  { id: 30, srNo: 30, groupName: 'admin', status: true },
-  { id: 31, srNo: 31, groupName: 'saif chaudhary', status: true },
-  { id: 32, srNo: 32, groupName: 'housekeeping', status: true }
+  { id: 22, srNo: 22, groupName: 'Others', status: true }
 ];
 
 const subGroupsData = [
@@ -59,7 +49,7 @@ const subGroupsData = [
   { id: 12, srNo: 12, groupName: 'Hall', subGroupName: 'auditorium', status: true },
   { id: 13, srNo: 13, groupName: 'Common Area', subGroupName: 'Floor cleaning', status: true },
   { id: 14, srNo: 14, groupName: 'server room', subGroupName: 'b block svr', status: true },
-  { id: 15, srNo: 15, groupName: 'Reception', subGroupName: 'Maintanance', status: true },
+  { id: 15, srNo: 15, groupName: 'Reception', subGroupName: 'Maintenance', status: true },
   { id: 16, srNo: 16, groupName: 'Room', subGroupName: 'Server Room', status: true },
   { id: 17, srNo: 17, groupName: 'DG 1', subGroupName: 'Battery No 1', status: true },
   { id: 18, srNo: 18, groupName: 'DG 1', subGroupName: 'Battery No 2', status: true },
