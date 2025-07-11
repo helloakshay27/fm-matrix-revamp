@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Edit, Copy, Eye, Share2, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -229,14 +228,14 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
                     </span>
                     <ChevronDown className="w-3 h-3 text-gray-400" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white border shadow-lg">
+                  <DropdownMenuContent className="bg-black border shadow-lg">
                     {statusOptions.map((status) => (
                       <DropdownMenuItem
                         key={status}
                         onClick={() => handleStatusChange(index, status)}
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-gray-800 text-white"
                       >
-                        <span className={getStatusColor(status)}>{status}</span>
+                        <span className="text-white">{status}</span>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -365,14 +364,14 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
                         </span>
                         <ChevronDown className="w-4 h-4 text-gray-400" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-white border shadow-lg z-50">
+                      <DropdownMenuContent className="bg-black border shadow-lg z-50">
                         {statusOptions.map((status) => (
                           <DropdownMenuItem
                             key={status}
                             onClick={() => handleStatusChange(index, status)}
-                            className="cursor-pointer hover:bg-gray-50"
+                            className="cursor-pointer hover:bg-gray-800 text-white"
                           >
-                            <span className={getStatusColor(status)}>{status}</span>
+                            <span className="text-white">{status}</span>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
