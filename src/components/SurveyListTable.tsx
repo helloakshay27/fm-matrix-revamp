@@ -1,7 +1,14 @@
+
 import React, { useState } from 'react';
 import { Edit, Copy, Eye, Share2, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 interface SurveyListTableProps {
   searchTerm: string;
@@ -127,6 +134,18 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
     });
   };
 
+  const handleStatusChange = (index: number, newStatus: string) => {
+    setSurveys(prevSurveys => 
+      prevSurveys.map((survey, i) => 
+        i === index ? { ...survey, status: newStatus } : survey
+      )
+    );
+    toast({
+      title: "Status Updated",
+      description: `Survey status changed to ${newStatus}`
+    });
+  };
+
   const handleAction = (action: string, surveyId: string) => {
     console.log(`${action} action for survey ${surveyId}`);
     toast({
@@ -148,10 +167,14 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
         return 'text-yellow-600';
       case 'Inactive':
         return 'text-red-600';
+      case 'Active':
+        return 'text-blue-600';
       default:
         return 'text-gray-600';
     }
   };
+
+  const statusOptions = ['Active', 'Draft', 'Published', 'Inactive'];
 
   return (
     <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
@@ -199,10 +222,25 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
               </div>
               <div>
                 <span className="text-gray-500">Status:</span>
-                <div className="flex items-center gap-1">
-                  <p className={`font-medium ${getStatusColor(survey.status)}`}>{survey.status}</p>
-                  <ChevronDown className="w-3 h-3 text-gray-400" />
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 hover:bg-gray-50 p-1 rounded">
+                    <span className={`font-medium ${getStatusColor(survey.status)}`}>
+                      {survey.status}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white border shadow-lg">
+                    {statusOptions.map((status) => (
+                      <DropdownMenuItem
+                        key={status}
+                        onClick={() => handleStatusChange(index, status)}
+                        className="cursor-pointer hover:bg-gray-50"
+                      >
+                        <span className={getStatusColor(status)}>{status}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div>
                 <span className="text-gray-500">Valid From:</span>
@@ -320,12 +358,25 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
                   <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
                   <TableCell>{survey.typeOfSurvey}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-medium ${getStatusColor(survey.status)}`}>
-                        {survey.status}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded">
+                        <span className={`font-medium ${getStatusColor(survey.status)}`}>
+                          {survey.status}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white border shadow-lg z-50">
+                        {statusOptions.map((status) => (
+                          <DropdownMenuItem
+                            key={status}
+                            onClick={() => handleStatusChange(index, status)}
+                            className="cursor-pointer hover:bg-gray-50"
+                          >
+                            <span className={getStatusColor(status)}>{status}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                   <TableCell>{survey.validFrom}</TableCell>
                   <TableCell>{survey.validTo}</TableCell>
