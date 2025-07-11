@@ -162,7 +162,7 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
               <span className="text-xs text-gray-500">Ticket Creation:</span>
               <div 
                 className={`relative inline-flex items-center h-5 rounded-full w-9 cursor-pointer transition-colors ${
-                  survey.ticketCreation ? 'bg-red-500' : 'bg-gray-300'
+                  survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
                 }`} 
                 onClick={() => handleTicketCreationToggle(index)}
               >
@@ -236,7 +236,7 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
                   <div className="flex items-center">
                     <div 
                       className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                        survey.ticketCreation ? 'bg-red-500' : 'bg-gray-300'
+                        survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
                       }`} 
                       onClick={() => handleTicketCreationToggle(index)}
                     >
