@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Plus, Filter, Download, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -153,6 +154,7 @@ const tableColumns = [
 ];
 
 const BookingListDashboard = () => {
+  const navigate = useNavigate();
   const [bookings] = useState<BookingData[]>(mockBookingData);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -174,6 +176,10 @@ const BookingListDashboard = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentBookings = bookings.slice(startIndex, endIndex);
+
+  const handleAddBooking = () => {
+    navigate('/vas/booking/add');
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -263,7 +269,10 @@ const BookingListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4">
-        <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
+        <Button 
+          className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+          onClick={handleAddBooking}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
