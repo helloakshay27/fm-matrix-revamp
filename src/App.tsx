@@ -13,9 +13,6 @@ import { LoginPage } from './pages/LoginPage';
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
 
-// Import Asset Groups page
-import { AssetGroupsPage } from './pages/AssetGroupsPage';
-
 // Import Snagging pages
 import { SnaggingDashboard } from './pages/SnaggingDashboard';
 import { SnaggingDetailsPage } from './pages/SnaggingDetailsPage';
@@ -434,8 +431,7 @@ function App() {
               
               {/* Settings Asset Setup Routes */}
               <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
-              <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsPage />} />
-
+              
               {/* Settings Masters Routes */}
               <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
               <Route path="/settings/masters/checklist-master" element={<ChecklistMasterDashboard />} />
@@ -733,7 +729,7 @@ function App() {
               <Route path="/setup/fm-user" element={<div>FM User</div>} />
               <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
               <Route path="/setup/meter-type" element={<div>Meter Type</div>} />
-              <Route path="/setup/asset-groups" element={<AssetGroupsPage />} />
+              <Route path="/setup/asset-groups" element={<div>Asset Groups</div>} />
               <Route path="/setup/checklist-group" element={<ChecklistGroupDashboard />} />
               <Route path="/setup/ticket/setup" element={<div>Ticket Setup</div>} />
               <Route path="/setup/ticket/escalation" element={<div>Ticket Escalation</div>} />
