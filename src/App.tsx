@@ -394,9 +394,6 @@ import { AddAddressPage } from './pages/AddAddressPage';
 // Import Edit Address page
 import { EditAddressPage } from './pages/EditAddressPage';
 
-// Import ChecklistGroupDashboard for setup and settings
-import { ChecklistGroupDashboard } from './pages/setup/ChecklistGroupDashboard';
-
 const queryClient = new QueryClient();
 
 function App() {
@@ -724,7 +721,7 @@ function App() {
               <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
               <Route path="/setup/meter-type" element={<div>Meter Type</div>} />
               <Route path="/setup/asset-groups" element={<div>Asset Groups</div>} />
-              <Route path="/setup/checklist-group" element={<ChecklistGroupDashboard />} />
+              <Route path="/setup/checklist-group" element={<div>Checklist Group</div>} />
               <Route path="/setup/ticket/setup" element={<div>Ticket Setup</div>} />
               <Route path="/setup/ticket/escalation" element={<div>Ticket Escalation</div>} />
               <Route path="/setup/ticket/cost-approval" element={<div>Ticket Cost Approval</div>} />
@@ -740,22 +737,6 @@ function App() {
               <Route path="/setup/address" element={<div>Address</div>} />
               <Route path="/setup/tag" element={<div>Tag</div>} />
               <Route path="/setup/export" element={<ExportDashboard />} />
-            </Route>
-
-            {/* Settings Routes */}
-            <Route path="/settings" element={<Layout><div /></Layout>}>
-              <Route path="/settings/checklist-setup/group" element={<ChecklistGroupDashboard />} />
-              <Route path="/settings/checklist-setup/email-rule" element={<div>Email Rule</div>} />
-              <Route path="/settings/checklist-setup/task-escalation" element={<div>Task Escalation</div>} />
-              <Route path="/settings/ticket-management/setup" element={<div>Ticket Management Setup</div>} />
-              <Route path="/settings/ticket-management/escalation-matrix" element={<div>Escalation Matrix</div>} />
-              <Route path="/settings/ticket-management/cost-approval" element={<div>Cost Approval</div>} />
-              <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
-              <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
-              <Route path="/settings/safety/permit-setup" element={<div>Permit Setup</div>} />
-              <Route path="/settings/safety/incident" element={<div>Safety Incident</div>} />
-              <Route path="/settings/safety/setup" element={<div>Safety Setup</div>} />
-              <Route path="/settings/waste-management/setup" element={<div>Waste Management Setup</div>} />
             </Route>
           </Routes>
           <Toaster />
