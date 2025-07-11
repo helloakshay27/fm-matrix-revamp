@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Checkbox as MuiCheckbox, FormControlLabel } from '@mui/material';
+import { FileUploadSection } from '@/components/FileUploadSection';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -104,11 +105,11 @@ export const AddRestaurantPage = () => {
     minimumOrder: '',
     orderNotAllowedText: ''
   });
-  const [attachments, setAttachments] = useState({
-    coverImage: null,
-    menu: null,
-    gallery: null
-  });
+
+  // File states
+  const [coverImages, setCoverImages] = useState<File[]>([]);
+  const [menuFiles, setMenuFiles] = useState<File[]>([]);
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
 
   const [expandedSections, setExpandedSections] = useState({
     basicDetails: true,
@@ -147,7 +148,9 @@ export const AddRestaurantPage = () => {
       blockedDays,
       tableBooking,
       orderConfig,
-      attachments
+      coverImages,
+      menuFiles,
+      galleryImages
     };
     
     console.log('Restaurant data:', data);
@@ -766,54 +769,39 @@ export const AddRestaurantPage = () => {
         {/* Attachments */}
         {renderSectionHeader('ATTACHMENTS', 'attachments', Paperclip)}
         {expandedSections.attachments && (
-          <div className="p-4 border border-gray-200 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <TextField
-                  label="Cover Image"
-                  type="file"
-                  inputProps={{ accept: "image/*" }}
-                  onChange={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    setAttachments(prev => ({ ...prev, coverImage: target.files?.[0] || null }));
-                  }}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </div>
-              <div>
-                <TextField
-                  label="Menu"
-                  type="file"
-                  inputProps={{ accept: "image/*,.pdf" }}
-                  onChange={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    setAttachments(prev => ({ ...prev, menu: target.files?.[0] || null }));
-                  }}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </div>
-              <div>
-                <TextField
-                  label="Gallery"
-                  type="file"
-                  inputProps={{ accept: "image/*", multiple: true }}
-                  onChange={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    setAttachments(prev => ({ ...prev, gallery: target.files }));
-                  }}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </div>
-            </div>
+          <div className="p-4 border border-gray-200 rounded-lg space-y-8">
+            <FileUploadSection
+              title="COVER"
+              sectionNumber={4}
+              acceptedTypes="image/*"
+              multiple={false}
+              buttonText="Upload Cover Image"
+              description="Cover image upload functionality would be implemented here"
+              files={coverImages}
+              onFilesChange={setCoverImages}
+            />
+
+            <FileUploadSection
+              title="MENU"
+              sectionNumber={5}
+              acceptedTypes="image/*,.pdf,.doc,.docx"
+              multiple={true}
+              buttonText="Add Menu Items"
+              description="Menu management functionality would be implemented here"
+              files={menuFiles}
+              onFilesChange={setMenuFiles}
+            />
+
+            <FileUploadSection
+              title="GALLERY"
+              sectionNumber={6}
+              acceptedTypes="image/*"
+              multiple={true}
+              buttonText="Add Gallery Images"
+              description="Gallery management functionality would be implemented here"
+              files={galleryImages}
+              onFilesChange={setGalleryImages}
+            />
           </div>
         )}
       </div>
