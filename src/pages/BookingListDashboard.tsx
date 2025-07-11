@@ -34,7 +34,6 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField, MenuItem } from '@mui/material';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
-import { FacilityBookingForm } from '@/components/FacilityBookingForm';
 
 interface BookingData {
   id: number;
@@ -160,7 +159,6 @@ const BookingListDashboard = () => {
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
   const [isFilterColumnsPopoverOpen, setIsFilterColumnsPopoverOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
-  const [isFacilityBookingFormOpen, setIsFacilityBookingFormOpen] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'bookedBy']);
   const [visibleTableColumns, setVisibleTableColumns] = useState<string[]>(['id', 'bookedBy', 'bookedFor', 'companyName', 'facility', 'facilityType', 'scheduledDate', 'scheduledTime', 'bookingStatus', 'createdOn', 'source']);
   const [filters, setFilters] = useState({
@@ -265,10 +263,7 @@ const BookingListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4">
-        <Button 
-          className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
-          onClick={() => setIsFacilityBookingFormOpen(true)}
-        >
+        <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
@@ -588,12 +583,6 @@ const BookingListDashboard = () => {
       <ExportByCentreModal
         isOpen={isExportByCentreModalOpen}
         onClose={() => setIsExportByCentreModalOpen(false)}
-      />
-
-      {/* Facility Booking Form */}
-      <FacilityBookingForm
-        isOpen={isFacilityBookingFormOpen}
-        onClose={() => setIsFacilityBookingFormOpen(false)}
       />
     </div>
   );
