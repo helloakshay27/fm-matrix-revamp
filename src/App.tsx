@@ -703,6 +703,7 @@ function App() {
               <Route path="/market-place/accounting" element={<AccountingDetailPage />} />
 
               <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
+              <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 
