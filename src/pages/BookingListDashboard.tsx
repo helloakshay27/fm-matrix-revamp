@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, Plus, Filter, Download, ChevronDown } from 'lucide-react';
+import { Eye, Plus, Filter, Download, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,6 +25,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TextField, MenuItem } from '@mui/material';
 
 interface BookingData {
   id: number;
@@ -111,6 +113,14 @@ const mockBookingData: BookingData[] = [
 const BookingListDashboard = () => {
   const [bookings] = useState<BookingData[]>(mockBookingData);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    facilityName: '',
+    status: '',
+    scheduledDate: '',
+    createdOn: ''
+  });
+  
   const itemsPerPage = 5;
   
   const totalPages = Math.ceil(bookings.length / itemsPerPage);
@@ -135,6 +145,27 @@ const BookingListDashboard = () => {
     setCurrentPage(page);
   };
 
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleApplyFilters = () => {
+    console.log('Applying filters:', filters);
+    setIsFilterModalOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      facilityName: '',
+      status: '',
+      scheduledDate: '',
+      createdOn: ''
+    });
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
@@ -154,7 +185,11 @@ const BookingListDashboard = () => {
           Add
         </Button>
         
-        <Button variant="outline" className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white">
+        <Button 
+          variant="outline" 
+          className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white"
+          onClick={() => setIsFilterModalOpen(true)}
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
@@ -267,6 +302,135 @@ const BookingListDashboard = () => {
           </PaginationContent>
         </Pagination>
       </div>
+
+      {/* Filter Modal */}
+      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+        <DialogContent className="sm:max-w-md [&>button]:hidden">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsFilterModalOpen(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-red-500 mb-4">Facility Bookings</div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                select
+                label="Facility Name"
+                value={filters.facilityName}
+                onChange={(e) => handleFilterChange('facilityName', e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '6px',
+                    height: { xs: '36px', sm: '45px' }
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#ef4444'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#ef4444'
+                  }
+                }}
+              >
+                <MenuItem value="">Select Facility</MenuItem>
+                <MenuItem value="admin-meeting-room">Admin Meeting Room</MenuItem>
+                <MenuItem value="conference-hall">Conference Hall</MenuItem>
+                <MenuItem value="board-room">Board Room</MenuItem>
+              </TextField>
+              
+              <TextField
+                select
+                label="Status"
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '6px',
+                    height: { xs: '36px', sm: '45px' }
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#ef4444'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#ef4444'
+                  }
+                }}
+              >
+                <MenuItem value="">Select Status</MenuItem>
+                <MenuItem value="confirmed">Confirmed</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="cancelled">Cancelled</MenuItem>
+              </TextField>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                type="date"
+                label="Booked Scheduled Date"
+                value={filters.scheduledDate}
+                onChange={(e) => handleFilterChange('scheduledDate', e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                placeholder="Scheduled on"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '6px',
+                    height: { xs: '36px', sm: '45px' }
+                  }
+                }}
+              />
+              
+              <TextField
+                type="date"
+                label="Created On"
+                value={filters.createdOn}
+                onChange={(e) => handleFilterChange('createdOn', e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                placeholder="Booked on"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '6px',
+                    height: { xs: '36px', sm: '45px' }
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button 
+              onClick={handleApplyFilters}
+              className="flex-1 bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+            >
+              Apply
+            </Button>
+            <Button 
+              onClick={handleResetFilters}
+              variant="outline"
+              className="flex-1"
+            >
+              Reset
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
