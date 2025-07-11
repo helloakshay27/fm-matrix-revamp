@@ -34,7 +34,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[90vh] overflow-hidden p-0 rounded-none">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[80vw] xl:max-w-[75vw] 2xl:max-w-[70vw] max-h-[90vh] overflow-hidden p-0 rounded-none">
         <DialogHeader className="px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">
@@ -56,7 +56,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           <div className="mb-6">
             <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px] sm:min-w-[1000px] lg:min-w-[1200px]">
+                <table className="w-full min-w-[600px] sm:min-w-[800px] lg:min-w-[1000px] xl:min-w-[1200px]">
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Name</th>
@@ -113,8 +113,8 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           {/* Movement To Section */}
           <div className="mb-6">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">Movement To</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 sm:gap-8">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
+              <div className="w-full">
                 <CustomTextField
                   label="Site*"
                   value={site}
@@ -123,7 +123,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   size="small"
                 />
               </div>
-              <div>
+              <div className="w-full">
                 <CustomTextField
                   label="Building*"
                   value={building}
@@ -132,7 +132,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   size="small"
                 />
               </div>
-              <div>
+              <div className="w-full">
                 <CustomTextField
                   label="Wing*"
                   value={wing}
@@ -141,7 +141,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   size="small"
                 />
               </div>
-              <div>
+              <div className="w-full">
                 <CustomTextField
                   label="Area*"
                   value={area}
@@ -150,7 +150,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   size="small"
                 />
               </div>
-              <div>
+              <div className="w-full">
                 <CustomTextField
                   label="Floor*"
                   value={floor}
@@ -159,7 +159,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   size="small"
                 />
               </div>
-              <div>
+              <div className="w-full">
                 <CustomTextField
                   label="Room*"  
                   value={room}
@@ -174,8 +174,8 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           {/* Allocate To Section */}
           <div className="mb-6">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3">Allocate To</h3>
-            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-8">
-              <div>
+            <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-8">
+              <div className="flex-shrink-0">
                 <RadioGroup value={allocateTo} onValueChange={setAllocateTo} className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="department" id="department" />
@@ -187,7 +187,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
                   </div>
                 </RadioGroup>
               </div>
-              <div className="flex-1 max-w-full sm:max-w-xs">
+              <div className="flex-1 max-w-full lg:max-w-xs">
                 <CustomTextField
                   label="Department*"
                   value={department}
