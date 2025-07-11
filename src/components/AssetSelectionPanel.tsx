@@ -27,6 +27,8 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   onCheckIn,
   onClearSelection
 }) => {
+  const [showAll, setShowAll] = useState(false);
+
   const handleClearClick = () => {
     console.log('X button clicked - clearing selection');
     onClearSelection();
@@ -35,10 +37,23 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   const getDisplayText = () => {
     if (selectedAssets.length === 0) return '';
     if (selectedAssets.length === 1) return selectedAssets[0].name;
+    if (showAll) {
+      return selectedAssets.map(asset => asset.name).join(', ');
+    }
     if (selectedAssets.length <= 3) {
       return selectedAssets.map(asset => asset.name).join(', ');
     }
-    return `${selectedAssets.slice(0, 2).map(asset => asset.name).join(', ')} and ${selectedAssets.length - 2} more`;
+    return (
+      <>
+        {selectedAssets.slice(0, 2).map(asset => asset.name).join(', ')} and{' '}
+        <button 
+          onClick={() => setShowAll(true)} 
+          className="text-blue-600 hover:text-blue-800 underline"
+        >
+          {selectedAssets.length - 2} more
+        </button>
+      </>
+    );
   };
 
   return <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-sm shadow-lg z-50 flex items-center px-4 py-4">
