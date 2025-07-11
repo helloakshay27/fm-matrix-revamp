@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -252,18 +253,20 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
             </div>
 
             {/* Form Fields */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6 items-start">
               {/* Dispose Date */}
               <div className="space-y-2">
                 <Label htmlFor="dispose-date" className="text-sm font-medium text-gray-700">
                   Dispose Date
                 </Label>
-                <ResponsiveDatePicker
-                  value={disposeDate}
-                  onChange={setDisposeDate}
-                  placeholder="Select Date"
-                  className="w-full"
-                />
+                <div className="h-[45px] md:h-[45px] mobile:h-[36px]">
+                  <ResponsiveDatePicker
+                    value={disposeDate}
+                    onChange={setDisposeDate}
+                    placeholder="Select Date"
+                    className="w-full h-full"
+                  />
+                </div>
               </div>
 
               {/* Dispose Reason */}
