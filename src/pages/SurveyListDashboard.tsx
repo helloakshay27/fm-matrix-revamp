@@ -21,9 +21,10 @@ export const SurveyListDashboard = () => {
         </div>
       </div>
       
-      {/* Action Buttons Row */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      {/* Action Buttons Row - Responsive */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        {/* Left side buttons */}
+        <div className="flex flex-wrap items-center gap-2 md:gap-4">
           <Button 
             onClick={() => setIsAddSurveyOpen(true)}
             className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
@@ -34,21 +35,22 @@ export const SurveyListDashboard = () => {
           
           <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
             <Upload className="w-4 h-4" />
-            Import
+            <span className="hidden sm:inline">Import</span>
           </Button>
           
           <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
             <Filter className="w-4 h-4" />
-            Filter
+            <span className="hidden sm:inline">Filter</span>
           </Button>
           
           <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
             <Download className="w-4 h-4" />
-            Export
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
         
-        <div className="flex items-center gap-4">
+        {/* Right side search and reset */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -56,11 +58,11 @@ export const SurveyListDashboard = () => {
               placeholder="Search services..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent w-80"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent w-full sm:w-64 lg:w-80"
             />
           </div>
           
-          <Button variant="outline" className="flex items-center gap-2 border-[#BF213E] text-[#BF213E]">
+          <Button variant="outline" className="flex items-center justify-center gap-2 border-[#BF213E] text-[#BF213E] min-w-fit">
             <RotateCcw className="w-4 h-4" />
             Reset
           </Button>
