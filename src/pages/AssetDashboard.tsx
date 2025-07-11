@@ -15,6 +15,7 @@ import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 import { AssetStats } from '@/components/AssetStats';
 import { AssetActions } from '@/components/AssetActions';
 import { AssetDataTable } from '@/components/AssetDataTable';
+import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { useAssetData } from '@/hooks/useAssetData';
 
 export const AssetDashboard = () => {
@@ -74,6 +75,30 @@ export const AssetDashboard = () => {
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
     setVisibleColumns(columns);
+  };
+
+  // Selection panel handlers
+  const handleMoveAsset = () => {
+    console.log('Move asset clicked for', selectedAssets.length, 'assets');
+  };
+
+  const handleDisposeAsset = () => {
+    console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
+  };
+
+  const handlePrintQRCode = () => {
+    console.log('Print QR code clicked for', selectedAssets.length, 'assets');
+  };
+
+  const handleCheckIn = () => {
+    console.log('Check in clicked for', selectedAssets.length, 'assets');
+  };
+
+  const handleClearSelection = () => {
+    // Clear all selections
+    filteredAssets.forEach(asset => {
+      handleSelectAsset(asset.id, false);
+    });
   };
 
   return (
@@ -181,6 +206,18 @@ export const AssetDashboard = () => {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
       />
+
+      {/* Selection Panel - only show when assets are selected */}
+      {selectedAssets.length > 0 && (
+        <AssetSelectionPanel
+          selectedCount={selectedAssets.length}
+          onMoveAsset={handleMoveAsset}
+          onDisposeAsset={handleDisposeAsset}
+          onPrintQRCode={handlePrintQRCode}
+          onCheckIn={handleCheckIn}
+          onClearSelection={handleClearSelection}
+        />
+      )}
     </div>
   );
 };
