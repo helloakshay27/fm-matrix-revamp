@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 
 const mockResponseData = [
   {
@@ -65,23 +65,9 @@ const mockResponseData = [
 
 export const SurveyResponsePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const handleViewDetails = (id: number) => {
     console.log('Viewing details for survey:', id);
-  };
-
-  const handleFilterClick = () => {
-    setIsFilterModalOpen(true);
-  };
-
-  const handleFilterClose = () => {
-    setIsFilterModalOpen(false);
-  };
-
-  const handleApplyFilters = (filters: any) => {
-    console.log('Applied filters:', filters);
-    // Handle filter application logic here
   };
 
   return (
@@ -145,11 +131,7 @@ export const SurveyResponsePage = () => {
             <Upload className="w-4 h-4 mr-2" />
             Import
           </Button>
-          <Button 
-            variant="outline" 
-            className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-            onClick={handleFilterClick}
-          >
+          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
             <Filter className="w-4 h-4 mr-2" />
             Filter
           </Button>
@@ -213,13 +195,6 @@ export const SurveyResponsePage = () => {
           </Table>
         </div>
       </div>
-
-      {/* Filter Modal */}
-      <SurveyResponseFilterModal
-        open={isFilterModalOpen}
-        onClose={handleFilterClose}
-        onApply={handleApplyFilters}
-      />
     </div>
   );
 };
