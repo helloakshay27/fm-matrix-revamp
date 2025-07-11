@@ -1,145 +1,196 @@
+
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Edit, Copy, Eye, Share2, Switch } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface SurveyListTableProps {
-  onAddSurvey: () => void;
+  searchTerm: string;
 }
 
-const mockSurveyData = [{
-  id: 1,
-  title: "Customer Satisfaction Survey",
-  status: "Active",
-  active: true,
-  ticketCreation: true,
-  ticketLevel: "Medium",
-  ticketCategory: "Feedback",
-  lastModified: "2024-01-15",
-  responses: 25
-}, {
-  id: 2,
-  title: "Facility Maintenance Survey",
-  status: "Draft",
-  active: false,
-  ticketCreation: false,
-  ticketLevel: "Low",
-  ticketCategory: "Maintenance",
-  lastModified: "2024-01-14",
-  responses: 0
-}];
+const mockSurveyData = [
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Survey",
+    noOfAssociation: 2,
+    typeOfSurvey: "QR"
+  },
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Survey",
+    noOfAssociation: 3,
+    typeOfSurvey: "Link"
+  },
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Question",
+    noOfAssociation: 4,
+    typeOfSurvey: "Link"
+  },
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Survey",
+    noOfAssociation: 3,
+    typeOfSurvey: "QR"
+  },
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Question",
+    noOfAssociation: 0,
+    typeOfSurvey: "Link"
+  },
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Survey",
+    noOfAssociation: 5,
+    typeOfSurvey: "QR"
+  },
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Question",
+    noOfAssociation: 2,
+    typeOfSurvey: "Link"
+  },
+  {
+    id: "12345",
+    title: "Survey Title 123",
+    ticketCreation: true,
+    ticketCategory: "Category 123",
+    ticketLevel: "Survey",
+    noOfAssociation: 1,
+    typeOfSurvey: "QR"
+  }
+];
 
-export const SurveyListTable = ({
-  onAddSurvey
-}: SurveyListTableProps) => {
-  const {
-    toast
-  } = useToast();
+export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
+  const { toast } = useToast();
   const [surveys, setSurveys] = useState(mockSurveyData);
 
-  const handleStatusToggle = (surveyId: number) => {
-    console.log(`Toggling status for Survey ${surveyId}`);
-    setSurveys(prevSurveys => prevSurveys.map(survey => survey.id === surveyId ? {
-      ...survey,
-      status: survey.status === 'Active' ? 'Draft' : 'Active'
-    } : survey));
-    toast({
-      title: "Status Updated",
-      description: "Survey status has been updated successfully"
-    });
-  };
-
-  const handleTicketCreationToggle = (surveyId: number) => {
-    console.log(`Toggling ticket creation for Survey ${surveyId}`);
-    setSurveys(prevSurveys => prevSurveys.map(survey => survey.id === surveyId ? {
-      ...survey,
-      ticketCreation: !survey.ticketCreation
-    } : survey));
+  const handleTicketCreationToggle = (index: number) => {
+    setSurveys(prevSurveys => 
+      prevSurveys.map((survey, i) => 
+        i === index ? { ...survey, ticketCreation: !survey.ticketCreation } : survey
+      )
+    );
     toast({
       title: "Ticket Creation Updated",
       description: "Ticket creation setting has been updated successfully"
     });
   };
 
-  const handleActiveToggle = (surveyId: number) => {
-    console.log(`Toggling active status for Survey ${surveyId}`);
-    setSurveys(prevSurveys => prevSurveys.map(survey => survey.id === surveyId ? {
-      ...survey,
-      active: !survey.active
-    } : survey));
+  const handleAction = (action: string, surveyId: string) => {
+    console.log(`${action} action for survey ${surveyId}`);
     toast({
-      title: "Active Status Updated",
-      description: "Survey active status has been updated successfully"
+      title: `${action} Action`,
+      description: `${action} action performed for survey ${surveyId}`
     });
   };
 
-  const handleAddSurvey = () => {
-    console.log("Adding new survey...");
-    toast({
-      title: "Add Survey",
-      description: "Add survey functionality initiated"
-    });
-    onAddSurvey();
-  };
+  const filteredSurveys = surveys.filter(survey =>
+    survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.ticketCategory.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  return <div className="space-y-4">
-      {/* Action Buttons */}
-      <div className="flex items-center gap-4">
-       <button onClick={handleAddSurvey} className="flex items-center text-[#BF213E] px-6 rounded-md transition-colors bg-sidebar-DEFAULT bg-[#F2EEE9] h-[36px]">
-  <Plus className="w-4 h-4 mr-2" style={{
-          color: '#BF213E'
-        }} />
-  Add
-      </button>
-
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-[#D5DbDB]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead>Ticket Creation</TableHead>
-              <TableHead>Ticket Level</TableHead>
-              <TableHead>Ticket Category</TableHead>
-              <TableHead>Last Modified</TableHead>
-              <TableHead>Responses</TableHead>
+  return (
+    <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-16">Edit</TableHead>
+            <TableHead className="w-16">Copy</TableHead>
+            <TableHead className="w-16">View</TableHead>
+            <TableHead className="w-16">Share</TableHead>
+            <TableHead className="w-24">ID</TableHead>
+            <TableHead>Survey Title</TableHead>
+            <TableHead className="w-32">Ticket Creation</TableHead>
+            <TableHead>Ticket Category</TableHead>
+            <TableHead>Ticket Level</TableHead>
+            <TableHead className="w-32">No. Of Association</TableHead>
+            <TableHead>Type Of Survey</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredSurveys.map((survey, index) => (
+            <TableRow key={`${survey.id}-${index}`}>
+              <TableCell>
+                <button 
+                  onClick={() => handleAction('Edit', survey.id)}
+                  className="p-1 text-gray-600 hover:text-gray-800"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              </TableCell>
+              <TableCell>
+                <button 
+                  onClick={() => handleAction('Copy', survey.id)}
+                  className="p-1 text-gray-600 hover:text-gray-800"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </TableCell>
+              <TableCell>
+                <button 
+                  onClick={() => handleAction('View', survey.id)}
+                  className="p-1 text-gray-600 hover:text-gray-800"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              </TableCell>
+              <TableCell>
+                <button 
+                  onClick={() => handleAction('Share', survey.id)}
+                  className="p-1 text-gray-600 hover:text-gray-800"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+              </TableCell>
+              <TableCell className="font-medium">{survey.id}</TableCell>
+              <TableCell>{survey.title}</TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <div 
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                      survey.ticketCreation ? 'bg-red-500' : 'bg-gray-300'
+                    }`} 
+                    onClick={() => handleTicketCreationToggle(index)}
+                  >
+                    <span 
+                      className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                        survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
+                      }`} 
+                    />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>{survey.ticketCategory}</TableCell>
+              <TableCell>{survey.ticketLevel}</TableCell>
+              <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
+              <TableCell>{survey.typeOfSurvey}</TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {surveys.map(survey => <TableRow key={survey.id}>
-                <TableCell className="font-medium">{survey.title}</TableCell>
-                <TableCell>
-                  <div className="flex items-center">
-                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${survey.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleStatusToggle(survey.id)}>
-                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${survey.status === 'Active' ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center">
-                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${survey.active ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleActiveToggle(survey.id)}>
-                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${survey.active ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center">
-                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${survey.ticketCreation ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleTicketCreationToggle(survey.id)}>
-                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{survey.ticketLevel}</TableCell>
-                <TableCell>{survey.ticketCategory}</TableCell>
-                <TableCell>{survey.lastModified}</TableCell>
-                <TableCell>{survey.responses}</TableCell>
-              </TableRow>)}
-          </TableBody>
-        </Table>
-      </div>
-    </div>;
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 };
