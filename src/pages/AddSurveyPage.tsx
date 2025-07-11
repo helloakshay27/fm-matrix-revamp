@@ -5,8 +5,6 @@ import { SurveyHeader } from '@/components/survey/SurveyHeader';
 import { SectionCard } from '@/components/survey/SectionCard';
 import { AssociationSection } from '@/components/survey/AssociationSection';
 import { ActionButtons } from '@/components/survey/ActionButtons';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { Section, Question } from '@/types/survey';
 
 export const AddSurveyPage = () => {
@@ -60,18 +58,6 @@ export const AddSurveyPage = () => {
           }
         : section
     ));
-  };
-
-  const addSection = () => {
-    const newSection: Section = {
-      id: Date.now().toString(),
-      title: 'Untitled Section',
-      description: 'Description',
-      questions: [
-        { id: Date.now().toString() + '_1', text: 'Question', type: 'Short answer', required: true }
-      ]
-    };
-    setSections([...sections, newSection]);
   };
 
   const deleteQuestion = (sectionId: string, questionId: string) => {
@@ -137,17 +123,6 @@ export const AddSurveyPage = () => {
               onDeleteQuestion={deleteQuestion}
             />
           ))}
-          
-          {/* Add Section Button */}
-          <div className="flex justify-center mt-6">
-            <Button
-              variant="ghost"
-              onClick={addSection}
-              className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 hover:border-gray-400"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
 
         <AssociationSection
