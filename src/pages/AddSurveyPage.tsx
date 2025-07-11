@@ -109,65 +109,39 @@ export const AddSurveyPage = () => {
     <div className="min-h-screen min-w-full bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+        <div className="p-6 bg-gray-100 border-b border-gray-200">
+          <div className="flex items-start justify-between">
             <div className="flex-1">
-              <Input
-                value={surveyTitle}
-                onChange={(e) => setSurveyTitle(e.target.value)}
-                className="text-2xl font-semibold border-none p-0 focus-visible:ring-0 bg-transparent"
-                placeholder="Survey Title"
-              />
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="mt-2 border-none p-0 focus-visible:ring-0 bg-transparent resize-none text-gray-600"
-                placeholder="Description"
-                rows={1}
-              />
+              <div className="text-2xl font-semibold text-black mb-2">
+                Survey Title
+              </div>
+              <div className="text-gray-600">
+                Description
+              </div>
             </div>
             
             <div className="flex items-center gap-6 ml-6">
               <div className="flex items-center gap-2">
-                <Label htmlFor="create-ticket">Create Ticket</Label>
-                <Switch
-                  id="create-ticket"
-                  checked={createTicket}
-                  onCheckedChange={setCreateTicket}
-                />
+                <span className="text-sm">Create Ticket</span>
+                <div className="w-6 h-3 bg-red-600 rounded-full relative">
+                  <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                </div>
               </div>
               
               <div className="flex items-center gap-2">
-                <Label htmlFor="survey-type">Type:</Label>
-                <Select value={surveyType} onValueChange={setSurveyType}>
-                  <SelectTrigger className="w-32 border-none bg-transparent">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Survey">Survey</SelectItem>
-                    <SelectItem value="Poll">Poll</SelectItem>
-                    <SelectItem value="Quiz">Quiz</SelectItem>
-                  </SelectContent>
-                </Select>
+                <span className="text-sm">Type:</span>
+                <span className="text-sm font-medium">Survey</span>
+                <div className="w-6 h-3 bg-red-600 rounded-full relative">
+                  <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                </div>
               </div>
               
               <div className="flex items-center gap-2">
-                <Select value={feedback} onValueChange={setFeedback}>
-                  <SelectTrigger className="w-32 border-none bg-transparent">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Feedback">Feedback</SelectItem>
-                    <SelectItem value="Rating">Rating</SelectItem>
-                    <SelectItem value="Review">Review</SelectItem>
-                  </SelectContent>
-                </Select>
+                <span className="text-sm font-medium">Feedback</span>
+                <div className="w-6 h-3 bg-red-600 rounded-full relative">
+                  <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                </div>
               </div>
-              
-              <Button variant="ghost" size="sm">
-                <Eye className="w-4 h-4 mr-2" />
-                Preview
-              </Button>
             </div>
           </div>
         </div>
