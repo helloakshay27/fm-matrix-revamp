@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { TextField, createTheme, ThemeProvider } from '@mui/material';
+import { TextField, createTheme, ThemeProvider, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { X } from 'lucide-react';
-import { AsyncSearchableDropdown } from './AsyncSearchableDropdown';
 
 interface ExportByCentreModalProps {
   isOpen: boolean;
@@ -46,6 +45,34 @@ const textFieldTheme = createTheme({
                 padding: '8px 14px',
                 fontSize: '12px',
               },
+            },
+          },
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '6px',
+            backgroundColor: '#FFFFFF',
+            height: '45px',
+            '& fieldset': {
+              borderColor: '#E0E0E0',
+              borderRadius: '6px',
+            },
+            '&:hover fieldset': {
+              borderColor: '#1A1A1A',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#8B4B8C',
+              borderWidth: 2,
+            },
+          },
+          // Mobile breakpoint
+          '@media (max-width: 768px)': {
+            '& .MuiOutlinedInput-root': {
+              height: '36px',
             },
           },
         },
@@ -94,7 +121,7 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
-    sites: null as any
+    sites: ''
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -104,22 +131,11 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
     }));
   };
 
-  const handleSiteSelection = (selectedSite: any) => {
+  const handleSiteSelection = (event: SelectChangeEvent) => {
     setFormData(prev => ({
       ...prev,
-      sites: selectedSite
+      sites: event.target.value
     }));
-  };
-
-  const handleSiteSearch = async (searchTerm: string) => {
-    // Filter sites based on search term
-    if (!searchTerm.trim()) {
-      return availableSites;
-    }
-    
-    return availableSites.filter(site => 
-      site.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
   };
 
   const handleExport = () => {
@@ -175,14 +191,33 @@ export const ExportByCentreModal: React.FC<ExportByCentreModalProps> = ({ isOpen
 
             <div>
               <h3 className="text-lg font-semibold mb-4">Choose Sites</h3>
-              <AsyncSearchableDropdown
-                placeholder="Select sites"
-                onSearch={handleSiteSearch}
-                onChange={handleSiteSelection}
-                defaultOptions={availableSites}
-                className="w-full"
-                noOptionsMessage="No sites found"
-              />
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="sites-select-label">Select sites</InputLabel>
+                <Select
+                  labelId="sites-select-label"
+                  id="sites-select"
+                  value={formData.sites}
+                  onChange={handleSiteSelection}
+                  label="Select sites"
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200,
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                      },
+                    },
+                  }}
+                >
+                  {availableSites.map((site) => (
+                    <MenuItem key={site.value} value={site.value}>
+                      {site.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             <div className="flex justify-start pt-4">
