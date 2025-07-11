@@ -13,9 +13,9 @@ export const CommentsAttachmentsSection: React.FC<CommentsAttachmentsSectionProp
   onCommentsChange
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-6 items-start">
+    <div className="flex flex-col lg:flex-row gap-6 items-start">
       {/* Comments - 50% width */}
-      <div className="space-y-2">
+      <div className="flex-1 space-y-2">
         <TextField
           label="Comments"
           multiline
@@ -36,7 +36,7 @@ export const CommentsAttachmentsSection: React.FC<CommentsAttachmentsSectionProp
       </div>
 
       {/* Attachments - 50% width */}
-      <div className="space-y-2">
+      <div className="flex-1 space-y-2">
         <AttachmentsSection />
       </div>
     </div>
