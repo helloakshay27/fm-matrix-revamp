@@ -217,7 +217,7 @@ export const AddSurveyPage = () => {
                               : s
                           ))}
                         >
-                          <SelectTrigger className="w-40 h-8">
+                          <SelectTrigger className="w-48 h-8">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
