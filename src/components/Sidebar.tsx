@@ -93,15 +93,6 @@ const modulesByPackage = {
         { name: 'Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
-    },
-    {
-      name: 'Booking',
-      icon: Calendar,
-      href: '/maintenance/booking',
-      subItems: [
-        { name: 'Booking List', href: '/maintenance/booking/list', color: 'text-[#1a1a1a]' },
-        { name: 'Book Setup', href: '/maintenance/booking/setup', color: 'text-[#1a1a1a]' }
-      ]
     }
   ],
   'Safety': [
@@ -226,6 +217,15 @@ const modulesByPackage = {
             { name: 'Export', href: '/vas/space-management/setup/export', color: 'text-[#1a1a1a]' }
           ]
         }
+      ]
+    },
+    {
+      name: 'Booking',
+      icon: Calendar,
+      href: '/vas/booking',
+      subItems: [
+        { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
+        { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
       ]
     },
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
