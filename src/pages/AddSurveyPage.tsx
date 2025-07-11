@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -123,24 +124,27 @@ export const AddSurveyPage = () => {
             <div className="flex items-center gap-6 ml-6">
               <div className="flex items-center gap-2">
                 <span className="text-sm">Create Ticket</span>
-                <div className="w-6 h-3 bg-red-600 rounded-full relative">
-                  <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
-                </div>
+                <Switch
+                  checked={createTicket}
+                  onCheckedChange={setCreateTicket}
+                />
               </div>
               
               <div className="flex items-center gap-2">
                 <span className="text-sm">Type:</span>
                 <span className="text-sm font-medium">Survey</span>
-                <div className="w-6 h-3 bg-red-600 rounded-full relative">
-                  <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
-                </div>
+                <Switch
+                  checked={true}
+                  onCheckedChange={() => {}}
+                />
               </div>
               
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Feedback</span>
-                <div className="w-6 h-3 bg-red-600 rounded-full relative">
-                  <div className="w-2 h-2 bg-white rounded-full absolute top-0.5 right-0.5"></div>
-                </div>
+                <Switch
+                  checked={true}
+                  onCheckedChange={() => {}}
+                />
               </div>
             </div>
           </div>
