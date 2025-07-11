@@ -51,7 +51,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
             <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
               Assets Selected
             </span>
-            <span className="text-xs text-gray-500 max-w-48 truncate">
+            <span className="text-xs text-gray-500 max-w-48 break-words">
               {getDisplayText()}
             </span>
           </div>
