@@ -113,7 +113,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           {/* Movement To Section */}
           <div className="mb-6">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">Movement To</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               <div className="w-full">
                 <CustomTextField
                   label="Site*"
