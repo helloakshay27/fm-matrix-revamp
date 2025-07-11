@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Eye, Plus, Filter, Download, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 interface BookingData {
   id: number;
@@ -102,6 +110,13 @@ const mockBookingData: BookingData[] = [
 
 const BookingListDashboard = () => {
   const [bookings] = useState<BookingData[]>(mockBookingData);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentBookings = bookings.slice(startIndex, endIndex);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -114,6 +129,10 @@ const BookingListDashboard = () => {
       default:
         return 'default';
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -188,7 +207,7 @@ const BookingListDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {bookings.map((booking) => (
+            {currentBookings.map((booking) => (
               <TableRow key={booking.id} className="hover:bg-gray-50">
                 <TableCell>
                   <Button variant="ghost" size="sm">
@@ -214,6 +233,39 @@ const BookingListDashboard = () => {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={() => handlePageChange(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );
