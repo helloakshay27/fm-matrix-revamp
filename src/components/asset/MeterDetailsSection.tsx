@@ -81,14 +81,14 @@ export const MeterDetailsSection: React.FC<MeterDetailsProps> = ({
                 checked={meterDetailsApplicable}
                 onChange={(e) => setMeterDetailsApplicable(e.target.checked)}
               />
-              <div className="w-11 h-6 bg-green-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              <div className={`w-11 h-6 ${meterDetailsApplicable ? 'bg-green-400' : 'bg-gray-300'} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
             </label>
             <span className="text-sm text-gray-600">If Applicable</span>
           </div>
         </div>
         {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
       </div>
-      {isExpanded && (
+      {isExpanded && meterDetailsApplicable && (
         <div className="p-4 sm:p-6">
           {/* Meter Type Section */}
           <div className="mb-6">
