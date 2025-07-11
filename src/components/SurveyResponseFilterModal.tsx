@@ -11,7 +11,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid,
   Box
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -88,123 +87,126 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
         </DialogTitle>
         
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <Grid container spacing={3}>
-              {/* Survey Title Filter */}
-              <Grid xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Survey Title"
-                  variant="outlined"
-                  value={filters.surveyTitle}
-                  onChange={(e) => handleInputChange('surveyTitle', e.target.value)}
-                  placeholder="Enter survey title..."
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': {
-                        borderColor: '#C72030',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
-                      },
+          <Box sx={{ 
+            mt: 2,
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 3
+          }}>
+            {/* Survey Title Filter */}
+            <Box>
+              <TextField
+                fullWidth
+                label="Survey Title"
+                variant="outlined"
+                value={filters.surveyTitle}
+                onChange={(e) => handleInputChange('surveyTitle', e.target.value)}
+                placeholder="Enter survey title..."
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
                     },
-                    '& .MuiInputLabel-root.Mui-focused': {
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Survey Type Filter */}
+            <Box>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel
+                  sx={{
+                    '&.Mui-focused': {
                       color: '#C72030',
                     },
                   }}
-                />
-              </Grid>
+                >
+                  Survey Type
+                </InputLabel>
+                <Select
+                  value={filters.surveyType}
+                  onChange={(e) => handleInputChange('surveyType', e.target.value)}
+                  label="Survey Type"
+                  sx={{
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
+                >
+                  <MenuItem value="">All Types</MenuItem>
+                  <MenuItem value="feedback">Feedback</MenuItem>
+                  <MenuItem value="evaluation">Evaluation</MenuItem>
+                  <MenuItem value="satisfaction">Satisfaction</MenuItem>
+                  <MenuItem value="research">Research</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
 
-              {/* Survey Type Filter */}
-              <Grid xs={12} md={6}>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel
-                    sx={{
-                      '&.Mui-focused': {
+            {/* Start Date Filter */}
+            <Box>
+              <DatePicker
+                label="Start Date"
+                value={filters.startDate}
+                onChange={(date) => handleInputChange('startDate', date)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: 'outlined',
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#C72030',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#C72030',
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
                         color: '#C72030',
                       },
-                    }}
-                  >
-                    Survey Type
-                  </InputLabel>
-                  <Select
-                    value={filters.surveyType}
-                    onChange={(e) => handleInputChange('surveyType', e.target.value)}
-                    label="Survey Type"
-                    sx={{
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#C72030',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#C72030',
-                      },
-                    }}
-                  >
-                    <MenuItem value="">All Types</MenuItem>
-                    <MenuItem value="feedback">Feedback</MenuItem>
-                    <MenuItem value="evaluation">Evaluation</MenuItem>
-                    <MenuItem value="satisfaction">Satisfaction</MenuItem>
-                    <MenuItem value="research">Research</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Start Date Filter */}
-              <Grid xs={12} md={6}>
-                <DatePicker
-                  label="Start Date"
-                  value={filters.startDate}
-                  onChange={(date) => handleInputChange('startDate', date)}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: 'outlined',
-                      sx: {
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': {
-                            borderColor: '#C72030',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#C72030',
-                          },
-                        },
-                        '& .MuiInputLabel-root.Mui-focused': {
-                          color: '#C72030',
-                        },
-                      }
                     }
-                  }}
-                />
-              </Grid>
+                  }
+                }}
+              />
+            </Box>
 
-              {/* End Date Filter */}
-              <Grid xs={12} md={6}>
-                <DatePicker
-                  label="End Date"
-                  value={filters.endDate}
-                  onChange={(date) => handleInputChange('endDate', date)}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: 'outlined',
-                      sx: {
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': {
-                            borderColor: '#C72030',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#C72030',
-                          },
+            {/* End Date Filter */}
+            <Box>
+              <DatePicker
+                label="End Date"
+                value={filters.endDate}
+                onChange={(date) => handleInputChange('endDate', date)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: 'outlined',
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#C72030',
                         },
-                        '& .MuiInputLabel-root.Mui-focused': {
-                          color: '#C72030',
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#C72030',
                         },
-                      }
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#C72030',
+                      },
                     }
-                  }}
-                />
-              </Grid>
-            </Grid>
+                  }
+                }}
+              />
+            </Box>
           </Box>
         </DialogContent>
 
