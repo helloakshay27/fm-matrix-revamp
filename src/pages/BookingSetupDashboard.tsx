@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Filter } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Filter, Eye } from "lucide-react";
 import { BookingSetupFilterDialog } from "@/components/BookingSetupFilterDialog";
 import { BookingSetupForm } from "@/components/BookingSetupForm";
 
@@ -14,7 +15,7 @@ export const BookingSetupDashboard = () => {
     console.log('Applied booking setup filters:', filters);
   };
 
-  const bookingSetupData = [
+  const [bookingSetupData, setBookingSetupData] = useState([
     {
       id: "1307",
       name: "conference room now",
@@ -25,7 +26,7 @@ export const BookingSetupDashboard = () => {
       advanceBooking: "04/03/2025 10:00 AM",
       createdOn: "22/11/2022 12:36 PM",
       createdBy: "",
-      status: "✓"
+      status: true
     },
     {
       id: "756",
@@ -37,7 +38,7 @@ export const BookingSetupDashboard = () => {
       advanceBooking: "",
       createdOn: "",
       createdBy: "Sony Bhogle",
-      status: "✓"
+      status: true
     },
     {
       id: "741",
@@ -49,7 +50,7 @@ export const BookingSetupDashboard = () => {
       advanceBooking: "14/09/2022 5:54 PM",
       createdOn: "",
       createdBy: "",
-      status: "✓"
+      status: true
     },
     {
       id: "740",
@@ -61,7 +62,7 @@ export const BookingSetupDashboard = () => {
       advanceBooking: "14/09/2022 5:52 PM",
       createdOn: "",
       createdBy: "",
-      status: "✓"
+      status: true
     },
     {
       id: "664",
@@ -73,12 +74,20 @@ export const BookingSetupDashboard = () => {
       advanceBooking: "28/02/2022 6:11 PM",
       createdOn: "",
       createdBy: "Ankit Gupta",
-      status: "✓"
+      status: true
     }
-  ];
+  ]);
 
   const handleAddBooking = () => {
     setIsAddBookingOpen(true);
+  };
+
+  const handleStatusToggle = (id: string) => {
+    setBookingSetupData(prevData =>
+      prevData.map(booking =>
+        booking.id === id ? { ...booking, status: !booking.status } : booking
+      )
+    );
   };
 
   return (
@@ -129,9 +138,9 @@ export const BookingSetupDashboard = () => {
               {bookingSetupData.map((booking, index) => (
                 <TableRow key={booking.id}>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost">👁️</Button>
-                    </div>
+                    <Button size="sm" variant="ghost">
+                      <Eye className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                   <TableCell className="text-blue-600 font-medium">{booking.id}</TableCell>
                   <TableCell className="text-blue-600">{booking.name}</TableCell>
@@ -142,7 +151,12 @@ export const BookingSetupDashboard = () => {
                   <TableCell>{booking.advanceBooking}</TableCell>
                   <TableCell>{booking.createdOn}</TableCell>
                   <TableCell>{booking.createdBy}</TableCell>
-                  <TableCell className="text-green-600 font-bold">{booking.status}</TableCell>
+                  <TableCell>
+                    <Switch
+                      checked={booking.status}
+                      onCheckedChange={() => handleStatusToggle(booking.id)}
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
