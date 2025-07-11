@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,7 @@ import { CalendarIcon, Copy, Trash2, Eye, Plus, MapPin, Minus, AlignLeft, Circle
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { QuestionContent } from '@/components/QuestionContent';
 
 interface Question {
   id: string;
@@ -299,12 +299,8 @@ export const AddSurveyPage = () => {
                     </div>
                   </div>
                   
-                  {/* Question Content */}
-                  <div className="px-4 py-6">
-                    <div className="text-gray-400 text-sm mb-4">
-                      {question.type} text
-                    </div>
-                  </div>
+                  {/* Question Content - Now Dynamic */}
+                  <QuestionContent questionType={question.type} />
                   
                   {/* Question Footer */}
                   <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between">
