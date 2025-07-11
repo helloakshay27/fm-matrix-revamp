@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Eye, Plus, Filter, Download, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -17,6 +17,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Pagination,
   PaginationContent,
@@ -111,10 +116,33 @@ const mockBookingData: BookingData[] = [
   }
 ];
 
+const exportColumns = [
+  { id: 'selectAll', label: 'Select All' },
+  { id: 'id', label: 'Id' },
+  { id: 'centreName', label: 'Centre Name' },
+  { id: 'bookedBy', label: 'Booked By' },
+  { id: 'bookedFor', label: 'Booked For' },
+  { id: 'companyName', label: 'Company Name' },
+  { id: 'facility', label: 'Facility' },
+  { id: 'scheduledOn', label: 'Scheduled On' },
+  { id: 'slot', label: 'Slot' },
+  { id: 'duration', label: 'Duration (Minutes)' },
+  { id: 'bookingStatus', label: 'Booking Status' },
+  { id: 'perSlotCharge', label: 'Per Slot Charge' },
+  { id: 'amountPaid', label: 'Amount Paid' },
+  { id: 'paymentStatus', label: 'Payment Status' },
+  { id: 'paymentType', label: 'Payment Type' },
+  { id: 'bookedOn', label: 'Booked On' },
+  { id: 'source', label: 'Source' },
+  { id: 'comment', label: 'Comment' }
+];
+
 const BookingListDashboard = () => {
   const [bookings] = useState<BookingData[]>(mockBookingData);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'bookedBy']);
   const [filters, setFilters] = useState({
     facilityName: '',
     status: '',
@@ -167,6 +195,29 @@ const BookingListDashboard = () => {
     });
   };
 
+  const handleColumnToggle = (columnId: string) => {
+    if (columnId === 'selectAll') {
+      if (selectedColumns.length === exportColumns.length - 1) {
+        setSelectedColumns([]);
+      } else {
+        setSelectedColumns(exportColumns.slice(1).map(col => col.id));
+      }
+    } else {
+      setSelectedColumns(prev => 
+        prev.includes(columnId) 
+          ? prev.filter(id => id !== columnId)
+          : [...prev, columnId]
+      );
+    }
+  };
+
+  const handleDownload = () => {
+    console.log('Downloading selected columns:', selectedColumns);
+    setIsExportPopoverOpen(false);
+  };
+
+  const isAllSelected = selectedColumns.length === exportColumns.length - 1;
+
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
@@ -195,20 +246,45 @@ const BookingListDashboard = () => {
           Filters
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <Popover open={isExportPopoverOpen} onOpenChange={setIsExportPopoverOpen}>
+          <PopoverTrigger asChild>
             <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
               <Download className="w-4 h-4 mr-2" />
               Export
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-            <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-            <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4 bg-white border border-gray-200 shadow-lg z-50" align="start">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Select columns to export:</h3>
+              
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {exportColumns.map((column) => (
+                  <div key={column.id} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={column.id}
+                      checked={column.id === 'selectAll' ? isAllSelected : selectedColumns.includes(column.id)}
+                      onCheckedChange={() => handleColumnToggle(column.id)}
+                    />
+                    <label 
+                      htmlFor={column.id} 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {column.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              
+              <Button 
+                onClick={handleDownload}
+                className="w-full bg-[#5D2A4B] hover:bg-[#4A2139] text-white"
+              >
+                Download
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
           <Download className="w-4 h-4 mr-2" />
