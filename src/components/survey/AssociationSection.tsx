@@ -27,11 +27,12 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
         {/* Location */}
         <div className="flex-1 min-w-0">
           <Typography variant="subtitle2" className="mb-2 text-center sm:text-left">Location</Typography>
-          <FormControl fullWidth size="small">
+          <FormControl fullWidth size="small" variant="outlined">
             <InputLabel>Location</InputLabel>
             <Select
               label="Location"
               defaultValue=""
+              variant="outlined"
             >
               <MenuItem value="location1">Location 1</MenuItem>
               <MenuItem value="location2">Location 2</MenuItem>
@@ -45,8 +46,8 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Box className="flex flex-col sm:flex-row items-center gap-2">
               <div className="flex-1 min-w-0 w-full sm:w-auto">
-                <Typography variant="caption" className="text-gray-500 block">Start Date</Typography>
                 <DatePicker
+                  label="Start Date"
                   value={startDate}
                   onChange={(newValue) => onStartDateChange(newValue || undefined)}
                   format="dd/MM/yy"
@@ -54,6 +55,7 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
                     textField: {
                       size: 'small',
                       fullWidth: true,
+                      variant: 'outlined',
                       placeholder: 'dd/mm/yy'
                     }
                   }}
@@ -63,8 +65,8 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
               <span className="text-gray-500 text-sm px-2 hidden sm:inline">To</span>
               
               <div className="flex-1 min-w-0 w-full sm:w-auto">
-                <Typography variant="caption" className="text-gray-500 block">End Date</Typography>
                 <DatePicker
+                  label="End Date"
                   value={endDate}
                   onChange={(newValue) => onEndDateChange(newValue || undefined)}
                   format="dd/MM/yy"
@@ -72,6 +74,7 @@ export const AssociationSection: React.FC<AssociationSectionProps> = ({
                     textField: {
                       size: 'small',
                       fullWidth: true,
+                      variant: 'outlined',
                       placeholder: 'dd/mm/yy'
                     }
                   }}
