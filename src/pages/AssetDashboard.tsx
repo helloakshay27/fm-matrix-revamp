@@ -16,6 +16,7 @@ import { AssetActions } from '@/components/AssetActions';
 import { AssetDataTable } from '@/components/AssetDataTable';
 import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { MoveAssetDialog } from '@/components/MoveAssetDialog';
+import { DisposeAssetDialog } from '@/components/DisposeAssetDialog';
 import { useAssetData } from '@/hooks/useAssetData';
 
 export const AssetDashboard = () => {
@@ -24,6 +25,7 @@ export const AssetDashboard = () => {
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMoveAssetOpen, setIsMoveAssetOpen] = useState(false);
+  const [isDisposeAssetOpen, setIsDisposeAssetOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -88,6 +90,9 @@ export const AssetDashboard = () => {
 
   const handleDisposeAsset = () => {
     console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
+    setIsDisposeAssetOpen(true);
+    // Clear selection to close the panel
+    handleSelectAll(false);
   };
 
   const handlePrintQRCode = () => {
@@ -227,6 +232,12 @@ export const AssetDashboard = () => {
       <MoveAssetDialog
         isOpen={isMoveAssetOpen}
         onClose={() => setIsMoveAssetOpen(false)}
+        selectedAssets={selectedAssets}
+      />
+
+      <DisposeAssetDialog
+        isOpen={isDisposeAssetOpen}
+        onClose={() => setIsDisposeAssetOpen(false)}
         selectedAssets={selectedAssets}
       />
     </div>
