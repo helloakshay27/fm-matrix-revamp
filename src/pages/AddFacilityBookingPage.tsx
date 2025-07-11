@@ -2,14 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { TextField, MenuItem } from '@mui/material';
 
 export const AddFacilityBookingPage = () => {
@@ -17,7 +11,7 @@ export const AddFacilityBookingPage = () => {
   const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
-  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedDate, setSelectedDate] = useState('');
   const [comment, setComment] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -99,6 +93,7 @@ export const AddFacilityBookingPage = () => {
               onChange={(e) => setSelectedUser(e.target.value)}
               variant="outlined"
               fullWidth
+              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             >
               <MenuItem value="user1">User 1</MenuItem>
@@ -116,6 +111,7 @@ export const AddFacilityBookingPage = () => {
               onChange={(e) => setSelectedFacility(e.target.value)}
               variant="outlined"
               fullWidth
+              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             >
               <MenuItem value="meeting-room">Meeting Room</MenuItem>
@@ -126,30 +122,16 @@ export const AddFacilityBookingPage = () => {
 
           {/* Date Selection */}
           <div className="space-y-2">
-            <Label>Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-9 sm:h-11 rounded-md",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : "Select Date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <TextField
+              type="date"
+              label="Date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            />
           </div>
         </div>
 
@@ -163,6 +145,7 @@ export const AddFacilityBookingPage = () => {
             fullWidth
             multiline
             rows={4}
+            InputLabelProps={{ shrink: true }}
             sx={{
               ...fieldStyles,
               '& .MuiOutlinedInput-root': {
