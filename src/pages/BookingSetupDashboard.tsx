@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Filter, Eye } from "lucide-react";
-import { BookingSetupFilterDialog } from "@/components/BookingSetupFilterDialog";
+import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { BookingSetupForm } from "@/components/BookingSetupForm";
 
 export const BookingSetupDashboard = () => {
@@ -163,8 +163,8 @@ export const BookingSetupDashboard = () => {
           </Table>
         </div>
 
-        {/* Filter Dialog */}
-        <BookingSetupFilterDialog 
+        {/* Filter Modal */}
+        <BookingSetupFilterModal 
           open={isFilterOpen}
           onOpenChange={setIsFilterOpen}
           onApply={handleFilterApply}
