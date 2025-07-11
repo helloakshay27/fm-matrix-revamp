@@ -152,7 +152,7 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => removeFile(index)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-500"
                 >
                   <X className="w-4 h-4" />
                 </Button>
