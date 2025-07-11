@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TextField, MenuItem } from '@mui/material';
+import { CheckCircle, FileText, Shield } from 'lucide-react';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -60,10 +61,10 @@ export const AddFacilityBookingPage = () => {
           <span>Add Facility Booking</span>
         </div>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">✓</span>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
+            <CheckCircle className="text-white w-5 h-5" />
           </div>
-          <h1 className="text-xl font-semibold text-orange-500">Facility Booking</h1>
+          <h1 className="text-xl font-semibold" style={{ color: '#C72030' }}>Facility Booking</h1>
         </div>
       </div>
 
@@ -180,10 +181,12 @@ export const AddFacilityBookingPage = () => {
 
         {/* Footer Links */}
         <div className="space-y-2 text-sm">
-          <div className="text-orange-500 cursor-pointer hover:underline">
+          <div className="flex items-center gap-2 cursor-pointer hover:underline" style={{ color: '#C72030' }}>
+            <FileText className="w-4 h-4" />
             Cancellation Policy
           </div>
-          <div className="text-orange-500 cursor-pointer hover:underline">
+          <div className="flex items-center gap-2 cursor-pointer hover:underline" style={{ color: '#C72030' }}>
+            <Shield className="w-4 h-4" />
             Terms & Conditions
           </div>
         </div>
