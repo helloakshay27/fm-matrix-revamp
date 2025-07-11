@@ -10,6 +10,9 @@ import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import { LoginPage } from './pages/LoginPage';
 
+// Import Invoice Approvals page
+import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
+
 // Import Snagging pages
 import { SnaggingDashboard } from './pages/SnaggingDashboard';
 import { SnaggingDetailsPage } from './pages/SnaggingDetailsPage';
@@ -425,6 +428,9 @@ function App() {
               <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
               <Route path="/settings/roles/role" element={<RoleDashboard />} />
+              
+              {/* Settings Asset Setup Routes */}
+              <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
               
               {/* Settings Masters Routes */}
               <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
