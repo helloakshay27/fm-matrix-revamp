@@ -91,7 +91,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
           <Box sx={{ mt: 2 }}>
             <Grid container spacing={3}>
               {/* Survey Title Filter */}
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Survey Title"
@@ -116,7 +116,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
               </Grid>
 
               {/* Survey Type Filter */}
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel
                     sx={{
@@ -150,7 +150,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
               </Grid>
 
               {/* Start Date Filter */}
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <DatePicker
                   label="Start Date"
                   value={filters.startDate}
@@ -178,7 +178,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
               </Grid>
 
               {/* End Date Filter */}
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <DatePicker
                   label="End Date"
                   value={filters.endDate}
