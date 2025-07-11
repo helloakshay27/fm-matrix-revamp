@@ -743,7 +743,6 @@ function App() {
               <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
               <Route path="/setup/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               <Route path="/setup/patrolling-approval" element={<div>Patrolling Approval</div>} />
-              <Route path="/setup/email-rule" element={<div>Email Rule</div>} />
               <Route path="/setup/fm-group" element={<div>FM Group</div>} />
               <Route path="/setup/master-checklist" element={<div>Master Checklist</div>} />
               <Route path="/setup/sac-hsn-setup" element={<div>SAC/HSN Setup</div>} />
@@ -755,7 +754,6 @@ function App() {
             {/* Settings Routes */}
             <Route path="/settings" element={<Layout><div /></Layout>}>
               <Route path="/settings/checklist-setup/group" element={<ChecklistGroupDashboard />} />
-              <Route path="/settings/checklist-setup/email-rule" element={<div>Email Rule</div>} />
               <Route path="/settings/checklist-setup/task-escalation" element={<div>Task Escalation</div>} />
               <Route path="/settings/ticket-management/setup" element={<div>Ticket Management Setup</div>} />
               <Route path="/settings/ticket-management/escalation-matrix" element={<div>Escalation Matrix</div>} />
