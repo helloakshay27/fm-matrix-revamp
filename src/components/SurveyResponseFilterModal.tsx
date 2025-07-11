@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -61,6 +60,17 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
         sm: '45px'
       },
       borderRadius: '6px',
+      '& input': {
+        height: {
+          xs: '36px',
+          sm: '45px'
+        },
+        padding: {
+          xs: '8px 14px',
+          sm: '10px 14px'
+        },
+        boxSizing: 'border-box'
+      },
       '&:hover fieldset': {
         borderColor: '#C72030'
       },
@@ -74,7 +84,10 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
       }
     },
     '& .MuiInputLabel-shrink': {
-      transform: 'translate(14px, -9px) scale(0.75)'
+      transform: {
+        xs: 'translate(14px, -9px) scale(0.75)',
+        sm: 'translate(14px, -9px) scale(0.75)'
+      }
     }
   };
 
