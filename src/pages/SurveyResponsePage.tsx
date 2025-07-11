@@ -85,8 +85,11 @@ export const SurveyResponsePage = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <Activity className="w-4 h-4 text-white" />
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
+            <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+              <Activity className="w-4 h-4 text-white" />
+            </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-[#C72030]">20</div>
@@ -95,8 +98,11 @@ export const SurveyResponsePage = () => {
         </div>
 
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <ThumbsUp className="w-4 h-4 text-white" />
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
+            <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+              <ThumbsUp className="w-4 h-4 text-white" />
+            </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-[#C72030]">10</div>
@@ -105,8 +111,11 @@ export const SurveyResponsePage = () => {
         </div>
 
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <ClipboardList className="w-4 h-4 text-white" />
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
+            <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+              <ClipboardList className="w-4 h-4 text-white" />
+            </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-[#C72030]">10</div>
