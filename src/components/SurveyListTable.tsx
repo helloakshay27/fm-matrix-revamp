@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Edit, Copy, Eye, Share2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -116,7 +117,7 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
       {/* Mobile Card Layout */}
       <div className="block md:hidden">
         {filteredSurveys.map((survey, index) => (
-          <div key={`${survey.id}-${index}`} className="p-4 border-b border-gray-200 last:border-b-0 bg-green-50">
+          <div key={`${survey.id}-${index}`} className="p-4 border-b border-gray-200 last:border-b-0">
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="font-medium text-sm">{survey.title}</h3>
