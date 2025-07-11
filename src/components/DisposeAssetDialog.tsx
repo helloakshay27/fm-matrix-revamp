@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -19,6 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface DisposeAssetDialogProps {
   isOpen: boolean;
@@ -52,22 +61,13 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
   // Mock data for the selected assets table
   const mockAssets = [
     {
-      name: 'Dell Laptop',
-      code: '#3423',
-      status: 'Breakdown',
-      site: 'Haven Infoline',
-      purchaseCost: '₹ 1,00,000',
-      currentBookValue: '₹ 20,000',
-      soldValue: '₹'
-    },
-    {
-      name: 'Computer Table',
-      code: '#1233',
-      status: 'Breakdown',
-      site: 'Haven Infoline',
-      purchaseCost: '₹ 1,00,000',
-      currentBookValue: '₹ 20,000',
-      soldValue: '₹'
+      name: 'sdcsdc',
+      code: '#02e0d956a50e6203182a',
+      status: 'Disposed',
+      site: 'Lockated',
+      purchaseCost: 'NA',
+      currentBookValue: 'NA',
+      soldValue: ''
     }
   ];
 
@@ -86,6 +86,13 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
     'Tech Waste Solutions',
     'EcoFriendly Disposal',
     'Secure Asset Disposal'
+  ];
+
+  const statusOptions = [
+    'Disposed',
+    'Pending Disposal',
+    'In Transit',
+    'Scrapped'
   ];
 
   return (
@@ -108,39 +115,51 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
         <div className="p-6 space-y-6">
           {/* Assets Table */}
           <div className="w-full">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Asset Name</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[10%]">Asset Code</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Asset Status</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Site</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Purchase Cost</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Current Book Value</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-700 w-[15%]">Sold Value</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[15%]">Asset Name</TableHead>
+                  <TableHead className="w-[20%]">Asset Code</TableHead>
+                  <TableHead className="w-[15%]">Asset Status</TableHead>
+                  <TableHead className="w-[12%]">Site</TableHead>
+                  <TableHead className="w-[13%]">Purchase Cost</TableHead>
+                  <TableHead className="w-[13%]">Current Book Value</TableHead>
+                  <TableHead className="w-[12%]">Sold Value</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {mockAssets.map((asset, index) => (
-                  <tr key={index} className="border-b border-gray-100">
-                    <td className="py-3 px-2">{asset.name}</td>
-                    <td className="py-3 px-2">{asset.code}</td>
-                    <td className="py-3 px-2">
-                      <div className="flex items-center">
-                        <span className="bg-red-500 text-white px-3 py-1 text-sm rounded">
-                          {asset.status}
-                        </span>
-                        <ChevronDown className="ml-2 h-4 w-4 text-gray-400" />
-                      </div>
-                    </td>
-                    <td className="py-3 px-2">{asset.site}</td>
-                    <td className="py-3 px-2">{asset.purchaseCost}</td>
-                    <td className="py-3 px-2">{asset.currentBookValue}</td>
-                    <td className="py-3 px-2">{asset.soldValue}</td>
-                  </tr>
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{asset.name}</TableCell>
+                    <TableCell>{asset.code}</TableCell>
+                    <TableCell>
+                      <Select defaultValue={asset.status}>
+                        <SelectTrigger className="w-full bg-purple-600 text-white border-0 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>{asset.site}</TableCell>
+                    <TableCell>{asset.purchaseCost}</TableCell>
+                    <TableCell>{asset.currentBookValue}</TableCell>
+                    <TableCell>
+                      <Input 
+                        placeholder="Enter Sold Value"
+                        defaultValue={asset.soldValue}
+                        className="w-full h-8 text-sm"
+                      />
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Form Fields */}
