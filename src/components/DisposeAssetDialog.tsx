@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AttachmentsSection } from './AttachmentsSection';
 import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -30,6 +30,12 @@ import {
   ThemeProvider 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -115,6 +121,7 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
   const [comments, setComments] = useState('');
   const [assetStatus, setAssetStatus] = useState('Disposed');
   const [soldValue, setSoldValue] = useState('');
+  const [breakdown, setBreakdown] = useState('Breakdown');
 
   const handleSubmit = () => {
     console.log('Dispose Asset submitted:', {
@@ -125,7 +132,8 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
       comments,
       selectedAssets,
       assetStatus,
-      soldValue
+      soldValue,
+      breakdown
     });
     onClose();
   };
@@ -167,6 +175,14 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
     'Scrapped'
   ];
 
+  const breakdownOptions = [
+    'Breakdown',
+    'Maintenance Required',
+    'Operational',
+    'Under Repair',
+    'Non-Functional'
+  ];
+
   return (
     <ThemeProvider theme={muiTheme}>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -206,30 +222,28 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
                       <TableCell className="font-medium">{asset.name}</TableCell>
                       <TableCell>{asset.code}</TableCell>
                       <TableCell>
-                        <FormControl fullWidth size="small">
-                          <InputLabel shrink>Status</InputLabel>
-                          <Select
-                            value={assetStatus}
-                            onChange={(e) => setAssetStatus(e.target.value)}
-                            label="Status"
-                            sx={{
-                              backgroundColor: '#9333ea',
-                              color: 'white',
-                              '& .MuiOutlinedInput-notchedOutline': {
-                                border: 'none',
-                              },
-                              '& .MuiSelect-icon': {
-                                color: 'white',
-                              },
-                            }}
-                          >
-                            {statusOptions.map((status) => (
-                              <MenuItem key={status} value={status}>
-                                {status}
-                              </MenuItem>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600 h-9 px-3 justify-between min-w-[120px]"
+                            >
+                              {breakdown}
+                              <ChevronDown className="h-4 w-4 ml-2" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="min-w-[120px] bg-white border shadow-md">
+                            {breakdownOptions.map((option) => (
+                              <DropdownMenuItem
+                                key={option}
+                                onClick={() => setBreakdown(option)}
+                                className="cursor-pointer hover:bg-gray-100"
+                              >
+                                {option}
+                              </DropdownMenuItem>
                             ))}
-                          </Select>
-                        </FormControl>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                       <TableCell>{asset.site}</TableCell>
                       <TableCell>{asset.purchaseCost}</TableCell>
