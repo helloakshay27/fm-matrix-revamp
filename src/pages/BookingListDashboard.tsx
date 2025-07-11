@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, Plus, Filter, Download, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -109,6 +110,7 @@ const mockBookingData: BookingData[] = [
 ];
 
 const BookingListDashboard = () => {
+  const navigate = useNavigate();
   const [bookings] = useState<BookingData[]>(mockBookingData);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -135,6 +137,10 @@ const BookingListDashboard = () => {
     setCurrentPage(page);
   };
 
+  const handleAddBooking = () => {
+    navigate('/vas/booking/add');
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
@@ -149,7 +155,10 @@ const BookingListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4">
-        <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
+        <Button 
+          onClick={handleAddBooking}
+          className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
