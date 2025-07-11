@@ -21,19 +21,32 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 }) => {
   const [isSelected, setIsSelected] = useState(false);
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsSelected(true);
   };
 
-  const handleClickOutside = (e: React.MouseEvent) => {
-    // If clicking outside the card, deselect it
-    if (e.target === e.currentTarget) {
-      setIsSelected(false);
+  // Handle clicks outside the card area
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      const questionCard = target.closest('[data-question-card]');
+      if (!questionCard || questionCard.getAttribute('data-question-id') !== question.id) {
+        setIsSelected(false);
+      }
+    };
+
+    if (isSelected) {
+      document.addEventListener('click', handleClickOutside);
     }
-  };
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isSelected, question.id]);
 
   return (
-    <div className="flex items-start gap-3 mb-4" onClick={handleClickOutside}>
+    <div className="flex items-start gap-3 mb-4">
       {/* Left Toolbar - Only show when selected */}
       {isSelected && (
         <div className="flex flex-col items-center bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
@@ -41,6 +54,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             variant="ghost"
             size="sm"
             className="p-2 hover:bg-gray-100 w-8 h-8"
+            onClick={(e) => e.stopPropagation()}
           >
             <Plus className="w-4 h-4" />
           </Button>
@@ -48,6 +62,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             variant="ghost"
             size="sm"
             className="p-2 hover:bg-gray-100 w-8 h-8"
+            onClick={(e) => e.stopPropagation()}
           >
             <Menu className="w-4 h-4" />
           </Button>
@@ -56,8 +71,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {/* Question Card */}
       <div 
-        className="flex-1 border border-gray-200 rounded-lg bg-white cursor-pointer"
+        className={`flex-1 border border-gray-200 rounded-lg bg-white cursor-pointer relative ${
+          isSelected ? 'border-l-4 border-l-red-600' : ''
+        }`}
         onClick={handleCardClick}
+        data-question-card
+        data-question-id={question.id}
       >
         {/* Question Header */}
         <div className="px-6 py-4">
@@ -68,6 +87,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={(e) => onQuestionChange(question.id, 'text', e.target.value)}
                 className="border-none p-0 focus-visible:ring-0 bg-transparent font-medium text-base pb-2 w-full"
                 placeholder="Question"
+                onClick={(e) => e.stopPropagation()}
               />
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600"></div>
             </div>
@@ -77,7 +97,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 value={question.type} 
                 onValueChange={(value) => onQuestionChange(question.id, 'type', value)}
               >
-                <SelectTrigger className="w-48 h-10 border border-gray-300">
+                <SelectTrigger className="w-48 h-10 border border-gray-300" onClick={(e) => e.stopPropagation()}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
@@ -168,7 +188,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onDuplicate(question.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate(question.id);
+              }}
               className="p-2 hover:bg-gray-200"
             >
               <Copy className="w-4 h-4" />
@@ -176,7 +199,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onDelete(question.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(question.id);
+              }}
               className="p-2 hover:bg-gray-200"
             >
               <Trash2 className="w-4 h-4" />
@@ -185,6 +211,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               variant="ghost"
               size="sm"
               className="p-2 hover:bg-gray-200"
+              onClick={(e) => e.stopPropagation()}
             >
               <Eye className="w-4 h-4" />
             </Button>
@@ -195,12 +222,18 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             <div className="relative">
               {question.required ? (
                 <div className="w-10 h-6 bg-red-600 rounded-full relative cursor-pointer flex items-center"
-                     onClick={() => onQuestionChange(question.id, 'required', false)}>
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       onQuestionChange(question.id, 'required', false);
+                     }}>
                   <div className="w-4 h-4 bg-white rounded-full absolute right-1 transition-all duration-200"></div>
                 </div>
               ) : (
                 <div className="w-10 h-6 bg-gray-300 rounded-full relative cursor-pointer flex items-center"
-                     onClick={() => onQuestionChange(question.id, 'required', true)}>
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       onQuestionChange(question.id, 'required', true);
+                     }}>
                   <div className="w-4 h-4 bg-white rounded-full absolute left-1 transition-all duration-200"></div>
                 </div>
               )}
