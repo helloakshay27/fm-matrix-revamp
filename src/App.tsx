@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { NotFound } from './pages/NotFound';
+import NotFound from './pages/NotFound';
 import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
 import { TaskDetailsPage } from './pages/TaskDetailsPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
