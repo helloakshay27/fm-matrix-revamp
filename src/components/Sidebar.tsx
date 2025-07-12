@@ -486,14 +486,7 @@ export const Sidebar = () => {
     return (
       <div key={item.name}>
         <button
-          onClick={() => {
-            // Special handling for Checklist Group and Sub Group to navigate to settings
-            if (item.name === 'Checklist Group and Sub Group') {
-              handleNavigation('/settings/checklist-setup/group', 'Settings');
-            } else {
-              handleNavigation(item.href, currentSection);
-            }
-          }}
+          onClick={() => handleNavigation(item.href, currentSection)}
           className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
             item.color || 'text-[#1a1a1a]'
           }`}
