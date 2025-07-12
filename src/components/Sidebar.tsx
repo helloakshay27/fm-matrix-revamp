@@ -367,7 +367,18 @@ const modulesByPackage = {
     { name: 'Installed', icon: CheckSquare, href: '/market-place/installed', color: 'text-[#1a1a1a]' },
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
-  'Settings': navigationStructure['Settings'].items
+ Settings: [
+    {
+      name: 'Settings',
+      icon: SettingsIcon, // optional
+      subItems: [
+        ...navigationStructure.Settings,
+        ...navigationStructure.Maintenance,
+        ...navigationStructure.Finance,
+        ...navigationStructure.Security
+      ]
+    }
+  ]
 };
 
 export const Sidebar = () => {
