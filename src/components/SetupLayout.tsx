@@ -4,11 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { SetupSidebar } from './SetupSidebar';
 import { SetupHeader } from './SetupHeader';
 
-interface SetupLayoutProps {
-  children: React.ReactNode;
-}
-
-export const SetupLayout = ({ children }: SetupLayoutProps) => {
+export const SetupLayout = () => {
   return (
     <div className="flex min-h-screen bg-[#f6f4ee]">
       <SetupSidebar />

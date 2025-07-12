@@ -20,11 +20,13 @@ const App = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="add-facility-booking" element={<AddFacilityBookingPage />} />
           </Route>
-          <Route path="/setup/*" element={<SetupLayout />}>
+          <Route path="/setup" element={<SetupLayout />}>
             <Route path="checklist-group" element={<ChecklistGroupDashboard />} />
             <Route path="groups" element={<GroupsPage />} />
           </Route>
-          <Route path="/settings/checklist-setup/group" element={<GroupsPage />} />
+          <Route path="/settings/checklist-setup/group" element={<SetupLayout />}>
+            <Route index element={<GroupsPage />} />
+          </Route>
         </Routes>
       </Router>
     </LayoutProvider>
