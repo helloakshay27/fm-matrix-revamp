@@ -5,7 +5,7 @@ import { SetupSidebar } from './SetupSidebar';
 import { SetupHeader } from './SetupHeader';
 
 interface SetupLayoutProps {
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export const SetupLayout = ({ children }: SetupLayoutProps) => {
@@ -15,7 +15,7 @@ export const SetupLayout = ({ children }: SetupLayoutProps) => {
       <div className="flex-1 ml-64">
         <SetupHeader />
         <main className="p-8">
-          {children || <Outlet />}
+          <Outlet />
         </main>
       </div>
     </div>
