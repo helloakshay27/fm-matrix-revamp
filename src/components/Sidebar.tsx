@@ -277,8 +277,8 @@ const modulesByPackage = {
       href: '/settings/checklist-setup',
       subItems: [
         { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/group', color: 'text-[#1a1a1a]' },
-        { name: 'Email Rule', icon: Mail, href: '/settings/checklist-setup/email-rule', color: 'text-[#1a1a1a]' },
-        { name: 'Task Escalation', icon: AlertTriangle, href: '/settings/checklist-setup/task-escalation', color: 'text-[#1a1a1a]' }
+        { name: 'Email Rule', href: '/settings/checklist-setup/email-rule', color: 'text-[#1a1a1a]' },
+        { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation', color: 'text-[#1a1a1a]' }
       ]
     },
     {
@@ -287,7 +287,7 @@ const modulesByPackage = {
       href: '/settings/ticket-management',
       subItems: [
         { name: 'Setup', href: '/settings/ticket-management/setup', color: 'text-[#1a1a1a]' },
-        { name: 'Escalation Matrix', icon: ClipboardList, href: '/settings/ticket-management/escalation-matrix', color: 'text-[#1a1a1a]' },
+        { name: 'Escalation Matrix', href: '/settings/ticket-management/escalation-matrix', color: 'text-[#1a1a1a]' },
         { name: 'Cost Approval', href: '/settings/ticket-management/cost-approval', color: 'text-[#1a1a1a]' }
       ]
     },
@@ -318,34 +318,43 @@ const modulesByPackage = {
         { name: 'Setup', href: '/settings/waste-management/setup', color: 'text-[#1a1a1a]' }
       ]
     },
-    { 
-      name: 'Module 1', 
-      icon: Package, 
-      href: '/settings/module1',
+    {
+      name: 'Location',
+      icon: MapPin,
+      href: '/settings/location',
       subItems: [
-        { name: 'Function 1', href: '/settings/module1/function1', color: 'text-orange-600' },
-        { name: 'Function 2', href: '/settings/module1/function2', color: 'text-orange-600' }
+        { name: 'Account', href: '/settings/location/account', color: 'text-[#1a1a1a]' },
+        { name: 'Building', href: '/settings/location/building', color: 'text-[#1a1a1a]' },
+        { name: 'Wing', href: '/settings/location/wing', color: 'text-[#1a1a1a]' },
+        { name: 'Area', href: '/settings/location/area', color: 'text-[#1a1a1a]' },
+        { name: 'Floor', href: '/settings/location/floor', color: 'text-[#1a1a1a]' },
+        { name: 'Unit', href: '/settings/location/unit', color: 'text-[#1a1a1a]' },
+        { name: 'Room', href: '/settings/location/room', color: 'text-[#1a1a1a]' }
       ]
     },
-    { 
-      name: 'Module 2', 
-      icon: Package, 
-      href: '/settings/module2',
+    {
+      name: 'User Role',
+      icon: Users,
+      href: '/settings/user-role',
       subItems: [
-        { name: 'Function 1', href: '/settings/module2/function1', color: 'text-orange-600' },
-        { name: 'Function 2', href: '/settings/module2/function2', color: 'text-orange-600' }
+        { name: 'Department', href: '/settings/user-role/department', color: 'text-[#1a1a1a]' },
+        { name: 'Role', href: '/settings/user-role/role', color: 'text-[#1a1a1a]' }
       ]
     },
-    { 
-      name: 'Masters', 
-      icon: Archive, 
-      href: '/settings/masters',
-      subItems: [
-        { name: 'Checklist Master', href: '/settings/masters/checklist', color: 'text-orange-600' },
-        { name: 'Unit Master', href: '/settings/masters/unit', color: 'text-orange-600' },
-        { name: 'Address Master', href: '/settings/masters/address', color: 'text-orange-600' }
-      ]
-    }
+    { name: 'FM User', icon: Users, href: '/settings/fm-user' },
+    { name: 'Occupant Users', icon: Users, href: '/settings/occupant-users' },
+    { name: 'Meter Type', icon: Settings, href: '/settings/meter-type' },
+    { name: 'Asset Groups', icon: Building, href: '/settings/asset-groups' },
+    { name: 'Checklist Group', icon: CheckSquare, href: '/settings/checklist-group' },
+    { name: 'Task Escalation', icon: AlertTriangle, href: '/settings/task-escalation' },
+    { name: 'Patrolling Approval', icon: Shield, href: '/settings/patrolling-approval' },
+    { name: 'Email Rule', icon: Mail, href: '/settings/email-rule' },
+    { name: 'FM Group', icon: Target, href: '/settings/fm-group' },
+    { name: 'Master Checklist', icon: BookOpen, href: '/settings/master-checklist' },
+    { name: 'SAC/HSN Setup', icon: Receipt, href: '/settings/sac-hsn-setup' },
+    { name: 'Address', icon: Home, href: '/settings/address' },
+    { name: 'Tag', icon: Archive, href: '/settings/tag' },
+    { name: 'Export', icon: FileText, href: '/settings/export' }
   ]
 };
 
