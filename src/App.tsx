@@ -408,6 +408,8 @@ import { BookingSetupDashboard } from './pages/BookingSetupDashboard';
 
 // Import Add Facility Booking page
 import { AddFacilityBookingPage } from './pages/AddFacilityBookingPage';
+import { AssetGroupsDashboard } from './pages/setup/AssetGroupsDashboard';
+
 
 
 
@@ -740,7 +742,7 @@ function App() {
 
             {/* Settings Routes */}
             <Route path="/settings" element={<Layout><div /></Layout>}>
-              <Route path="/settings/checklist-setup/group" element={<ChecklistGroupDashboard />} />
+              <Route path="/settings/checklist-setup/group" element={<AssetGroupsDashboard />} />
               <Route path="/settings/checklist-setup/email-rule" element={<div>Email Rule</div>} />
               <Route path="/settings/checklist-setup/task-escalation" element={<div>Task Escalation</div>} />
               <Route path="/settings/ticket-management/setup" element={<div>Ticket Management Setup</div>} />
