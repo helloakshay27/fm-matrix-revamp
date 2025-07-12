@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Filter, Download, Eye, Settings, Clock, AlertCircle, Play, CheckCircle, XCircle } from 'lucide-react';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { useNavigate } from 'react-router-dom';
@@ -271,13 +272,32 @@ export const ScheduledTaskDashboard = () => {
             </Button>
           </div>
 
-          {/* Task Cards */}
-          <div className="space-y-4">
-            {taskData.map((task) => (
-              <Card key={task.id} className="bg-card border shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-1">
+          {/* Task Table */}
+          <div className="bg-white rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Checklist</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Schedule</TableHead>
+                  <TableHead>Assign to</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Schedule For</TableHead>
+                  <TableHead>Assets/Services</TableHead>
+                  <TableHead>Site</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Grace Time</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>%</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {taskData.map((task) => (
+                  <TableRow key={task.id} className="hover:bg-gray-50">
+                    <TableCell>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -286,52 +306,31 @@ export const ScheduledTaskDashboard = () => {
                       >
                         <Eye className="w-4 h-4 text-muted-foreground" />
                       </Button>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-sm font-medium text-foreground">{task.id}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-sm text-foreground">{task.checklist}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-sm text-muted-foreground">{task.type}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-sm text-foreground">{task.schedule}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-sm text-foreground">{task.assignTo}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="px-3 py-1 rounded-full text-xs bg-accent text-accent-foreground font-medium">
+                    </TableCell>
+                    <TableCell className="font-medium">{task.id}</TableCell>
+                    <TableCell>{task.checklist}</TableCell>
+                    <TableCell>{task.type}</TableCell>
+                    <TableCell>{task.schedule}</TableCell>
+                    <TableCell>{task.assignTo || '-'}</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
                         {task.status}
                       </span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-sm text-muted-foreground">{task.scheduleFor}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-sm text-foreground truncate">{task.assetsServices}</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-12 gap-4 text-sm text-muted-foreground border-t pt-4">
-                    <div className="col-span-1"></div>
-                    <div className="col-span-2">
-                      <span>Site: {task.site}</span>
-                    </div>
-                    <div className="col-span-6">
-                      <span className="truncate">Location: {task.location}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span>Grace Time: {task.graceTime}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span>{task.duration}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </TableCell>
+                    <TableCell>{task.scheduleFor}</TableCell>
+                    <TableCell>{task.assetsServices}</TableCell>
+                    <TableCell>{task.site}</TableCell>
+                    <TableCell className="max-w-xs truncate" title={task.location}>
+                      {task.location}
+                    </TableCell>
+                    <TableCell>{task.supplier || '-'}</TableCell>
+                    <TableCell>{task.graceTime}</TableCell>
+                    <TableCell>{task.duration || '-'}</TableCell>
+                    <TableCell>{task.percentage || '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </>
       )}
