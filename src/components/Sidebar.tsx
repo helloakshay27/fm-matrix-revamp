@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -367,17 +368,11 @@ const modulesByPackage = {
     { name: 'Installed', icon: CheckSquare, href: '/market-place/installed', color: 'text-[#1a1a1a]' },
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
- Settings: [
-    {
-      name: 'Settings',
-      icon: SettingsIcon, // optional
-      subItems: [
-        ...navigationStructure.Settings,
-        ...navigationStructure.Maintenance,
-        ...navigationStructure.Finance,
-        ...navigationStructure.Security
-      ]
-    }
+  'Settings': [
+    ...navigationStructure.Settings.items,
+    ...navigationStructure.Maintenance.items,
+    ...navigationStructure.Finance.items,
+    ...navigationStructure.Security.items
   ]
 };
 
@@ -438,7 +433,7 @@ export const Sidebar = () => {
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
-    const showDropdowns = item.hasDropdowns && location.pathname === item.href;
+    const showDropdowns = item.hasDropdowns && item.href && location.pathname === item.href;
     const isActive = item.href ? isActiveRoute(item.href) : false;
 
     if (hasSubItems) {
@@ -472,7 +467,7 @@ export const Sidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                        {subItem.href && isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                         <span>{subItem.name}</span>
                         {expandedItems.includes(subItem.name) ?
                           <ChevronDown className="w-4 h-4" /> :
