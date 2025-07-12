@@ -13,7 +13,6 @@ import {
   Briefcase, BookOpen, FileSpreadsheet, Target,
   Archive, TreePine, FlaskConical, Mail, ClipboardList
 } from 'lucide-react';
-import { settingsModules } from './SettingsModules'; // Importing settings modules
 
 const navigationStructure = {
   'Settings': {
@@ -146,12 +145,7 @@ const navigationStructure = {
     ]
   }
 };
-const settingsModules = navigationStructure['Settings'].items.map(item => ({
-  name: item.name,
-  icon: item.icon,
-  href: item.href || undefined,
-  subItems: item.subItems || undefined
-}));
+
 const modulesByPackage = {
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
@@ -373,8 +367,7 @@ const modulesByPackage = {
     { name: 'Installed', icon: CheckSquare, href: '/market-place/installed', color: 'text-[#1a1a1a]' },
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
-  'Settings': settingsModules // ✅ injecting navigationStructure here
-
+  'Settings': navigationStructure['Settings'].items
 };
 
 export const Sidebar = () => {
@@ -435,7 +428,7 @@ export const Sidebar = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
     const showDropdowns = item.hasDropdowns && location.pathname === item.href;
-    const isActive = isActiveRoute(item.href);
+    const isActive = item.href ? isActiveRoute(item.href) : false;
 
     if (hasSubItems) {
       return (
@@ -512,7 +505,7 @@ export const Sidebar = () => {
     return (
       <div key={item.name}>
         <button
-          onClick={() => handleNavigation(item.href, currentSection)}
+          onClick={() => item.href && handleNavigation(item.href, currentSection)}
           className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || 'text-[#1a1a1a]'
             }`}
         >
