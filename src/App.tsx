@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
-import { SetupLayout } from './components/SetupLayout';
 
 // Import existing pages
 import Index from './pages/Index';
@@ -270,9 +269,6 @@ import { DepartmentDashboard } from './pages/settings/DepartmentDashboard';
 
 // Import Role Dashboard for Settings
 import { RoleDashboard } from './pages/settings/RoleDashboard';
-
-// Import Department Dashboard for Setup
-import { DepartmentDashboard as SetupDepartmentDashboard } from './pages/setup/DepartmentDashboard';
 
 // Import AddNewBillDashboard
 import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
@@ -733,39 +729,6 @@ function App() {
 
               <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
               <Route path="*" element={<NotFound />} />
-            </Route>
-
-            {/* Setup Routes */}
-            <Route path="/setup" element={<SetupLayout><div /></SetupLayout>}>
-              <Route path="/setup/location/account" element={<div>Location Account</div>} />
-              <Route path="/setup/location/building" element={<div>Location Building</div>} />
-              <Route path="/setup/location/wing" element={<div>Location Wing</div>} />
-              <Route path="/setup/location/area" element={<div>Location Area</div>} />
-              <Route path="/setup/location/floor" element={<div>Location Floor</div>} />
-              <Route path="/setup/location/unit" element={<div>Location Unit</div>} />
-              <Route path="/setup/location/room" element={<div>Location Room</div>} />
-              <Route path="/setup/user-role/department" element={<SetupDepartmentDashboard />} />
-              <Route path="/setup/user-role/role" element={<div>User Role Role</div>} />
-              <Route path="/setup/fm-user" element={<div>FM User</div>} />
-              <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
-              <Route path="/setup/meter-type" element={<div>Meter Type</div>} />
-              <Route path="/setup/asset-groups" element={<AssetGroupsPage />} />
-              <Route path="/setup/checklist-group" element={<ChecklistGroupDashboard />} />
-              <Route path="/setup/ticket/setup" element={<div>Ticket Setup</div>} />
-              <Route path="/setup/ticket/escalation" element={<div>Ticket Escalation</div>} />
-              <Route path="/setup/ticket/cost-approval" element={<div>Ticket Cost Approval</div>} />
-              <Route path="/setup/task-escalation" element={<div>Task Escalation</div>} />
-              <Route path="/setup/approval-matrix" element={<ApprovalMatrixDashboard />} />
-              <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
-              <Route path="/setup/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
-              <Route path="/setup/patrolling-approval" element={<div>Patrolling Approval</div>} />
-              <Route path="/setup/email-rule" element={<div>Email Rule</div>} />
-              <Route path="/setup/fm-group" element={<div>FM Group</div>} />
-              <Route path="/setup/master-checklist" element={<div>Master Checklist</div>} />
-              <Route path="/setup/sac-hsn-setup" element={<div>SAC/HSN Setup</div>} />
-              <Route path="/setup/address" element={<div>Address</div>} />
-              <Route path="/setup/tag" element={<div>Tag</div>} />
-              <Route path="/setup/export" element={<ExportDashboard />} />
             </Route>
 
             {/* Settings Routes */}
