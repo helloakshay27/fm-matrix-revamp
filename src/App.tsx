@@ -409,6 +409,9 @@ import { BookingSetupDashboard } from './pages/BookingSetupDashboard';
 // Import Add Facility Booking page
 import { AddFacilityBookingPage } from './pages/AddFacilityBookingPage';
 
+import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
+import { TaskDetailsPage } from './pages/TaskDetailsPage';
+
 const queryClient = new QueryClient();
 
 function App() {
