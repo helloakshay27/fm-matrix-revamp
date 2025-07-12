@@ -2,23 +2,16 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { DynamicHeader } from './DynamicHeader';
-import { Header } from './Header';
 
-interface LayoutProps {
-  children?: React.ReactNode;
-}
-
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout = () => {
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      <Header />
+    <div className="flex min-h-screen bg-[#f6f4ee]">
       <Sidebar />
-      <DynamicHeader />
-      
-      <main className="ml-64 pt-28">
+      <div className="flex-1 ml-64">
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 };
+
+export default Layout;

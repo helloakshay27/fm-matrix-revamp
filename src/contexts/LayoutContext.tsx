@@ -8,24 +8,20 @@ interface LayoutContextType {
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
-export const useLayout = () => {
-  const context = useContext(LayoutContext);
-  if (context === undefined) {
-    throw new Error('useLayout must be used within a LayoutProvider');
-  }
-  return context;
-};
-
-interface LayoutProviderProps {
-  children: ReactNode;
-}
-
-export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
-  const [currentSection, setCurrentSection] = useState<string>('');
+export const LayoutProvider = ({ children }: { children: ReactNode }) => {
+  const [currentSection, setCurrentSection] = useState('Settings');
 
   return (
     <LayoutContext.Provider value={{ currentSection, setCurrentSection }}>
       {children}
     </LayoutContext.Provider>
   );
+};
+
+export const useLayout = () => {
+  const context = useContext(LayoutContext);
+  if (context === undefined) {
+    throw new Error('useLayout must be used within a LayoutProvider');
+  }
+  return context;
 };
