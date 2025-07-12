@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface LayoutContextType {
   currentSection: string;
@@ -10,14 +10,18 @@ const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 export const useLayout = () => {
   const context = useContext(LayoutContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useLayout must be used within a LayoutProvider');
   }
   return context;
 };
 
-export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentSection, setCurrentSection] = useState('Settings');
+interface LayoutProviderProps {
+  children: ReactNode;
+}
+
+export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
+  const [currentSection, setCurrentSection] = useState<string>('');
 
   return (
     <LayoutContext.Provider value={{ currentSection, setCurrentSection }}>
