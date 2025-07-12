@@ -1,19 +1,53 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import { Filter, Download, Eye, Settings } from 'lucide-react';
+import { Filter, Download, Eye, Settings, Clock, AlertCircle, Play, CheckCircle, XCircle } from 'lucide-react';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { useNavigate } from 'react-router-dom';
 
 const statusCards = [
-  { title: 'Scheduled', count: 1555, color: 'bg-primary', textColor: 'text-primary-foreground' },
-  { title: 'Open', count: 174, color: 'bg-accent', textColor: 'text-accent-foreground' },
-  { title: 'In Progress', count: 0, color: 'bg-secondary', textColor: 'text-secondary-foreground' },
-  { title: 'Closed', count: 0, color: 'bg-muted', textColor: 'text-muted-foreground' },
-  { title: 'Overdue', count: 907, color: 'bg-destructive', textColor: 'text-destructive-foreground' }
+  { 
+    title: 'Scheduled', 
+    count: 1555, 
+    color: 'bg-blue-50', 
+    textColor: 'text-blue-600',
+    iconBg: 'bg-blue-100',
+    icon: Clock
+  },
+  { 
+    title: 'Open', 
+    count: 174, 
+    color: 'bg-green-50', 
+    textColor: 'text-green-600',
+    iconBg: 'bg-green-100',
+    icon: AlertCircle
+  },
+  { 
+    title: 'In Progress', 
+    count: 0, 
+    color: 'bg-yellow-50', 
+    textColor: 'text-yellow-600',
+    iconBg: 'bg-yellow-100',
+    icon: Play
+  },
+  { 
+    title: 'Closed', 
+    count: 0, 
+    color: 'bg-gray-50', 
+    textColor: 'text-gray-600',
+    iconBg: 'bg-gray-100',
+    icon: CheckCircle
+  },
+  { 
+    title: 'Overdue', 
+    count: 907, 
+    color: 'bg-red-50', 
+    textColor: 'text-red-600',
+    iconBg: 'bg-red-100',
+    icon: XCircle
+  }
 ];
 
 const taskData = [
@@ -188,21 +222,24 @@ export const ScheduledTaskDashboard = () => {
 
           {/* Status Cards */}
           <div className="grid grid-cols-5 gap-4 mb-6">
-            {statusCards.map((card, index) => (
-              <Card key={index} className={`${card.color} ${card.textColor} border-0 shadow-sm hover:shadow-md transition-shadow`}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-card/20 rounded-lg flex items-center justify-center">
-                      <span className="text-lg font-bold">{card.count}</span>
+            {statusCards.map((card, index) => {
+              const IconComponent = card.icon;
+              return (
+                <Card key={index} className={`${card.color} border-0 shadow-sm hover:shadow-md transition-shadow`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 ${card.iconBg} rounded-lg flex items-center justify-center`}>
+                        <IconComponent className={`w-6 h-6 ${card.textColor}`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className={`text-2xl font-bold ${card.textColor}`}>{card.count}</div>
+                        <div className="text-sm text-gray-600">{card.title}</div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-2xl font-bold">{card.count}</div>
-                      <div className="text-sm opacity-90">{card.title}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Search and Actions */}
