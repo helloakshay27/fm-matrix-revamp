@@ -1,4 +1,3 @@
-
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -55,7 +54,7 @@ import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
 import { EditInventoryPage } from './pages/EditInventoryPage';
 
 // Import Task pages
-import { TaskDashboard } from './pages/TaskDashboard';
+import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
 import { TaskDetailsPage } from './pages/TaskDetailsPage';
 
 // Import Utility pages
@@ -494,6 +493,10 @@ function App() {
               <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
               <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
 
+              {/* Task Routes */}
+              <Route path="/maintenance/task" element={<ScheduledTaskDashboard />} />
+              <Route path="/maintenance/task/details/:id" element={<TaskDetailsPage />} />
+
               {/* Safety Routes */}
               <Route path="/safety/incident" element={<IncidentListDashboard />} />
               <Route path="/safety/incident/add" element={<AddIncidentPage />} />
@@ -614,7 +617,7 @@ function App() {
               <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
 
               {/* Task Routes */}
-              <Route path="/maintenance/task" element={<TaskDashboard />} />
+              <Route path="/maintenance/task" element={<ScheduledTaskDashboard />} />
               <Route path="/maintenance/task/details/:id" element={<TaskDetailsPage />} />
 
               {/* Schedule Routes */}
