@@ -9,11 +9,11 @@ import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog'
 import { useNavigate } from 'react-router-dom';
 
 const statusCards = [
-  { title: 'Scheduled', count: 1555, color: 'bg-red-500', textColor: 'text-white' },
-  { title: 'Open', count: 174, color: 'bg-green-500', textColor: 'text-white' },
-  { title: 'In Progress', count: 0, color: 'bg-orange-500', textColor: 'text-white' },
-  { title: 'Closed', count: 0, color: 'bg-orange-400', textColor: 'text-white' },
-  { title: 'Overdue', count: 907, color: 'bg-red-600', textColor: 'text-white' }
+  { title: 'Scheduled', count: 1555, color: 'bg-primary', textColor: 'text-primary-foreground' },
+  { title: 'Open', count: 174, color: 'bg-accent', textColor: 'text-accent-foreground' },
+  { title: 'In Progress', count: 0, color: 'bg-secondary', textColor: 'text-secondary-foreground' },
+  { title: 'Closed', count: 0, color: 'bg-muted', textColor: 'text-muted-foreground' },
+  { title: 'Overdue', count: 907, color: 'bg-destructive', textColor: 'text-destructive-foreground' }
 ];
 
 const taskData = [
@@ -134,15 +134,19 @@ export const ScheduledTaskDashboard = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span>Scheduled Task</span>
-          <span>&gt;</span>
-          <span>Scheduled Task List</span>
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <span>Scheduled Task</span>
+            <span>&gt;</span>
+            <span>Scheduled Task List</span>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground uppercase">SCHEDULED TASK</h1>
         </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">SCHEDULED TASK</h1>
       </div>
+      
+      <div className="container mx-auto px-6 py-6">
 
       {/* Tabs */}
       <div className="flex gap-4 mb-6">
@@ -185,15 +189,19 @@ export const ScheduledTaskDashboard = () => {
           {/* Status Cards */}
           <div className="grid grid-cols-5 gap-4 mb-6">
             {statusCards.map((card, index) => (
-              <div key={index} className={`${card.color} ${card.textColor} p-4 rounded-lg flex items-center gap-3`}>
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <span className="text-lg font-bold">{card.count}</span>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{card.count}</div>
-                  <div className="text-sm opacity-90">{card.title}</div>
-                </div>
-              </div>
+              <Card key={index} className={`${card.color} ${card.textColor} border-0 shadow-sm hover:shadow-md transition-shadow`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-card/20 rounded-lg flex items-center justify-center">
+                      <span className="text-lg font-bold">{card.count}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-2xl font-bold">{card.count}</div>
+                      <div className="text-sm opacity-90">{card.title}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
@@ -227,9 +235,9 @@ export const ScheduledTaskDashboard = () => {
           </div>
 
           {/* Task Cards */}
-          <div className="grid gap-4">
+          <div className="space-y-4">
             {taskData.map((task) => (
-              <Card key={task.id} className="border rounded-lg">
+              <Card key={task.id} className="bg-card border shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-1">
@@ -237,39 +245,39 @@ export const ScheduledTaskDashboard = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewTask(task.id)}
-                        className="p-1"
+                        className="p-2 h-8 w-8 hover:bg-accent"
                       >
-                        <Eye className="w-4 h-4 text-gray-600" />
+                        <Eye className="w-4 h-4 text-muted-foreground" />
                       </Button>
                     </div>
                     <div className="col-span-1">
-                      <span className="text-sm font-medium">{task.id}</span>
+                      <span className="text-sm font-medium text-foreground">{task.id}</span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-sm">{task.checklist}</span>
+                      <span className="text-sm text-foreground">{task.checklist}</span>
                     </div>
                     <div className="col-span-1">
-                      <span className="text-sm">{task.type}</span>
+                      <span className="text-sm text-muted-foreground">{task.type}</span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-sm">{task.schedule}</span>
+                      <span className="text-sm text-foreground">{task.schedule}</span>
                     </div>
                     <div className="col-span-1">
-                      <span className="text-sm">{task.assignTo}</span>
+                      <span className="text-sm text-foreground">{task.assignTo}</span>
                     </div>
                     <div className="col-span-1">
-                      <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                      <span className="px-3 py-1 rounded-full text-xs bg-accent text-accent-foreground font-medium">
                         {task.status}
                       </span>
                     </div>
                     <div className="col-span-1">
-                      <span className="text-sm">{task.scheduleFor}</span>
+                      <span className="text-sm text-muted-foreground">{task.scheduleFor}</span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-sm truncate">{task.assetsServices}</span>
+                      <span className="text-sm text-foreground truncate">{task.assetsServices}</span>
                     </div>
                   </div>
-                  <div className="mt-4 grid grid-cols-12 gap-4 text-sm text-gray-600">
+                  <div className="mt-4 grid grid-cols-12 gap-4 text-sm text-muted-foreground border-t pt-4">
                     <div className="col-span-1"></div>
                     <div className="col-span-2">
                       <span>Site: {task.site}</span>
@@ -372,6 +380,7 @@ export const ScheduledTaskDashboard = () => {
         onOpenChange={setShowAdvancedFilter}
         onApply={handleAdvancedFilter}
       />
+      </div>
     </div>
   );
 };
