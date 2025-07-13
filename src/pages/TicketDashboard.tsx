@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Eye, Filter, Download, Ticket, Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 const ticketData = [{
   id: '2189-11106',
   taskNumber: 'test',
@@ -65,167 +64,139 @@ const ticketData = [{
 }];
 export const TicketDashboard = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredTickets, setFilteredTickets] = useState(ticketData);
-  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const totalTickets = ticketData.length;
   const openTickets = ticketData.filter(t => t.status === 'Open').length;
   const inProgressTickets = ticketData.filter(t => t.status === 'In Progress').length;
   const pendingTickets = ticketData.filter(t => t.status === 'Pending').length;
   const closedTickets = ticketData.filter(t => t.status === 'Closed').length;
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    if (value) {
-      const filtered = ticketData.filter(ticket => ticket.id.toLowerCase().includes(value.toLowerCase()) || ticket.taskNumber.toLowerCase().includes(value.toLowerCase()) || ticket.category.toLowerCase().includes(value.toLowerCase()) || ticket.createdBy.toLowerCase().includes(value.toLowerCase()));
-      setFilteredTickets(filtered);
-    } else {
-      setFilteredTickets(ticketData);
-    }
-  };
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status);
-    if (status === 'all') {
-      setFilteredTickets(ticketData);
-    } else {
-      const filtered = ticketData.filter(ticket => ticket.status.toLowerCase() === status.toLowerCase());
-      setFilteredTickets(filtered);
-    }
-  };
-  const handleTicketSelect = (ticketId: string) => {
-    setSelectedTickets(prev => prev.includes(ticketId) ? prev.filter(id => id !== ticketId) : [...prev, ticketId]);
-  };
-  const handleExport = () => {
-    const ticketsToExport = selectedTickets.length > 0 ? filteredTickets.filter(ticket => selectedTickets.includes(ticket.id)) : filteredTickets;
-    const csvContent = [['Ticket ID', 'Task Number', 'Description', 'Category', 'Sub Category', 'Created By', 'Assigned To', 'Status', 'Priority', 'Created On'], ...ticketsToExport.map(ticket => [ticket.id, ticket.taskNumber, ticket.description, ticket.category, ticket.subCategory, ticket.createdBy, ticket.assignedTo, ticket.status, ticket.priority, ticket.createdOn])].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], {
-      type: 'text/csv'
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'tickets.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
-  return <div className="p-4 sm:p-6">
+
+  const columns = [
+    { key: 'id', label: 'Ticket ID', sortable: true },
+    { key: 'taskNumber', label: 'Task Number', sortable: true },
+    { key: 'description', label: 'Description', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+    { key: 'subCategory', label: 'Sub Category', sortable: true },
+    { key: 'createdBy', label: 'Created By', sortable: true },
+    { key: 'assignedTo', label: 'Assigned To', sortable: true },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'priority', label: 'Priority', sortable: true },
+    { key: 'site', label: 'Site', sortable: true },
+    { key: 'unit', label: 'Unit', sortable: true },
+    { key: 'createdOn', label: 'Created On', sortable: true }
+  ];
+
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Plus className="w-4 h-4 mr-2" /> Add
+      </Button>
+      <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
+        <Filter className="w-4 h-4 mr-2" /> Filters
+      </Button>
+    </div>
+  );
+
+  const renderRowActions = (ticket) => (
+    <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
+
+  const renderCell = (item, columnKey) => {
+    if (columnKey === 'status') {
+      return (
+        <span className={`px-2 py-1 rounded text-xs ${
+          item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+          item.status === 'Closed' ? 'bg-green-100 text-green-700' :
+          item.status === 'Open' ? 'bg-blue-100 text-blue-700' :
+          'bg-orange-100 text-orange-700'
+        }`}>
+          {item.status}
+        </span>
+      );
+    }
+    if (columnKey === 'priority') {
+      return (
+        <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
+          {item.priority}
+        </span>
+      );
+    }
+    return item[columnKey];
+  };
+  return (
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <p className="text-gray-600 mb-2 text-sm">Tickets &gt; Ticket List</p>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">TICKET LIST</h1>
+        <p className="text-muted-foreground mb-2 text-sm">Tickets &gt; Ticket List</p>
+        <h1 className="text-xl sm:text-2xl font-bold uppercase">TICKET LIST</h1>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {[{
-        label: 'Total Tickets',
-        value: totalTickets,
-        icon: Ticket,
-        iconName: 'Ticket'
-      }, {
-        label: 'Open',
-        value: openTickets,
-        icon: AlertCircle,
-        iconName: 'AlertCircle'
-      }, {
-        label: 'In Progress',
-        value: inProgressTickets,
-        icon: Clock,
-        iconName: 'Clock'
-      }, {
-        label: 'Pending',
-        value: pendingTickets,
-        icon: Clock,
-        iconName: 'Clock'
-      }, {
-        label: 'Closed',
-        value: closedTickets,
-        icon: CheckCircle,
-        iconName: 'CheckCircle'
-      }].map((item, i) => {
-        const IconComponent = item.icon;
-        return <div key={i} className="bg-[#F5F3F0] p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-[#FFE8E9] flex items-center justify-center flex-shrink-0">
-                <IconComponent className="w-6 h-6 text-[#C72030]" />
+          label: 'Total Tickets',
+          value: totalTickets,
+          icon: Ticket,
+        }, {
+          label: 'Open',
+          value: openTickets,
+          icon: AlertCircle,
+        }, {
+          label: 'In Progress',
+          value: inProgressTickets,
+          icon: Clock,
+        }, {
+          label: 'Pending',
+          value: pendingTickets,
+          icon: Clock,
+        }, {
+          label: 'Closed',
+          value: closedTickets,
+          icon: CheckCircle,
+        }].map((item, i) => {
+          const IconComponent = item.icon;
+          return (
+            <div key={i} className="bg-muted/50 p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <IconComponent className="w-6 h-6 text-primary" />
               </div>
               <div className="flex flex-col">
-                <div className="text-2xl font-bold text-[#C72030] leading-tight">{item.value}</div>
-                <div className="text-sm text-gray-600 font-medium">{item.label}</div>
+                <div className="text-2xl font-bold text-primary leading-tight">{item.value}</div>
+                <div className="text-sm text-muted-foreground font-medium">{item.label}</div>
               </div>
-            </div>;
-      })}
+            </div>
+          );
+        })}
       </div>
 
-      <div className="flex flex-wrap gap-3 items-center mb-6">
-        <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-[#C72030] text-white hover:bg-[#C72030]/90">
-          <Plus className="w-4 h-4 mr-2" /> Add
-        </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={() => setIsFilterOpen(true)}>
-          <Filter className="w-4 h-4 mr-2" /> Filters
-        </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={handleExport}>
-          <Download className="w-4 h-4 mr-2" /> Export
-        </Button>
-        <div className="relative ml-auto w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input placeholder="Search tickets..." value={searchTerm} onChange={e => handleSearch(e.target.value)} className="pl-10 bg-white" />
-        </div>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={() => {
-        setSearchTerm('');
-        setFilteredTickets(ticketData);
-        setStatusFilter('all');
-        setSelectedTickets([]);
-      }}>Reset</Button>
-      </div>
+      <EnhancedTable
+        data={ticketData}
+        columns={columns}
+        enableSearch
+        enableExport
+        enableSelection
+        enablePagination
+        renderCustomActions={renderCustomActions}
+        renderRowActions={renderRowActions}
+        renderCell={renderCell}
+        onRowClick={handleViewDetails}
+        storageKey="tickets-table"
+        searchPlaceholder="Search tickets..."
+        exportFilename="tickets"
+      />
 
-      <div className="overflow-x-auto bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead><input type="checkbox" onChange={e => setSelectedTickets(e.target.checked ? filteredTickets.map(t => t.id) : [])} checked={selectedTickets.length === filteredTickets.length && filteredTickets.length > 0} /></TableHead>
-              <TableHead>View</TableHead>
-              <TableHead>Ticket ID</TableHead>
-              <TableHead>Task Number</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Sub Category</TableHead>
-              <TableHead>Created By</TableHead>
-              <TableHead>Assigned To</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>Site</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Created On</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTickets.map(ticket => <TableRow key={ticket.id}>
-                <TableCell><input type="checkbox" checked={selectedTickets.includes(ticket.id)} onChange={() => handleTicketSelect(ticket.id)} /></TableCell>
-                <TableCell><Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}><Eye className="w-4 h-4" /></Button></TableCell>
-                <TableCell>{ticket.id}</TableCell>
-                <TableCell>{ticket.taskNumber}</TableCell>
-                <TableCell>{ticket.description}</TableCell>
-                <TableCell>{ticket.category}</TableCell>
-                <TableCell>{ticket.subCategory}</TableCell>
-                <TableCell>{ticket.createdBy}</TableCell>
-                <TableCell>{ticket.assignedTo}</TableCell>
-                <TableCell><span className={`px-2 py-1 rounded text-xs ${ticket.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : ticket.status === 'Closed' ? 'bg-green-100 text-green-700' : ticket.status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>{ticket.status}</span></TableCell>
-                <TableCell><span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">{ticket.priority}</span></TableCell>
-                <TableCell>{ticket.site}</TableCell>
-                <TableCell>{ticket.unit}</TableCell>
-                <TableCell>Technician</TableCell>
-                <TableCell>{ticket.createdOn}</TableCell>
-              </TableRow>)}
-          </TableBody>
-        </Table>
-      </div>
-
-      <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={filters => {
-      console.log('Applied filters:', filters);
-      setIsFilterOpen(false);
-    }} />
-    </div>;
+      <TicketsFilterDialog 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+        onApplyFilters={filters => {
+          console.log('Applied filters:', filters);
+          setIsFilterOpen(false);
+        }} 
+      />
+    </div>
+  );
 };
