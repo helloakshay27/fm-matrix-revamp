@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -46,20 +45,19 @@ const navigationStructure = {
         subItems: [
           { name: 'Setup', href: '/settings/approval-matrix/setup' }
         ]
+      },
+      {
+        name: 'Asset Setup',
+        icon: Building,
+        subItems: [
+          { name: 'Asset Group & Sub Group', href: '/settings/asset-setup/asset-groups' }
+        ]
       }
     ]
   },
   'Maintenance': {
     icon: Wrench,
     items: [
-      {
-        name: 'Asset Setup',
-        icon: Building,
-        subItems: [
-          { name: 'Approval Matrix', href: '/maintenance/asset-setup/approval-matrix' },
-          { name: 'Asset Group & Sub Group', href: '/maintenance/asset-setup/asset-groups' }
-        ]
-      },
       {
         name: 'Checklist Setup',
         icon: CheckSquare,
