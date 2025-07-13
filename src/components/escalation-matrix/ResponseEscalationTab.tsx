@@ -62,8 +62,8 @@ export const ResponseEscalationTab: React.FC = () => {
     const newRule: ResponseEscalationRule = {
       id: Date.now().toString(),
       categoryType: data.categoryType,
-      escalationLevels: data.escalationLevels,
-      priorityTimings: data.priorityTimings,
+      escalationLevels: data.escalationLevels as EscalationLevel[],
+      priorityTimings: data.priorityTimings as PriorityTiming[],
       createdOn: new Date().toISOString(),
       createdBy: 'Current User',
       active: true,

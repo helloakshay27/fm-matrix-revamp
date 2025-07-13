@@ -45,7 +45,7 @@ export const ResolutionEscalationTab: React.FC = () => {
     const newRule: ResolutionEscalationRule = {
       id: Date.now().toString(),
       categoryType: data.categoryType,
-      escalationLevels: data.escalationLevels,
+      escalationLevels: data.escalationLevels as EscalationLevel[],
       createdOn: new Date().toISOString(),
       createdBy: 'Current User',
       active: true,
