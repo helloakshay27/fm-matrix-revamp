@@ -444,12 +444,8 @@ function App() {
               <Route path="/settings/roles/role" element={<RoleDashboard />} />
 
               {/* Settings Asset Setup Routes */}
-              <Route path="/settings/asset-setup/approval-matrix" element={<ApprovalMatrixSetupPage />} />
-              <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsDashboard />} />
-              
-              {/* Maintenance Asset Setup Routes */}
-              <Route path="/maintenance/asset-setup/approval-matrix" element={<ApprovalMatrixSetupPage />} />
-              <Route path="/maintenance/asset-setup/asset-groups" element={<AssetGroupsDashboard />} />
+              <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
+              <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsPage />} />
 
               {/* Settings Masters Routes */}
               <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
