@@ -89,7 +89,7 @@ export const ResponseEscalationTab: React.FC = () => {
     });
   };
 
-  const filteredRules = selectedCategoryFilter 
+  const filteredRules = selectedCategoryFilter && selectedCategoryFilter !== 'all'
     ? rules.filter(rule => rule.categoryType === selectedCategoryFilter)
     : rules;
 
@@ -264,7 +264,7 @@ export const ResponseEscalationTab: React.FC = () => {
             <SelectValue placeholder="Filter by Category Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
             <SelectItem value="Maintenance">Maintenance</SelectItem>
             <SelectItem value="Security">Security</SelectItem>
             <SelectItem value="Cleaning">Cleaning</SelectItem>
