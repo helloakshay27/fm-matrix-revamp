@@ -757,7 +757,8 @@ function App() {
               <Route path="/settings/safety/permit-setup" element={<div>Permit Setup</div>} />
               <Route path="/settings/safety/incident" element={<div>Safety Incident</div>} />
               <Route path="/settings/safety/setup" element={<div>Safety Setup</div>} />
-              <Route path="/settings/waste-management/setup" element={<div>Waste Management Setup</div>} />
+              <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+
             </Route>
           </Routes>
           <Toaster />
