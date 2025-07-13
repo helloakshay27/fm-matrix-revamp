@@ -16,13 +16,13 @@ const responseEscalationSchema = z.object({
     id: z.string(),
     level: z.enum(['E1', 'E2', 'E3', 'E4', 'E5']),
     escalationTo: z.string().min(1, 'Escalation to is required'),
-  })),
+  })).length(5),
   priorityTimings: z.array(z.object({
     priority: z.enum(['P1', 'P2', 'P3', 'P4', 'P5']),
     days: z.number().min(0),
     hours: z.number().min(0).max(23),
     minutes: z.number().min(0).max(59),
-  })),
+  })).length(5),
 });
 
 type ResponseEscalationFormData = z.infer<typeof responseEscalationSchema>;

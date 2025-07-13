@@ -15,7 +15,7 @@ const resolutionEscalationSchema = z.object({
     id: z.string(),
     level: z.enum(['E1', 'E2', 'E3', 'E4', 'E5']),
     escalationTo: z.string().min(1, 'Escalation to is required'),
-  })),
+  })).length(5),
 });
 
 type ResolutionEscalationFormData = z.infer<typeof resolutionEscalationSchema>;
