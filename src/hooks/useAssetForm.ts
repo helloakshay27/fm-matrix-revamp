@@ -60,28 +60,28 @@ export const useAssetForm = () => {
     capacity: ''
   });
 
-  const toggleSection = (section) => {
+  const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
 
-  const handleLocationChange = (field, value) => {
+  const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleItAssetChange = (field, value) => {
+  const handleItAssetChange = (field: string, value: string) => {
     setItAssetData(prev => ({
       ...prev,
       [field]: value
