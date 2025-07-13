@@ -1,14 +1,9 @@
 
 import { useMemo } from 'react';
 
-interface UseSearchSuggestionsProps {
-  data: any[];
-  searchFields: string[];
-}
-
-export const useSearchSuggestions = ({ data, searchFields }: UseSearchSuggestionsProps) => {
+export const useSearchSuggestions = ({ data, searchFields }) => {
   const suggestions = useMemo(() => {
-    const allValues = new Set<string>();
+    const allValues = new Set();
     
     data.forEach(item => {
       searchFields.forEach(field => {
