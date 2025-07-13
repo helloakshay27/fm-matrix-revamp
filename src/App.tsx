@@ -4,9 +4,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
 import { SetupLayout } from './components/SetupLayout';
-import HomePage from './pages/HomePage';
+import { HomePage } from './pages/HomePage';
 import NotFound from './pages/NotFound';
-import { ApprovalMatrixSetupPage } from './pages/settings/ApprovalMatrixSetupPage';
+import ApprovalMatrixSetupPage from './pages/settings/ApprovalMatrixSetupPage';
 import { AssetGroupsPage } from './pages/settings/AssetGroupsPage';
 
 function App() {
