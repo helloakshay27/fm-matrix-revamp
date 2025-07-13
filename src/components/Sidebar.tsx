@@ -56,8 +56,8 @@ const navigationStructure = {
         name: 'Asset Setup',
         icon: Building,
         subItems: [
-          { name: 'Approval Matrix', href: '/maintenance/asset-setup/approval-matrix' },
-          { name: 'Asset Group & Sub Group', href: '/maintenance/asset-setup/asset-groups' }
+          { name: 'Approval Matrix', href: '/settings/asset-setup/approval-matrix' },
+          { name: 'Asset Group & Sub Group', href: '/settings/asset-setup/asset-groups' }
         ]
       },
       {
