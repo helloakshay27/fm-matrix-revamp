@@ -12,6 +12,7 @@ import { ESCALATION_LEVELS, ESCALATION_TO_OPTIONS, ResolutionEscalationRule } fr
 const resolutionEscalationSchema = z.object({
   categoryType: z.string().min(1, 'Category type is required'),
   escalationLevels: z.array(z.object({
+    id: z.string(),
     level: z.enum(['E1', 'E2', 'E3', 'E4', 'E5']),
     escalationTo: z.string().min(1, 'Escalation to is required'),
   })),
@@ -29,6 +30,7 @@ export const ResolutionEscalationTab: React.FC = () => {
     defaultValues: {
       categoryType: '',
       escalationLevels: ESCALATION_LEVELS.map(level => ({
+        id: `${level}-${Date.now()}`,
         level,
         escalationTo: '',
       })),
@@ -46,7 +48,14 @@ export const ResolutionEscalationTab: React.FC = () => {
     };
 
     setRules(prev => [...prev, newRule]);
-    form.reset();
+    form.reset({
+      categoryType: '',
+      escalationLevels: ESCALATION_LEVELS.map(level => ({
+        id: `${level}-${Date.now()}`,
+        level,
+        escalationTo: '',
+      })),
+    });
   };
 
   const toggleRuleExpansion = (ruleId: string) => {

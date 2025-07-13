@@ -13,6 +13,7 @@ import { ESCALATION_LEVELS, PRIORITY_LEVELS, ESCALATION_TO_OPTIONS, ResponseEsca
 const responseEscalationSchema = z.object({
   categoryType: z.string().min(1, 'Category type is required'),
   escalationLevels: z.array(z.object({
+    id: z.string(),
     level: z.enum(['E1', 'E2', 'E3', 'E4', 'E5']),
     escalationTo: z.string().min(1, 'Escalation to is required'),
   })),
@@ -36,6 +37,7 @@ export const ResponseEscalationTab: React.FC = () => {
     defaultValues: {
       categoryType: '',
       escalationLevels: ESCALATION_LEVELS.map(level => ({
+        id: `${level}-${Date.now()}`,
         level,
         escalationTo: '',
       })),
@@ -60,7 +62,20 @@ export const ResponseEscalationTab: React.FC = () => {
     };
 
     setRules(prev => [...prev, newRule]);
-    form.reset();
+    form.reset({
+      categoryType: '',
+      escalationLevels: ESCALATION_LEVELS.map(level => ({
+        id: `${level}-${Date.now()}`,
+        level,
+        escalationTo: '',
+      })),
+      priorityTimings: PRIORITY_LEVELS.map(priority => ({
+        priority,
+        days: 0,
+        hours: 0,
+        minutes: 0,
+      })),
+    });
   };
 
   const toggleRuleExpansion = (ruleId: string) => {
