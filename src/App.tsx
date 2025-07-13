@@ -768,11 +768,11 @@ function App() {
               <Route path="/settings/safety/incident" element={<div>Safety Incident</div>} />
               <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
               <Route path="/settings/waste-management/setup" element={<div>Waste Management Setup</div>} />
-              
-              {/* Setup Routes */}
-              <Route path="/setup/permit" element={<PermitSetupDashboard />} />
-              <Route path="/setup/incident" element={<IncidentSetupDashboard />} />
             </Route>
+
+            {/* Setup Routes - Outside of settings parent route */}
+            <Route path="/setup/permit" element={<PermitSetupDashboard />} />
+            <Route path="/setup/incident" element={<IncidentSetupDashboard />} />
 
           </Routes>
           <Toaster />
