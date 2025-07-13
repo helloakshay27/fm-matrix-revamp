@@ -64,7 +64,7 @@ const navigationStructure = {
         name: 'Checklist Setup',
         icon: CheckSquare,
         subItems: [
-          { name: 'Checklist Group and Sub Group', href: '/maintenance/checklist-setup/group' },
+          { name: 'Checklist Group and Sub Group', href: '/settings/asset-setup/asset-groups' },
           { name: 'Email Rule', href: '/maintenance/checklist-setup/email-rule' },
           { name: 'Task Escalation', href: '/maintenance/checklist-setup/task-escalation' }
         ]
@@ -108,7 +108,7 @@ const navigationStructure = {
         name: 'Waste Management',
         icon: Trash2,
         subItems: [
-          { name: 'Setup', href: '/maintenance/waste-management/setup' }
+          { name: 'Setup', href: '/settings/waste-management/setup' }
         ]
       }
     ]
