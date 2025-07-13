@@ -767,7 +767,8 @@ function App() {
               <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
               <Route path="/settings/safety/incident" element={<IncidentSetupDashboard />} />
               <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
-              <Route path="/settings/waste-management/setup" element={<div>Waste Management Setup</div>} />
+<Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+            </Route>
             </Route>
 
             {/* Setup Routes - Outside of settings parent route */}
