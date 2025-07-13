@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -63,8 +64,17 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
   });
 
   const handleSubmit = (data: EmailRuleFormData) => {
-    // Data is now properly typed and all fields are required
-    onSubmit(data);
+    // Ensure all required fields are present and typed correctly
+    const submissionData: Omit<EmailRule, 'id' | 'srNo' | 'createdOn' | 'createdBy' | 'active'> = {
+      ruleName: data.ruleName,
+      triggerType: data.triggerType,
+      triggerTo: data.triggerTo,
+      role: data.role,
+      periodValue: data.periodValue,
+      periodType: data.periodType,
+    };
+    
+    onSubmit(submissionData);
     form.reset();
     onClose();
   };
