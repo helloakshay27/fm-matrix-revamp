@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -155,8 +154,251 @@ export const AddSchedulePage = () => {
     dayStart: '01',
     dayEnd: '31',
     monthStart: 'Jan',
-    monthEnd: 'Dec'
+    monthEnd: 'Dec',
+    selectedMinutes: [] as number[],
+    selectedHours: [] as number[],
+    selectedDays: [] as number[],
+    selectedMonths: [] as number[],
+    minuteOption: 'specific',
+    hourOption: 'specific',
+    dayOption: 'specific',
+    monthOption: 'specific'
   });
+
+  const toggleMinute = (minute: number) => {
+    setCronFormData(prev => ({
+      ...prev,
+      selectedMinutes: prev.selectedMinutes.includes(minute) 
+        ? prev.selectedMinutes.filter(m => m !== minute)
+        : [...prev.selectedMinutes, minute]
+    }));
+  };
+
+  const toggleHour = (hour: number) => {
+    setCronFormData(prev => ({
+      ...prev,
+      selectedHours: prev.selectedHours.includes(hour) 
+        ? prev.selectedHours.filter(h => h !== hour)
+        : [...prev.selectedHours, hour]
+    }));
+  };
+
+  const toggleDay = (day: number) => {
+    setCronFormData(prev => ({
+      ...prev,
+      selectedDays: prev.selectedDays.includes(day) 
+        ? prev.selectedDays.filter(d => d !== day)
+        : [...prev.selectedDays, day]
+    }));
+  };
+
+  const toggleMonth = (month: number) => {
+    setCronFormData(prev => ({
+      ...prev,
+      selectedMonths: prev.selectedMonths.includes(month) 
+        ? prev.selectedMonths.filter(m => m !== month)
+        : [...prev.selectedMonths, month]
+    }));
+  };
+
+  const generateCronExpression = () => {
+    const { selectedMinutes, selectedHours, selectedDays, selectedMonths } = cronFormData;
+    
+    let minutes = '*';
+    let hours = '*';
+    let days = '*';
+    let months = '*';
+    
+    if (selectedMinutes.length > 0) {
+      minutes = selectedMinutes.sort((a, b) => a - b).join(',');
+    }
+    if (selectedHours.length > 0) {
+      hours = selectedHours.sort((a, b) => a - b).join(',');
+    }
+    if (selectedDays.length > 0) {
+      days = selectedDays.sort((a, b) => a - b).join(',');
+    }
+    if (selectedMonths.length > 0) {
+      months = selectedMonths.sort((a, b) => a - b).join(',');
+    }
+    
+    return `${minutes} ${hours} ${days} ${months} *`;
+  };
+
+  const renderCronTabContent = () => {
+    switch (activeTab) {
+      case 'Minutes':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="specific-minute"
+                name="minute-option"
+                checked={cronFormData.minuteOption === 'specific'}
+                onChange={() => setCronFormData(prev => ({ ...prev, minuteOption: 'specific' }))}
+                style={customRadioStyles}
+              />
+              <Label htmlFor="specific-minute" className="text-sm">Specific minute (choose one or many)</Label>
+            </div>
+            
+            <div className="grid grid-cols-10 gap-2">
+              {Array.from({ length: 60 }, (_, i) => (
+                <label key={i} className="flex items-center space-x-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cronFormData.selectedMinutes.includes(i)}
+                    onChange={() => toggleMinute(i)}
+                    style={customCheckboxStyles}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{i.toString().padStart(2, '0')}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="every-minute"
+                name="minute-option"
+                checked={cronFormData.minuteOption === 'range'}
+                onChange={() => setCronFormData(prev => ({ ...prev, minuteOption: 'range' }))}
+                style={customRadioStyles}
+              />
+              <Label htmlFor="every-minute" className="text-sm">Every minute between minute</Label>
+              <FormControl variant="outlined" sx={{ ...fieldStyles, minWidth: 80 }}>
+                <MuiSelect
+                  value={cronFormData.minuteStart}
+                  onChange={(e) => setCronFormData(prev => ({ ...prev, minuteStart: e.target.value }))}
+                  displayEmpty
+                >
+                  {Array.from({ length: 60 }, (_, i) => (
+                    <MenuItem key={i} value={i.toString().padStart(2, '0')}>
+                      {i.toString().padStart(2, '0')}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <span className="text-sm">and minute</span>
+              <FormControl variant="outlined" sx={{ ...fieldStyles, minWidth: 80 }}>
+                <MuiSelect
+                  value={cronFormData.minuteEnd}
+                  onChange={(e) => setCronFormData(prev => ({ ...prev, minuteEnd: e.target.value }))}
+                  displayEmpty
+                >
+                  {Array.from({ length: 60 }, (_, i) => (
+                    <MenuItem key={i} value={i.toString().padStart(2, '0')}>
+                      {i.toString().padStart(2, '0')}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+          </div>
+        );
+      
+      case 'Hours':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="specific-hour"
+                name="hour-option"
+                checked={cronFormData.hourOption === 'specific'}
+                onChange={() => setCronFormData(prev => ({ ...prev, hourOption: 'specific' }))}
+                style={customRadioStyles}
+              />
+              <Label htmlFor="specific-hour" className="text-sm">Specific hour (choose one or many)</Label>
+            </div>
+            
+            <div className="grid grid-cols-12 gap-2">
+              {Array.from({ length: 24 }, (_, i) => (
+                <label key={i} className="flex items-center space-x-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cronFormData.selectedHours.includes(i)}
+                    onChange={() => toggleHour(i)}
+                    style={customCheckboxStyles}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{i.toString().padStart(2, '0')}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      
+      case 'Day':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="specific-day"
+                name="day-option"
+                checked={cronFormData.dayOption === 'specific'}
+                onChange={() => setCronFormData(prev => ({ ...prev, dayOption: 'specific' }))}
+                style={customRadioStyles}
+              />
+              <Label htmlFor="specific-day" className="text-sm">Specific day of month (choose one or many)</Label>
+            </div>
+            
+            <div className="grid grid-cols-10 gap-2">
+              {Array.from({ length: 31 }, (_, i) => (
+                <label key={i + 1} className="flex items-center space-x-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cronFormData.selectedDays.includes(i + 1)}
+                    onChange={() => toggleDay(i + 1)}
+                    style={customCheckboxStyles}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{(i + 1).toString().padStart(2, '0')}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      
+      case 'Month':
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="specific-month"
+                name="month-option"
+                checked={cronFormData.monthOption === 'specific'}
+                onChange={() => setCronFormData(prev => ({ ...prev, monthOption: 'specific' }))}
+                style={customRadioStyles}
+              />
+              <Label htmlFor="specific-month" className="text-sm">Specific month (choose one or many)</Label>
+            </div>
+            
+            <div className="grid grid-cols-6 gap-2">
+              {Array.from({ length: 12 }, (_, i) => (
+                <label key={i + 1} className="flex items-center space-x-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cronFormData.selectedMonths.includes(i + 1)}
+                    onChange={() => toggleMonth(i + 1)}
+                    style={customCheckboxStyles}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{monthNames[i]}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -199,7 +441,7 @@ export const AddSchedulePage = () => {
   };
 
   const handleSubmit = () => {
-    console.log('Submitting schedule data:', { formData, taskSections });
+    console.log('Submitting schedule data:', { formData, taskSections, cronFormData });
     toast({
       title: "Success",
       description: "Schedule saved successfully!",
@@ -949,6 +1191,82 @@ export const AddSchedulePage = () => {
                 }}
                 sx={floatingFieldStyles}
               />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cron Form Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">
+              <span className="text-[#ffff] text-xs">4</span>
+            </span>
+            Cron form
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Tab Navigation */}
+          <div className="flex flex-wrap gap-2 sm:gap-4 mb-4">
+            {['Minutes', 'Hours', 'Day', 'Month'].map((tab) => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? "default" : "outline"}
+                onClick={() => setActiveTab(tab)}
+                className={`${
+                  activeTab === tab 
+                    ? "bg-[#5B9BD5] text-white hover:bg-[#4A8AC7]" 
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                } flex-1 sm:flex-none`}
+              >
+                {tab}
+              </Button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-3 sm:p-4 rounded-lg bg-white border">
+            {renderCronTabContent()}
+          </div>
+
+          {/* Resulting Cron Expression */}
+          <div className="mt-4 sm:mt-6">
+            <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
+            <div className="mt-2 p-3 bg-gray-100 rounded border text-sm sm:text-lg font-mono break-all">
+              {generateCronExpression()}
+            </div>
+          </div>
+
+          {/* Cron Expression Breakdown */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 text-center">
+            <div>
+              <Label className="text-xs sm:text-sm font-medium">Minutes</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
+                {cronFormData.selectedMinutes.length > 0 ? cronFormData.selectedMinutes.join(',') : '*'}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs sm:text-sm font-medium">Hours</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
+                {cronFormData.selectedHours.length > 0 ? cronFormData.selectedHours.join(',') : '*'}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs sm:text-sm font-medium">Day Of Month</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
+                {cronFormData.selectedDays.length > 0 ? cronFormData.selectedDays.join(',') : '*'}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs sm:text-sm font-medium">Month</Label>
+              <div className="mt-1 text-sm sm:text-lg break-all">
+                {cronFormData.selectedMonths.length > 0 ? cronFormData.selectedMonths.join(',') : '*'}
+              </div>
+            </div>
+            <div className="col-span-2 sm:col-span-3 lg:col-span-1">
+              <Label className="text-xs sm:text-sm font-medium">Day Of Week</Label>
+              <div className="mt-1 text-sm sm:text-lg">*</div>
             </div>
           </div>
         </CardContent>

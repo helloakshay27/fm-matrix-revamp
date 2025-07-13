@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TextField, TextFieldProps, createTheme, ThemeProvider } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -10,12 +9,12 @@ const textFieldTheme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 0,
+            borderRadius: '6px', // rounded-md equivalent
             backgroundColor: '#FFFFFF',
             boxShadow: 'none',
             '& fieldset': {
               borderColor: '#E0E0E0',
-              borderRadius: 0,
+              borderRadius: '6px', // rounded-md equivalent
             },
             '&:hover fieldset': {
               borderColor: '#1A1A1A',
@@ -70,7 +69,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     // Desktop (default)
     width: '316px',
-    minHeight: '56px',
+    height: '45px',
     '& input': {
       fontSize: '14px',
       fontWeight: 400,
@@ -91,7 +90,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   [theme.breakpoints.down('lg')]: {
     '& .MuiOutlinedInput-root': {
       width: '254px',
-      minHeight: '44px',
+      height: '45px',
       '& input': {
         fontSize: '12px',
         padding: '4px 12px 12px 12px',
@@ -110,7 +109,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   [theme.breakpoints.down('md')]: {
     '& .MuiOutlinedInput-root': {
       width: '128px',
-      minHeight: '28px',
+      height: '36px',
       '& input': {
         fontSize: '8px',
         padding: '8px',
@@ -191,7 +190,7 @@ export const DesktopTextField: React.FC<CustomTextFieldProps> = (props) => (
     sx={{
       '& .MuiOutlinedInput-root': {
         width: '316px',
-        height: '56px',
+        height: '45px',
         '& input': {
           fontSize: '14px',
           padding: '12px 20px 20px 12px',
@@ -207,7 +206,7 @@ export const TabletTextField: React.FC<CustomTextFieldProps> = (props) => (
     sx={{
       '& .MuiOutlinedInput-root': {
         width: '254px',
-        height: '44px',
+        height: '45px',
         '& input': {
           fontSize: '12px',
           padding: '4px 12px 12px 12px',
@@ -223,7 +222,7 @@ export const MobileTextField: React.FC<CustomTextFieldProps> = (props) => (
     sx={{
       '& .MuiOutlinedInput-root': {
         width: '128px',
-        height: '28px',
+        height: '36px',
         '& input': {
           fontSize: '8px',
           padding: '8px',
