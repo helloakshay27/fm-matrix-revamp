@@ -760,10 +760,14 @@ function App() {
               <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
               <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
               <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
-              <Route path="/settings/safety/permit-setup" element={<div>Permit Setup</div>} />
+              <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
               <Route path="/settings/safety/incident" element={<div>Safety Incident</div>} />
-              <Route path="/settings/safety/setup" element={<div>Safety Setup</div>} />
+              <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
               <Route path="/settings/waste-management/setup" element={<div>Waste Management Setup</div>} />
+              
+              {/* Setup Routes */}
+              <Route path="/setup/permit" element={<PermitSetupDashboard />} />
+              <Route path="/setup/incident" element={<IncidentSetupDashboard />} />
             </Route>
 
           </Routes>
