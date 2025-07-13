@@ -419,6 +419,10 @@ import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementS
 
 import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
 
+// Import Setup pages
+import { PermitSetupDashboard } from './pages/PermitSetupDashboard';
+import { IncidentSetupDashboard } from './pages/IncidentSetupDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
