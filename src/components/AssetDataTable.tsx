@@ -129,29 +129,20 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   );
 
   return (
-    <div className="space-y-4">
-      {/* Selection Controls */}
-      <div className="flex items-center gap-4 px-4 py-2 bg-gray-50 rounded-lg">
-        <label className="flex items-center gap-2 text-sm">
-          <input 
-            type="checkbox" 
-            onChange={(e) => onSelectAll(e.target.checked)}
-            checked={selectedAssets.length === assets.length && assets.length > 0}
-            className="rounded border-gray-300"
-          />
-          Select All ({selectedAssets.length} selected)
-        </label>
-      </div>
-
-      <EnhancedTable
-        data={assets}
-        columns={columns}
-        renderCell={renderCell}
-        renderActions={renderActions}
-        onRowClick={(asset) => onViewAsset(asset.id)}
-        storageKey="asset-data-table"
-        emptyMessage="No assets found"
-      />
-    </div>
+    <EnhancedTable
+      data={assets}
+      columns={columns}
+      renderCell={renderCell}
+      renderActions={renderActions}
+      onRowClick={(asset) => onViewAsset(asset.id)}
+      storageKey="asset-data-table"
+      emptyMessage="No assets found"
+      selectable={true}
+      selectedItems={selectedAssets}
+      onSelectAll={onSelectAll}
+      onSelectItem={onSelectAsset}
+      getItemId={(asset) => asset.id}
+      selectAllLabel="Select all assets"
+    />
   );
 };
