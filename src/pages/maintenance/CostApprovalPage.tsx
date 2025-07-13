@@ -586,6 +586,8 @@ export const CostApprovalPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
