@@ -34,6 +34,7 @@ import { AddProjectDashboard } from './pages/AddProjectDashboard';
 import { FitoutChecklistDashboard } from './pages/FitoutChecklistDashboard';
 import { AddChecklistDashboard } from './pages/AddChecklistDashboard';
 import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
+import { CostApprovalPage } from './pages/maintenance/CostApprovalPage';
 
 // Import Maintenance pages
 import { AssetDashboard } from './pages/AssetDashboard';
@@ -756,7 +757,7 @@ function App() {
               <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
               <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
               <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
-              <Route path="/settings/ticket-management/cost-approval" element={<div>Cost Approval</div>} />
+              <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
               <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
               <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
               <Route path="/settings/safety/permit-setup" element={<div>Permit Setup</div>} />
