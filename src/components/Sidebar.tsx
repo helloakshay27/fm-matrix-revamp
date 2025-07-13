@@ -46,11 +46,6 @@ const navigationStructure = {
         subItems: [
           { name: 'Setup', href: '/settings/approval-matrix/setup' }
         ]
-      },
-      {
-        name: 'Invoice Approvals',
-        icon: Receipt,
-        href: '/settings/invoice-approvals'
       }
     ]
   },
