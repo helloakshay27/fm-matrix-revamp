@@ -64,7 +64,7 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
   });
 
   const handleSubmit = (data: EmailRuleFormData) => {
-    // The data is now guaranteed to have all required fields
+    // Data is now properly typed and all fields are required
     onSubmit(data);
     form.reset();
     onClose();

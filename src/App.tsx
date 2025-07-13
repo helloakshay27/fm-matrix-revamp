@@ -413,8 +413,8 @@ import { AssetGroupsDashboard } from './pages/setup/AssetGroupsDashboard';
 import ApprovalMatrixSetupPage from './pages/settings/ApprovalMatrixSetupPage';
 
 import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
-
-
+import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
+import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
 
 const queryClient = new QueryClient();
 
@@ -750,8 +750,8 @@ function App() {
 
               <Route path="/settings/checklist-setup/group" element={<AssetGroupsDashboard />} />
               <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
-              <Route path="/settings/checklist-setup/task-escalation" element={<div>Task Escalation</div>} />
-              <Route path="/settings/ticket-management/setup" element={<div>Ticket Management Setup</div>} />
+              <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
+              <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
               <Route path="/settings/ticket-management/escalation-matrix" element={<div>Escalation Matrix</div>} />
               <Route path="/settings/ticket-management/cost-approval" element={<div>Cost Approval</div>} />
               <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
