@@ -254,20 +254,21 @@ export const InventoryDashboard = () => {
       <EnhancedTable
         data={inventoryData}
         columns={columns}
-        enableSearch
-        enableExport
-        enableBulkActions
-        enableSelection
-        enablePagination
-        bulkActions={bulkActions}
-        renderCustomActions={renderCustomActions}
-        renderRowActions={renderRowActions}
         renderCell={renderCell}
+        renderActions={renderRowActions}
+        bulkActions={bulkActions}
+        showBulkActions={true}
+        selectable={true}
+        pagination={true}
+        enableExport={true}
+        exportFileName="inventory"
         onRowClick={handleViewItem}
         storageKey="inventory-table"
-        searchPlaceholder="Search inventory..."
-        exportFilename="inventory"
       />
+
+      <div className="mt-4">
+        {renderCustomActions()}
+      </div>
 
       <BulkUploadDialog open={showBulkUpload} onOpenChange={setShowBulkUpload} title="Bulk Upload" />
       <InventoryFilterDialog open={showFilter} onOpenChange={setShowFilter} onApply={(filters) => console.log('Applied filters:', filters)} />

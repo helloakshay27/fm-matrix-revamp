@@ -176,18 +176,19 @@ export const TicketDashboard = () => {
       <EnhancedTable
         data={ticketData}
         columns={columns}
-        enableSearch
-        enableExport
-        enableSelection
-        enablePagination
-        renderCustomActions={renderCustomActions}
-        renderRowActions={renderRowActions}
         renderCell={renderCell}
+        renderActions={renderRowActions}
+        selectable={true}
+        pagination={true}
+        enableExport={true}
+        exportFileName="tickets"
         onRowClick={handleViewDetails}
         storageKey="tickets-table"
-        searchPlaceholder="Search tickets..."
-        exportFilename="tickets"
       />
+
+      <div className="mt-4">
+        {renderCustomActions()}
+      </div>
 
       <TicketsFilterDialog 
         isOpen={isFilterOpen} 

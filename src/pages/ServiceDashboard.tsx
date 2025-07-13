@@ -237,13 +237,21 @@ export const ServiceDashboard = () => {
       <EnhancedTable
         data={services}
         columns={columns}
-        bulkActions={bulkActions}
-        renderCustomActions={renderCustomActions}
-        renderRowActions={renderRowActions}
         renderCell={renderCell}
+        renderActions={renderRowActions}
+        bulkActions={bulkActions}
+        showBulkActions={true}
+        selectable={true}
+        pagination={true}
+        enableExport={true}
+        exportFileName="services"
         onRowClick={handleViewService}
         storageKey="services-table"
       />
+
+      <div className="mt-4">
+        {renderCustomActions()}
+      </div>
 
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />

@@ -131,18 +131,19 @@ export const ScheduleListDashboard = () => {
       <EnhancedTable
         data={schedules}
         columns={columns}
-        enableSearch
-        enableExport
-        enableSelection
-        enablePagination
-        renderCustomActions={renderCustomActions}
-        renderRowActions={renderRowActions}
         renderCell={renderCell}
+        renderActions={renderRowActions}
+        selectable={true}
+        pagination={true}
+        enableExport={true}
+        exportFileName="schedules"
         onRowClick={handleViewSchedule}
         storageKey="schedules-table"
-        searchPlaceholder="Search schedules..."
-        exportFilename="schedules"
       />
+
+      <div className="mt-4">
+        {renderCustomActions()}
+      </div>
 
       <BulkUploadDialog open={showImportModal} onOpenChange={setShowImportModal} title="Bulk Upload" />
       <ScheduleFilterDialog open={showFilterDialog} onOpenChange={setShowFilterDialog} />
