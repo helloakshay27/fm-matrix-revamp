@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ChevronDown, Edit, Trash2 } from 'lucide-react';
-import { ESCALATION_LEVELS, PRIORITY_LEVELS, ESCALATION_TO_OPTIONS, ResponseEscalationRule } from '@/types/escalationMatrix';
+import { ESCALATION_LEVELS, PRIORITY_LEVELS, ESCALATION_TO_OPTIONS, ResponseEscalationRule, EscalationLevel, PriorityTiming } from '@/types/escalationMatrix';
 
 const responseEscalationSchema = z.object({
   categoryType: z.string().min(1, 'Category type is required'),
@@ -32,21 +32,29 @@ export const ResponseEscalationTab: React.FC = () => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
 
+  const createDefaultEscalationLevels = (): EscalationLevel[] => {
+    return ESCALATION_LEVELS.map(level => ({
+      id: `${level}-${Date.now()}`,
+      level,
+      escalationTo: '',
+    }));
+  };
+
+  const createDefaultPriorityTimings = (): PriorityTiming[] => {
+    return PRIORITY_LEVELS.map(priority => ({
+      priority,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+    }));
+  };
+
   const form = useForm<ResponseEscalationFormData>({
     resolver: zodResolver(responseEscalationSchema),
     defaultValues: {
       categoryType: '',
-      escalationLevels: ESCALATION_LEVELS.map(level => ({
-        id: `${level}-${Date.now()}`,
-        level,
-        escalationTo: '',
-      })),
-      priorityTimings: PRIORITY_LEVELS.map(priority => ({
-        priority,
-        days: 0,
-        hours: 0,
-        minutes: 0,
-      })),
+      escalationLevels: createDefaultEscalationLevels(),
+      priorityTimings: createDefaultPriorityTimings(),
     },
   });
 
@@ -64,17 +72,8 @@ export const ResponseEscalationTab: React.FC = () => {
     setRules(prev => [...prev, newRule]);
     form.reset({
       categoryType: '',
-      escalationLevels: ESCALATION_LEVELS.map(level => ({
-        id: `${level}-${Date.now()}`,
-        level,
-        escalationTo: '',
-      })),
-      priorityTimings: PRIORITY_LEVELS.map(priority => ({
-        priority,
-        days: 0,
-        hours: 0,
-        minutes: 0,
-      })),
+      escalationLevels: createDefaultEscalationLevels(),
+      priorityTimings: createDefaultPriorityTimings(),
     });
   };
 

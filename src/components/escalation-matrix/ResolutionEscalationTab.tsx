@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ChevronDown, Edit, Trash2 } from 'lucide-react';
-import { ESCALATION_LEVELS, ESCALATION_TO_OPTIONS, ResolutionEscalationRule } from '@/types/escalationMatrix';
+import { ESCALATION_LEVELS, ESCALATION_TO_OPTIONS, ResolutionEscalationRule, EscalationLevel } from '@/types/escalationMatrix';
 
 const resolutionEscalationSchema = z.object({
   categoryType: z.string().min(1, 'Category type is required'),
@@ -25,15 +25,19 @@ export const ResolutionEscalationTab: React.FC = () => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
 
+  const createDefaultEscalationLevels = (): EscalationLevel[] => {
+    return ESCALATION_LEVELS.map(level => ({
+      id: `${level}-${Date.now()}`,
+      level,
+      escalationTo: '',
+    }));
+  };
+
   const form = useForm<ResolutionEscalationFormData>({
     resolver: zodResolver(resolutionEscalationSchema),
     defaultValues: {
       categoryType: '',
-      escalationLevels: ESCALATION_LEVELS.map(level => ({
-        id: `${level}-${Date.now()}`,
-        level,
-        escalationTo: '',
-      })),
+      escalationLevels: createDefaultEscalationLevels(),
     },
   });
 
@@ -50,11 +54,7 @@ export const ResolutionEscalationTab: React.FC = () => {
     setRules(prev => [...prev, newRule]);
     form.reset({
       categoryType: '',
-      escalationLevels: ESCALATION_LEVELS.map(level => ({
-        id: `${level}-${Date.now()}`,
-        level,
-        escalationTo: '',
-      })),
+      escalationLevels: createDefaultEscalationLevels(),
     });
   };
 
