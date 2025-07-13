@@ -362,9 +362,230 @@ export const CostApprovalPage: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="fm">
-          <div className="text-center py-8 text-muted-foreground">
-            <p>FM tab content coming soon...</p>
-          </div>
+              <Card>
+            <CardContent className="p-6">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                  {/* Top section with Approval Level, Access Level and Unit */}
+                  <div className="grid grid-cols-12 gap-6">
+                    {/* Left side - Approval Level and Access Level */}
+                    <div className="col-span-3 space-y-4">
+                      <div>
+                        <h3 className="text-sm font-medium mb-3">Approval Level</h3>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-sm font-medium">Access Level</span>
+                            <div className="mt-2 space-y-2">
+                              {ACCESS_LEVELS.map(level => (
+                                <div key={level} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={level}
+                                    checked={form.watch('accessLevels').includes(level)}
+                                    onCheckedChange={(checked) => handleAccessLevelChange(level, checked as boolean)}
+                                  />
+                                  <label htmlFor={level} className="text-sm">{level}</label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <FormField
+                          control={form.control}
+                          name="unit"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Unit</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select Unit" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {UNITS.map(unit => (
+                                    <SelectItem key={unit} value={unit}>
+                                      {unit}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Right side - Levels and Approvers table */}
+                    <div className="col-span-9">
+                      <div className="border rounded-lg">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b bg-gray-50">
+                              <th className="p-3 text-left text-sm font-medium">Levels</th>
+                              <th className="p-3 text-left text-sm font-medium">Approvers</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {APPROVAL_LEVELS.map((level) => (
+                              <tr key={level} className="border-b last:border-b-0">
+                                <td className="p-3 text-sm font-medium">{level}</td>
+                                <td className="p-3">
+                                  <div className="space-y-2">
+                                    <Select onValueChange={(value) => handleApproverSelect(level, value)}>
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select up to 15 Options..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {MOCK_APPROVERS.filter(approver => 
+                                          !(selectedApprovers[level] || []).includes(approver)
+                                        ).map(approver => (
+                                          <SelectItem key={approver} value={approver}>
+                                            {approver}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    
+                                    {selectedApprovers[level] && selectedApprovers[level].length > 0 && (
+                                      <div className="flex flex-wrap gap-1">
+                                        {selectedApprovers[level].map(approver => (
+                                          <Badge key={approver} variant="secondary" className="text-xs">
+                                            {approver}
+                                            <button
+                                              type="button"
+                                              onClick={() => removeApprover(level, approver)}
+                                              className="ml-1 text-xs hover:text-red-500"
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cost Range - moved to bottom */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="costRangeMin"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Minimum Cost</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              {...field}
+                              onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="costRangeMax"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maximum Cost</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="10000"
+                              {...field}
+                              onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-center">
+                    <Button type="submit" className="px-8">
+                      Submit
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Existing Rules */}
+          <div className="space-y-4">
+            {rules.map((rule, index) => (
+              <Card key={rule.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Rule {index + 1}</CardTitle>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => deleteRule(rule.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="border rounded-lg">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-gray-50">
+                          <th className="p-3 text-left text-sm font-medium">Cost Range</th>
+                          <th className="p-3 text-left text-sm font-medium">Access Level</th>
+                          <th className="p-3 text-left text-sm font-medium">Levels</th>
+                          <th className="p-3 text-left text-sm font-medium">Approvers</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="p-3 text-sm">{rule.costRange.min} - {rule.costRange.max}</td>
+                          <td className="p-3 text-sm">{rule.accessLevel}</td>
+                          <td className="p-3">
+                            <div className="space-y-1 text-sm">
+                              {rule.approvalLevels.map(level => (
+                                <div key={level.level}>{level.level}</div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="space-y-1 text-sm">
+                              {rule.approvalLevels.map(level => (
+                                <div key={level.level}>
+                                  {level.approvers.length > 0 ? level.approvers.join(', ') : '-'}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
         </TabsContent>
       </Tabs>
     </div>
