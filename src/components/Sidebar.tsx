@@ -65,7 +65,7 @@ const navigationStructure = {
         icon: CheckSquare,
         subItems: [
           { name: 'Checklist Group and Sub Group', href: '/settings/asset-setup/asset-groups' },
-          { name: 'Email Rule', href: '/maintenance/checklist-setup/email-rule' },
+          { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
           { name: 'Task Escalation', href: '/maintenance/checklist-setup/task-escalation' }
         ]
       },
