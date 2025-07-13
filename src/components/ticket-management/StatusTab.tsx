@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -102,6 +101,10 @@ export const StatusTab: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAllowReopenChange = (checked: boolean | "indeterminate") => {
+    setAllowReopen(checked === true);
   };
 
   const columns = [
@@ -248,7 +251,7 @@ export const StatusTab: React.FC = () => {
               <Checkbox
                 id="allowReopen"
                 checked={allowReopen}
-                onCheckedChange={setAllowReopen}
+                onCheckedChange={handleAllowReopenChange}
               />
               <label htmlFor="allowReopen" className="text-sm font-medium">
                 Allow User to reopen ticket after closure
