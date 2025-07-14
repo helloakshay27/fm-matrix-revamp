@@ -204,9 +204,6 @@ const ticketData = [{
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [visibleChartSections, setVisibleChartSections] = useState<string[]>([
-    'statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix'
-  ]);
   const totalTickets = ticketData.length;
   const openTickets = ticketData.filter(t => t.status === 'Open').length;
   const inProgressTickets = ticketData.filter(t => t.status === 'In Progress').length;
@@ -325,10 +322,7 @@ export const TicketDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <p className="text-muted-foreground mb-2 text-sm">Tickets &gt; Dashboard</p>
-        <h1 className="text-xl sm:text-2xl font-bold uppercase">TICKET DASHBOARD</h1>
-      </div>
+ 
 
       <Tabs defaultValue="analytics" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -345,7 +339,7 @@ export const TicketDashboard = () => {
         <TabsContent value="analytics" className="space-y-6 mt-6">
           {/* Header with Ticket Selector */}
           <div className="flex justify-end">
-            <TicketSelector onSelectionChange={setVisibleChartSections} />
+            <TicketSelector />
           </div>
 
           {/* Main Analytics Layout */}
@@ -355,7 +349,6 @@ export const TicketDashboard = () => {
               {/* Top Row - Two Donut Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Tickets Chart */}
-                {visibleChartSections.includes('statusChart') && (
                 <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Tickets</h3>
@@ -393,10 +386,8 @@ export const TicketDashboard = () => {
                     ))}
                   </div>
                 </div>
-                )}
 
                 {/* Reactive Proactive Tickets Chart */}
-                {visibleChartSections.includes('reactiveChart') && (
                 <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Reactive Proactive Ticket</h3>
@@ -434,11 +425,9 @@ export const TicketDashboard = () => {
                     ))}
                   </div>
                 </div>
-                )}
               </div>
 
               {/* Unit Category Wise Tickets Bar Chart */}
-              {visibleChartSections.includes('categoryChart') && (
               <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Unit Category-wise Tickets</h3>
@@ -460,12 +449,10 @@ export const TicketDashboard = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              )}
 
               {/* Bottom Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Aging Matrix */}
-                {visibleChartSections.includes('agingMatrix') && (
                 <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Aging Matrix</h3>
@@ -498,10 +485,8 @@ export const TicketDashboard = () => {
                     </table>
                   </div>
                 </div>
-                )}
 
                 {/* Average Resolution Time */}
-                {visibleChartSections.includes('agingMatrix') && (
                 <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">569 Days Average Time Taken To Resolve A Ticket</h3>
@@ -515,7 +500,6 @@ export const TicketDashboard = () => {
                     </div>
                   </div>
                 </div>
-                )}
               </div>
             </div>
 
