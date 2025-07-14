@@ -179,76 +179,144 @@ export const BookingSetupDetailPage = () => {
               <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
                 <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">3</span>
                 CONFIGURE SLOT
-                <Button size="sm" className="ml-auto bg-[#C72030] hover:bg-[#A01E2A] text-white">
-                  Add
-                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-7 gap-4 mb-4">
-                <div>
-                  <Label className="text-xs text-gray-600">Start Time</Label>
-                  <Select value={bookingData.configureSlotData.startTime} disabled>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Break Time Start</Label>
-                  <Select disabled>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Break Time End</Label>
-                  <Select value={bookingData.configureSlotData.breakTimeEnd} disabled>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">End Time</Label>
-                  <Select value={bookingData.configureSlotData.endTime} disabled>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Consumption Slots</Label>
-                  <Select value={bookingData.configureSlotData.consumptionSlots} disabled>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Slot by</Label>
-                  <Select value={bookingData.configureSlotData.slotBy} disabled>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Wrap Time</Label>
-                  <Select value={bookingData.configureSlotData.wrapTime} disabled>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </Select>
-                </div>
+              <div className="mb-4">
+                <Button size="sm" className="bg-purple-800 hover:bg-purple-900 text-white px-6">
+                  Add
+                </Button>
               </div>
-              <div className="text-right">
-                <Select disabled>
-                  <SelectTrigger className="w-32 h-8">
-                    <SelectValue placeholder="15 Minutes" />
-                  </SelectTrigger>
-                </Select>
+              
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <div className="grid grid-cols-7 gap-4 mb-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Start Time</Label>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Break Time Start</Label>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Break Time End</Label>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">End Time</Label>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Concurrent Slots</Label>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Slot by</Label>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Wrap Time</Label>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-7 gap-4">
+                  <div className="flex gap-1">
+                    <Select value="09" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="09">09</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value="00" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="00">00</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex gap-1">
+                    <Select value="13" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="13">13</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value="00" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="00">00</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex gap-1">
+                    <Select value="14" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="14">14</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value="00" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="00">00</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex gap-1">
+                    <Select value="19" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="19">19</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value="00" disabled>
+                      <SelectTrigger className="h-8 w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="00">00</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Select disabled>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Select value="15 Minutes" disabled>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15 Minutes">15 Minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Select disabled>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </Select>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
