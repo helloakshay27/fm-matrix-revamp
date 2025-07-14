@@ -308,6 +308,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
   const [savedTasks, setSavedTasks] = useState([]);
   const [isDelete, setIsDelete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [totalWorkingHours, setTotalWorkingHours] = useState(0);
   const [formData, setFormData] = useState({
     project: id,
     milestone: mid,
@@ -316,12 +317,19 @@ const Tasks = ({ isEdit, onCloseModal }) => {
     responsiblePerson: "",
     department: "",
     priority: "",
-    duration: "",
+    duration: 0,
     expected_start_date: null,
     target_date: null,
     observer: [],
     tags: [],
   });
+
+  useEffect(() => {
+    setFormData({
+      ...formData,
+      duration: Math.round(totalWorkingHours)
+    })
+  }, [totalWorkingHours])
 
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
@@ -329,20 +337,60 @@ const Tasks = ({ isEdit, onCloseModal }) => {
   const calculateDuration = (startDateStr, endDateStr) => {
     if (!startDateStr || !endDateStr) return "";
 
-    const now = new Date();
-    const endDate = new Date(endDateStr);
-    endDate.setHours(23, 59, 59, 999); // End of that day
+    const shiftStartHour = 9;
+    const shiftEndHour = 17;
+    const shiftMinutesPerDay = (shiftEndHour - shiftStartHour) * 60;
 
-    if (endDate < now) return "Expired";
+    const start = new Date(`${startDateStr}T${shiftStartHour.toString().padStart(2, "0")}:00:00`);
+    const end = new Date(`${endDateStr}T${shiftEndHour.toString().padStart(2, "0")}:00:00`);
 
-    const ms = endDate - now;
-    const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    if (end <= start) {
+      setTotalWorkingHours(0); // Expired → 0 hours
+      return "Expired";
+    }
+
+    let totalMinutes = 0;
+    let current = new Date(start);
+
+    while (current <= end) {
+      const currentDay = new Date(current);
+      currentDay.setHours(0, 0, 0, 0);
+
+      const shiftStart = new Date(currentDay);
+      shiftStart.setHours(shiftStartHour, 0, 0, 0);
+
+      const shiftEnd = new Date(currentDay);
+      shiftEnd.setHours(shiftEndHour, 0, 0, 0);
+
+      const isWeekend = current.getDay() === 0 || current.getDay() === 6;
+      if (!isWeekend) {
+        // If it's within the date range and not a weekend, count full day
+        const isSameDay = current.toDateString() === end.toDateString();
+        const to = isSameDay && end < shiftEnd ? end : shiftEnd;
+
+        // Always count full shift minutes if date is valid
+        if (shiftStart <= to) {
+          const diff = Math.floor((to - shiftStart) / 60000);
+          totalMinutes += Math.min(diff, shiftMinutesPerDay);
+        }
+      }
+
+      // Move to next day
+      current.setDate(current.getDate() + 1);
+      current.setHours(shiftStartHour, 0, 0, 0);
+    }
+
+    const totalHours = +(totalMinutes / 60).toFixed(2);
+    setTotalWorkingHours(totalHours);
+
+    const days = Math.floor(totalMinutes / shiftMinutesPerDay);
+    const remainingMinutes = totalMinutes % shiftMinutesPerDay;
+    const hours = Math.floor(remainingMinutes / 60);
+    const minutes = remainingMinutes % 60;
 
     return `${days}d : ${hours}h : ${minutes}m`;
   };
+
 
   useEffect(() => {
     dispatch(fetchUsers({ token }));
@@ -402,7 +450,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
     project_management_id: id,
     milestone_id: mid,
     active: true,
-    estimated_hour: 0
+    estimated_hour: data.duration
   });
 
   const isFormEmpty = () => {
@@ -475,7 +523,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
         responsiblePerson: "",
         department: "",
         priority: "",
-        duration: "",
+        duration: 0,
         expected_start_date: null,
         target_date: null,
         observer: [],
@@ -542,7 +590,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
         toast.success(
           isEdit ? "Task updated successfully." : "Task created successfully."
         );
-        window.location.reload();
+        // window.location.reload();
       } else {
         toast.error(isEdit ? "Task update failed." : "Task creation failed.");
       }
