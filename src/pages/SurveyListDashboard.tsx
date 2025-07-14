@@ -114,6 +114,90 @@ export const SurveyListDashboard = () => {
       status: "Active",
       validFrom: "12/07/2025",
       validTo: "12/08/2025"
+    },
+    {
+      id: "12353",
+      title: "Brand Awareness Survey",
+      ticketCreation: false,
+      ticketCategory: "Marketing",
+      ticketLevel: "Question",
+      noOfAssociation: 6,
+      typeOfSurvey: "Link",
+      status: "Published",
+      validFrom: "18/07/2025",
+      validTo: "18/09/2025"
+    },
+    {
+      id: "12354",
+      title: "Website Usability Survey",
+      ticketCreation: true,
+      ticketCategory: "UX",
+      ticketLevel: "Survey",
+      noOfAssociation: 4,
+      typeOfSurvey: "QR",
+      status: "Active",
+      validFrom: "22/07/2025",
+      validTo: "22/08/2025"
+    },
+    {
+      id: "12355",
+      title: "Customer Support Survey",
+      ticketCreation: true,
+      ticketCategory: "Support",
+      ticketLevel: "Survey",
+      noOfAssociation: 7,
+      typeOfSurvey: "Link",
+      status: "Draft",
+      validFrom: "28/07/2025",
+      validTo: "28/08/2025"
+    },
+    {
+      id: "12356",
+      title: "Product Launch Survey",
+      ticketCreation: false,
+      ticketCategory: "Product",
+      ticketLevel: "Question",
+      noOfAssociation: 3,
+      typeOfSurvey: "QR",
+      status: "Published",
+      validFrom: "02/08/2025",
+      validTo: "02/09/2025"
+    },
+    {
+      id: "12357",
+      title: "Annual Review Survey",
+      ticketCreation: true,
+      ticketCategory: "Review",
+      ticketLevel: "Survey",
+      noOfAssociation: 8,
+      typeOfSurvey: "Link",
+      status: "Inactive",
+      validFrom: "15/08/2025",
+      validTo: "15/10/2025"
+    },
+    {
+      id: "12358",
+      title: "Mobile App Feedback Survey",
+      ticketCreation: false,
+      ticketCategory: "Mobile",
+      ticketLevel: "Question",
+      noOfAssociation: 2,
+      typeOfSurvey: "QR",
+      status: "Active",
+      validFrom: "25/08/2025",
+      validTo: "25/09/2025"
+    },
+    {
+      id: "12359",
+      title: "Social Media Survey",
+      ticketCreation: true,
+      ticketCategory: "Social",
+      ticketLevel: "Survey",
+      noOfAssociation: 5,
+      typeOfSurvey: "Link",
+      status: "Published",
+      validFrom: "30/08/2025",
+      validTo: "30/10/2025"
     }
   ]);
 
