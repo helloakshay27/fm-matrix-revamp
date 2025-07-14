@@ -251,15 +251,6 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            className="flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
           
           <ColumnVisibilityMenu
             columns={columns}
