@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -18,6 +19,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -60,6 +70,9 @@ interface EnhancedTableProps<T> {
   loading?: boolean;
   enableSearch?: boolean;
   enableSelection?: boolean;
+  hideTableExport?: boolean;
+  hideTableSearch?: boolean;
+  hideColumnsButton?: boolean;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -91,6 +104,9 @@ export function EnhancedTable<T extends Record<string, any>>({
   loading = false,
   enableSearch = false,
   enableSelection = false,
+  hideTableExport = false,
+  hideTableSearch = false,
+  hideColumnsButton = false,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -213,11 +229,42 @@ export function EnhancedTable<T extends Record<string, any>>({
     return filteredData.filter(item => selectedItems.includes(getItemId(item)));
   }, [filteredData, selectedItems, getItemId]);
 
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (startPage > 1) {
+        pages.push(1);
+        if (startPage > 2) pages.push('ellipsis-start');
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pages.push('ellipsis-end');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-          {(onSearchChange || !externalSearchTerm) && (
+          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
@@ -251,7 +298,7 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          {enableExport && (
+          {!hideTableExport && enableExport && (
             <Button
               variant="outline"
               size="sm"
@@ -263,44 +310,38 @@ export function EnhancedTable<T extends Record<string, any>>({
             </Button>
           )}
           
-          <div className="text-sm text-muted-foreground">
-            {filteredData.length} {filteredData.length === 1 ? 'item' : 'items'}
-            {selectable && selectedItems.length > 0 && (
-              <span className="ml-2 text-primary">
-                ({selectedItems.length} selected)
-              </span>
-            )}
-          </div>
-          
-          <ColumnVisibilityMenu
-            columns={columns}
-            columnVisibility={columnVisibility}
-            onToggleVisibility={toggleColumnVisibility}
-            onResetToDefaults={resetToDefaults}
-          />
+          {!hideColumnsButton && (
+            <ColumnVisibilityMenu
+              columns={columns}
+              columnVisibility={columnVisibility}
+              onToggleVisibility={toggleColumnVisibility}
+              onResetToDefaults={resetToDefaults}
+            />
+          )}
         </div>
       </div>
 
-      <div className="rounded-lg overflow-hidden">
+      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-<Table className={`border ${className}`}>
+            <Table className={className}>
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12" data-checkbox>
-                        <Checkbox
-                          checked={isAllSelected}
-                          onCheckedChange={handleSelectAllChange}
-                          aria-label={selectAllLabel}
-                          className="ml-2"
-                          {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                        />
+                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAllChange}
+                            aria-label={selectAllLabel}
+                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                          />
+                        </div>
                       </TableHead>
                     )}
                     {visibleColumns.map((column) => (
@@ -311,13 +352,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee]"
+                        className="bg-[#f6f4ee] text-center"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee]">Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
@@ -369,26 +410,28 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="p-4 w-12" data-checkbox>
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
-                            aria-label={`Select row ${index + 1}`}
-                            onClick={(e) => e.stopPropagation()}
-                          />
+                        <TableCell className="p-4 w-12 text-center" data-checkbox>
+                          <div className="flex justify-center">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                              aria-label={`Select row ${index + 1}`}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
                         </TableCell>
                       )}
                       {visibleColumns.map((column) => {
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4">
+                          <TableCell key={column.key} className="p-4 text-center">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="p-4" data-actions>
+                        <TableCell className="p-4 text-center" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
@@ -403,32 +446,39 @@ export function EnhancedTable<T extends Record<string, any>>({
 
       {/* Pagination */}
       {pagination && totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {generatePageNumbers().map((page, index) => (
+              <PaginationItem key={index}>
+                {page === 'ellipsis-start' || page === 'ellipsis-end' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page as number)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   );

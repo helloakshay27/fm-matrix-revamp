@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+
 const ticketData = [{
   id: '2189-11106',
   taskNumber: 'test',
@@ -61,7 +62,141 @@ const ticketData = [{
   status: 'Pending',
   createdOn: '14/06/2025 10:15 AM',
   mode: 'Web'
+}, {
+  id: '2189-11103',
+  taskNumber: 'Electrical Issue',
+  description: 'Power outage in conference room',
+  category: 'Electrical',
+  subCategory: 'Power',
+  createdBy: 'Sarah Johnson',
+  assignedTo: 'Deepak Gupta',
+  unit: 'Lockated',
+  site: 'Lockated',
+  building: 'J1',
+  wing: 'West',
+  floor: '3',
+  area: 'Conference Room',
+  room: 'CR-301',
+  priority: 'p1',
+  status: 'In Progress',
+  createdOn: '13/06/2025 2:45 PM',
+  mode: 'App'
+}, {
+  id: '2189-11102',
+  taskNumber: 'Plumbing Fix',
+  description: 'Leaky faucet in restroom',
+  category: 'Plumbing',
+  subCategory: 'Faucet',
+  createdBy: 'Mike Wilson',
+  assignedTo: 'Vinayak Mane',
+  unit: 'Lockated',
+  site: 'Lockated',
+  building: 'J2',
+  wing: 'North',
+  floor: '1',
+  area: 'Restroom',
+  room: 'RR-101',
+  priority: 'p2',
+  status: 'Open',
+  createdOn: '12/06/2025 11:30 AM',
+  mode: 'Call'
+}, {
+  id: '2189-11101',
+  taskNumber: 'HVAC Maintenance',
+  description: 'Routine HVAC system check',
+  category: 'HVAC',
+  subCategory: 'Maintenance',
+  createdBy: 'Lisa Chen',
+  assignedTo: 'Deepak Gupta',
+  unit: 'Lockated',
+  site: 'Lockated',
+  building: 'J1',
+  wing: 'Central',
+  floor: '2',
+  area: 'Mechanical Room',
+  room: 'MR-201',
+  priority: 'p3',
+  status: 'Pending',
+  createdOn: '11/06/2025 9:00 AM',
+  mode: 'Web'
+}, {
+  id: '2189-11100',
+  taskNumber: 'Security Issue',
+  description: 'Broken door lock',
+  category: 'Security',
+  subCategory: 'Lock',
+  createdBy: 'Robert Davis',
+  assignedTo: 'Vinayak Mane',
+  unit: 'Lockated',
+  site: 'Lockated',
+  building: 'J2',
+  wing: 'South',
+  floor: '3',
+  area: 'Office',
+  room: 'OF-305',
+  priority: 'p1',
+  status: 'Closed',
+  createdOn: '10/06/2025 4:20 PM',
+  mode: 'Email'
+}, {
+  id: '2189-11099',
+  taskNumber: 'Network Issue',
+  description: 'Internet connectivity problem',
+  category: 'IT',
+  subCategory: 'Network',
+  createdBy: 'Emma Brown',
+  assignedTo: 'Deepak Gupta',
+  unit: 'Lockated',
+  site: 'Lockated',
+  building: 'J1',
+  wing: 'East',
+  floor: '1',
+  area: 'IT Room',
+  room: 'IT-101',
+  priority: 'p2',
+  status: 'In Progress',
+  createdOn: '09/06/2025 1:15 PM',
+  mode: 'App'
+}, {
+  id: '2189-11098',
+  taskNumber: 'Furniture Repair',
+  description: 'Broken office chair',
+  category: 'Furniture',
+  subCategory: 'Chair',
+  createdBy: 'David Miller',
+  assignedTo: 'Vinayak Mane',
+  unit: 'Lockated',
+  site: 'Lockated',
+  building: 'J2',
+  wing: 'West',
+  floor: '2',
+  area: 'Workspace',
+  room: 'WS-201',
+  priority: 'p3',
+  status: 'Open',
+  createdOn: '08/06/2025 10:45 AM',
+  mode: 'Call'
+}, {
+  id: '2189-11097',
+  taskNumber: 'Lighting Fix',
+  description: 'Flickering lights in hallway',
+  category: 'Electrical',
+  subCategory: 'Lighting',
+  createdBy: 'Jennifer Taylor',
+  assignedTo: 'Deepak Gupta',
+  unit: 'Lockated',
+  site: 'Lockated',
+  building: 'J1',
+  wing: 'North',
+  floor: '2',
+  area: 'Hallway',
+  room: '',
+  priority: 'p2',
+  status: 'Pending',
+  createdOn: '07/06/2025 3:00 PM',
+  mode: 'Web'
 }];
+
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -70,9 +205,11 @@ export const TicketDashboard = () => {
   const inProgressTickets = ticketData.filter(t => t.status === 'In Progress').length;
   const pendingTickets = ticketData.filter(t => t.status === 'Pending').length;
   const closedTickets = ticketData.filter(t => t.status === 'Closed').length;
+
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
+
   const columns = [{
     key: 'id',
     label: 'Ticket ID',
@@ -122,6 +259,7 @@ export const TicketDashboard = () => {
     label: 'Created On',
     sortable: true
   }];
+
   const renderCustomActions = () => <div className="flex flex-wrap gap-3">
       <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4 mr-2" /> Add
@@ -130,9 +268,11 @@ export const TicketDashboard = () => {
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
     </div>;
+
   const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
       <Eye className="w-4 h-4" />
     </Button>;
+
   const renderCell = (item, columnKey) => {
     if (columnKey === 'status') {
       return <span className={`px-2 py-1 rounded text-xs ${item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.status === 'Closed' ? 'bg-green-100 text-green-700' : item.status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
@@ -146,6 +286,7 @@ export const TicketDashboard = () => {
     }
     return item[columnKey];
   };
+
   return <div className="p-4 sm:p-6">
       <div className="mb-6">
         <p className="text-muted-foreground mb-2 text-sm">Tickets &gt; Ticket List</p>
@@ -187,11 +328,23 @@ export const TicketDashboard = () => {
       })}
       </div>
 
-      <EnhancedTable data={ticketData} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="tickets" onRowClick={handleViewDetails} storageKey="tickets-table" />
-
-      <div className="mt-4">
+      <div className="mb-4">
         {renderCustomActions()}
       </div>
+
+      <EnhancedTable 
+        data={ticketData} 
+        columns={columns} 
+        renderCell={renderCell} 
+        renderActions={renderRowActions} 
+        selectable={true} 
+        pagination={true} 
+        pageSize={10}
+        enableExport={true} 
+        exportFileName="tickets" 
+        onRowClick={handleViewDetails} 
+        storageKey="tickets-table" 
+      />
 
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={filters => {
       console.log('Applied filters:', filters);

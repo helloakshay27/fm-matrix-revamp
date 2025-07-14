@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Trash2, QrCode, LogIn, X, Users, Package } from 'lucide-react';
+import { RotateCcw, Trash2, QrCode, LogIn, X, Users, Package, Download } from 'lucide-react';
 
 interface Asset {
   id: string;
@@ -32,6 +32,30 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   const handleClearClick = () => {
     console.log('X button clicked - clearing selection');
     onClearSelection();
+  };
+
+  const handleExport = () => {
+    console.log('Export clicked for', selectedAssets.length, 'selected assets');
+    
+    // Create CSV content with headers
+    const headers = ['Asset Name', 'Asset ID'];
+    const csvContent = [
+      headers.join(','),
+      ...selectedAssets.map(asset => 
+        `"${asset.name}","${asset.id}"`
+      )
+    ].join('\n');
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `selected_assets_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getDisplayText = () => {
@@ -81,6 +105,11 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
           <Button variant="ghost" size="sm" onClick={onDisposeAsset} className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto">
             <Package className="w-4 h-4" />
             <span className="text-xs font-medium">Dispose Asset</span>
+          </Button>
+          
+          <Button variant="ghost" size="sm" onClick={handleExport} className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto">
+            <Download className="w-4 h-4" />
+            <span className="text-xs font-medium">Export</span>
           </Button>
           
           <Button variant="ghost" size="sm" onClick={onPrintQRCode} className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto">

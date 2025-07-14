@@ -108,6 +108,7 @@ export const AddInventoryPage = () => {
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
+            <ArrowLeft className="w-4 h-4" />
             Inventory List
           </button>
           <span>&gt;</span>

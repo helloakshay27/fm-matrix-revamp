@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -37,6 +37,10 @@ export const AddAssetAuditPage = () => {
     assetGroup: '',
     assetSubGroup: ''
   });
+
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   const handleSubmit = (type: 'create' | 'saveAndCreate') => {
     if (!formData.auditName || !formData.startDate || !formData.endDate) {
@@ -74,8 +78,14 @@ export const AddAssetAuditPage = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
         {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
-          Audit &gt; Create New Audit
+        <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
+          <button
+            onClick={handleBack}
+            className="flex items-center hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <span>Audit &gt; Create New Audit</span>
         </div>
 
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6">
@@ -90,10 +100,10 @@ export const AddAssetAuditPage = () => {
               onClick={() => setBasicDetailsExpanded(!basicDetailsExpanded)}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
                   <span className="text-white text-sm">1</span>
                 </div>
-                <h2 className="text-base md:text-lg font-semibold text-blue-600">BASIC DETAILS</h2>
+                <h2 className="text-base md:text-lg font-semibold text-[#C72030] uppercase">BASIC DETAILS</h2>
               </div>
               {basicDetailsExpanded ? <ChevronUp /> : <ChevronDown />}
             </div>
@@ -181,10 +191,10 @@ export const AddAssetAuditPage = () => {
               onClick={() => setAuditTypeExpanded(!auditTypeExpanded)}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
                   <span className="text-white text-sm">2</span>
                 </div>
-                <h2 className="text-base md:text-lg font-semibold text-blue-600">Audit Type</h2>
+                <h2 className="text-base md:text-lg font-semibold text-[#C72030]">Audit Type</h2>
               </div>
               {auditTypeExpanded ? <ChevronUp /> : <ChevronDown />}
             </div>

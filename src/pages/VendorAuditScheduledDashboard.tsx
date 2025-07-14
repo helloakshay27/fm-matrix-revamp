@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Plus, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const VendorAuditScheduledDashboard = () => {
   const navigate = useNavigate();
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const handleCopy = (id: string) => {
     navigate('/maintenance/audit/vendor/scheduled/copy');
@@ -30,6 +31,59 @@ export const VendorAuditScheduledDashboard = () => {
       createdOn: "10/12/2024, 06:21 PM"
     }
   ];
+
+  const columns = [
+    { key: 'action', label: 'Action', sortable: false, draggable: true },
+    { key: 'id', label: 'ID', sortable: true, draggable: true },
+    { key: 'activityName', label: 'Activity Name', sortable: true, draggable: true },
+    { key: 'noOfAssociation', label: 'No. Of Association', sortable: true, draggable: true },
+    { key: 'task', label: 'Task', sortable: true, draggable: true },
+    { key: 'taskAssignedTo', label: 'Task Assigned To', sortable: true, draggable: true },
+    { key: 'createdOn', label: 'Created on', sortable: true, draggable: true },
+  ];
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'action':
+        return (
+          <Button
+            onClick={() => handleCopy(item.id)}
+            size="sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:opacity-90"
+          >
+            <Copy className="w-4 h-4" />
+          </Button>
+        );
+      case 'id':
+        return (
+          <button
+            onClick={() => handleIdClick(item.id)}
+            className="text-blue-600 hover:underline font-medium"
+          >
+            {item.id}
+          </button>
+        );
+      default:
+        return item[columnKey];
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(scheduleData.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
 
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
@@ -56,49 +110,19 @@ export const VendorAuditScheduledDashboard = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Action</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>Activity Name</TableHead>
-              <TableHead>No. Of Association</TableHead>
-              <TableHead>Task</TableHead>
-              <TableHead>Task Assigned To</TableHead>
-              <TableHead>Created on</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {scheduleData.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <Button
-                    onClick={() => handleCopy(item.id)}
-                    size="sm"
-                    style={{ backgroundColor: '#C72030' }}
-                    className="text-white hover:opacity-90"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="text-blue-600 font-medium">
-                  <button
-                    onClick={() => handleIdClick(item.id)}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    {item.id}
-                  </button>
-                </TableCell>
-                <TableCell>{item.activityName}</TableCell>
-                <TableCell>{item.noOfAssociation}</TableCell>
-                <TableCell>{item.task}</TableCell>
-                <TableCell>{item.taskAssignedTo}</TableCell>
-                <TableCell>{item.createdOn}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="overflow-x-auto">
+        <EnhancedTable
+          data={scheduleData}
+          columns={columns}
+          renderCell={renderCell}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          getItemId={(item) => item.id}
+          storageKey="vendor-schedule-table"
+          className="w-full"
+        />
       </div>
     </div>
   );

@@ -143,6 +143,9 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       onSelectItem={onSelectAsset}
       getItemId={(asset) => asset.id}
       selectAllLabel="Select all assets"
+      hideTableSearch={true}
+      hideTableExport={true}
+      hideColumnsButton={true}
     />
   );
 };
