@@ -182,10 +182,6 @@ export const SurveyResponsePage = () => {
             <Filter className="w-4 h-4 mr-2" />
             Filter
           </Button>
-          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
         </div>
 
         <div className="flex gap-2 w-full lg:w-auto">
