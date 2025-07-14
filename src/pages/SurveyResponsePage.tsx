@@ -57,6 +57,7 @@ const mockResponseData = [
 ];
 
 export const SurveyResponsePage = () => {
+  console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
