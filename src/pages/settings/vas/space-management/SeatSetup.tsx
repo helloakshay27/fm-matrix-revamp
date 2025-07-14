@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Plus, Edit, Trash2, Download, Upload } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
@@ -248,7 +248,7 @@ export const SeatSetup = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 p-6 min-w-0">
+      <div className="flex-1 p-6 ml-64">
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">
@@ -290,10 +290,10 @@ export const SeatSetup = () => {
           />
         </div>
 
-        {/* Main Table Container with proper overflow handling */}
+        {/* Table Container with ScrollArea */}
         <div className="bg-white rounded-lg border shadow-sm">
-          <div className="overflow-x-auto max-w-full">
-            <div className="min-w-max">
+          <ScrollArea className="w-full">
+            <div className="min-w-[1200px]">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
@@ -304,17 +304,17 @@ export const SeatSetup = () => {
                       Floor
                     </TableHead>
                     {seatTypeColumns.map((seatType) => (
-                      <TableHead key={seatType} className="font-semibold text-gray-700 text-center min-w-[80px]">
+                      <TableHead key={seatType} className="font-semibold text-gray-700 text-center min-w-[100px]">
                         <div className="space-y-1">
                           <div className="text-xs">{seatType}</div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-blue-600">Total Seats</span>
-                            <span className="text-red-600">Reserved Seats</span>
+                            <span className="text-blue-600">Total</span>
+                            <span className="text-red-600">Reserved</span>
                           </div>
                         </div>
                       </TableHead>
                     ))}
-                    <TableHead className="font-semibold text-gray-700 text-center sticky right-0 bg-gray-50 z-20 border-l border-gray-200">
+                    <TableHead className="font-semibold text-gray-700 text-center sticky right-0 bg-gray-50 z-20 border-l border-gray-200 min-w-[80px]">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -332,7 +332,7 @@ export const SeatSetup = () => {
                         const seatInfo = location.seatTypes[seatType] || { totalSeats: 0, reservedSeats: 0 };
                         return (
                           <TableCell key={seatType} className="text-center">
-                            <div className="flex justify-between text-sm">
+                            <div className="flex justify-between text-sm px-2">
                               <span className="text-blue-600">{seatInfo.totalSeats}</span>
                               <span className="text-red-600">{seatInfo.reservedSeats}</span>
                             </div>
@@ -340,7 +340,7 @@ export const SeatSetup = () => {
                         );
                       })}
                       <TableCell className="text-center sticky right-0 bg-white z-10 border-l border-gray-200">
-                        <div className="flex gap-2 justify-center">
+                        <div className="flex gap-1 justify-center">
                           <Button 
                             size="sm" 
                             variant="ghost" 
@@ -371,7 +371,7 @@ export const SeatSetup = () => {
                     </TableCell>
                     {seatTypeColumns.map((seatType) => (
                       <TableCell key={seatType} className="text-center">
-                        <div className="flex justify-between text-sm font-semibold">
+                        <div className="flex justify-between text-sm font-semibold px-2">
                           <span className="text-blue-600">{totals[seatType].totalSeats}</span>
                           <span className="text-red-600">{totals[seatType].reservedSeats}</span>
                         </div>
@@ -384,7 +384,8 @@ export const SeatSetup = () => {
                 </TableBody>
               </Table>
             </div>
-          </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </div>
       </div>
     </div>
