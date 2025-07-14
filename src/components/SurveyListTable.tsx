@@ -2,19 +2,32 @@
 import React, { useState } from 'react';
 import { Edit, Copy, Eye, Share2, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { SurveyEnhancedTable, SurveyColumnConfig } from './survey-enhanced-table/SurveyEnhancedTable';
 
 interface SurveyListTableProps {
   searchTerm: string;
 }
 
-const mockSurveyData = [
+interface Survey {
+  id: string;
+  title: string;
+  ticketCreation: boolean;
+  ticketCategory: string;
+  ticketLevel: string;
+  noOfAssociation: number;
+  typeOfSurvey: string;
+  status: string;
+  validFrom: string;
+  validTo: string;
+}
+
+const mockSurveyData: Survey[] = [
   {
     id: "12345",
     title: "Survey Title 123",
@@ -113,9 +126,24 @@ const mockSurveyData = [
   }
 ];
 
+const columns: SurveyColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, hideable: false, width: '160px' },
+  { key: 'id', label: 'ID', sortable: true, hideable: true, width: '100px' },
+  { key: 'title', label: 'Survey Title', sortable: true, hideable: true, minWidth: '200px' },
+  { key: 'ticketCreation', label: 'Ticket Creation', sortable: false, hideable: true, width: '140px' },
+  { key: 'ticketCategory', label: 'Ticket Category', sortable: true, hideable: true, minWidth: '150px' },
+  { key: 'ticketLevel', label: 'Ticket Level', sortable: true, hideable: true, width: '120px' },
+  { key: 'noOfAssociation', label: 'No. Of Association', sortable: true, hideable: true, width: '140px' },
+  { key: 'typeOfSurvey', label: 'Type Of Survey', sortable: true, hideable: true, width: '130px' },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, width: '120px' },
+  { key: 'validFrom', label: 'Valid From', sortable: true, hideable: true, width: '120px' },
+  { key: 'validTo', label: 'Valid To', sortable: true, hideable: true, width: '120px' }
+];
+
 export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
   const { toast } = useToast();
-  const [surveys, setSurveys] = useState(mockSurveyData);
+  const [surveys, setSurveys] = useState<Survey[]>(mockSurveyData);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   console.log('Survey data:', surveys);
   console.log('First survey status:', surveys[0]?.status);
@@ -154,10 +182,10 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
     });
   };
 
-  const filteredSurveys = surveys.filter(survey =>
-    survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    survey.ticketCategory.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleRowSelect = (selectedRowIds: string[]) => {
+    setSelectedRows(selectedRowIds);
+    console.log('Selected rows:', selectedRowIds);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -176,216 +204,158 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
 
   const statusOptions = ['Active', 'Draft', 'Published', 'Inactive'];
 
-  return (
-    <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-      {/* Mobile Card Layout */}
-      <div className="block md:hidden">
-        {filteredSurveys.map((survey, index) => (
-          <div key={`${survey.id}-${index}`} className="p-4 border-b border-gray-200 last:border-b-0">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-medium text-sm">{survey.title}</h3>
-                <p className="text-xs text-gray-500">ID: {survey.id}</p>
-              </div>
-              <div className="flex gap-1">
-                <button onClick={() => handleAction('Edit', survey.id)} className="p-1 text-gray-600">
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleAction('Copy', survey.id)} className="p-1 text-gray-600">
-                  <Copy className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleAction('View', survey.id)} className="p-1 text-gray-600">
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleAction('Share', survey.id)} className="p-1 text-gray-600">
-                  <Share2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <span className="text-gray-500">Category:</span>
-                <p className="font-medium">{survey.ticketCategory}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Level:</span>
-                <p className="font-medium">{survey.ticketLevel}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Associations:</span>
-                <p className="font-medium">{survey.noOfAssociation}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Type:</span>
-                <p className="font-medium">{survey.typeOfSurvey}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Status:</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 hover:bg-gray-50 p-1 rounded">
-                    <span className={`font-medium ${getStatusColor(survey.status)}`}>
-                      {survey.status}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-gray-400" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white border shadow-lg">
-                    {statusOptions.map((status) => (
-                      <DropdownMenuItem
-                        key={status}
-                        onClick={() => handleStatusChange(index, status)}
-                        className="cursor-pointer hover:bg-gray-50"
-                      >
-                        <span className={getStatusColor(status)}>{status}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div>
-                <span className="text-gray-500">Valid From:</span>
-                <p className="font-medium">{survey.validFrom}</p>
-              </div>
-              <div className="col-span-2">
-                <span className="text-gray-500">Valid To:</span>
-                <p className="font-medium">{survey.validTo}</p>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center mt-3">
-              <span className="text-xs text-gray-500">Ticket Creation:</span>
-              <div 
-                className={`relative inline-flex items-center h-5 rounded-full w-9 cursor-pointer transition-colors ${
-                  survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
+  const renderCell = (survey: Survey, columnKey: string, index: number) => {
+    switch (columnKey) {
+      case 'actions':
+        return (
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => handleAction('Edit', survey.id)}
+              className="p-1 text-gray-600 hover:text-gray-800"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleAction('Copy', survey.id)}
+              className="p-1 text-gray-600 hover:text-gray-800"
+              title="Copy"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleAction('View', survey.id)}
+              className="p-1 text-gray-600 hover:text-gray-800"
+              title="View"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleAction('Share', survey.id)}
+              className="p-1 text-gray-600 hover:text-gray-800"
+              title="Share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      
+      case 'id':
+        return <span className="font-medium">{survey.id}</span>;
+      
+      case 'title':
+        return <span>{survey.title}</span>;
+      
+      case 'ticketCreation':
+        return (
+          <div className="flex items-center">
+            <div 
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
+              }`} 
+              onClick={() => handleTicketCreationToggle(index)}
+            >
+              <span 
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                  survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
                 }`} 
-                onClick={() => handleTicketCreationToggle(index)}
-              >
-                <span 
-                  className={`inline-block w-3 h-3 transform bg-white rounded-full transition-transform ${
-                    survey.ticketCreation ? 'translate-x-5' : 'translate-x-1'
-                  }`} 
-                />
-              </div>
+              />
             </div>
           </div>
-        ))}
-      </div>
+        );
+      
+      case 'ticketCategory':
+        return <span>{survey.ticketCategory}</span>;
+      
+      case 'ticketLevel':
+        return <span>{survey.ticketLevel}</span>;
+      
+      case 'noOfAssociation':
+        return <span className="text-center block">{survey.noOfAssociation}</span>;
+      
+      case 'typeOfSurvey':
+        return <span>{survey.typeOfSurvey}</span>;
+      
+      case 'status':
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded">
+              <span className={`font-medium ${getStatusColor(survey.status)}`}>
+                {survey.status}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white border shadow-lg z-50">
+              {statusOptions.map((status) => (
+                <DropdownMenuItem
+                  key={status}
+                  onClick={() => handleStatusChange(index, status)}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  <span className={getStatusColor(status)}>{status}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      
+      case 'validFrom':
+        return <span>{survey.validFrom}</span>;
+      
+      case 'validTo':
+        return <span>{survey.validTo}</span>;
+      
+      default:
+        return <span>{(survey as any)[columnKey]}</span>;
+    }
+  };
 
-      {/* Desktop Table Layout */}
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12 lg:w-16">Edit</TableHead>
-              <TableHead className="w-12 lg:w-16">Copy</TableHead>
-              <TableHead className="w-12 lg:w-16">View</TableHead>
-              <TableHead className="w-12 lg:w-16">Share</TableHead>
-              <TableHead className="w-16 lg:w-24">ID</TableHead>
-              <TableHead className="min-w-[150px]">Survey Title</TableHead>
-              <TableHead className="w-24 lg:w-32">Ticket Creation</TableHead>
-              <TableHead className="min-w-[120px]">Ticket Category</TableHead>
-              <TableHead className="min-w-[100px]">Ticket Level</TableHead>
-              <TableHead className="w-24 lg:w-32 text-center">No. Of Association</TableHead>
-              <TableHead className="min-w-[100px]">Type Of Survey</TableHead>
-              <TableHead className="min-w-[100px]">Status</TableHead>
-              <TableHead className="min-w-[100px]">Valid From</TableHead>
-              <TableHead className="min-w-[100px]">Valid To</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredSurveys.map((survey, index) => {
-              console.log(`Rendering survey ${index}:`, {
-                id: survey.id,
-                status: survey.status,
-                validFrom: survey.validFrom,
-                validTo: survey.validTo
-              });
-              
-              return (
-                <TableRow key={`${survey.id}-${index}`}>
-                  <TableCell>
-                    <button 
-                      onClick={() => handleAction('Edit', survey.id)}
-                      className="p-1 text-gray-600 hover:text-gray-800"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <button 
-                      onClick={() => handleAction('Copy', survey.id)}
-                      className="p-1 text-gray-600 hover:text-gray-800"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <button 
-                      onClick={() => handleAction('View', survey.id)}
-                      className="p-1 text-gray-600 hover:text-gray-800"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <button 
-                      onClick={() => handleAction('Share', survey.id)}
-                      className="p-1 text-gray-600 hover:text-gray-800"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="font-medium">{survey.id}</TableCell>
-                  <TableCell>{survey.title}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <div 
-                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                          survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
-                        }`} 
-                        onClick={() => handleTicketCreationToggle(index)}
-                      >
-                        <span 
-                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                            survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
-                          }`} 
-                        />
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{survey.ticketCategory}</TableCell>
-                  <TableCell>{survey.ticketLevel}</TableCell>
-                  <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
-                  <TableCell>{survey.typeOfSurvey}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded">
-                        <span className={`font-medium ${getStatusColor(survey.status)}`}>
-                          {survey.status}
-                        </span>
-                        <ChevronDown className="w-4 h-4 text-gray-400" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-white border shadow-lg z-50">
-                        {statusOptions.map((status) => (
-                          <DropdownMenuItem
-                            key={status}
-                            onClick={() => handleStatusChange(index, status)}
-                            className="cursor-pointer hover:bg-gray-50"
-                          >
-                            <span className={getStatusColor(status)}>{status}</span>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                  <TableCell>{survey.validFrom}</TableCell>
-                  <TableCell>{survey.validTo}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+  return (
+    <div className="space-y-4">
+      {/* Show selected rows count and bulk actions */}
+      {selectedRows.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-blue-800">
+              {selectedRows.length} survey{selectedRows.length > 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <button 
+                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => {
+                  toast({
+                    title: "Bulk Action",
+                    description: `Bulk action performed on ${selectedRows.length} surveys`
+                  });
+                }}
+              >
+                Bulk Edit
+              </button>
+              <button 
+                className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                onClick={() => {
+                  toast({
+                    title: "Bulk Delete",
+                    description: `${selectedRows.length} surveys marked for deletion`
+                  });
+                }}
+              >
+                Delete Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Table */}
+      <SurveyEnhancedTable
+        data={surveys}
+        columns={columns}
+        searchTerm={searchTerm}
+        onRowSelect={handleRowSelect}
+        renderCell={renderCell}
+        className="border border-[#D5DbDB]"
+      />
     </div>
   );
 };
