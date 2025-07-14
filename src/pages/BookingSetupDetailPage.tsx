@@ -385,18 +385,24 @@ export const BookingSetupDetailPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center space-x-2">
-                  <Switch checked={bookingData.allowMultipleSlots} disabled />
-                  <Label className="text-sm">Allow Multiple Slots</Label>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      checked={bookingData.allowMultipleSlots} 
+                      disabled
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <Label className="text-sm font-medium">Allow Multiple Slots</Label>
+                  </div>
+                  <Input value="15" className="w-20" readOnly />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch checked={bookingData.facilityCanBeBooked} disabled />
-                  <Label className="text-sm">Facility can be booked</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch checked={bookingData.viewPerSlotByUser} disabled />
-                  <Label className="text-sm">View per slot by User</Label>
+                
+                <div className="flex items-center gap-4">
+                  <Label className="text-sm font-medium">Facility can be booked</Label>
+                  <Input value="10" className="w-20" readOnly />
+                  <span className="text-sm">times per day by User</span>
                 </div>
               </div>
             </CardContent>
