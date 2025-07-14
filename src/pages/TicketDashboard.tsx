@@ -70,67 +70,83 @@ export const TicketDashboard = () => {
   const inProgressTickets = ticketData.filter(t => t.status === 'In Progress').length;
   const pendingTickets = ticketData.filter(t => t.status === 'Pending').length;
   const closedTickets = ticketData.filter(t => t.status === 'Closed').length;
-
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
-
-  const columns = [
-    { key: 'id', label: 'Ticket ID', sortable: true },
-    { key: 'taskNumber', label: 'Task Number', sortable: true },
-    { key: 'description', label: 'Description', sortable: true },
-    { key: 'category', label: 'Category', sortable: true },
-    { key: 'subCategory', label: 'Sub Category', sortable: true },
-    { key: 'createdBy', label: 'Created By', sortable: true },
-    { key: 'assignedTo', label: 'Assigned To', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'priority', label: 'Priority', sortable: true },
-    { key: 'site', label: 'Site', sortable: true },
-    { key: 'unit', label: 'Unit', sortable: true },
-    { key: 'createdOn', label: 'Created On', sortable: true }
-  ];
-
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-3">
+  const columns = [{
+    key: 'id',
+    label: 'Ticket ID',
+    sortable: true
+  }, {
+    key: 'taskNumber',
+    label: 'Task Number',
+    sortable: true
+  }, {
+    key: 'description',
+    label: 'Description',
+    sortable: true
+  }, {
+    key: 'category',
+    label: 'Category',
+    sortable: true
+  }, {
+    key: 'subCategory',
+    label: 'Sub Category',
+    sortable: true
+  }, {
+    key: 'createdBy',
+    label: 'Created By',
+    sortable: true
+  }, {
+    key: 'assignedTo',
+    label: 'Assigned To',
+    sortable: true
+  }, {
+    key: 'status',
+    label: 'Status',
+    sortable: true
+  }, {
+    key: 'priority',
+    label: 'Priority',
+    sortable: true
+  }, {
+    key: 'site',
+    label: 'Site',
+    sortable: true
+  }, {
+    key: 'unit',
+    label: 'Unit',
+    sortable: true
+  }, {
+    key: 'createdOn',
+    label: 'Created On',
+    sortable: true
+  }];
+  const renderCustomActions = () => <div className="flex flex-wrap gap-3">
       <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
       <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
-    </div>
-  );
-
-  const renderRowActions = (ticket) => (
-    <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
+    </div>;
+  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
       <Eye className="w-4 h-4" />
-    </Button>
-  );
-
+    </Button>;
   const renderCell = (item, columnKey) => {
     if (columnKey === 'status') {
-      return (
-        <span className={`px-2 py-1 rounded text-xs ${
-          item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
-          item.status === 'Closed' ? 'bg-green-100 text-green-700' :
-          item.status === 'Open' ? 'bg-blue-100 text-blue-700' :
-          'bg-orange-100 text-orange-700'
-        }`}>
+      return <span className={`px-2 py-1 rounded text-xs ${item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.status === 'Closed' ? 'bg-green-100 text-green-700' : item.status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
           {item.status}
-        </span>
-      );
+        </span>;
     }
     if (columnKey === 'priority') {
-      return (
-        <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
+      return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
           {item.priority}
-        </span>
-      );
+        </span>;
     }
     return item[columnKey];
   };
-  return (
-    <div className="p-4 sm:p-6">
+  return <div className="p-4 sm:p-6">
       <div className="mb-6">
         <p className="text-muted-foreground mb-2 text-sm">Tickets &gt; Ticket List</p>
         <h1 className="text-xl sm:text-2xl font-bold uppercase">TICKET LIST</h1>
@@ -138,66 +154,48 @@ export const TicketDashboard = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {[{
-          label: 'Total Tickets',
-          value: totalTickets,
-          icon: Ticket,
-        }, {
-          label: 'Open',
-          value: openTickets,
-          icon: AlertCircle,
-        }, {
-          label: 'In Progress',
-          value: inProgressTickets,
-          icon: Clock,
-        }, {
-          label: 'Pending',
-          value: pendingTickets,
-          icon: Clock,
-        }, {
-          label: 'Closed',
-          value: closedTickets,
-          icon: CheckCircle,
-        }].map((item, i) => {
-          const IconComponent = item.icon;
-          return (
-            <div key={i} className="bg-muted/50 p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <IconComponent className="w-6 h-6 text-primary" />
+        label: 'Total Tickets',
+        value: totalTickets,
+        icon: Ticket
+      }, {
+        label: 'Open',
+        value: openTickets,
+        icon: AlertCircle
+      }, {
+        label: 'In Progress',
+        value: inProgressTickets,
+        icon: Clock
+      }, {
+        label: 'Pending',
+        value: pendingTickets,
+        icon: Clock
+      }, {
+        label: 'Closed',
+        value: closedTickets,
+        icon: CheckCircle
+      }].map((item, i) => {
+        const IconComponent = item.icon;
+        return <div key={i} className="p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4 bg-[f6f4ee] bg-[#f6f4ee]">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#c72030]">
+                <IconComponent className="w-6 h-6 text-primary bg-transparent" />
               </div>
               <div className="flex flex-col">
                 <div className="text-2xl font-bold text-primary leading-tight">{item.value}</div>
                 <div className="text-sm text-muted-foreground font-medium">{item.label}</div>
               </div>
-            </div>
-          );
-        })}
+            </div>;
+      })}
       </div>
 
-      <EnhancedTable
-        data={ticketData}
-        columns={columns}
-        renderCell={renderCell}
-        renderActions={renderRowActions}
-        selectable={true}
-        pagination={true}
-        enableExport={true}
-        exportFileName="tickets"
-        onRowClick={handleViewDetails}
-        storageKey="tickets-table"
-      />
+      <EnhancedTable data={ticketData} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="tickets" onRowClick={handleViewDetails} storageKey="tickets-table" />
 
       <div className="mt-4">
         {renderCustomActions()}
       </div>
 
-      <TicketsFilterDialog 
-        isOpen={isFilterOpen} 
-        onClose={() => setIsFilterOpen(false)} 
-        onApplyFilters={filters => {
-          console.log('Applied filters:', filters);
-          setIsFilterOpen(false);
-        }} 
-      />
-    </div>
-  );
+      <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={filters => {
+      console.log('Applied filters:', filters);
+      setIsFilterOpen(false);
+    }} />
+    </div>;
 };
