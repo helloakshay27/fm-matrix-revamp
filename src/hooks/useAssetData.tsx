@@ -124,7 +124,9 @@ export const useAssetData = () => {
       nonItAssets: nonItAssets,
       itAssets: itAssets,
       inStore: inStoreAssets,
-      dispose: disposeAssets
+      dispose: disposeAssets,
+      maintenance: maintenanceAssets,
+      standby: standbyAssets
     };
   }, []);
 

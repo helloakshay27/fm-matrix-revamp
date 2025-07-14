@@ -220,7 +220,8 @@ export function RecentTicketsSidebar() {
       <AddCommentModal
         isOpen={commentModal.isOpen}
         onClose={() => setCommentModal({ isOpen: false, ticketId: '' })}
-        ticketId={commentModal.ticketId}
+        itemId={commentModal.ticketId}
+        itemType="ticket"
       />
     </>
   );

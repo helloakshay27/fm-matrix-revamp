@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Eye, Filter, Package, BarChart3, TrendingUp, Download, Zap, Wrench, AlertTriangle, Activity } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -9,6 +12,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 import { AssetStats } from '@/components/AssetStats';
@@ -17,6 +21,8 @@ import { AssetDataTable } from '@/components/AssetDataTable';
 import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { MoveAssetDialog } from '@/components/MoveAssetDialog';
 import { DisposeAssetDialog } from '@/components/DisposeAssetDialog';
+import { AssetSelector } from '@/components/AssetSelector';
+import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { useAssetData } from '@/hooks/useAssetData';
 
 export const AssetDashboard = () => {
@@ -26,6 +32,9 @@ export const AssetDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMoveAssetOpen, setIsMoveAssetOpen] = useState(false);
   const [isDisposeAssetOpen, setIsDisposeAssetOpen] = useState(false);
+  const [selectedAnalyticsItems, setSelectedAnalyticsItems] = useState<string[]>([
+    'total-available', 'assets-in-use', 'asset-breakdown', 'critical-breakdown'
+  ]);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -115,115 +124,403 @@ export const AssetDashboard = () => {
     console.log('Selection cleared using handleSelectAll(false)');
   };
 
+  // Analytics data
+  const statusData = [
+    { name: 'In Use', value: stats.inUse, color: 'hsl(120, 70%, 50%)' },
+    { name: 'Breakdown', value: stats.breakdown, color: 'hsl(0, 70%, 50%)' }
+  ];
+
+  const assetTypeData = [
+    { name: 'IT Equipment', value: stats.itAssets, color: 'hsl(35, 35%, 75%)' },
+    { name: 'Non-IT Equipment', value: stats.nonItAssets, color: 'hsl(25, 45%, 55%)' }
+  ];
+
+  const categoryData = [
+    { name: 'Electronics', value: 2 },
+    { name: 'Office', value: 1 },
+    { name: 'HVAC', value: 1 },
+    { name: 'Security', value: 1 },
+    { name: 'AV', value: 1 }
+  ];
+
+  const agingMatrixData = [
+    { priority: 'P1', '0-1Y': 15, '1-2Y': 8, '2-3Y': 5, '3-4Y': 3, '4-5Y': 2 },
+    { priority: 'P2', '0-1Y': 25, '1-2Y': 12, '2-3Y': 8, '3-4Y': 5, '4-5Y': 3 },
+    { priority: 'P3', '0-1Y': 35, '1-2Y': 18, '2-3Y': 12, '3-4Y': 8, '4-5Y': 5 }
+  ];
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
           <span>Assets</span>
           <span>&gt;</span>
-          <span>Asset List</span>
+          <span>Asset Management</span>
         </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">ASSET LIST</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">ASSET MANAGEMENT</h1>
       </div>
 
-      <AssetStats stats={stats} />
+      <Tabs defaultValue="analytics" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            Asset List
+          </TabsTrigger>
+        </TabsList>
 
-      <AssetActions
-        searchTerm={searchTerm}
-        onSearch={handleSearch}
-        onAddAsset={handleAddAsset}
-        onImport={handleImport}
-        onUpdate={handleUpdate}
-        onFilterOpen={() => setIsFilterOpen(true)}
-        onRefresh={handleRefresh}
-        visibleColumns={visibleColumns}
-        onColumnChange={handleColumnChange}
-      />
+        <TabsContent value="analytics" className="space-y-6 mt-6">
+          {/* Analytics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+            {/* Total Assets Available */}
+            <div className="bg-gradient-to-br from-orange-400 to-purple-600 p-4 rounded-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <Package className="w-6 h-6" />
+                <span className="text-xs opacity-90">Total</span>
+              </div>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-xs opacity-90">Total Assets Available</div>
+            </div>
 
-      <div className="relative">
-        <AssetDataTable
-          assets={filteredAssets}
-          selectedAssets={selectedAssets}
-          visibleColumns={visibleColumns}
-          onSelectAll={handleSelectAll}
-          onSelectAsset={handleSelectAsset}
-          onViewAsset={handleViewAsset}
-        />
+            {/* Asset In Use */}
+            <div className="bg-gradient-to-br from-green-400 to-green-600 p-4 rounded-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <Activity className="w-6 h-6" />
+                <span className="text-xs opacity-90">Active</span>
+              </div>
+              <div className="text-2xl font-bold">{stats.inUse}</div>
+              <div className="text-xs opacity-90">Asset In Use</div>
+            </div>
 
-        {/* Selection Panel - positioned as overlay within table container */}
-        {selectedAssets.length > 0 && (
-          <AssetSelectionPanel
-            selectedCount={selectedAssets.length}
-            selectedAssets={selectedAssetObjects}
-            onMoveAsset={handleMoveAsset}
-            onDisposeAsset={handleDisposeAsset}
-            onPrintQRCode={handlePrintQRCode}
-            onCheckIn={handleCheckIn}
-            onClearSelection={handleClearSelection}
+            {/* Asset In Breakdown */}
+            <div className="bg-gradient-to-br from-red-500 to-red-700 p-4 rounded-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <AlertTriangle className="w-6 h-6" />
+                <span className="text-xs opacity-90">Issues</span>
+              </div>
+              <div className="text-2xl font-bold">{stats.breakdown}</div>
+              <div className="text-xs opacity-90">Asset In Breakdown</div>
+            </div>
+
+            {/* Critical Assets In Breakdown */}
+            <div className="bg-gradient-to-br from-red-600 to-purple-700 p-4 rounded-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <Zap className="w-6 h-6" />
+                <span className="text-xs opacity-90">Critical</span>
+              </div>
+              <div className="text-2xl font-bold">15</div>
+              <div className="text-xs opacity-90">Critical Assets In Breakdown</div>
+            </div>
+
+            {/* PPM Overdue */}
+            <div className="bg-gradient-to-br from-red-500 to-purple-600 p-4 rounded-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <Wrench className="w-6 h-6" />
+                <span className="text-xs opacity-90">PPM</span>
+              </div>
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-xs opacity-90">PPM Overdue</div>
+            </div>
+
+            {/* Customer Average */}
+            <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <TrendingUp className="w-6 h-6" />
+                <span className="text-xs opacity-90">Rating</span>
+              </div>
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-xs opacity-90">Customer Average</div>
+            </div>
+          </div>
+
+          {/* Header with Asset Selector */}
+          <div className="flex justify-end">
+            <AssetSelector 
+              selectedItems={selectedAnalyticsItems}
+              onSelectionChange={setSelectedAnalyticsItems}
+            />
+          </div>
+
+          {/* Main Analytics Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Section - Charts (3 columns) */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Top Row - Two Donut Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Asset Status Chart */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Asset Status</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={statusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {statusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex justify-center gap-4 mt-4">
+                    {statusData.map((item, index) => (
+                      <div key={index} className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
+                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
+                        </div>
+                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Asset Type Distribution Chart */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Asset Type Distribution</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={assetTypeData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {assetTypeData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex justify-center gap-4 mt-4">
+                    {assetTypeData.map((item, index) => (
+                      <div key={index} className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
+                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
+                        </div>
+                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Category-wise Assets Bar Chart */}
+              <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Category-wise Assets</h3>
+                  <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={categoryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
+                    />
+                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Bottom Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Asset Aging Matrix */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Asset Aging Matrix</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-[hsl(var(--analytics-background))]">
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-left text-sm font-medium text-[hsl(var(--analytics-text))]">Priority</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">0-1Y</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">1-2Y</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">2-3Y</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">3-4Y</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">4-5Y</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {agingMatrixData.map((row, index) => (
+                          <tr key={index}>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 font-medium text-[hsl(var(--analytics-text))]">{row.priority}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['0-1Y']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['1-2Y']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['2-3Y']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['3-4Y']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['4-5Y']}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Asset Performance Metrics */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Performance Metrics</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      <span className="text-sm text-[hsl(var(--analytics-text))]">Average Uptime</span>
+                      <span className="font-semibold text-green-600">98.5%</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      <span className="text-sm text-[hsl(var(--analytics-text))]">Maintenance Cost</span>
+                      <span className="font-semibold text-[hsl(var(--analytics-text))]">₹45,000</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      <span className="text-sm text-[hsl(var(--analytics-text))]">Asset Utilization</span>
+                      <span className="font-semibold text-blue-600">85.2%</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      <span className="text-sm text-[hsl(var(--analytics-text))]">ROI</span>
+                      <span className="font-semibold text-green-600">12.5%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Sidebar - Recent Assets (1 column) */}
+            <div className="lg:col-span-1">
+              <RecentAssetsSidebar />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-6 mt-6">
+          <AssetStats stats={stats} />
+
+          <AssetActions
+            searchTerm={searchTerm}
+            onSearch={handleSearch}
+            onAddAsset={handleAddAsset}
+            onImport={handleImport}
+            onUpdate={handleUpdate}
+            onFilterOpen={() => setIsFilterOpen(true)}
+            onRefresh={handleRefresh}
+            visibleColumns={visibleColumns}
+            onColumnChange={handleColumnChange}
           />
-        )}
-      </div>
 
-      <div className="mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious href="#" />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#" isActive>
-                1
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                2
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                3
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                4
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                5
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                6
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                7
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                8
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationEllipsis />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                Last
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext href="#" />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+          <div className="relative">
+            <AssetDataTable
+              assets={filteredAssets}
+              selectedAssets={selectedAssets}
+              visibleColumns={visibleColumns}
+              onSelectAll={handleSelectAll}
+              onSelectAsset={handleSelectAsset}
+              onViewAsset={handleViewAsset}
+            />
+
+            {/* Selection Panel - positioned as overlay within table container */}
+            {selectedAssets.length > 0 && (
+              <AssetSelectionPanel
+                selectedCount={selectedAssets.length}
+                selectedAssets={selectedAssetObjects}
+                onMoveAsset={handleMoveAsset}
+                onDisposeAsset={handleDisposeAsset}
+                onPrintQRCode={handlePrintQRCode}
+                onCheckIn={handleCheckIn}
+                onClearSelection={handleClearSelection}
+              />
+            )}
+          </div>
+
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#" isActive>
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    2
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    3
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    4
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    5
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    6
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    7
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    8
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">
+                    Last
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext href="#" />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <BulkUploadDialog 
         open={isBulkUploadOpen}

@@ -2,107 +2,70 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, Send } from 'lucide-react';
-import { toast } from 'sonner';
+import { MessageSquare } from 'lucide-react';
 
 interface AddCommentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  ticketId: string;
+  itemId: string;
+  itemType: 'asset' | 'ticket';
 }
 
-export function AddCommentModal({ isOpen, onClose, ticketId }: AddCommentModalProps) {
+export const AddCommentModal: React.FC<AddCommentModalProps> = ({
+  isOpen,
+  onClose,
+  itemId,
+  itemType
+}) => {
   const [comment, setComment] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
 
   const handleSubmit = () => {
-    if (!comment.trim()) {
-      toast.error('Please enter a comment');
-      return;
+    if (comment.trim()) {
+      console.log(`Adding comment to ${itemType} ${itemId}:`, comment);
+      // Here you would typically call an API to save the comment
+      setComment('');
+      onClose();
     }
-
-    // Simulate API call
-    toast.success('Comment added successfully');
-    setComment('');
-    setAttachments([]);
-    onClose();
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setAttachments(prev => [...prev, ...files]);
+  const handleCancel = () => {
+    setComment('');
+    onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white border border-[hsl(var(--analytics-border))] max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[hsl(var(--analytics-text))] font-medium">
-            Add Comment - Ticket #{ticketId}
+          <DialogTitle className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Add Comment to {itemType === 'asset' ? 'Asset' : 'Ticket'}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          <Textarea
-            placeholder="Enter your comment..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="min-h-[100px] border-[hsl(var(--analytics-border))] bg-white text-[hsl(var(--analytics-text))]"
-          />
-          
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-              id="attachment-upload"
-            />
-            <label
-              htmlFor="attachment-upload"
-              className="flex items-center gap-2 px-3 py-2 border border-[hsl(var(--analytics-border))] rounded-md cursor-pointer hover:bg-[hsl(var(--analytics-background))] text-sm text-[hsl(var(--analytics-text))]"
-            >
-              <Paperclip className="h-4 w-4" />
-              Attach Files
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Comment
             </label>
-            {attachments.length > 0 && (
-              <span className="text-sm text-[hsl(var(--analytics-text))]">
-                {attachments.length} file(s) selected
-              </span>
-            )}
+            <Textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={`Enter your comment for this ${itemType}...`}
+              rows={4}
+              className="w-full"
+            />
           </div>
-
-          {attachments.length > 0 && (
-            <div className="space-y-2">
-              {attachments.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-[hsl(var(--analytics-background))] rounded">
-                  <span className="text-sm text-[hsl(var(--analytics-text))]">{file.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
           
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-background))]"
-            >
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button
+            <Button 
               onClick={handleSubmit}
-              className="bg-[hsl(var(--analytics-accent))] hover:bg-[hsl(var(--analytics-accent))]/90 text-white"
+              disabled={!comment.trim()}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <Send className="h-4 w-4 mr-2" />
               Add Comment
             </Button>
           </div>
@@ -110,4 +73,4 @@ export function AddCommentModal({ isOpen, onClose, ticketId }: AddCommentModalPr
       </DialogContent>
     </Dialog>
   );
-}
+};
