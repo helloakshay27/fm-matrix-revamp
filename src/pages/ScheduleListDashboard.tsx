@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { ScheduleFilterDialog } from '@/components/ScheduleFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+
 const scheduleData = [{
   id: '11878',
   activityName: 'meter reading',
@@ -30,20 +31,22 @@ const scheduleData = [{
   active: true,
   createdOn: '14/08/2024, 04:17 PM'
 }];
+
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [schedules, setSchedules] = useState(scheduleData);
+
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   const handleExport = () => navigate('/maintenance/schedule/export');
-  
+
   const handleToggleActive = (scheduleId: string) => {
     setSchedules(prev => prev.map(schedule => 
       schedule.id === scheduleId ? { ...schedule, active: !schedule.active } : schedule
     ));
   };
-  
+
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
   const handleViewSchedule = (id: string) => navigate(`/maintenance/schedule/view/${id}`);
@@ -121,11 +124,16 @@ export const ScheduleListDashboard = () => {
     }
     return item[columnKey];
   };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
         <p className="text-muted-foreground mb-1">Schedule</p>
         <h1 className="text-xl sm:text-2xl font-bold">Schedule List</h1>
+      </div>
+
+      <div className="mb-4">
+        {renderCustomActions()}
       </div>
 
       <EnhancedTable
@@ -140,10 +148,6 @@ export const ScheduleListDashboard = () => {
         onRowClick={handleViewSchedule}
         storageKey="schedules-table"
       />
-
-      <div className="mt-4">
-        {renderCustomActions()}
-      </div>
 
       <BulkUploadDialog open={showImportModal} onOpenChange={setShowImportModal} title="Bulk Upload" />
       <ScheduleFilterDialog open={showFilterDialog} onOpenChange={setShowFilterDialog} />
