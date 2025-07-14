@@ -327,7 +327,7 @@ export const SurveyListDashboard = () => {
       </div>
 
       {/* Enhanced Survey List Table */}
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+      <div>
         <EnhancedTable
           data={filteredSurveys}
           columns={columns}

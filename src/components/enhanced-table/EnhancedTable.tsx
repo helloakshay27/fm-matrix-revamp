@@ -281,14 +281,14 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className="rounded-lg overflow-hidden">
+      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-<Table className={`border ${className}`}>
+            <Table className={className}>
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
