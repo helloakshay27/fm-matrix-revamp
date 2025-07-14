@@ -16,6 +16,9 @@ const muiTheme = createTheme({
           fontSize: '16px',
         },
       },
+      defaultProps: {
+        shrink: true, // Make all labels floating
+      },
     },
     MuiTextField: {
       styleOverrides: {
@@ -34,6 +37,11 @@ const muiTheme = createTheme({
               padding: '12px 14px',
             },
           },
+        },
+      },
+      defaultProps: {
+        InputLabelProps: {
+          shrink: true, // Make all TextField labels floating
         },
       },
     },
