@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -261,15 +260,6 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Download className="w-4 h-4" />
             Export
           </Button>
-          
-          <div className="text-sm text-muted-foreground">
-            {filteredData.length} {filteredData.length === 1 ? 'item' : 'items'}
-            {selectable && selectedItems.length > 0 && (
-              <span className="ml-2 text-primary">
-                ({selectedItems.length} selected)
-              </span>
-            )}
-          </div>
           
           <ColumnVisibilityMenu
             columns={columns}
