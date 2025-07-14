@@ -8,7 +8,7 @@ interface AddCommentModalProps {
   isOpen: boolean;
   onClose: () => void;
   itemId: string;
-  itemType: 'asset' | 'ticket';
+  itemType: 'asset' | 'ticket' | 'schedule';
 }
 
 export const AddCommentModal: React.FC<AddCommentModalProps> = ({
@@ -39,7 +39,7 @@ export const AddCommentModal: React.FC<AddCommentModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
-            Add Comment to {itemType === 'asset' ? 'Asset' : 'Ticket'}
+            Add Comment to {itemType === 'asset' ? 'Asset' : itemType === 'ticket' ? 'Ticket' : 'Schedule'}
           </DialogTitle>
         </DialogHeader>
         
