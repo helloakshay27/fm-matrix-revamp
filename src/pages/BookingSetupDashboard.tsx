@@ -1,15 +1,15 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Filter, Eye } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
-import { BookingSetupForm } from "@/components/BookingSetupForm";
 
 export const BookingSetupDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
 
   const handleFilterApply = (filters: any) => {
     console.log('Applied booking setup filters:', filters);
@@ -79,7 +79,7 @@ export const BookingSetupDashboard = () => {
   ]);
 
   const handleAddBooking = () => {
-    setIsAddBookingOpen(true);
+    navigate('/vas/booking/setup/add');
   };
 
   const handleStatusToggle = (id: string) => {
@@ -170,10 +170,6 @@ export const BookingSetupDashboard = () => {
           onApply={handleFilterApply}
         />
 
-        {/* Add Booking Setup Form */}
-        {isAddBookingOpen && (
-          <BookingSetupForm onClose={() => setIsAddBookingOpen(false)} />
-        )}
       </div>
     </div>
   );
