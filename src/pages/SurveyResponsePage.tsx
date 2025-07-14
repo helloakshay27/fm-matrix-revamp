@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 
 const mockResponseData = [
@@ -66,9 +59,11 @@ const mockResponseData = [
 export const SurveyResponsePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [responseData, setResponseData] = useState(mockResponseData);
 
-  const handleViewDetails = (id: number) => {
-    console.log('Viewing details for survey:', id);
+  const handleViewDetails = (item: any) => {
+    console.log('Viewing details for survey:', item.id);
   };
 
   const handleFilterClick = () => {
@@ -83,6 +78,39 @@ export const SurveyResponsePage = () => {
     console.log('Applied filters:', filters);
     // Handle filter application logic here
   };
+
+  const columns = [
+    { key: 'id', label: 'ID', sortable: true, draggable: true },
+    { key: 'surveyTitle', label: 'Survey Title', sortable: true, draggable: true },
+    { key: 'responses', label: 'No. Of Responses', sortable: true, draggable: true },
+    { key: 'tickets', label: 'No. Of Tickets', sortable: true, draggable: true },
+    { key: 'expiryDate', label: 'Expiry Date', sortable: true, draggable: true }
+  ];
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'responses':
+      case 'tickets':
+        return <div className="text-center">{item[columnKey]}</div>;
+      default:
+        return item[columnKey];
+    }
+  };
+
+  const renderActions = (item: any) => (
+    <button
+      onClick={() => handleViewDetails(item)}
+      className="text-gray-600 hover:text-[#C72030] transition-colors"
+    >
+      <Eye className="w-4 h-4" />
+    </button>
+  );
+
+  // Filter responses based on search term
+  const filteredResponses = responseData.filter(item =>
+    item.surveyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.id.toString().includes(searchTerm)
+  );
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -177,41 +205,21 @@ export const SurveyResponsePage = () => {
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">View</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">ID</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">Survey Title</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">No. Of Responses</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">No. Of Tickets</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">Expiry Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockResponseData.map((item, index) => (
-                <TableRow key={index} className="hover:bg-gray-50">
-                  <TableCell>
-                    <button
-                      onClick={() => handleViewDetails(item.id)}
-                      className="text-gray-600 hover:text-[#C72030] transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="font-medium text-gray-900">{item.id}</TableCell>
-                  <TableCell className="text-gray-700">{item.surveyTitle}</TableCell>
-                  <TableCell className="text-center text-gray-700">{item.responses}</TableCell>
-                  <TableCell className="text-center text-gray-700">{item.tickets}</TableCell>
-                  <TableCell className="text-gray-700">{item.expiryDate}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      {/* Enhanced Data Table */}
+      <div>
+        <EnhancedTable
+          data={filteredResponses}
+          columns={columns}
+          selectable={true}
+          renderActions={renderActions}
+          renderCell={renderCell}
+          storageKey="survey-response-table"
+          enableExport={true}
+          exportFileName="survey-response-data"
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search responses..."
+        />
       </div>
 
       {/* Filter Modal */}
