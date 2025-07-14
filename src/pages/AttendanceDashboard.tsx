@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -46,21 +47,6 @@ export const AttendanceDashboard = () => {
 
   const handleViewDetails = (id: number) => {
     navigate(`/maintenance/attendance/details/${id}`);
-  };
-
-  const handleExport = () => {
-    const csvContent = [
-      'Name,Department',
-      ...attendance.map(person => `"${person.name}","${person.department}"`)
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'attendance_list.csv';
-    link.click();
-    window.URL.revokeObjectURL(url);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -122,17 +108,6 @@ export const AttendanceDashboard = () => {
       <div className="mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-2">Attendance &gt; Attendance List</p>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE LIST</h1>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="mb-6">
-        <Button 
-          onClick={handleExport} 
-          className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export
-        </Button>
       </div>
 
       {/* Enhanced Table */}
