@@ -180,7 +180,7 @@ export const TicketDashboard = () => {
                 <IconComponent className="w-6 h-6" style={{ color: '#C72030' }} />
               </div>
               <div className="flex flex-col">
-                <div className="text-2xl font-bold text-primary leading-tight">{item.value}</div>
+                <div className="text-2xl font-bold leading-tight" style={{ color: '#C72030' }}>{item.value}</div>
                 <div className="text-sm text-muted-foreground font-medium">{item.label}</div>
               </div>
             </div>;
