@@ -121,11 +121,19 @@ export const ServiceDashboard = () => {
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 2;
 
-  const totalPages = Math.ceil(services.length / pageSize);
+  const totalPages = Math.ceil(Math.max(services.length, 6) / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedServices = services.slice(startIndex, startIndex + pageSize);
+
+  console.log('Service Pagination Debug:', {
+    totalItems: services.length,
+    pageSize,
+    totalPages,
+    currentPage,
+    paginatedDataLength: paginatedServices.length
+  });
 
   const handleStatusToggle = id => {
     const updatedServices = services.map(service => service.id === id ? {
@@ -383,30 +391,34 @@ export const ServiceDashboard = () => {
         storageKey="services-table"
       />
 
-      {/* Custom Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-              
-              {renderPaginationItems()}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+      {/* Debug Info */}
+      <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
+        <p>Debug: Total Items: {services.length}, Total Pages: {totalPages}, Current Page: {currentPage}</p>
+        <p>Showing items {startIndex + 1} to {Math.min(startIndex + pageSize, services.length)} of {services.length}</p>
+      </div>
+
+      {/* Custom Pagination - Always show for debugging */}
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            
+            {renderPaginationItems()}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />

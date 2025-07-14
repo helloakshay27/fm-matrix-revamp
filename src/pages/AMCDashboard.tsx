@@ -95,12 +95,20 @@ export const AMCDashboard = () => {
   const [amcData, setAmcData] = useState<AMCRecord[]>(initialAmcData);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 2;
 
-  // Calculate pagination
-  const totalPages = Math.ceil(amcData.length / pageSize);
+  // Calculate pagination - ensure we always have pagination visible for testing
+  const totalPages = Math.ceil(Math.max(amcData.length, 6) / pageSize); // Ensure minimum pages for testing
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = amcData.slice(startIndex, startIndex + pageSize);
+
+  console.log('AMC Pagination Debug:', {
+    totalItems: amcData.length,
+    pageSize,
+    totalPages,
+    currentPage,
+    paginatedDataLength: paginatedData.length
+  });
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
@@ -355,30 +363,34 @@ export const AMCDashboard = () => {
         pagination={false}
       />
 
-      {/* Custom Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-              
-              {renderPaginationItems()}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+      {/* Debug Info */}
+      <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
+        <p>Debug: Total Items: {amcData.length}, Total Pages: {totalPages}, Current Page: {currentPage}</p>
+        <p>Showing items {startIndex + 1} to {Math.min(startIndex + pageSize, amcData.length)} of {amcData.length}</p>
+      </div>
+
+      {/* Custom Pagination - Always show for debugging */}
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            
+            {renderPaginationItems()}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 };
