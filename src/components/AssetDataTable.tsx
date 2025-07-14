@@ -145,6 +145,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       selectAllLabel="Select all assets"
       hideTableSearch={true}
       hideTableExport={true}
+      hideColumnsButton={true}
     />
   );
 };

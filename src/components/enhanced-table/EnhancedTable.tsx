@@ -62,6 +62,7 @@ interface EnhancedTableProps<T> {
   enableSelection?: boolean;
   hideTableExport?: boolean;
   hideTableSearch?: boolean;
+  hideColumnsButton?: boolean;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -95,6 +96,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   enableSelection = false,
   hideTableExport = false,
   hideTableSearch = false,
+  hideColumnsButton = false,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -267,12 +269,14 @@ export function EnhancedTable<T extends Record<string, any>>({
             </Button>
           )}
           
-          <ColumnVisibilityMenu
-            columns={columns}
-            columnVisibility={columnVisibility}
-            onToggleVisibility={toggleColumnVisibility}
-            onResetToDefaults={resetToDefaults}
-          />
+          {!hideColumnsButton && (
+            <ColumnVisibilityMenu
+              columns={columns}
+              columnVisibility={columnVisibility}
+              onToggleVisibility={toggleColumnVisibility}
+              onResetToDefaults={resetToDefaults}
+            />
+          )}
         </div>
       </div>
 
