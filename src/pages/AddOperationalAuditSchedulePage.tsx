@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ArrowLeft } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -347,11 +347,23 @@ export const AddOperationalAuditSchedulePage = () => {
     navigate('/maintenance/audit/operational');
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         <div>
-          <div className="text-xs sm:text-sm text-gray-600 mb-1">Operational Audit</div>
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-1">
+            <button 
+              onClick={handleBack}
+              className="flex items-center gap-1 hover:text-[#C72030] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Operational Audit</span>
+            </button>
+          </div>
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Add Operational Audit Schedule</h1>
         </div>
       </div>
