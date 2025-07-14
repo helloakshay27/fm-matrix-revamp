@@ -1,0 +1,435 @@
+import React, { useMemo, useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { SortableColumnHeader } from './SortableColumnHeader';
+import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
+import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
+import { Search, Download, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface BulkAction<T> {
+  label: string;
+  icon?: React.ComponentType<any>;
+  onClick: (selectedItems: T[]) => void;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+}
+
+interface EnhancedTableProps<T> {
+  data: T[];
+  columns: ColumnConfig[];
+  renderCell?: (item: T, columnKey: string) => React.ReactNode;
+  renderRow?: (item: T) => Record<string, any>;
+  renderActions?: (item: T) => React.ReactNode;
+  onRowClick?: (item: T) => void;
+  storageKey?: string;
+  className?: string;
+  emptyMessage?: string;
+  selectable?: boolean;
+  selectedItems?: string[];
+  onSelectAll?: (checked: boolean) => void;
+  onSelectItem?: (itemId: string, checked: boolean) => void;
+  getItemId?: (item: T) => string;
+  selectAllLabel?: string;
+  // Enhanced features
+  searchTerm?: string;
+  onSearchChange?: (searchTerm: string) => void;
+  searchPlaceholder?: string;
+  enableExport?: boolean;
+  exportFileName?: string;
+  bulkActions?: BulkAction<T>[];
+  showBulkActions?: boolean;
+  pagination?: boolean;
+  pageSize?: number;
+  loading?: boolean;
+  enableSearch?: boolean;
+  enableSelection?: boolean;
+}
+
+export function EnhancedTable<T extends Record<string, any>>({
+  data,
+  columns,
+  renderCell,
+  renderRow,
+  renderActions,
+  onRowClick,
+  storageKey,
+  className,
+  emptyMessage = "No data available",
+  selectable = false,
+  selectedItems = [],
+  onSelectAll,
+  onSelectItem,
+  getItemId = (item: T) => item.id,
+  selectAllLabel = "Select all",
+  // Enhanced features
+  searchTerm: externalSearchTerm,
+  onSearchChange,
+  searchPlaceholder = 'Search...',
+  enableExport = false,
+  exportFileName = 'table-export',
+  bulkActions = [],
+  showBulkActions = false,
+  pagination = false,
+  pageSize = 10,
+  loading = false,
+  enableSearch = false,
+  enableSelection = false,
+}: EnhancedTableProps<T>) {
+  const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+
+  const {
+    sortedData: baseSortedData,
+    sortState,
+    columnVisibility,
+    visibleColumns,
+    handleSort,
+    toggleColumnVisibility,
+    reorderColumns,
+    resetToDefaults
+  } = useEnhancedTable({
+    data,
+    columns,
+    storageKey
+  });
+
+  // Filter data based on search term
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return baseSortedData;
+    
+    return baseSortedData.filter(item =>
+      Object.values(item).some(value =>
+        String(value).toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [baseSortedData, searchTerm]);
+
+  // Paginate data if pagination is enabled
+  const paginatedData = useMemo(() => {
+    if (!pagination) return filteredData;
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredData.slice(startIndex, startIndex + pageSize);
+  }, [filteredData, currentPage, pageSize, pagination]);
+
+  const sortedData = pagination ? paginatedData : filteredData;
+  const totalPages = pagination ? Math.ceil(filteredData.length / pageSize) : 1;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      reorderColumns(String(active.id), String(over.id));
+    }
+  };
+
+  // Create column IDs for drag and drop, excluding checkbox column
+  const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
+
+  // Check if all visible items are selected
+  const isAllSelected = selectable && sortedData.length > 0 && 
+    sortedData.every(item => selectedItems.includes(getItemId(item)));
+
+  // Check if some (but not all) items are selected
+  const isIndeterminate = selectable && selectedItems.length > 0 && !isAllSelected;
+
+  const handleSelectAllChange = (checked: boolean) => {
+    if (onSelectAll) {
+      onSelectAll(checked);
+    }
+  };
+
+  const handleSelectItemChange = (itemId: string, checked: boolean) => {
+    if (onSelectItem) {
+      onSelectItem(itemId, checked);
+    }
+  };
+
+  const handleRowClick = (item: T, event: React.MouseEvent) => {
+    // Don't trigger row click if clicking on checkbox or actions
+    const target = event.target as HTMLElement;
+    if (target.closest('[data-checkbox]') || target.closest('[data-actions]')) {
+      return;
+    }
+    onRowClick?.(item);
+  };
+
+  const handleInternalSearchChange = (value: string) => {
+    setInternalSearchTerm(value);
+    setCurrentPage(1);
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
+  };
+
+  const handleExport = () => {
+    const csvContent = [
+      visibleColumns.map(col => col.label).join(','),
+      ...filteredData.map(item => 
+        visibleColumns.map(col => {
+          const renderedRow = renderRow ? renderRow(item) : item;
+          const value = renderRow ? renderedRow[col.key] : renderCell?.(item, col.key);
+          return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : `"${value}"`;
+        }).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${exportFileName}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const selectedItemObjects = useMemo(() => {
+    return filteredData.filter(item => selectedItems.includes(getItemId(item)));
+  }, [filteredData, selectedItems, getItemId]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          {(onSearchChange || !externalSearchTerm) && (
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => handleInternalSearchChange(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
+          
+          {showBulkActions && selectedItems.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {selectedItems.length} selected
+              </span>
+              {bulkActions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant={action.variant || 'outline'}
+                  size="sm"
+                  onClick={() => action.onClick(selectedItemObjects)}
+                  className="flex items-center gap-2"
+                >
+                  {action.icon && <action.icon className="w-4 h-4" />}
+                  {action.label}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {enableExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+          )}
+          
+          <div className="text-sm text-muted-foreground">
+            {filteredData.length} {filteredData.length === 1 ? 'item' : 'items'}
+            {selectable && selectedItems.length > 0 && (
+              <span className="ml-2 text-primary">
+                ({selectedItems.length} selected)
+              </span>
+            )}
+          </div>
+          
+          <ColumnVisibilityMenu
+            columns={columns}
+            columnVisibility={columnVisibility}
+            onToggleVisibility={toggleColumnVisibility}
+            onResetToDefaults={resetToDefaults}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+<Table className={`border ${className}`}>
+              <TableHeader>
+                <TableRow>
+                  <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                    {selectable && (
+                      <TableHead className="bg-[#f6f4ee] w-12" data-checkbox>
+                        <Checkbox
+                          checked={isAllSelected}
+                          onCheckedChange={handleSelectAllChange}
+                          aria-label={selectAllLabel}
+                          className="ml-2"
+                          {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                        />
+                      </TableHead>
+                    )}
+                    {visibleColumns.map((column) => (
+                      <SortableColumnHeader
+                        key={column.key}
+                        id={column.key}
+                        sortable={column.sortable}
+                        draggable={column.draggable}
+                        sortDirection={sortState.column === column.key ? sortState.direction : null}
+                        onSort={() => handleSort(column.key)}
+                        className="bg-[#f6f4ee]"
+                      >
+                        {column.label}
+                      </SortableColumnHeader>
+                    ))}
+                    {renderActions && (
+                      <TableHead className="bg-[#f6f4ee]">Actions</TableHead>
+                    )}
+                  </SortableContext>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading && (
+                  <TableRow>
+                    <TableCell 
+                      colSpan={
+                        visibleColumns.length + 
+                        (renderActions ? 1 : 0) + 
+                        (selectable ? 1 : 0)
+                      } 
+                      className="h-24 text-center"
+                    >
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <span className="ml-2">Loading...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!loading && sortedData.length === 0 && (
+                  <TableRow>
+                    <TableCell 
+                      colSpan={
+                        visibleColumns.length + 
+                        (renderActions ? 1 : 0) + 
+                        (selectable ? 1 : 0)
+                      } 
+                      className="text-center py-8 text-gray-500"
+                    >
+                      {emptyMessage}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!loading && sortedData.map((item, index) => {
+                  const itemId = getItemId(item);
+                  const isSelected = selectedItems.includes(itemId);
+                  
+                  return (
+                    <TableRow 
+                      key={index}
+                      className={cn(
+                        onRowClick && "cursor-pointer",
+                        "hover:bg-gray-50",
+                        isSelected && "bg-blue-50"
+                      )}
+                      onClick={(e) => handleRowClick(item, e)}
+                    >
+                      {selectable && (
+                        <TableCell className="p-4 w-12" data-checkbox>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                            aria-label={`Select row ${index + 1}`}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </TableCell>
+                      )}
+                      {visibleColumns.map((column) => {
+                        const renderedRow = renderRow ? renderRow(item) : item;
+                        const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
+                        return (
+                          <TableCell key={column.key} className="p-4">
+                            {cellContent}
+                          </TableCell>
+                        );
+                      })}
+                      {renderActions && (
+                        <TableCell className="p-4" data-actions>
+                          {renderActions(item)}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </DndContext>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {pagination && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

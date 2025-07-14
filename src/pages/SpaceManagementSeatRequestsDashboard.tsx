@@ -1,113 +1,100 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle, XCircle, Clock, Users } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
-
 export const SpaceManagementSeatRequestsDashboard = () => {
-  const [seatRequests, setSeatRequests] = useState([
-    {
-      id: "48823",
-      name: "Robert Day2",
-      requestedDate: "14/08/2024",
-      seatType: "Angular Ws",
-      shift: "10:00 AM to 08:00 PM",
-      allocationType: "Recurring",
-      count: 100,
-      status: "Rejected"
-    },
-    {
-      id: "79876",
-      name: "Abdul A",
-      requestedDate: "25/07/2024",
-      seatType: "circular",
-      shift: "09:00 AM to 07:00 PM",
-      allocationType: "",
-      count: 1,
-      status: "Rejected"
-    },
-    {
-      id: "48823",
-      name: "Robert Day2",
-      requestedDate: "17/10/2023",
-      seatType: "Angular Ws",
-      shift: "10:00 AM to 08:00 PM",
-      allocationType: "Recurring",
-      count: 100,
-      status: "Rejected"
-    },
-    {
-      id: "48823",
-      name: "Robert Day2",
-      requestedDate: "26/05/2023",
-      seatType: "Angular Ws",
-      shift: "10:00 AM to 08:00 PM",
-      allocationType: "Recurring",
-      count: 100,
-      status: "Approved"
-    },
-    {
-      id: "85672",
-      name: "Kshitij Rasal",
-      requestedDate: "12/04/2023",
-      seatType: "circularchair",
-      shift: "",
-      allocationType: "",
-      count: 1,
-      status: "Approved"
-    },
-    {
-      id: "85672",
-      name: "Kshitij Rasal",
-      requestedDate: "29/04/2023",
-      seatType: "circularchair",
-      shift: "",
-      allocationType: "",
-      count: 1,
-      status: "Approved"
-    },
-    {
-      id: "85672",
-      name: "Kshitij Rasal",
-      requestedDate: "28/04/2023",
-      seatType: "Rectangle",
-      shift: "",
-      allocationType: "",
-      count: 1,
-      status: "Approved"
-    },
-    {
-      id: "79876",
-      name: "Abdul A",
-      requestedDate: "20/04/2023",
-      seatType: "circular",
-      shift: "09:00 AM to 07:00 PM",
-      allocationType: "",
-      count: 1,
-      status: "Approved"
-    },
-    {
-      id: "79876",
-      name: "Abdul A",
-      requestedDate: "15/04/2023",
-      seatType: "circular",
-      shift: "09:00 AM to 07:00 PM",
-      allocationType: "",
-      count: 1,
-      status: "Approved"
-    },
-    {
-      id: "79876",
-      name: "Abdul A",
-      requestedDate: "27/04/2023",
-      seatType: "circular",
-      shift: "09:00 AM to 07:00 PM",
-      allocationType: "",
-      count: 1,
-      status: "Pending"
-    }
-  ]);
+  const [seatRequests, setSeatRequests] = useState([{
+    id: "48823",
+    name: "Robert Day2",
+    requestedDate: "14/08/2024",
+    seatType: "Angular Ws",
+    shift: "10:00 AM to 08:00 PM",
+    allocationType: "Recurring",
+    count: 100,
+    status: "Rejected"
+  }, {
+    id: "79876",
+    name: "Abdul A",
+    requestedDate: "25/07/2024",
+    seatType: "circular",
+    shift: "09:00 AM to 07:00 PM",
+    allocationType: "",
+    count: 1,
+    status: "Rejected"
+  }, {
+    id: "48823",
+    name: "Robert Day2",
+    requestedDate: "17/10/2023",
+    seatType: "Angular Ws",
+    shift: "10:00 AM to 08:00 PM",
+    allocationType: "Recurring",
+    count: 100,
+    status: "Rejected"
+  }, {
+    id: "48823",
+    name: "Robert Day2",
+    requestedDate: "26/05/2023",
+    seatType: "Angular Ws",
+    shift: "10:00 AM to 08:00 PM",
+    allocationType: "Recurring",
+    count: 100,
+    status: "Approved"
+  }, {
+    id: "85672",
+    name: "Kshitij Rasal",
+    requestedDate: "12/04/2023",
+    seatType: "circularchair",
+    shift: "",
+    allocationType: "",
+    count: 1,
+    status: "Approved"
+  }, {
+    id: "85672",
+    name: "Kshitij Rasal",
+    requestedDate: "29/04/2023",
+    seatType: "circularchair",
+    shift: "",
+    allocationType: "",
+    count: 1,
+    status: "Approved"
+  }, {
+    id: "85672",
+    name: "Kshitij Rasal",
+    requestedDate: "28/04/2023",
+    seatType: "Rectangle",
+    shift: "",
+    allocationType: "",
+    count: 1,
+    status: "Approved"
+  }, {
+    id: "79876",
+    name: "Abdul A",
+    requestedDate: "20/04/2023",
+    seatType: "circular",
+    shift: "09:00 AM to 07:00 PM",
+    allocationType: "",
+    count: 1,
+    status: "Approved"
+  }, {
+    id: "79876",
+    name: "Abdul A",
+    requestedDate: "15/04/2023",
+    seatType: "circular",
+    shift: "09:00 AM to 07:00 PM",
+    allocationType: "",
+    count: 1,
+    status: "Approved"
+  }, {
+    id: "79876",
+    name: "Abdul A",
+    requestedDate: "27/04/2023",
+    seatType: "circular",
+    shift: "09:00 AM to 07:00 PM",
+    allocationType: "",
+    count: 1,
+    status: "Pending"
+  }]);
 
   // Calculate statistics dynamically based on current data
   const statistics = useMemo(() => {
@@ -115,19 +102,20 @@ export const SpaceManagementSeatRequestsDashboard = () => {
     const pending = seatRequests.filter(request => request.status === 'Pending').length;
     const approved = seatRequests.filter(request => request.status === 'Approved').length;
     const rejected = seatRequests.filter(request => request.status === 'Rejected').length;
-
-    return { total, pending, approved, rejected };
+    return {
+      total,
+      pending,
+      approved,
+      rejected
+    };
   }, [seatRequests]);
-
   const handleStatusChange = (requestId: string, newStatus: string) => {
-    setSeatRequests(prevRequests =>
-      prevRequests.map(request =>
-        request.id === requestId ? { ...request, status: newStatus } : request
-      )
-    );
+    setSeatRequests(prevRequests => prevRequests.map(request => request.id === requestId ? {
+      ...request,
+      status: newStatus
+    } : request));
     console.log(`Status changed for request ${requestId} to ${newStatus}`);
   };
-
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved':
@@ -140,9 +128,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
-  return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+  return <div className="p-6 min-h-screen bg-white">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>Space</span>
@@ -197,7 +183,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
       <div className="text-sm text-gray-500">Rejected</div>
     </div>
   </div>
-</div>
+      </div>
 
 
         {/* Table */}
@@ -218,8 +204,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {seatRequests.map((request, index) => (
-                  <TableRow key={`${request.id}-${index}`}>
+                {seatRequests.map((request, index) => <TableRow key={`${request.id}-${index}`}>
                     <TableCell>{request.id}</TableCell>
                     <TableCell className="text-blue-600">{request.name}</TableCell>
                     <TableCell>{request.requestedDate}</TableCell>
@@ -234,43 +219,24 @@ export const SpaceManagementSeatRequestsDashboard = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {request.status === 'Pending' && (
-                          <>
-                            <Button 
-                              size="sm" 
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() => handleStatusChange(request.id, 'Approved')}
-                            >
+                        {request.status === 'Pending' && <>
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleStatusChange(request.id, 'Approved')}>
                               Approve
                             </Button>
-                            <Button 
-                              size="sm" 
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                              onClick={() => handleStatusChange(request.id, 'Rejected')}
-                            >
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => handleStatusChange(request.id, 'Rejected')}>
                               Reject
                             </Button>
-                          </>
-                        )}
-                        {request.status !== 'Pending' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="border-gray-300 text-gray-700"
-                            onClick={() => handleStatusChange(request.id, 'Pending')}
-                          >
+                          </>}
+                        {request.status !== 'Pending' && <Button size="sm" variant="outline" className="border-gray-300 text-gray-700" onClick={() => handleStatusChange(request.id, 'Pending')}>
                             Reset
-                          </Button>
-                        )}
+                          </Button>}
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };

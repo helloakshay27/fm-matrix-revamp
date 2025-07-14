@@ -2,25 +2,157 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { 
-  Users, Settings, FileText, Building, Car, Shield, DollarSign, 
+import {
+  Users, Settings, FileText, Building, Car, Shield, DollarSign,
   Clipboard, AlertTriangle, Bell, Package, Wrench, BarChart3,
   Calendar, Clock, CheckSquare, MapPin, Truck, Phone, Globe,
-  CreditCard, Receipt, Calculator, PieChart, UserCheck, 
+  CreditCard, Receipt, Calculator, PieChart, UserCheck,
   Database, Zap, Droplets, Trash2, Sun, Battery, Gauge,
   Video, Lock, Key, Eye, ShieldCheck, Headphones, Gift,
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical
+  Archive, TreePine, FlaskConical, Mail, ClipboardList
 } from 'lucide-react';
+
+const navigationStructure = {
+  'Settings': {
+    icon: Settings,
+    items: [
+      {
+        name: 'Account',
+        icon: Users,
+        subItems: [
+          { name: 'General', href: '/settings/account/general' },
+          { name: 'Holiday Calendar', href: '/settings/account/holiday-calendar' },
+          { name: 'About', href: '/settings/account/about', isActive: true },
+          { name: 'Language', href: '/settings/account/language' },
+          { name: 'Company Logo Upload', href: '/settings/account/company-logo-upload' },
+          { name: 'Report Setup', href: '/settings/account/report-setup' },
+          { name: 'Notification Setup', href: '/settings/account/notification-setup' }
+        ]
+      },
+      {
+        name: 'Roles (RACI)',
+        icon: UserCheck,
+        subItems: [
+          { name: 'Department', href: '/settings/roles/department' },
+          { name: 'Role', href: '/settings/roles/role' }
+        ]
+      },
+      {
+        name: 'Approval Matrix',
+        icon: CheckSquare,
+        subItems: [
+          { name: 'Setup', href: '/settings/approval-matrix/setup' }
+        ]
+      }
+    ]
+  },
+  'Maintenance': {
+    icon: Wrench,
+    items: [
+      {
+        name: 'Asset Setup',
+        icon: Building,
+        subItems: [
+          { name: 'Approval Matrix', href: '/settings/asset-setup/approval-matrix' },
+          { name: 'Asset Group & Sub Group', href: '/settings/asset-setup/asset-groups' }
+        ]
+      },
+      {
+        name: 'Checklist Setup',
+        icon: CheckSquare,
+        subItems: [
+          { name: 'Checklist Group and Sub Group', href: '/settings/asset-setup/asset-groups' },
+          { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
+          { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
+        ]
+      },
+      {
+        name: 'Ticket Management',
+        icon: FileText,
+        subItems: [
+          { name: 'Setup', href: '/settings/ticket-management/setup' },
+          { name: 'Escalation Matrix', href: '/settings/ticket-management/escalation-matrix' },
+          { name: 'Cost Approval', href: '/settings/ticket-management/cost-approval' }
+        ]
+      },
+      {
+        name: 'Inventory Management',
+        icon: Package,
+        subItems: [
+          { name: 'SAC/HSN Code', href: '/settings/inventory-management/sac-hsn-code' }
+        ]
+      },
+      {
+        name: 'Safety',
+        icon: Shield,
+        href: '/maintenance/safety'
+      },
+      {
+        name: 'Permit',
+        icon: FileText,
+        subItems: [
+          { name: 'Permit Setup', href: '/settings/safety/permit-setup' }
+        ]
+      },
+      {
+        name: 'Incident',
+        icon: AlertTriangle,
+        subItems: [
+          { name: 'Setup', href: '/settings/safety/incident' }
+        ]
+      },
+      {
+        name: 'Waste Management',
+        icon: Trash2,
+        subItems: [
+          { name: 'Setup', href: '/settings/waste-management/setup' }
+        ]
+      }
+    ]
+  },
+  'Finance': {
+    icon: DollarSign,
+    items: [
+      {
+        name: 'Wallet Setup',
+        icon: CreditCard,
+        href: '/finance/wallet-setup'
+      }
+    ]
+  },
+  'Security': {
+    icon: Shield,
+    items: [
+      {
+        name: 'Visitor Management',
+        icon: Users,
+        subItems: [
+          { name: 'Setup', href: '/security/visitor-management/setup' },
+          { name: 'Visiting Purpose', href: '/security/visitor-management/visiting-purpose' },
+          { name: 'Support Staff', href: '/security/visitor-management/support-staff' }
+        ]
+      },
+      {
+        name: 'Gate Pass',
+        icon: Car,
+        subItems: [
+          { name: 'Materials Type', href: '/security/gate-pass/materials-type' },
+          { name: 'Items Name', href: '/security/gate-pass/items-name' }
+        ]
+      }
+    ]
+  }
+};
 
 const modulesByPackage = {
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
-    { 
-      name: 'Snagging', 
-      icon: CheckSquare, 
+    {
+      name: 'Snagging',
+      icon: CheckSquare,
       href: '/transitioning/snagging',
       subItems: [
         { name: 'User Snag', href: '/transitioning/snagging?view=user', color: 'text-[#1a1a1a]' },
@@ -28,9 +160,9 @@ const modulesByPackage = {
       ]
     },
     { name: 'Design Insight', icon: BarChart3, href: '/transitioning/design-insight' },
-    { 
-      name: 'Fitout', 
-      icon: Wrench, 
+    {
+      name: 'Fitout',
+      icon: Wrench,
       href: '/transitioning/fitout',
       subItems: [
         { name: 'Fitout Setup', href: '/transitioning/fitout/setup', color: 'text-[#1a1a1a]' },
@@ -49,14 +181,14 @@ const modulesByPackage = {
     { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
     { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
     { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
-    { 
-      name: 'Audit', 
-      icon: Clipboard, 
+    {
+      name: 'Audit',
+      icon: Clipboard,
       href: '/maintenance/audit',
       subItems: [
-        { 
-          name: 'Operational', 
-          href: '/maintenance/audit/operational', 
+        {
+          name: 'Operational',
+          href: '/maintenance/audit/operational',
           color: 'text-[#1a1a1a]',
           subItems: [
             { name: 'Scheduled', href: '/maintenance/audit/operational/scheduled', color: 'text-[#1a1a1a]' },
@@ -64,9 +196,9 @@ const modulesByPackage = {
             { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]' }
           ]
         },
-        { 
-          name: 'Vendor', 
-          href: '/maintenance/audit/vendor', 
+        {
+          name: 'Vendor',
+          href: '/maintenance/audit/vendor',
           color: 'text-[#1a1a1a]',
           subItems: [
             { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]' },
@@ -103,23 +235,23 @@ const modulesByPackage = {
     { name: 'Training List', icon: BookOpen, href: '/safety/training-list' }
   ],
   'Finance': [
-    { 
-      name: 'Procurement', 
-      icon: Briefcase, 
+    {
+      name: 'Procurement',
+      icon: Briefcase,
       href: '/finance/procurement',
       subItems: [
-        { 
-          name: 'PR/ SR', 
-          href: '/finance/pr-sr', 
+        {
+          name: 'PR/ SR',
+          href: '/finance/pr-sr',
           color: 'text-[#1a1a1a]',
           subItems: [
             { name: 'Material PR', href: '/finance/material-pr', color: 'text-[#1a1a1a]' },
             { name: 'Service PR', href: '/finance/service-pr', color: 'text-[#1a1a1a]' }
           ]
         },
-        { 
-          name: 'PO/WO', 
-          href: '/finance/po-wo', 
+        {
+          name: 'PO/WO',
+          href: '/finance/po-wo',
           color: 'text-[#1a1a1a]',
           subItems: [
             { name: 'PO', href: '/finance/po', color: 'text-[#1a1a1a]' },
@@ -132,9 +264,9 @@ const modulesByPackage = {
     },
     { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
     { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking' },
-    { 
-      name: 'Accounting', 
-      icon: Calculator, 
+    {
+      name: 'Accounting',
+      icon: Calculator,
       href: '/finance/accounting',
       subItems: [
         { name: 'Cost Center', href: '/finance/cost-center', color: 'text-[#1a1a1a]' },
@@ -162,9 +294,9 @@ const modulesByPackage = {
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
   ],
   'Security': [
-    { 
-      name: 'Gate Pass', 
-      icon: Shield, 
+    {
+      name: 'Gate Pass',
+      icon: Shield,
       href: '/security/gate-pass',
       subItems: [
         { name: 'Inwards', href: '/security/gate-pass/inwards', color: 'text-[#1a1a1a]' },
@@ -173,14 +305,14 @@ const modulesByPackage = {
     },
     { name: 'Visitor', icon: Users, href: '/security/visitor' },
     { name: 'Staff', icon: Users, href: '/security/staff' },
-    { 
-      name: 'Vehicle', 
-      icon: Car, 
+    {
+      name: 'Vehicle',
+      icon: Car,
       href: '/security/vehicle',
       subItems: [
-        { 
-          name: 'R Vehicles', 
-          href: '/security/vehicle/r-vehicles', 
+        {
+          name: 'R Vehicles',
+          href: '/security/vehicle/r-vehicles',
           color: 'text-[#1a1a1a]',
           subItems: [
             { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
@@ -196,16 +328,16 @@ const modulesByPackage = {
     { name: 'F&B', icon: Coffee, href: '/vas/fnb' },
     { name: 'Parking', icon: Car, href: '/vas/parking' },
     { name: 'OSR', icon: TreePine, href: '/vas/osr' },
-    { 
-      name: 'Space Management', 
-      icon: Building, 
+    {
+      name: 'Space Management',
+      icon: Building,
       href: '/vas/space-management',
       subItems: [
         { name: 'Bookings', href: '/vas/space-management/bookings', color: 'text-[#1a1a1a]' },
         { name: 'Seat Requests', href: '/vas/space-management/seat-requests', color: 'text-[#1a1a1a]' },
-        { 
-          name: 'Setup', 
-          href: '/vas/space-management/setup', 
+        {
+          name: 'Setup',
+          href: '/vas/space-management/setup',
           color: 'text-[#1a1a1a]',
           subItems: [
             { name: 'Seat Type', href: '/vas/space-management/setup/seat-type', color: 'text-[#1a1a1a]' },
@@ -220,6 +352,15 @@ const modulesByPackage = {
         }
       ]
     },
+    {
+      name: 'Booking',
+      icon: Calendar,
+      href: '/vas/booking',
+      subItems: [
+        { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
+        { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
   'Market Place': [
@@ -228,69 +369,10 @@ const modulesByPackage = {
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
   'Settings': [
-    { 
-      name: 'General', 
-      icon: Settings, 
-      href: '/settings/general',
-      subItems: [
-        { name: 'Holiday Calendar', href: '/settings/general/holiday-calendar', color: 'text-[#1a1a1a]' },
-        { name: 'About', href: '/settings/general/about', color: 'text-[#1a1a1a]' },
-        { name: 'Language', href: '/settings/general/language', color: 'text-[#1a1a1a]' },
-        { name: 'Company Logo Upload', href: '/settings/general/company-logo-upload', color: 'text-[#1a1a1a]' },
-        { name: 'Report Setup', href: '/settings/general/report-setup', color: 'text-[#1a1a1a]' },
-        { name: 'Notification Setup', href: '/settings/general/notification-setup', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Account', icon: Users, href: '/settings/account' },
-    { name: 'Users', icon: Users, href: '/settings/users' },
-    { 
-      name: 'Roles (RACI)', 
-      icon: UserCheck, 
-      href: '/settings/roles',
-      hasDropdowns: true,
-      subItems: [
-        { name: 'Department', href: '/settings/roles/department', color: 'text-[#1a1a1a]' },
-        { name: 'Role', href: '/settings/roles/role', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
-    { 
-      name: 'Asset Setup', 
-      icon: Building, 
-      href: '/settings/asset-setup',
-      subItems: [
-        { name: 'Approval Matrix', href: '/settings/asset-setup/approval-matrix', color: 'text-[#1a1a1a]' },
-        { name: 'Asset Group & Sub Group', href: '/settings/asset-setup/asset-groups', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { 
-      name: 'Module 1', 
-      icon: Package, 
-      href: '/settings/module1',
-      subItems: [
-        { name: 'Function 1', href: '/settings/module1/function1', color: 'text-orange-600' },
-        { name: 'Function 2', href: '/settings/module1/function2', color: 'text-orange-600' }
-      ]
-    },
-    { 
-      name: 'Module 2', 
-      icon: Package, 
-      href: '/settings/module2',
-      subItems: [
-        { name: 'Function 1', href: '/settings/module2/function1', color: 'text-orange-600' },
-        { name: 'Function 2', href: '/settings/module2/function2', color: 'text-orange-600' }
-      ]
-    },
-    { 
-      name: 'Masters', 
-      icon: Archive, 
-      href: '/settings/masters',
-      subItems: [
-        { name: 'Checklist Master', href: '/settings/masters/checklist', color: 'text-orange-600' },
-        { name: 'Unit Master', href: '/settings/masters/unit', color: 'text-orange-600' },
-        { name: 'Address Master', href: '/settings/masters/address', color: 'text-orange-600' }
-      ]
-    }
+    ...navigationStructure.Settings.items,
+    ...navigationStructure.Maintenance.items,
+    ...navigationStructure.Finance.items,
+    ...navigationStructure.Security.items
   ]
 };
 
@@ -303,8 +385,8 @@ export const Sidebar = () => {
   const [selectedRole, setSelectedDepartment] = useState('');
 
   const toggleExpanded = (itemName: string) => {
-    setExpandedItems(prev => 
-      prev.includes(itemName) 
+    setExpandedItems(prev =>
+      prev.includes(itemName)
         ? prev.filter(name => name !== itemName)
         : [...prev, itemName]
     );
@@ -351,9 +433,9 @@ export const Sidebar = () => {
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
-    const showDropdowns = item.hasDropdowns && location.pathname === item.href;
-    const isActive = isActiveRoute(item.href);
-    
+    const showDropdowns = item.hasDropdowns && item.href && location.pathname === item.href;
+    const isActive = item.href ? isActiveRoute(item.href) : false;
+
     if (hasSubItems) {
       return (
         <div key={item.name}>
@@ -370,8 +452,8 @@ export const Sidebar = () => {
               )}
               {item.name}
             </div>
-            {isExpanded ? 
-              <ChevronDown className="w-4 h-4" /> : 
+            {isExpanded ?
+              <ChevronDown className="w-4 h-4" /> :
               <ChevronRight className="w-4 h-4" />
             }
           </button>
@@ -385,10 +467,10 @@ export const Sidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                        {subItem.href && isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                         <span>{subItem.name}</span>
-                        {expandedItems.includes(subItem.name) ? 
-                          <ChevronDown className="w-4 h-4" /> : 
+                        {expandedItems.includes(subItem.name) ?
+                          <ChevronDown className="w-4 h-4" /> :
                           <ChevronRight className="w-4 h-4" />
                         }
                       </button>
@@ -398,9 +480,8 @@ export const Sidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
-                                nestedItem.color || 'text-[#1a1a1a]'
-                              }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
+                                }`}
                             >
                               {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                               {nestedItem.name}
@@ -412,9 +493,8 @@ export const Sidebar = () => {
                   ) : (
                     <button
                       onClick={() => handleNavigation(subItem.href, currentSection)}
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-                        subItem.color || 'text-[#1a1a1a]'
-                      }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || 'text-[#1a1a1a]'
+                        }`}
                     >
                       {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                       {subItem.name}
@@ -431,10 +511,9 @@ export const Sidebar = () => {
     return (
       <div key={item.name}>
         <button
-          onClick={() => handleNavigation(item.href, currentSection)}
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-            item.color || 'text-[#1a1a1a]'
-          }`}
+          onClick={() => item.href && handleNavigation(item.href, currentSection)}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || 'text-[#1a1a1a]'
+            }`}
         >
           {level === 0 && (
             <>
@@ -444,7 +523,7 @@ export const Sidebar = () => {
           )}
           {item.name}
         </button>
-        
+
         {/* Show dropdowns for Roles (RACI) when on that page */}
         {showDropdowns && (
           <div className="mt-4 space-y-3 px-3">
@@ -464,13 +543,13 @@ export const Sidebar = () => {
                 <option value="hr">Human Resources</option>
               </select>
             </div>
-            
+
             <div>
               <label className="text-xs font-medium text-[#1a1a1a] mb-1 block">Role</label>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+                className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
               >
                 <option value="">Select Role</option>
                 <option value="manager">Manager</option>
@@ -498,7 +577,7 @@ className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white 
           </div>
           <span className="text-[#1a1a1a] font-semibold text-lg">Facility Management</span>
         </div>
-        
+
         {currentSection && (
           <div className="mb-4">
             <h3 className="text-sm font-medium text-[#1a1a1a] opacity-70 uppercase tracking-wide">
@@ -506,7 +585,7 @@ className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white 
             </h3>
           </div>
         )}
-        
+
         <nav className="space-y-2">
           {currentModules.map((module) => renderMenuItem(module))}
         </nav>

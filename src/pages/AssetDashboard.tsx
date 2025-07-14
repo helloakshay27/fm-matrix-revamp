@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +14,9 @@ import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 import { AssetStats } from '@/components/AssetStats';
 import { AssetActions } from '@/components/AssetActions';
 import { AssetDataTable } from '@/components/AssetDataTable';
+import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
+import { MoveAssetDialog } from '@/components/MoveAssetDialog';
+import { DisposeAssetDialog } from '@/components/DisposeAssetDialog';
 import { useAssetData } from '@/hooks/useAssetData';
 
 export const AssetDashboard = () => {
@@ -22,6 +24,8 @@ export const AssetDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMoveAssetOpen, setIsMoveAssetOpen] = useState(false);
+  const [isDisposeAssetOpen, setIsDisposeAssetOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -50,6 +54,12 @@ export const AssetDashboard = () => {
     handleSelectAsset
   } = useAssetData();
 
+  // Get selected asset objects with id and name
+  const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
+    id: asset.id,
+    name: asset.name
+  }));
+
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
   };
@@ -74,6 +84,35 @@ export const AssetDashboard = () => {
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
     setVisibleColumns(columns);
+  };
+
+  // Selection panel handlers
+  const handleMoveAsset = () => {
+    console.log('Move asset clicked for', selectedAssets.length, 'assets');
+    setIsMoveAssetOpen(true);
+    // Clear selection to close the panel
+    handleSelectAll(false);
+  };
+
+  const handleDisposeAsset = () => {
+    console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
+    setIsDisposeAssetOpen(true);
+    // Clear selection to close the panel
+    handleSelectAll(false);
+  };
+
+  const handlePrintQRCode = () => {
+    console.log('Print QR code clicked for', selectedAssets.length, 'assets');
+  };
+
+  const handleCheckIn = () => {
+    console.log('Check in clicked for', selectedAssets.length, 'assets');
+  };
+
+  const handleClearSelection = () => {
+    console.log('Clear selection called, current selected assets:', selectedAssets.length);
+    handleSelectAll(false);
+    console.log('Selection cleared using handleSelectAll(false)');
   };
 
   return (
@@ -101,14 +140,29 @@ export const AssetDashboard = () => {
         onColumnChange={handleColumnChange}
       />
 
-      <AssetDataTable
-        assets={filteredAssets}
-        selectedAssets={selectedAssets}
-        visibleColumns={visibleColumns}
-        onSelectAll={handleSelectAll}
-        onSelectAsset={handleSelectAsset}
-        onViewAsset={handleViewAsset}
-      />
+      <div className="relative">
+        <AssetDataTable
+          assets={filteredAssets}
+          selectedAssets={selectedAssets}
+          visibleColumns={visibleColumns}
+          onSelectAll={handleSelectAll}
+          onSelectAsset={handleSelectAsset}
+          onViewAsset={handleViewAsset}
+        />
+
+        {/* Selection Panel - positioned as overlay within table container */}
+        {selectedAssets.length > 0 && (
+          <AssetSelectionPanel
+            selectedCount={selectedAssets.length}
+            selectedAssets={selectedAssetObjects}
+            onMoveAsset={handleMoveAsset}
+            onDisposeAsset={handleDisposeAsset}
+            onPrintQRCode={handlePrintQRCode}
+            onCheckIn={handleCheckIn}
+            onClearSelection={handleClearSelection}
+          />
+        )}
+      </div>
 
       <div className="mt-6">
         <Pagination>
@@ -180,6 +234,18 @@ export const AssetDashboard = () => {
       <AssetFilterDialog 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
+      />
+
+      <MoveAssetDialog
+        isOpen={isMoveAssetOpen}
+        onClose={() => setIsMoveAssetOpen(false)}
+        selectedAssets={selectedAssets}
+      />
+
+      <DisposeAssetDialog
+        isOpen={isDisposeAssetOpen}
+        onClose={() => setIsDisposeAssetOpen(false)}
+        selectedAssets={selectedAssets}
       />
     </div>
   );

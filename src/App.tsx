@@ -1,14 +1,20 @@
+import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
-import { SetupLayout } from './components/SetupLayout';
 
 // Import existing pages
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import { LoginPage } from './pages/LoginPage';
+
+// Import Invoice Approvals page
+import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
+
+// Import Asset Groups page
+import { AssetGroupsPage } from './pages/AssetGroupsPage';
 
 // Import Snagging pages
 import { SnaggingDashboard } from './pages/SnaggingDashboard';
@@ -28,6 +34,7 @@ import { AddProjectDashboard } from './pages/AddProjectDashboard';
 import { FitoutChecklistDashboard } from './pages/FitoutChecklistDashboard';
 import { AddChecklistDashboard } from './pages/AddChecklistDashboard';
 import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
+import { CostApprovalPage } from './pages/maintenance/CostApprovalPage';
 
 // Import Maintenance pages
 import { AssetDashboard } from './pages/AssetDashboard';
@@ -45,9 +52,10 @@ import { EditIncidentDetailsPage } from './pages/EditIncidentDetailsPage';
 import { InventoryDashboard } from './pages/InventoryDashboard';
 import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
 import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
+import { EditInventoryPage } from './pages/EditInventoryPage';
 
 // Import Task pages
-import { TaskDashboard } from './pages/TaskDashboard';
+import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
 import { TaskDetailsPage } from './pages/TaskDetailsPage';
 
 // Import Utility pages
@@ -68,6 +76,7 @@ import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
 
 // Import Survey pages
 import { SurveyListDashboard } from './pages/SurveyListDashboard';
+import { AddSurveyPage } from './pages/AddSurveyPage';
 import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
 import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
 import { SurveyResponsePage } from './pages/SurveyResponsePage';
@@ -261,9 +270,6 @@ import { DepartmentDashboard } from './pages/settings/DepartmentDashboard';
 // Import Role Dashboard for Settings
 import { RoleDashboard } from './pages/settings/RoleDashboard';
 
-// Import Department Dashboard for Setup
-import { DepartmentDashboard as SetupDepartmentDashboard } from './pages/setup/DepartmentDashboard';
-
 // Import AddNewBillDashboard
 import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 
@@ -392,6 +398,32 @@ import { AddAddressPage } from './pages/AddAddressPage';
 // Import Edit Address page
 import { EditAddressPage } from './pages/EditAddressPage';
 
+// Import ChecklistGroupDashboard for setup and settings
+import { ChecklistGroupDashboard } from './pages/setup/ChecklistGroupDashboard';
+
+// Import Booking List page
+import BookingListDashboard from './pages/BookingListDashboard';
+
+// Import Booking Setup Dashboard
+import { BookingSetupDashboard } from './pages/BookingSetupDashboard';
+import { BookingSetupDetailPage } from './pages/BookingSetupDetailPage';
+
+// Import Add Facility Booking page
+import { AddFacilityBookingPage } from './pages/AddFacilityBookingPage';
+import { AssetGroupsDashboard } from './pages/setup/AssetGroupsDashboard';
+
+import ApprovalMatrixSetupPage from './pages/settings/ApprovalMatrixSetupPage';
+
+import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
+import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
+import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
+
+import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
+
+// Import Setup pages
+import { PermitSetupDashboard } from './pages/PermitSetupDashboard';
+import { IncidentSetupDashboard } from './pages/IncidentSetupDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -402,7 +434,7 @@ function App() {
           <Routes>
             {/* Login Route */}
             <Route path="/login" element={<LoginPage />} />
-            
+
             <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
 
@@ -420,7 +452,11 @@ function App() {
               <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
               <Route path="/settings/roles/role" element={<RoleDashboard />} />
-              
+
+              {/* Settings Asset Setup Routes */}
+              <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
+              <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsPage />} />
+
               {/* Settings Masters Routes */}
               <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
               <Route path="/settings/masters/checklist-master" element={<ChecklistMasterDashboard />} />
@@ -471,6 +507,10 @@ function App() {
               <Route path="/maintenance/ticket/details/:id" element={<TicketDetailsPage />} />
               <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
               <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
+
+              {/* Task Routes */}
+              <Route path="/maintenance/task" element={<ScheduledTaskDashboard />} />
+              <Route path="/maintenance/task/details/:id" element={<TaskDetailsPage />} />
 
               {/* Safety Routes */}
               <Route path="/safety/incident" element={<IncidentListDashboard />} />
@@ -524,6 +564,7 @@ function App() {
 
               {/* Survey Routes */}
               <Route path="/maintenance/survey/list" element={<SurveyListDashboard />} />
+              <Route path="/maintenance/survey/add" element={<AddSurveyPage />} />
               <Route path="/maintenance/survey/mapping" element={<SurveyMappingDashboard />} />
               <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
               <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />
@@ -587,10 +628,11 @@ function App() {
               <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
               <Route path="/maintenance/inventory/add" element={<AddInventoryPage />} />
               <Route path="/maintenance/inventory/details/:id" element={<InventoryDetailsPage />} />
+              <Route path="/maintenance/inventory/edit/:id" element={<EditInventoryPage />} />
               <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
 
               {/* Task Routes */}
-              <Route path="/maintenance/task" element={<TaskDashboard />} />
+              <Route path="/maintenance/task" element={<ScheduledTaskDashboard />} />
               <Route path="/maintenance/task/details/:id" element={<TaskDetailsPage />} />
 
               {/* Schedule Routes */}
@@ -698,42 +740,42 @@ function App() {
               <Route path="/market-place/cloud-telephony" element={<CloudTelephonyDetailPage />} />
               <Route path="/market-place/accounting" element={<AccountingDetailPage />} />
 
+              {/* VAS Booking Routes */}
+              <Route path="/vas/booking/list" element={<BookingListDashboard />} />
+              <Route path="/vas/booking/add" element={<AddFacilityBookingPage />} />
+              <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
+              <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
+
               <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
+              <Route path="maintenance/task" element={<ScheduledTaskDashboard />} />
+              <Route path="task-details/:id" element={<TaskDetailsPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 
-            {/* Setup Routes */}
-            <Route path="/setup" element={<SetupLayout><div /></SetupLayout>}>
-              <Route path="/setup/location/account" element={<div>Location Account</div>} />
-              <Route path="/setup/location/building" element={<div>Location Building</div>} />
-              <Route path="/setup/location/wing" element={<div>Location Wing</div>} />
-              <Route path="/setup/location/area" element={<div>Location Area</div>} />
-              <Route path="/setup/location/floor" element={<div>Location Floor</div>} />
-              <Route path="/setup/location/unit" element={<div>Location Unit</div>} />
-              <Route path="/setup/location/room" element={<div>Location Room</div>} />
-              <Route path="/setup/user-role/department" element={<SetupDepartmentDashboard />} />
-              <Route path="/setup/user-role/role" element={<div>User Role Role</div>} />
-              <Route path="/setup/fm-user" element={<div>FM User</div>} />
-              <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
-              <Route path="/setup/meter-type" element={<div>Meter Type</div>} />
-              <Route path="/setup/asset-groups" element={<div>Asset Groups</div>} />
-              <Route path="/setup/checklist-group" element={<div>Checklist Group</div>} />
-              <Route path="/setup/ticket/setup" element={<div>Ticket Setup</div>} />
-              <Route path="/setup/ticket/escalation" element={<div>Ticket Escalation</div>} />
-              <Route path="/setup/ticket/cost-approval" element={<div>Ticket Cost Approval</div>} />
-              <Route path="/setup/task-escalation" element={<div>Task Escalation</div>} />
-              <Route path="/setup/approval-matrix" element={<ApprovalMatrixDashboard />} />
-              <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
-              <Route path="/setup/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
-              <Route path="/setup/patrolling-approval" element={<div>Patrolling Approval</div>} />
-              <Route path="/setup/email-rule" element={<div>Email Rule</div>} />
-              <Route path="/setup/fm-group" element={<div>FM Group</div>} />
-              <Route path="/setup/master-checklist" element={<div>Master Checklist</div>} />
-              <Route path="/setup/sac-hsn-setup" element={<div>SAC/HSN Setup</div>} />
-              <Route path="/setup/address" element={<div>Address</div>} />
-              <Route path="/setup/tag" element={<div>Tag</div>} />
-              <Route path="/setup/export" element={<ExportDashboard />} />
+            {/* Settings Routes */}
+
+                       <Route path="/settings" element={<Layout><div /></Layout>}>
+
+            <Route path="/settings/approval-matrix/setup" element={<ApprovalMatrixSetupPage />} />
+
+              <Route path="/settings/checklist-setup/group" element={<AssetGroupsDashboard />} />
+              <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
+              <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
+              <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
+              <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
+              <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
+              <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
+              <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
+              <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
+              <Route path="/settings/safety/incident" element={<IncidentSetupDashboard />} />
+              <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
+<Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
             </Route>
+
+            {/* Setup Routes - Outside of settings parent route */}
+            <Route path="/setup/permit" element={<PermitSetupDashboard />} />
+            <Route path="/setup/incident" element={<IncidentSetupDashboard />} />
+
           </Routes>
           <Toaster />
         </LayoutProvider>

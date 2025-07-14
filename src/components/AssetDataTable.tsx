@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
+import { EnhancedTable } from './enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 interface Asset {
   id: string;
@@ -57,141 +58,91 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     }
   };
 
+  const columns: ColumnConfig[] = [
+    { key: 'serialNumber', label: 'Serial Number', sortable: true, hideable: true, defaultVisible: visibleColumns.serialNumber },
+    { key: 'assetName', label: 'Asset Name', sortable: true, hideable: true, defaultVisible: visibleColumns.assetName },
+    { key: 'assetId', label: 'Asset ID', sortable: true, hideable: true, defaultVisible: visibleColumns.assetId },
+    { key: 'assetNo', label: 'Asset No.', sortable: true, hideable: true, defaultVisible: visibleColumns.assetNo },
+    { key: 'assetStatus', label: 'Asset Status', sortable: true, hideable: true, defaultVisible: visibleColumns.assetStatus },
+    { key: 'site', label: 'Site', sortable: true, hideable: true, defaultVisible: visibleColumns.site },
+    { key: 'building', label: 'Building', sortable: true, hideable: true, defaultVisible: visibleColumns.building },
+    { key: 'wing', label: 'Wing', sortable: true, hideable: true, defaultVisible: visibleColumns.wing },
+    { key: 'floor', label: 'Floor', sortable: true, hideable: true, defaultVisible: visibleColumns.floor },
+    { key: 'area', label: 'Area', sortable: true, hideable: true, defaultVisible: visibleColumns.area },
+    { key: 'room', label: 'Room', sortable: true, hideable: true, defaultVisible: visibleColumns.room },
+    { key: 'group', label: 'Group', sortable: true, hideable: true, defaultVisible: visibleColumns.group },
+    { key: 'subGroup', label: 'Sub-Group', sortable: true, hideable: true, defaultVisible: visibleColumns.subGroup },
+    { key: 'assetType', label: 'Asset Type', sortable: true, hideable: true, defaultVisible: visibleColumns.assetType },
+  ];
+
+  const renderCell = (asset: Asset, columnKey: string) => {
+    switch (columnKey) {
+      case 'serialNumber':
+        return <span className="text-sm text-gray-600">{asset.serialNumber || asset.code}</span>;
+      case 'assetName':
+        return <span className="text-sm font-medium text-gray-900">{asset.name}</span>;
+      case 'assetId':
+        return <span className="text-sm text-[#1a1a1a]">{asset.id}</span>;
+      case 'assetNo':
+        return <span className="text-sm text-gray-600">{asset.assetNo}</span>;
+      case 'assetStatus':
+        return (
+          <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
+            {asset.status}
+          </Badge>
+        );
+      case 'site':
+        return <span className="text-sm text-gray-600">{asset.site}</span>;
+      case 'building':
+        return <span className="text-sm text-gray-600">{asset.building}</span>;
+      case 'wing':
+        return <span className="text-sm text-gray-600">{asset.wing}</span>;
+      case 'floor':
+        return <span className="text-sm text-gray-600">{asset.floor}</span>;
+      case 'area':
+        return <span className="text-sm text-gray-600">{asset.area}</span>;
+      case 'room':
+        return <span className="text-sm text-gray-600">{asset.room}</span>;
+      case 'group':
+        return <span className="text-sm text-gray-600">{asset.group || 'N/A'}</span>;
+      case 'subGroup':
+        return <span className="text-sm text-gray-600">{asset.subGroup || 'N/A'}</span>;
+      case 'assetType':
+        return <span className="text-sm text-gray-600">{asset.assetType}</span>;
+      default:
+        return null;
+    }
+  };
+
+  const renderActions = (asset: Asset) => (
+    <Button 
+      variant="ghost" 
+      size="sm"
+      onClick={(e) => {
+        e.stopPropagation();
+        onViewAsset(asset.id);
+      }}
+      className="p-1 h-8 w-8"
+    >
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50 border-b border-gray-200">
-              <TableHead className="w-12 px-4 py-3">
-                <input 
-                  type="checkbox" 
-                  onChange={(e) => onSelectAll(e.target.checked)}
-                  checked={selectedAssets.length === assets.length && assets.length > 0}
-                  className="rounded border-gray-300"
-                />
-              </TableHead>
-              {visibleColumns.actions && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</TableHead>
-              )}
-              {visibleColumns.serialNumber && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Serial Number</TableHead>
-              )}
-              {visibleColumns.assetName && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Name</TableHead>
-              )}
-              {visibleColumns.assetId && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset ID</TableHead>
-              )}
-              {visibleColumns.assetNo && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset No.</TableHead>
-              )}
-              {visibleColumns.assetStatus && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Status</TableHead>
-              )}
-              {visibleColumns.site && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site</TableHead>
-              )}
-              {visibleColumns.building && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Building</TableHead>
-              )}
-              {visibleColumns.wing && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wing</TableHead>
-              )}
-              {visibleColumns.floor && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Floor</TableHead>
-              )}
-              {visibleColumns.area && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Area</TableHead>
-              )}
-              {visibleColumns.room && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</TableHead>
-              )}
-              {visibleColumns.group && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Group</TableHead>
-              )}
-              {visibleColumns.subGroup && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Sub-Group</TableHead>
-              )}
-              {visibleColumns.assetType && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Type</TableHead>
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assets.map((asset) => (
-              <TableRow key={asset.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <TableCell className="px-4 py-3">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedAssets.includes(asset.id)}
-                    onChange={(e) => onSelectAsset(asset.id, e.target.checked)}
-                    className="rounded border-gray-300"
-                  />
-                </TableCell>
-                {visibleColumns.actions && (
-                  <TableCell className="px-4 py-3">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => onViewAsset(asset.id)}
-                      className="p-1 h-8 w-8"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                )}
-                {visibleColumns.serialNumber && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.serialNumber || asset.code}</TableCell>
-                )}
-                {visibleColumns.assetName && (
-                  <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name}</TableCell>
-                )}
-                {visibleColumns.assetId && (
-                  <TableCell className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.id}</TableCell>
-                )}
-                {visibleColumns.assetNo && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
-                )}
-                {visibleColumns.assetStatus && (
-                  <TableCell className="px-4 py-3">
-                    <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
-                      {asset.status}
-                    </Badge>
-                  </TableCell>
-                )}
-                {visibleColumns.site && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.site}</TableCell>
-                )}
-                {visibleColumns.building && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.building}</TableCell>
-                )}
-                {visibleColumns.wing && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.wing}</TableCell>
-                )}
-                {visibleColumns.floor && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.floor}</TableCell>
-                )}
-                {visibleColumns.area && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.area}</TableCell>
-                )}
-                {visibleColumns.room && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.room}</TableCell>
-                )}
-                {visibleColumns.group && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.group || 'N/A'}</TableCell>
-                )}
-                {visibleColumns.subGroup && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.subGroup || 'N/A'}</TableCell>
-                )}
-                {visibleColumns.assetType && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetType}</TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <EnhancedTable
+      data={assets}
+      columns={columns}
+      renderCell={renderCell}
+      renderActions={renderActions}
+      onRowClick={(asset) => onViewAsset(asset.id)}
+      storageKey="asset-data-table"
+      emptyMessage="No assets found"
+      selectable={true}
+      selectedItems={selectedAssets}
+      onSelectAll={onSelectAll}
+      onSelectItem={onSelectAsset}
+      getItemId={(asset) => asset.id}
+      selectAllLabel="Select all assets"
+    />
   );
 };

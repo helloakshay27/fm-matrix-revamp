@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Eye } from 'lucide-react';
+import { Plus, Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-const initialAmcData = [{
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+
+interface AMCRecord {
+  id: string;
+  assetName: string;
+  type: string;
+  vendor: string;
+  startDate: string;
+  endDate: string;
+  firstService: string;
+  status: boolean;
+  createdOn: string;
+}
+
+const initialAmcData: AMCRecord[] = [{
   id: '51016',
   assetName: '',
   type: 'Asset',
@@ -55,121 +68,162 @@ const initialAmcData = [{
   status: true,
   createdOn: '04/02/2025, 12:31AM'
 }];
+
+const columns: ColumnConfig[] = [
+  { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
+  { key: 'assetName', label: 'Asset Name', sortable: true, defaultVisible: true },
+  { key: 'type', label: 'Type', sortable: true, defaultVisible: true },
+  { key: 'vendor', label: 'Vendor', sortable: true, defaultVisible: true },
+  { key: 'startDate', label: 'Start Date', sortable: true, defaultVisible: true },
+  { key: 'endDate', label: 'End Date', sortable: true, defaultVisible: true },
+  { key: 'firstService', label: 'First Service', sortable: true, defaultVisible: true },
+  { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+  { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+];
+
 export const AMCDashboard = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [amcData, setAmcData] = useState(initialAmcData);
-  const [filteredAMC, setFilteredAMC] = useState(initialAmcData);
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    if (value) {
-      const filtered = amcData.filter(amc => amc.id.toLowerCase().includes(value.toLowerCase()) || amc.vendor.toLowerCase().includes(value.toLowerCase()));
-      setFilteredAMC(filtered);
-    } else {
-      setFilteredAMC(amcData);
-    }
-  };
+  const [amcData, setAmcData] = useState<AMCRecord[]>(initialAmcData);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
   };
+
   const handleViewDetails = (id: string) => {
     navigate(`/maintenance/amc/details/${id}`);
   };
+
   const handleStatusToggle = (id: string) => {
-    console.log(`Toggling status for AMC ${id}`);
-
-    // Update the main data array
-    const updatedAmcData = amcData.map(amc => amc.id === id ? {
-      ...amc,
-      status: !amc.status
-    } : amc);
+    const updatedAmcData = amcData.map(amc => 
+      amc.id === id ? { ...amc, status: !amc.status } : amc
+    );
     setAmcData(updatedAmcData);
+  };
 
-    // Update the filtered data array
-    const updatedFilteredData = filteredAMC.map(amc => amc.id === id ? {
-      ...amc,
-      status: !amc.status
-    } : amc);
-    setFilteredAMC(updatedFilteredData);
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(amcData.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
   };
-  const handleReset = () => {
-    setSearchTerm('');
-    setFilteredAMC(amcData);
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
   };
-  return <div className="p-6">
+
+  const handleBulkDelete = (selectedItems: AMCRecord[]) => {
+    const selectedIds = selectedItems.map(item => item.id);
+    setAmcData(prev => prev.filter(item => !selectedIds.includes(item.id)));
+    setSelectedItems([]);
+  };
+
+  const renderCell = (item: AMCRecord, columnKey: string) => {
+    switch (columnKey) {
+      case 'id':
+        return <span className="font-medium">{item.id}</span>;
+      case 'assetName':
+        return item.assetName || '-';
+      case 'type':
+        return item.type;
+      case 'vendor':
+        return item.vendor;
+      case 'startDate':
+        return item.startDate;
+      case 'endDate':
+        return item.endDate;
+      case 'firstService':
+        return item.firstService;
+      case 'status':
+        return (
+          <div className="flex items-center">
+            <div 
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                item.status ? 'bg-green-500' : 'bg-gray-300'
+              }`} 
+              onClick={() => handleStatusToggle(item.id)}
+            >
+              <span 
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                  item.status ? 'translate-x-6' : 'translate-x-1'
+                }`} 
+              />
+            </div>
+          </div>
+        );
+      case 'createdOn':
+        return item.createdOn;
+      default:
+        return '-';
+    }
+  };
+
+  const renderActions = (item: AMCRecord) => (
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      onClick={() => handleViewDetails(item.id)}
+    >
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      icon: Trash2,
+      variant: 'destructive' as const,
+      onClick: handleBulkDelete,
+    },
+  ];
+
+  return (
+    <div className="p-6">
       {/* Header */}
       <div className="mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">AMC LIST</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
+          AMC LIST
+        </h1>
       </div>
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button onClick={handleAddClick} className="text-white bg-[#C72030] hover:bg-[#C72030]/90 [&_svg]:text-white">
-        <Plus className="w-4 h-4 mr-2" style={{
-          color: '#BF213E'
-        }} />
-  Add
-      </Button>
-
-        <div className="ml-auto flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input placeholder="Search AMC..." value={searchTerm} onChange={e => handleSearch(e.target.value)} className="pl-10 w-64 bg-white" />
-          </div>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10" onClick={handleReset}>
-            Reset
-          </Button>
-        </div>
+        <Button 
+          onClick={handleAddClick} 
+          className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
       </div>
 
-      {/* AMC Table */}
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Action</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>Asset Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Vendor</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead>First Service</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created on</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAMC.map(amc => <TableRow key={amc.id}>
-                <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => handleViewDetails(amc.id)}>
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">{amc.id}</TableCell>
-                <TableCell>{amc.assetName}</TableCell>
-                <TableCell>{amc.type}</TableCell>
-                <TableCell>{amc.vendor}</TableCell>
-                <TableCell>{amc.startDate}</TableCell>
-                <TableCell>{amc.endDate}</TableCell>
-                <TableCell>{amc.firstService}</TableCell>
-                <TableCell>
-                  <div className="flex items-center">
-                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${amc.status ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleStatusToggle(amc.id)}>
-                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${amc.status ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{amc.createdOn}</TableCell>
-              </TableRow>)}
-            {filteredAMC.length === 0 && <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                  No AMC records found
-                </TableCell>
-              </TableRow>}
-          </TableBody>
-        </Table>
-      </div>
-    </div>;
+      {/* Enhanced Table */}
+      <EnhancedTable
+        data={amcData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        onRowClick={(item) => handleViewDetails(item.id)}
+        selectable={true}
+        selectedItems={selectedItems}
+        onSelectAll={handleSelectAll}
+        onSelectItem={handleSelectItem}
+        storageKey="amc-dashboard-table"
+        emptyMessage="No AMC records found"
+        searchPlaceholder="Search AMC records..."
+        enableExport={true}
+        exportFileName="amc-records"
+        bulkActions={bulkActions}
+        showBulkActions={true}
+        pagination={true}
+        pageSize={10}
+      />
+    </div>
+  );
 };

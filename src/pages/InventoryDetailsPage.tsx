@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, QrCode, Edit } from 'lucide-react';
-import { EditInventoryModal } from '@/components/EditInventoryModal';
 
 export const InventoryDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleBack = () => {
     navigate('/maintenance/inventory');
@@ -20,7 +18,7 @@ export const InventoryDetailsPage = () => {
   };
 
   const handleEdit = () => {
-    setIsEditModalOpen(true);
+    navigate(`/maintenance/inventory/edit/${id}`);
   };
 
   return (
@@ -225,35 +223,6 @@ export const InventoryDetailsPage = () => {
           </Card>
         </div>
       </div>
-
-      {/* Edit Modal */}
-      <EditInventoryModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        inventoryData={{
-          assetName: '',
-          inventoryName: 'test12',
-          inventoryCode: '123987',
-          serialNumber: '',
-          quantity: '8.0',
-          cost: '',
-          unit: '',
-          expiryDate: '',
-          category: '',
-          vendor: '',
-          maxStockLevel: '',
-          minStockLevel: '',
-          minOrderLevel: '',
-          inventoryType: 'consumable',
-          criticality: 'critical',
-          ecoFriendly: false,
-          taxApplicable: false,
-          sacHsnCode: '',
-          sgstRate: '',
-          cgstRate: '',
-          igstRate: ''
-        }}
-      />
     </div>
   );
 };

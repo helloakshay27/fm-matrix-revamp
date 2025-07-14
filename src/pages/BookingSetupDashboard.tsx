@@ -1,107 +1,100 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Filter } from "lucide-react";
-import { BookingSetupFilterDialog } from "@/components/BookingSetupFilterDialog";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Filter, Eye } from "lucide-react";
+import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { BookingSetupForm } from "@/components/BookingSetupForm";
-
 export const BookingSetupDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
-
   const handleFilterApply = (filters: any) => {
     console.log('Applied booking setup filters:', filters);
   };
-
-  const bookingSetupData = [
-    {
-      id: "1307",
-      name: "conference room now",
-      type: "bookable",
-      department: "Slot",
-      bookBy: "D • H • M",
-      bookBefore: "D • H • M",
-      advanceBooking: "04/03/2025 10:00 AM",
-      createdOn: "22/11/2022 12:36 PM",
-      createdBy: "",
-      status: "✓"
-    },
-    {
-      id: "756",
-      name: "Legacy Board Room ( HOUSE - 2ND FLOOR)",
-      type: "bookable",
-      department: "Slot",
-      bookBy: "00 • 0H • 2M",
-      bookBefore: "PD • 0H • 4M",
-      advanceBooking: "",
-      createdOn: "",
-      createdBy: "Sony Bhogle",
-      status: "✓"
-    },
-    {
-      id: "741",
-      name: "Admin Room",
-      type: "bookable",
-      department: "Slot",
-      bookBy: "00 • 0H • 2M",
-      bookBefore: "D • H • M",
-      advanceBooking: "14/09/2022 5:54 PM",
-      createdOn: "",
-      createdBy: "",
-      status: "✓"
-    },
-    {
-      id: "740",
-      name: "Conference Room",
-      type: "bookable",
-      department: "Slot",
-      bookBy: "00 • 0H • 2M",
-      bookBefore: "D • H • M",
-      advanceBooking: "14/09/2022 5:52 PM",
-      createdOn: "",
-      createdBy: "",
-      status: "✓"
-    },
-    {
-      id: "664",
-      name: "Gryfindor Focus Room",
-      type: "bookable",
-      department: "Slot",
-      bookBy: "00 • 0H • 2M",
-      bookBefore: "D • H • M",
-      advanceBooking: "28/02/2022 6:11 PM",
-      createdOn: "",
-      createdBy: "Ankit Gupta",
-      status: "✓"
-    }
-  ];
-
+  const [bookingSetupData, setBookingSetupData] = useState([{
+    id: "1307",
+    name: "conference room now",
+    type: "bookable",
+    department: "Slot",
+    bookBy: "D • H • M",
+    bookBefore: "D • H • M",
+    advanceBooking: "04/03/2025 10:00 AM",
+    createdOn: "22/11/2022 12:36 PM",
+    createdBy: "",
+    status: true
+  }, {
+    id: "756",
+    name: "Legacy Board Room ( HOUSE - 2ND FLOOR)",
+    type: "bookable",
+    department: "Slot",
+    bookBy: "00 • 0H • 2M",
+    bookBefore: "PD • 0H • 4M",
+    advanceBooking: "",
+    createdOn: "",
+    createdBy: "Sony Bhogle",
+    status: true
+  }, {
+    id: "741",
+    name: "Admin Room",
+    type: "bookable",
+    department: "Slot",
+    bookBy: "00 • 0H • 2M",
+    bookBefore: "D • H • M",
+    advanceBooking: "14/09/2022 5:54 PM",
+    createdOn: "",
+    createdBy: "",
+    status: true
+  }, {
+    id: "740",
+    name: "Conference Room",
+    type: "bookable",
+    department: "Slot",
+    bookBy: "00 • 0H • 2M",
+    bookBefore: "D • H • M",
+    advanceBooking: "14/09/2022 5:52 PM",
+    createdOn: "",
+    createdBy: "",
+    status: true
+  }, {
+    id: "664",
+    name: "Gryfindor Focus Room",
+    type: "bookable",
+    department: "Slot",
+    bookBy: "00 • 0H • 2M",
+    bookBefore: "D • H • M",
+    advanceBooking: "28/02/2022 6:11 PM",
+    createdOn: "",
+    createdBy: "Ankit Gupta",
+    status: true
+  }]);
   const handleAddBooking = () => {
     setIsAddBookingOpen(true);
   };
+  const handleStatusToggle = (id: string) => {
+    setBookingSetupData(prevData => prevData.map(booking => booking.id === id ? {
+      ...booking,
+      status: !booking.status
+    } : booking));
+  };
 
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-sm p-6">
+  const handleViewDetails = (id: string) => {
+    navigate(`/vas/booking/setup/details/${id}`);
+  };
+  return <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="rounded-lg shadow-sm p-1 bg-transparent">
         <div className="mb-6">
           <p className="text-[#1a1a1a] opacity-70 mb-2">Booking Setup &gt; Booking Setup List</p>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">BOOKING SETUP</h1>
         </div>
 
         <div className="flex items-center gap-2 mb-6">
-          <Button 
-            onClick={handleAddBooking}
-            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-          >
+          <Button onClick={handleAddBooking} className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Add
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setIsFilterOpen(true)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="outline" onClick={() => setIsFilterOpen(true)} className="flex items-center gap-2">
             <Filter className="w-4 h-4" />
             Filter
           </Button>
@@ -126,15 +119,18 @@ export const BookingSetupDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookingSetupData.map((booking, index) => (
-                <TableRow key={booking.id}>
+              {bookingSetupData.map((booking, index) => <TableRow key={booking.id}>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost">👁️</Button>
-                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => handleViewDetails(booking.id)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                   </TableCell>
-                  <TableCell className="text-blue-600 font-medium">{booking.id}</TableCell>
-                  <TableCell className="text-blue-600">{booking.name}</TableCell>
+                  <TableCell className="text-black font-medium">{booking.id}</TableCell>
+                  <TableCell className="text-black">{booking.name}</TableCell>
                   <TableCell>{booking.type}</TableCell>
                   <TableCell>{booking.department}</TableCell>
                   <TableCell>{booking.bookBy}</TableCell>
@@ -142,25 +138,19 @@ export const BookingSetupDashboard = () => {
                   <TableCell>{booking.advanceBooking}</TableCell>
                   <TableCell>{booking.createdOn}</TableCell>
                   <TableCell>{booking.createdBy}</TableCell>
-                  <TableCell className="text-green-600 font-bold">{booking.status}</TableCell>
-                </TableRow>
-              ))}
+                  <TableCell>
+                    <Switch checked={booking.status} onCheckedChange={() => handleStatusToggle(booking.id)} />
+                  </TableCell>
+                </TableRow>)}
             </TableBody>
           </Table>
         </div>
 
-        {/* Filter Dialog */}
-        <BookingSetupFilterDialog 
-          open={isFilterOpen}
-          onOpenChange={setIsFilterOpen}
-          onApply={handleFilterApply}
-        />
+        {/* Filter Modal */}
+        <BookingSetupFilterModal open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleFilterApply} />
 
         {/* Add Booking Setup Form */}
-        {isAddBookingOpen && (
-          <BookingSetupForm onClose={() => setIsAddBookingOpen(false)} />
-        )}
+        {isAddBookingOpen && <BookingSetupForm onClose={() => setIsAddBookingOpen(false)} />}
       </div>
-    </div>
-  );
+    </div>;
 };

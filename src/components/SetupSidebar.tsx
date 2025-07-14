@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   MapPin,
   Building,
@@ -42,10 +43,20 @@ const ticketItems = [
   { name: 'Cost Approval', href: '/setup/ticket/cost-approval' },
 ];
 
+const permitItems = [
+  { name: 'Permit Setup', href: '/setup/permit' },
+];
+
+const incidentItems = [
+  { name: 'Incident Setup', href: '/setup/incident' },
+];
+
 export const SetupSidebar = () => {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isUserRoleOpen, setIsUserRoleOpen] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
+  const [isPermitOpen, setIsPermitOpen] = useState(false);
+  const [isIncidentOpen, setIsIncidentOpen] = useState(false);
 
   return (
     <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
@@ -73,13 +84,13 @@ export const SetupSidebar = () => {
             {isLocationOpen && (
               <div className="ml-8 mt-1 space-y-1">
                 {locationItems.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
@@ -100,43 +111,43 @@ export const SetupSidebar = () => {
             {isUserRoleOpen && (
               <div className="ml-8 mt-1 space-y-1">
                 {userRoleItems.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
           </div>
 
           {/* Individual Items */}
-          <a href="/setup/fm-user" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/fm-user" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Users className="w-5 h-5" />
             FM User
-          </a>
+          </Link>
 
-          <a href="/setup/occupant-users" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/occupant-users" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Users className="w-5 h-5" />
             Occupant Users
-          </a>
+          </Link>
 
-          <a href="/setup/meter-type" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/meter-type" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Settings className="w-5 h-5" />
             Meter Type
-          </a>
+          </Link>
 
-          <a href="/setup/asset-groups" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/asset-groups" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Building className="w-5 h-5" />
             Asset Groups
-          </a>
+          </Link>
 
-          <a href="/setup/checklist-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/checklist-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <CheckSquare className="w-5 h-5" />
             Checklist Group
-          </a>
+          </Link>
 
           {/* Ticket Dropdown */}
           <div>
@@ -153,67 +164,121 @@ export const SetupSidebar = () => {
             {isTicketOpen && (
               <div className="ml-8 mt-1 space-y-1">
                 {ticketItems.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
           </div>
 
-          <a href="/setup/task-escalation" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          {/* Permit Dropdown */}
+          <div>
+            <button
+              onClick={() => setIsPermitOpen(!isPermitOpen)}
+              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5" />
+                Permit
+              </div>
+              {isPermitOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+            {isPermitOpen && (
+              <div className="ml-8 mt-1 space-y-1">
+                {permitItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Incident Dropdown */}
+          <div>
+            <button
+              onClick={() => setIsIncidentOpen(!isIncidentOpen)}
+              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+            >
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5" />
+                Incident
+              </div>
+              {isIncidentOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+            {isIncidentOpen && (
+              <div className="ml-8 mt-1 space-y-1">
+                {incidentItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Link to="/setup/task-escalation" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <AlertTriangle className="w-5 h-5" />
             Task Escalation
-          </a>
+          </Link>
 
-          <a href="/setup/approval-matrix" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/approval-matrix" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <ClipboardList className="w-5 h-5" />
             Approval Matrix
-          </a>
+          </Link>
 
-          <a href="/setup/patrolling-approval" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/patrolling-approval" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Shield className="w-5 h-5" />
             Patrolling Approval
-          </a>
+          </Link>
 
-          <a href="/setup/email-rule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/email-rule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Mail className="w-5 h-5" />
             Email Rule
-          </a>
+          </Link>
 
-          <a href="/setup/fm-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/fm-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Target className="w-5 h-5" />
             FM Group
-          </a>
+          </Link>
 
-          <a href="/setup/master-checklist" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/master-checklist" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <BookOpen className="w-5 h-5" />
             Master Checklist
-          </a>
+          </Link>
 
-          <a href="/setup/sac-hsn-setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/sac-hsn-setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Receipt className="w-5 h-5" />
             SAC/HSN Setup
-          </a>
+          </Link>
 
-          <a href="/setup/address" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/address" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Home className="w-5 h-5" />
             Address
-          </a>
+          </Link>
 
-          <a href="/setup/tag" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/tag" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Tag className="w-5 h-5" />
             Tag
-          </a>
+          </Link>
 
-          <a href="/setup/export" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <Link to="/setup/export" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <FileText className="w-5 h-5" />
             Export
-          </a>
+          </Link>
         </nav>
       </div>
     </div>

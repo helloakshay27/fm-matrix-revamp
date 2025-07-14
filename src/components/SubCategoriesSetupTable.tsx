@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { AddSubCategoryModal } from "./AddSubCategoryModal";
 import { EditSubCategoryModal } from "./EditSubCategoryModal";
+import { EnhancedTable } from "./enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface SubCategory {
   id: number;
@@ -19,6 +20,14 @@ const mockSubCategories: SubCategory[] = [
   { id: 1, category: "Breakfast", subCategory: "Continental", description: "Continental breakfast items", active: true },
   { id: 2, category: "Lunch", subCategory: "Indian", description: "Traditional Indian lunch", active: true },
   { id: 3, category: "Dinner", subCategory: "Italian", description: "Italian dinner specialties", active: true },
+];
+
+const columns: ColumnConfig[] = [
+  { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
+  { key: 'subCategory', label: 'Sub Category', sortable: true, hideable: true, draggable: true },
+  { key: 'description', label: 'Description', sortable: true, hideable: true, draggable: true },
+  { key: 'active', label: 'Active', sortable: true, hideable: true, draggable: true },
+  { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false }
 ];
 
 export const SubCategoriesSetupTable = () => {
@@ -63,6 +72,41 @@ export const SubCategoriesSetupTable = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const renderRow = (item: SubCategory) => ({
+    category: item.category,
+    subCategory: item.subCategory,
+    description: item.description,
+    active: (
+      <span className={`px-2 py-1 rounded-full text-xs ${
+        item.active 
+          ? 'bg-green-100 text-green-800' 
+          : 'bg-red-100 text-red-800'
+      }`}>
+        {item.active ? 'Active' : 'Inactive'}
+      </span>
+    ),
+    actions: (
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => openEditModal(item)}
+          className="p-1 h-8 w-8"
+        >
+          <Pencil className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => openDeleteDialog(item)}
+          className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    )
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex justify-start">
@@ -75,45 +119,15 @@ export const SubCategoriesSetupTable = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-100">
-              <TableHead className="font-medium">Actions</TableHead>
-              <TableHead className="font-medium text-center">Category</TableHead>
-              <TableHead className="font-medium text-center">Sub Category</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subCategories.map((subCategory) => (
-              <TableRow key={subCategory.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditModal(subCategory)}
-                      className="p-1 h-8 w-8"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDeleteDialog(subCategory)}
-                      className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">{subCategory.category}</TableCell>
-                <TableCell className="text-center">{subCategory.subCategory}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <EnhancedTable
+        data={subCategories}
+        columns={columns}
+        renderRow={renderRow}
+        enableSearch={true}
+        enableSelection={true}
+        enableExport={true}
+        storageKey="subcategories-table"
+      />
 
       <AddSubCategoryModal
         isOpen={isAddModalOpen}

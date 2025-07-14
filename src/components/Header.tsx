@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Bell, User, MapPin, ChevronDown, Home, Settings } from 'lucide-react';
+import { Bell, User, MapPin, ChevronDown, Home } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,17 +38,6 @@ export const Header = () => {
           >
             <Home className="w-4 h-4" />
             Home
-          </a>
-
-          {/* Setup Link */}
-          <a
-            href="/setup"
-            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-              currentPath === '/setup' ? 'text-[#C72030]' : 'text-[#1a1a1a] hover:text-[#C72030]'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Setup
           </a>
 
           {/* Project Dropdown */}
@@ -104,7 +94,7 @@ export const Header = () => {
               <DropdownMenuItem>Preferences</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600">
-                <Settings className="w-4 h-4 mr-2" />
+                <User className="w-4 h-4 mr-2" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
