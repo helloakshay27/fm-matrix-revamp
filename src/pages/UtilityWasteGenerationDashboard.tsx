@@ -149,6 +149,10 @@ const UtilityWasteGenerationDashboard = () => {
       </Button>
     </div>
   );
+
+  const renderCell = (item: any, columnKey: string) => {
+    return item[columnKey];
+  };
   return <>
       <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
         {/* Header */}
@@ -209,6 +213,7 @@ const UtilityWasteGenerationDashboard = () => {
               columns={columns}
               selectable={true}
               renderActions={renderActions}
+              renderCell={renderCell}
               storageKey="waste-generation-table"
               enableExport={true}
               exportFileName="waste-generation-data"
