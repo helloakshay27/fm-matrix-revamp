@@ -248,8 +248,7 @@ export const SeatSetup = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Main content with proper spacing from sidebar */}
-      <div className="flex-1 p-6 ml-64 min-w-0">
+      <div className="flex-1 p-6 min-w-0">
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">
@@ -291,11 +290,11 @@ export const SeatSetup = () => {
           />
         </div>
 
-        {/* Table Container with fixed boundaries */}
-        <div className="bg-white rounded-lg border shadow-sm max-w-full">
-          <div className="overflow-x-auto">
+        {/* Main Table Container with proper overflow handling */}
+        <div className="bg-white rounded-lg border shadow-sm">
+          <div className="overflow-x-auto max-w-full">
             <div className="min-w-max">
-              <Table className="w-full">
+              <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-semibold text-gray-700 sticky left-0 bg-gray-50 z-20 min-w-[120px] border-r border-gray-200">
@@ -305,7 +304,7 @@ export const SeatSetup = () => {
                       Floor
                     </TableHead>
                     {seatTypeColumns.map((seatType) => (
-                      <TableHead key={seatType} className="font-semibold text-gray-700 text-center min-w-[80px] whitespace-nowrap">
+                      <TableHead key={seatType} className="font-semibold text-gray-700 text-center min-w-[80px]">
                         <div className="space-y-1">
                           <div className="text-xs">{seatType}</div>
                           <div className="flex justify-between text-xs">
@@ -315,7 +314,7 @@ export const SeatSetup = () => {
                         </div>
                       </TableHead>
                     ))}
-                    <TableHead className="font-semibold text-gray-700 text-center sticky right-0 bg-gray-50 z-20 border-l border-gray-200 min-w-[100px]">
+                    <TableHead className="font-semibold text-gray-700 text-center sticky right-0 bg-gray-50 z-20 border-l border-gray-200">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -332,7 +331,7 @@ export const SeatSetup = () => {
                       {seatTypeColumns.map((seatType) => {
                         const seatInfo = location.seatTypes[seatType] || { totalSeats: 0, reservedSeats: 0 };
                         return (
-                          <TableCell key={seatType} className="text-center whitespace-nowrap">
+                          <TableCell key={seatType} className="text-center">
                             <div className="flex justify-between text-sm">
                               <span className="text-blue-600">{seatInfo.totalSeats}</span>
                               <span className="text-red-600">{seatInfo.reservedSeats}</span>
@@ -371,7 +370,7 @@ export const SeatSetup = () => {
                       -
                     </TableCell>
                     {seatTypeColumns.map((seatType) => (
-                      <TableCell key={seatType} className="text-center whitespace-nowrap">
+                      <TableCell key={seatType} className="text-center">
                         <div className="flex justify-between text-sm font-semibold">
                           <span className="text-blue-600">{totals[seatType].totalSeats}</span>
                           <span className="text-red-600">{totals[seatType].reservedSeats}</span>
