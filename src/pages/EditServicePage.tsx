@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { User, Folder } from 'lucide-react';
+import { User, Folder, ArrowLeft } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const EditServicePage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     serviceName: '',
     serviceCode: '',
@@ -31,6 +33,10 @@ const EditServicePage = () => {
     e.preventDefault();
     console.log('Submitting form data:', formData);
     // Submit to backend
+  };
+
+  const handleGoBack = () => {
+    navigate(-1);
   };
 
   // Common styles for MUI fields with responsive heights
@@ -77,6 +83,16 @@ const EditServicePage = () => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 mx-auto">
+      {/* Back Button */}
+      <Button 
+        variant="ghost" 
+        onClick={handleGoBack}
+        className="mb-4 text-[#1a1a1a] hover:text-[#C72030]"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
+
       <h1 className="text-2xl font-bold mb-6 text-[#1a1a1a]">
         Edit Service - ID: {id}
       </h1>
