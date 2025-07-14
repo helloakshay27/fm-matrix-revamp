@@ -218,7 +218,7 @@ export const AssetAuditDashboard = () => {
                 <Clock className="w-6 h-6 text-[#D92818]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-black">{stats.scheduled}</span>
+                <span className="text-2xl font-bold" style={{ color: '#C72030' }}>{stats.scheduled}</span>
                 <span className="font-medium text-sm text-black">Scheduled</span>
               </div>
             </div>
@@ -230,7 +230,7 @@ export const AssetAuditDashboard = () => {
                 <Settings className="w-6 h-6 text-[#D92818]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-black">{stats.inProgress}</span>
+                <span className="text-2xl font-bold" style={{ color: '#C72030' }}>{stats.inProgress}</span>
                 <span className="font-medium text-sm text-black">In Progress</span>
               </div>
             </div>
@@ -242,7 +242,7 @@ export const AssetAuditDashboard = () => {
                 <CheckCircle className="w-6 h-6 text-[#D92818]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-black">{stats.completed}</span>
+                <span className="text-2xl font-bold" style={{ color: '#C72030' }}>{stats.completed}</span>
                 <span className="font-medium text-sm text-black">Completed</span>
               </div>
             </div>
@@ -254,7 +254,7 @@ export const AssetAuditDashboard = () => {
                 <AlertTriangle className="w-6 h-6 text-[#D92818]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-black">{stats.overdue}</span>
+                <span className="text-2xl font-bold" style={{ color: '#C72030' }}>{stats.overdue}</span>
                 <span className="font-medium text-sm text-black">Overdue</span>
               </div>
             </div>
@@ -266,7 +266,7 @@ export const AssetAuditDashboard = () => {
                 <XCircle className="w-6 h-6 text-[#D92818]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-black">{stats.closed}</span>
+                <span className="text-2xl font-bold" style={{ color: '#C72030' }}>{stats.closed}</span>
                 <span className="font-medium text-sm text-black">Closed</span>
               </div>
             </div>
