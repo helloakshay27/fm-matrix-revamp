@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Eye, Trash2 } from 'lucide-react';
@@ -70,15 +71,15 @@ const initialAmcData: AMCRecord[] = [{
 }];
 
 const columns: ColumnConfig[] = [
-  { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
-  { key: 'assetName', label: 'Asset Name', sortable: true, defaultVisible: true },
-  { key: 'type', label: 'Type', sortable: true, defaultVisible: true },
-  { key: 'vendor', label: 'Vendor', sortable: true, defaultVisible: true },
-  { key: 'startDate', label: 'Start Date', sortable: true, defaultVisible: true },
-  { key: 'endDate', label: 'End Date', sortable: true, defaultVisible: true },
-  { key: 'firstService', label: 'First Service', sortable: true, defaultVisible: true },
-  { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
-  { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+  { key: 'id', label: 'ID', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'assetName', label: 'Asset Name', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'type', label: 'Type', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'vendor', label: 'Vendor', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'startDate', label: 'Start Date', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'endDate', label: 'End Date', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'firstService', label: 'First Service', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, defaultVisible: true, draggable: true },
+  { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true, draggable: true },
 ];
 
 export const AMCDashboard = () => {
@@ -203,7 +204,7 @@ export const AMCDashboard = () => {
         </Button>
       </div>
 
-      {/* Enhanced Table */}
+      {/* Enhanced Table with drag and drop, sorting, and row selection */}
       <EnhancedTable
         data={amcData}
         columns={columns}
