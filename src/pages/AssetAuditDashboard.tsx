@@ -211,7 +211,7 @@ export const AssetAuditDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
         
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
           <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg flex items-center justify-center">
@@ -219,7 +219,7 @@ export const AssetAuditDashboard = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{stats.scheduled}</span>
-                <span className="font-medium text-sm">Scheduled</span>
+                <span className="font-medium text-sm text-black">Scheduled</span>
               </div>
             </div>
           </div>
@@ -231,7 +231,7 @@ export const AssetAuditDashboard = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{stats.inProgress}</span>
-                <span className="font-medium text-sm">In Progress</span>
+                <span className="font-medium text-sm text-black">In Progress</span>
               </div>
             </div>
           </div>
@@ -243,7 +243,7 @@ export const AssetAuditDashboard = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{stats.completed}</span>
-                <span className="font-medium text-sm">Completed</span>
+                <span className="font-medium text-sm text-black">Completed</span>
               </div>
             </div>
           </div>
@@ -255,7 +255,7 @@ export const AssetAuditDashboard = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{stats.overdue}</span>
-                <span className="font-medium text-sm">Overdue</span>
+                <span className="font-medium text-sm text-black">Overdue</span>
               </div>
             </div>
           </div>
@@ -267,7 +267,7 @@ export const AssetAuditDashboard = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{stats.closed}</span>
-                <span className="font-medium text-sm">Closed</span>
+                <span className="font-medium text-sm text-black">Closed</span>
               </div>
             </div>
           </div>
