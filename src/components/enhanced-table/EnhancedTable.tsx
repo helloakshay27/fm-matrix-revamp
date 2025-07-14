@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -401,31 +402,34 @@ export function EnhancedTable<T extends Record<string, any>>({
 
       {/* Pagination */}
       {pagination && totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="flex justify-center mt-6 gap-2">
+          <Button 
+            variant="outline" 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => prev - 1)}
+            className="hover:bg-gray-50"
+          >
+            Previous
+          </Button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              style={currentPage === page ? { backgroundColor: '#C72030' } : {}}
+              className={currentPage === page ? "text-white" : "hover:bg-gray-50"}
+              onClick={() => setCurrentPage(page)}
             >
-              Previous
+              {page}
             </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-          </div>
+          ))}
+          <Button 
+            variant="outline" 
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            className="hover:bg-gray-50"
+          >
+            Next
+          </Button>
         </div>
       )}
     </div>
