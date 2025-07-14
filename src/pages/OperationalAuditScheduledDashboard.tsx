@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { EnhancedScheduleTable } from '@/components/enhanced-table/EnhancedScheduleTable';
 
 export const OperationalAuditScheduledDashboard = () => {
   const navigate = useNavigate();
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // Sample data matching the image
   const scheduleData = [
@@ -24,6 +25,10 @@ export const OperationalAuditScheduledDashboard = () => {
 
   const handleAddSchedule = () => {
     navigate('/maintenance/audit/operational/scheduled/add');
+  };
+
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedItems(selectedIds);
   };
 
   return (
@@ -46,32 +51,10 @@ export const OperationalAuditScheduledDashboard = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-700">ID</TableHead>
-              <TableHead className="font-semibold text-gray-700">Activity Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">No. Of Association</TableHead>
-              <TableHead className="font-semibold text-gray-700">Task</TableHead>
-              <TableHead className="font-semibold text-gray-700">Task Assigned To</TableHead>
-              <TableHead className="font-semibold text-gray-700">Created on</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {scheduleData.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
-                <TableCell>{item.activityName}</TableCell>
-                <TableCell>{item.noOfAssociation}</TableCell>
-                <TableCell>{item.task}</TableCell>
-                <TableCell>{item.taskAssignedTo}</TableCell>
-                <TableCell>{item.createdOn}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <EnhancedScheduleTable 
+        data={scheduleData} 
+        onSelectionChange={handleSelectionChange}
+      />
     </div>
   );
 };
