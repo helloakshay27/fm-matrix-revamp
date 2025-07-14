@@ -31,15 +31,9 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
         Add
       </Button>
 
-      <Button onClick={onImport} className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4">
-        <Upload className="w-4 h-4 mr-2" />
-        Import
-      </Button>
       
-      <Button onClick={onUpdate} className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4">
-        <Download className="w-4 h-4 mr-2" />
-        Download QR All Asset
-      </Button>
+      
+      
       
       <Button onClick={onFilterOpen} variant="outline" className="border-gray-600 text-gray-800 bg-white hover:bg-gray-50 px-4">
         <Filter className="w-4 h-4 mr-2" />
