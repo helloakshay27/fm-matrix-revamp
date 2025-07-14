@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 export const OperationalAuditScheduledDashboard = () => {
   const navigate = useNavigate();
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // Sample data matching the image
   const scheduleData = [
@@ -22,8 +23,40 @@ export const OperationalAuditScheduledDashboard = () => {
     { id: "8935", activityName: "Engineer audit", noOfAssociation: 0, task: "Yes", taskAssignedTo: "", createdOn: "13/02/2023, 05:14 PM" },
   ];
 
+  const columns = [
+    { key: 'id', label: 'ID', sortable: true, draggable: true },
+    { key: 'activityName', label: 'Activity Name', sortable: true, draggable: true },
+    { key: 'noOfAssociation', label: 'No. Of Association', sortable: true, draggable: true },
+    { key: 'task', label: 'Task', sortable: true, draggable: true },
+    { key: 'taskAssignedTo', label: 'Task Assigned To', sortable: true, draggable: true },
+    { key: 'createdOn', label: 'Created on', sortable: true, draggable: true },
+  ];
+
   const handleAddSchedule = () => {
     navigate('/maintenance/audit/operational/scheduled/add');
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
+    if (columnKey === 'id') {
+      return <span className="text-blue-600 font-medium">{item.id}</span>;
+    }
+    return item[columnKey];
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(scheduleData.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
   };
 
   return (
@@ -47,30 +80,18 @@ export const OperationalAuditScheduledDashboard = () => {
       </div>
 
       <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-700">ID</TableHead>
-              <TableHead className="font-semibold text-gray-700">Activity Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">No. Of Association</TableHead>
-              <TableHead className="font-semibold text-gray-700">Task</TableHead>
-              <TableHead className="font-semibold text-gray-700">Task Assigned To</TableHead>
-              <TableHead className="font-semibold text-gray-700">Created on</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {scheduleData.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
-                <TableCell>{item.activityName}</TableCell>
-                <TableCell>{item.noOfAssociation}</TableCell>
-                <TableCell>{item.task}</TableCell>
-                <TableCell>{item.taskAssignedTo}</TableCell>
-                <TableCell>{item.createdOn}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <EnhancedTable
+          data={scheduleData}
+          columns={columns}
+          renderCell={renderCell}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          getItemId={(item) => item.id}
+          storageKey="schedule-list-table"
+          className="w-full"
+        />
       </div>
     </div>
   );
