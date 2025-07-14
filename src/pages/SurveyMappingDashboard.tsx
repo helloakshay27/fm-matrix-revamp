@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { SurveyMappingTable } from '../components/SurveyMappingTable';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, Filter, Download, RotateCcw, Eye } from 'lucide-react';
+import { Plus, Upload, Filter, Download, RotateCcw, Search, Eye } from 'lucide-react';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { Switch } from "@/components/ui/switch";
 import { QRCodeModal } from '../components/QRCodeModal';
@@ -249,8 +250,19 @@ export const SurveyMappingDashboard = () => {
           </Button>
         </div>
         
-        {/* Right side reset button only */}
-        <div className="flex items-center">
+        {/* Right side search and reset */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search services..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent w-full sm:w-64 lg:w-80"
+            />
+          </div>
+          
           <Button variant="outline" className="flex items-center justify-center gap-2 border-[#BF213E] text-[#BF213E] min-w-fit">
             <RotateCcw className="w-4 h-4" />
             Reset
