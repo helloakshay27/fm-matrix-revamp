@@ -217,6 +217,18 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
+          {(onSearchChange || !externalSearchTerm) && (
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => handleInternalSearchChange(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
+          
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">

@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, Upload, Filter, Search, RotateCcw, ExternalLink } from 'lucide-react';
+import { Plus, Upload, Filter, RotateCcw, ExternalLink } from 'lucide-react';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 
 interface AssetActionsProps {
@@ -56,16 +55,6 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
       </Button>
 
       <div className="flex items-center gap-2 ml-auto">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => onSearch(e.target.value)}
-            className="pl-10 w-64 bg-white border-gray-300"
-          />
-        </div>
-        
         <Button 
           variant="outline" 
           size="icon"
