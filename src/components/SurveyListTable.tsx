@@ -9,7 +9,6 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { EnhancedSurveyTable } from "@/components/enhanced-table/EnhancedSurveyTable";
 
 interface SurveyListTableProps {
   searchTerm: string;
@@ -117,7 +116,6 @@ const mockSurveyData = [
 export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
   const { toast } = useToast();
   const [surveys, setSurveys] = useState(mockSurveyData);
-  const [showEnhancedTable, setShowEnhancedTable] = useState(true);
 
   console.log('Survey data:', surveys);
   console.log('First survey status:', surveys[0]?.status);
@@ -178,245 +176,215 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
 
   const statusOptions = ['Active', 'Draft', 'Published', 'Inactive'];
 
-  if (showEnhancedTable) {
-    return (
-      <div>
-        <div className="mb-4 flex justify-end">
-          <button
-            onClick={() => setShowEnhancedTable(false)}
-            className="text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            Switch to Simple View
-          </button>
-        </div>
-        <EnhancedSurveyTable 
-          data={surveys} 
-          onDataChange={setSurveys} 
-          searchTerm={searchTerm} 
-        />
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={() => setShowEnhancedTable(true)}
-          className="text-sm text-blue-600 hover:text-blue-800 underline"
-        >
-          Switch to Enhanced View
-        </button>
-      </div>
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-        {/* Mobile Card Layout */}
-        <div className="block md:hidden">
-          {filteredSurveys.map((survey, index) => (
-            <div key={`${survey.id}-${index}`} className="p-4 border-b border-gray-200 last:border-b-0">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-medium text-sm">{survey.title}</h3>
-                  <p className="text-xs text-gray-500">ID: {survey.id}</p>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => handleAction('Edit', survey.id)} className="p-1 text-gray-600">
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleAction('Copy', survey.id)} className="p-1 text-gray-600">
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleAction('View', survey.id)} className="p-1 text-gray-600">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleAction('Share', survey.id)} className="p-1 text-gray-600">
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                </div>
+    <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+      {/* Mobile Card Layout */}
+      <div className="block md:hidden">
+        {filteredSurveys.map((survey, index) => (
+          <div key={`${survey.id}-${index}`} className="p-4 border-b border-gray-200 last:border-b-0">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <h3 className="font-medium text-sm">{survey.title}</h3>
+                <p className="text-xs text-gray-500">ID: {survey.id}</p>
               </div>
-              
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-gray-500">Category:</span>
-                  <p className="font-medium">{survey.ticketCategory}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Level:</span>
-                  <p className="font-medium">{survey.ticketLevel}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Associations:</span>
-                  <p className="font-medium">{survey.noOfAssociation}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Type:</span>
-                  <p className="font-medium">{survey.typeOfSurvey}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Status:</span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-1 hover:bg-gray-50 p-1 rounded">
-                      <span className={`font-medium ${getStatusColor(survey.status)}`}>
-                        {survey.status}
-                      </span>
-                      <ChevronDown className="w-3 h-3 text-gray-400" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-white border shadow-lg">
-                      {statusOptions.map((status) => (
-                        <DropdownMenuItem
-                          key={status}
-                          onClick={() => handleStatusChange(index, status)}
-                          className="cursor-pointer hover:bg-gray-50"
-                        >
-                          <span className={getStatusColor(status)}>{status}</span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div>
-                  <span className="text-gray-500">Valid From:</span>
-                  <p className="font-medium">{survey.validFrom}</p>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-gray-500">Valid To:</span>
-                  <p className="font-medium">{survey.validTo}</p>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center mt-3">
-                <span className="text-xs text-gray-500">Ticket Creation:</span>
-                <div 
-                  className={`relative inline-flex items-center h-5 rounded-full w-9 cursor-pointer transition-colors ${
-                    survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
-                  }`} 
-                  onClick={() => handleTicketCreationToggle(index)}
-                >
-                  <span 
-                    className={`inline-block w-3 h-3 transform bg-white rounded-full transition-transform ${
-                      survey.ticketCreation ? 'translate-x-5' : 'translate-x-1'
-                    }`} 
-                  />
-                </div>
+              <div className="flex gap-1">
+                <button onClick={() => handleAction('Edit', survey.id)} className="p-1 text-gray-600">
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleAction('Copy', survey.id)} className="p-1 text-gray-600">
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleAction('View', survey.id)} className="p-1 text-gray-600">
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleAction('Share', survey.id)} className="p-1 text-gray-600">
+                  <Share2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-gray-500">Category:</span>
+                <p className="font-medium">{survey.ticketCategory}</p>
+              </div>
+              <div>
+                <span className="text-gray-500">Level:</span>
+                <p className="font-medium">{survey.ticketLevel}</p>
+              </div>
+              <div>
+                <span className="text-gray-500">Associations:</span>
+                <p className="font-medium">{survey.noOfAssociation}</p>
+              </div>
+              <div>
+                <span className="text-gray-500">Type:</span>
+                <p className="font-medium">{survey.typeOfSurvey}</p>
+              </div>
+              <div>
+                <span className="text-gray-500">Status:</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 hover:bg-gray-50 p-1 rounded">
+                    <span className={`font-medium ${getStatusColor(survey.status)}`}>
+                      {survey.status}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white border shadow-lg">
+                    {statusOptions.map((status) => (
+                      <DropdownMenuItem
+                        key={status}
+                        onClick={() => handleStatusChange(index, status)}
+                        className="cursor-pointer hover:bg-gray-50"
+                      >
+                        <span className={getStatusColor(status)}>{status}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div>
+                <span className="text-gray-500">Valid From:</span>
+                <p className="font-medium">{survey.validFrom}</p>
+              </div>
+              <div className="col-span-2">
+                <span className="text-gray-500">Valid To:</span>
+                <p className="font-medium">{survey.validTo}</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-3">
+              <span className="text-xs text-gray-500">Ticket Creation:</span>
+              <div 
+                className={`relative inline-flex items-center h-5 rounded-full w-9 cursor-pointer transition-colors ${
+                  survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
+                }`} 
+                onClick={() => handleTicketCreationToggle(index)}
+              >
+                <span 
+                  className={`inline-block w-3 h-3 transform bg-white rounded-full transition-transform ${
+                    survey.ticketCreation ? 'translate-x-5' : 'translate-x-1'
+                  }`} 
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
-        {/* Desktop Table Layout */}
-        <div className="hidden md:block overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12 lg:w-16">Edit</TableHead>
-                <TableHead className="w-12 lg:w-16">Copy</TableHead>
-                <TableHead className="w-12 lg:w-16">View</TableHead>
-                <TableHead className="w-12 lg:w-16">Share</TableHead>
-                <TableHead className="w-16 lg:w-24">ID</TableHead>
-                <TableHead className="min-w-[150px]">Survey Title</TableHead>
-                <TableHead className="w-24 lg:w-32">Ticket Creation</TableHead>
-                <TableHead className="min-w-[120px]">Ticket Category</TableHead>
-                <TableHead className="min-w-[100px]">Ticket Level</TableHead>
-                <TableHead className="w-24 lg:w-32 text-center">No. Of Association</TableHead>
-                <TableHead className="min-w-[100px]">Type Of Survey</TableHead>
-                <TableHead className="min-w-[100px]">Status</TableHead>
-                <TableHead className="min-w-[100px]">Valid From</TableHead>
-                <TableHead className="min-w-[100px]">Valid To</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSurveys.map((survey, index) => {
-                console.log(`Rendering survey ${index}:`, {
-                  id: survey.id,
-                  status: survey.status,
-                  validFrom: survey.validFrom,
-                  validTo: survey.validTo
-                });
-                
-                return (
-                  <TableRow key={`${survey.id}-${index}`}>
-                    <TableCell>
-                      <button 
-                        onClick={() => handleAction('Edit', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
+      {/* Desktop Table Layout */}
+      <div className="hidden md:block overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12 lg:w-16">Edit</TableHead>
+              <TableHead className="w-12 lg:w-16">Copy</TableHead>
+              <TableHead className="w-12 lg:w-16">View</TableHead>
+              <TableHead className="w-12 lg:w-16">Share</TableHead>
+              <TableHead className="w-16 lg:w-24">ID</TableHead>
+              <TableHead className="min-w-[150px]">Survey Title</TableHead>
+              <TableHead className="w-24 lg:w-32">Ticket Creation</TableHead>
+              <TableHead className="min-w-[120px]">Ticket Category</TableHead>
+              <TableHead className="min-w-[100px]">Ticket Level</TableHead>
+              <TableHead className="w-24 lg:w-32 text-center">No. Of Association</TableHead>
+              <TableHead className="min-w-[100px]">Type Of Survey</TableHead>
+              <TableHead className="min-w-[100px]">Status</TableHead>
+              <TableHead className="min-w-[100px]">Valid From</TableHead>
+              <TableHead className="min-w-[100px]">Valid To</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredSurveys.map((survey, index) => {
+              console.log(`Rendering survey ${index}:`, {
+                id: survey.id,
+                status: survey.status,
+                validFrom: survey.validFrom,
+                validTo: survey.validTo
+              });
+              
+              return (
+                <TableRow key={`${survey.id}-${index}`}>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Edit', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Copy', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('View', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Share', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell className="font-medium">{survey.id}</TableCell>
+                  <TableCell>{survey.title}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <div 
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                          survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
+                        }`} 
+                        onClick={() => handleTicketCreationToggle(index)}
                       >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      <button 
-                        onClick={() => handleAction('Copy', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      <button 
-                        onClick={() => handleAction('View', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      <button 
-                        onClick={() => handleAction('Share', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </button>
-                    </TableCell>
-                    <TableCell className="font-medium">{survey.id}</TableCell>
-                    <TableCell>{survey.title}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <div 
-                          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                            survey.ticketCreation ? 'bg-green-400' : 'bg-gray-300'
+                        <span 
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                            survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
                           }`} 
-                          onClick={() => handleTicketCreationToggle(index)}
-                        >
-                          <span 
-                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                              survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
-                            }`} 
-                          />
-                        </div>
+                        />
                       </div>
-                    </TableCell>
-                    <TableCell>{survey.ticketCategory}</TableCell>
-                    <TableCell>{survey.ticketLevel}</TableCell>
-                    <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
-                    <TableCell>{survey.typeOfSurvey}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded">
-                          <span className={`font-medium ${getStatusColor(survey.status)}`}>
-                            {survey.status}
-                          </span>
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white border shadow-lg z-50">
-                          {statusOptions.map((status) => (
-                            <DropdownMenuItem
-                              key={status}
-                              onClick={() => handleStatusChange(index, status)}
-                              className="cursor-pointer hover:bg-gray-50"
-                            >
-                              <span className={getStatusColor(status)}>{status}</span>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                    <TableCell>{survey.validFrom}</TableCell>
-                    <TableCell>{survey.validTo}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{survey.ticketCategory}</TableCell>
+                  <TableCell>{survey.ticketLevel}</TableCell>
+                  <TableCell className="text-center">{survey.noOfAssociation}</TableCell>
+                  <TableCell>{survey.typeOfSurvey}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded">
+                        <span className={`font-medium ${getStatusColor(survey.status)}`}>
+                          {survey.status}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white border shadow-lg z-50">
+                        {statusOptions.map((status) => (
+                          <DropdownMenuItem
+                            key={status}
+                            onClick={() => handleStatusChange(index, status)}
+                            className="cursor-pointer hover:bg-gray-50"
+                          >
+                            <span className={getStatusColor(status)}>{status}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                  <TableCell>{survey.validFrom}</TableCell>
+                  <TableCell>{survey.validTo}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
