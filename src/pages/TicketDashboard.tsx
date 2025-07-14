@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -199,7 +200,22 @@ export const TicketDashboard = () => {
         {renderCustomActions()}
       </div>
 
-      <EnhancedTable data={ticketData} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="tickets" onRowClick={handleViewDetails} storageKey="tickets-table" />
+      <EnhancedTable 
+        data={ticketData} 
+        columns={columns} 
+        renderCell={renderCell} 
+        renderActions={renderRowActions} 
+        selectable={true} 
+        pagination={true} 
+        paginationConfig={{
+          pageSize: 10,
+          showDebug: false
+        }}
+        enableExport={true} 
+        exportFileName="tickets" 
+        onRowClick={handleViewDetails} 
+        storageKey="tickets-table" 
+      />
 
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={filters => {
       console.log('Applied filters:', filters);
