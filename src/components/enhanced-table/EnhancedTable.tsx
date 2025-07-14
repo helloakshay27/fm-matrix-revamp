@@ -61,6 +61,7 @@ interface EnhancedTableProps<T> {
   enableSearch?: boolean;
   enableSelection?: boolean;
   hideTableExport?: boolean;
+  hideTableSearch?: boolean;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -93,6 +94,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   enableSearch = false,
   enableSelection = false,
   hideTableExport = false,
+  hideTableSearch = false,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -219,7 +221,7 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-          {(onSearchChange || !externalSearchTerm) && (
+          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input

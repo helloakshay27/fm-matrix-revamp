@@ -238,6 +238,7 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
         showBulkActions={true}
         storageKey="energy-assets-table"
         hideTableExport={true}
+        hideTableSearch={true}
       />
 
       {showSelectionPanel && selectedItems.length > 0 && (
