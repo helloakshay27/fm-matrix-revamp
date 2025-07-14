@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+
 const ticketData = [{
   id: '2189-11106',
   taskNumber: 'test',
@@ -62,6 +63,7 @@ const ticketData = [{
   createdOn: '14/06/2025 10:15 AM',
   mode: 'Web'
 }];
+
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -70,9 +72,11 @@ export const TicketDashboard = () => {
   const inProgressTickets = ticketData.filter(t => t.status === 'In Progress').length;
   const pendingTickets = ticketData.filter(t => t.status === 'Pending').length;
   const closedTickets = ticketData.filter(t => t.status === 'Closed').length;
+
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
+
   const columns = [{
     key: 'id',
     label: 'Ticket ID',
@@ -122,6 +126,7 @@ export const TicketDashboard = () => {
     label: 'Created On',
     sortable: true
   }];
+
   const renderCustomActions = () => <div className="flex flex-wrap gap-3">
       <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4 mr-2" /> Add
@@ -130,9 +135,11 @@ export const TicketDashboard = () => {
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
     </div>;
+
   const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
       <Eye className="w-4 h-4" />
     </Button>;
+
   const renderCell = (item, columnKey) => {
     if (columnKey === 'status') {
       return <span className={`px-2 py-1 rounded text-xs ${item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.status === 'Closed' ? 'bg-green-100 text-green-700' : item.status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
@@ -146,6 +153,7 @@ export const TicketDashboard = () => {
     }
     return item[columnKey];
   };
+
   return <div className="p-4 sm:p-6">
       <div className="mb-6">
         <p className="text-muted-foreground mb-2 text-sm">Tickets &gt; Ticket List</p>
@@ -187,11 +195,11 @@ export const TicketDashboard = () => {
       })}
       </div>
 
-      <EnhancedTable data={ticketData} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="tickets" onRowClick={handleViewDetails} storageKey="tickets-table" />
-
-      <div className="mt-4">
+      <div className="mb-4">
         {renderCustomActions()}
       </div>
+
+      <EnhancedTable data={ticketData} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="tickets" onRowClick={handleViewDetails} storageKey="tickets-table" />
 
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={filters => {
       console.log('Applied filters:', filters);
