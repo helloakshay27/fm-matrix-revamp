@@ -18,6 +18,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -219,6 +228,37 @@ export function EnhancedTable<T extends Record<string, any>>({
     return filteredData.filter(item => selectedItems.includes(getItemId(item)));
   }, [filteredData, selectedItems, getItemId]);
 
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (startPage > 1) {
+        pages.push(1);
+        if (startPage > 2) pages.push('ellipsis-start');
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pages.push('ellipsis-end');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -402,35 +442,39 @@ export function EnhancedTable<T extends Record<string, any>>({
 
       {/* Pagination */}
       {pagination && totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          <Button 
-            variant="outline" 
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
-            className="hover:bg-gray-50"
-          >
-            Previous
-          </Button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              style={currentPage === page ? { backgroundColor: '#C72030' } : {}}
-              className={currentPage === page ? "text-white" : "hover:bg-gray-50"}
-              onClick={() => setCurrentPage(page)}
-            >
-              {page}
-            </Button>
-          ))}
-          <Button 
-            variant="outline" 
-            disabled={currentPage === totalPages || totalPages === 0}
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            className="hover:bg-gray-50"
-          >
-            Next
-          </Button>
-        </div>
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {generatePageNumbers().map((page, index) => (
+              <PaginationItem key={index}>
+                {page === 'ellipsis-start' || page === 'ellipsis-end' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page as number)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   );
