@@ -253,7 +253,7 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          {!hideTableExport && (
+          {!hideTableExport && enableExport && (
             <Button
               variant="outline"
               size="sm"
