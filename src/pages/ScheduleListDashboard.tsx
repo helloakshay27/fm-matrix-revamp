@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, Filter, Download, Eye, Edit, Copy } from 'lucide-react';
+import { Plus, Upload, Filter, Eye, Edit, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { ScheduleFilterDialog } from '@/components/ScheduleFilterDialog';
@@ -75,9 +75,6 @@ export const ScheduleListDashboard = () => {
       </Button>
       <Button onClick={() => setShowFilterDialog(true)} variant="outline">
         <Filter className="w-4 h-4 mr-2" /> Filters
-      </Button>
-      <Button onClick={handleExport} variant="outline">
-        <Download className="w-4 h-4 mr-2" /> Export
       </Button>
     </div>
   );
