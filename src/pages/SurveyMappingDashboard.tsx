@@ -128,6 +128,104 @@ export const SurveyMappingDashboard = () => {
       status: true,
       createdOn: "01/07/2025",
       qrCode: "QR008"
+    },
+    {
+      id: 9,
+      serviceId: "12346",
+      serviceName: "Customer Satisfaction Survey",
+      site: "TechPark",
+      building: "Tower B",
+      wing: "Wing B",
+      area: "Area B",
+      floor: "Fourth",
+      room: "Conference Room",
+      status: false,
+      createdOn: "02/07/2025",
+      qrCode: "QR009"
+    },
+    {
+      id: 10,
+      serviceId: "12347",
+      serviceName: "Employee Feedback Survey", 
+      site: "Corporate",
+      building: "Main Building",
+      wing: "East Wing",
+      area: "HR Area",
+      floor: "Fifth",
+      room: "Meeting Room 1",
+      status: true,
+      createdOn: "03/07/2025",
+      qrCode: "QR010"
+    },
+    {
+      id: 11,
+      serviceId: "12348",
+      serviceName: "Product Quality Assessment",
+      site: "Manufacturing",
+      building: "Factory A",
+      wing: "Production Wing",
+      area: "QC Area",
+      floor: "Ground",
+      room: "Lab 1",
+      status: true,
+      createdOn: "04/07/2025",
+      qrCode: "QR011"
+    },
+    {
+      id: 12,
+      serviceId: "12349",
+      serviceName: "Service Quality Survey",
+      site: "ServiceCenter",
+      building: "Support Building",
+      wing: "Customer Wing",
+      area: "Service Area",
+      floor: "Second",
+      room: "Help Desk",
+      status: false,
+      createdOn: "05/07/2025",
+      qrCode: "QR012"
+    },
+    {
+      id: 13,
+      serviceId: "12350",
+      serviceName: "Market Research Survey",
+      site: "Research Hub",
+      building: "Innovation Center",
+      wing: "Research Wing",
+      area: "Analytics Area",
+      floor: "Sixth",
+      room: "Data Room",
+      status: true,
+      createdOn: "06/07/2025",
+      qrCode: "QR013"
+    },
+    {
+      id: 14,
+      serviceId: "12351",
+      serviceName: "Training Effectiveness Survey",
+      site: "Training Center",
+      building: "Education Building",
+      wing: "Learning Wing",
+      area: "Training Area",
+      floor: "Third",
+      room: "Classroom A",
+      status: true,
+      createdOn: "07/07/2025",
+      qrCode: "QR014"
+    },
+    {
+      id: 15,
+      serviceId: "12352",
+      serviceName: "Event Feedback Survey",
+      site: "Event Hall",
+      building: "Convention Center",
+      wing: "Main Wing",
+      area: "Event Area",
+      floor: "Ground",
+      room: "Auditorium",
+      status: false,
+      createdOn: "08/07/2025",
+      qrCode: "QR015"
     }
   ]);
 
@@ -264,6 +362,8 @@ export const SurveyMappingDashboard = () => {
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder="Search mappings..."
+          pagination={true}
+          pageSize={10}
         />
       </div>
 
