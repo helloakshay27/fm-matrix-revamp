@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
+
 const UtilityWasteGenerationDashboard = () => {
   console.log('UtilityWasteGenerationDashboard component loaded successfully');
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ const UtilityWasteGenerationDashboard = () => {
   const handleView = (id: number) => console.log('View waste generation record:', id);
   const handleEdit = (id: number) => console.log('Edit waste generation record:', id);
   const handleDelete = (id: number) => console.log('Delete waste generation record:', id);
+  
   const wasteGenerationData = [{
     id: 1,
     location: 'Building A - Floor 1',
@@ -118,6 +121,104 @@ const UtilityWasteGenerationDashboard = () => {
     wasteDate: '2024-01-09',
     createdBy: 'Robert Taylor',
     createdOn: '2024-01-09 08:45 AM'
+  }, {
+    id: 8,
+    location: 'Building H - Floor 3',
+    vendor: 'EcoFriendly Ltd',
+    commodity: 'Textile',
+    category: 'Reusable',
+    operational: 'Fashion House',
+    uom: 'KG',
+    generated: 95,
+    recycled: 75,
+    agency: 'Textile Recyclers',
+    wasteDate: '2024-01-08',
+    createdBy: 'Lisa Chen',
+    createdOn: '2024-01-08 04:20 PM'
+  }, {
+    id: 9,
+    location: 'Building I - Floor 2',
+    vendor: 'WasteZero Solutions',
+    commodity: 'Aluminum',
+    category: 'Recyclable',
+    operational: 'Beverage Co',
+    uom: 'KG',
+    generated: 180,
+    recycled: 170,
+    agency: 'Metal Works Inc',
+    wasteDate: '2024-01-07',
+    createdBy: 'Mark Anderson',
+    createdOn: '2024-01-07 12:10 PM'
+  }, {
+    id: 10,
+    location: 'Building J - Floor 1',
+    vendor: 'GreenTech Waste',
+    commodity: 'Battery',
+    category: 'Hazardous',
+    operational: 'Electronics Hub',
+    uom: 'Units',
+    generated: 25,
+    recycled: 25,
+    agency: 'Hazmat Specialists',
+    wasteDate: '2024-01-06',
+    createdBy: 'Anna Rodriguez',
+    createdOn: '2024-01-06 09:30 AM'
+  }, {
+    id: 11,
+    location: 'Building K - Floor 4',
+    vendor: 'EcoManage Pro',
+    commodity: 'Wood',
+    category: 'Recyclable',
+    operational: 'Furniture Corp',
+    uom: 'KG',
+    generated: 220,
+    recycled: 200,
+    agency: 'Wood Recovery Ltd',
+    wasteDate: '2024-01-05',
+    createdBy: 'Tom Wilson',
+    createdOn: '2024-01-05 02:45 PM'  
+  }, {
+    id: 12,
+    location: 'Building L - Floor 2',
+    vendor: 'CleanEarth Services',
+    commodity: 'Food Waste',
+    category: 'Compostable',
+    operational: 'Restaurant Chain',
+    uom: 'KG',
+    generated: 300,
+    recycled: 280,
+    agency: 'Compost Solutions',
+    wasteDate: '2024-01-04',
+    createdBy: 'Rachel Green',
+    createdOn: '2024-01-04 06:15 PM'
+  }, {
+    id: 13,
+    location: 'Building M - Floor 3',
+    vendor: 'WasteCare Ltd',
+    commodity: 'Rubber',
+    category: 'Recyclable',
+    operational: 'Auto Parts Co',
+    uom: 'KG',
+    generated: 140,
+    recycled: 120,
+    agency: 'Rubber Recycling Inc',
+    wasteDate: '2024-01-03',
+    createdBy: 'Steve Johnson',
+    createdOn: '2024-01-03 11:20 AM'
+  }, {
+    id: 14,
+    location: 'Building N - Floor 1',
+    vendor: 'EcoVision Corp',
+    commodity: 'Chemical',
+    category: 'Hazardous',
+    operational: 'Lab Services',
+    uom: 'Liters',
+    generated: 50,
+    recycled: 45,
+    agency: 'Chemical Disposal Pro',
+    wasteDate: '2024-01-02',
+    createdBy: 'Dr. Patricia Lee',
+    createdOn: '2024-01-02 03:10 PM'
   }];
 
   const columns = [
@@ -153,6 +254,7 @@ const UtilityWasteGenerationDashboard = () => {
   const renderCell = (item: any, columnKey: string) => {
     return item[columnKey];
   };
+  
   return <>
       <div className="flex-1 space-y-4 p-4  sm:p-5 md:p-3 pt-6">
         {/* Header */}
@@ -217,6 +319,8 @@ const UtilityWasteGenerationDashboard = () => {
               storageKey="waste-generation-table"
               enableExport={true}
               exportFileName="waste-generation-data"
+              pagination={true}
+              pageSize={10}
             />
           </CardContent>
         </Card>
@@ -228,4 +332,5 @@ const UtilityWasteGenerationDashboard = () => {
       <WasteGenerationBulkDialog isOpen={isUpdateOpen} onClose={() => setIsUpdateOpen(false)} type="update" />
     </>;
 };
+
 export default UtilityWasteGenerationDashboard;
