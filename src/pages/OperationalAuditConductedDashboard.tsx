@@ -1,10 +1,12 @@
 
-import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import React, { useState } from 'react';
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 
 export const OperationalAuditConductedDashboard = () => {
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  
   // Sample data matching the image
   const conductedData = [
     { report: true, id: "46884738", auditName: "clean", startDateTime: "18/02/2025, 06:26PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
@@ -64,6 +66,65 @@ export const OperationalAuditConductedDashboard = () => {
     }
   };
 
+  const columns = [
+    { key: 'report', label: 'Report', sortable: true, draggable: true },
+    { key: 'id', label: 'ID', sortable: true, draggable: true },
+    { key: 'auditName', label: 'Audit Name', sortable: true, draggable: true },
+    { key: 'startDateTime', label: 'Start Date & Time', sortable: true, draggable: true },
+    { key: 'conductedBy', label: 'Conducted By', sortable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, draggable: true },
+    { key: 'site', label: 'Site', sortable: true, draggable: true },
+    { key: 'duration', label: 'Duration', sortable: true, draggable: true },
+    { key: 'percentage', label: '%', sortable: true, draggable: true },
+    { key: 'delete', label: 'Delete', sortable: false, draggable: true },
+  ];
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'report':
+        return item.report ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handlePrintReport(item.id, item.auditName)}
+            className="p-1 h-auto hover:bg-gray-100"
+          >
+            <FileText className="w-4 h-4 text-blue-600" />
+          </Button>
+        ) : null;
+      case 'id':
+        return <span className="text-blue-600 font-medium">{item.id}</span>;
+      case 'status':
+        return (
+          <span className={`px-2 py-1 rounded text-xs font-medium ${
+            item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+          }`}>
+            {item.status}
+          </span>
+        );
+      case 'delete':
+        return null;
+      default:
+        return item[columnKey];
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(conductedData.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -73,56 +134,19 @@ export const OperationalAuditConductedDashboard = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-700">Report</TableHead>
-              <TableHead className="font-semibold text-gray-700">ID</TableHead>
-              <TableHead className="font-semibold text-gray-700">Audit Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">Start Date & Time</TableHead>
-              <TableHead className="font-semibold text-gray-700">Conducted By</TableHead>
-              <TableHead className="font-semibold text-gray-700">Status</TableHead>
-              <TableHead className="font-semibold text-gray-700">Site</TableHead>
-              <TableHead className="font-semibold text-gray-700">Duration</TableHead>
-              <TableHead className="font-semibold text-gray-700">%</TableHead>
-              <TableHead className="font-semibold text-gray-700">Delete</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {conductedData.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  {item.report && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePrintReport(item.id, item.auditName)}
-                      className="p-1 h-auto hover:bg-gray-100"
-                    >
-                      <FileText className="w-4 h-4 text-blue-600" />
-                    </Button>
-                  )}
-                </TableCell>
-                <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
-                <TableCell>{item.auditName}</TableCell>
-                <TableCell>{item.startDateTime}</TableCell>
-                <TableCell>{item.conductedBy}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {item.status}
-                  </span>
-                </TableCell>
-                <TableCell>{item.site}</TableCell>
-                <TableCell>{item.duration}</TableCell>
-                <TableCell>{item.percentage}</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="overflow-x-auto">
+        <EnhancedTable
+          data={conductedData}
+          columns={columns}
+          renderCell={renderCell}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          getItemId={(item) => item.id}
+          storageKey="conducted-audit-table"
+          className="w-full"
+        />
       </div>
     </div>
   );
