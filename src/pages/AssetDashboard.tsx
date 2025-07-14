@@ -138,6 +138,7 @@ export const AssetDashboard = () => {
         onRefresh={handleRefresh}
         visibleColumns={visibleColumns}
         onColumnChange={handleColumnChange}
+        hideSearch={true}
       />
 
       <div className="relative">

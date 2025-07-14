@@ -15,6 +15,7 @@ interface AssetActionsProps {
   onRefresh: () => void;
   visibleColumns: any;
   onColumnChange: (columns: any) => void;
+  hideSearch?: boolean;
 }
 
 export const AssetActions: React.FC<AssetActionsProps> = ({
@@ -26,7 +27,8 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
   onFilterOpen,
   onRefresh,
   visibleColumns,
-  onColumnChange
+  onColumnChange,
+  hideSearch = false
 }) => {
   return (
     <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -56,15 +58,17 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
       </Button>
 
       <div className="flex items-center gap-2 ml-auto">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => onSearch(e.target.value)}
-            className="pl-10 w-64 bg-white border-gray-300"
-          />
-        </div>
+        {!hideSearch && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => onSearch(e.target.value)}
+              className="pl-10 w-64 bg-white border-gray-300"
+            />
+          </div>
+        )}
         
         <Button 
           variant="outline" 
