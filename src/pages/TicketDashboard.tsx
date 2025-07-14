@@ -177,7 +177,7 @@ export const TicketDashboard = () => {
         const IconComponent = item.icon;
         return <div key={i} className="p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4 bg-[f6f4ee] bg-[#f6f4ee]">
               <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
-                <IconComponent className="w-6 h-6 text-white" />
+                <IconComponent className="w-6 h-6" style={{ color: '#C72030' }} />
               </div>
               <div className="flex flex-col">
                 <div className="text-2xl font-bold text-primary leading-tight">{item.value}</div>
