@@ -5,18 +5,26 @@ import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare } from 'lucide-react';
 
 interface AddCommentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  itemId: string;
-  itemType: 'asset' | 'ticket' | 'schedule';
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  itemId?: string;
+  title?: string;
+  itemType?: 'asset' | 'ticket' | 'schedule' | 'inventory';
 }
 
 export const AddCommentModal: React.FC<AddCommentModalProps> = ({
+  open,
+  onOpenChange,
   isOpen,
   onClose,
   itemId,
-  itemType
+  title,
+  itemType = 'inventory'
 }) => {
+  const modalOpen = open !== undefined ? open : isOpen || false;
+  const handleOpenChange = onOpenChange || ((open: boolean) => !open && onClose?.());
   const [comment, setComment] = useState('');
 
   const handleSubmit = () => {
@@ -24,22 +32,22 @@ export const AddCommentModal: React.FC<AddCommentModalProps> = ({
       console.log(`Adding comment to ${itemType} ${itemId}:`, comment);
       // Here you would typically call an API to save the comment
       setComment('');
-      onClose();
+      handleOpenChange(false);
     }
   };
 
   const handleCancel = () => {
     setComment('');
-    onClose();
+    handleOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={modalOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
-            Add Comment to {itemType === 'asset' ? 'Asset' : itemType === 'ticket' ? 'Ticket' : 'Schedule'}
+            {title || `Add Comment to ${itemType === 'asset' ? 'Asset' : itemType === 'ticket' ? 'Ticket' : itemType === 'schedule' ? 'Schedule' : 'Inventory'}`}
           </DialogTitle>
         </DialogHeader>
         
