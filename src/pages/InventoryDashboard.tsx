@@ -251,10 +251,6 @@ export const InventoryDashboard = () => {
         <h1 className="text-xl sm:text-2xl font-bold uppercase">INVENTORY LIST</h1>
       </div>
 
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
-
       <EnhancedTable
         data={inventoryData}
         columns={columns}
@@ -269,6 +265,10 @@ export const InventoryDashboard = () => {
         onRowClick={handleViewItem}
         storageKey="inventory-table"
       />
+
+      <div className="mt-4">
+        {renderCustomActions()}
+      </div>
 
       <BulkUploadDialog open={showBulkUpload} onOpenChange={setShowBulkUpload} title="Bulk Upload" />
       <InventoryFilterDialog open={showFilter} onOpenChange={setShowFilter} onApply={(filters) => console.log('Applied filters:', filters)} />

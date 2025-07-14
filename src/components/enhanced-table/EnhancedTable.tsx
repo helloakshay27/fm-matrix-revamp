@@ -1,6 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -77,13 +90,13 @@ export function EnhancedTable<T extends Record<string, any>>({
   pageSize = 10,
   loading = false,
   enableSearch = false,
-  enableSelection = false
+  enableSelection = false,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
-  
+
   const {
     sortedData: baseSortedData,
     sortState,
@@ -102,8 +115,9 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Filter data based on search term
   const filteredData = useMemo(() => {
     if (!searchTerm) return baseSortedData;
-    return baseSortedData.filter(item => 
-      Object.values(item).some(value => 
+    
+    return baseSortedData.filter(item =>
+      Object.values(item).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
@@ -112,6 +126,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
     if (!pagination) return filteredData;
+    
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [filteredData, currentPage, pageSize, pagination]);
@@ -128,6 +143,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+
     if (over && active.id !== over.id) {
       reorderColumns(String(active.id), String(over.id));
     }
@@ -175,7 +191,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const handleExport = () => {
     const csvContent = [
       visibleColumns.map(col => col.label).join(','),
-      ...filteredData.map(item =>
+      ...filteredData.map(item => 
         visibleColumns.map(col => {
           const renderedRow = renderRow ? renderRow(item) : item;
           const value = renderRow ? renderedRow[col.key] : renderCell?.(item, col.key);
@@ -183,7 +199,7 @@ export function EnhancedTable<T extends Record<string, any>>({
         }).join(',')
       )
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -201,6 +217,17 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
+          {(onSearchChange || !externalSearchTerm) && (
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => handleInternalSearchChange(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
           
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
@@ -236,6 +263,15 @@ export function EnhancedTable<T extends Record<string, any>>({
             </Button>
           )}
           
+          <div className="text-sm text-muted-foreground">
+            {filteredData.length} {filteredData.length === 1 ? 'item' : 'items'}
+            {selectable && selectedItems.length > 0 && (
+              <span className="ml-2 text-primary">
+                ({selectedItems.length} selected)
+              </span>
+            )}
+          </div>
+          
           <ColumnVisibilityMenu
             columns={columns}
             columnVisibility={columnVisibility}
@@ -256,7 +292,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-                    {(selectable || enableSelection) && (
+                    {selectable && (
                       <TableHead className="bg-[#f6f4ee] w-12" data-checkbox>
                         <Checkbox
                           checked={isAllSelected}
@@ -290,7 +326,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                 {loading && (
                   <TableRow>
                     <TableCell 
-                      colSpan={visibleColumns.length + (renderActions ? 1 : 0) + ((selectable || enableSelection) ? 1 : 0)} 
+                      colSpan={
+                        visibleColumns.length + 
+                        (renderActions ? 1 : 0) + 
+                        (selectable ? 1 : 0)
+                      } 
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center">
@@ -303,7 +343,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                 {!loading && sortedData.length === 0 && (
                   <TableRow>
                     <TableCell 
-                      colSpan={visibleColumns.length + (renderActions ? 1 : 0) + ((selectable || enableSelection) ? 1 : 0)} 
+                      colSpan={
+                        visibleColumns.length + 
+                        (renderActions ? 1 : 0) + 
+                        (selectable ? 1 : 0)
+                      } 
                       className="text-center py-8 text-gray-500"
                     >
                       {emptyMessage}
@@ -313,8 +357,9 @@ export function EnhancedTable<T extends Record<string, any>>({
                 {!loading && sortedData.map((item, index) => {
                   const itemId = getItemId(item);
                   const isSelected = selectedItems.includes(itemId);
+                  
                   return (
-                    <TableRow
+                    <TableRow 
                       key={index}
                       className={cn(
                         onRowClick && "cursor-pointer",
@@ -323,7 +368,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                       )}
                       onClick={(e) => handleRowClick(item, e)}
                     >
-                      {(selectable || enableSelection) && (
+                      {selectable && (
                         <TableCell className="p-4 w-12" data-checkbox>
                           <Checkbox
                             checked={isSelected}
@@ -360,7 +405,7 @@ export function EnhancedTable<T extends Record<string, any>>({
       {pagination && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
+            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
           </div>
           <div className="flex items-center gap-2">
             <Button
