@@ -332,14 +332,15 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12" data-checkbox>
-                        <Checkbox
-                          checked={isAllSelected}
-                          onCheckedChange={handleSelectAllChange}
-                          aria-label={selectAllLabel}
-                          className="ml-2"
-                          {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                        />
+                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAllChange}
+                            aria-label={selectAllLabel}
+                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                          />
+                        </div>
                       </TableHead>
                     )}
                     {visibleColumns.map((column) => (
@@ -408,13 +409,15 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="p-4 w-12" data-checkbox>
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
-                            aria-label={`Select row ${index + 1}`}
-                            onClick={(e) => e.stopPropagation()}
-                          />
+                        <TableCell className="p-4 w-12 text-center" data-checkbox>
+                          <div className="flex justify-center">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                              aria-label={`Select row ${index + 1}`}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
                         </TableCell>
                       )}
                       {visibleColumns.map((column) => {
