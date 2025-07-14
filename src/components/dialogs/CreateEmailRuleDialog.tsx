@@ -64,7 +64,17 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
   });
 
   const handleSubmit = (data: EmailRuleFormData) => {
-    onSubmit(data);
+    // Ensure all required fields are present and typed correctly
+    const submissionData: Omit<EmailRule, 'id' | 'srNo' | 'createdOn' | 'createdBy' | 'active'> = {
+      ruleName: data.ruleName,
+      triggerType: data.triggerType,
+      triggerTo: data.triggerTo,
+      role: data.role,
+      periodValue: data.periodValue,
+      periodType: data.periodType,
+    };
+    
+    onSubmit(submissionData);
     form.reset();
     onClose();
   };

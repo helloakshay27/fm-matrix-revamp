@@ -14,41 +14,41 @@ const statusCards = [
   { 
     title: 'Scheduled', 
     count: 1555, 
-    color: 'bg-blue-50', 
-    textColor: 'text-blue-600',
-    iconBg: 'bg-blue-100',
+    color: 'bg-rose-50', 
+    textColor: 'text-red-600',
+    iconBg: 'bg-rose-100',
     icon: Clock
   },
   { 
     title: 'Open', 
     count: 174, 
-    color: 'bg-green-50', 
-    textColor: 'text-green-600',
-    iconBg: 'bg-green-100',
+    color: 'bg-rose-50', 
+    textColor: 'text-red-600',
+    iconBg: 'bg-rose-100',
     icon: AlertCircle
   },
   { 
     title: 'In Progress', 
     count: 0, 
-    color: 'bg-yellow-50', 
-    textColor: 'text-yellow-600',
-    iconBg: 'bg-yellow-100',
+    color: 'bg-rose-50', 
+    textColor: 'text-red-600',
+    iconBg: 'bg-rose-100',
     icon: Play
   },
   { 
     title: 'Closed', 
     count: 0, 
-    color: 'bg-gray-50', 
-    textColor: 'text-gray-600',
-    iconBg: 'bg-gray-100',
+    color: 'bg-rose-50', 
+    textColor: 'text-red-600',
+    iconBg: 'bg-rose-100',
     icon: CheckCircle
   },
   { 
     title: 'Overdue', 
     count: 907, 
-    color: 'bg-red-50', 
+    color: 'bg-rose-50', 
     textColor: 'text-red-600',
-    iconBg: 'bg-red-100',
+    iconBg: 'bg-rose-100',
     icon: XCircle
   }
 ];
@@ -118,7 +118,7 @@ export const ScheduledTaskDashboard = () => {
             />
 
             {/* Status Cards */}
-            <div className="grid grid-cols-5 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
               {statusCards.map((card, index) => (
                 <StatusCard key={index} {...card} />
               ))}

@@ -1,66 +1,85 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Download, Filter, Search, Settings, Clock, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+
+interface AuditRecord {
+  id: number;
+  auditName: string;
+  auditId: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  conductedBy: string;
+  report: boolean;
+}
+
+const auditData: AuditRecord[] = [
+  {
+    id: 1,
+    auditName: 'Name Latest',
+    auditId: '10',
+    type: '',
+    startDate: '09/04/2025',
+    endDate: '27/06/2025',
+    status: 'Scheduled',
+    conductedBy: 'Abhishek Sharma',
+    report: true
+  },
+  {
+    id: 2,
+    auditName: 'Audit For It Assets',
+    auditId: '6',
+    type: '',
+    startDate: '01/06/2025',
+    endDate: '01/06/2026',
+    status: 'Completed',
+    conductedBy: 'Abdul Ghaffar',
+    report: true
+  },
+  {
+    id: 3,
+    auditName: 'Asset integrity audit for AC system',
+    auditId: '5',
+    type: '',
+    startDate: '01/06/2025',
+    endDate: '30/06/2025',
+    status: 'In Progress',
+    conductedBy: 'Abdul Ghaffar',
+    report: true
+  },
+  {
+    id: 4,
+    auditName: 'Electrical Consumption Metering Audit',
+    auditId: '4',
+    type: '',
+    startDate: '02/06/2025',
+    endDate: '30/06/2025',
+    status: 'Scheduled',
+    conductedBy: 'Vinayak Mane',
+    report: true
+  }
+];
+
+const columns: ColumnConfig[] = [
+  { key: 'auditName', label: 'Audit Name', sortable: true, defaultVisible: true },
+  { key: 'auditId', label: 'Audit ID', sortable: true, defaultVisible: true },
+  { key: 'type', label: 'Type', sortable: true, defaultVisible: true },
+  { key: 'startDate', label: 'Start Date', sortable: true, defaultVisible: true },
+  { key: 'endDate', label: 'End Date', sortable: true, defaultVisible: true },
+  { key: 'status', label: 'Audit Status', sortable: true, defaultVisible: true },
+  { key: 'conductedBy', label: 'Conducted By', sortable: true, defaultVisible: true },
+  { key: 'report', label: 'Report', sortable: false, defaultVisible: true },
+];
 
 export const AssetAuditDashboard = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-
-  // Sample data matching the reference image
-  const auditData = [
-    {
-      id: 1,
-      auditName: 'Name Latest',
-      auditId: '10',
-      type: '',
-      startDate: '09/04/2025',
-      endDate: '27/06/2025',
-      status: 'Scheduled',
-      conductedBy: 'Abhishek Sharma',
-      report: true
-    },
-    {
-      id: 2,
-      auditName: 'Audit For It Assets',
-      auditId: '6',
-      type: '',
-      startDate: '01/06/2025',
-      endDate: '01/06/2026',
-      status: 'Completed',
-      conductedBy: 'Abdul Ghaffar',
-      report: true
-    },
-    {
-      id: 3,
-      auditName: 'Asset integrity audit for AC system',
-      auditId: '5',
-      type: '',
-      startDate: '01/06/2025',
-      endDate: '30/06/2025',
-      status: 'In Progress',
-      conductedBy: 'Abdul Ghaffar',
-      report: true
-    },
-    {
-      id: 4,
-      auditName: 'Electrical Consumption Metering Audit',
-      auditId: '4',
-      type: '',
-      startDate: '02/06/2025',
-      endDate: '30/06/2025',
-      status: 'Scheduled',
-      conductedBy: 'Vinayak Mane',
-      report: true
-    }
-  ];
-
-  const [audits, setAudits] = useState(auditData);
+  const [audits, setAudits] = useState<AuditRecord[]>(auditData);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // Statistics based on data
   const stats = {
@@ -96,12 +115,90 @@ export const AssetAuditDashboard = () => {
     }
   };
 
-  const filteredAudits = audits.filter(audit => {
-    const matchesSearch = audit.auditName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         audit.conductedBy.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'all' || audit.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(audits.map(item => String(item.id)));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleBulkDelete = (selectedItems: AuditRecord[]) => {
+    const selectedIds = selectedItems.map(item => item.id);
+    setAudits(prev => prev.filter(item => !selectedIds.includes(item.id)));
+    setSelectedItems([]);
+  };
+
+  const renderCell = (item: AuditRecord, columnKey: string) => {
+    switch (columnKey) {
+      case 'auditName':
+        return (
+          <button
+            onClick={() => handleAuditNameClick(item.auditId)}
+            className="text-black hover:underline font-medium"
+          >
+            {item.auditName}
+          </button>
+        );
+      case 'auditId':
+        return item.auditId;
+      case 'type':
+        return item.type || '-';
+      case 'startDate':
+        return item.startDate;
+      case 'endDate':
+        return item.endDate;
+      case 'status':
+        return (
+          <div className="min-w-[120px]">
+            <Select
+              value={item.status}
+              onValueChange={(value) => handleStatusUpdate(item.id, value)}
+            >
+              <SelectTrigger
+                className={`w-full md:w-32 text-white px-3 py-1.5 text-sm rounded-md truncate ${getStatusColor(item.status)}`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Scheduled">Scheduled</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Overdue">Overdue</SelectItem>
+                <SelectItem value="Closed">Closed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+      case 'conductedBy':
+        return item.conductedBy;
+      case 'report':
+        return item.report ? (
+          <Button size="sm" variant="ghost">
+            <Download className="w-4 h-4" />
+          </Button>
+        ) : '-';
+      default:
+        return '-';
+    }
+  };
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      icon: Trash2,
+      variant: 'destructive' as const,
+      onClick: handleBulkDelete,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -176,70 +273,38 @@ export const AssetAuditDashboard = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900">Audit Name</TableHead>
-                <TableHead className="font-semibold text-gray-900">Audit ID</TableHead>
-                <TableHead className="font-semibold text-gray-900">Type</TableHead>
-                <TableHead className="font-semibold text-gray-900">Start Date</TableHead>
-                <TableHead className="font-semibold text-gray-900">End Date</TableHead>
-                <TableHead className="font-semibold text-gray-900">Audit Status</TableHead>
-                <TableHead className="font-semibold text-gray-900">Conducted By</TableHead>
-                <TableHead className="font-semibold text-gray-900">Report</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAudits.map((audit) => (
-                <TableRow key={audit.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <button
-                      onClick={() => handleAuditNameClick(audit.auditId)}
-                      className="text-black hover:underline font-medium"
-                    >
-                      {audit.auditName}
-                    </button>
-                  </TableCell>
-                  <TableCell>{audit.auditId}</TableCell>
-                  <TableCell>{audit.type}</TableCell>
-                  <TableCell>{audit.startDate}</TableCell>
-                  <TableCell>{audit.endDate}</TableCell>
-                  <TableCell className="min-w-[120px]">
-  <Select
-    value={audit.status}
-    onValueChange={(value) => handleStatusUpdate(audit.id, value)}
-  >
-    <SelectTrigger
-      className={`w-full md:w-32 text-white px-3 py-1.5 text-sm rounded-md truncate ${getStatusColor(audit.status)}`}
-    >
-      <SelectValue />
-    </SelectTrigger>
-
-    <SelectContent>
-      <SelectItem value="Scheduled">Scheduled</SelectItem>
-      <SelectItem value="In Progress">In Progress</SelectItem>
-      <SelectItem value="Completed">Completed</SelectItem>
-      <SelectItem value="Overdue">Overdue</SelectItem>
-      <SelectItem value="Closed">Closed</SelectItem>
-    </SelectContent>
-  </Select>
-</TableCell>
-
-                  <TableCell>{audit.conductedBy}</TableCell>
-                  <TableCell>
-                    {audit.report && (
-                      <Button size="sm" variant="ghost">
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        {/* Action Button */}
+        <div className="mb-6">
+          <Button 
+            onClick={handleAddClick}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Audit
+          </Button>
         </div>
+
+        {/* Enhanced Table */}
+        <EnhancedTable
+          data={audits}
+          columns={columns}
+          renderCell={renderCell}
+          onRowClick={(item) => handleAuditNameClick(item.auditId)}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          getItemId={(item) => String(item.id)}
+          storageKey="asset-audit-dashboard-table"
+          emptyMessage="No audit records found"
+          searchPlaceholder="Search audits..."
+          enableExport={true}
+          exportFileName="audit-records"
+          bulkActions={bulkActions}
+          showBulkActions={true}
+          pagination={true}
+          pageSize={10}
+        />
       </div>
     </div>
   );

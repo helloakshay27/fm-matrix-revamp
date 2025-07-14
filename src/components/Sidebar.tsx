@@ -65,24 +65,24 @@ const navigationStructure = {
         icon: CheckSquare,
         subItems: [
           { name: 'Checklist Group and Sub Group', href: '/settings/asset-setup/asset-groups' },
-          { name: 'Email Rule', href: '/maintenance/checklist-setup/email-rule' },
-          { name: 'Task Escalation', href: '/maintenance/checklist-setup/task-escalation' }
+          { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
+          { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
         ]
       },
       {
         name: 'Ticket Management',
         icon: FileText,
         subItems: [
-          { name: 'Setup', href: '/maintenance/ticket-management/setup' },
-          { name: 'Escalation Matrix', href: '/maintenance/ticket-management/escalation-matrix' },
-          { name: 'Cost Approval', href: '/maintenance/ticket-management/cost-approval' }
+          { name: 'Setup', href: '/settings/ticket-management/setup' },
+          { name: 'Escalation Matrix', href: '/settings/ticket-management/escalation-matrix' },
+          { name: 'Cost Approval', href: '/settings/ticket-management/cost-approval' }
         ]
       },
       {
         name: 'Inventory Management',
         icon: Package,
         subItems: [
-          { name: 'SAC/HSN Code', href: '/maintenance/inventory-management/sac-hsn-code' }
+          { name: 'SAC/HSN Code', href: '/settings/inventory-management/sac-hsn-code' }
         ]
       },
       {
@@ -94,14 +94,14 @@ const navigationStructure = {
         name: 'Permit',
         icon: FileText,
         subItems: [
-          { name: 'Permit Setup', href: '/maintenance/permit/permit-setup' }
+          { name: 'Permit Setup', href: '/settings/safety/permit-setup' }
         ]
       },
       {
         name: 'Incident',
         icon: AlertTriangle,
         subItems: [
-          { name: 'Setup', href: '/maintenance/incident/setup' }
+          { name: 'Setup', href: '/settings/safety/incident' }
         ]
       },
       {
