@@ -745,10 +745,13 @@ const TaskTable = () => {
       cell: ({ getValue, row }) => {
         return (
           <SelectBox
-            options={projectTeamMembers.map((user) => ({
-              value: user.user_id,
-              label: user?.user?.name,
-            }))}
+            options={(projectTeamMembers.length > 0 ? projectTeamMembers : users).map(
+              (user) => ({
+                value: user.user_id || user.id,
+                label:
+                  user?.user?.name || `${user.firstname} ${user.lastname}`,
+              })
+            )}
             value={getValue()}
             onChange={(newValue) =>
               handleUpdateTaskFieldCell(
