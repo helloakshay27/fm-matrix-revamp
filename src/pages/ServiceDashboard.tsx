@@ -234,6 +234,10 @@ export const ServiceDashboard = () => {
         <h1 className="font-semibold text-lg sm:text-2xl">SERVICE LIST</h1>
       </div>
 
+      <div className="mb-4">
+        {renderCustomActions()}
+      </div>
+
       <EnhancedTable
         data={services}
         columns={columns}
@@ -249,9 +253,6 @@ export const ServiceDashboard = () => {
         storageKey="services-table"
       />
 
-      <div className="mt-4">
-        {renderCustomActions()}
-      </div>
 
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />
