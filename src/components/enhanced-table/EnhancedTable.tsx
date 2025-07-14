@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -93,7 +92,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   loading = false,
   enableSearch = false,
   enableSelection = false,
-  hideTableExport = false,
+  hideTableExport = true,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -254,17 +253,6 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          {!hideTableExport && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
-          )}
           
           <ColumnVisibilityMenu
             columns={columns}
