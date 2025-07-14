@@ -23,6 +23,16 @@ const muiTheme = createTheme({
           width: '100%',
           '& .MuiOutlinedInput-root': {
             borderRadius: '6px',
+            height: '36px', // Mobile height
+            '@media (min-width: 768px)': {
+              height: '45px', // Desktop height
+            },
+          },
+          '& .MuiOutlinedInput-input': {
+            padding: '8px 14px',
+            '@media (min-width: 768px)': {
+              padding: '12px 14px',
+            },
           },
         },
       },
@@ -33,6 +43,16 @@ const muiTheme = createTheme({
           width: '100%',
           '& .MuiOutlinedInput-root': {
             borderRadius: '6px',
+            height: '36px', // Mobile height
+            '@media (min-width: 768px)': {
+              height: '45px', // Desktop height
+            },
+          },
+          '& .MuiSelect-select': {
+            padding: '8px 14px',
+            '@media (min-width: 768px)': {
+              padding: '12px 14px',
+            },
           },
         },
       },
