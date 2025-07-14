@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,55 @@ const mockResponseData = [
     responses: 8,
     tickets: 8,
     expiryDate: "01/07/2025"
+  },
+  {
+    id: 12346,
+    surveyTitle: "Customer Satisfaction Survey",
+    responses: 12,
+    tickets: 3,
+    expiryDate: "15/07/2025"
+  },
+  {
+    id: 12347,
+    surveyTitle: "Employee Feedback Survey",
+    responses: 25,
+    tickets: 8,
+    expiryDate: "20/07/2025"
+  },
+  {
+    id: 12348,
+    surveyTitle: "Product Quality Assessment",
+    responses: 18,
+    tickets: 5,
+    expiryDate: "25/07/2025"
+  },
+  {
+    id: 12349,
+    surveyTitle: "Service Quality Survey",
+    responses: 30,
+    tickets: 12,
+    expiryDate: "30/07/2025"
+  },
+  {
+    id: 12350,
+    surveyTitle: "Market Research Survey",
+    responses: 45,
+    tickets: 15,
+    expiryDate: "05/08/2025"
+  },
+  {
+    id: 12351,
+    surveyTitle: "Training Effectiveness Survey",
+    responses: 22,
+    tickets: 7,
+    expiryDate: "10/08/2025"
+  },
+  {
+    id: 12352,
+    surveyTitle: "Event Feedback Survey",
+    responses: 35,
+    tickets: 10,
+    expiryDate: "15/08/2025"
   }
 ];
 
@@ -199,6 +249,8 @@ export const SurveyResponsePage = () => {
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder="Search responses..."
+          pagination={true}
+          pageSize={10}
         />
       </div>
 
