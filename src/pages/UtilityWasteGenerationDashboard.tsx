@@ -7,6 +7,7 @@ import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilter
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 const UtilityWasteGenerationDashboard = () => {
+  console.log('UtilityWasteGenerationDashboard component loaded successfully');
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
