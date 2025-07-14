@@ -48,6 +48,76 @@ const UtilityWasteGenerationDashboard = () => {
     wasteDate: '2024-01-14',
     createdBy: 'Jane Smith',
     createdOn: '2024-01-14 02:15 PM'
+  }, {
+    id: 3,
+    location: 'Building C - Floor 3',
+    vendor: 'GreenCycle Corp',
+    commodity: 'Glass',
+    category: 'Recyclable',
+    operational: 'Tech Innovations',
+    uom: 'KG',
+    generated: 200,
+    recycled: 180,
+    agency: 'Eco Handlers',
+    wasteDate: '2024-01-13',
+    createdBy: 'Mike Johnson',
+    createdOn: '2024-01-13 09:45 AM'
+  }, {
+    id: 4,
+    location: 'Building D - Floor 1',
+    vendor: 'WastePro Services',
+    commodity: 'Metal',
+    category: 'Recyclable',
+    operational: 'Manufacturing Co',
+    uom: 'KG',
+    generated: 350,
+    recycled: 320,
+    agency: 'Metal Recovery Inc',
+    wasteDate: '2024-01-12',
+    createdBy: 'Sarah Davis',
+    createdOn: '2024-01-12 03:20 PM'
+  }, {
+    id: 5,
+    location: 'Building E - Floor 2',
+    vendor: 'BioCycle Ltd',
+    commodity: 'Organic',
+    category: 'Compostable',
+    operational: 'Food Services',
+    uom: 'KG',
+    generated: 120,
+    recycled: 100,
+    agency: 'Organic Solutions',
+    wasteDate: '2024-01-11',
+    createdBy: 'David Wilson',
+    createdOn: '2024-01-11 11:15 AM'
+  }, {
+    id: 6,
+    location: 'Building F - Floor 4',
+    vendor: 'TechWaste Pro',
+    commodity: 'Electronic',
+    category: 'E-Waste',
+    operational: 'IT Department',
+    uom: 'Units',
+    generated: 45,
+    recycled: 40,
+    agency: 'E-Waste Specialists',
+    wasteDate: '2024-01-10',
+    createdBy: 'Emily Brown',
+    createdOn: '2024-01-10 01:30 PM'
+  }, {
+    id: 7,
+    location: 'Building G - Floor 1',
+    vendor: 'CleanWaste Solutions',
+    commodity: 'Cardboard',
+    category: 'Recyclable',
+    operational: 'Logistics Dept',
+    uom: 'KG',
+    generated: 280,
+    recycled: 250,
+    agency: 'Paper Recovery Co',
+    wasteDate: '2024-01-09',
+    createdBy: 'Robert Taylor',
+    createdOn: '2024-01-09 08:45 AM'
   }];
 
   const columns = [
