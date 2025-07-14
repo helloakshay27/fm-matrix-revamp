@@ -6,6 +6,7 @@ import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
 import { ServiceFilterModal } from '@/components/ServiceFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+
 const serviceData = [{
   id: '16706',
   serviceName: 'test',
@@ -103,12 +104,14 @@ const serviceData = [{
   status: true,
   createdOn: '05/06/2025'
 }];
+
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
   const [services, setServices] = useState(serviceData);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+
   const handleStatusToggle = id => {
     const updatedServices = services.map(service => service.id === id ? {
       ...service,
@@ -227,11 +230,16 @@ export const ServiceDashboard = () => {
     }
     return item[columnKey];
   };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
         <p className="text-muted-foreground mb-2">Services &gt; Service List</p>
         <h1 className="font-semibold text-lg sm:text-2xl">SERVICE LIST</h1>
+      </div>
+
+      <div className="mb-4">
+        {renderCustomActions()}
       </div>
 
       <EnhancedTable
@@ -248,10 +256,6 @@ export const ServiceDashboard = () => {
         onRowClick={handleViewService}
         storageKey="services-table"
       />
-
-      <div className="mt-4">
-        {renderCustomActions()}
-      </div>
 
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />
