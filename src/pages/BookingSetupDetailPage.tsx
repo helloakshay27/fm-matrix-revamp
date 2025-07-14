@@ -330,38 +330,46 @@ export const BookingSetupDetailPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <Label className="text-sm font-medium">Per Slot Charge:</Label>
-                  <Input value={bookingData.perSlotCharge} className="mt-1 w-32" readOnly />
+                  <Label className="text-sm font-medium text-gray-700">Per Slot Charge:</Label>
+                  <Input value={bookingData.perSlotCharge} className="mt-1 w-64" readOnly />
                 </div>
-                <div className="space-y-2">
-                  <div>
-                    <Label className="text-sm font-medium">Booking Allowed Service :</Label>
-                    <div className="mt-1 text-sm">{bookingData.bookingAllowedService ? 'Yes' : 'No'}</div>
+                
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Booking Allowed before :</Label>
+                  <div className="text-xs text-gray-500 mt-1">(Enter Time: DD Days, HH Hours, MM Minutes)</div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input placeholder="Day" className="w-20" readOnly />
+                    <span className="text-gray-500">d</span>
+                    <Input placeholder="Hour" className="w-20" readOnly />
+                    <span className="text-gray-500">h</span>
+                    <Input placeholder="Mins" className="w-20" readOnly />
+                    <span className="text-gray-500">m</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm">Allow Booking</Label>
-                      <Switch disabled />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm">Allow Booking</Label>
-                      <Switch disabled />
-                    </div>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Advance Booking :</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input placeholder="Day" className="w-20" readOnly />
+                    <span className="text-gray-500">d</span>
+                    <Input placeholder="Hour" className="w-20" readOnly />
+                    <span className="text-gray-500">h</span>
+                    <Input placeholder="Mins" className="w-20" readOnly />
+                    <span className="text-gray-500">m</span>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium">Can Cancel Before Schedule</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm">Day</Label>
-                        <Switch disabled />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm">Hr</Label>
-                        <Switch disabled />
-                      </div>
-                    </div>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Can Cancel Before Schedule :</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input placeholder="Day" className="w-20" readOnly />
+                    <span className="text-gray-500">d</span>
+                    <Input placeholder="Hour" className="w-20" readOnly />
+                    <span className="text-gray-500">h</span>
+                    <Input placeholder="Mins" className="w-20" readOnly />
+                    <span className="text-gray-500">m</span>
                   </div>
                 </div>
               </div>
