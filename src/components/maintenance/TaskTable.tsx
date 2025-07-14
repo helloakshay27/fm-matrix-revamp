@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye } from 'lucide-react';
+import { EnhancedTable } from '../enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 interface Task {
   id: string;
@@ -26,66 +27,74 @@ interface TaskTableProps {
   onViewTask: (taskId: string) => void;
 }
 
+const columns: ColumnConfig[] = [
+  { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+  { key: 'checklist', label: 'Checklist', sortable: true, hideable: true, draggable: true },
+  { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
+  { key: 'schedule', label: 'Schedule', sortable: true, hideable: true, draggable: true },
+  { key: 'assignTo', label: 'Assign to', sortable: true, hideable: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+  { key: 'scheduleFor', label: 'Schedule For', sortable: true, hideable: true, draggable: true },
+  { key: 'assetsServices', label: 'Assets/Services', sortable: true, hideable: true, draggable: true },
+  { key: 'site', label: 'Site', sortable: true, hideable: true, draggable: true },
+  { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
+  { key: 'supplier', label: 'Supplier', sortable: true, hideable: true, draggable: true },
+  { key: 'graceTime', label: 'Grace Time', sortable: true, hideable: true, draggable: true },
+  { key: 'duration', label: 'Duration', sortable: true, hideable: true, draggable: true },
+  { key: 'percentage', label: '%', sortable: true, hideable: true, draggable: true },
+  { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false }
+];
+
 export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask }) => {
+  const renderRow = (task: Task) => ({
+    id: task.id,
+    checklist: task.checklist,
+    type: task.type,
+    schedule: task.schedule,
+    assignTo: task.assignTo || '-',
+    status: (
+      <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
+        {task.status}
+      </span>
+    ),
+    scheduleFor: task.scheduleFor,
+    assetsServices: task.assetsServices,
+    site: task.site,
+    location: (
+      <div className="max-w-xs truncate" title={task.location}>
+        {task.location}
+      </div>
+    ),
+    supplier: task.supplier || '-',
+    graceTime: task.graceTime,
+    duration: task.duration || '-',
+    percentage: task.percentage || '-',
+    actions: (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onViewTask(task.id)}
+        className="p-2 h-8 w-8 hover:bg-accent"
+      >
+        <Eye className="w-4 h-4 text-muted-foreground" />
+      </Button>
+    )
+  });
+
   return (
     <div className="bg-white rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Action</TableHead>
-            <TableHead>ID</TableHead>
-            <TableHead>Checklist</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Schedule</TableHead>
-            <TableHead>Assign to</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Schedule For</TableHead>
-            <TableHead>Assets/Services</TableHead>
-            <TableHead>Site</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Supplier</TableHead>
-            <TableHead>Grace Time</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>%</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.id} className="hover:bg-gray-50">
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onViewTask(task.id)}
-                  className="p-2 h-8 w-8 hover:bg-accent"
-                >
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                </Button>
-              </TableCell>
-              <TableCell className="font-medium">{task.id}</TableCell>
-              <TableCell>{task.checklist}</TableCell>
-              <TableCell>{task.type}</TableCell>
-              <TableCell>{task.schedule}</TableCell>
-              <TableCell>{task.assignTo || '-'}</TableCell>
-              <TableCell>
-                <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
-                  {task.status}
-                </span>
-              </TableCell>
-              <TableCell>{task.scheduleFor}</TableCell>
-              <TableCell>{task.assetsServices}</TableCell>
-              <TableCell>{task.site}</TableCell>
-              <TableCell className="max-w-xs truncate" title={task.location}>
-                {task.location}
-              </TableCell>
-              <TableCell>{task.supplier || '-'}</TableCell>
-              <TableCell>{task.graceTime}</TableCell>
-              <TableCell>{task.duration || '-'}</TableCell>
-              <TableCell>{task.percentage || '-'}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <EnhancedTable
+        data={tasks}
+        columns={columns}
+        renderRow={renderRow}
+        enableSearch={true}
+        enableSelection={true}
+        enableExport={true}
+        storageKey="scheduled-tasks-table"
+        emptyMessage="No scheduled tasks found"
+        searchPlaceholder="Search tasks..."
+        exportFileName="scheduled-tasks"
+      />
     </div>
   );
 };
