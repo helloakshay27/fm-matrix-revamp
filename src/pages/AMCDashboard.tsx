@@ -211,7 +211,7 @@ export const AMCDashboard = () => {
       items.push(
         <PaginationItem key={1}>
           <PaginationLink 
-            onClick={() => handlePageChange(1)}
+            onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
           >
             1
@@ -231,7 +231,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink 
-                onClick={() => handlePageChange(i)}
+                onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
                 {i}
@@ -247,7 +247,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink 
-                onClick={() => handlePageChange(i)}
+                onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
                 {i}
@@ -270,7 +270,7 @@ export const AMCDashboard = () => {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink 
-                  onClick={() => handlePageChange(i)}
+                  onClick={() => setCurrentPage(i)}
                   isActive={currentPage === i}
                 >
                   {i}
@@ -286,7 +286,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={totalPages}>
             <PaginationLink 
-              onClick={() => handlePageChange(totalPages)}
+              onClick={() => setCurrentPage(totalPages)}
               isActive={currentPage === totalPages}
             >
               {totalPages}
@@ -300,7 +300,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={i}>
             <PaginationLink 
-              onClick={() => handlePageChange(i)}
+              onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
             >
               {i}

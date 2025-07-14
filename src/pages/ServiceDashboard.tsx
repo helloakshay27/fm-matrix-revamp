@@ -6,6 +6,15 @@ import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
 import { ServiceFilterModal } from '@/components/ServiceFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const serviceData = [{
   id: '16706',
@@ -111,6 +120,12 @@ export const ServiceDashboard = () => {
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const totalPages = Math.ceil(services.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedServices = services.slice(startIndex, startIndex + pageSize);
 
   const handleStatusToggle = id => {
     const updatedServices = services.map(service => service.id === id ? {
@@ -231,6 +246,117 @@ export const ServiceDashboard = () => {
     return item[columnKey];
   };
 
+  const renderPaginationItems = () => {
+    const items = [];
+    const showEllipsis = totalPages > 7;
+    
+    if (showEllipsis) {
+      // Show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink 
+            onClick={() => setCurrentPage(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show ellipsis or pages 2-3
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink 
+                onClick={() => setCurrentPage(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Show current page area
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink 
+                onClick={() => setCurrentPage(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Show ellipsis or pages before last
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find(item => item.key === i)) {
+            items.push(
+              <PaginationItem key={i}>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(i)}
+                  isActive={currentPage === i}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      // Show last page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink 
+              onClick={() => setCurrentPage(totalPages)}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show all pages if total is 7 or less
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              onClick={() => setCurrentPage(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
@@ -243,19 +369,44 @@ export const ServiceDashboard = () => {
       </div>
 
       <EnhancedTable
-        data={services}
+        data={paginatedServices}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderRowActions}
         bulkActions={bulkActions}
         showBulkActions={true}
         selectable={true}
-        pagination={true}
+        pagination={false}
         enableExport={true}
         exportFileName="services"
         onRowClick={handleViewService}
         storageKey="services-table"
       />
+
+      {/* Custom Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+              
+              {renderPaginationItems()}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />
