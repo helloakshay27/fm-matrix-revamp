@@ -363,12 +363,6 @@ export const AMCDashboard = () => {
         pagination={false}
       />
 
-      {/* Debug Info */}
-      <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
-        <p>Debug: Total Items: {amcData.length}, Total Pages: {totalPages}, Current Page: {currentPage}</p>
-        <p>Showing items {startIndex + 1} to {Math.min(startIndex + pageSize, amcData.length)} of {amcData.length}</p>
-      </div>
-
       {/* Custom Pagination - Always show for debugging */}
       <div className="flex justify-center mt-6">
         <Pagination>
