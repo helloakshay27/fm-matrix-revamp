@@ -154,7 +154,7 @@ const UtilityWasteGenerationDashboard = () => {
     return item[columnKey];
   };
   return <>
-      <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
+      <div className="flex-1 space-y-4 p-4  sm:p-5 md:p-3 pt-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
           <div>
@@ -166,7 +166,7 @@ const UtilityWasteGenerationDashboard = () => {
         </div>
 
         {/* Main Card */}
-        <Card className="bg-transparent">
+<Card className="bg-transparent border-none">
           <CardHeader>
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <CardTitle className="text-base sm:text-lg font-semibold">
