@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Filter, Download } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 interface FilterSectionProps {
   dateFrom: string;
@@ -70,10 +70,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
           className="max-w-xs" 
         />
         <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">Go</Button>
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">
-          <Download className="w-4 h-4 mr-2" />
-          Export
-        </Button>
       </div>
     </>
   );
