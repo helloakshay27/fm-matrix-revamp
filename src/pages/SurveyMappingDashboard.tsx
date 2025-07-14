@@ -246,11 +246,6 @@ export const SurveyMappingDashboard = () => {
           </Button>
           
           <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export</span>
-          </Button>
-          
-          <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
             <span className="hidden sm:inline">Print QR</span>
           </Button>
         </div>
