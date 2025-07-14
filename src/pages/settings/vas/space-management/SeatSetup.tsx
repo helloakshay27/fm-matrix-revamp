@@ -248,7 +248,7 @@ export const SeatSetup = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 min-w-0">
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">
@@ -290,98 +290,100 @@ export const SeatSetup = () => {
           />
         </div>
 
-        {/* Main Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10 min-w-[120px]">
-                    Location
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700 sticky left-[120px] bg-gray-50 z-10 min-w-[100px]">
-                    Floor
-                  </TableHead>
-                  {seatTypeColumns.map((seatType) => (
-                    <TableHead key={seatType} className="font-semibold text-gray-700 text-center min-w-[80px]">
-                      <div className="space-y-1">
-                        <div className="text-xs">{seatType}</div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-blue-600">Total Seats</span>
-                          <span className="text-red-600">Reserved Seats</span>
-                        </div>
-                      </div>
+        {/* Main Table Container with proper overflow handling */}
+        <div className="bg-white rounded-lg border shadow-sm">
+          <div className="overflow-x-auto max-w-full">
+            <div className="min-w-max">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-700 sticky left-0 bg-gray-50 z-20 min-w-[120px] border-r border-gray-200">
+                      Location
                     </TableHead>
-                  ))}
-                  <TableHead className="font-semibold text-gray-700 text-center sticky right-0 bg-gray-50 z-10">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {seatData.map((location) => (
-                  <TableRow key={location.id} className="border-b hover:bg-gray-50">
-                    <TableCell className="font-medium sticky left-0 bg-white z-10">
-                      {location.location}
-                    </TableCell>
-                    <TableCell className="sticky left-[120px] bg-white z-10">
-                      {location.floor}
-                    </TableCell>
-                    {seatTypeColumns.map((seatType) => {
-                      const seatInfo = location.seatTypes[seatType] || { totalSeats: 0, reservedSeats: 0 };
-                      return (
-                        <TableCell key={seatType} className="text-center">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-blue-600">{seatInfo.totalSeats}</span>
-                            <span className="text-red-600">{seatInfo.reservedSeats}</span>
+                    <TableHead className="font-semibold text-gray-700 sticky left-[120px] bg-gray-50 z-20 min-w-[100px] border-r border-gray-200">
+                      Floor
+                    </TableHead>
+                    {seatTypeColumns.map((seatType) => (
+                      <TableHead key={seatType} className="font-semibold text-gray-700 text-center min-w-[80px]">
+                        <div className="space-y-1">
+                          <div className="text-xs">{seatType}</div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-blue-600">Total Seats</span>
+                            <span className="text-red-600">Reserved Seats</span>
                           </div>
-                        </TableCell>
-                      );
-                    })}
-                    <TableCell className="text-center sticky right-0 bg-white z-10">
-                      <div className="flex gap-2 justify-center">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="p-1 hover:bg-gray-100"
-                          onClick={() => handleEditClick(location.id)}
-                        >
-                          <Edit className="w-4 h-4 text-gray-600" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="p-1 hover:bg-gray-100"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </Button>
-                      </div>
+                        </div>
+                      </TableHead>
+                    ))}
+                    <TableHead className="font-semibold text-gray-700 text-center sticky right-0 bg-gray-50 z-20 border-l border-gray-200">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {seatData.map((location) => (
+                    <TableRow key={location.id} className="border-b hover:bg-gray-50">
+                      <TableCell className="font-medium sticky left-0 bg-white z-10 border-r border-gray-200">
+                        {location.location}
+                      </TableCell>
+                      <TableCell className="sticky left-[120px] bg-white z-10 border-r border-gray-200">
+                        {location.floor}
+                      </TableCell>
+                      {seatTypeColumns.map((seatType) => {
+                        const seatInfo = location.seatTypes[seatType] || { totalSeats: 0, reservedSeats: 0 };
+                        return (
+                          <TableCell key={seatType} className="text-center">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-blue-600">{seatInfo.totalSeats}</span>
+                              <span className="text-red-600">{seatInfo.reservedSeats}</span>
+                            </div>
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className="text-center sticky right-0 bg-white z-10 border-l border-gray-200">
+                        <div className="flex gap-2 justify-center">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="p-1 hover:bg-gray-100"
+                            onClick={() => handleEditClick(location.id)}
+                          >
+                            <Edit className="w-4 h-4 text-gray-600" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="p-1 hover:bg-gray-100"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  
+                  {/* Total Row */}
+                  <TableRow className="bg-gray-100 font-semibold border-t-2 border-gray-300">
+                    <TableCell className="sticky left-0 bg-gray-100 z-10 border-r border-gray-200">
+                      <strong>Total</strong>
+                    </TableCell>
+                    <TableCell className="sticky left-[120px] bg-gray-100 z-10 border-r border-gray-200">
+                      -
+                    </TableCell>
+                    {seatTypeColumns.map((seatType) => (
+                      <TableCell key={seatType} className="text-center">
+                        <div className="flex justify-between text-sm font-semibold">
+                          <span className="text-blue-600">{totals[seatType].totalSeats}</span>
+                          <span className="text-red-600">{totals[seatType].reservedSeats}</span>
+                        </div>
+                      </TableCell>
+                    ))}
+                    <TableCell className="sticky right-0 bg-gray-100 z-10 border-l border-gray-200">
+                      -
                     </TableCell>
                   </TableRow>
-                ))}
-                
-                {/* Total Row */}
-                <TableRow className="bg-gray-100 font-semibold border-t-2 border-gray-300">
-                  <TableCell className="sticky left-0 bg-gray-100 z-10">
-                    <strong>Total</strong>
-                  </TableCell>
-                  <TableCell className="sticky left-[120px] bg-gray-100 z-10">
-                    -
-                  </TableCell>
-                  {seatTypeColumns.map((seatType) => (
-                    <TableCell key={seatType} className="text-center">
-                      <div className="flex justify-between text-sm font-semibold">
-                        <span className="text-blue-600">{totals[seatType].totalSeats}</span>
-                        <span className="text-red-600">{totals[seatType].reservedSeats}</span>
-                      </div>
-                    </TableCell>
-                  ))}
-                  <TableCell className="sticky right-0 bg-gray-100 z-10">
-                    -
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       </div>
