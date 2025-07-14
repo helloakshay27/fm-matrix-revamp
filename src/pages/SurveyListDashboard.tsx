@@ -316,6 +316,8 @@ export const SurveyListDashboard = () => {
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder="Search surveys..."
+          pagination={true}
+          pageSize={10}
         />
       </div>
     </div>
