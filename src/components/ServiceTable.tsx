@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { Eye, Filter, Plus, Import, QrCode, RotateCcw } from 'lucide-react';
+import { EnhancedTable } from "./enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 const services = [
   {
@@ -94,6 +96,25 @@ interface ServiceTableProps {
   onAddService: () => void;
 }
 
+const columns: ColumnConfig[] = [
+  { key: 'serviceName', label: 'Service Name', sortable: true, hideable: true, draggable: true },
+  { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+  { key: 'referenceNumber', label: 'Reference Number', sortable: true, hideable: true, draggable: true },
+  { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
+  { key: 'group', label: 'Group', sortable: true, hideable: true, draggable: true },
+  { key: 'serviceCode', label: 'Service Code', sortable: true, hideable: true, draggable: true },
+  { key: 'uom', label: 'UOM', sortable: true, hideable: true, draggable: true },
+  { key: 'site', label: 'Site', sortable: true, hideable: true, draggable: true },
+  { key: 'building', label: 'Building', sortable: true, hideable: true, draggable: true },
+  { key: 'wing', label: 'Wing', sortable: true, hideable: true, draggable: true },
+  { key: 'area', label: 'Area', sortable: true, hideable: true, draggable: true },
+  { key: 'floor', label: 'Floor', sortable: true, hideable: true, draggable: true },
+  { key: 'room', label: 'Room', sortable: true, hideable: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+  { key: 'createdOn', label: 'Created On', sortable: true, hideable: true, draggable: true },
+  { key: 'actions', label: 'View', sortable: false, hideable: false, draggable: false }
+];
+
 export const ServiceTable = ({ onAddService }: ServiceTableProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
@@ -134,192 +155,69 @@ export const ServiceTable = ({ onAddService }: ServiceTableProps) => {
     );
   };
 
+  const renderRow = (item: any) => ({
+    serviceName: item.serviceName,
+    id: item.referenceNumber,
+    referenceNumber: item.referenceNumber,
+    category: item.category,
+    group: item.group,
+    serviceCode: item.serviceCode,
+    uom: item.uom,
+    site: item.site,
+    building: item.building,
+    wing: item.wing,
+    area: item.area,
+    floor: item.floor,
+    room: item.room,
+    status: getStatusToggle(item.status),
+    createdOn: item.createdOn,
+    actions: (
+      <button className="text-[#1a1a1a] hover:text-[#8B5CF6] transition-colors">
+        <Eye className="w-4 h-4" />
+      </button>
+    )
+  });
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
-      {/* Table Header Actions */}
-      <div className="p-6 border-b border-[#D5DbDB]">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onAddService}
-              className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors">
-              <Import className="w-4 h-4" />
-              Import
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors">
-              <Import className="w-4 h-4" />
-              Import Locations
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
-              <Filter className="w-4 h-4" />
-              Filters
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
-              <QrCode className="w-4 h-4" />
-              Print QR
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
-            />
-            <button className="px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
-              🔍
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </button>
-          </div>
+    <div className="space-y-4">
+      {/* Header Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={onAddService}
+            className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors">
+            <Import className="w-4 h-4" />
+            Import
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors">
+            <Import className="w-4 h-4" />
+            Import Locations
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
+            <Filter className="w-4 h-4" />
+            Filters
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
+            <QrCode className="w-4 h-4" />
+            Print QR
+          </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-[#f6f4ee]">
-            <tr>
-              <th className="px-6 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedServices.length === filteredServices.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-[#D5DbDB] text-[#8B5CF6] focus:ring-[#8B5CF6]"
-                />
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                View
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Service Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Reference Number
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Group
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Service Code
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Uom
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Site
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Building
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Wing
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Area
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Floor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Room
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Created on
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-[#D5DbDB]">
-            {filteredServices.map((service) => (
-              <tr key={service.id} className="hover:bg-[#fafafa] transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="checkbox"
-                    checked={selectedServices.includes(service.id)}
-                    onChange={(e) => handleSelectService(service.id, e.target.checked)}
-                    className="rounded border-[#D5DbDB] text-[#8B5CF6] focus:ring-[#8B5CF6]"
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-[#1a1a1a] hover:text-[#8B5CF6] transition-colors">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#1a1a1a]">
-                  {service.serviceName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.referenceNumber}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.referenceNumber}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.category}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.group}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a] font-mono">
-                  {service.serviceCode}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.uom}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.site}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.building}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.wing}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.area}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.floor}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.room}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {getStatusToggle(service.status)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
-                  {service.createdOn}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-[#D5DbDB] flex justify-center">
-        <div className="text-sm text-[#1a1a1a] opacity-70">
-          Powered by <span className="font-semibold">go</span><span className="text-[#C72030]">Phygital</span><span className="font-semibold">.work</span>
-        </div>
-      </div>
+      <EnhancedTable
+        data={filteredServices}
+        columns={columns}
+        renderRow={renderRow}
+        enableSearch={true}
+        enableSelection={true}
+        enableExport={true}
+        storageKey="service-table"
+      />
     </div>
   );
 };
