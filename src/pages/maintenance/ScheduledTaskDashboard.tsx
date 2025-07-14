@@ -5,9 +5,10 @@ import { Clock, AlertCircle, Play, CheckCircle, XCircle } from 'lucide-react';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { useNavigate } from 'react-router-dom';
 import { StatusCard } from '@/components/maintenance/StatusCard';
-import { TaskTable } from '@/components/maintenance/TaskTable';
+import { TaskTable, columns } from '@/components/maintenance/TaskTable';
 import { CalendarView } from '@/components/maintenance/CalendarView';
 import { FilterSection } from '@/components/maintenance/FilterSection';
+import { TableControls } from '@/components/maintenance/TableControls';
 import { taskData } from '@/data/taskData';
 
 const statusCards = [
@@ -63,12 +64,76 @@ export const ScheduledTaskDashboard = () => {
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
+  // Table control states
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.filter(col => col.key !== 'actions').map(col => col.key).concat(['actions'])
+  );
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const handleViewTask = (taskId: string) => {
     navigate(`/task-details/${taskId}`);
   };
 
   const handleAdvancedFilter = (filters: any) => {
     console.log('Advanced filters applied:', filters);
+  };
+
+  // Table control handlers
+  const handleColumnVisibilityChange = (columnKey: string, visible: boolean) => {
+    if (visible) {
+      setVisibleColumns([...visibleColumns, columnKey]);
+    } else {
+      setVisibleColumns(visibleColumns.filter(key => key !== columnKey));
+    }
+  };
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortColumn(null);
+        setSortDirection(null);
+      } else {
+        setSortDirection('asc');
+      }
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleSelectTask = (taskId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTasks([...selectedTasks, taskId]);
+    } else {
+      setSelectedTasks(selectedTasks.filter(id => id !== taskId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTasks(taskData.map(task => task.id));
+    } else {
+      setSelectedTasks([]);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedTasks([]);
+  };
+
+  const handleExport = () => {
+    // Export logic
+    console.log('Exporting tasks...');
+  };
+
+  const handleBulkAction = (action: string) => {
+    console.log(`Bulk action: ${action} on ${selectedTasks.length} tasks`);
   };
 
   return (
@@ -124,8 +189,41 @@ export const ScheduledTaskDashboard = () => {
               ))}
             </div>
 
+            {/* Table Controls - External to table */}
+            <TableControls
+              columns={columns}
+              visibleColumns={visibleColumns}
+              onColumnVisibilityChange={handleColumnVisibilityChange}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSortChange={handleSort}
+              onClearSort={() => {
+                setSortColumn(null);
+                setSortDirection(null);
+              }}
+              selectedCount={selectedTasks.length}
+              totalCount={taskData.length}
+              onSelectAll={handleSelectAll}
+              onClearSelection={handleClearSelection}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onExport={handleExport}
+              onBulkAction={handleBulkAction}
+            />
+
             {/* Task Table */}
-            <TaskTable tasks={taskData} onViewTask={handleViewTask} />
+            <TaskTable 
+              tasks={taskData} 
+              onViewTask={handleViewTask}
+              visibleColumns={visibleColumns}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              selectedTasks={selectedTasks}
+              onSelectTask={handleSelectTask}
+              onSelectAll={handleSelectAll}
+              searchTerm={searchTerm}
+            />
           </>
         )}
 
