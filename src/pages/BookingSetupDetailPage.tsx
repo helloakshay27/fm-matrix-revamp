@@ -504,25 +504,53 @@ export const BookingSetupDetailPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label className="text-sm font-medium">Select Days</Label>
-                  <div className="mt-2 space-y-2">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Input placeholder="Select Date" className="w-full" readOnly />
+                  </div>
+                  <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-2">
-                      <input type="checkbox" disabled />
-                      <Label className="text-sm">Define Day</Label>
+                      <input 
+                        type="radio" 
+                        id="entireDay" 
+                        name="blockType" 
+                        value="entireDay" 
+                        disabled
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor="entireDay" className="text-sm">Entire Day</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="checkbox" disabled />
-                      <Label className="text-sm">Selected Days</Label>
+                      <input 
+                        type="radio" 
+                        id="selectedSlots" 
+                        name="blockType" 
+                        value="selectedSlots" 
+                        disabled
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor="selectedSlots" className="text-sm">Selected Slots</label>
                     </div>
                   </div>
+                  <div>
+                    <Textarea 
+                      placeholder="Please mention block reason" 
+                      className="min-h-[80px] resize-none" 
+                      readOnly 
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium">Block Start</Label>
-                  <div className="mt-1 text-sm text-gray-500">No data</div>
-                  <Label className="text-sm font-medium mt-4 block">Block Reason</Label>
-                  <div className="mt-1 text-sm text-gray-500">No data</div>
+                
+                <div className="mt-6">
+                  <div className="grid grid-cols-3 gap-4 py-3 bg-gray-100 px-4 font-semibold text-sm">
+                    <div>Block Days</div>
+                    <div>Blocked Slot</div>
+                    <div>Block Reason</div>
+                  </div>
+                  <div className="min-h-[100px] border border-gray-200 p-4">
+                    {/* Empty state - no blocked days */}
+                  </div>
                 </div>
               </div>
             </CardContent>
