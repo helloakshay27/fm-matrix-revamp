@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ticketData = [{
   id: '2189-11106',
@@ -206,6 +208,36 @@ export const TicketDashboard = () => {
   const pendingTickets = ticketData.filter(t => t.status === 'Pending').length;
   const closedTickets = ticketData.filter(t => t.status === 'Closed').length;
 
+  // Analytics data
+  const statusData = [
+    { name: 'Open', value: openTickets, color: '#3B82F6' },
+    { name: 'In Progress', value: inProgressTickets, color: '#F59E0B' },
+    { name: 'Pending', value: pendingTickets, color: '#EAB308' },
+    { name: 'Closed', value: closedTickets, color: '#10B981' }
+  ];
+
+  const categoryData = ticketData.reduce((acc, ticket) => {
+    const category = ticket.category;
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {});
+
+  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({ name, value }));
+
+  const priorityData = [
+    { priority: 'P1', '0-1 Days': 2, '2-3 Days': 1, '4-7 Days': 0, '>7 Days': 0 },
+    { priority: 'P2', '0-1 Days': 1, '2-3 Days': 2, '4-7 Days': 1, '>7 Days': 0 },
+    { priority: 'P3', '0-1 Days': 0, '2-3 Days': 1, '4-7 Days': 1, '>7 Days': 1 }
+  ];
+
+  const reactiveTickets = Math.floor(totalTickets * 0.7);
+  const proactiveTickets = totalTickets - reactiveTickets;
+
+  const typeData = [
+    { name: 'Reactive', value: reactiveTickets, color: '#EF4444' },
+    { name: 'Proactive', value: proactiveTickets, color: '#22C55E' }
+  ];
+
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
@@ -287,68 +319,225 @@ export const TicketDashboard = () => {
     return item[columnKey];
   };
 
-  return <div className="p-4 sm:p-6">
+  return (
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <p className="text-muted-foreground mb-2 text-sm">Tickets &gt; Ticket List</p>
-        <h1 className="text-xl sm:text-2xl font-bold uppercase">TICKET LIST</h1>
+        <p className="text-muted-foreground mb-2 text-sm">Tickets &gt; Dashboard</p>
+        <h1 className="text-xl sm:text-2xl font-bold uppercase">TICKET DASHBOARD</h1>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        {[{
-        label: 'Total Tickets',
-        value: totalTickets,
-        icon: Ticket
-      }, {
-        label: 'Open',
-        value: openTickets,
-        icon: AlertCircle
-      }, {
-        label: 'In Progress',
-        value: inProgressTickets,
-        icon: Clock
-      }, {
-        label: 'Pending',
-        value: pendingTickets,
-        icon: Clock
-      }, {
-        label: 'Closed',
-        value: closedTickets,
-        icon: CheckCircle
-      }].map((item, i) => {
-        const IconComponent = item.icon;
-        return <div key={i} className="p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4 bg-[f6f4ee] bg-[#f6f4ee]">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
-                <IconComponent className="w-6 h-6" style={{ color: '#C72030' }} />
+      <Tabs defaultValue="analytics" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="tickets" className="flex items-center gap-2">
+            <Ticket className="w-4 h-4" />
+            Ticket List
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="analytics" className="space-y-6 mt-6">
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Status Distribution */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <h3 className="text-lg font-semibold mb-4">Total Tickets - Status Wise</h3>
+              <div className="flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              <div className="flex flex-col">
-                <div className="text-2xl font-bold leading-tight" style={{ color: '#C72030' }}>{item.value}</div>
-                <div className="text-sm text-muted-foreground font-medium">{item.label}</div>
+              <div className="flex flex-wrap justify-center gap-4 mt-4">
+                {statusData.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-sm">{item.name}: {item.value}</span>
+                  </div>
+                ))}
               </div>
-            </div>;
-      })}
-      </div>
+            </div>
 
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
+            {/* Reactive vs Proactive */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <h3 className="text-lg font-semibold mb-4">Reactive vs Proactive Tickets</h3>
+              <div className="flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={typeData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {typeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-center gap-6 mt-4">
+                {typeData.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-sm">{item.name}: {item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-      <EnhancedTable 
-        data={ticketData} 
-        columns={columns} 
-        renderCell={renderCell} 
-        renderActions={renderRowActions} 
-        selectable={true} 
-        pagination={true} 
-        pageSize={10}
-        enableExport={true} 
-        exportFileName="tickets" 
-        onRowClick={handleViewDetails} 
-        storageKey="tickets-table" 
+          {/* Category Bar Chart */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <h3 className="text-lg font-semibold mb-4">Unit Category Wise Tickets</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={categoryChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#C72030" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Aging Matrix */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <h3 className="text-lg font-semibold mb-4">Aging Matrix - Priority vs Days</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="border border-gray-300 p-3 text-left">Priority</th>
+                    <th className="border border-gray-300 p-3 text-center">0-1 Days</th>
+                    <th className="border border-gray-300 p-3 text-center">2-3 Days</th>
+                    <th className="border border-gray-300 p-3 text-center">4-7 Days</th>
+                    <th className="border border-gray-300 p-3 text-center">&gt;7 Days</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {priorityData.map((row, index) => (
+                    <tr key={index}>
+                      <td className="border border-gray-300 p-3 font-medium">{row.priority}</td>
+                      <td className="border border-gray-300 p-3 text-center">{row['0-1 Days']}</td>
+                      <td className="border border-gray-300 p-3 text-center">{row['2-3 Days']}</td>
+                      <td className="border border-gray-300 p-3 text-center">{row['4-7 Days']}</td>
+                      <td className="border border-gray-300 p-3 text-center">{row['>7 Days']}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Average Resolution Time */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <h3 className="text-lg font-semibold mb-4">Average Resolution Time</h3>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-8 h-8 text-green-600" />
+                <div>
+                  <div className="text-2xl font-bold text-green-600">2.5 Days</div>
+                  <div className="text-sm text-muted-foreground">Current Average</div>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Based on closed tickets in the last 30 days
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="tickets" className="space-y-6 mt-6">
+          {/* Ticket Statistics Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[{
+              label: 'Total Tickets',
+              value: totalTickets,
+              icon: Ticket
+            }, {
+              label: 'Open',
+              value: openTickets,
+              icon: AlertCircle
+            }, {
+              label: 'In Progress',
+              value: inProgressTickets,
+              icon: Clock
+            }, {
+              label: 'Pending',
+              value: pendingTickets,
+              icon: Clock
+            }, {
+              label: 'Closed',
+              value: closedTickets,
+              icon: CheckCircle
+            }].map((item, i) => {
+              const IconComponent = item.icon;
+              return (
+                <div key={i} className="p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4 bg-[#f6f4ee]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
+                    <IconComponent className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="text-2xl font-bold leading-tight" style={{ color: '#C72030' }}>{item.value}</div>
+                    <div className="text-sm text-muted-foreground font-medium">{item.label}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mb-4">
+            {renderCustomActions()}
+          </div>
+
+          {/* Tickets Table */}
+          <EnhancedTable 
+            data={ticketData} 
+            columns={columns} 
+            renderCell={renderCell} 
+            renderActions={renderRowActions} 
+            selectable={true} 
+            pagination={true} 
+            pageSize={10}
+            enableExport={true} 
+            exportFileName="tickets" 
+            onRowClick={handleViewDetails} 
+            storageKey="tickets-table" 
+          />
+        </TabsContent>
+      </Tabs>
+
+      <TicketsFilterDialog 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+        onApplyFilters={(filters) => {
+          console.log('Applied filters:', filters);
+          setIsFilterOpen(false);
+        }} 
       />
-
-      <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={filters => {
-      console.log('Applied filters:', filters);
-      setIsFilterOpen(false);
-    }} />
-    </div>;
+    </div>
+  );
 };
