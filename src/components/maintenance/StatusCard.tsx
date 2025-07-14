@@ -24,7 +24,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
     <Card className="border-0 shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#F6F4EE' }}>
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 ${iconBg} rounded-lg flex items-center justify-center`}>
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F6F4EE' }}>
             <IconComponent className={`w-6 h-6 ${textColor}`} />
           </div>
           <div className="flex-1">
