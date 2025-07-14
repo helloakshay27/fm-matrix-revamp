@@ -251,17 +251,15 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          {enableExport && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
           
           <div className="text-sm text-muted-foreground">
             {filteredData.length} {filteredData.length === 1 ? 'item' : 'items'}
