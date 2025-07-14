@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -351,13 +352,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee]"
+                        className="bg-[#f6f4ee] text-center"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee]">Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
@@ -424,13 +425,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4">
+                          <TableCell key={column.key} className="p-4 text-center">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="p-4" data-actions>
+                        <TableCell className="p-4 text-center" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
