@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Download, Upload, Filter, Eye, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
+import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 const UtilityWasteGenerationDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const handleAdd = () => navigate('/maintenance/waste/generation/add');
   const handleImport = () => setIsImportOpen(true);
   const handleUpdate = () => setIsUpdateOpen(true);
@@ -47,6 +48,36 @@ const UtilityWasteGenerationDashboard = () => {
     createdBy: 'Jane Smith',
     createdOn: '2024-01-14 02:15 PM'
   }];
+
+  const columns = [
+    { key: 'id', label: 'ID', sortable: true, draggable: true },
+    { key: 'location', label: 'Location', sortable: true, draggable: true },
+    { key: 'vendor', label: 'Vendor', sortable: true, draggable: true },
+    { key: 'commodity', label: 'Commodity/Source', sortable: true, draggable: true },
+    { key: 'category', label: 'Category', sortable: true, draggable: true },
+    { key: 'operational', label: 'Operational Name', sortable: true, draggable: true },
+    { key: 'uom', label: 'UoM', sortable: true, draggable: true },
+    { key: 'generated', label: 'Generated', sortable: true, draggable: true },
+    { key: 'recycled', label: 'Recycled', sortable: true, draggable: true },
+    { key: 'agency', label: 'Agency', sortable: true, draggable: true },
+    { key: 'wasteDate', label: 'Waste Date', sortable: true, draggable: true },
+    { key: 'createdBy', label: 'Created By', sortable: true, draggable: true },
+    { key: 'createdOn', label: 'Created On', sortable: true, draggable: true }
+  ];
+
+  const renderActions = (record: any) => (
+    <div className="flex space-x-1">
+      <Button variant="ghost" size="sm" onClick={() => handleView(record.id)} className="h-8 w-8 p-0">
+        <Eye className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(record.id)} className="h-8 w-8 p-0">
+        <Edit className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => handleDelete(record.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
   return <>
       <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
         {/* Header */}
@@ -100,64 +131,15 @@ const UtilityWasteGenerationDashboard = () => {
             </div>
           </CardHeader>
 
-          {/* Table */}
+          {/* Enhanced Table */}
           <CardContent>
-            <div className="w-full overflow-x-auto">
-              <Table className="min-w-[1200px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Actions</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead>Commodity/Source</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Operational Name</TableHead>
-                    <TableHead>UoM</TableHead>
-                    <TableHead>Generated</TableHead>
-                    <TableHead>Recycled</TableHead>
-                    <TableHead>Agency</TableHead>
-                    <TableHead>Waste Date</TableHead>
-                    <TableHead>Created By</TableHead>
-                    <TableHead>Created On</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {wasteGenerationData.length > 0 ? wasteGenerationData.map(record => <TableRow key={record.id}>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            <Button variant="ghost" size="sm" onClick={() => handleView(record.id)} className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(record.id)} className="h-8 w-8 p-0">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(record.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell>{record.id}</TableCell>
-                        <TableCell>{record.location}</TableCell>
-                        <TableCell>{record.vendor}</TableCell>
-                        <TableCell>{record.commodity}</TableCell>
-                        <TableCell>{record.category}</TableCell>
-                        <TableCell>{record.operational}</TableCell>
-                        <TableCell>{record.uom}</TableCell>
-                        <TableCell>{record.generated}</TableCell>
-                        <TableCell>{record.recycled}</TableCell>
-                        <TableCell>{record.agency}</TableCell>
-                        <TableCell>{record.wasteDate}</TableCell>
-                        <TableCell>{record.createdBy}</TableCell>
-                        <TableCell>{record.createdOn}</TableCell>
-                      </TableRow>) : <TableRow>
-                      <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
-                        No waste generation records found.
-                      </TableCell>
-                    </TableRow>}
-                </TableBody>
-              </Table>
-            </div>
+            <EnhancedTable
+              data={wasteGenerationData}
+              columns={columns}
+              enableSelection={true}
+              renderActions={renderActions}
+              storageKey="waste-generation-table"
+            />
           </CardContent>
         </Card>
       </div>
