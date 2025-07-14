@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
@@ -6,6 +7,7 @@ import { Plus, Filter, Eye } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { BookingSetupForm } from "@/components/BookingSetupForm";
 export const BookingSetupDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
   const handleFilterApply = (filters: any) => {
@@ -76,6 +78,10 @@ export const BookingSetupDashboard = () => {
       status: !booking.status
     } : booking));
   };
+
+  const handleViewDetails = (id: string) => {
+    navigate(`/vas/booking/setup/details/${id}`);
+  };
   return <div className="p-6 bg-gray-50 min-h-screen">
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
         <div className="mb-6">
@@ -115,7 +121,11 @@ export const BookingSetupDashboard = () => {
             <TableBody>
               {bookingSetupData.map((booking, index) => <TableRow key={booking.id}>
                   <TableCell>
-                    <Button size="sm" variant="ghost">
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => handleViewDetails(booking.id)}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                   </TableCell>
