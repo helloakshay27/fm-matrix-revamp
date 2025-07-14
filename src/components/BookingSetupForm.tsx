@@ -205,10 +205,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Configure App Key */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
-                <h3 className="text-lg font-semibold text-orange-600">CONFIGURE APP KEY</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">CONFIGURE APP KEY</h3>
               </div>
               <TextField
                 label="App Key"
@@ -220,10 +220,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Configure Payment */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
-                <h3 className="text-lg font-semibold text-orange-600">CONFIGURE PAYMENT</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">CONFIGURE PAYMENT</h3>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="flex items-center space-x-2">
@@ -276,10 +276,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Configure Slot */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
-                <h3 className="text-lg font-semibold text-orange-600">CONFIGURE SLOT</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">CONFIGURE SLOT</h3>
               </div>
               <Button onClick={addSlot} className="mb-4 bg-purple-600 hover:bg-purple-700">
                 Add
@@ -393,10 +393,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Charge Setup */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
-                <h3 className="text-lg font-semibold text-orange-600">CHARGE SETUP</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">CHARGE SETUP</h3>
               </div>
               <div className="space-y-4">
                 <TextField
@@ -443,10 +443,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Slot Setup */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">5</div>
-                <h3 className="text-lg font-semibold text-orange-600">SLOT SETUP</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">5</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">SLOT SETUP</h3>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -464,17 +464,17 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Cover Image */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">6</div>
-                <h3 className="text-lg font-semibold text-orange-600">COVER IMAGE</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">6</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">COVER IMAGE</h3>
               </div>
-              <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
-                <div className="text-orange-500 mb-2">
+              <div className="border-2 border-dashed border-[#C72030]/30 rounded-lg p-8 text-center">
+                <div className="text-[#C72030] mb-2">
                   <Upload className="h-8 w-8 mx-auto" />
                 </div>
                 <p className="text-sm text-gray-600">
-                  Drag & Drop or <span className="text-orange-500 cursor-pointer">Choose File</span> No file chosen
+                  Drag & Drop or <span className="text-[#C72030] cursor-pointer">Choose File</span> No file chosen
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   Accepted file formats: PNG/JPEG (height: 142px, width: 328px) (max 5 mb)
@@ -483,17 +483,17 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Booking Summary Image */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">7</div>
-                <h3 className="text-lg font-semibold text-orange-600">Booking Summary Image</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">7</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">Booking Summary Image</h3>
               </div>
-              <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
-                <div className="text-orange-500 mb-2">
+              <div className="border-2 border-dashed border-[#C72030]/30 rounded-lg p-8 text-center">
+                <div className="text-[#C72030] mb-2">
                   <Upload className="h-8 w-8 mx-auto" />
                 </div>
                 <p className="text-sm text-gray-600">
-                  Drag & Drop or <span className="text-orange-500 cursor-pointer">Choose File</span> No file chosen
+                  Drag & Drop or <span className="text-[#C72030] cursor-pointer">Choose File</span> No file chosen
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   Accepted file formats: PNG/JPEG (height: 91px, width: 108px) (max 5 mb)
@@ -502,10 +502,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Description */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">8</div>
-                <h3 className="text-lg font-semibold text-orange-600">DESCRIPTION</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">8</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">DESCRIPTION</h3>
               </div>
               <Textarea
                 placeholder="Enter description"
@@ -517,10 +517,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
 
             {/* Terms & Conditions and Cancellation Text */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-orange-200 rounded-lg p-4">
+              <div className="border border-[#C72030]/20 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">9</div>
-                  <h3 className="text-lg font-semibold text-orange-600">TERMS & CONDITIONS</h3>
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">9</div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">TERMS & CONDITIONS</h3>
                 </div>
                 <Textarea
                   placeholder="Enter terms and conditions"
@@ -530,10 +530,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
                 />
               </div>
 
-              <div className="border border-orange-200 rounded-lg p-4">
+              <div className="border border-[#C72030]/20 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">10</div>
-                  <h3 className="text-lg font-semibold text-orange-600">CANCELLATION TEXT</h3>
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">10</div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">CANCELLATION TEXT</h3>
                 </div>
                 <Textarea
                   placeholder="Enter cancellation text"
@@ -545,7 +545,7 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Cancellation Rules */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="font-medium text-gray-700">Rules Description</div>
                 <div className="font-medium text-gray-700">Time</div>
@@ -578,10 +578,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Configure Amenity Info */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">11</div>
-                <h3 className="text-lg font-semibold text-orange-600">CONFIGURE AMENITY INFO</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">11</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">CONFIGURE AMENITY INFO</h3>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="flex items-center space-x-2">
@@ -654,10 +654,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Seater Info */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">12</div>
-                <h3 className="text-lg font-semibold text-orange-600">SEATER INFO</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">12</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">SEATER INFO</h3>
               </div>
               <FormControl>
                 <InputLabel>Seater Info</InputLabel>
@@ -675,10 +675,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Floor Info */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">13</div>
-                <h3 className="text-lg font-semibold text-orange-600">FLOOR INFO</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">13</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">FLOOR INFO</h3>
               </div>
               <FormControl>
                 <InputLabel>Floor Info</InputLabel>
@@ -696,10 +696,10 @@ export const BookingSetupForm: React.FC<BookingSetupFormProps> = ({ onClose }) =
             </div>
 
             {/* Shared Content Info */}
-            <div className="border border-orange-200 rounded-lg p-4">
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">14</div>
-                <h3 className="text-lg font-semibold text-orange-600">Shared Content Info</h3>
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">14</div>
+                <h3 className="text-lg font-semibold text-[#C72030]">Shared Content Info</h3>
               </div>
               <Textarea
                 placeholder="Text content will appear on meeting room share icon in Application"
