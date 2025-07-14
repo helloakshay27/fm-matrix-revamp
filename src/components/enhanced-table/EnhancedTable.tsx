@@ -34,7 +34,8 @@ interface BulkAction<T> {
 interface EnhancedTableProps<T> {
   data: T[];
   columns: ColumnConfig[];
-  renderCell: (item: T, columnKey: string) => React.ReactNode;
+  renderCell?: (item: T, columnKey: string) => React.ReactNode;
+  renderRow?: (item: T) => Record<string, any>;
   renderActions?: (item: T) => React.ReactNode;
   onRowClick?: (item: T) => void;
   storageKey?: string;
@@ -57,12 +58,15 @@ interface EnhancedTableProps<T> {
   pagination?: boolean;
   pageSize?: number;
   loading?: boolean;
+  enableSearch?: boolean;
+  enableSelection?: boolean;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
   data,
   columns,
   renderCell,
+  renderRow,
   renderActions,
   onRowClick,
   storageKey,
@@ -79,12 +83,14 @@ export function EnhancedTable<T extends Record<string, any>>({
   onSearchChange,
   searchPlaceholder = 'Search...',
   enableExport = false,
-  exportFileName = 'export',
+  exportFileName = 'table-export',
   bulkActions = [],
   showBulkActions = false,
   pagination = false,
   pageSize = 10,
   loading = false,
+  enableSearch = false,
+  enableSelection = false,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -187,7 +193,8 @@ export function EnhancedTable<T extends Record<string, any>>({
       visibleColumns.map(col => col.label).join(','),
       ...filteredData.map(item => 
         visibleColumns.map(col => {
-          const value = renderCell(item, col.key);
+          const renderedRow = renderRow ? renderRow(item) : item;
+          const value = renderRow ? renderedRow[col.key] : renderCell?.(item, col.key);
           return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : `"${value}"`;
         }).join(',')
       )
@@ -372,11 +379,15 @@ export function EnhancedTable<T extends Record<string, any>>({
                           />
                         </TableCell>
                       )}
-                      {visibleColumns.map((column) => (
-                        <TableCell key={column.key} className="p-4">
-                          {renderCell(item, column.key)}
-                        </TableCell>
-                      ))}
+                      {visibleColumns.map((column) => {
+                        const renderedRow = renderRow ? renderRow(item) : item;
+                        const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
+                        return (
+                          <TableCell key={column.key} className="p-4">
+                            {cellContent}
+                          </TableCell>
+                        );
+                      })}
                       {renderActions && (
                         <TableCell className="p-4" data-actions>
                           {renderActions(item)}
