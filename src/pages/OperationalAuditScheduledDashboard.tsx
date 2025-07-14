@@ -79,7 +79,7 @@ export const OperationalAuditScheduledDashboard = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
+      <div className="overflow-x-auto">
         <EnhancedTable
           data={scheduleData}
           columns={columns}
