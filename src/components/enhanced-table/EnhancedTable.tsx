@@ -215,7 +215,6 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      {/* Search and Actions Row */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
           {(onSearchChange || !externalSearchTerm) && (
@@ -289,7 +288,7 @@ export function EnhancedTable<T extends Record<string, any>>({
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <Table className={className}>
+<Table className={`border ${className}`}>
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>

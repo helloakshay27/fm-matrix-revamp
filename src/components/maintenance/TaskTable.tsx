@@ -82,7 +82,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask }) => {
   });
 
   return (
-    <div className="bg-white rounded-lg border">
+    <div className="bg-white rounded-lg">
       <EnhancedTable
         data={tasks}
         columns={columns}
