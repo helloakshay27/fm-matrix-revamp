@@ -28,7 +28,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
             <IconComponent className={`w-6 h-6 ${textColor}`} />
           </div>
           <div className="flex-1">
-            <div className={`text-2xl font-bold ${textColor}`}>{count}</div>
+            <div className="text-2xl font-bold" style={{ color: '#C72030' }}>{count}</div>
             <div className="text-sm text-gray-600">{title}</div>
           </div>
         </div>
