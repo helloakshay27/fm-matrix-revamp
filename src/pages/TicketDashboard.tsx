@@ -321,10 +321,10 @@ export const TicketDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6">
- 
+    <div className="h-screen overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-hidden p-6">
 
-      <Tabs defaultValue="analytics" className="w-full">
+      <Tabs defaultValue="analytics" className="w-full h-full flex flex-col">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -579,6 +579,7 @@ export const TicketDashboard = () => {
           setIsFilterOpen(false);
         }} 
       />
+      </div>
     </div>
   );
 };
