@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -210,10 +209,7 @@ export const TaskDashboard = () => {
         renderCell={renderCell} 
         selectable={true} 
         pagination={true} 
-        paginationConfig={{
-          pageSize: 10,
-          showDebug: false
-        }}
+        pageSize={10}
         enableExport={true} 
         exportFileName="tasks" 
         onRowClick={handleViewDetails} 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -207,10 +206,7 @@ export const TicketDashboard = () => {
         renderActions={renderRowActions} 
         selectable={true} 
         pagination={true} 
-        paginationConfig={{
-          pageSize: 10,
-          showDebug: false
-        }}
+        pageSize={10}
         enableExport={true} 
         exportFileName="tickets" 
         onRowClick={handleViewDetails} 
