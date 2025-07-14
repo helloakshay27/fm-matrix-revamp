@@ -180,18 +180,27 @@ export const ColumnVisibilityDropdown = ({
               key={key}
               className="flex items-center gap-2 cursor-pointer"
               onSelect={(e) => {
-                e.preventDefault();
-                if (!isLastVisible) {
-                  handleColumnToggle(key, !visible);
-                }
+                e.preventDefault(); // Prevent dropdown from closing
               }}
             >
               <Checkbox
                 checked={visible}
                 disabled={isLastVisible}
+                onCheckedChange={(checked) => {
+                  if (!isLastVisible) {
+                    handleColumnToggle(key, checked as boolean);
+                  }
+                }}
                 className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <div className="flex items-center gap-2 flex-1">
+              <div 
+                className="flex items-center gap-2 flex-1 cursor-pointer"
+                onClick={() => {
+                  if (!isLastVisible) {
+                    handleColumnToggle(key, !visible);
+                  }
+                }}
+              >
                 {visible ? (
                   <Eye className="w-4 h-4 text-green-600" />
                 ) : (
