@@ -646,9 +646,14 @@ export const BookingSetupDetailPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mb-3">
                 Text content will appear on booking room share icon in Application
               </p>
+              <Textarea 
+                placeholder="Enter shared content text..." 
+                className="min-h-[100px]" 
+                readOnly 
+              />
             </CardContent>
           </Card>
         </div>
