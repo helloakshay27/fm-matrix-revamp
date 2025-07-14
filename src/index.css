@@ -75,6 +75,20 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* Analytics specific colors - Beige/Tan Theme */
+    --analytics-background: 249 246 237; /* Light beige background */
+    --analytics-border: 215 204 200; /* Tan border */
+    --analytics-text: 101 85 73; /* Dark brown text */
+    --analytics-accent: 180 140 102; /* Warm tan accent */
+    --analytics-chart-1: 205 164 94; /* Chart color 1 */
+    --analytics-chart-2: 139 115 85; /* Chart color 2 */
+    --analytics-chart-3: 160 134 104; /* Chart color 3 */
+    --analytics-chart-4: 185 155 121; /* Chart color 4 */
+    --analytics-success: 134 154 120; /* Muted green */
+    --analytics-warning: 204 154 104; /* Warm orange */
+    --analytics-error: 180 120 115; /* Muted red */
+    --analytics-muted: 145 130 120; /* Muted text color */
   }
 }
 

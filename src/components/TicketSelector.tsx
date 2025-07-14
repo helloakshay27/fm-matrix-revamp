@@ -8,26 +8,44 @@ import {
 } from '@/components/ui/popover';
 
 const ticketOptions = [
-  { id: 'all', label: 'All Tickets', checked: true },
-  { id: 'reactive', label: 'Reactive Tickets', checked: true },
-  { id: 'proactive', label: 'Proactive Tickets', checked: true },
-  { id: 'pending', label: 'Pending Tickets', checked: false },
-  { id: 'inprogress', label: 'In Progress Tickets', checked: false },
-  { id: 'closed', label: 'Closed Tickets', checked: false },
-  { id: 'overdue', label: 'Overdue Tickets', checked: false },
-  { id: 'highpriority', label: 'High Priority (P1)', checked: false },
-  { id: 'medpriority', label: 'Medium Priority (P2)', checked: false },
-  { id: 'lowpriority', label: 'Low Priority (P3)', checked: false },
+  { id: 'tickets', label: 'Tickets', checked: true, chartSection: 'statusChart' },
+  { id: 'reactive-proactive', label: 'Reactive Proactive Tickets', checked: true, chartSection: 'reactiveChart' },
+  { id: 'category-wise', label: 'Category-wise Tickets', checked: true, chartSection: 'categoryChart' },
+  { id: 'category-proactive', label: 'Category-wise Proactive Tickets', checked: false, chartSection: 'categoryProactiveChart' },
+  { id: 'aging-matrix', label: 'Aging Matrix', checked: true, chartSection: 'agingMatrix' },
+  { id: 'pending', label: 'Pending Tickets', checked: false, chartSection: 'pendingChart' },
+  { id: 'inprogress', label: 'In Progress Tickets', checked: false, chartSection: 'inProgressChart' },
+  { id: 'closed', label: 'Closed Tickets', checked: false, chartSection: 'closedChart' },
+  { id: 'overdue', label: 'Overdue Tickets', checked: false, chartSection: 'overdueChart' },
+  { id: 'highpriority', label: 'High Priority (P1)', checked: false, chartSection: 'p1Chart' },
+  { id: 'medpriority', label: 'Medium Priority (P2)', checked: false, chartSection: 'p2Chart' },
+  { id: 'lowpriority', label: 'Low Priority (P3)', checked: false, chartSection: 'p3Chart' },
 ];
 
-export function TicketSelector() {
+interface TicketSelectorProps {
+  onSelectionChange?: (visibleSections: string[]) => void;
+}
+
+export function TicketSelector({ onSelectionChange }: TicketSelectorProps) {
   const [options, setOptions] = useState(ticketOptions);
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOption = (id: string) => {
-    setOptions(prev => prev.map(option => 
-      option.id === id ? { ...option, checked: !option.checked } : option
-    ));
+    setOptions(prev => {
+      const newOptions = prev.map(option => 
+        option.id === id ? { ...option, checked: !option.checked } : option
+      );
+      
+      // Get visible chart sections
+      const visibleSections = newOptions
+        .filter(opt => opt.checked)
+        .map(opt => opt.chartSection);
+      
+      // Notify parent component
+      onSelectionChange?.(visibleSections);
+      
+      return newOptions;
+    });
   };
 
   const selectedCount = options.filter(opt => opt.checked).length;
