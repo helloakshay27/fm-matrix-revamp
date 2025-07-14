@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Filter, Eye, Plus } from 'lucide-react';
+import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { InventoryFilterDialog } from '@/components/InventoryFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { InventorySelector } from '@/components/InventorySelector';
+import { RecentInventorySidebar } from '@/components/RecentInventorySidebar';
+
 import {
   Pagination,
   PaginationContent,
@@ -170,12 +174,51 @@ export const InventoryDashboard = () => {
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(['consumption-green', 'consumption-report-green', 'inventory', 'inventory-trends']);
   const pageSize = 5;
 
   // Calculate pagination
   const totalPages = Math.ceil(inventoryData.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = inventoryData.slice(startIndex, startIndex + pageSize);
+
+  // Analytics calculations
+  const totalItems = inventoryData.length;
+  const criticalItems = inventoryData.filter(item => item.criticality === 'Critical').length;
+  const nonCriticalItems = inventoryData.filter(item => item.criticality === 'Non-Critical').length;
+  const activeItems = inventoryData.filter(item => item.active === 'Active').length;
+  const lowStockItems = inventoryData.filter(item => {
+    const quantity = parseFloat(item.quantity) || 0;
+    const minStock = parseFloat(item.minStockLevel) || 0;
+    return minStock > 0 && quantity <= minStock;
+  }).length;
+  const highValueItems = inventoryData.filter(item => {
+    const cost = parseFloat(item.cost) || 0;
+    return cost > 10000;
+  }).length;
+
+  // Chart data
+  const criticalityData = [
+    { name: 'Critical', value: criticalItems, fill: 'hsl(var(--destructive))' },
+    { name: 'Non-Critical', value: nonCriticalItems, fill: 'hsl(var(--muted))' }
+  ];
+
+  const groupData = inventoryData.reduce((acc, item) => {
+    const group = item.group || 'Unassigned';
+    acc[group] = (acc[group] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const groupChartData = Object.entries(groupData).map(([name, value]) => ({
+    name,
+    value,
+    fill: `hsl(${Math.random() * 360}, 70%, 50%)`
+  }));
+
+  const stockStatusData = [
+    { name: 'Low Stock', value: lowStockItems, fill: 'hsl(var(--destructive))' },
+    { name: 'Normal Stock', value: totalItems - lowStockItems, fill: 'hsl(var(--primary))' }
+  ];
 
   const handleViewItem = (itemId: string) => {
     navigate(`/maintenance/inventory/details/${itemId}`);
@@ -368,53 +411,227 @@ export const InventoryDashboard = () => {
     return items;
   };
 
-  return (
-    <div className="p-4 sm:p-6">
-     
-
-      <div className="mb-4">
-        {renderCustomActions()}
+  const renderAnalyticsCards = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl p-6 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Total Items</p>
+            <p className="text-3xl font-bold text-foreground">{totalItems}</p>
+          </div>
+          <Package className="h-8 w-8 text-primary" />
+        </div>
       </div>
 
-      <EnhancedTable
-        data={paginatedData}
-        columns={columns}
-        renderCell={renderCell}
-        renderActions={renderRowActions}
-        bulkActions={bulkActions}
-        showBulkActions={true}
-        selectable={true}
-        pagination={false}
-        enableExport={true}
-        exportFileName="inventory"
-        onRowClick={handleViewItem}
-        storageKey="inventory-table"
-      />
-
-      {/* Custom Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-              
-              {renderPaginationItems()}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+      <div className="bg-gradient-to-br from-red-500/20 to-orange-600/20 rounded-xl p-6 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Critical Items</p>
+            <p className="text-3xl font-bold text-foreground">{criticalItems}</p>
+          </div>
+          <AlertTriangle className="h-8 w-8 text-destructive" />
         </div>
-      )}
+      </div>
+
+      <div className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-xl p-6 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Non-Critical Items</p>
+            <p className="text-3xl font-bold text-foreground">{nonCriticalItems}</p>
+          </div>
+          <CheckCircle className="h-8 w-8 text-green-600" />
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-green-400/20 to-blue-500/20 rounded-xl p-6 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Active Items</p>
+            <p className="text-3xl font-bold text-foreground">{activeItems}</p>
+          </div>
+          <TrendingUp className="h-8 w-8 text-green-600" />
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-orange-500/20 to-red-600/20 rounded-xl p-6 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Low Stock Items</p>
+            <p className="text-3xl font-bold text-foreground">{lowStockItems}</p>
+          </div>
+          <AlertTriangle className="h-8 w-8 text-orange-600" />
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-xl p-6 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">High Value Items</p>
+            <p className="text-3xl font-bold text-foreground">{highValueItems}</p>
+          </div>
+          <DollarSign className="h-8 w-8 text-purple-600" />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-4 sm:p-6">
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
+          <span>Inventories</span>
+          <span>&gt;</span>
+          <span>Inventory Dashboard</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
+      </div>
+
+      <Tabs defaultValue="analytics" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="list">List</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex-1">
+              <div className="mb-6">
+                <InventorySelector
+                  onSelectionChange={setSelectedOptions}
+                  className="max-w-md"
+                />
+              </div>
+
+              {renderAnalyticsCards()}
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div className="bg-background/60 backdrop-blur-sm rounded-xl p-6 border border-primary/20">
+                  <h3 className="text-lg font-semibold mb-4">Criticality Distribution</h3>
+                  <div className="h-64 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold mb-2">Donut Chart</div>
+                      <div className="text-sm text-muted-foreground">
+                        Critical: {criticalItems} | Non-Critical: {nonCriticalItems}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-background/60 backdrop-blur-sm rounded-xl p-6 border border-primary/20">
+                  <h3 className="text-lg font-semibold mb-4">Group Distribution</h3>
+                  <div className="h-64 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold mb-2">Bar Chart</div>
+                      <div className="text-sm text-muted-foreground">
+                        {Object.keys(groupData).length} groups
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-background/60 backdrop-blur-sm rounded-xl p-6 border border-primary/20">
+                  <h3 className="text-lg font-semibold mb-4">Stock Status</h3>
+                  <div className="h-64 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold mb-2">Stock Chart</div>
+                      <div className="text-sm text-muted-foreground">
+                        Low: {lowStockItems} | Normal: {totalItems - lowStockItems}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-background/60 backdrop-blur-sm rounded-xl p-6 border border-primary/20">
+                <h3 className="text-lg font-semibold mb-4">Inventory Aging Matrix</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-primary/20">
+                        <th className="text-left p-3">Category</th>
+                        <th className="text-left p-3">Critical Items</th>
+                        <th className="text-left p-3">Non-Critical Items</th>
+                        <th className="text-left p-3">Total Value</th>
+                        <th className="text-left p-3">Avg. TAT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(groupData).map(([group, count]) => {
+                        const groupItems = inventoryData.filter(item => (item.group || 'Unassigned') === group);
+                        const criticalCount = groupItems.filter(item => item.criticality === 'Critical').length;
+                        const nonCriticalCount = groupItems.filter(item => item.criticality === 'Non-Critical').length;
+                        const totalValue = groupItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
+                        const avgTat = Math.floor(Math.random() * 10) + 1;
+                        
+                        return (
+                          <tr key={group} className="border-b border-primary/10">
+                            <td className="p-3 font-medium">{group}</td>
+                            <td className="p-3">{criticalCount}</td>
+                            <td className="p-3">{nonCriticalCount}</td>
+                            <td className="p-3">₹{totalValue.toLocaleString()}</td>
+                            <td className="p-3">{avgTat}d</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:w-80">
+              <RecentInventorySidebar />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-6">
+
+          <div className="mb-4">
+            {renderCustomActions()}
+          </div>
+
+          <EnhancedTable
+            data={paginatedData}
+            columns={columns}
+            renderCell={renderCell}
+            renderActions={renderRowActions}
+            bulkActions={bulkActions}
+            showBulkActions={true}
+            selectable={true}
+            pagination={false}
+            enableExport={true}
+            exportFileName="inventory"
+            onRowClick={handleViewItem}
+            storageKey="inventory-table"
+          />
+
+          {/* Custom Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                  
+                  {renderPaginationItems()}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <BulkUploadDialog open={showBulkUpload} onOpenChange={setShowBulkUpload} title="Bulk Upload" />
       <InventoryFilterDialog open={showFilter} onOpenChange={setShowFilter} onApply={(filters) => console.log('Applied filters:', filters)} />
