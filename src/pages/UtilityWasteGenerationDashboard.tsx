@@ -207,9 +207,11 @@ const UtilityWasteGenerationDashboard = () => {
             <EnhancedTable
               data={wasteGenerationData}
               columns={columns}
-              enableSelection={true}
+              selectable={true}
               renderActions={renderActions}
               storageKey="waste-generation-table"
+              enableExport={true}
+              exportFileName="waste-generation-data"
             />
           </CardContent>
         </Card>
