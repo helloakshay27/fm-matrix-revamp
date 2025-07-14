@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TicketSelector } from '@/components/TicketSelector';
+import { RecentTicketsSidebar } from '@/components/RecentTicketsSidebar';
 
 const ticketData = [{
   id: '2189-11106',
@@ -208,12 +210,10 @@ export const TicketDashboard = () => {
   const pendingTickets = ticketData.filter(t => t.status === 'Pending').length;
   const closedTickets = ticketData.filter(t => t.status === 'Closed').length;
 
-  // Analytics data
+  // Analytics data with updated colors matching design
   const statusData = [
-    { name: 'Open', value: openTickets, color: '#3B82F6' },
-    { name: 'In Progress', value: inProgressTickets, color: '#F59E0B' },
-    { name: 'Pending', value: pendingTickets, color: '#EAB308' },
-    { name: 'Closed', value: closedTickets, color: '#10B981' }
+    { name: 'Open', value: openTickets, color: 'hsl(35, 35%, 75%)' },
+    { name: 'Closed', value: closedTickets, color: 'hsl(25, 45%, 55%)' }
   ];
 
   const categoryData = ticketData.reduce((acc, ticket) => {
@@ -224,18 +224,19 @@ export const TicketDashboard = () => {
 
   const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({ name, value }));
 
-  const priorityData = [
-    { priority: 'P1', '0-1 Days': 2, '2-3 Days': 1, '4-7 Days': 0, '>7 Days': 0 },
-    { priority: 'P2', '0-1 Days': 1, '2-3 Days': 2, '4-7 Days': 1, '>7 Days': 0 },
-    { priority: 'P3', '0-1 Days': 0, '2-3 Days': 1, '4-7 Days': 1, '>7 Days': 1 }
+  const agingMatrixData = [
+    { priority: 'P1', '0-10': 5, '11-20': 3, '21-30': 2, '31-40': 1, '41-50': 0 },
+    { priority: 'P2', '0-10': 8, '11-20': 4, '21-30': 2, '31-40': 1, '41-50': 1 },
+    { priority: 'P3', '0-10': 12, '11-20': 6, '21-30': 3, '31-40': 2, '41-50': 1 },
+    { priority: 'P4', '0-10': 15, '11-20': 8, '21-30': 4, '31-40': 2, '41-50': 1 }
   ];
 
   const reactiveTickets = Math.floor(totalTickets * 0.7);
   const proactiveTickets = totalTickets - reactiveTickets;
 
   const typeData = [
-    { name: 'Reactive', value: reactiveTickets, color: '#EF4444' },
-    { name: 'Proactive', value: proactiveTickets, color: '#22C55E' }
+    { name: 'Reactive', value: reactiveTickets, color: 'hsl(35, 35%, 75%)' },
+    { name: 'Proactive', value: proactiveTickets, color: 'hsl(25, 45%, 55%)' }
   ];
 
   const handleViewDetails = (ticketId: string) => {
@@ -339,132 +340,175 @@ export const TicketDashboard = () => {
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6 mt-6">
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Status Distribution */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold mb-4">Total Tickets - Status Wise</h3>
-              <div className="flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex flex-wrap justify-center gap-4 mt-4">
-                {statusData.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }}></div>
-                    <span className="text-sm">{item.name}: {item.value}</span>
+          {/* Header with Ticket Selector */}
+          <div className="flex justify-end">
+            <TicketSelector />
+          </div>
+
+          {/* Main Analytics Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Section - Charts (3 columns) */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Top Row - Two Donut Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Tickets Chart */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Tickets</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Reactive vs Proactive */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold mb-4">Reactive vs Proactive Tickets</h3>
-              <div className="flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={typeData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {typeData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex justify-center gap-6 mt-4">
-                {typeData.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }}></div>
-                    <span className="text-sm">{item.name}: {item.value}</span>
+                  <div className="flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={statusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {statusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  <div className="flex justify-center gap-4 mt-4">
+                    {statusData.map((item, index) => (
+                      <div key={index} className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
+                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
+                        </div>
+                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-          {/* Category Bar Chart */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold mb-4">Unit Category Wise Tickets</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={categoryChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#C72030" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Aging Matrix */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold mb-4">Aging Matrix - Priority vs Days</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-300 p-3 text-left">Priority</th>
-                    <th className="border border-gray-300 p-3 text-center">0-1 Days</th>
-                    <th className="border border-gray-300 p-3 text-center">2-3 Days</th>
-                    <th className="border border-gray-300 p-3 text-center">4-7 Days</th>
-                    <th className="border border-gray-300 p-3 text-center">&gt;7 Days</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {priorityData.map((row, index) => (
-                    <tr key={index}>
-                      <td className="border border-gray-300 p-3 font-medium">{row.priority}</td>
-                      <td className="border border-gray-300 p-3 text-center">{row['0-1 Days']}</td>
-                      <td className="border border-gray-300 p-3 text-center">{row['2-3 Days']}</td>
-                      <td className="border border-gray-300 p-3 text-center">{row['4-7 Days']}</td>
-                      <td className="border border-gray-300 p-3 text-center">{row['>7 Days']}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Average Resolution Time */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h3 className="text-lg font-semibold mb-4">Average Resolution Time</h3>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-8 h-8 text-green-600" />
-                <div>
-                  <div className="text-2xl font-bold text-green-600">2.5 Days</div>
-                  <div className="text-sm text-muted-foreground">Current Average</div>
+                {/* Reactive Proactive Tickets Chart */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Reactive Proactive Ticket</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={typeData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {typeData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex justify-center gap-4 mt-4">
+                    {typeData.map((item, index) => (
+                      <div key={index} className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
+                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
+                        </div>
+                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="text-sm text-muted-foreground">
-                Based on closed tickets in the last 30 days
+
+              {/* Unit Category Wise Tickets Bar Chart */}
+              <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Unit Category-wise Tickets</h3>
+                  <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={categoryChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={80}
+                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
+                    />
+                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
+
+              {/* Bottom Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Aging Matrix */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Aging Matrix</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-[hsl(var(--analytics-background))]">
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-left text-sm font-medium text-[hsl(var(--analytics-text))]">Priority</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">0-10</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">11-20</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">21-30</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">31-40</th>
+                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">41-50</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {agingMatrixData.map((row, index) => (
+                          <tr key={index}>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 font-medium text-[hsl(var(--analytics-text))]">{row.priority}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['0-10']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['11-20']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['21-30']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['31-40']}</td>
+                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['41-50']}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Average Resolution Time */}
+                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">569 Days Average Time Taken To Resolve A Ticket</h3>
+                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  </div>
+                  <div className="flex items-center justify-center h-32">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-[hsl(var(--analytics-accent))] mb-2">569</div>
+                      <div className="text-lg text-[hsl(var(--analytics-text))]">Days</div>
+                      <div className="text-sm text-[hsl(var(--analytics-muted))] mt-2">Average Resolution Time</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Sidebar - Recent Tickets */}
+            <div className="lg:col-span-1">
+              <RecentTicketsSidebar />
             </div>
           </div>
         </TabsContent>

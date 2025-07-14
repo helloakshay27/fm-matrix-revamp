@@ -30,6 +30,23 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    
+    /* Analytics theme colors - beige/tan palette */
+    --analytics-primary: 35 25% 75%;
+    --analytics-secondary: 35 35% 85%;
+    --analytics-accent: 35 45% 65%;
+    --analytics-background: 45 25% 92%;
+    --analytics-border: 35 20% 80%;
+    --analytics-text: 25 25% 25%;
+    --analytics-muted: 35 15% 65%;
+    
+    /* Chart colors - matching design */
+    --chart-tan: 35 35% 75%;
+    --chart-beige: 45 25% 85%;
+    --chart-brown: 25 45% 55%;
+    --chart-cream: 50 20% 90%;
+    --chart-mocha: 20 35% 45%;
+    
     --radius: 0.5rem;
   }
 
