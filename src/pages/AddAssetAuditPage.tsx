@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -90,10 +91,10 @@ export const AddAssetAuditPage = () => {
               onClick={() => setBasicDetailsExpanded(!basicDetailsExpanded)}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
                   <span className="text-white text-sm">1</span>
                 </div>
-                <h2 className="text-base md:text-lg font-semibold text-blue-600">BASIC DETAILS</h2>
+                <h2 className="text-base md:text-lg font-semibold text-[#C72030] uppercase">BASIC DETAILS</h2>
               </div>
               {basicDetailsExpanded ? <ChevronUp /> : <ChevronDown />}
             </div>
@@ -181,10 +182,10 @@ export const AddAssetAuditPage = () => {
               onClick={() => setAuditTypeExpanded(!auditTypeExpanded)}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
                   <span className="text-white text-sm">2</span>
                 </div>
-                <h2 className="text-base md:text-lg font-semibold text-blue-600">Audit Type</h2>
+                <h2 className="text-base md:text-lg font-semibold text-[#C72030]">Audit Type</h2>
               </div>
               {auditTypeExpanded ? <ChevronUp /> : <ChevronDown />}
             </div>
