@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -44,39 +45,6 @@ const navigationStructure = {
         icon: CheckSquare,
         subItems: [
           { name: 'Setup', href: '/settings/approval-matrix/setup' }
-        ]
-      },
-      {
-        name: 'Value Added Services',
-        icon: Star,
-        subItems: [
-          {
-            name: 'MOM',
-            subItems: [
-              { name: 'Client Tag Setup', href: '/settings/vas/mom/client-tag-setup' },
-              { name: 'Product Tag Setup', href: '/settings/vas/mom/product-tag-setup' }
-            ]
-          },
-          {
-            name: 'Space Management',
-            subItems: [
-              { name: 'Seat Setup', href: '/settings/vas/space-management/seat-setup' }
-            ]
-          },
-          {
-            name: 'Booking',
-            subItems: [
-              { name: 'Setup', href: '/settings/vas/booking/setup' }
-            ]
-          },
-          {
-            name: 'Parking Management',
-            subItems: [
-              { name: 'Parking Category', href: '/settings/vas/parking-management/parking-category' },
-              { name: 'Slot Configuration', href: '/settings/vas/parking-management/slot-configuration' },
-              { name: 'Time Slot Setup', href: '/settings/vas/parking-management/time-slot-setup' }
-            ]
-          }
         ]
       }
     ]
@@ -492,7 +460,7 @@ export const Sidebar = () => {
           {isExpanded && (
             <div className="space-y-1">
               {item.subItems.map((subItem: any) => (
-                <div key={subItem.name} className={level === 0 ? "ml-8" : "ml-4"}>
+                <div key={subItem.name} className="ml-8">
                   {subItem.subItems ? (
                     <div>
                       <button
