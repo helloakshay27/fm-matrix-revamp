@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from '@dnd-kit/sortable';
@@ -10,12 +11,14 @@ import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Search, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
 interface BulkAction<T> {
   label: string;
   icon?: React.ComponentType<any>;
   onClick: (selectedItems: T[]) => void;
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
+
 interface EnhancedTableProps<T> {
   data: T[];
   columns: ColumnConfig[];
@@ -46,6 +49,7 @@ interface EnhancedTableProps<T> {
   enableSearch?: boolean;
   enableSelection?: boolean;
 }
+
 export function EnhancedTable<T extends Record<string, any>>({
   data,
   columns,
@@ -78,7 +82,9 @@ export function EnhancedTable<T extends Record<string, any>>({
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+  
   const {
     sortedData: baseSortedData,
     sortState,
@@ -97,7 +103,11 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Filter data based on search term
   const filteredData = useMemo(() => {
     if (!searchTerm) return baseSortedData;
-    return baseSortedData.filter(item => Object.values(item).some(value => String(value).toLowerCase().includes(searchTerm.toLowerCase())));
+    return baseSortedData.filter(item => 
+      Object.values(item).some(value => 
+        String(value).toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
   }, [baseSortedData, searchTerm]);
 
   // Paginate data if pagination is enabled
@@ -106,16 +116,19 @@ export function EnhancedTable<T extends Record<string, any>>({
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [filteredData, currentPage, pageSize, pagination]);
+
   const sortedData = pagination ? paginatedData : filteredData;
   const totalPages = pagination ? Math.ceil(filteredData.length / pageSize) : 1;
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, {
-    coordinateGetter: sortableKeyboardCoordinates
-  }));
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
-    const {
-      active,
-      over
-    } = event;
+    const { active, over } = event;
     if (over && active.id !== over.id) {
       reorderColumns(String(active.id), String(over.id));
     }
@@ -125,20 +138,24 @@ export function EnhancedTable<T extends Record<string, any>>({
   const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
 
   // Check if all visible items are selected
-  const isAllSelected = selectable && sortedData.length > 0 && sortedData.every(item => selectedItems.includes(getItemId(item)));
+  const isAllSelected = selectable && sortedData.length > 0 && 
+    sortedData.every(item => selectedItems.includes(getItemId(item)));
 
   // Check if some (but not all) items are selected
   const isIndeterminate = selectable && selectedItems.length > 0 && !isAllSelected;
+
   const handleSelectAllChange = (checked: boolean) => {
     if (onSelectAll) {
       onSelectAll(checked);
     }
   };
+
   const handleSelectItemChange = (itemId: string, checked: boolean) => {
     if (onSelectItem) {
       onSelectItem(itemId, checked);
     }
   };
+
   const handleRowClick = (item: T, event: React.MouseEvent) => {
     // Don't trigger row click if clicking on checkbox or actions
     const target = event.target as HTMLElement;
@@ -147,6 +164,7 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
     onRowClick?.(item);
   };
+
   const handleInternalSearchChange = (value: string) => {
     setInternalSearchTerm(value);
     setCurrentPage(1);
@@ -154,15 +172,20 @@ export function EnhancedTable<T extends Record<string, any>>({
       onSearchChange(value);
     }
   };
+
   const handleExport = () => {
-    const csvContent = [visibleColumns.map(col => col.label).join(','), ...filteredData.map(item => visibleColumns.map(col => {
-      const renderedRow = renderRow ? renderRow(item) : item;
-      const value = renderRow ? renderedRow[col.key] : renderCell?.(item, col.key);
-      return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : `"${value}"`;
-    }).join(','))].join('\n');
-    const blob = new Blob([csvContent], {
-      type: 'text/csv'
-    });
+    const csvContent = [
+      visibleColumns.map(col => col.label).join(','),
+      ...filteredData.map(item =>
+        visibleColumns.map(col => {
+          const renderedRow = renderRow ? renderRow(item) : item;
+          const value = renderRow ? renderedRow[col.key] : renderCell?.(item, col.key);
+          return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : `"${value}"`;
+        }).join(',')
+      )
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -170,92 +193,175 @@ export function EnhancedTable<T extends Record<string, any>>({
     link.click();
     window.URL.revokeObjectURL(url);
   };
+
   const selectedItemObjects = useMemo(() => {
     return filteredData.filter(item => selectedItems.includes(getItemId(item)));
   }, [filteredData, selectedItems, getItemId]);
-  return <div className="space-y-4">
+
+  return (
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-          {(onSearchChange || !externalSearchTerm) && <div className="relative max-w-sm">
-              
-              
-            </div>}
+          {(enableSearch || onSearchChange || !externalSearchTerm) && (
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => handleInternalSearchChange(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
           
-          {showBulkActions && selectedItems.length > 0 && <div className="flex items-center gap-2">
+          {showBulkActions && selectedItems.length > 0 && (
+            <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {selectedItems.length} selected
               </span>
-              {bulkActions.map((action, index) => <Button key={index} variant={action.variant || 'outline'} size="sm" onClick={() => action.onClick(selectedItemObjects)} className="flex items-center gap-2">
+              {bulkActions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant={action.variant || 'outline'}
+                  size="sm"
+                  onClick={() => action.onClick(selectedItemObjects)}
+                  className="flex items-center gap-2"
+                >
                   {action.icon && <action.icon className="w-4 h-4" />}
                   {action.label}
-                </Button>)}
-            </div>}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {enableExport && <Button variant="outline" size="sm" onClick={handleExport} className="flex items-center gap-2">
+          {enableExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="flex items-center gap-2"
+            >
               <Download className="w-4 h-4" />
               Export
-            </Button>}
+            </Button>
+          )}
           
-          
-          
-          <ColumnVisibilityMenu columns={columns} columnVisibility={columnVisibility} onToggleVisibility={toggleColumnVisibility} onResetToDefaults={resetToDefaults} />
+          <ColumnVisibilityMenu
+            columns={columns}
+            columnVisibility={columnVisibility}
+            onToggleVisibility={toggleColumnVisibility}
+            onResetToDefaults={resetToDefaults}
+          />
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
             <Table className={className}>
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-                    {selectable && <TableHead className="bg-[#f6f4ee] w-12" data-checkbox>
-                        <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAllChange} aria-label={selectAllLabel} className="ml-2" {...isIndeterminate && {
-                      'data-state': 'indeterminate'
-                    }} />
-                      </TableHead>}
-                    {visibleColumns.map(column => <SortableColumnHeader key={column.key} id={column.key} sortable={column.sortable} draggable={column.draggable} sortDirection={sortState.column === column.key ? sortState.direction : null} onSort={() => handleSort(column.key)} className="bg-[#f6f4ee]">
+                    {(selectable || enableSelection) && (
+                      <TableHead className="bg-[#f6f4ee] w-12" data-checkbox>
+                        <Checkbox
+                          checked={isAllSelected}
+                          onCheckedChange={handleSelectAllChange}
+                          aria-label={selectAllLabel}
+                          className="ml-2"
+                          {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                        />
+                      </TableHead>
+                    )}
+                    {visibleColumns.map((column) => (
+                      <SortableColumnHeader
+                        key={column.key}
+                        id={column.key}
+                        sortable={column.sortable}
+                        draggable={column.draggable}
+                        sortDirection={sortState.column === column.key ? sortState.direction : null}
+                        onSort={() => handleSort(column.key)}
+                        className="bg-[#f6f4ee]"
+                      >
                         {column.label}
-                      </SortableColumnHeader>)}
-                    {renderActions && <TableHead className="bg-[#f6f4ee]">Actions</TableHead>}
+                      </SortableColumnHeader>
+                    ))}
+                    {renderActions && (
+                      <TableHead className="bg-[#f6f4ee]">Actions</TableHead>
+                    )}
                   </SortableContext>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading && <TableRow>
-                    <TableCell colSpan={visibleColumns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0)} className="h-24 text-center">
+                {loading && (
+                  <TableRow>
+                    <TableCell 
+                      colSpan={visibleColumns.length + (renderActions ? 1 : 0) + ((selectable || enableSelection) ? 1 : 0)} 
+                      className="h-24 text-center"
+                    >
                       <div className="flex items-center justify-center">
                         <Loader2 className="h-8 w-8 animate-spin" />
                         <span className="ml-2">Loading...</span>
                       </div>
                     </TableCell>
-                  </TableRow>}
-                {!loading && sortedData.length === 0 && <TableRow>
-                    <TableCell colSpan={visibleColumns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0)} className="text-center py-8 text-gray-500">
+                  </TableRow>
+                )}
+                {!loading && sortedData.length === 0 && (
+                  <TableRow>
+                    <TableCell 
+                      colSpan={visibleColumns.length + (renderActions ? 1 : 0) + ((selectable || enableSelection) ? 1 : 0)} 
+                      className="text-center py-8 text-gray-500"
+                    >
                       {emptyMessage}
                     </TableCell>
-                  </TableRow>}
+                  </TableRow>
+                )}
                 {!loading && sortedData.map((item, index) => {
-                const itemId = getItemId(item);
-                const isSelected = selectedItems.includes(itemId);
-                return <TableRow key={index} className={cn(onRowClick && "cursor-pointer", "hover:bg-gray-50", isSelected && "bg-blue-50")} onClick={e => handleRowClick(item, e)}>
-                      {selectable && <TableCell className="p-4 w-12" data-checkbox>
-                          <Checkbox checked={isSelected} onCheckedChange={checked => handleSelectItemChange(itemId, !!checked)} aria-label={`Select row ${index + 1}`} onClick={e => e.stopPropagation()} />
-                        </TableCell>}
-                      {visibleColumns.map(column => {
-                    const renderedRow = renderRow ? renderRow(item) : item;
-                    const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
-                    return <TableCell key={column.key} className="p-4">
+                  const itemId = getItemId(item);
+                  const isSelected = selectedItems.includes(itemId);
+                  return (
+                    <TableRow
+                      key={index}
+                      className={cn(
+                        onRowClick && "cursor-pointer",
+                        "hover:bg-gray-50",
+                        isSelected && "bg-blue-50"
+                      )}
+                      onClick={(e) => handleRowClick(item, e)}
+                    >
+                      {(selectable || enableSelection) && (
+                        <TableCell className="p-4 w-12" data-checkbox>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                            aria-label={`Select row ${index + 1}`}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </TableCell>
+                      )}
+                      {visibleColumns.map((column) => {
+                        const renderedRow = renderRow ? renderRow(item) : item;
+                        const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
+                        return (
+                          <TableCell key={column.key} className="p-4">
                             {cellContent}
-                          </TableCell>;
-                  })}
-                      {renderActions && <TableCell className="p-4" data-actions>
+                          </TableCell>
+                        );
+                      })}
+                      {renderActions && (
+                        <TableCell className="p-4" data-actions>
                           {renderActions(item)}
-                        </TableCell>}
-                    </TableRow>;
-              })}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </DndContext>
@@ -263,21 +369,34 @@ export function EnhancedTable<T extends Record<string, any>>({
       </div>
 
       {/* Pagination */}
-      {pagination && totalPages > 1 && <div className="flex items-center justify-between">
+      {pagination && totalPages > 1 && (
+        <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
               Previous
             </Button>
             <span className="text-sm">
               Page {currentPage} of {totalPages}
             </span>
-            <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
               Next
             </Button>
           </div>
-        </div>}
-    </div>;
+        </div>
+      )}
+    </div>
+  );
 }
