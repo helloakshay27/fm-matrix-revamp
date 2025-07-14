@@ -63,22 +63,60 @@ export const BookingSetupDetailPage = () => {
           {/* Basic Info */}
           <Card>
             <CardContent className="p-6">
+              {/* Radio buttons */}
+              <div className="flex items-center space-x-6 mb-6">
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="bookable" 
+                    name="type" 
+                    value="bookable" 
+                    defaultChecked 
+                    disabled
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <label htmlFor="bookable" className="text-sm font-medium">Bookable</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="request" 
+                    name="type" 
+                    value="request" 
+                    disabled
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <label htmlFor="request" className="text-sm font-medium">Request</label>
+                </div>
+              </div>
+
+              {/* Form fields */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <Label className="text-sm font-medium">Facility Name</Label>
+                  <Label className="text-sm font-medium">
+                    Facility Name<span className="text-red-500">*</span>
+                  </Label>
                   <Input value={bookingData.facilityName} className="mt-1" readOnly />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Active</Label>
-                  <div className="mt-2">
-                    <Switch checked={bookingData.active} disabled />
-                  </div>
+                  <Label className="text-sm font-medium">
+                    Active<span className="text-red-500">*</span>
+                  </Label>
+                  <Select value="Yes" disabled>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Department</Label>
                   <Select value={bookingData.department} disabled>
                     <SelectTrigger className="mt-1">
-                      <SelectValue />
+                      <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Slot">Slot</SelectItem>
