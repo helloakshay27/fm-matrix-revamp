@@ -183,23 +183,6 @@ export const SurveyResponsePage = () => {
             Filter
           </Button>
         </div>
-
-        <div className="flex gap-2 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[28px] sm:h-[36px] pl-10 pr-4 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none text-sm"
-            />
-          </div>
-          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white flex-shrink-0">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset
-          </Button>
-        </div>
       </div>
 
       {/* Enhanced Data Table */}
