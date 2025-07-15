@@ -290,7 +290,7 @@ import { GRNDashboard } from './pages/GRNDashboard';
 // Import Edit GRN page
 import { EditGRNDashboard } from './pages/EditGRNDashboard';
 import { AddInventoryPage } from './pages/AddInventoryPage';
-import EditAssetDetailsPage from './pages/EditAssetDetailsPage';
+import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 
 // Import M Safe pages
 import { MSafeDashboard } from './pages/MSafeDashboard';
