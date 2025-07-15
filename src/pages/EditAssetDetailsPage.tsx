@@ -3423,6 +3423,7 @@ export const EditAssetDetailsPage = () => {
                 </div>
                 {expandedSections.meterCategory && (
                   <div className="p-4 sm:p-6">
+                    {/* Meter Type */}
                     <div className="mb-6">
                       <div className="flex items-center gap-4 mb-4">
                         <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
@@ -3436,6 +3437,7 @@ export const EditAssetDetailsPage = () => {
                               checked={meterType === 'parent'}
                               onChange={(e) => setMeterType(e.target.value)}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
+                              style={{ accentColor: '#C72030' }}
                             />
                             <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
                           </div>
@@ -3448,12 +3450,166 @@ export const EditAssetDetailsPage = () => {
                               checked={meterType === 'sub'}
                               onChange={(e) => setMeterType(e.target.value)}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
+                              style={{ accentColor: '#C72030' }}
                             />
                             <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Critical Status */}
+                    <div className="mb-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-[#C72030] font-medium text-sm sm:text-base">CRITICAL</span>
+                        <div className="flex gap-6">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="critical-yes"
+                              name="criticalStatus"
+                              value="yes"
+                              checked={criticalStatus === 'yes'}
+                              onChange={(e) => setCriticalStatus(e.target.value)}
+                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              style={{ accentColor: '#C72030' }}
+                            />
+                            <label htmlFor="critical-yes" className="text-sm">Yes</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="critical-no"
+                              name="criticalStatus"
+                              value="no"
+                              checked={criticalStatus === 'no'}
+                              onChange={(e) => setCriticalStatus(e.target.value)}
+                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              style={{ accentColor: '#C72030' }}
+                            />
+                            <label htmlFor="critical-no" className="text-sm">No</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Meter Details Categories */}
+                    <div className="mb-6">
+                      <h3 className="text-[#C72030] font-semibold mb-4 bg-gray-50 p-3 rounded text-sm">METER DETAILS</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {getMeterCategoryOptions().map((option) => {
+                          const IconComponent = option.icon;
+                          return (
+                            <div
+                              key={option.value}
+                              className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-gray-50 ${
+                                meterCategoryType === option.value
+                                  ? 'border-[#C72030] bg-red-50'
+                                  : 'border-gray-200'
+                              }`}
+                              onClick={() => handleMeterCategoryChange(option.value)}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id={`meter-${option.value}`}
+                                  name="meterCategory"
+                                  value={option.value}
+                                  checked={meterCategoryType === option.value}
+                                  onChange={() => handleMeterCategoryChange(option.value)}
+                                  className="w-4 h-4 text-[#C72030] border-gray-300"
+                                  style={{ accentColor: '#C72030' }}
+                                />
+                                <IconComponent className="w-5 h-5 text-gray-600" />
+                                <label htmlFor={`meter-${option.value}`} className="text-sm font-medium cursor-pointer">
+                                  {option.label}
+                                </label>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Board Ratio Options - Show when Board is selected */}
+                    {showBoardRatioOptions && (
+                      <div className="mb-6">
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">Board Sub-options</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {getBoardRatioOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div
+                                key={option.value}
+                                className={`border rounded-md p-3 cursor-pointer transition-colors hover:bg-gray-50 ${
+                                  subCategoryType === option.value
+                                    ? 'border-[#C72030] bg-red-50'
+                                    : 'border-gray-200'
+                                }`}
+                                onClick={() => setSubCategoryType(option.value)}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`board-${option.value}`}
+                                    name="boardSubCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={() => setSubCategoryType(option.value)}
+                                    className="w-3 h-3 text-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`board-${option.value}`} className="text-xs font-medium cursor-pointer">
+                                    {option.label}
+                                  </label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Renewable Options - Show when Renewable is selected */}
+                    {showRenewableOptions && (
+                      <div className="mb-6">
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">Renewable Sub-options</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {getRenewableOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div
+                                key={option.value}
+                                className={`border rounded-md p-3 cursor-pointer transition-colors hover:bg-gray-50 ${
+                                  subCategoryType === option.value
+                                    ? 'border-[#C72030] bg-red-50'
+                                    : 'border-gray-200'
+                                }`}
+                                onClick={() => setSubCategoryType(option.value)}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`renewable-${option.value}`}
+                                    name="renewableSubCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={() => setSubCategoryType(option.value)}
+                                    className="w-3 h-3 text-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`renewable-${option.value}`} className="text-xs font-medium cursor-pointer">
+                                    {option.label}
+                                  </label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
