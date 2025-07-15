@@ -529,44 +529,42 @@ export const TicketDashboard = () => {
                     <Download className="w-5 h-5 cursor-pointer" style={{ color: '#C72030' }} />
                   </div>
                   
-                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <div className="space-y-6">
                     {/* Table */}
-                    <div className="xl:col-span-2">
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse border border-gray-300">
-                          <thead>
-                            <tr style={{ backgroundColor: '#EDE4D8' }}>
-                              <th className="border border-gray-300 p-3 text-left text-sm font-medium text-black">Priority</th>
-                              <th colSpan={5} className="border border-gray-300 p-3 text-center text-sm font-medium text-black">No. of Days</th>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-300">
+                        <thead>
+                          <tr style={{ backgroundColor: '#EDE4D8' }}>
+                            <th className="border border-gray-300 p-3 text-left text-sm font-medium text-black">Priority</th>
+                            <th colSpan={5} className="border border-gray-300 p-3 text-center text-sm font-medium text-black">No. of Days</th>
+                          </tr>
+                          <tr style={{ backgroundColor: '#EDE4D8' }}>
+                            <th className="border border-gray-300 p-3"></th>
+                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">0-10</th>
+                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">11-20</th>
+                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">21-30</th>
+                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">31-40</th>
+                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">41-50</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {agingMatrixData.map((row, index) => (
+                            <tr key={index} className="bg-white">
+                              <td className="border border-gray-300 p-3 font-medium text-black">{row.priority}</td>
+                              <td className="border border-gray-300 p-3 text-center text-black">{row['0-10']}</td>
+                              <td className="border border-gray-300 p-3 text-center text-black">{row['11-20']}</td>
+                              <td className="border border-gray-300 p-3 text-center text-black">{row['21-30']}</td>
+                              <td className="border border-gray-300 p-3 text-center text-black">{row['31-40']}</td>
+                              <td className="border border-gray-300 p-3 text-center text-black">{row['41-50']}</td>
                             </tr>
-                            <tr style={{ backgroundColor: '#EDE4D8' }}>
-                              <th className="border border-gray-300 p-3"></th>
-                              <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">0-10</th>
-                              <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">11-20</th>
-                              <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">21-30</th>
-                              <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">31-40</th>
-                              <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">41-50</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {agingMatrixData.map((row, index) => (
-                              <tr key={index} className="bg-white">
-                                <td className="border border-gray-300 p-3 font-medium text-black">{row.priority}</td>
-                                <td className="border border-gray-300 p-3 text-center text-black">{row['0-10']}</td>
-                                <td className="border border-gray-300 p-3 text-center text-black">{row['11-20']}</td>
-                                <td className="border border-gray-300 p-3 text-center text-black">{row['21-30']}</td>
-                                <td className="border border-gray-300 p-3 text-center text-black">{row['31-40']}</td>
-                                <td className="border border-gray-300 p-3 text-center text-black">{row['41-50']}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
 
-                    {/* Summary Box */}
-                    <div className="xl:col-span-1 flex items-center justify-center">
-                      <div className="rounded-lg p-8 text-center w-full" style={{ backgroundColor: '#EDE4D8' }}>
+                    {/* Summary Box - Full Width Below Table */}
+                    <div className="w-full">
+                      <div className="rounded-lg p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
                         <div className="text-4xl font-bold text-black mb-2">569 Days</div>
                         <div className="text-base text-black">Average Time Taken To Resolve A Ticket</div>
                       </div>
