@@ -254,7 +254,7 @@ export const AssetDashboard = () => {
               {/* Category-wise Assets Bar Chart */}
               <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Category-wise Assets</h3>
+                  <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Category-wise Assets</h3>
                   <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                 </div>
                 <ResponsiveContainer width="100%" height={250}>
@@ -276,7 +276,7 @@ export const AssetDashboard = () => {
                 {/* Asset Aging Matrix */}
                 <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Asset Aging Matrix</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Asset Aging Matrix</h3>
                     <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                   </div>
                   <div className="overflow-x-auto">
@@ -310,7 +310,7 @@ export const AssetDashboard = () => {
                 {/* Asset Performance Metrics */}
                 <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Performance Metrics</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Performance Metrics</h3>
                     <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                   </div>
                   <div className="space-y-4">
