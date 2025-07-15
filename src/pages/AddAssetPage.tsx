@@ -990,6 +990,31 @@ const AddAssetPage = () => {
                         }
                       }}
                     />
+                    
+                    {/* Custom Fields */}
+                    {customFields.leaseholdBasicId.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('leaseholdBasicId', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('leaseholdBasicId', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -1053,10 +1078,35 @@ const AddAssetPage = () => {
                         '& .MuiOutlinedInput-root': {
                           height: { xs: '36px', md: '45px' }
                         }
-                      }}
-                    />
-                  </div>
-                </CardContent>
+                       }}
+                     />
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdLocationAssoc.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdLocationAssoc', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdLocationAssoc', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
 
               {/* Improvement Details */}
@@ -1157,9 +1207,34 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
-                    />
-                  </div>
-                </CardContent>
+                     />
+                     
+                     {/* Custom Fields */}
+                     {customFields.improvementDetails.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('improvementDetails', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('improvementDetails', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
 
               {/* Financial & Depreciation */}
@@ -1254,9 +1329,34 @@ const AddAssetPage = () => {
                           }
                         }
                       }}
-                    />
-                  </div>
-                </CardContent>
+                     />
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdFinancial.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdFinancial', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdFinancial', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
 
               {/* Lease & Maintenance Linkages */}
@@ -1323,9 +1423,34 @@ const AddAssetPage = () => {
                         <MenuItem value="yes">Yes</MenuItem>
                         <MenuItem value="no">No</MenuItem>
                       </MuiSelect>
-                    </FormControl>
-                  </div>
-                </CardContent>
+                     </FormControl>
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdLease.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdLease', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdLease', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
 
               {/* Oversight & Documentation */}
@@ -1392,13 +1517,38 @@ const AddAssetPage = () => {
                             Click to upload attachments
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            Upload invoices, contracts, improvement photos, etc.
-                          </p>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
+                             Upload invoices, contracts, improvement photos, etc.
+                           </p>
+                         </label>
+                       </div>
+                     </div>
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdOversight.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdOversight', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdOversight', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
             </div>
           </LocalizationProvider>
