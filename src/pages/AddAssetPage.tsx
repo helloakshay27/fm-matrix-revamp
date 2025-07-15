@@ -1674,18 +1674,52 @@ const AddAssetPage = () => {
                         <MenuItem value="private">Private</MenuItem>
                         <MenuItem value="commercial">Commercial</MenuItem>
                         <MenuItem value="transport">Transport Permit</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-                </CardContent>
+                       </MuiSelect>
+                     </FormControl>
+                     
+                     {/* Custom Fields */}
+                     {customFields.vehicleOwnership.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('vehicleOwnership', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('vehicleOwnership', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
 
               {/* Financial & Depreciation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <DollarSign className="w-5 h-5" />
-                    Financial & Depreciation
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Financial & Depreciation
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleFinancial')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1764,6 +1798,31 @@ const AddAssetPage = () => {
                         }
                       }}
                     />
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleTechnicalSpecs.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleTechnicalSpecs', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleTechnicalSpecs', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -1771,9 +1830,18 @@ const AddAssetPage = () => {
               {/* Performance Tracking */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Performance className="w-5 h-5" />
-                    Performance Tracking
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Performance className="w-5 h-5" />
+                      Performance Tracking
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehiclePerformance')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1860,9 +1928,18 @@ const AddAssetPage = () => {
               {/* Legal & Compliance */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5" />
-                    Legal & Compliance
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5" />
+                      Legal & Compliance
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleLegal')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1931,6 +2008,31 @@ const AddAssetPage = () => {
                         }
                       }}
                     />
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleLegal.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleLegal', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleLegal', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -1938,9 +2040,18 @@ const AddAssetPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Archive className="w-5 h-5" />
-                    Miscellaneous
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Archive className="w-5 h-5" />
+                      Miscellaneous
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleMiscellaneous')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1969,8 +2080,33 @@ const AddAssetPage = () => {
                         Upload RC copy, insurance, permit, fitness, PUC, etc.
                       </p>
                     </label>
-                  </div>
-                </CardContent>
+                   </div>
+                   
+                   {/* Custom Fields */}
+                   {customFields.vehicleMiscellaneous.map((field) => (
+                     <div key={field.id} className="relative">
+                       <TextField
+                         label={field.name}
+                         placeholder={`Enter ${field.name}`}
+                         variant="outlined"
+                         fullWidth
+                         value={field.value}
+                         onChange={(e) => handleCustomFieldChange('vehicleMiscellaneous', field.id, e.target.value)}
+                         sx={{
+                           '& .MuiOutlinedInput-root': {
+                             height: { xs: '36px', md: '45px' }
+                           }
+                         }}
+                       />
+                       <button
+                         onClick={() => removeCustomField('vehicleMiscellaneous', field.id)}
+                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                       >
+                         <X className="w-3 h-3" />
+                       </button>
+                     </div>
+                   ))}
+                 </CardContent>
               </Card>
             </div>
           </LocalizationProvider>
@@ -2098,6 +2234,31 @@ const AddAssetPage = () => {
                         }
                       }}
                     />
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehiclePerformance.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehiclePerformance', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehiclePerformance', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
