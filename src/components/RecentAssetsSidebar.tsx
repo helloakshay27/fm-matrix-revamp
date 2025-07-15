@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Flag, Eye } from 'lucide-react';
+import { MessageSquare, Flag, Eye, Star, Hash, Timer, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AddCommentModal } from '@/components/AddCommentModal';
 
@@ -106,59 +106,84 @@ export const RecentAssetsSidebar = () => {
   };
 
   return (
-    <div className="bg-white border border-[hsl(var(--analytics-border))] h-fit">
-      <div className="p-4 border-b border-[hsl(var(--analytics-border))]">
-        <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Recent Assets</h3>
+    <div className="bg-[#C4B89D]/25 p-4 h-fit">
+      {/* Header */}
+      <div className="mb-6">
+        <h3 className="text-lg font-bold mb-1" style={{ color: '#C72030' }}>Recent Assets</h3>
+        <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}</p>
       </div>
       
-      <div className="max-h-[600px] overflow-y-auto">
+      <div className="max-h-[600px] overflow-y-auto space-y-4">
         {recentAssets.map((asset) => (
-          <div key={asset.id} className="p-4 border-b border-[hsl(var(--analytics-border))] last:border-b-0">
-            <div className="space-y-3">
-              <div>
-                <div className="font-medium text-[hsl(var(--analytics-text))] text-sm">{asset.name}</div>
-                <div className="text-xs text-[hsl(var(--analytics-muted))]">{asset.assetNo}</div>
+          <div key={asset.id} className="bg-[#C4B89D]/20 border border-[#C4B89D]/40 rounded-lg p-4">
+            {/* Header with Asset No and Star */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Hash className="w-4 h-4" style={{ color: '#C72030' }} />
+                <span className="font-medium text-sm">{asset.assetNo}</span>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <span className={`px-2 py-1 rounded text-xs ${getStatusColor(asset.status)}`}>
+              <Star className="w-4 h-4 text-gray-400 hover:text-yellow-500 cursor-pointer" />
+            </div>
+
+            {/* Asset Name */}
+            <h4 className="font-semibold text-base mb-3 text-gray-800">{asset.name}</h4>
+
+            {/* TAT in quotes */}
+            <div className="mb-4">
+              <span className="text-blue-600 font-medium">"{asset.tat}"</span>
+            </div>
+
+            {/* Asset Details */}
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4" style={{ color: '#C72030' }} />
+                <span className="text-sm font-medium">Status:</span>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(asset.status)}`}>
                   {asset.status}
                 </span>
-                <div className="text-right">
-                  <div className="text-xs text-[hsl(var(--analytics-muted))]">TAT</div>
-                  <div className={`text-xs font-medium ${getTatColor(asset.tatStatus)}`}>
-                    {asset.tat}
-                  </div>
-                </div>
               </div>
               
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 h-7 text-xs"
+              <div className="flex items-center gap-2">
+                <Timer className="w-4 h-4" style={{ color: '#C72030' }} />
+                <span className="text-sm font-medium">TAT Status:</span>
+                <span className={`text-xs font-medium ${getTatColor(asset.tatStatus)}`}>
+                  {asset.tatStatus}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between">
+              <div className="flex gap-3">
+                <button
+                  className="text-sm text-gray-700 hover:text-gray-900 font-medium"
                   onClick={() => handleAddComment(asset.id)}
                 >
-                  <MessageSquare className="w-3 h-3 mr-1" />
-                  Comment
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={`h-7 px-2 ${flaggedAssets.has(asset.id) ? 'bg-red-50 border-red-200' : ''}`}
+                  Add Comment
+                </button>
+                <button
+                  className={`text-sm font-medium ${
+                    flaggedAssets.has(asset.id) 
+                      ? 'text-red-600' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
                   onClick={() => handleFlag(asset.id)}
                 >
-                  <Flag className={`w-3 h-3 ${flaggedAssets.has(asset.id) ? 'text-red-600' : ''}`} />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2"
-                  onClick={() => handleViewDetails(asset.id)}
-                >
-                  <Eye className="w-3 h-3" />
-                </Button>
+                  Flag Issue
+                </button>
               </div>
+              
+              <button
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium underline"
+                onClick={() => handleViewDetails(asset.id)}
+              >
+                View Detail&gt;&gt;
+              </button>
             </div>
           </div>
         ))}
