@@ -3139,17 +3139,18 @@ export const EditAssetDetailsPage = () => {
             {expandedSections.amcDetails && <div className="p-4 sm:p-6 bg-white">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {/* Vendor */}
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Vendor
-                    </label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm">
-                      <option value="">Select Vendor</option>
-                      <option value="vendor1">Vendor 1</option>
-                      <option value="vendor2">Vendor 2</option>
-                      <option value="vendor3">Vendor 3</option>
-                    </select>
-                  </div>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Vendor</InputLabel>
+                    <MuiSelect
+                      sx={fieldStyles}
+                      label="Vendor"
+                    >
+                      <MenuItem value="">Select Vendor</MenuItem>
+                      <MenuItem value="vendor1">Vendor 1</MenuItem>
+                      <MenuItem value="vendor2">Vendor 2</MenuItem>
+                      <MenuItem value="vendor3">Vendor 3</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
 
                   {/* Start Date */}
                   <div className="space-y-2">
@@ -3191,36 +3192,43 @@ export const EditAssetDetailsPage = () => {
                   </div>
 
                   {/* Payment Terms */}
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Payment Terms
-                    </label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm">
-                      <option value="">Select Payment Terms</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="quarterly">Quarterly</option>
-                      <option value="half-yearly">Half Yearly</option>
-                      <option value="yearly">Yearly</option>
-                    </select>
-                  </div>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Payment Terms</InputLabel>
+                    <MuiSelect
+                      sx={fieldStyles}
+                      label="Payment Terms"
+                    >
+                      <MenuItem value="">Select Payment Terms</MenuItem>
+                      <MenuItem value="monthly">Monthly</MenuItem>
+                      <MenuItem value="quarterly">Quarterly</MenuItem>
+                      <MenuItem value="half-yearly">Half Yearly</MenuItem>
+                      <MenuItem value="yearly">Yearly</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
 
                   {/* No. of Visits */}
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      No. of Visits
-                    </label>
-                    <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm" placeholder="Enter Value" />
-                  </div>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="No. of Visits"
+                    type="number"
+                    placeholder="Enter Value"
+                    sx={fieldStyles}
+                  />
 
                   {/* AMC Cost */}
-                  <div className="space-y-2 lg:col-span-1">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      AMC Cost
-                    </label>
-                    <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm" placeholder="Enter AMC Cost" />
-                  </div>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="AMC Cost"
+                    type="number"
+                    placeholder="Enter AMC Cost"
+                    sx={fieldStyles}
+                    className="lg:col-span-1"
+                  />
                 </div>
-              </div>}
+              </div>
+            )}
           </div>
         </LocalizationProvider>
 
@@ -3237,5 +3245,6 @@ export const EditAssetDetailsPage = () => {
 
       {/* Add Custom Field Modal */}
       <AddCustomFieldModal isOpen={customFieldModalOpen} onClose={() => setCustomFieldModalOpen(false)} onAddField={handleAddCustomField} />
-    </div>;
+    </div>
+  );
 };
