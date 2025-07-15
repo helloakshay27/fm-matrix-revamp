@@ -432,7 +432,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal('basicIdentification')}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -523,7 +523,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal('locationOwnership')}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -651,7 +651,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal('landSizeValue')}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -764,7 +764,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal('landUsageDevelopment')}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -864,7 +864,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => openCustomFieldModal('miscellaneous')}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -943,7 +943,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -988,7 +988,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -1053,7 +1053,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -1156,7 +1156,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -1253,7 +1253,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -1322,7 +1322,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -1471,7 +1471,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -1537,7 +1537,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -2053,7 +2053,7 @@ const AddAssetPage = () => {
                     </div>
                     <button
                       onClick={() => setCustomFieldModalOpen(true)}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
