@@ -36,9 +36,24 @@ const AddAssetPage = () => {
   const [showRenewableOptions, setShowRenewableOptions] = useState(false);
   const [allocationBasedOn, setAllocationBasedOn] = useState('department');
   const [customFieldModalOpen, setCustomFieldModalOpen] = useState(false);
+  const [currentSection, setCurrentSection] = useState('');
   const [itAssetsCustomFieldModalOpen, setItAssetsCustomFieldModalOpen] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
-  const [customFields, setCustomFields] = useState([]);
+  const [customFields, setCustomFields] = useState({
+    basicIdentification: [],
+    locationOwnership: [],
+    landSizeValue: [],
+    landUsageDevelopment: [],
+    miscellaneous: [],
+    improvementDetails: [],
+    technicalSpecs: [],
+    ownershipUsage: [],
+    financialDepreciation: [],
+    constructionDetails: [],
+    acquisitionValue: [],
+    usageCompliance: [],
+    maintenanceLinkages: []
+  });
   const [itAssetsCustomFields, setItAssetsCustomFields] = useState({
     'System Details': [],
     'Hard Disk Details': []
@@ -184,27 +199,42 @@ const AddAssetPage = () => {
     }));
   };
 
-  // Custom field functions for Asset Details
+  // Custom field functions - Updated to handle sections
+  const openCustomFieldModal = (section) => {
+    setCurrentSection(section);
+    setCustomFieldModalOpen(true);
+  };
+
   const handleAddCustomField = () => {
-    if (newFieldName.trim()) {
+    if (newFieldName.trim() && currentSection) {
       const newField = {
         id: Date.now(),
         name: newFieldName.trim(),
         value: ''
       };
-      setCustomFields(prev => [...prev, newField]);
+      setCustomFields(prev => ({
+        ...prev,
+        [currentSection]: [...prev[currentSection], newField]
+      }));
       setNewFieldName('');
       setCustomFieldModalOpen(false);
+      setCurrentSection('');
     }
   };
-  const handleCustomFieldChange = (id, value) => {
-    setCustomFields(prev => prev.map(field => field.id === id ? {
-      ...field,
-      value
-    } : field));
+  const handleCustomFieldChange = (section, id, value) => {
+    setCustomFields(prev => ({
+      ...prev,
+      [section]: prev[section].map(field => 
+        field.id === id ? { ...field, value } : field
+      )
+    }));
   };
-  const removeCustomField = id => {
-    setCustomFields(prev => prev.filter(field => field.id !== id));
+  
+  const removeCustomField = (section, id) => {
+    setCustomFields(prev => ({
+      ...prev,
+      [section]: prev[section].filter(field => field.id !== id)
+    }));
   };
 
   // Custom field functions for IT Assets
@@ -401,7 +431,7 @@ const AddAssetPage = () => {
                       Basic Identification
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('basicIdentification')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -456,7 +486,7 @@ const AddAssetPage = () => {
                     </FormControl>
                     
                     {/* Custom Fields */}
-                    {customFields.map((field) => (
+                    {customFields.basicIdentification.map((field) => (
                       <div key={field.id} className="relative">
                         <TextField
                           label={field.name}
@@ -464,7 +494,7 @@ const AddAssetPage = () => {
                           variant="outlined"
                           fullWidth
                           value={field.value}
-                          onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                          onChange={(e) => handleCustomFieldChange('basicIdentification', field.id, e.target.value)}
                           sx={{
                             '& .MuiOutlinedInput-root': {
                               height: { xs: '36px', md: '45px' }
@@ -472,7 +502,7 @@ const AddAssetPage = () => {
                           }}
                         />
                         <button
-                          onClick={() => removeCustomField(field.id)}
+                          onClick={() => removeCustomField('basicIdentification', field.id)}
                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
                         >
                           <X className="w-3 h-3" />
@@ -492,7 +522,7 @@ const AddAssetPage = () => {
                       Location & Ownership
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('locationOwnership')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -580,10 +610,35 @@ const AddAssetPage = () => {
                         <MenuItem value="clear">Clear</MenuItem>
                         <MenuItem value="mortgage">Under Mortgage</MenuItem>
                         <MenuItem value="disputed">Disputed</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-                </CardContent>
+                       </MuiSelect>
+                     </FormControl>
+                     
+                     {/* Custom Fields */}
+                     {customFields.locationOwnership.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('locationOwnership', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('locationOwnership', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
 
               {/* Land Size & Value */}
@@ -595,7 +650,7 @@ const AddAssetPage = () => {
                       Land Size & Value
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('landSizeValue')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -708,7 +763,7 @@ const AddAssetPage = () => {
                       Land Usage & Development
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('landUsageDevelopment')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -759,19 +814,44 @@ const AddAssetPage = () => {
                         <MenuItem value="other">Other (Manual Input)</MenuItem>
                       </MuiSelect>
                     </FormControl>
-                    <TextField
-                      label="Responsible Department"
-                      placeholder="Enter department or user"
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          height: { xs: '36px', md: '45px' }
-                        }
-                      }}
-                    />
-                  </div>
-                </CardContent>
+                     <TextField
+                       label="Responsible Department"
+                       placeholder="Enter department or user"
+                       variant="outlined"
+                       fullWidth
+                       sx={{
+                         '& .MuiOutlinedInput-root': {
+                           height: { xs: '36px', md: '45px' }
+                         }
+                       }}
+                     />
+                     
+                     {/* Custom Fields */}
+                     {customFields.landUsageDevelopment.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('landUsageDevelopment', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('landUsageDevelopment', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
 
               {/* Miscellaneous */}
@@ -783,7 +863,7 @@ const AddAssetPage = () => {
                       Miscellaneous
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('miscellaneous')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -817,8 +897,33 @@ const AddAssetPage = () => {
                         Upload deed copy, layout, map, lease, etc.
                       </p>
                     </label>
-                  </div>
-                </CardContent>
+                   </div>
+                   
+                   {/* Custom Fields */}
+                   {customFields.miscellaneous.map((field) => (
+                     <div key={field.id} className="relative">
+                       <TextField
+                         label={field.name}
+                         placeholder={`Enter ${field.name}`}
+                         variant="outlined"
+                         fullWidth
+                         value={field.value}
+                         onChange={(e) => handleCustomFieldChange('miscellaneous', field.id, e.target.value)}
+                         sx={{
+                           '& .MuiOutlinedInput-root': {
+                             height: { xs: '36px', md: '45px' }
+                           }
+                         }}
+                       />
+                       <button
+                         onClick={() => removeCustomField('miscellaneous', field.id)}
+                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                       >
+                         <X className="w-3 h-3" />
+                       </button>
+                     </div>
+                   ))}
+                 </CardContent>
               </Card>
             </div>
           </LocalizationProvider>
@@ -2477,21 +2582,7 @@ const AddAssetPage = () => {
                 </FormControl>
               </div>
 
-              {/* Custom Fields */}
-              {customFields.length > 0 && <div className="mb-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {customFields.map(field => <div key={field.id} className="relative">
-                        <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleCustomFieldChange(field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />
-                        <button onClick={() => removeCustomField(field.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>)}
-                  </div>
-                </div>}
+              {/* Custom Fields are now handled per section */}
 
               {/* Third row: Status */}
               <div className="mb-4">
