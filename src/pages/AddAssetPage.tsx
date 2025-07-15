@@ -2365,15 +2365,16 @@ const AddAssetPage = () => {
             </div>}
         </div>
 
-        {/* IT Assets Details */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              IT ASSETS DETAILS
-            </div>
+        {/* IT Assets Details - Show only for IT Equipment */}
+        {selectedAssetCategory === 'IT Equipment' && (
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                IT ASSETS DETAILS
+              </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">If Applicable</span>
@@ -2467,7 +2468,8 @@ const AddAssetPage = () => {
                 </div>
               </div>
             </div>}
-        </div>
+          </div>
+        )}
 
         {/* Meter Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
