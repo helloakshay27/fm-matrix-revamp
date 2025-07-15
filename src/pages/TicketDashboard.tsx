@@ -331,22 +331,20 @@ export const TicketDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="analytics" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b mb-4 sm:mb-6">
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 
             value="analytics" 
-            className="flex items-center gap-1 sm:gap-2 bg-white text-gray-700 border-0 rounded-none px-4 sm:px-8 py-2 sm:py-3 text-sm sm:text-base font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-gray-50"
+            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline">Analytics</span>
-            <span className="xs:hidden">Analytics</span>
+            <BarChart3 className="w-4 h-4" />
+            Analytics
           </TabsTrigger>
           <TabsTrigger 
             value="tickets" 
-            className="flex items-center gap-1 sm:gap-2 bg-white text-gray-700 border-0 rounded-none px-4 sm:px-8 py-2 sm:py-3 text-sm sm:text-base font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-gray-50"
+            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
-            <Ticket className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline">Ticket List</span>
-            <span className="xs:hidden">Tickets</span>
+            <Ticket className="w-4 h-4" />
+            Ticket List
           </TabsTrigger>
         </TabsList>
 
