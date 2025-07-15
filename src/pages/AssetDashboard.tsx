@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,7 @@ import { MoveAssetDialog } from '@/components/MoveAssetDialog';
 import { DisposeAssetDialog } from '@/components/DisposeAssetDialog';
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
+import { DonutChartGrid } from '@/components/DonutChartGrid';
 import { useAssetData } from '@/hooks/useAssetData';
 
 export const AssetDashboard = () => {
@@ -249,85 +249,7 @@ export const AssetDashboard = () => {
             {/* Left Section - Charts (3 columns) */}
             <div className="lg:col-span-3 space-y-6">
               {/* Top Row - Two Donut Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Asset Status Chart */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Asset Status</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={statusData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {statusData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex justify-center gap-4 mt-4">
-                    {statusData.map((item, index) => (
-                      <div key={index} className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
-                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
-                        </div>
-                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Asset Type Distribution Chart */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Asset Type Distribution</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={assetTypeData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {assetTypeData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex justify-center gap-4 mt-4">
-                    {assetTypeData.map((item, index) => (
-                      <div key={index} className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
-                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
-                        </div>
-                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <DonutChartGrid />
 
               {/* Category-wise Assets Bar Chart */}
               <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
