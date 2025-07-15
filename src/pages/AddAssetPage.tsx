@@ -2217,8 +2217,9 @@ const AddAssetPage = () => {
           </LocalizationProvider>
         )}
 
-        {/* Conditional Sections - Show only for specific asset categories (excluding IT Equipment) */}
+        {/* Conditional Sections - Show only for specific asset categories */}
         {(selectedAssetCategory === 'Furniture & Fixtures' || 
+          selectedAssetCategory === 'IT Equipment' || 
           selectedAssetCategory === 'Machinery & Equipment' || 
           selectedAssetCategory === 'Tools & Instruments') && (
           <>
@@ -2364,6 +2365,111 @@ const AddAssetPage = () => {
             </div>}
         </div>
 
+        {/* IT Assets Details - Show only for IT Equipment */}
+        {selectedAssetCategory === 'IT Equipment' && (
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                IT ASSETS DETAILS
+              </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">If Applicable</span>
+                <div className="relative inline-block w-12 h-6">
+                  <input type="checkbox" className="sr-only peer" id="it-assets-toggle" checked={itAssetsToggle} onChange={e => handleItAssetsToggleChange(e.target.checked)} />
+                  <label htmlFor="it-assets-toggle" className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${itAssetsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                </div>
+              </div>
+              <button onClick={() => setItAssetsCustomFieldModalOpen(true)} className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
+              backgroundColor: '#F6F4EE',
+              color: '#C72030'
+            }}>
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </button>
+              {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+          </div>
+          {expandedSections.warranty && <div className="p-4 sm:p-6">
+              {/* System Details */}
+              <div className="mb-6">
+                <h3 className="font-semibold mb-4" style={{
+              color: '#C72030'
+            }}>SYSTEM DETAILS</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <TextField label="OS" placeholder="Enter OS" name="os" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Total Memory" placeholder="Enter Total Memory" name="totalMemory" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Processor" placeholder="Enter Processor" name="processor" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  
+                  {/* Custom Fields for System Details */}
+                  {itAssetsCustomFields['System Details'].map(field => <div key={field.id} className="relative">
+                      <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('System Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} />
+                      <button onClick={() => removeItAssetsCustomField('System Details', field.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>)}
+                </div>
+              </div>
+
+              {/* Hard Disk Details */}
+              <div>
+                <h3 className="font-semibold mb-4" style={{
+              color: '#C72030'
+            }}>HARD DISK DETAILS</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <TextField label="Model" placeholder="Enter Model" name="hdModel" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Serial No." placeholder="Enter Serial No." name="hdSerialNo" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Capacity" placeholder="Enter Capacity" name="hdCapacity" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  
+                  {/* Custom Fields for Hard Disk Details */}
+                  {itAssetsCustomFields['Hard Disk Details'].map(field => <div key={field.id} className="relative">
+                      <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('Hard Disk Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} />
+                      <button onClick={() => removeItAssetsCustomField('Hard Disk Details', field.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>)}
+                </div>
+              </div>
+            </div>}
+          </div>
+        )}
 
         {/* Meter Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -2870,112 +2976,6 @@ const AddAssetPage = () => {
                 </div>}
             </div>
           </>
-        )}
-
-        {/* IT Asset Details - Show only for IT Equipment */}
-        {selectedAssetCategory === 'IT Equipment' && (
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                  <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-                </span>
-                IT ASSETS DETAILS
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">If Applicable</span>
-                  <div className="relative inline-block w-12 h-6">
-                    <input type="checkbox" className="sr-only peer" id="it-assets-toggle" checked={itAssetsToggle} onChange={e => handleItAssetsToggleChange(e.target.checked)} />
-                    <label htmlFor="it-assets-toggle" className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
-                      <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${itAssetsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
-                    </label>
-                  </div>
-                </div>
-                <button onClick={() => setItAssetsCustomFieldModalOpen(true)} className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
-                backgroundColor: '#F6F4EE',
-                color: '#C72030'
-              }}>
-                  <Plus className="w-4 h-4" />
-                  Custom Field
-                </button>
-                {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-              </div>
-            </div>
-            {expandedSections.warranty && <div className="p-4 sm:p-6">
-                {/* System Details */}
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-4" style={{
-                color: '#C72030'
-              }}>System Details</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <TextField label="OS" placeholder="Enter OS" name="os" fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
-                    <TextField label="Total Memory" placeholder="Enter Memory" name="totalMemory" fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
-                    <TextField label="Processor" placeholder="Enter Processor" name="processor" fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
-                    <TextField label="Model" placeholder="Enter Model" name="systemModel" fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
-                    <TextField label="Serial No." placeholder="Enter Serial No" name="systemSerialNo" fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
-                    
-                    {/* Custom Fields for System Details */}
-                    {itAssetsCustomFields['System Details'].map(field => <div key={field.id} className="relative">
-                        <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('System Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />
-                        <button onClick={() => removeItAssetsCustomField('System Details', field.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>)}
-                  </div>
-                </div>
-
-                {/* Hard Disk Details */}
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-4" style={{
-                color: '#C72030'
-              }}>Hard Disk Details</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <TextField label="Capacity" placeholder="Enter Capacity" name="hdCapacity" fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
-                    
-                    {/* Custom Fields for Hard Disk Details */}
-                    {itAssetsCustomFields['Hard Disk Details'].map(field => <div key={field.id} className="relative">
-                        <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('Hard Disk Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />
-                        <button onClick={() => removeItAssetsCustomField('Hard Disk Details', field.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>)}
-                  </div>
-                </div>
-              </div>}
-          </div>
         )}
 
         {/* Action Buttons */}
