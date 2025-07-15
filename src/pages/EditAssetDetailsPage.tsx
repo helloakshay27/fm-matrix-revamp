@@ -4011,7 +4011,8 @@ export const EditAssetDetailsPage = () => {
         </div>
 
         {/* Asset Loaned */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('assetLoaned')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
@@ -4107,7 +4108,11 @@ export const EditAssetDetailsPage = () => {
               </div>
             </div>
           )}
-        </div>
+          </div>
+        </LocalizationProvider>
+            </>
+          </LocalizationProvider>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
