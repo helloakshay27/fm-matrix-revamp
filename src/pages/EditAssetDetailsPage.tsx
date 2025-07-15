@@ -3224,6 +3224,195 @@ export const EditAssetDetailsPage = () => {
           </div>
         </LocalizationProvider>
 
+        {/* Attachments */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ATTACHMENTS
+            </div>
+            {expandedSections.attachments ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />}
+          </div>
+          
+          {expandedSections.attachments && (
+            <div className="p-4 sm:p-6 bg-white">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Manuals Upload */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-900">Manuals Upload</h3>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleFileUpload('manualsUpload', e.target.files)}
+                        />
+                        <span className="text-[#C72030] text-sm font-medium">
+                          Choose File{' '}
+                          <span className="text-gray-500 font-normal">No file chosen</span>
+                        </span>
+                      </label>
+                      <button
+                        onClick={() => {
+                          const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+                          input?.click();
+                        }}
+                        className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Upload Files
+                      </button>
+                    </div>
+                  </div>
+                  {/* File list */}
+                  {attachments.manualsUpload.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.manualsUpload.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm text-gray-700">{file.name}</span>
+                          <button
+                            onClick={() => removeFile('manualsUpload', index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Insurance Details */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-900">Insurance Details</h3>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleFileUpload('insuranceDetails', e.target.files)}
+                        />
+                        <span className="text-[#C72030] text-sm font-medium">
+                          Choose File{' '}
+                          <span className="text-gray-500 font-normal">No file chosen</span>
+                        </span>
+                      </label>
+                      <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                        <Plus className="w-4 h-4" />
+                        Upload Files
+                      </button>
+                    </div>
+                  </div>
+                  {/* File list */}
+                  {attachments.insuranceDetails.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.insuranceDetails.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm text-gray-700">{file.name}</span>
+                          <button
+                            onClick={() => removeFile('insuranceDetails', index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Purchase Invoice */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-900">Purchase Invoice</h3>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleFileUpload('purchaseInvoice', e.target.files)}
+                        />
+                        <span className="text-[#C72030] text-sm font-medium">
+                          Choose File{' '}
+                          <span className="text-gray-500 font-normal">No file chosen</span>
+                        </span>
+                      </label>
+                      <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                        <Plus className="w-4 h-4" />
+                        Upload Files
+                      </button>
+                    </div>
+                  </div>
+                  {/* File list */}
+                  {attachments.purchaseInvoice.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.purchaseInvoice.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm text-gray-700">{file.name}</span>
+                          <button
+                            onClick={() => removeFile('purchaseInvoice', index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* AMC */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-900">AMC</h3>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleFileUpload('amc', e.target.files)}
+                        />
+                        <span className="text-[#C72030] text-sm font-medium">
+                          Choose File{' '}
+                          <span className="text-gray-500 font-normal">No file chosen</span>
+                        </span>
+                      </label>
+                      <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                        <Plus className="w-4 h-4" />
+                        Upload Files
+                      </button>
+                    </div>
+                  </div>
+                  {/* File list */}
+                  {attachments.amc.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.amc.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm text-gray-700">{file.name}</span>
+                          <button
+                            onClick={() => removeFile('amc', index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
           <button onClick={handleSaveAndShow} className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base">
