@@ -2472,6 +2472,7 @@ const AddAssetPage = () => {
         )}
 
         {/* Meter Details */}
+        {selectedAssetCategory !== 'Tools & Instruments' && (
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
@@ -2590,6 +2591,7 @@ const AddAssetPage = () => {
               </div>
             </div>}
         </div>
+        )}
 
         {/* Purchase Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
