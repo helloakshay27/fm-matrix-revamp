@@ -2351,6 +2351,764 @@ export const EditAssetDetailsPage = () => {
           </LocalizationProvider>
         )}
 
+        {/* Vehicle Asset Details - Show when Vehicle is selected */}
+        {selectedAssetCategory === 'Vehicle' && (
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <div className="space-y-6">
+              {/* Basic Identification */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Identification
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleBasicId')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Asset ID / Code"
+                      placeholder="System-generated or manually entered"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Vehicle Type</InputLabel>
+                      <MuiSelect
+                        label="Vehicle Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Vehicle Type</MenuItem>
+                        <MenuItem value="car">Car</MenuItem>
+                        <MenuItem value="truck">Truck</MenuItem>
+                        <MenuItem value="van">Van</MenuItem>
+                        <MenuItem value="forklift">Forklift</MenuItem>
+                        <MenuItem value="electric-cart">Electric Cart</MenuItem>
+                        <MenuItem value="other">Other</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Make & Model"
+                      placeholder="e.g., Tata Ace, Honda Activa"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Registration Number"
+                      placeholder="e.g., MH01AB1234"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleBasicId.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleBasicId', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleBasicId', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Technical Specifications */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Cog className="w-5 h-5" />
+                      Technical Specifications
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleTechnicalSpecs')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Chassis Number"
+                      placeholder="Enter chassis number"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Engine Number"
+                      placeholder="Enter engine number"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Fuel Type</InputLabel>
+                      <MuiSelect
+                        label="Fuel Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Fuel Type</MenuItem>
+                        <MenuItem value="petrol">Petrol</MenuItem>
+                        <MenuItem value="diesel">Diesel</MenuItem>
+                        <MenuItem value="cng">CNG</MenuItem>
+                        <MenuItem value="electric">Electric</MenuItem>
+                        <MenuItem value="hybrid">Hybrid</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleTechnicalSpecs.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleTechnicalSpecs', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleTechnicalSpecs', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Ownership & Usage */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users2 className="w-5 h-5" />
+                      Ownership & Usage
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleOwnership')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Ownership Type</InputLabel>
+                      <MuiSelect
+                        label="Ownership Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Ownership Type</MenuItem>
+                        <MenuItem value="owned">Owned</MenuItem>
+                        <MenuItem value="leased">Leased</MenuItem>
+                        <MenuItem value="company-owned">Company-Owned</MenuItem>
+                        <MenuItem value="departmental">Departmental</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Assigned To / Department</InputLabel>
+                      <MuiSelect
+                        label="Assigned To / Department"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Department/User</MenuItem>
+                        <MenuItem value="admin">Administration</MenuItem>
+                        <MenuItem value="hr">Human Resources</MenuItem>
+                        <MenuItem value="logistics">Logistics</MenuItem>
+                        <MenuItem value="maintenance">Maintenance</MenuItem>
+                        <MenuItem value="other">Other</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Usage Type</InputLabel>
+                      <MuiSelect
+                        label="Usage Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Usage Type</MenuItem>
+                        <MenuItem value="official">Official</MenuItem>
+                        <MenuItem value="delivery">Delivery</MenuItem>
+                        <MenuItem value="emergency">Emergency</MenuItem>
+                        <MenuItem value="transport">Transport</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Permit Type</InputLabel>
+                      <MuiSelect
+                        label="Permit Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Permit Type</MenuItem>
+                        <MenuItem value="private">Private</MenuItem>
+                        <MenuItem value="commercial">Commercial</MenuItem>
+                        <MenuItem value="transport">Transport Permit</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleOwnership.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleOwnership', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleOwnership', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Financial & Depreciation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Financial & Depreciation
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleFinancial')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DatePicker
+                      label="Date of Purchase"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Purchase Cost"
+                        placeholder="Enter purchase cost"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      />
+                    </div>
+                    <TextField
+                      label="Depreciation Rate (%)"
+                      placeholder="Linked to depreciation module"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Current Book Value (INR)"
+                      placeholder="Calculated or manually entered"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleFinancial.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleFinancial', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleFinancial', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Performance Tracking */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5" />
+                      Performance Tracking
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehiclePerformance')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex gap-2">
+                      <TextField
+                        label="Odometer Reading"
+                        placeholder="Enter reading"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      />
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Unit</InputLabel>
+                        <MuiSelect
+                          label="Unit"
+                          defaultValue="km"
+                        >
+                          <MenuItem value="km">KM</MenuItem>
+                          <MenuItem value="miles">Miles</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+                    <TextField
+                      label="Service Schedule (PPM)"
+                      placeholder="Linked PPM name (Read-only)"
+                      variant="outlined"
+                      fullWidth
+                      disabled
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Last Service Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>AMC Linked</InputLabel>
+                      <MuiSelect
+                        label="AMC Linked"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehiclePerformance.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehiclePerformance', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehiclePerformance', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Legal & Compliance */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5" />
+                      Legal & Compliance
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleLegal')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Insurance Provider"
+                      placeholder="Enter insurance provider name"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Insurance Policy No."
+                      placeholder="Enter policy number"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Insurance Expiry Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Fitness Certificate Expiry"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="PUC Expiry Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleLegal.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleLegal', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleLegal', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Miscellaneous */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Archive className="w-5 h-5" />
+                      Miscellaneous
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleMiscellaneous')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <TextField
+                    label="Remarks / Notes"
+                    placeholder="Comments, issues, or notes"
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={4}
+                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="hidden"
+                      id="vehicle-attachments"
+                    />
+                    <label htmlFor="vehicle-attachments" className="cursor-pointer">
+                      <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600">
+                        Click to upload attachments
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Upload RC copy, insurance, permit, fitness, PUC, etc.
+                      </p>
+                    </label>
+                   </div>
+                   
+                   {/* Custom Fields */}
+                   {customFields.vehicleMiscellaneous.map((field) => (
+                     <div key={field.id} className="relative">
+                       <TextField
+                         label={field.name}
+                         placeholder={`Enter ${field.name}`}
+                         variant="outlined"
+                         fullWidth
+                         value={field.value}
+                         onChange={(e) => handleCustomFieldChange('vehicleMiscellaneous', field.id, e.target.value)}
+                         sx={{
+                           '& .MuiOutlinedInput-root': {
+                             height: { xs: '36px', md: '45px' }
+                           }
+                         }}
+                       />
+                       <button
+                         onClick={() => removeCustomField('vehicleMiscellaneous', field.id)}
+                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                       >
+                         <X className="w-3 h-3" />
+                       </button>
+                     </div>
+                   ))}
+                 </CardContent>
+              </Card>
+            </div>
+          </LocalizationProvider>
+        )}
+
         {/* Conditional Sections - Show only for specific asset categories */}
         {(selectedAssetCategory === 'Furniture & Fixtures' || 
           selectedAssetCategory === 'IT Equipment' || 
