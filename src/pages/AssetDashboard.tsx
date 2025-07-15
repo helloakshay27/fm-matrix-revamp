@@ -151,7 +151,9 @@ export const AssetDashboard = () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="flex w-full min-h-screen">
+      {/* Main Content Area - 67% width */}
+      <div className="flex-1 w-2/3 p-4 sm:p-6">
       
 
       <Tabs defaultValue="analytics" className="w-full">
@@ -245,9 +247,9 @@ export const AssetDashboard = () => {
           </div>
 
           {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left Section - Charts (3 columns) */}
-            <div className="lg:col-span-3 space-y-6">
+          <div className="space-y-6">
+            {/* Charts Section */}
+            <div className="space-y-6">
               {/* Top Row - Two Donut Charts */}
               <DonutChartGrid />
 
@@ -333,11 +335,6 @@ export const AssetDashboard = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Right Sidebar - Recent Assets (1 column) */}
-            <div className="lg:col-span-1">
-              <RecentAssetsSidebar />
             </div>
           </div>
         </TabsContent>
@@ -466,6 +463,12 @@ export const AssetDashboard = () => {
         onClose={() => setIsDisposeAssetOpen(false)}
         selectedAssets={selectedAssets}
       />
+      </div>
+
+      {/* Right Sidebar - Recent Assets (33% width) */}
+      <div className="w-1/3 border-l border-gray-200 bg-gray-50">
+        <RecentAssetsSidebar />
+      </div>
     </div>
   );
 };
