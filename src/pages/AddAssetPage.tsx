@@ -395,9 +395,18 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Basic Identification
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Identification
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -445,6 +454,31 @@ const AddAssetPage = () => {
                         <MenuItem value="special">Special Use</MenuItem>
                       </MuiSelect>
                     </FormControl>
+                    
+                    {/* Custom Fields */}
+                    {customFields.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField(field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -452,9 +486,18 @@ const AddAssetPage = () => {
               {/* Location & Ownership */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
-                    Location & Ownership
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
+                      Location & Ownership
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -546,9 +589,18 @@ const AddAssetPage = () => {
               {/* Land Size & Value */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Ruler className="w-5 h-5" />
-                    Land Size & Value
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Ruler className="w-5 h-5" />
+                      Land Size & Value
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -650,9 +702,18 @@ const AddAssetPage = () => {
               {/* Land Usage & Development */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Construction className="w-5 h-5" />
-                    Land Usage & Development
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Construction className="w-5 h-5" />
+                      Land Usage & Development
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -716,9 +777,18 @@ const AddAssetPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Archive className="w-5 h-5" />
-                    Miscellaneous
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Archive className="w-5 h-5" />
+                      Miscellaneous
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -761,9 +831,18 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Basic Identification
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Identification
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -797,9 +876,18 @@ const AddAssetPage = () => {
               {/* Location & Association */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
-                    Location & Association
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
+                      Location & Association
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -853,9 +941,18 @@ const AddAssetPage = () => {
               {/* Improvement Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Construction className="w-5 h-5" />
-                    Improvement Details
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Construction className="w-5 h-5" />
+                      Improvement Details
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -947,9 +1044,18 @@ const AddAssetPage = () => {
               {/* Financial & Depreciation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <DollarSign className="w-5 h-5" />
-                    Financial & Depreciation
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Financial & Depreciation
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1035,9 +1141,18 @@ const AddAssetPage = () => {
               {/* Lease & Maintenance Linkages */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Lease & Maintenance Linkages
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Lease & Maintenance Linkages
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1095,9 +1210,18 @@ const AddAssetPage = () => {
               {/* Oversight & Documentation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Users2 className="w-5 h-5" />
-                    Oversight & Documentation
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users2 className="w-5 h-5" />
+                      Oversight & Documentation
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1235,9 +1359,18 @@ const AddAssetPage = () => {
               {/* Technical Specifications */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Cog className="w-5 h-5" />
-                    Technical Specifications
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Cog className="w-5 h-5" />
+                      Technical Specifications
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1292,9 +1425,18 @@ const AddAssetPage = () => {
               {/* Ownership & Usage */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Users2 className="w-5 h-5" />
-                    Ownership & Usage
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users2 className="w-5 h-5" />
+                      Ownership & Usage
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1799,9 +1941,18 @@ const AddAssetPage = () => {
               {/* Construction Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <Construction className="w-5 h-5" />
-                    Construction Details
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Construction className="w-5 h-5" />
+                      Construction Details
+                    </div>
+                    <button
+                      onClick={() => setCustomFieldModalOpen(true)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
