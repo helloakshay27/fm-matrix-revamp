@@ -4111,6 +4111,133 @@ export const EditAssetDetailsPage = () => {
           </div>
         </LocalizationProvider>
 
+        {/* AMC Details */}
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div onClick={() => toggleSection('amcDetails')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                AMC DETAILS
+              </div>
+              {expandedSections.amcDetails ? (
+                <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />
+              ) : (
+                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />
+              )}
+            </div>
+            
+            {expandedSections.amcDetails && (
+              <div className="p-4 sm:p-6 bg-gray-50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {/* Vendor */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                      Vendor
+                    </label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm">
+                      <option value="">Select Vendor</option>
+                      <option value="vendor1">Vendor 1</option>
+                      <option value="vendor2">Vendor 2</option>
+                      <option value="vendor3">Vendor 3</option>
+                    </select>
+                  </div>
+
+                  {/* Start Date */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                      Start Date
+                    </label>
+                    <DatePicker
+                      className="w-full"
+                      format="dd/MM/yyyy"
+                      slotProps={{
+                        textField: {
+                          className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
+                          placeholder: "dd/mm/yyyy"
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                      End Date
+                    </label>
+                    <DatePicker
+                      className="w-full"
+                      format="dd/MM/yyyy"
+                      slotProps={{
+                        textField: {
+                          className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
+                          placeholder: "dd/mm/yyyy"
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* First Service */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                      First Service
+                    </label>
+                    <DatePicker
+                      className="w-full"
+                      format="dd/MM/yyyy"
+                      slotProps={{
+                        textField: {
+                          className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
+                          placeholder: "dd/mm/yyyy"
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Payment Terms */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                      Payment Terms
+                    </label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm">
+                      <option value="">Select Payment Terms</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="half-yearly">Half Yearly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+
+                  {/* No. of Visits */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                      No. of Visits
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm"
+                      placeholder="Enter Value"
+                    />
+                  </div>
+
+                  {/* AMC Cost */}
+                  <div className="space-y-2 lg:col-span-1">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                      AMC Cost
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm"
+                      placeholder="Enter AMC Cost"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </LocalizationProvider>
+
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
           <button
