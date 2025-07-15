@@ -52,7 +52,7 @@ const DonutChartGrid = () => {
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-bold mb-4" style={{ color: '#c6b692' }}>
+      <h3 className="text-lg font-bold mb-4" style={{ color: '#C72030' }}>
         {title}
       </h3>
 
