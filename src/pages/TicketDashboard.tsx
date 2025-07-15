@@ -328,7 +328,7 @@ export const TicketDashboard = () => {
         <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b">
           <TabsTrigger 
             value="analytics" 
-            className="flex items-center gap-2 bg-[#C72030] text-white border-0 rounded-none px-8 py-3 font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-[#C72030]/90"
+            className="flex items-center gap-2 bg-white text-gray-700 border-0 rounded-none px-8 py-3 font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-gray-50"
           >
             <BarChart3 className="w-4 h-4" />
             Analytics
