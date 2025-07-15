@@ -1161,336 +1161,522 @@ const AddAssetPage = () => {
 
         {/* Vehicle Asset Details - Show when Vehicle is selected */}
         {selectedAssetCategory === 'Vehicle' && (
-          <div className="space-y-6">
-            {/* Basic Identification */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Basic Identification
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Asset ID / Code</label>
-                    <input 
-                      type="text" 
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <div className="space-y-6">
+              {/* Basic Identification */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Basic Identification
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Asset ID / Code"
                       placeholder="System-generated or manually entered"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Vehicle Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Vehicle Type</option>
-                      <option value="car">Car</option>
-                      <option value="truck">Truck</option>
-                      <option value="van">Van</option>
-                      <option value="forklift">Forklift</option>
-                      <option value="electric-cart">Electric Cart</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Make & Model</label>
-                    <input 
-                      type="text" 
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Vehicle Type</InputLabel>
+                      <MuiSelect
+                        label="Vehicle Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Vehicle Type</MenuItem>
+                        <MenuItem value="car">Car</MenuItem>
+                        <MenuItem value="truck">Truck</MenuItem>
+                        <MenuItem value="van">Van</MenuItem>
+                        <MenuItem value="forklift">Forklift</MenuItem>
+                        <MenuItem value="electric-cart">Electric Cart</MenuItem>
+                        <MenuItem value="other">Other</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Make & Model"
                       placeholder="e.g., Tata Ace, Honda Activa"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Registration Number</label>
-                    <input 
-                      type="text" 
+                    <TextField
+                      label="Registration Number"
                       placeholder="e.g., MH01AB1234"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Technical Specifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Cog className="w-5 h-5" />
-                  Technical Specifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Chassis Number</label>
-                    <input 
-                      type="text" 
+              {/* Technical Specifications */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Cog className="w-5 h-5" />
+                    Technical Specifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Chassis Number"
                       placeholder="Enter chassis number"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Engine Number</label>
-                    <input 
-                      type="text" 
+                    <TextField
+                      label="Engine Number"
                       placeholder="Enter engine number"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Fuel Type</InputLabel>
+                      <MuiSelect
+                        label="Fuel Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Fuel Type</MenuItem>
+                        <MenuItem value="petrol">Petrol</MenuItem>
+                        <MenuItem value="diesel">Diesel</MenuItem>
+                        <MenuItem value="cng">CNG</MenuItem>
+                        <MenuItem value="electric">Electric</MenuItem>
+                        <MenuItem value="hybrid">Hybrid</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Fuel Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Fuel Type</option>
-                      <option value="petrol">Petrol</option>
-                      <option value="diesel">Diesel</option>
-                      <option value="cng">CNG</option>
-                      <option value="electric">Electric</option>
-                      <option value="hybrid">Hybrid</option>
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Ownership & Usage */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Users2 className="w-5 h-5" />
-                  Ownership & Usage
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Ownership Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Ownership Type</option>
-                      <option value="owned">Owned</option>
-                      <option value="leased">Leased</option>
-                      <option value="company-owned">Company-Owned</option>
-                      <option value="departmental">Departmental</option>
-                    </select>
+              {/* Ownership & Usage */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Users2 className="w-5 h-5" />
+                    Ownership & Usage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Ownership Type</InputLabel>
+                      <MuiSelect
+                        label="Ownership Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Ownership Type</MenuItem>
+                        <MenuItem value="owned">Owned</MenuItem>
+                        <MenuItem value="leased">Leased</MenuItem>
+                        <MenuItem value="company-owned">Company-Owned</MenuItem>
+                        <MenuItem value="departmental">Departmental</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Assigned To / Department</InputLabel>
+                      <MuiSelect
+                        label="Assigned To / Department"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Department/User</MenuItem>
+                        <MenuItem value="admin">Administration</MenuItem>
+                        <MenuItem value="hr">Human Resources</MenuItem>
+                        <MenuItem value="logistics">Logistics</MenuItem>
+                        <MenuItem value="maintenance">Maintenance</MenuItem>
+                        <MenuItem value="other">Other</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Usage Type</InputLabel>
+                      <MuiSelect
+                        label="Usage Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Usage Type</MenuItem>
+                        <MenuItem value="official">Official</MenuItem>
+                        <MenuItem value="delivery">Delivery</MenuItem>
+                        <MenuItem value="emergency">Emergency</MenuItem>
+                        <MenuItem value="transport">Transport</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Permit Type</InputLabel>
+                      <MuiSelect
+                        label="Permit Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Permit Type</MenuItem>
+                        <MenuItem value="private">Private</MenuItem>
+                        <MenuItem value="commercial">Commercial</MenuItem>
+                        <MenuItem value="transport">Transport Permit</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Assigned To / Department</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Department/User</option>
-                      <option value="admin">Administration</option>
-                      <option value="hr">Human Resources</option>
-                      <option value="logistics">Logistics</option>
-                      <option value="maintenance">Maintenance</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Usage Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Usage Type</option>
-                      <option value="official">Official</option>
-                      <option value="delivery">Delivery</option>
-                      <option value="emergency">Emergency</option>
-                      <option value="transport">Transport</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Permit Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Permit Type</option>
-                      <option value="private">Private</option>
-                      <option value="commercial">Commercial</option>
-                      <option value="transport">Transport Permit</option>
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Financial & Depreciation */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <DollarSign className="w-5 h-5" />
-                  Financial & Depreciation
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Date of Purchase</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+              {/* Financial & Depreciation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Financial & Depreciation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DatePicker
+                      label="Date of Purchase"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Purchase Cost (INR)</label>
                     <div className="flex gap-2">
-                      <select className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                        <option value="inr">INR</option>
-                      </select>
-                      <input 
-                        type="number" 
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Purchase Cost"
                         placeholder="Enter purchase cost"
-                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Depreciation Rate (%)</label>
-                    <input 
-                      type="number" 
+                    <TextField
+                      label="Depreciation Rate (%)"
                       placeholder="Linked to depreciation module"
-                      step="0.01"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Current Book Value (INR)</label>
-                    <input 
-                      type="number" 
+                    <TextField
+                      label="Current Book Value (INR)"
                       placeholder="Calculated or manually entered"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Performance Tracking */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Performance className="w-5 h-5" />
-                  Performance Tracking
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Odometer Reading</label>
+              {/* Performance Tracking */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Performance className="w-5 h-5" />
+                    Performance Tracking
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex gap-2">
-                      <input 
-                        type="number" 
+                      <TextField
+                        label="Odometer Reading"
                         placeholder="Enter reading"
-                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
                       />
-                      <select className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                        <option value="km">KM</option>
-                        <option value="miles">Miles</option>
-                      </select>
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Unit</InputLabel>
+                        <MuiSelect
+                          label="Unit"
+                          defaultValue="km"
+                        >
+                          <MenuItem value="km">KM</MenuItem>
+                          <MenuItem value="miles">Miles</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Service Schedule (PPM)</label>
-                    <input 
-                      type="text" 
+                    <TextField
+                      label="Service Schedule (PPM)"
                       placeholder="Linked PPM name (Read-only)"
-                      readOnly
-                      className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      disabled
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Last Service Date</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    <DatePicker
+                      label="Last Service Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
                     />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>AMC Linked</InputLabel>
+                      <MuiSelect
+                        label="AMC Linked"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">AMC Linked</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Status</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Legal & Compliance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5" />
-                  Legal & Compliance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Insurance Provider</label>
-                    <input 
-                      type="text" 
+              {/* Legal & Compliance */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5" />
+                    Legal & Compliance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Insurance Provider"
                       placeholder="Enter insurance provider name"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Insurance Policy No.</label>
-                    <input 
-                      type="text" 
+                    <TextField
+                      label="Insurance Policy No."
                       placeholder="Enter policy number"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Insurance Expiry Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Fitness Certificate Expiry"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="PUC Expiry Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Insurance Expiry Date</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Fitness Certificate Expiry</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">PUC Expiry Date</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Miscellaneous */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Archive className="w-5 h-5" />
-                  Miscellaneous
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Remarks / Notes</label>
-                  <textarea 
+              {/* Miscellaneous */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Archive className="w-5 h-5" />
+                    Miscellaneous
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <TextField
+                    label="Remarks / Notes"
                     placeholder="Comments, issues, or notes"
+                    variant="outlined"
+                    fullWidth
+                    multiline
                     rows={4}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Attachments</label>
-                  <input 
-                    type="file" 
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Upload RC copy, insurance, permit, fitness, PUC, etc.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="hidden"
+                      id="vehicle-attachments"
+                    />
+                    <label htmlFor="vehicle-attachments" className="cursor-pointer">
+                      <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600">
+                        Click to upload attachments
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Upload RC copy, insurance, permit, fitness, PUC, etc.
+                      </p>
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </LocalizationProvider>
         )}
 
         {/* Building Asset Details - Show when Building is selected */}
