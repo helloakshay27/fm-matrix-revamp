@@ -252,29 +252,27 @@ export const AssetDashboard = () => {
               <DonutChartGrid />
 
               {/* Category-wise Assets Bar Chart */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Category-wise Assets</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                  </div>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={categoryData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
-                      />
-                      <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
-                    </BarChart>
-                  </ResponsiveContainer>
+              <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Category-wise Assets</h3>
+                  <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                 </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={categoryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
+                    />
+                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
 
               {/* Bottom Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Asset Aging Matrix */}
                 <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
                   <div className="flex items-center justify-between mb-4">
