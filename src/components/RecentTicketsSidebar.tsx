@@ -152,20 +152,31 @@ export function RecentTicketsSidebar() {
               </div>
               
               {/* Action Buttons */}
-              <div className="flex items-center gap-3">
-                <Button size="sm" variant="outline" className="text-xs border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-1 px-3" onClick={() => handleAddComment(ticket.id)}>
-                  <MessageSquare className="h-3 w-3 text-red-500" />
-                  Add Comment
-                </Button>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-6">
+                  <button 
+                    className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80" 
+                    onClick={() => handleAddComment(ticket.id)}
+                  >
+                    <MessageSquare className="h-4 w-4 text-red-500" />
+                    Add Comment
+                  </button>
+                  
+                  <button 
+                    className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedTickets.has(ticket.id) ? 'opacity-60' : ''}`} 
+                    onClick={() => handleFlag(ticket.id)}
+                  >
+                    <Flag className="h-4 w-4 text-red-500" />
+                    Flag Issue
+                  </button>
+                </div>
                 
-                <Button size="sm" variant="outline" className={`text-xs border-gray-300 hover:bg-gray-100 flex items-center gap-1 px-3 ${flaggedTickets.has(ticket.id) ? 'bg-red-100 text-red-700 border-red-300' : 'text-gray-700'}`} onClick={() => handleFlag(ticket.id)}>
-                  <Flag className="h-3 w-3 text-red-500" />
-                  Flag Issue
-                </Button>
-                
-                <Button size="sm" variant="link" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-normal" onClick={() => handleViewDetails(ticket.id)}>
-                  View Details&gt;&gt;
-                </Button>
+                <button 
+                  className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
+                  onClick={() => handleViewDetails(ticket.id)}
+                >
+                  View Detail&gt;&gt;
+                </button>
               </div>
             </div>)}
         </div>
