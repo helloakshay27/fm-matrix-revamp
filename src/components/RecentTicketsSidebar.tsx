@@ -3,61 +3,59 @@ import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, Rotate
 import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
-
-const recentTickets = [
-  {
-    id: '234-87654',
-    title: 'Floor not clean',
-    category: 'Housekeeping',
-    subCategory: 'Common Area',
-    assigneeName: 'Arman',
-    site: 'GoPhygital',
-    priority: 'P1',
-    tat: 'A',
-    status: 'In Progress',
-    nextStatus: 'Closed',
-    handledBy: 'Arman'
-  },
-  {
-    id: '234-87654',
-    title: 'Floor not clean',
-    category: 'Housekeeping',
-    subCategory: 'Common Area',
-    assigneeName: 'Arman',
-    site: 'GoPhygital',
-    priority: 'P1',
-    tat: 'A',
-    status: 'In Progress',
-    nextStatus: 'Closed',
-    handledBy: 'Arman'
-  },
-  {
-    id: '234-87654',
-    title: 'Floor not clean',
-    category: 'Housekeeping',
-    subCategory: 'Common Area',
-    assigneeName: 'Arman',
-    site: 'GoPhygital',
-    priority: 'P1',
-    tat: 'A',
-    status: 'In Progress',
-    nextStatus: 'Closed',
-    handledBy: 'Arman'
-  }
-];
-
+const recentTickets = [{
+  id: '234-87654',
+  title: 'Floor not clean',
+  category: 'Housekeeping',
+  subCategory: 'Common Area',
+  assigneeName: 'Arman',
+  site: 'GoPhygital',
+  priority: 'P1',
+  tat: 'A',
+  status: 'In Progress',
+  nextStatus: 'Closed',
+  handledBy: 'Arman'
+}, {
+  id: '234-87654',
+  title: 'Floor not clean',
+  category: 'Housekeeping',
+  subCategory: 'Common Area',
+  assigneeName: 'Arman',
+  site: 'GoPhygital',
+  priority: 'P1',
+  tat: 'A',
+  status: 'In Progress',
+  nextStatus: 'Closed',
+  handledBy: 'Arman'
+}, {
+  id: '234-87654',
+  title: 'Floor not clean',
+  category: 'Housekeeping',
+  subCategory: 'Common Area',
+  assigneeName: 'Arman',
+  site: 'GoPhygital',
+  priority: 'P1',
+  tat: 'A',
+  status: 'In Progress',
+  nextStatus: 'Closed',
+  handledBy: 'Arman'
+}];
 export function RecentTicketsSidebar() {
-  const [commentModal, setCommentModal] = useState<{ isOpen: boolean; ticketId: string }>({
+  const [commentModal, setCommentModal] = useState<{
+    isOpen: boolean;
+    ticketId: string;
+  }>({
     isOpen: false,
     ticketId: ''
   });
   const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
-
   const handleAddComment = (ticketId: string) => {
-    setCommentModal({ isOpen: true, ticketId });
+    setCommentModal({
+      isOpen: true,
+      ticketId
+    });
   };
-
   const handleFlag = (ticketId: string) => {
     setFlaggedTickets(prev => {
       const newSet = new Set(prev);
@@ -69,14 +67,11 @@ export function RecentTicketsSidebar() {
       return newSet;
     });
   };
-
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket-details/${ticketId}`);
   };
-
-  return (
-    <>
-      <div className="w-full bg-gray-50 border-l border-gray-200 p-4 h-full overflow-hidden flex flex-col">
+  return <>
+      <div className="w-full bg-[#E8E0D4] border-l border-gray-200 p-4 h-full overflow-hidden flex flex-col">
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-red-600 mb-2">
@@ -89,8 +84,7 @@ export function RecentTicketsSidebar() {
         
         {/* Tickets List */}
         <div className="flex-1 overflow-y-auto space-y-4">
-          {recentTickets.map((ticket, index) => (
-            <div key={`${ticket.id}-${index}`} className="bg-[#E8E0D4] rounded-lg p-4 shadow-sm">
+          {recentTickets.map((ticket, index) => <div key={`${ticket.id}-${index}`} className="bg-[#E8E0D4] rounded-lg p-4 shadow-sm">
               {/* Header with ID, Star, and Priority */}
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-800 text-sm">{ticket.id}</span>
@@ -159,50 +153,27 @@ export function RecentTicketsSidebar() {
               
               {/* Action Buttons */}
               <div className="flex items-center gap-3">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="text-xs border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-1 px-3"
-                  onClick={() => handleAddComment(ticket.id)}
-                >
+                <Button size="sm" variant="outline" className="text-xs border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-1 px-3" onClick={() => handleAddComment(ticket.id)}>
                   <MessageSquare className="h-3 w-3 text-red-500" />
                   Add Comment
                 </Button>
                 
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className={`text-xs border-gray-300 hover:bg-gray-100 flex items-center gap-1 px-3 ${
-                    flaggedTickets.has(ticket.id) 
-                      ? 'bg-red-100 text-red-700 border-red-300' 
-                      : 'text-gray-700'
-                  }`}
-                  onClick={() => handleFlag(ticket.id)}
-                >
+                <Button size="sm" variant="outline" className={`text-xs border-gray-300 hover:bg-gray-100 flex items-center gap-1 px-3 ${flaggedTickets.has(ticket.id) ? 'bg-red-100 text-red-700 border-red-300' : 'text-gray-700'}`} onClick={() => handleFlag(ticket.id)}>
                   <Flag className="h-3 w-3 text-red-500" />
                   Flag Issue
                 </Button>
                 
-                <Button 
-                  size="sm" 
-                  variant="link" 
-                  className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-normal"
-                  onClick={() => handleViewDetails(ticket.id)}
-                >
+                <Button size="sm" variant="link" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-normal" onClick={() => handleViewDetails(ticket.id)}>
                   View Details&gt;&gt;
                 </Button>
               </div>
-            </div>
-          ))}
+            </div>)}
         </div>
       </div>
 
-      <AddCommentModal
-        isOpen={commentModal.isOpen}
-        onClose={() => setCommentModal({ isOpen: false, ticketId: '' })}
-        itemId={commentModal.ticketId}
-        itemType="ticket"
-      />
-    </>
-  );
+      <AddCommentModal isOpen={commentModal.isOpen} onClose={() => setCommentModal({
+      isOpen: false,
+      ticketId: ''
+    })} itemId={commentModal.ticketId} itemType="ticket" />
+    </>;
 }
