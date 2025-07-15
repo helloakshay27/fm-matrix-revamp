@@ -1495,333 +1495,540 @@ const AddAssetPage = () => {
 
         {/* Building Asset Details - Show when Building is selected */}
         {selectedAssetCategory === 'Building' && (
-          <div className="space-y-6">
-            {/* Basic Identification */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Basic Identification
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Asset ID / Code</label>
-                    <input 
-                      type="text" 
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <div className="space-y-6">
+              {/* Basic Identification */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Basic Identification
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Asset ID / Code"
                       placeholder="Enter unique identifier"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Asset Name</label>
-                    <input 
-                      type="text" 
+                    <TextField
+                      label="Asset Name"
                       placeholder="Enter building name"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Building Type</InputLabel>
+                      <MuiSelect
+                        label="Building Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Building Type</MenuItem>
+                        <MenuItem value="office">Office</MenuItem>
+                        <MenuItem value="residential">Residential</MenuItem>
+                        <MenuItem value="industrial">Industrial</MenuItem>
+                        <MenuItem value="mixed">Mixed Use</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Building Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Building Type</option>
-                      <option value="office">Office</option>
-                      <option value="residential">Residential</option>
-                      <option value="industrial">Industrial</option>
-                      <option value="mixed">Mixed Use</option>
-                      <option value="other">Other (Manual Entry)</option>
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Location & Ownership */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Location & Ownership
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Location</label>
-                    <input 
-                      type="text" 
+              {/* Location & Ownership */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Location & Ownership
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Location"
                       placeholder="Full address"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Ownership Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Ownership Type</option>
-                      <option value="owned">Owned</option>
-                      <option value="rented">Rented</option>
-                      <option value="leased">Leased</option>
-                      <option value="government">Government Allotted</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Linked Land Asset</label>
-                    <input 
-                      type="text" 
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Ownership Type</InputLabel>
+                      <MuiSelect
+                        label="Ownership Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Ownership Type</MenuItem>
+                        <MenuItem value="owned">Owned</MenuItem>
+                        <MenuItem value="rented">Rented</MenuItem>
+                        <MenuItem value="leased">Leased</MenuItem>
+                        <MenuItem value="government">Government Allotted</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Linked Land Asset"
                       placeholder="Enter Asset ID or name of land"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Construction Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Construction className="w-5 h-5" />
-                  Construction Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Construction Type</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Construction Type</option>
-                      <option value="rcc">RCC</option>
-                      <option value="steel">Steel</option>
-                      <option value="prefab">Pre-Fab</option>
-                      <option value="loadbearing">Load Bearing</option>
-                      <option value="other">Other (Manual Entry)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Number of Floors</label>
-                    <input 
-                      type="number" 
+              {/* Construction Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Construction className="w-5 h-5" />
+                    Construction Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Construction Type</InputLabel>
+                      <MuiSelect
+                        label="Construction Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Construction Type</MenuItem>
+                        <MenuItem value="rcc">RCC</MenuItem>
+                        <MenuItem value="steel">Steel</MenuItem>
+                        <MenuItem value="prefab">Pre-Fab</MenuItem>
+                        <MenuItem value="loadbearing">Load Bearing</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Number of Floors"
                       placeholder="e.g., G + 3 = 4"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Built-up Area</label>
                     <div className="flex gap-2">
-                      <input 
-                        type="number" 
+                      <TextField
+                        label="Built-up Area"
                         placeholder="Enter area"
-                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
                       />
-                      <select className="w-24 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                        <option value="sqft">Sq. Ft.</option>
-                        <option value="sqm">Sq. M.</option>
-                      </select>
+                      <FormControl 
+                        sx={{
+                          minWidth: 100,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Unit</InputLabel>
+                        <MuiSelect
+                          label="Unit"
+                          defaultValue="sqft"
+                        >
+                          <MenuItem value="sqft">Sq. Ft.</MenuItem>
+                          <MenuItem value="sqm">Sq. M.</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Date of Construction</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    <DatePicker
+                      label="Date of Construction"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
                     />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Acquisition & Value */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Acquisition & Value
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Date of Acquisition</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+              {/* Acquisition & Value */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Acquisition & Value
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DatePicker
+                      label="Date of Acquisition"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Acquisition Cost (INR)</label>
                     <div className="flex gap-2">
-                      <select className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                        <option value="inr">INR</option>
-                      </select>
-                      <input 
-                        type="number" 
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Acquisition Cost"
                         placeholder="Enter cost"
-                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Depreciation Rate (%)</label>
-                    <input 
-                      type="number" 
+                    <TextField
+                      label="Depreciation Rate (%)"
                       placeholder="Enter depreciation rate"
-                      step="0.01"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Current Book Value (INR)</label>
                     <div className="flex gap-2">
-                      <select className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                        <option value="inr">INR</option>
-                      </select>
-                      <input 
-                        type="number" 
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Current Book Value"
                         placeholder="Enter book value"
-                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Current Market Value (INR)</label>
                     <div className="flex gap-2">
-                      <select className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                        <option value="inr">INR</option>
-                      </select>
-                      <input 
-                        type="number" 
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Current Market Value"
                         placeholder="Enter market value"
-                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
                       />
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Usage & Compliance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5" />
-                  Usage & Compliance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Building Use</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Building Use</option>
-                      <option value="office">Office</option>
-                      <option value="warehouse">Warehouse</option>
-                      <option value="school">School</option>
-                      <option value="other">Other (Manual Entry)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Fire Safety Certification</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Status</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                      <option value="pending">Pending</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Occupancy Certificate No.</label>
-                    <input 
-                      type="text" 
+              {/* Usage & Compliance */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Usage & Compliance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Building Use</InputLabel>
+                      <MuiSelect
+                        label="Building Use"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Building Use</MenuItem>
+                        <MenuItem value="office">Office</MenuItem>
+                        <MenuItem value="warehouse">Warehouse</MenuItem>
+                        <MenuItem value="school">School</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Fire Safety Certification</InputLabel>
+                      <MuiSelect
+                        label="Fire Safety Certification"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                        <MenuItem value="pending">Pending</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Occupancy Certificate No."
                       placeholder="Enter certificate ID"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Structural Safety Certificate</InputLabel>
+                      <MuiSelect
+                        label="Structural Safety Certificate"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                        <MenuItem value="lastUpdated">Last Updated Date Option</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Utility Connections</InputLabel>
+                      <MuiSelect
+                        label="Utility Connections"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Utilities</MenuItem>
+                        <MenuItem value="water">Water</MenuItem>
+                        <MenuItem value="electricity">Electricity</MenuItem>
+                        <MenuItem value="both">Water & Electricity</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Structural Safety Certificate</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Status</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                      <option value="lastUpdated">Last Updated Date Option</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Utility Connections</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Utilities</option>
-                      <option value="water">Water</option>
-                      <option value="electricity">Electricity</option>
-                      <option value="both">Water & Electricity</option>
-                      <option value="other">Other (Manual Entry)</option>
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Maintenance & Linkages */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Wrench className="w-5 h-5" />
-                  Maintenance & Linkages
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Maintenance Responsibility</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Department/Team</option>
-                      <option value="facilities">Facilities Management</option>
-                      <option value="admin">Administration</option>
-                      <option value="outsourced">Outsourced</option>
-                      <option value="other">Other</option>
-                    </select>
+              {/* Maintenance & Linkages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Wrench className="w-5 h-5" />
+                    Maintenance & Linkages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Maintenance Responsibility</InputLabel>
+                      <MuiSelect
+                        label="Maintenance Responsibility"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Department/Team</MenuItem>
+                        <MenuItem value="facilities">Facilities Management</MenuItem>
+                        <MenuItem value="admin">Administration</MenuItem>
+                        <MenuItem value="outsourced">Outsourced</MenuItem>
+                        <MenuItem value="other">Other</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>AMC / PPM Linked</InputLabel>
+                      <MuiSelect
+                        label="AMC / PPM Linked"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">AMC / PPM Linked</label>
-                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                      <option value="">Select Status</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Miscellaneous */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                  <Archive className="w-5 h-5" />
-                  Miscellaneous
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Remarks / Notes</label>
-                  <textarea 
+              {/* Miscellaneous */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Archive className="w-5 h-5" />
+                    Miscellaneous
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <TextField
+                    label="Remarks / Notes"
                     placeholder="Special remarks like shared floor, rent info, etc."
+                    variant="outlined"
+                    fullWidth
+                    multiline
                     rows={4}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Attachments</label>
-                  <input 
-                    type="file" 
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.dwg"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Upload blueprints, tax receipts, occupancy certificate, etc.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.dwg"
+                      className="hidden"
+                      id="building-attachments"
+                    />
+                    <label htmlFor="building-attachments" className="cursor-pointer">
+                      <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600">
+                        Click to upload attachments
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Upload blueprints, tax receipts, occupancy certificate, etc.
+                      </p>
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </LocalizationProvider>
         )}
 
         {/* Location Details */}
