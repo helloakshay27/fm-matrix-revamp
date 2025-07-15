@@ -500,10 +500,10 @@ export const TicketDashboard = () => {
               </div>
 
               {/* Unit Category Wise Tickets Bar Chart */}
-              <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+              <div className="bg-white border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Unit Category-wise Tickets</h3>
-                  <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                  <h3 className="text-lg font-bold" style={{ color: '#C72030' }}>Unit Category-wise Tickets</h3>
+                  <Download className="w-4 h-4 cursor-pointer" style={{ color: '#C72030' }} />
                 </div>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={categoryChartData}>
