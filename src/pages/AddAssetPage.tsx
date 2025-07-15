@@ -68,7 +68,11 @@ const AddAssetPage = () => {
     buildingAcquisition: [],
     buildingUsage: [],
     buildingMaintenance: [],
-    buildingMiscellaneous: []
+    buildingMiscellaneous: [],
+    // General sections
+    locationDetails: [],
+    purchaseDetails: [],
+    depreciationRule: []
   });
   const [itAssetsCustomFields, setItAssetsCustomFields] = useState({
     'System Details': [],
@@ -3053,7 +3057,19 @@ const AddAssetPage = () => {
                   </span>
                   LOCATION DETAILS
                 </div>
-                {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCustomFieldModal('locationDetails');
+                    }}
+                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Custom Field
+                  </button>
+                  {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </div>
               </div>
           {expandedSections.location && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
@@ -3068,7 +3084,7 @@ const AddAssetPage = () => {
                     </MuiSelect>
                   </FormControl>)}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                 <FormControl fullWidth variant="outlined" sx={{
               minWidth: 120
             }}>
@@ -3080,6 +3096,30 @@ const AddAssetPage = () => {
                   </MuiSelect>
                 </FormControl>
               </div>
+
+              {/* Custom Fields */}
+              {customFields.locationDetails.map((field) => (
+                <div key={field.id} className="flex items-center gap-2 mb-2">
+                  <TextField
+                    label={field.name}
+                    value={field.value}
+                    onChange={(e) => handleCustomFieldChange('locationDetails', field.id, e.target.value)}
+                    variant="outlined"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' }
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => removeCustomField('locationDetails', field.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>}
         </div>
 
@@ -3409,10 +3449,22 @@ const AddAssetPage = () => {
               </span>
               PURCHASE DETAILS
             </div>
-            {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openCustomFieldModal('purchaseDetails');
+                }}
+                className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+              >
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </button>
+              {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
           </div>
           {expandedSections.consumption && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <TextField required label="Purchase Cost" placeholder="Enter cost" name="purchaseCost" fullWidth variant="outlined" InputLabelProps={{
               shrink: true
             }} InputProps={{
@@ -3446,6 +3498,30 @@ const AddAssetPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Custom Fields */}
+              {customFields.purchaseDetails.map((field) => (
+                <div key={field.id} className="flex items-center gap-2 mb-2">
+                  <TextField
+                    label={field.name}
+                    value={field.value}
+                    onChange={(e) => handleCustomFieldChange('purchaseDetails', field.id, e.target.value)}
+                    variant="outlined"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' }
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => removeCustomField('purchaseDetails', field.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>}
         </div>
 
@@ -3459,6 +3535,16 @@ const AddAssetPage = () => {
               DEPRECIATION RULE
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openCustomFieldModal('depreciationRule');
+                }}
+                className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+              >
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </button>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">If Applicable</span>
                 <div className="relative inline-block w-12 h-6">
@@ -3512,7 +3598,7 @@ const AddAssetPage = () => {
                 </div>
 
                 {/* Radio Options */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
                   <div>
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="configure-this" name="depreciationConfig" value="configure-this" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
@@ -3530,6 +3616,30 @@ const AddAssetPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Custom Fields */}
+                {customFields.depreciationRule.map((field) => (
+                  <div key={field.id} className="flex items-center gap-2 mb-2">
+                    <TextField
+                      label={field.name}
+                      value={field.value}
+                      onChange={(e) => handleCustomFieldChange('depreciationRule', field.id, e.target.value)}
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => removeCustomField('depreciationRule', field.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>}
         </div>
