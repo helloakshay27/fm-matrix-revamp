@@ -220,13 +220,9 @@ export const TicketDashboard = () => {
     const category = ticket.category;
     acc[category] = (acc[category] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {});
 
-  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({ 
-    name, 
-    series1: Math.floor(value * 0.6), // Beige bars
-    series2: Math.floor(value * 0.4)  // Red bars
-  }));
+  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({ name, value }));
 
   const agingMatrixData = [
     { priority: 'P1', '0-10': 5, '11-20': 3, '21-30': 2, '31-40': 1, '41-50': 0 },
@@ -504,30 +500,24 @@ export const TicketDashboard = () => {
               </div>
 
               {/* Unit Category Wise Tickets Bar Chart */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-[#C72030]">Unit Category-wise Tickets</h3>
-                  <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
+              <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Unit Category-wise Tickets</h3>
+                  <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                 </div>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={categoryChartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={categoryChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
                     <XAxis 
                       dataKey="name" 
                       angle={-45} 
                       textAnchor="end" 
                       height={80}
-                      tick={{ fill: '#666', fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
                     />
-                    <YAxis 
-                      tick={{ fill: '#666', fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
+                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
                     <Tooltip />
-                    <Bar dataKey="series1" fill="#C7B299" barSize={30} />
-                    <Bar dataKey="series2" fill="#E06666" barSize={30} />
+                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
