@@ -95,7 +95,7 @@ export function RecentTicketsSidebar() {
     navigate(`/maintenance/ticket-details/${ticketId}`);
   };
   return <>
-      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full overflow-hidden flex flex-col">
+      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:h-[calc(100vh-200px)] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-red-600 mb-2">
@@ -107,7 +107,7 @@ export function RecentTicketsSidebar() {
         </div>
         
         {/* Tickets List */}
-        <div className="flex-1 overflow-y-auto space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4 xl:max-h-[calc(100vh-300px)]">
           {recentTickets.map((ticket, index) => <div key={`${ticket.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
               {/* Header with ID, Star, and Priority */}
               <div className="flex items-center justify-between mb-3">

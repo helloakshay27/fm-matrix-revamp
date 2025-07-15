@@ -350,7 +350,7 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
             {/* Left Section - Charts */}
             <div className="xl:col-span-8 space-y-4 sm:space-y-6">
               {/* Top Row - Two Donut Charts */}
