@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Flag, Eye } from 'lucide-react';
+import { MessageSquare, Flag, Eye, Building2, User, Globe, Clock, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AddCommentModal } from '@/components/AddCommentModal';
 
@@ -106,58 +106,107 @@ export const RecentAssetsSidebar = () => {
   };
 
   return (
-    <div className="bg-white border border-[hsl(var(--analytics-border))] h-fit">
-      <div className="p-4 border-b border-[hsl(var(--analytics-border))]">
-        <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Recent Assets</h3>
+    <div className="bg-white border border-[hsl(var(--analytics-border))] h-fit w-[420px]">
+      <div className="p-6 border-b border-[hsl(var(--analytics-border))]">
+        <h3 className="text-xl font-semibold text-[#C72030] mb-2">Recent Assets</h3>
+        <div className="text-sm text-gray-600">14/07/2025</div>
       </div>
       
       <div className="max-h-[600px] overflow-y-auto">
         {recentAssets.map((asset) => (
-          <div key={asset.id} className="p-4 border-b border-[hsl(var(--analytics-border))] last:border-b-0">
-            <div className="space-y-3">
-              <div>
-                <div className="font-medium text-[hsl(var(--analytics-text))] text-sm">{asset.name}</div>
-                <div className="text-xs text-[hsl(var(--analytics-muted))]">{asset.assetNo}</div>
+          <div key={asset.id} className="p-4 bg-[#F5F5F5] m-4 rounded-lg border border-gray-200">
+            <div className="space-y-4">
+              {/* Header with asset number, star and priority */}
+              <div className="flex items-center justify-between">
+                <div className="text-lg font-semibold text-gray-800">{asset.assetNo}</div>
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                  <span className="px-2 py-1 bg-[#E91E63] text-white text-xs font-medium rounded">P1</span>
+                </div>
               </div>
               
+              {/* Asset name and TAT */}
               <div className="flex items-center justify-between">
-                <span className={`px-2 py-1 rounded text-xs ${getStatusColor(asset.status)}`}>
-                  {asset.status}
-                </span>
+                <div className="text-lg font-medium text-gray-800">{asset.name}</div>
                 <div className="text-right">
-                  <div className="text-xs text-[hsl(var(--analytics-muted))]">TAT</div>
-                  <div className={`text-xs font-medium ${getTatColor(asset.tatStatus)}`}>
-                    {asset.tat}
+                  <span className="text-sm text-gray-600">TAT : </span>
+                  <span className="text-blue-600 font-medium">"{asset.tat}"</span>
+                </div>
+              </div>
+              
+              {/* Details section */}
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <Building2 className="w-4 h-4 text-[#C72030] mr-3" />
+                  <span className="text-gray-700 font-medium w-32">Category</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="text-gray-800 ml-2">Equipment</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <Building2 className="w-4 h-4 text-[#C72030] mr-3" />
+                  <span className="text-gray-700 font-medium w-32">Sub-Category</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="text-gray-800 ml-2">IT Equipment</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <User className="w-4 h-4 text-[#C72030] mr-3" />
+                  <span className="text-gray-700 font-medium w-32">Assignee Name</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="text-gray-800 ml-2">Admin</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <Globe className="w-4 h-4 text-[#C72030] mr-3" />
+                  <span className="text-gray-700 font-medium w-32">Site</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="text-gray-800 ml-2">GoPhygital</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 text-[#C72030] mr-3" />
+                  <span className="text-gray-700 font-medium w-32">Update</span>
+                  <span className="text-gray-600">:</span>
+                  <div className="flex items-center ml-2">
+                    <span className="text-gray-600 italic">{asset.status}</span>
+                    <span className="mx-2">→</span>
+                    <span className="text-gray-800 italic">Active</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 h-7 text-xs"
-                  onClick={() => handleAddComment(asset.id)}
-                >
-                  <MessageSquare className="w-3 h-3 mr-1" />
-                  Comment
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={`h-7 px-2 ${flaggedAssets.has(asset.id) ? 'bg-red-50 border-red-200' : ''}`}
-                  onClick={() => handleFlag(asset.id)}
-                >
-                  <Flag className={`w-3 h-3 ${flaggedAssets.has(asset.id) ? 'text-red-600' : ''}`} />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2"
+              {/* Handler info */}
+              <div className="text-sm text-gray-600 mt-3">
+                (Handled By Admin)
+              </div>
+              
+              {/* Action buttons */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-300">
+                <div className="flex items-center gap-4">
+                  <button 
+                    className="flex items-center text-[#C72030] hover:underline"
+                    onClick={() => handleAddComment(asset.id)}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-1" />
+                    Add Comment
+                  </button>
+                  
+                  <button 
+                    className={`flex items-center hover:underline ${flaggedAssets.has(asset.id) ? 'text-red-600' : 'text-[#C72030]'}`}
+                    onClick={() => handleFlag(asset.id)}
+                  >
+                    <Flag className="w-4 h-4 mr-1" />
+                    Flag Issue
+                  </button>
+                </div>
+                
+                <button 
+                  className="text-blue-600 hover:underline font-medium"
                   onClick={() => handleViewDetails(asset.id)}
                 >
-                  <Eye className="w-3 h-3" />
-                </Button>
+                  View Detail{'>>'}
+                </button>
               </div>
             </div>
           </div>
