@@ -3114,7 +3114,8 @@ export const EditAssetDetailsPage = () => {
           selectedAssetCategory === 'IT Equipment' || 
           selectedAssetCategory === 'Machinery & Equipment' || 
           selectedAssetCategory === 'Tools & Instruments') && (
-          <>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <>
             {/* Location Details */}
             <div className="bg-white shadow-sm rounded-lg overflow-hidden">
               <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
@@ -3812,7 +3813,8 @@ export const EditAssetDetailsPage = () => {
             </div>
           )}
         </div>
-          </>
+            </>
+          </LocalizationProvider>
         )}
 
         {/* Action Buttons */}
