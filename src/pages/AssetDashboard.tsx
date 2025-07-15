@@ -302,7 +302,8 @@ export const AssetDashboard = () => {
           </div>
 
           {/* Header with Asset Selector */}
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <div></div>
             <AssetSelector 
               selectedItems={selectedAnalyticsItems}
               onSelectionChange={setSelectedAnalyticsItems}
