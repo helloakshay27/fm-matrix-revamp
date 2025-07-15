@@ -108,7 +108,7 @@ export function RecentTicketsSidebar() {
         
         {/* Tickets List */}
         <div className="flex-1 overflow-y-auto space-y-4 xl:max-h-[calc(100vh-300px)]">
-          {recentTickets.map((ticket, index) => <div key={`${ticket.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
+          {recentTickets.map((ticket, index) => <div key={`${ticket.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60 h-full" style={{ borderWidth: '0.6px' }}>
               {/* Header with ID, Star, and Priority */}
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-800 text-sm">{ticket.id}</span>
