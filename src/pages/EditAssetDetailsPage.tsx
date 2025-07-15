@@ -2962,6 +2962,9 @@ export const EditAssetDetailsPage = () => {
             </>
           </LocalizationProvider>}
 
+        {/* Show these sections only for Furniture & Fixtures */}
+        {selectedAssetCategory === 'Furniture & Fixtures' && (
+          <>
         {/* Asset Allocation */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('assetAllocation')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
@@ -3412,6 +3415,8 @@ export const EditAssetDetailsPage = () => {
             </div>
           )}
         </div>
+          </>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
