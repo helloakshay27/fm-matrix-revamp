@@ -4110,9 +4110,6 @@ export const EditAssetDetailsPage = () => {
           )}
           </div>
         </LocalizationProvider>
-            </>
-          </LocalizationProvider>
-        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
