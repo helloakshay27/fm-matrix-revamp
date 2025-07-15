@@ -2693,7 +2693,7 @@ export const EditAssetDetailsPage = () => {
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {getMeterCategoryOptions().map(option => {
                     const IconComponent = option.icon;
-                    return <div key={option.value} className={`border rounded-lg p-4 cursor-pointer transition-colors bg-white hover:bg-gray-50 ${meterCategoryType === option.value ? 'border-[#C72030] bg-red-50' : 'border-gray-200'}`} onClick={() => handleMeterCategoryChange(option.value)}>
+                    return <div key={option.value} className={`border rounded-lg p-4 cursor-pointer transition-colors hover:bg-gray-50 ${meterCategoryType === option.value ? 'border-[#C72030] bg-red-50' : 'border-gray-200'}`} onClick={() => handleMeterCategoryChange(option.value)}>
                               <div className="flex items-center space-x-2">
                                 <input type="radio" id={`meter-${option.value}`} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={() => handleMeterCategoryChange(option.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                           accentColor: '#C72030'
