@@ -3113,7 +3113,8 @@ export const EditAssetDetailsPage = () => {
         {(selectedAssetCategory === 'Furniture & Fixtures' || 
           selectedAssetCategory === 'IT Equipment' || 
           selectedAssetCategory === 'Machinery & Equipment' || 
-          selectedAssetCategory === 'Tools & Instruments') && (
+          selectedAssetCategory === 'Tools & Instruments' ||
+          selectedAssetCategory === 'Vehicle') && (
           <>
             {/* Location Details */}
             <div className="bg-white shadow-sm rounded-lg overflow-hidden">
