@@ -40,19 +40,35 @@ const AddAssetPage = () => {
   const [itAssetsCustomFieldModalOpen, setItAssetsCustomFieldModalOpen] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
   const [customFields, setCustomFields] = useState({
+    // Land sections
     basicIdentification: [],
     locationOwnership: [],
     landSizeValue: [],
     landUsageDevelopment: [],
     miscellaneous: [],
+    // Leasehold Improvement sections
+    leaseholdBasicId: [],
+    leaseholdLocationAssoc: [],
     improvementDetails: [],
-    technicalSpecs: [],
-    ownershipUsage: [],
-    financialDepreciation: [],
-    constructionDetails: [],
-    acquisitionValue: [],
-    usageCompliance: [],
-    maintenanceLinkages: []
+    leaseholdFinancial: [],
+    leaseholdLease: [],
+    leaseholdOversight: [],
+    // Vehicle sections
+    vehicleBasicId: [],
+    vehicleTechnicalSpecs: [],
+    vehicleOwnership: [],
+    vehicleFinancial: [],
+    vehiclePerformance: [],
+    vehicleLegal: [],
+    vehicleMiscellaneous: [],
+    // Building sections
+    buildingBasicId: [],
+    buildingLocation: [],
+    buildingConstruction: [],
+    buildingAcquisition: [],
+    buildingUsage: [],
+    buildingMaintenance: [],
+    buildingMiscellaneous: []
   });
   const [itAssetsCustomFields, setItAssetsCustomFields] = useState({
     'System Details': [],
@@ -942,7 +958,7 @@ const AddAssetPage = () => {
                       Basic Identification
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('leaseholdBasicId')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -987,7 +1003,7 @@ const AddAssetPage = () => {
                       Location & Association
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('leaseholdLocationAssoc')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -1052,7 +1068,7 @@ const AddAssetPage = () => {
                       Improvement Details
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('improvementDetails')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -1155,7 +1171,7 @@ const AddAssetPage = () => {
                       Financial & Depreciation
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('leaseholdFinancial')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -1252,7 +1268,7 @@ const AddAssetPage = () => {
                       Lease & Maintenance Linkages
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('leaseholdLease')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -1321,7 +1337,7 @@ const AddAssetPage = () => {
                       Oversight & Documentation
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('leaseholdOversight')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -1395,9 +1411,18 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Basic Identification
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Identification
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('vehicleBasicId')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1457,6 +1482,31 @@ const AddAssetPage = () => {
                         }
                       }}
                     />
+                    
+                    {/* Custom Fields */}
+                    {customFields.vehicleBasicId.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('vehicleBasicId', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('vehicleBasicId', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -1470,7 +1520,7 @@ const AddAssetPage = () => {
                       Technical Specifications
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('vehicleTechnicalSpecs')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -1536,7 +1586,7 @@ const AddAssetPage = () => {
                       Ownership & Usage
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('vehicleOwnership')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -1933,9 +1983,18 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Basic Identification
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Identification
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingBasicId')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -2052,7 +2111,7 @@ const AddAssetPage = () => {
                       Construction Details
                     </div>
                     <button
-                      onClick={() => setCustomFieldModalOpen(true)}
+                      onClick={() => openCustomFieldModal('buildingConstruction')}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
@@ -2528,7 +2587,7 @@ const AddAssetPage = () => {
               ASSET DETAILS
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setCustomFieldModalOpen(true)} className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
+              <button onClick={() => openCustomFieldModal('assetDetails')} className="px-3 py-1 rounded text-sm flex items-center gap-1" style={{
               backgroundColor: '#F6F4EE',
               color: '#C72030'
             }}>
