@@ -48,6 +48,8 @@ export const EditAssetDetailsPage = () => {
   const [subCategoryType, setSubCategoryType] = useState('');
   const [meterType, setMeterType] = useState('');
   const [criticalStatus, setCriticalStatus] = useState('');
+  const [depreciationMethod, setDepreciationMethod] = useState('straight-line');
+  const [depreciationConfig, setDepreciationConfig] = useState('this-only');
   const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
   const [showRenewableOptions, setShowRenewableOptions] = useState(false);
   const [allocationBasedOn, setAllocationBasedOn] = useState('department');
@@ -3773,9 +3775,43 @@ export const EditAssetDetailsPage = () => {
           </div>
           {expandedSections.nonConsumption && (
             <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              {/* Method */}
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-700 mb-3 block">Method</label>
+                <div className="flex gap-6">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="method-straight-line"
+                      name="depreciationMethod"
+                      value="straight-line"
+                      checked={depreciationMethod === 'straight-line'}
+                      onChange={(e) => setDepreciationMethod(e.target.value)}
+                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                      style={{ accentColor: '#C72030' }}
+                    />
+                    <label htmlFor="method-straight-line" className="text-sm">Straight Line</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="method-wdv"
+                      name="depreciationMethod"
+                      value="wdv"
+                      checked={depreciationMethod === 'wdv'}
+                      onChange={(e) => setDepreciationMethod(e.target.value)}
+                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                      style={{ accentColor: '#C72030' }}
+                    />
+                    <label htmlFor="method-wdv" className="text-sm">WDV</label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Input Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <TextField
-                  label="Useful Life (in yrs)"
+                  label="Useful Life (in yrs) *"
                   placeholder="YRS"
                   variant="outlined"
                   fullWidth
@@ -3785,6 +3821,60 @@ export const EditAssetDetailsPage = () => {
                     }
                   }}
                 />
+                <TextField
+                  label="Salvage Value *"
+                  placeholder="Enter Value"
+                  variant="outlined"
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
+                    }
+                  }}
+                />
+                <TextField
+                  label="Depreciation Rate *"
+                  placeholder="Enter Value"
+                  variant="outlined"
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Configuration Options */}
+              <div className="mb-6">
+                <div className="flex gap-8">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="config-this-only"
+                      name="depreciationConfig"
+                      value="this-only"
+                      checked={depreciationConfig === 'this-only'}
+                      onChange={(e) => setDepreciationConfig(e.target.value)}
+                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                      style={{ accentColor: '#C72030' }}
+                    />
+                    <label htmlFor="config-this-only" className="text-sm">Configure Depreciation Only For This</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="config-similar-product"
+                      name="depreciationConfig"
+                      value="similar-product"
+                      checked={depreciationConfig === 'similar-product'}
+                      onChange={(e) => setDepreciationConfig(e.target.value)}
+                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                      style={{ accentColor: '#C72030' }}
+                    />
+                    <label htmlFor="config-similar-product" className="text-sm">For Similar Product</label>
+                  </div>
+                </div>
               </div>
 
               {/* Custom Fields */}
