@@ -39,6 +39,30 @@ const recentTickets = [{
   status: 'In Progress',
   nextStatus: 'Closed',
   handledBy: 'Arman'
+}, {
+  id: '234-87655',
+  title: 'AC not working',
+  category: 'HVAC',
+  subCategory: 'Air Conditioning',
+  assigneeName: 'John',
+  site: 'GoPhygital',
+  priority: 'P2',
+  tat: 'B',
+  status: 'Open',
+  nextStatus: 'In Progress',
+  handledBy: 'John'
+}, {
+  id: '234-87656',
+  title: 'Elevator maintenance',
+  category: 'Mechanical',
+  subCategory: 'Elevator',
+  assigneeName: 'Sarah',
+  site: 'GoPhygital',
+  priority: 'P3',
+  tat: 'C',
+  status: 'Scheduled',
+  nextStatus: 'In Progress',
+  handledBy: 'Sarah'
 }];
 export function RecentTicketsSidebar() {
   const [commentModal, setCommentModal] = useState<{
