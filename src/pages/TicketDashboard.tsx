@@ -241,7 +241,7 @@ export const TicketDashboard = () => {
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix'
   ]);
-  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart']);
+  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -415,36 +415,52 @@ export const TicketDashboard = () => {
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
             {/* Left Section - Charts */}
             <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-              {/* Top Row - Two Donut Charts */}
+              {/* All Charts with Drag and Drop */}
               <DndContext 
                 sensors={sensors} 
                 collisionDetection={closestCenter} 
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    {chartOrder.map((chartId) => {
-                      if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                              </div>
-                              <div className="relative flex items-center justify-center">
-                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                  <PieChart>
-                                    <Pie
-                                      data={statusData}
-                                      cx="50%"
-                                      cy="50%"
-                                      innerRadius={40}
-                                      outerRadius={80}
-                                      paddingAngle={2}
-                                      dataKey="value"
-                                      label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                        if (name === 'Open') {
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Top Row - Two Donut Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                      {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map((chartId) => {
+                        if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
+                          return (
+                            <SortableChartItem key={chartId} id={chartId}>
+                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                  <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
+                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                </div>
+                                <div className="relative flex items-center justify-center">
+                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                    <PieChart>
+                                      <Pie
+                                        data={statusData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={40}
+                                        outerRadius={80}
+                                        paddingAngle={2}
+                                        dataKey="value"
+                                        label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                                          if (name === 'Open') {
+                                            return (
+                                              <text 
+                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                                fill="black"
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                fontSize="14"
+                                                fontWeight="bold"
+                                              >
+                                                2
+                                              </text>
+                                            );
+                                          }
                                           return (
                                             <text 
                                               x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
@@ -455,73 +471,73 @@ export const TicketDashboard = () => {
                                               fontSize="14"
                                               fontWeight="bold"
                                             >
-                                              2
+                                              {value}
                                             </text>
                                           );
-                                        }
-                                        return (
-                                          <text 
-                                            x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                            y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                            fill="black"
-                                            textAnchor="middle"
-                                            dominantBaseline="middle"
-                                            fontSize="14"
-                                            fontWeight="bold"
-                                          >
-                                            {value}
-                                          </text>
-                                        );
-                                      }}
-                                      labelLine={false}
-                                    >
-                                      {statusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                      ))}
-                                    </Pie>
-                                    <Tooltip />
-                                  </PieChart>
-                                </ResponsiveContainer>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="text-center">
-                                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
+                                        }}
+                                        labelLine={false}
+                                      >
+                                        {statusData.map((entry, index) => (
+                                          <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                      </Pie>
+                                      <Tooltip />
+                                    </PieChart>
+                                  </ResponsiveContainer>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="text-center">
+                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
+                                    </div>
                                   </div>
                                 </div>
+                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                  {statusData.map((item, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                              <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                {statusData.map((item, index) => (
-                                  <div key={index} className="flex items-center gap-2">
-                                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                    <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
-                      
-                      if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                              </div>
-                              <div className="relative flex items-center justify-center">
-                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                  <PieChart>
-                                    <Pie
-                                      data={typeData}
-                                      cx="50%"
-                                      cy="50%"
-                                      innerRadius={40}
-                                      outerRadius={80}
-                                      paddingAngle={2}
-                                      dataKey="value"
-                                      label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                        if (name === 'Open') {
+                            </SortableChartItem>
+                          );
+                        }
+                        
+                        if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
+                          return (
+                            <SortableChartItem key={chartId} id={chartId}>
+                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                  <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
+                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                </div>
+                                <div className="relative flex items-center justify-center">
+                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                    <PieChart>
+                                      <Pie
+                                        data={typeData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={40}
+                                        outerRadius={80}
+                                        paddingAngle={2}
+                                        dataKey="value"
+                                        label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                                          if (name === 'Open') {
+                                            return (
+                                              <text 
+                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                                fill="black"
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                fontSize="14"
+                                                fontWeight="bold"
+                                              >
+                                                2
+                                              </text>
+                                            );
+                                          }
                                           return (
                                             <text 
                                               x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
@@ -532,139 +548,137 @@ export const TicketDashboard = () => {
                                               fontSize="14"
                                               fontWeight="bold"
                                             >
-                                              2
+                                              {value}
                                             </text>
                                           );
-                                        }
-                                        return (
-                                          <text 
-                                            x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                            y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                            fill="black"
-                                            textAnchor="middle"
-                                            dominantBaseline="middle"
-                                            fontSize="14"
-                                            fontWeight="bold"
-                                          >
-                                            {value}
-                                          </text>
-                                        );
-                                      }}
-                                      labelLine={false}
-                                    >
-                                      {typeData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                      ))}
-                                    </Pie>
-                                    <Tooltip />
-                                  </PieChart>
-                                </ResponsiveContainer>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="text-center">
-                                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {reactiveTickets + proactiveTickets}</div>
+                                        }}
+                                        labelLine={false}
+                                      >
+                                        {typeData.map((entry, index) => (
+                                          <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                      </Pie>
+                                      <Tooltip />
+                                    </PieChart>
+                                  </ResponsiveContainer>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="text-center">
+                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {reactiveTickets + proactiveTickets}</div>
+                                    </div>
                                   </div>
                                 </div>
+                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                  {typeData.map((item, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                              <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                {typeData.map((item, index) => (
-                                  <div key={index} className="flex items-center gap-2">
-                                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                    <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                  </div>
-                                ))}
+                            </SortableChartItem>
+                          );
+                        }
+                        
+                        return null;
+                      })}
+                    </div>
+
+                    {/* Bottom Charts - Category and Aging Matrix */}
+                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix'].includes(id)).map((chartId) => {
+                      if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Category-wise Tickets</h3>
+                                <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
+                              </div>
+                              <div className="w-full overflow-x-auto">
+                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
+                                  <BarChart data={categoryChartData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
+                                    <XAxis 
+                                      dataKey="name" 
+                                      angle={-45} 
+                                      textAnchor="end" 
+                                      height={80}
+                                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }}
+                                      className="text-xs"
+                                    />
+                                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }} />
+                                    <Tooltip />
+                                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
+                                  </BarChart>
+                                </ResponsiveContainer>
                               </div>
                             </div>
                           </SortableChartItem>
                         );
                       }
-                      
+
+                      if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
+                              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Tickets Ageing Matrix</h3>
+                                <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
+                              </div>
+                              
+                              <div className="space-y-4 sm:space-y-6">
+                                {/* Table - Horizontally scrollable on mobile */}
+                                <div className="overflow-x-auto -mx-3 sm:mx-0">
+                                  <div className="min-w-[500px] px-3 sm:px-0">
+                                    <table className="w-full border-collapse border border-gray-300">
+                                      <thead>
+                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
+                                          <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
+                                        </tr>
+                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                          <th className="border border-gray-300 p-2 sm:p-3"></th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {agingMatrixData.map((row, index) => (
+                                          <tr key={index} className="bg-white">
+                                            <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+
+                                {/* Summary Box - Full Width Below Table */}
+                                <div className="w-full">
+                                  <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
+                                    <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">569 Days</div>
+                                    <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </SortableChartItem>
+                        );
+                      }
+
                       return null;
                     })}
                   </div>
                 </SortableContext>
               </DndContext>
-
-              {/* Unit Category Wise Tickets Bar Chart */}
-              {visibleSections.includes('categoryChart') && (
-                <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Category-wise Tickets</h3>
-                    <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
-                  </div>
-                  <div className="w-full overflow-x-auto">
-                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
-                      <BarChart data={categoryChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                        <XAxis 
-                          dataKey="name" 
-                          angle={-45} 
-                          textAnchor="end" 
-                          height={80}
-                          tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }}
-                          className="text-xs"
-                        />
-                        <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }} />
-                        <Tooltip />
-                        <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-
-              {/* Tickets Ageing Matrix */}
-              {visibleSections.includes('agingMatrix') && (
-                <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Tickets Ageing Matrix</h3>
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
-                  </div>
-                  
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* Table - Horizontally scrollable on mobile */}
-                    <div className="overflow-x-auto -mx-3 sm:mx-0">
-                      <div className="min-w-[500px] px-3 sm:px-0">
-                        <table className="w-full border-collapse border border-gray-300">
-                          <thead>
-                            <tr style={{ backgroundColor: '#EDE4D8' }}>
-                              <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
-                              <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
-                            </tr>
-                            <tr style={{ backgroundColor: '#EDE4D8' }}>
-                              <th className="border border-gray-300 p-2 sm:p-3"></th>
-                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
-                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
-                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
-                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
-                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {agingMatrixData.map((row, index) => (
-                              <tr key={index} className="bg-white">
-                                <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
-                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
-                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
-                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
-                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {/* Summary Box - Full Width Below Table */}
-                    <div className="w-full">
-                      <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
-                        <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">569 Days</div>
-                        <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Right Sidebar - Recent Tickets */}
