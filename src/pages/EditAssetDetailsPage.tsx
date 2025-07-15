@@ -2689,7 +2689,7 @@ export const EditAssetDetailsPage = () => {
 
                     {/* Meter Details Categories */}
                     <div className="mb-6">
-                      <h3 className="text-[#C72030] font-semibold mb-4 bg-gray-50 p-3 rounded text-sm">METER DETAILS</h3>
+                      <h3 className="text-[#C72030] font-semibold mb-4  p-3 rounded text-sm">METER DETAILS</h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {getMeterCategoryOptions().map(option => {
                     const IconComponent = option.icon;
@@ -2963,8 +2963,7 @@ export const EditAssetDetailsPage = () => {
           </LocalizationProvider>}
 
         {/* Show these sections only for Furniture & Fixtures */}
-        {selectedAssetCategory === 'Furniture & Fixtures' && (
-          <>
+        {selectedAssetCategory === 'Furniture & Fixtures' && <>
         {/* Asset Allocation */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('assetAllocation')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
@@ -2985,14 +2984,14 @@ export const EditAssetDetailsPage = () => {
                 <div className="flex gap-6">
                   <div className="flex items-center space-x-2">
                     <input type="radio" id="allocation-department" name="allocationBasedOn" value="department" checked={allocationBasedOn === 'department'} onChange={e => setAllocationBasedOn(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                  accentColor: '#C72030'
-                }} />
+                    accentColor: '#C72030'
+                  }} />
                     <label htmlFor="allocation-department" className="text-sm">Department</label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <input type="radio" id="allocation-users" name="allocationBasedOn" value="users" checked={allocationBasedOn === 'users'} onChange={e => setAllocationBasedOn(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                  accentColor: '#C72030'
-                }} />
+                    accentColor: '#C72030'
+                  }} />
                     <label htmlFor="allocation-users" className="text-sm">Users</label>
                   </div>
                 </div>
@@ -3003,13 +3002,13 @@ export const EditAssetDetailsPage = () => {
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Department*</InputLabel>
                     <MuiSelect label="Department*" displayEmpty defaultValue="" sx={{
-                '& .MuiOutlinedInput-root': {
-                  height: {
-                    xs: '36px',
-                    md: '45px'
+                  '& .MuiOutlinedInput-root': {
+                    height: {
+                      xs: '36px',
+                      md: '45px'
+                    }
                   }
-                }
-              }}>
+                }}>
                       <MenuItem value=""><em>Select...</em></MenuItem>
                       <MenuItem value="admin">Administration</MenuItem>
                       <MenuItem value="hr">Human Resources</MenuItem>
@@ -3026,13 +3025,13 @@ export const EditAssetDetailsPage = () => {
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Users*</InputLabel>
                     <MuiSelect label="Users*" displayEmpty defaultValue="" sx={{
-                '& .MuiOutlinedInput-root': {
-                  height: {
-                    xs: '36px',
-                    md: '45px'
+                  '& .MuiOutlinedInput-root': {
+                    height: {
+                      xs: '36px',
+                      md: '45px'
+                    }
                   }
-                }
-              }}>
+                }}>
                       <MenuItem value=""><em>Select...</em></MenuItem>
                       <MenuItem value="user1">John Doe</MenuItem>
                       <MenuItem value="user2">Jane Smith</MenuItem>
@@ -3073,13 +3072,13 @@ export const EditAssetDetailsPage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Vendor Name*</InputLabel>
                   <MuiSelect label="Vendor Name*" displayEmpty defaultValue="" sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: {
-                      xs: '36px',
-                      md: '45px'
+                    '& .MuiOutlinedInput-root': {
+                      height: {
+                        xs: '36px',
+                        md: '45px'
+                      }
                     }
-                  }
-                }}>
+                  }}>
                     <MenuItem value=""><em>Select Vendor</em></MenuItem>
                     <MenuItem value="vendor1">ABC Corporation</MenuItem>
                     <MenuItem value="vendor2">XYZ Technologies</MenuItem>
@@ -3090,37 +3089,37 @@ export const EditAssetDetailsPage = () => {
 
                 {/* Agreement Start Date */}
                 <DatePicker label="Agreement Start Date *" slotProps={{
-                textField: {
-                  fullWidth: true,
-                  variant: 'outlined',
-                  placeholder: 'dd/mm/yyyy',
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      height: {
-                        xs: '36px',
-                        md: '45px'
+                  textField: {
+                    fullWidth: true,
+                    variant: 'outlined',
+                    placeholder: 'dd/mm/yyyy',
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        height: {
+                          xs: '36px',
+                          md: '45px'
+                        }
                       }
                     }
                   }
-                }
-              }} />
+                }} />
 
                 {/* Agreement End Date */}
                 <DatePicker label="Agreement End Date *" slotProps={{
-                textField: {
-                  fullWidth: true,
-                  variant: 'outlined',
-                  placeholder: 'dd/mm/yyyy',
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      height: {
-                        xs: '36px',
-                        md: '45px'
+                  textField: {
+                    fullWidth: true,
+                    variant: 'outlined',
+                    placeholder: 'dd/mm/yyyy',
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        height: {
+                          xs: '36px',
+                          md: '45px'
+                        }
                       }
                     }
                   }
-                }
-              }} />
+                }} />
               </div>
             </div>}
           </div>
@@ -3160,11 +3159,11 @@ export const EditAssetDetailsPage = () => {
                       Start Date
                     </label>
                     <DatePicker className="w-full" format="dd/MM/yyyy" slotProps={{
-                  textField: {
-                    className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
-                    placeholder: "dd/mm/yyyy"
-                  }
-                }} />
+                    textField: {
+                      className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
+                      placeholder: "dd/mm/yyyy"
+                    }
+                  }} />
                   </div>
 
                   {/* End Date */}
@@ -3173,11 +3172,11 @@ export const EditAssetDetailsPage = () => {
                       End Date
                     </label>
                     <DatePicker className="w-full" format="dd/MM/yyyy" slotProps={{
-                  textField: {
-                    className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
-                    placeholder: "dd/mm/yyyy"
-                  }
-                }} />
+                    textField: {
+                      className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
+                      placeholder: "dd/mm/yyyy"
+                    }
+                  }} />
                   </div>
 
                   {/* First Service */}
@@ -3186,11 +3185,11 @@ export const EditAssetDetailsPage = () => {
                       First Service
                     </label>
                     <DatePicker className="w-full" format="dd/MM/yyyy" slotProps={{
-                  textField: {
-                    className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
-                    placeholder: "dd/mm/yyyy"
-                  }
-                }} />
+                    textField: {
+                      className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent text-sm",
+                      placeholder: "dd/mm/yyyy"
+                    }
+                  }} />
                   </div>
 
                   {/* Payment Terms */}
@@ -3239,8 +3238,7 @@ export const EditAssetDetailsPage = () => {
             {expandedSections.attachments ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />}
           </div>
           
-          {expandedSections.attachments && (
-            <div className="p-4 sm:p-6 bg-white">
+          {expandedSections.attachments && <div className="p-4 sm:p-6 bg-white">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Manuals Upload */}
                 <div className="space-y-3">
@@ -3248,45 +3246,30 @@ export const EditAssetDetailsPage = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="flex flex-col items-center space-y-2">
                       <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleFileUpload('manualsUpload', e.target.files)}
-                        />
+                        <input type="file" multiple className="hidden" onChange={e => handleFileUpload('manualsUpload', e.target.files)} />
                         <span className="text-[#C72030] text-sm font-medium">
                           Choose File{' '}
                           <span className="text-gray-500 font-normal">No file chosen</span>
                         </span>
                       </label>
-                      <button
-                        onClick={() => {
-                          const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-                          input?.click();
-                        }}
-                        className="flex items-center gap-2 bg-[#f6f4ee] text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-[#e8e5d9] transition-colors"
-                      >
+                      <button onClick={() => {
+                      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+                      input?.click();
+                    }} className="flex items-center gap-2 bg-[#f6f4ee] text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-[#e8e5d9] transition-colors">
                         <Plus className="w-4 h-4" />
                         Upload Files
                       </button>
                     </div>
                   </div>
                   {/* File list */}
-                  {attachments.manualsUpload.length > 0 && (
-                    <div className="space-y-2">
-                      {attachments.manualsUpload.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  {attachments.manualsUpload.length > 0 && <div className="space-y-2">
+                      {attachments.manualsUpload.map((file, index) => <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <span className="text-sm text-gray-700">{file.name}</span>
-                          <button
-                            onClick={() => removeFile('manualsUpload', index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
+                          <button onClick={() => removeFile('manualsUpload', index)} className="text-red-500 hover:text-red-700">
                             <X className="w-4 h-4" />
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        </div>)}
+                    </div>}
                 </div>
 
                 {/* Insurance Details */}
@@ -3295,12 +3278,7 @@ export const EditAssetDetailsPage = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="flex flex-col items-center space-y-2">
                       <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleFileUpload('insuranceDetails', e.target.files)}
-                        />
+                        <input type="file" multiple className="hidden" onChange={e => handleFileUpload('insuranceDetails', e.target.files)} />
                         <span className="text-[#C72030] text-sm font-medium">
                           Choose File{' '}
                           <span className="text-gray-500 font-normal">No file chosen</span>
@@ -3313,21 +3291,14 @@ export const EditAssetDetailsPage = () => {
                     </div>
                   </div>
                   {/* File list */}
-                  {attachments.insuranceDetails.length > 0 && (
-                    <div className="space-y-2">
-                      {attachments.insuranceDetails.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  {attachments.insuranceDetails.length > 0 && <div className="space-y-2">
+                      {attachments.insuranceDetails.map((file, index) => <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <span className="text-sm text-gray-700">{file.name}</span>
-                          <button
-                            onClick={() => removeFile('insuranceDetails', index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
+                          <button onClick={() => removeFile('insuranceDetails', index)} className="text-red-500 hover:text-red-700">
                             <X className="w-4 h-4" />
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        </div>)}
+                    </div>}
                 </div>
 
                 {/* Purchase Invoice */}
@@ -3336,12 +3307,7 @@ export const EditAssetDetailsPage = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="flex flex-col items-center space-y-2">
                       <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleFileUpload('purchaseInvoice', e.target.files)}
-                        />
+                        <input type="file" multiple className="hidden" onChange={e => handleFileUpload('purchaseInvoice', e.target.files)} />
                         <span className="text-[#C72030] text-sm font-medium">
                           Choose File{' '}
                           <span className="text-gray-500 font-normal">No file chosen</span>
@@ -3354,21 +3320,14 @@ export const EditAssetDetailsPage = () => {
                     </div>
                   </div>
                   {/* File list */}
-                  {attachments.purchaseInvoice.length > 0 && (
-                    <div className="space-y-2">
-                      {attachments.purchaseInvoice.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  {attachments.purchaseInvoice.length > 0 && <div className="space-y-2">
+                      {attachments.purchaseInvoice.map((file, index) => <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <span className="text-sm text-gray-700">{file.name}</span>
-                          <button
-                            onClick={() => removeFile('purchaseInvoice', index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
+                          <button onClick={() => removeFile('purchaseInvoice', index)} className="text-red-500 hover:text-red-700">
                             <X className="w-4 h-4" />
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        </div>)}
+                    </div>}
                 </div>
 
                 {/* AMC */}
@@ -3377,12 +3336,7 @@ export const EditAssetDetailsPage = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="flex flex-col items-center space-y-2">
                       <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleFileUpload('amc', e.target.files)}
-                        />
+                        <input type="file" multiple className="hidden" onChange={e => handleFileUpload('amc', e.target.files)} />
                         <span className="text-[#C72030] text-sm font-medium">
                           Choose File{' '}
                           <span className="text-gray-500 font-normal">No file chosen</span>
@@ -3395,28 +3349,19 @@ export const EditAssetDetailsPage = () => {
                     </div>
                   </div>
                   {/* File list */}
-                  {attachments.amc.length > 0 && (
-                    <div className="space-y-2">
-                      {attachments.amc.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  {attachments.amc.length > 0 && <div className="space-y-2">
+                      {attachments.amc.map((file, index) => <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <span className="text-sm text-gray-700">{file.name}</span>
-                          <button
-                            onClick={() => removeFile('amc', index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
+                          <button onClick={() => removeFile('amc', index)} className="text-red-500 hover:text-red-700">
                             <X className="w-4 h-4" />
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        </div>)}
+                    </div>}
                 </div>
               </div>
-            </div>
-          )}
+            </div>}
         </div>
-          </>
-        )}
+          </>}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
