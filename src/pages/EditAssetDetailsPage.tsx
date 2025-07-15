@@ -3907,6 +3907,109 @@ export const EditAssetDetailsPage = () => {
           </LocalizationProvider>
         )}
 
+        {/* Asset Allocation */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('assetAllocation')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <BarChart className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ASSET ALLOCATION
+            </div>
+            <div className="flex items-center gap-2">
+              {expandedSections.assetAllocation ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+          </div>
+          {expandedSections.assetAllocation && (
+            <div className="p-4 sm:p-6">
+              {/* Based On */}
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-700 mb-3 block">Based On</label>
+                <div className="flex gap-6">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="allocation-department"
+                      name="allocationBasedOn"
+                      value="department"
+                      checked={allocationBasedOn === 'department'}
+                      onChange={(e) => setAllocationBasedOn(e.target.value)}
+                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                      style={{ accentColor: '#C72030' }}
+                    />
+                    <label htmlFor="allocation-department" className="text-sm">Department</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="allocation-users"
+                      name="allocationBasedOn"
+                      value="users"
+                      checked={allocationBasedOn === 'users'}
+                      onChange={(e) => setAllocationBasedOn(e.target.value)}
+                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                      style={{ accentColor: '#C72030' }}
+                    />
+                    <label htmlFor="allocation-users" className="text-sm">Users</label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Department Dropdown */}
+              {allocationBasedOn === 'department' && (
+                <div className="mb-4">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Department*</InputLabel>
+                    <MuiSelect 
+                      label="Department*" 
+                      displayEmpty 
+                      defaultValue=""
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <MenuItem value=""><em>Select...</em></MenuItem>
+                      <MenuItem value="admin">Administration</MenuItem>
+                      <MenuItem value="hr">Human Resources</MenuItem>
+                      <MenuItem value="finance">Finance</MenuItem>
+                      <MenuItem value="it">IT Department</MenuItem>
+                      <MenuItem value="operations">Operations</MenuItem>
+                      <MenuItem value="maintenance">Maintenance</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              )}
+
+              {/* Users Dropdown */}
+              {allocationBasedOn === 'users' && (
+                <div className="mb-4">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Users*</InputLabel>
+                    <MuiSelect 
+                      label="Users*" 
+                      displayEmpty 
+                      defaultValue=""
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <MenuItem value=""><em>Select...</em></MenuItem>
+                      <MenuItem value="user1">John Doe</MenuItem>
+                      <MenuItem value="user2">Jane Smith</MenuItem>
+                      <MenuItem value="user3">Mike Johnson</MenuItem>
+                      <MenuItem value="user4">Sarah Williams</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
           <button
