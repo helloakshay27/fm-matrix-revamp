@@ -1742,6 +1742,615 @@ export const EditAssetDetailsPage = () => {
           </LocalizationProvider>
         )}
 
+        {/* Leasehold Improvement Asset Details - Show when Leasehold Improvement is selected */}
+        {selectedAssetCategory === 'Leasehold Improvement' && (
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <div className="space-y-6">
+              {/* Basic Identification */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Identification
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('leaseholdBasicId')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Asset ID / Code"
+                      placeholder="Enter alphanumeric code"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Improvement Description"
+                      placeholder="e.g., Flooring, IT Cabling"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    
+                    {/* Custom Fields */}
+                    {customFields.leaseholdBasicId.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('leaseholdBasicId', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('leaseholdBasicId', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Location & Association */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
+                      Location & Association
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('leaseholdLocationAssoc')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Location / Site"
+                      placeholder="Enter location"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Leased Property ID</InputLabel>
+                      <MuiSelect
+                        label="Leased Property ID"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Property</MenuItem>
+                        <MenuItem value="prop001">Property 001</MenuItem>
+                        <MenuItem value="prop002">Property 002</MenuItem>
+                        <MenuItem value="prop003">Property 003</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Ownership Type"
+                      value="Lessee"
+                      variant="outlined"
+                      fullWidth
+                      disabled
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                       }}
+                     />
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdLocationAssoc.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdLocationAssoc', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdLocationAssoc', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Improvement Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Construction className="w-5 h-5" />
+                      Improvement Details
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('improvementDetails')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Type of Improvement</InputLabel>
+                      <MuiSelect
+                        label="Type of Improvement"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Type</MenuItem>
+                        <MenuItem value="civil">Civil</MenuItem>
+                        <MenuItem value="electrical">Electrical</MenuItem>
+                        <MenuItem value="hvac">HVAC</MenuItem>
+                        <MenuItem value="plumbing">Plumbing</MenuItem>
+                        <MenuItem value="it">IT Infrastructure</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Vendor / Contractor Name</InputLabel>
+                      <MuiSelect
+                        label="Vendor / Contractor Name"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Vendor</MenuItem>
+                        <MenuItem value="vendor1">ABC Construction</MenuItem>
+                        <MenuItem value="vendor2">XYZ Contractors</MenuItem>
+                        <MenuItem value="vendor3">PQR Services</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Invoice Number"
+                      placeholder="Enter invoice number"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Date of Improvement"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Improvement Cost (INR)"
+                      placeholder="Enter cost"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                     />
+                     
+                     {/* Custom Fields */}
+                     {customFields.improvementDetails.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('improvementDetails', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('improvementDetails', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Financial & Depreciation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Financial & Depreciation
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('leaseholdFinancial')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Depreciation Method</InputLabel>
+                      <MuiSelect
+                        label="Depreciation Method"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Method</MenuItem>
+                        <MenuItem value="straight">Straight Line</MenuItem>
+                        <MenuItem value="wdv">Written Down Value</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Useful Life (Years)"
+                      placeholder="Enter years"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Depreciation Rate (%)"
+                      placeholder="Enter rate"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Current Book Value (INR)"
+                      placeholder="Enter value"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Asset Capitalized On"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                     />
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdFinancial.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdFinancial', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdFinancial', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Lease & Maintenance Linkages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Lease & Maintenance Linkages
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('leaseholdLease')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DatePicker
+                      label="Lease Start Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Lease End Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>AMC / PPM Linked</InputLabel>
+                      <MuiSelect
+                        label="AMC / PPM Linked"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                      </MuiSelect>
+                     </FormControl>
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdLease.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdLease', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdLease', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Oversight & Documentation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users2 className="w-5 h-5" />
+                      Oversight & Documentation
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('leaseholdOversight')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Responsible Department</InputLabel>
+                      <MuiSelect
+                        label="Responsible Department"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Department</MenuItem>
+                        <MenuItem value="facilities">Facilities Management</MenuItem>
+                        <MenuItem value="admin">Administration</MenuItem>
+                        <MenuItem value="maintenance">Maintenance</MenuItem>
+                        <MenuItem value="it">IT Department</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <div className="md:col-span-2">
+                      <TextField
+                        label="Remarks / Notes"
+                        placeholder="Enter remarks or notes"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={4}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          className="hidden"
+                          id="leasehold-attachments"
+                        />
+                        <label htmlFor="leasehold-attachments" className="cursor-pointer">
+                          <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-600">
+                            Click to upload attachments
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                             Upload invoices, contracts, improvement photos, etc.
+                           </p>
+                         </label>
+                       </div>
+                     </div>
+                     
+                     {/* Custom Fields */}
+                     {customFields.leaseholdOversight.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('leaseholdOversight', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('leaseholdOversight', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+            </div>
+          </LocalizationProvider>
+        )}
+
         {/* Conditional Sections - Show only for specific asset categories */}
         {(selectedAssetCategory === 'Furniture & Fixtures' || 
           selectedAssetCategory === 'IT Equipment' || 
