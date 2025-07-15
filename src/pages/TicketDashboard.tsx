@@ -322,7 +322,7 @@ export const TicketDashboard = () => {
   };
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 w-full min-h-screen">
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="analytics" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b mb-4 sm:mb-6">
           <TabsTrigger 
@@ -350,9 +350,9 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 sm:gap-6">
             {/* Left Section - Charts */}
-            <div className="xl:col-span-3 space-y-4 sm:space-y-6">
+            <div className="xl:col-span-4 space-y-4 sm:space-y-6">
               {/* Top Row - Two Donut Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Tickets Chart */}

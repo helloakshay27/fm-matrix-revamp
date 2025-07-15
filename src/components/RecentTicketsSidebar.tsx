@@ -124,10 +124,10 @@ export function RecentTicketsSidebar() {
   return (
     <>
       <div className="
-        w-full sm:w-80 lg:w-[420px] xl:w-[450px] 2xl:w-[520px]
+        w-full sm:w-80 lg:w-80 xl:w-full 2xl:w-full
         bg-[hsl(var(--analytics-background))] 
         border-l border-[hsl(var(--analytics-border))] 
-        p-3 sm:p-4 lg:p-5 xl:p-6
+        p-3 sm:p-4 lg:p-5 xl:p-4
         h-full overflow-hidden flex flex-col
       ">
         <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-[hsl(var(--analytics-text))] mb-3 sm:mb-4 lg:mb-5">
