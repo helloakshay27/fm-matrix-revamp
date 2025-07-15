@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -321,52 +322,54 @@ export const TicketDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="analytics" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b">
+        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b mb-4 sm:mb-6">
           <TabsTrigger 
             value="analytics" 
-            className="flex items-center gap-2 bg-white text-gray-700 border-0 rounded-none px-8 py-3 font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-gray-50"
+            className="flex items-center gap-1 sm:gap-2 bg-white text-gray-700 border-0 rounded-none px-4 sm:px-8 py-2 sm:py-3 text-sm sm:text-base font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-gray-50"
           >
-            <BarChart3 className="w-4 h-4" />
-            Analytics
+            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Analytics</span>
+            <span className="xs:hidden">Stats</span>
           </TabsTrigger>
           <TabsTrigger 
             value="tickets" 
-            className="flex items-center gap-2 bg-white text-gray-700 border-0 rounded-none px-8 py-3 font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-gray-50"
+            className="flex items-center gap-1 sm:gap-2 bg-white text-gray-700 border-0 rounded-none px-4 sm:px-8 py-2 sm:py-3 text-sm sm:text-base font-medium data-[state=active]:bg-[#C72030] data-[state=active]:text-white hover:bg-gray-50"
           >
-            <Ticket className="w-4 h-4" />
-            Ticket List
+            <Ticket className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Ticket List</span>
+            <span className="xs:hidden">Tickets</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="analytics" className="space-y-6 mt-6">
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Header with Ticket Selector */}
           <div className="flex justify-end">
             <TicketSelector />
           </div>
 
           {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left Section - Charts (3 columns) */}
-            <div className="lg:col-span-3 space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
+            {/* Left Section - Charts */}
+            <div className="xl:col-span-3 space-y-4 sm:space-y-6">
               {/* Top Row - Two Donut Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Tickets Chart */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-[#C72030]">Tickets</h3>
-                    <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                   </div>
                   <div className="relative flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
                       <PieChart>
                         <Pie
                           data={statusData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
+                          innerRadius={40}
+                          outerRadius={80}
                           paddingAngle={2}
                           dataKey="value"
                           label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
@@ -378,7 +381,7 @@ export const TicketDashboard = () => {
                                   fill="black"
                                   textAnchor="middle"
                                   dominantBaseline="middle"
-                                  fontSize="16"
+                                  fontSize="14"
                                   fontWeight="bold"
                                 >
                                   2
@@ -392,7 +395,7 @@ export const TicketDashboard = () => {
                                 fill="black"
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                fontSize="16"
+                                fontSize="14"
                                 fontWeight="bold"
                               >
                                 {value}
@@ -410,35 +413,35 @@ export const TicketDashboard = () => {
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
+                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-center gap-6 mt-4">
+                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
                     {statusData.map((item, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                        <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Reactive Proactive Tickets Chart */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-[#C72030]">Reactive Proactive Ticket</h3>
-                    <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                   </div>
                   <div className="relative flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
                       <PieChart>
                         <Pie
                           data={typeData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
+                          innerRadius={40}
+                          outerRadius={80}
                           paddingAngle={2}
                           dataKey="value"
                           label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
@@ -450,7 +453,7 @@ export const TicketDashboard = () => {
                                   fill="black"
                                   textAnchor="middle"
                                   dominantBaseline="middle"
-                                  fontSize="16"
+                                  fontSize="14"
                                   fontWeight="bold"
                                 >
                                   2
@@ -464,7 +467,7 @@ export const TicketDashboard = () => {
                                 fill="black"
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                fontSize="16"
+                                fontSize="14"
                                 fontWeight="bold"
                               >
                                 {value}
@@ -482,15 +485,15 @@ export const TicketDashboard = () => {
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-lg font-semibold text-gray-700">Total : {reactiveTickets + proactiveTickets}</div>
+                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {reactiveTickets + proactiveTickets}</div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-center gap-6 mt-4">
+                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
                     {typeData.map((item, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                        <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
                       </div>
                     ))}
                   </div>
@@ -498,76 +501,78 @@ export const TicketDashboard = () => {
               </div>
 
               {/* Unit Category Wise Tickets Bar Chart */}
-              <div className="bg-white border border-gray-200 p-6">
+              <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold" style={{ color: '#C72030' }}>Unit Category-wise Tickets</h3>
-                  <Download className="w-4 h-4 cursor-pointer" style={{ color: '#C72030' }} />
+                  <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Category-wise Tickets</h3>
+                  <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
                 </div>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={categoryChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45} 
-                      textAnchor="end" 
-                      height={80}
-                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
-                    />
-                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="w-full overflow-x-auto">
+                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
+                    <BarChart data={categoryChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
+                      <XAxis 
+                        dataKey="name" 
+                        angle={-45} 
+                        textAnchor="end" 
+                        height={80}
+                        tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }}
+                        className="text-xs"
+                      />
+                      <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }} />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
-              {/* Bottom Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Combined Tickets Ageing Matrix and Summary */}
-                <div className="lg:col-span-2 bg-white border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold" style={{ color: '#C72030' }}>Tickets Ageing Matrix</h3>
-                    <Download className="w-5 h-5 cursor-pointer" style={{ color: '#C72030' }} />
-                  </div>
-                  
-                  <div className="space-y-6">
-                    {/* Table */}
-                    <div className="overflow-x-auto">
+              {/* Tickets Ageing Matrix */}
+              <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Tickets Ageing Matrix</h3>
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
+                </div>
+                
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Table - Horizontally scrollable on mobile */}
+                  <div className="overflow-x-auto -mx-3 sm:mx-0">
+                    <div className="min-w-[500px] px-3 sm:px-0">
                       <table className="w-full border-collapse border border-gray-300">
                         <thead>
                           <tr style={{ backgroundColor: '#EDE4D8' }}>
-                            <th className="border border-gray-300 p-3 text-left text-sm font-medium text-black">Priority</th>
-                            <th colSpan={5} className="border border-gray-300 p-3 text-center text-sm font-medium text-black">No. of Days</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
+                            <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
                           </tr>
                           <tr style={{ backgroundColor: '#EDE4D8' }}>
-                            <th className="border border-gray-300 p-3"></th>
-                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">0-10</th>
-                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">11-20</th>
-                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">21-30</th>
-                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">31-40</th>
-                            <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">41-50</th>
+                            <th className="border border-gray-300 p-2 sm:p-3"></th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
                           </tr>
                         </thead>
                         <tbody>
                           {agingMatrixData.map((row, index) => (
                             <tr key={index} className="bg-white">
-                              <td className="border border-gray-300 p-3 font-medium text-black">{row.priority}</td>
-                              <td className="border border-gray-300 p-3 text-center text-black">{row['0-10']}</td>
-                              <td className="border border-gray-300 p-3 text-center text-black">{row['11-20']}</td>
-                              <td className="border border-gray-300 p-3 text-center text-black">{row['21-30']}</td>
-                              <td className="border border-gray-300 p-3 text-center text-black">{row['31-40']}</td>
-                              <td className="border border-gray-300 p-3 text-center text-black">{row['41-50']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
+                  </div>
 
-                    {/* Summary Box - Full Width Below Table */}
-                    <div className="w-full">
-                      <div className="rounded-lg p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
-                        <div className="text-4xl font-bold text-black mb-2">569 Days</div>
-                        <div className="text-base text-black">Average Time Taken To Resolve A Ticket</div>
-                      </div>
+                  {/* Summary Box - Full Width Below Table */}
+                  <div className="w-full">
+                    <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
+                      <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">569 Days</div>
+                      <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                     </div>
                   </div>
                 </div>
@@ -575,15 +580,15 @@ export const TicketDashboard = () => {
             </div>
 
             {/* Right Sidebar - Recent Tickets */}
-            <div className="lg:col-span-1">
+            <div className="xl:col-span-1 order-first xl:order-last">
               <RecentTicketsSidebar />
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="tickets" className="space-y-6 mt-6">
+        <TabsContent value="tickets" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Ticket Statistics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
             {[{
               label: 'Total Tickets',
               value: totalTickets,
@@ -607,13 +612,13 @@ export const TicketDashboard = () => {
             }].map((item, i) => {
               const IconComponent = item.icon;
               return (
-                <div key={i} className="p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4 bg-[#f6f4ee]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
-                    <IconComponent className="w-6 h-6" style={{ color: '#C72030' }} />
+                <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
+                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                   </div>
-                  <div className="flex flex-col">
-                    <div className="text-2xl font-bold leading-tight" style={{ color: '#C72030' }}>{item.value}</div>
-                    <div className="text-sm text-muted-foreground font-medium">{item.label}</div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate" style={{ color: '#C72030' }}>{item.value}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{item.label}</div>
                   </div>
                 </div>
               );
@@ -626,19 +631,21 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Tickets Table */}
-          <EnhancedTable 
-            data={ticketData} 
-            columns={columns} 
-            renderCell={renderCell} 
-            renderActions={renderRowActions} 
-            selectable={true} 
-            pagination={true} 
-            pageSize={10}
-            enableExport={true} 
-            exportFileName="tickets" 
-            onRowClick={handleViewDetails} 
-            storageKey="tickets-table" 
-          />
+          <div className="overflow-x-auto">
+            <EnhancedTable 
+              data={ticketData} 
+              columns={columns} 
+              renderCell={renderCell} 
+              renderActions={renderRowActions} 
+              selectable={true} 
+              pagination={true} 
+              pageSize={10}
+              enableExport={true} 
+              exportFileName="tickets" 
+              onRowClick={handleViewDetails} 
+              storageKey="tickets-table" 
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
