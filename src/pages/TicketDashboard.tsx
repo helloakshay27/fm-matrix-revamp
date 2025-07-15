@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -225,10 +226,10 @@ export const TicketDashboard = () => {
   const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({ name, value }));
 
   const agingMatrixData = [
-    { priority: 'P1', '0-10': 5, '11-20': 3, '21-30': 2, '31-40': 1, '41-50': 0 },
-    { priority: 'P2', '0-10': 8, '11-20': 4, '21-30': 2, '31-40': 1, '41-50': 1 },
-    { priority: 'P3', '0-10': 12, '11-20': 6, '21-30': 3, '31-40': 2, '41-50': 1 },
-    { priority: 'P4', '0-10': 15, '11-20': 8, '21-30': 4, '31-40': 2, '41-50': 1 }
+    { priority: 'P1', '0-10': 20, '11-20': 3, '21-30': 4, '31-40': 0, '41-50': 203 },
+    { priority: 'P2', '0-10': 2, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 4 },
+    { priority: 'P3', '0-10': 1, '11-20': 0, '21-30': 1, '31-40': 0, '41-50': 7 },
+    { priority: 'P4', '0-10': 1, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 5 }
   ];
 
   const reactiveTickets = Math.floor(totalTickets * 0.7);
@@ -524,33 +525,38 @@ export const TicketDashboard = () => {
 
               {/* Bottom Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Aging Matrix */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Aging Matrix</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                {/* Tickets Ageing Matrix */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold" style={{ color: '#C72030' }}>Tickets Ageing Matrix</h3>
+                    <Download className="w-5 h-5 cursor-pointer" style={{ color: '#C72030' }} />
                   </div>
+                  
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
+                    <table className="w-full border-collapse border border-gray-300">
                       <thead>
-                        <tr className="bg-[hsl(var(--analytics-background))]">
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-left text-sm font-medium text-[hsl(var(--analytics-text))]">Priority</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">0-10</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">11-20</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">21-30</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">31-40</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">41-50</th>
+                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-black">Priority</th>
+                          <th colSpan={5} className="border border-gray-300 p-3 text-center text-sm font-medium text-black">No. of Days</th>
+                        </tr>
+                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                          <th className="border border-gray-300 p-3"></th>
+                          <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">0-10</th>
+                          <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">11-20</th>
+                          <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">21-30</th>
+                          <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">31-40</th>
+                          <th className="border border-gray-300 p-3 text-center text-sm font-medium text-black">41-50</th>
                         </tr>
                       </thead>
                       <tbody>
                         {agingMatrixData.map((row, index) => (
-                          <tr key={index}>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 font-medium text-[hsl(var(--analytics-text))]">{row.priority}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['0-10']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['11-20']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['21-30']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['31-40']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['41-50']}</td>
+                          <tr key={index} className="bg-white">
+                            <td className="border border-gray-300 p-3 font-medium text-black">{row.priority}</td>
+                            <td className="border border-gray-300 p-3 text-center text-black">{row['0-10']}</td>
+                            <td className="border border-gray-300 p-3 text-center text-black">{row['11-20']}</td>
+                            <td className="border border-gray-300 p-3 text-center text-black">{row['21-30']}</td>
+                            <td className="border border-gray-300 p-3 text-center text-black">{row['31-40']}</td>
+                            <td className="border border-gray-300 p-3 text-center text-black">{row['41-50']}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -558,17 +564,12 @@ export const TicketDashboard = () => {
                   </div>
                 </div>
 
-                {/* Average Resolution Time */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">569 Days Average Time Taken To Resolve A Ticket</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                  </div>
-                  <div className="flex items-center justify-center h-32">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-[hsl(var(--analytics-accent))] mb-2">569</div>
-                      <div className="text-lg text-[hsl(var(--analytics-text))]">Days</div>
-                      <div className="text-sm text-[hsl(var(--analytics-muted))] mt-2">Average Resolution Time</div>
+                {/* Average Resolution Time Summary Box */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="h-full flex flex-col justify-center">
+                    <div className="rounded-lg p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
+                      <div className="text-4xl font-bold text-black mb-2">569 Days</div>
+                      <div className="text-base text-black">Average Time Taken To Resolve A Ticket</div>
                     </div>
                   </div>
                 </div>
