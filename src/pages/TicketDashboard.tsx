@@ -383,7 +383,8 @@ export const TicketDashboard = () => {
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
+                        <div className="text-3xl font-bold text-[#C72030] mb-1">2</div>
+                        <div className="text-sm text-gray-600">Total : {totalTickets}</div>
                       </div>
                     </div>
                   </div>
