@@ -3136,7 +3136,8 @@ export const EditAssetDetailsPage = () => {
               {expandedSections.amcDetails ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />}
             </div>
             
-            {expandedSections.amcDetails && <div className="p-4 sm:p-6 bg-white">
+            {expandedSections.amcDetails && (
+              <div className="p-4 sm:p-6 bg-white">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {/* Vendor */}
                   <FormControl fullWidth size="small">
@@ -3244,7 +3245,11 @@ export const EditAssetDetailsPage = () => {
       </div>
 
       {/* Add Custom Field Modal */}
-      <AddCustomFieldModal isOpen={customFieldModalOpen} onClose={() => setCustomFieldModalOpen(false)} onAddField={handleAddCustomField} />
+      <AddCustomFieldModal 
+        isOpen={customFieldModalOpen} 
+        onClose={() => setCustomFieldModalOpen(false)} 
+        onAddField={handleAddCustomField} 
+      />
     </div>
   );
 };
