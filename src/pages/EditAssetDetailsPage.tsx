@@ -966,6 +966,782 @@ export const EditAssetDetailsPage = () => {
           </LocalizationProvider>
         )}
 
+        {/* Building Asset Details - Show when Building is selected */}
+        {selectedAssetCategory === 'Building' && (
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <div className="space-y-6">
+              {/* Basic Identification */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Identification
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingBasicId')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Asset ID / Code"
+                      placeholder="Enter unique identifier"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Asset Name"
+                      placeholder="Enter building name"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Building Type</InputLabel>
+                      <MuiSelect
+                        label="Building Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Building Type</MenuItem>
+                        <MenuItem value="office">Office</MenuItem>
+                        <MenuItem value="residential">Residential</MenuItem>
+                        <MenuItem value="industrial">Industrial</MenuItem>
+                        <MenuItem value="mixed">Mixed Use</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                     </FormControl>
+                     
+                     {/* Custom Fields */}
+                     {customFields.buildingBasicId.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('buildingBasicId', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('buildingBasicId', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Location & Ownership */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
+                      Location & Ownership
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingLocation')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Location"
+                      placeholder="Full address"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Ownership Type</InputLabel>
+                      <MuiSelect
+                        label="Ownership Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Ownership Type</MenuItem>
+                        <MenuItem value="owned">Owned</MenuItem>
+                        <MenuItem value="rented">Rented</MenuItem>
+                        <MenuItem value="leased">Leased</MenuItem>
+                        <MenuItem value="government">Government Allotted</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Linked Land Asset"
+                      placeholder="Enter Asset ID or name of land"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                     
+                     {/* Custom Fields */}
+                     {customFields.buildingLocation.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('buildingLocation', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('buildingLocation', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Construction Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Construction className="w-5 h-5" />
+                      Construction Details
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingConstruction')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Construction Type</InputLabel>
+                      <MuiSelect
+                        label="Construction Type"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Construction Type</MenuItem>
+                        <MenuItem value="rcc">RCC</MenuItem>
+                        <MenuItem value="steel">Steel</MenuItem>
+                        <MenuItem value="prefab">Pre-Fab</MenuItem>
+                        <MenuItem value="loadbearing">Load Bearing</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Number of Floors"
+                      placeholder="e.g., G + 3 = 4"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <TextField
+                        label="Built-up Area"
+                        placeholder="Enter area"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      />
+                      <FormControl 
+                        sx={{
+                          minWidth: 100,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Unit</InputLabel>
+                        <MuiSelect
+                          label="Unit"
+                          defaultValue="sqft"
+                        >
+                          <MenuItem value="sqft">Sq. Ft.</MenuItem>
+                          <MenuItem value="sqm">Sq. M.</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+                    <DatePicker
+                      label="Date of Construction"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    
+                    {/* Custom Fields */}
+                    {customFields.buildingConstruction.map((field) => (
+                      <div key={field.id} className="relative">
+                        <TextField
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          variant="outlined"
+                          fullWidth
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange('buildingConstruction', field.id, e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => removeCustomField('buildingConstruction', field.id)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Acquisition & Value */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Acquisition & Value
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingAcquisition')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DatePicker
+                      label="Date of Acquisition"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Acquisition Cost"
+                        placeholder="Enter cost"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      />
+                    </div>
+                    <TextField
+                      label="Depreciation Rate (%)"
+                      placeholder="Enter depreciation rate"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Current Book Value"
+                        placeholder="Enter book value"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <FormControl 
+                        sx={{
+                          minWidth: 80,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      >
+                        <InputLabel>Currency</InputLabel>
+                        <MuiSelect
+                          label="Currency"
+                          defaultValue="inr"
+                        >
+                          <MenuItem value="inr">INR</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                      <TextField
+                        label="Current Market Value"
+                        placeholder="Enter market value"
+                        variant="outlined"
+                        type="number"
+                        sx={{
+                          flexGrow: 1,
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      />
+                     </div>
+                     
+                     {/* Custom Fields */}
+                     {customFields.buildingAcquisition.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('buildingAcquisition', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('buildingAcquisition', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Usage & Compliance */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      Usage & Compliance
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingUsage')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Building Use</InputLabel>
+                      <MuiSelect
+                        label="Building Use"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Building Use</MenuItem>
+                        <MenuItem value="office">Office</MenuItem>
+                        <MenuItem value="warehouse">Warehouse</MenuItem>
+                        <MenuItem value="school">School</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Fire Safety Certification</InputLabel>
+                      <MuiSelect
+                        label="Fire Safety Certification"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                        <MenuItem value="pending">Pending</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Occupancy Certificate No."
+                      placeholder="Enter certificate ID"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Structural Safety Certificate</InputLabel>
+                      <MuiSelect
+                        label="Structural Safety Certificate"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                        <MenuItem value="lastUpdated">Last Updated Date Option</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Utility Connections</InputLabel>
+                      <MuiSelect
+                        label="Utility Connections"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Utilities</MenuItem>
+                        <MenuItem value="water">Water</MenuItem>
+                        <MenuItem value="electricity">Electricity</MenuItem>
+                        <MenuItem value="both">Water & Electricity</MenuItem>
+                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                      </MuiSelect>
+                     </FormControl>
+                     
+                     {/* Custom Fields */}
+                     {customFields.buildingUsage.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('buildingUsage', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('buildingUsage', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Maintenance & Linkages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="w-5 h-5" />
+                      Maintenance & Linkages
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingMaintenance')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Maintenance Responsibility</InputLabel>
+                      <MuiSelect
+                        label="Maintenance Responsibility"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Department/Team</MenuItem>
+                        <MenuItem value="facilities">Facilities Management</MenuItem>
+                        <MenuItem value="admin">Administration</MenuItem>
+                        <MenuItem value="outsourced">Outsourced</MenuItem>
+                        <MenuItem value="other">Other</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>AMC / PPM Linked</InputLabel>
+                      <MuiSelect
+                        label="AMC / PPM Linked"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                      </MuiSelect>
+                     </FormControl>
+                     
+                     {/* Custom Fields */}
+                     {customFields.buildingMaintenance.map((field) => (
+                       <div key={field.id} className="relative">
+                         <TextField
+                           label={field.name}
+                           placeholder={`Enter ${field.name}`}
+                           variant="outlined"
+                           fullWidth
+                           value={field.value}
+                           onChange={(e) => handleCustomFieldChange('buildingMaintenance', field.id, e.target.value)}
+                           sx={{
+                             '& .MuiOutlinedInput-root': {
+                               height: { xs: '36px', md: '45px' }
+                             }
+                           }}
+                         />
+                         <button
+                           onClick={() => removeCustomField('buildingMaintenance', field.id)}
+                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
+              </Card>
+
+              {/* Miscellaneous */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Archive className="w-5 h-5" />
+                      Miscellaneous
+                    </div>
+                    <button
+                      onClick={() => openCustomFieldModal('buildingMiscellaneous')}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <TextField
+                    label="Remarks / Notes"
+                    placeholder="Special remarks like shared floor, rent info, etc."
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={4}
+                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.dwg"
+                      className="hidden"
+                      id="building-attachments"
+                    />
+                    <label htmlFor="building-attachments" className="cursor-pointer">
+                      <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600">
+                        Click to upload attachments
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Upload blueprints, tax receipts, occupancy certificate, etc.
+                      </p>
+                    </label>
+                   </div>
+                   
+                   {/* Custom Fields */}
+                   {customFields.buildingMiscellaneous.map((field) => (
+                     <div key={field.id} className="relative">
+                       <TextField
+                         label={field.name}
+                         placeholder={`Enter ${field.name}`}
+                         variant="outlined"
+                         fullWidth
+                         value={field.value}
+                         onChange={(e) => handleCustomFieldChange('buildingMiscellaneous', field.id, e.target.value)}
+                         sx={{
+                           '& .MuiOutlinedInput-root': {
+                             height: { xs: '36px', md: '45px' }
+                           }
+                         }}
+                       />
+                       <button
+                         onClick={() => removeCustomField('buildingMiscellaneous', field.id)}
+                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                       >
+                         <X className="w-3 h-3" />
+                       </button>
+                     </div>
+                   ))}
+                 </CardContent>
+              </Card>
+            </div>
+          </LocalizationProvider>
+        )}
+
         {/* Conditional Sections - Show only for specific asset categories */}
         {(selectedAssetCategory === 'Furniture & Fixtures' || 
           selectedAssetCategory === 'IT Equipment' || 
