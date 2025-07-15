@@ -95,7 +95,7 @@ export function RecentTicketsSidebar() {
     navigate(`/maintenance/ticket-details/${ticketId}`);
   };
   return <>
-      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1260px] overflow-hidden flex flex-col">
+      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-red-600 mb-2">
