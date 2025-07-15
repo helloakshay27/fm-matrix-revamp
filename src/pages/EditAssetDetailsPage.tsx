@@ -2688,18 +2688,18 @@ export const EditAssetDetailsPage = () => {
                     </div>
 
                     {/* Meter Details Categories */}
-                    <div className="mb-6" style={{ backgroundColor: '#f6f4ee' }}>
-                      <h3 className="text-[#C72030] font-semibold mb-4  p-3 rounded text-sm">METER DETAILS</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="mb-6 bg-white">
+                      <h3 className="text-[#C72030] font-semibold mb-6 text-sm tracking-wider">METER DETAILS</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                         {getMeterCategoryOptions().map(option => {
                     const IconComponent = option.icon;
                     return <div key={option.value} className={`border rounded-lg p-4 cursor-pointer transition-colors bg-white hover:bg-gray-50 ${meterCategoryType === option.value ? 'border-[#C72030] bg-red-50' : 'border-gray-200'}`} onClick={() => handleMeterCategoryChange(option.value)}>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-3">
                                 <input type="radio" id={`meter-${option.value}`} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={() => handleMeterCategoryChange(option.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                           accentColor: '#C72030'
                         }} />
                                 <IconComponent className="w-5 h-5 text-gray-600" />
-                                <label htmlFor={`meter-${option.value}`} className="text-sm font-medium cursor-pointer">
+                                <label htmlFor={`meter-${option.value}`} className="text-sm font-medium cursor-pointer text-gray-700">
                                   {option.label}
                                 </label>
                               </div>
