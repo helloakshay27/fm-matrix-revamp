@@ -3640,9 +3640,9 @@ export const EditAssetDetailsPage = () => {
           </div>
           {expandedSections.consumption && (
             <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <TextField
-                  label="Purchase Cost"
+                  label="Purchase Cost *"
                   placeholder="Enter cost"
                   variant="outlined"
                   fullWidth
@@ -3652,18 +3652,63 @@ export const EditAssetDetailsPage = () => {
                     }
                   }}
                 />
-                <TextField
-                  label="Purchase Date"
-                  type="date"
-                  variant="outlined"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
+                <DatePicker
+                  label="Purchase Date *"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: 'outlined',
+                      placeholder: 'dd/mm/yyyy',
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }
                     }
                   }}
                 />
+                <DatePicker
+                  label="Warranty Expires On *"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: 'outlined',
+                      placeholder: 'dd/mm/yyyy',
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }
+                    }
+                  }}
+                />
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-2">Under Warranty</label>
+                  <div className="flex gap-6 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="warranty-yes"
+                        name="underWarranty"
+                        value="yes"
+                        className="w-4 h-4 text-[#C72030] border-gray-300"
+                        style={{ accentColor: '#C72030' }}
+                      />
+                      <label htmlFor="warranty-yes" className="text-sm">Yes</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="warranty-no"
+                        name="underWarranty"
+                        value="no"
+                        className="w-4 h-4 text-[#C72030] border-gray-300"
+                        style={{ accentColor: '#C72030' }}
+                      />
+                      <label htmlFor="warranty-no" className="text-sm">No</label>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Custom Fields */}
