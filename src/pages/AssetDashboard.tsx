@@ -25,6 +25,40 @@ import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
 import { useAssetData } from '@/hooks/useAssetData';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable Chart Item Component
+const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners}
+      className="cursor-move"
+    >
+      {children}
+    </div>
+  );
+};
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
@@ -53,6 +87,17 @@ export const AssetDashboard = () => {
     subGroup: true,
     assetType: true
   });
+  const [chartOrder, setChartOrder] = useState<string[]>([
+    'donutCharts', 'categoryChart', 'agingMatrix', 'performanceMetrics'
+  ]);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const {
     filteredAssets,
@@ -123,6 +168,20 @@ export const AssetDashboard = () => {
     console.log('Clear selection called, current selected assets:', selectedAssets.length);
     handleSelectAll(false);
     console.log('Selection cleared using handleSelectAll(false)');
+  };
+
+  // Handle drag end for chart reordering
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   // Analytics data
@@ -254,91 +313,123 @@ export const AssetDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Left Section - Charts (3 columns) */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Top Row - Two Donut Charts */}
-              <DonutChartGrid />
-
-              {/* Category-wise Assets Bar Chart */}
-              <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Category-wise Assets</h3>
-                  <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                </div>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={categoryData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
-                    />
-                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Bottom Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Asset Aging Matrix */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Asset Aging Matrix</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+              {/* All Charts with Drag and Drop */}
+              <DndContext 
+                sensors={sensors} 
+                collisionDetection={closestCenter} 
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                  <div className="space-y-6">
+                    {chartOrder.map((chartId) => {
+                      if (chartId === 'donutCharts') {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <DonutChartGrid />
+                          </SortableChartItem>
+                        );
+                      }
+                      
+                      if (chartId === 'categoryChart') {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Category-wise Assets</h3>
+                                <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                              </div>
+                              <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={categoryData}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
+                                  <XAxis 
+                                    dataKey="name" 
+                                    tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
+                                  />
+                                  <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
+                                  <Tooltip />
+                                  <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </SortableChartItem>
+                        );
+                      }
+                      
+                      if (chartId === 'agingMatrix') {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Asset Aging Matrix</h3>
+                                <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                              </div>
+                              <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                  <thead>
+                                    <tr className="bg-[hsl(var(--analytics-background))]">
+                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-left text-sm font-medium text-[hsl(var(--analytics-text))]">Priority</th>
+                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">0-1Y</th>
+                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">1-2Y</th>
+                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">2-3Y</th>
+                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">3-4Y</th>
+                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">4-5Y</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {agingMatrixData.map((row, index) => (
+                                      <tr key={index}>
+                                        <td className="border border-[hsl(var(--analytics-border))] p-2 font-medium text-[hsl(var(--analytics-text))]">{row.priority}</td>
+                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['0-1Y']}</td>
+                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['1-2Y']}</td>
+                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['2-3Y']}</td>
+                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['3-4Y']}</td>
+                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['4-5Y']}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </SortableChartItem>
+                        );
+                      }
+                      
+                      if (chartId === 'performanceMetrics') {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Performance Metrics</h3>
+                                <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                              </div>
+                              <div className="space-y-4">
+                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                                  <span className="text-sm text-[hsl(var(--analytics-text))]">Average Uptime</span>
+                                  <span className="font-semibold text-green-600">98.5%</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                                  <span className="text-sm text-[hsl(var(--analytics-text))]">Maintenance Cost</span>
+                                  <span className="font-semibold text-[hsl(var(--analytics-text))]">₹45,000</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                                  <span className="text-sm text-[hsl(var(--analytics-text))]">Asset Utilization</span>
+                                  <span className="font-semibold text-blue-600">85.2%</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                                  <span className="text-sm text-[hsl(var(--analytics-text))]">ROI</span>
+                                  <span className="font-semibold text-green-600">12.5%</span>
+                                </div>
+                              </div>
+                            </div>
+                          </SortableChartItem>
+                        );
+                      }
+                      
+                      return null;
+                    })}
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-[hsl(var(--analytics-background))]">
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-left text-sm font-medium text-[hsl(var(--analytics-text))]">Priority</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">0-1Y</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">1-2Y</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">2-3Y</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">3-4Y</th>
-                          <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">4-5Y</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {agingMatrixData.map((row, index) => (
-                          <tr key={index}>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 font-medium text-[hsl(var(--analytics-text))]">{row.priority}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['0-1Y']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['1-2Y']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['2-3Y']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['3-4Y']}</td>
-                            <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">{row['4-5Y']}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Asset Performance Metrics */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Performance Metrics</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                      <span className="text-sm text-[hsl(var(--analytics-text))]">Average Uptime</span>
-                      <span className="font-semibold text-green-600">98.5%</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                      <span className="text-sm text-[hsl(var(--analytics-text))]">Maintenance Cost</span>
-                      <span className="font-semibold text-[hsl(var(--analytics-text))]">₹45,000</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                      <span className="text-sm text-[hsl(var(--analytics-text))]">Asset Utilization</span>
-                      <span className="font-semibold text-blue-600">85.2%</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                      <span className="text-sm text-[hsl(var(--analytics-text))]">ROI</span>
-                      <span className="font-semibold text-green-600">12.5%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
 
             {/* Right Sidebar - Recent Assets (1 column) */}
