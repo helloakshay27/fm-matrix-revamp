@@ -4,6 +4,15 @@ import { Plus, Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface AMCRecord {
   id: string;
@@ -85,6 +94,21 @@ export const AMCDashboard = () => {
   const navigate = useNavigate();
   const [amcData, setAmcData] = useState<AMCRecord[]>(initialAmcData);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 2;
+
+  // Calculate pagination - ensure we always have pagination visible for testing
+  const totalPages = Math.ceil(Math.max(amcData.length, 6) / pageSize); // Ensure minimum pages for testing
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedData = amcData.slice(startIndex, startIndex + pageSize);
+
+  console.log('AMC Pagination Debug:', {
+    totalItems: amcData.length,
+    pageSize,
+    totalPages,
+    currentPage,
+    paginatedDataLength: paginatedData.length
+  });
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
@@ -182,6 +206,121 @@ export const AMCDashboard = () => {
     },
   ];
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const showEllipsis = totalPages > 7;
+    
+    if (showEllipsis) {
+      // Show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink 
+            onClick={() => setCurrentPage(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show ellipsis or pages 2-3
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink 
+                onClick={() => setCurrentPage(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Show current page area
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink 
+                onClick={() => setCurrentPage(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Show ellipsis or pages before last
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find(item => item.key === i)) {
+            items.push(
+              <PaginationItem key={i}>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(i)}
+                  isActive={currentPage === i}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      // Show last page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink 
+              onClick={() => setCurrentPage(totalPages)}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show all pages if total is 7 or less
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              onClick={() => setCurrentPage(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -205,7 +344,7 @@ export const AMCDashboard = () => {
 
       {/* Enhanced Table */}
       <EnhancedTable
-        data={amcData}
+        data={paginatedData}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
@@ -221,9 +360,31 @@ export const AMCDashboard = () => {
         exportFileName="amc-records"
         bulkActions={bulkActions}
         showBulkActions={true}
-        pagination={true}
-        pageSize={10}
+        pagination={false}
       />
+
+      {/* Custom Pagination - Always show for debugging */}
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            
+            {renderPaginationItems()}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 };

@@ -1,14 +1,8 @@
+
 import React, { useState } from 'react';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 
 const mockResponseData = [
@@ -60,15 +54,67 @@ const mockResponseData = [
     responses: 8,
     tickets: 8,
     expiryDate: "01/07/2025"
+  },
+  {
+    id: 12346,
+    surveyTitle: "Customer Satisfaction Survey",
+    responses: 12,
+    tickets: 3,
+    expiryDate: "15/07/2025"
+  },
+  {
+    id: 12347,
+    surveyTitle: "Employee Feedback Survey",
+    responses: 25,
+    tickets: 8,
+    expiryDate: "20/07/2025"
+  },
+  {
+    id: 12348,
+    surveyTitle: "Product Quality Assessment",
+    responses: 18,
+    tickets: 5,
+    expiryDate: "25/07/2025"
+  },
+  {
+    id: 12349,
+    surveyTitle: "Service Quality Survey",
+    responses: 30,
+    tickets: 12,
+    expiryDate: "30/07/2025"
+  },
+  {
+    id: 12350,
+    surveyTitle: "Market Research Survey",
+    responses: 45,
+    tickets: 15,
+    expiryDate: "05/08/2025"
+  },
+  {
+    id: 12351,
+    surveyTitle: "Training Effectiveness Survey",
+    responses: 22,
+    tickets: 7,
+    expiryDate: "10/08/2025"
+  },
+  {
+    id: 12352,
+    surveyTitle: "Event Feedback Survey",
+    responses: 35,
+    tickets: 10,
+    expiryDate: "15/08/2025"
   }
 ];
 
 export const SurveyResponsePage = () => {
+  console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [responseData, setResponseData] = useState(mockResponseData);
 
-  const handleViewDetails = (id: number) => {
-    console.log('Viewing details for survey:', id);
+  const handleViewDetails = (item: any) => {
+    console.log('Viewing details for survey:', item.id);
   };
 
   const handleFilterClick = () => {
@@ -83,6 +129,39 @@ export const SurveyResponsePage = () => {
     console.log('Applied filters:', filters);
     // Handle filter application logic here
   };
+
+  const columns = [
+    { key: 'id', label: 'ID', sortable: true, draggable: true },
+    { key: 'surveyTitle', label: 'Survey Title', sortable: true, draggable: true },
+    { key: 'responses', label: 'No. Of Responses', sortable: true, draggable: true },
+    { key: 'tickets', label: 'No. Of Tickets', sortable: true, draggable: true },
+    { key: 'expiryDate', label: 'Expiry Date', sortable: true, draggable: true }
+  ];
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'responses':
+      case 'tickets':
+        return <div className="text-center">{item[columnKey]}</div>;
+      default:
+        return item[columnKey];
+    }
+  };
+
+  const renderActions = (item: any) => (
+    <button
+      onClick={() => handleViewDetails(item)}
+      className="text-gray-600 hover:text-[#C72030] transition-colors"
+    >
+      <Eye className="w-4 h-4" />
+    </button>
+  );
+
+  // Filter responses based on search term
+  const filteredResponses = responseData.filter(item =>
+    item.surveyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.id.toString().includes(searchTerm)
+  );
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -153,65 +232,26 @@ export const SurveyResponsePage = () => {
             <Filter className="w-4 h-4 mr-2" />
             Filter
           </Button>
-          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-        </div>
-
-        <div className="flex gap-2 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[28px] sm:h-[36px] pl-10 pr-4 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none text-sm"
-            />
-          </div>
-          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white flex-shrink-0">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset
-          </Button>
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">View</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">ID</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">Survey Title</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">No. Of Responses</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">No. Of Tickets</TableHead>
-                <TableHead className="text-gray-600 font-medium whitespace-nowrap">Expiry Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockResponseData.map((item, index) => (
-                <TableRow key={index} className="hover:bg-gray-50">
-                  <TableCell>
-                    <button
-                      onClick={() => handleViewDetails(item.id)}
-                      className="text-gray-600 hover:text-[#C72030] transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="font-medium text-gray-900">{item.id}</TableCell>
-                  <TableCell className="text-gray-700">{item.surveyTitle}</TableCell>
-                  <TableCell className="text-center text-gray-700">{item.responses}</TableCell>
-                  <TableCell className="text-center text-gray-700">{item.tickets}</TableCell>
-                  <TableCell className="text-gray-700">{item.expiryDate}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      {/* Enhanced Data Table */}
+      <div>
+        <EnhancedTable
+          data={filteredResponses}
+          columns={columns}
+          selectable={true}
+          renderActions={renderActions}
+          renderCell={renderCell}
+          storageKey="survey-response-table"
+          enableExport={true}
+          exportFileName="survey-response-data"
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search responses..."
+          pagination={true}
+          pageSize={10}
+        />
       </div>
 
       {/* Filter Modal */}

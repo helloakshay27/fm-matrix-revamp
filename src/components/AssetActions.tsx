@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Upload, Download, Filter, Search, RotateCcw, ExternalLink } from 'lucide-react';
+import { Plus, Upload, Filter, Search, RotateCcw, ExternalLink } from 'lucide-react';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 
 interface AssetActionsProps {
@@ -44,14 +44,6 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
       >
         <Upload className="w-4 h-4 mr-2" />
         Import
-      </Button>
-      
-      <Button 
-        onClick={onUpdate}
-        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4"
-      >
-        <Download className="w-4 h-4 mr-2" />
-        Download QR All Asset
       </Button>
       
       <Button 

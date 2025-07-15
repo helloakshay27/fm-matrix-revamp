@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   TextField,
@@ -89,6 +88,10 @@ export const AddMasterChecklistPage = () => {
   const [createTask, setCreateTask] = useState(false);
   const [weightage, setWeightage] = useState(false);
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   const addTaskSection = () => {
     setTaskSections((prev) => [
       ...prev,
@@ -168,7 +171,15 @@ export const AddMasterChecklistPage = () => {
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
       <div className="mb-6">
-        <p className="text-sm text-gray-500 mb-2">Master Checklist &gt; Add Master Checklist</p>
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            onClick={handleBack}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <p className="text-sm text-gray-500">Master Checklist &gt; Add Master Checklist</p>
+        </div>
         <h1 className="text-2xl font-bold">ADD MASTER CHECKLIST</h1>
       </div>
 

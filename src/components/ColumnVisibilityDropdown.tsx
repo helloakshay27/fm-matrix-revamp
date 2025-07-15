@@ -2,11 +2,13 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Grid3X3 } from 'lucide-react';
+import { Grid3X3, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -141,6 +143,18 @@ export const ColumnVisibilityDropdown = ({
   };
 
   const columnData = getColumnData();
+  const visibleCount = columnData.filter(col => col.visible).length;
+
+  const handleResetToDefaults = () => {
+    if (onColumnChange && visibleColumns) {
+      // Reset to default state (all columns visible)
+      const defaultColumns = Object.keys(visibleColumns).reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {} as any);
+      onColumnChange(defaultColumns);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -149,20 +163,65 @@ export const ColumnVisibilityDropdown = ({
           <Grid3X3 className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-white border border-gray-200 shadow-lg z-50">
-        {columnData.map(({ key, label, visible }) => (
-          <DropdownMenuItem key={key} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
-            <Checkbox
-              id={key}
-              checked={visible}
-              onCheckedChange={(checked) => handleColumnToggle(key, checked as boolean)}
-              className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-            />
-            <label htmlFor={key} className="text-sm font-medium cursor-pointer">
-              {label}
-            </label>
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>Show Columns</span>
+          <span className="text-xs text-gray-500">
+            {visibleCount} of {columnData.length}
+          </span>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        {columnData.map(({ key, label, visible }) => {
+          const isLastVisible = visibleCount === 1 && visible;
+          
+          return (
+            <DropdownMenuItem
+              key={key}
+              className="flex items-center gap-2 cursor-pointer"
+              onSelect={(e) => {
+                e.preventDefault(); // Prevent dropdown from closing
+              }}
+            >
+              <Checkbox
+                checked={visible}
+                disabled={isLastVisible}
+                onCheckedChange={(checked) => {
+                  if (!isLastVisible) {
+                    handleColumnToggle(key, checked as boolean);
+                  }
+                }}
+                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              />
+              <div 
+                className="flex items-center gap-2 flex-1 cursor-pointer"
+                onClick={() => {
+                  if (!isLastVisible) {
+                    handleColumnToggle(key, !visible);
+                  }
+                }}
+              >
+                {visible ? (
+                  <Eye className="w-4 h-4 text-green-600" />
+                ) : (
+                  <EyeOff className="w-4 h-4 text-gray-400" />
+                )}
+                <span className={isLastVisible ? "text-gray-400" : ""}>
+                  {label}
+                </span>
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+        
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          onClick={handleResetToDefaults}
+          className="flex items-center gap-2 cursor-pointer text-gray-600"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reset to Default
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 
 export type SortDirection = 'asc' | 'desc' | null;
 
@@ -73,6 +73,15 @@ export function useEnhancedTable<T extends Record<string, any>>({
   const [sortState, setSortState] = useState<SortState>(defaultSort);
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(getInitialVisibility);
   const [columnOrder, setColumnOrder] = useState<string[]>(getInitialOrder);
+
+  // Update column visibility when columns prop changes (for external control)
+  useEffect(() => {
+    const newVisibility: Record<string, boolean> = {};
+    columns.forEach(col => {
+      newVisibility[col.key] = col.defaultVisible !== false;
+    });
+    setColumnVisibility(newVisibility);
+  }, [columns]);
 
   // Handle sorting
   const handleSort = useCallback((columnKey: string) => {

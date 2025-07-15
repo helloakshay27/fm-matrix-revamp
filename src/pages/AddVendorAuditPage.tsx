@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
@@ -67,6 +68,10 @@ export const AddVendorAuditPage = () => {
   const [checklistType, setChecklistType] = useState('individual');
   const [taskSections, setTaskSections] = useState([]);
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   const handleAddSection = () => {
     setTaskSections([...taskSections, { id: Date.now() }]);
   };
@@ -83,15 +88,23 @@ export const AddVendorAuditPage = () => {
     <div className="flex-1 p-4 sm:p-6 md:p-8 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <nav className="flex flex-wrap items-center text-sm text-gray-600 mb-4">
-          <span>Maintenance</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Audit</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Vendor</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Add Schedule</span>
-        </nav>
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={handleBack}
+            className="text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <nav className="flex flex-wrap items-center text-sm text-gray-600">
+            <span>Maintenance</span>
+            <span className="mx-2">{'>'}</span>
+            <span>Audit</span>
+            <span className="mx-2">{'>'}</span>
+            <span>Vendor</span>
+            <span className="mx-2">{'>'}</span>
+            <span>Add Schedule</span>
+          </nav>
+        </div>
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">ADD VENDOR AUDIT SCHEDULE</h1>
       </div>
 

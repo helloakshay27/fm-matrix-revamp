@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { Recycle } from 'lucide-react';
+import { Recycle, ArrowLeft } from 'lucide-react';
 const fieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
@@ -76,6 +76,9 @@ const AddWasteGenerationPage = () => {
       [field]: value
     }));
   };
+  const handleGoBack = () => {
+    navigate(-1);
+  };
   const handleSave = () => {
     if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit) {
       toast({
@@ -98,17 +101,22 @@ const AddWasteGenerationPage = () => {
   return <div className="p-4 sm:p-6 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <nav className="flex flex-wrap items-center text-sm text-gray-600 mb-4">
-          <span>Maintenance</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Audit</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Waste</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Generation</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Add</span>
-        </nav>
+        <div className="flex items-center mb-4">
+          <Button variant="ghost" onClick={handleGoBack} className="p-1 mr-2 text-gray-600 hover:text-[#C72030]">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <nav className="flex flex-wrap items-center text-sm text-gray-600">
+            <span>Maintenance</span>
+            <span className="mx-2">{'>'}</span>
+            <span>Audit</span>
+            <span className="mx-2">{'>'}</span>
+            <span>Waste</span>
+            <span className="mx-2">{'>'}</span>
+            <span>Generation</span>
+            <span className="mx-2">{'>'}</span>
+            <span>Add</span>
+          </nav>
+        </div>
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 uppercase">
           ADD WASTE GENERATION
         </h1>
