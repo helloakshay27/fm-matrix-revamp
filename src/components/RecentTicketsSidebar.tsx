@@ -123,42 +123,50 @@ export function RecentTicketsSidebar() {
 
   return (
     <>
-      <div className="w-80 bg-[hsl(var(--analytics-background))] border-l border-[hsl(var(--analytics-border))] p-4 h-full overflow-hidden flex flex-col">
-        <h2 className="text-lg font-semibold text-[hsl(var(--analytics-text))] mb-4">Recent Tickets</h2>
+      <div className="
+        w-full sm:w-80 lg:w-80 xl:w-96
+        bg-[hsl(var(--analytics-background))] 
+        border-l border-[hsl(var(--analytics-border))] 
+        p-3 sm:p-4 
+        h-full overflow-hidden flex flex-col
+      ">
+        <h2 className="text-base sm:text-lg font-semibold text-[hsl(var(--analytics-text))] mb-3 sm:mb-4">
+          Recent Tickets
+        </h2>
         
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-1 sm:pr-2">
           {recentTickets.map((ticket) => (
-            <div key={ticket.id} className="border border-[hsl(var(--analytics-border))] rounded-lg p-4 bg-white shadow-sm">
+            <div key={ticket.id} className="border border-[hsl(var(--analytics-border))] rounded-lg p-3 sm:p-4 bg-white shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-[hsl(var(--analytics-text))]">#{ticket.id}</span>
+                <span className="font-medium text-[hsl(var(--analytics-text))] text-sm sm:text-base">#{ticket.id}</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
                   {ticket.priority}
                 </span>
               </div>
               
-              <p className="text-sm text-[hsl(var(--analytics-text))] mb-3 line-clamp-2 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[hsl(var(--analytics-text))] mb-2 sm:mb-3 line-clamp-2 leading-relaxed">
                 {ticket.description}
               </p>
               
-              <div className="space-y-2 mb-3">
+              <div className="space-y-1.5 sm:space-y-2 mb-2 sm:mb-3">
                 <div className="flex items-center text-xs text-[hsl(var(--analytics-text))]">
                   <span className="font-medium mr-2">Category:</span>
-                  <span className="bg-[hsl(var(--analytics-chart-1))]/20 px-2 py-1 rounded text-[hsl(var(--analytics-chart-1))]">
+                  <span className="bg-[hsl(var(--analytics-chart-1))]/20 px-2 py-1 rounded text-[hsl(var(--analytics-chart-1))] text-xs">
                     {ticket.category}
                   </span>
                 </div>
                 <div className="flex items-center text-xs text-[hsl(var(--analytics-text))]">
-                  <MapPin className="h-3 w-3 mr-2" />
-                  <span>{ticket.location}</span>
+                  <MapPin className="h-3 w-3 mr-2 flex-shrink-0" />
+                  <span className="truncate">{ticket.location}</span>
                 </div>
                 <div className="flex items-center text-xs text-[hsl(var(--analytics-text))]">
-                  <User className="h-3 w-3 mr-2" />
-                  <span>{ticket.assignee}</span>
+                  <User className="h-3 w-3 mr-2 flex-shrink-0" />
+                  <span className="truncate">{ticket.assignee}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-xs flex-wrap gap-2">
                   <div className="flex items-center">
-                    <Clock className="h-3 w-3 mr-2 text-[hsl(var(--analytics-text))]" />
-                    <span className="bg-[hsl(var(--analytics-background))] px-2 py-1 rounded border border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))]">
+                    <Clock className="h-3 w-3 mr-2 text-[hsl(var(--analytics-text))] flex-shrink-0" />
+                    <span className="bg-[hsl(var(--analytics-background))] px-2 py-1 rounded border border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] text-xs">
                       {ticket.status}
                     </span>
                   </div>
@@ -172,9 +180,9 @@ export function RecentTicketsSidebar() {
                 <div className="flex items-center text-xs text-[hsl(var(--analytics-text))]">
                   <span className="mr-2">Flow:</span>
                   <div className="flex items-center">
-                    <span>{ticket.flow.split(' → ')[0]}</span>
-                    <ArrowRight className="h-3 w-3 mx-1" />
-                    <span>{ticket.flow.split(' → ')[1]}</span>
+                    <span className="truncate">{ticket.flow.split(' → ')[0]}</span>
+                    <ArrowRight className="h-3 w-3 mx-1 flex-shrink-0" />
+                    <span className="truncate">{ticket.flow.split(' → ')[1]}</span>
                   </div>
                 </div>
               </div>
@@ -183,33 +191,36 @@ export function RecentTicketsSidebar() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="flex-1 text-xs border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-1))]/20 hover:border-[hsl(var(--analytics-chart-1))]"
+                  className="flex-1 text-xs border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-1))]/20 hover:border-[hsl(var(--analytics-chart-1))] min-w-0"
                   onClick={() => handleAddComment(ticket.id)}
                 >
-                  <MessageSquare className="h-3 w-3 mr-1" />
-                  Add Comment
+                  <MessageSquare className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="hidden sm:inline">Add Comment</span>
+                  <span className="sm:hidden">Comment</span>
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className={`flex-1 text-xs border-[hsl(var(--analytics-border))] hover:bg-[hsl(var(--analytics-chart-2))]/20 hover:border-[hsl(var(--analytics-chart-2))] ${
+                  className={`flex-1 text-xs border-[hsl(var(--analytics-border))] hover:bg-[hsl(var(--analytics-chart-2))]/20 hover:border-[hsl(var(--analytics-chart-2))] min-w-0 ${
                     flaggedTickets.has(ticket.id) 
                       ? 'bg-[hsl(var(--analytics-error))]/20 text-[hsl(var(--analytics-error))] border-[hsl(var(--analytics-error))]' 
                       : 'text-[hsl(var(--analytics-text))]'
                   }`}
                   onClick={() => handleFlag(ticket.id)}
                 >
-                  <Flag className="h-3 w-3 mr-1" />
-                  Flag
+                  <Flag className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="hidden sm:inline">Flag</span>
+                  <span className="sm:hidden">Flag</span>
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="flex-1 text-xs border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-3))]/20 hover:border-[hsl(var(--analytics-chart-3))]"
+                  className="flex-1 text-xs border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-3))]/20 hover:border-[hsl(var(--analytics-chart-3))] min-w-0"
                   onClick={() => handleViewDetails(ticket.id)}
                 >
-                  <Eye className="h-3 w-3 mr-1" />
-                  View
+                  <Eye className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="hidden sm:inline">View</span>
+                  <span className="sm:hidden">View</span>
                 </Button>
               </div>
             </div>
