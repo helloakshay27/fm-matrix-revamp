@@ -2232,12 +2232,7 @@ const AddAssetPage = () => {
                   </span>
                   LOCATION DETAILS
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
-                    {expandedSections.location ? 'Hide' : 'Show Fields'}
-                  </span>
-                  {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                </div>
+                {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </div>
           {expandedSections.location && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
@@ -2277,16 +2272,13 @@ const AddAssetPage = () => {
               ASSET DETAILS
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={(e) => { e.stopPropagation(); setCustomFieldModalOpen(true); }} className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
+              <button onClick={() => setCustomFieldModalOpen(true)} className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
               backgroundColor: '#F6F4EE',
               color: '#C72030'
             }}>
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
-              <span className="text-sm text-gray-600">
-                {expandedSections.asset ? 'Hide' : 'Show Fields'}
-              </span>
               {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
@@ -2393,16 +2385,13 @@ const AddAssetPage = () => {
                   </label>
                 </div>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); setItAssetsCustomFieldModalOpen(true); }} className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
+              <button onClick={() => setItAssetsCustomFieldModalOpen(true)} className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
               backgroundColor: '#F6F4EE',
               color: '#C72030'
             }}>
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
-              <span className="text-sm text-gray-600">
-                {expandedSections.warranty ? 'Hide' : 'Show Fields'}
-              </span>
               {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
@@ -2502,9 +2491,6 @@ const AddAssetPage = () => {
                   </label>
                 </div>
               </div>
-              <span className="text-sm text-gray-600">
-                {expandedSections.meterCategory ? 'Hide' : 'Show Fields'}
-              </span>
               {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
@@ -2616,12 +2602,7 @@ const AddAssetPage = () => {
               </span>
               PURCHASE DETAILS
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                {expandedSections.consumption ? 'Hide' : 'Show Fields'}
-              </span>
-              {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </div>
+            {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
           {expandedSections.consumption && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -2680,9 +2661,6 @@ const AddAssetPage = () => {
                   </label>
                 </div>
               </div>
-              <span className="text-sm text-gray-600">
-                {expandedSections.nonConsumption ? 'Hide' : 'Show Fields'}
-              </span>
               {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
@@ -2758,12 +2736,7 @@ const AddAssetPage = () => {
               </span>
               ASSET ALLOCATION
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                {expandedSections.assetAllocation ? 'Hide' : 'Show Fields'}
-              </span>
-              {expandedSections.assetAllocation ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </div>
+            {expandedSections.assetAllocation ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
           {expandedSections.assetAllocation && <div className="p-4 sm:p-6">
               <div className="space-y-6">
@@ -2832,9 +2805,6 @@ const AddAssetPage = () => {
 
                 </div>
               </div>
-              <span className="text-sm text-gray-600">
-                {expandedSections.assetLoaned ? 'Hide' : 'Show Fields'}
-              </span>
               {expandedSections.assetLoaned ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
@@ -2874,12 +2844,7 @@ const AddAssetPage = () => {
               </span>
               AMC DETAILS
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                {expandedSections.amcDetails ? 'Hide' : 'Show Fields'}
-              </span>
-              {expandedSections.amcDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </div>
+            {expandedSections.amcDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
           {expandedSections.amcDetails && <div className="p-4 sm:p-6">
               <div className="space-y-6">
@@ -2955,9 +2920,6 @@ const AddAssetPage = () => {
                   </span>
                   ATTACHMENTS
                 </div>
-                <span className="text-sm text-gray-600">
-                  {expandedSections.attachments ? 'Hide' : 'Show Fields'}
-                </span>
                 {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </div>
               {expandedSections.attachments && <div className="p-4 sm:p-6">
