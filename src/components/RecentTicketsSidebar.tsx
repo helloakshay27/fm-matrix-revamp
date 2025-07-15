@@ -1,69 +1,48 @@
 import React, { useState } from 'react';
-import { Clock, User, MapPin, Flag, MessageSquare, Eye, ArrowRight } from 'lucide-react';
+import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
 
 const recentTickets = [
   {
-    id: 'TIC001',
-    description: 'Network connectivity issue in main office building requiring immediate attention',
-    category: 'Infrastructure',
-    location: 'Main Office',
-    assignee: 'John Smith',
+    id: '234-87654',
+    title: 'Floor not clean',
+    category: 'Housekeeping',
+    subCategory: 'Common Area',
+    assigneeName: 'Arman',
+    site: 'GoPhygital',
     priority: 'P1',
+    tat: 'A',
     status: 'In Progress',
-    tat: '2 Days',
-    tatStatus: 'warning',
-    flow: 'In Progress → Closed'
+    nextStatus: 'Closed',
+    handledBy: 'Arman'
   },
   {
-    id: 'TIC002', 
-    description: 'Printer malfunction in accounting department affecting daily operations',
-    category: 'Hardware',
-    location: 'Accounting Dept',
-    assignee: 'Sarah Johnson',
-    priority: 'P2',
-    status: 'Open',
-    tat: '1 Day',
-    tatStatus: 'success',
-    flow: 'Open → In Progress'
-  },
-  {
-    id: 'TIC003',
-    description: 'Software installation request for new employee onboarding process',
-    category: 'Software',
-    location: 'HR Department',
-    assignee: 'Mike Wilson',
-    priority: 'P3',
-    status: 'Pending',
-    tat: '5 Days',
-    tatStatus: 'error',
-    flow: 'Pending → Open'
-  },
-  {
-    id: 'TIC004',
-    description: 'Email server configuration issue affecting multiple departments',
-    category: 'Infrastructure',
-    location: 'IT Department',
-    assignee: 'David Lee',
+    id: '234-87654',
+    title: 'Floor not clean',
+    category: 'Housekeeping',
+    subCategory: 'Common Area',
+    assigneeName: 'Arman',
+    site: 'GoPhygital',
     priority: 'P1',
+    tat: 'A',
     status: 'In Progress',
-    tat: '3 Days',
-    tatStatus: 'warning',
-    flow: 'In Progress → Closed'
+    nextStatus: 'Closed',
+    handledBy: 'Arman'
   },
   {
-    id: 'TIC005',
-    description: 'Access card replacement request for security system',
-    category: 'Security',
-    location: 'Security Desk',
-    assignee: 'Emma Davis',
-    priority: 'P2',
-    status: 'Open',
-    tat: '2 Days',
-    tatStatus: 'success',
-    flow: 'Open → In Progress'
+    id: '234-87654',
+    title: 'Floor not clean',
+    category: 'Housekeeping',
+    subCategory: 'Common Area',
+    assigneeName: 'Arman',
+    site: 'GoPhygital',
+    priority: 'P1',
+    tat: 'A',
+    status: 'In Progress',
+    nextStatus: 'Closed',
+    handledBy: 'Arman'
   }
 ];
 
@@ -95,132 +74,122 @@ export function RecentTicketsSidebar() {
     navigate(`/maintenance/ticket-details/${ticketId}`);
   };
 
-  const getTatColor = (tatStatus: string) => {
-    switch (tatStatus) {
-      case 'success':
-        return 'text-[hsl(var(--analytics-success))]';
-      case 'warning':
-        return 'text-[hsl(var(--analytics-warning))]';
-      case 'error':
-        return 'text-[hsl(var(--analytics-error))]';
-      default:
-        return 'text-[hsl(var(--analytics-text))]';
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'P1':
-        return 'bg-red-100 text-red-800 border border-red-200';
-      case 'P2':
-        return 'bg-[hsl(var(--analytics-warning))]/20 text-[hsl(var(--analytics-warning))] border border-[hsl(var(--analytics-warning))]/30';
-      case 'P3':
-        return 'bg-[hsl(var(--analytics-success))]/20 text-[hsl(var(--analytics-success))] border border-[hsl(var(--analytics-success))]/30';
-      default:
-        return 'bg-gray-100 text-gray-800 border border-gray-200';
-    }
-  };
-
   return (
     <>
-      <div className="
-        w-full sm:w-80 lg:w-80 xl:w-full 2xl:w-full
-        bg-[hsl(var(--analytics-background))] 
-        border-l border-[hsl(var(--analytics-border))] 
-        p-3 sm:p-4 lg:p-5 xl:p-4
-        h-full overflow-hidden flex flex-col
-      ">
-        <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-[hsl(var(--analytics-text))] mb-3 sm:mb-4 lg:mb-5">
-          Recent Tickets
-        </h2>
+      <div className="w-full bg-gray-50 border-l border-gray-200 p-4 h-full overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-red-600 mb-2">
+            Recent Tickets
+          </h2>
+          <div className="text-sm font-medium text-gray-800">
+            14/07/2025
+          </div>
+        </div>
         
-        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 lg:space-y-5 pr-1 sm:pr-2">
-          {recentTickets.map((ticket) => (
-            <div key={ticket.id} className="border border-[hsl(var(--analytics-border))] rounded-lg p-3 sm:p-4 lg:p-5 bg-white shadow-sm">
-              <div className="flex items-center justify-between mb-2 lg:mb-3">
-                <span className="font-medium text-[hsl(var(--analytics-text))] text-sm sm:text-base lg:text-lg">#{ticket.id}</span>
-                <span className={`px-2 py-1 lg:px-3 lg:py-1.5 rounded text-xs lg:text-sm font-medium ${getPriorityColor(ticket.priority)}`}>
-                  {ticket.priority}
-                </span>
-              </div>
-              
-              <p className="text-xs sm:text-sm lg:text-base text-[hsl(var(--analytics-text))] mb-2 sm:mb-3 lg:mb-4 line-clamp-2 leading-relaxed">
-                {ticket.description}
-              </p>
-              
-              <div className="space-y-1.5 sm:space-y-2 lg:space-y-2.5 mb-2 sm:mb-3 lg:mb-4">
-                <div className="flex items-center text-xs lg:text-sm text-[hsl(var(--analytics-text))]">
-                  <span className="font-medium mr-2">Category:</span>
-                  <span className="bg-[hsl(var(--analytics-chart-1))]/20 px-2 py-1 lg:px-3 lg:py-1.5 rounded text-[hsl(var(--analytics-chart-1))] text-xs lg:text-sm">
-                    {ticket.category}
+        {/* Tickets List */}
+        <div className="flex-1 overflow-y-auto space-y-4">
+          {recentTickets.map((ticket, index) => (
+            <div key={`${ticket.id}-${index}`} className="bg-[#E8E0D4] rounded-lg p-4 shadow-sm">
+              {/* Header with ID, Star, and Priority */}
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold text-gray-800 text-sm">{ticket.id}</span>
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
+                    {ticket.priority}
                   </span>
                 </div>
-                <div className="flex items-center text-xs lg:text-sm text-[hsl(var(--analytics-text))]">
-                  <MapPin className="h-3 w-3 lg:h-4 lg:w-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">{ticket.location}</span>
-                </div>
-                <div className="flex items-center text-xs lg:text-sm text-[hsl(var(--analytics-text))]">
-                  <User className="h-3 w-3 lg:h-4 lg:w-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">{ticket.assignee}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs lg:text-sm flex-wrap gap-2">
-                  <div className="flex items-center">
-                    <Clock className="h-3 w-3 lg:h-4 lg:w-4 mr-2 text-[hsl(var(--analytics-text))] flex-shrink-0" />
-                    <span className="bg-[hsl(var(--analytics-background))] px-2 py-1 lg:px-3 lg:py-1.5 rounded border border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] text-xs lg:text-sm">
-                      {ticket.status}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-[hsl(var(--analytics-text))] mr-1">TAT:</span>
-                    <span className={`font-medium ${getTatColor(ticket.tatStatus)}`}>
-                      {ticket.tat}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center text-xs lg:text-sm text-[hsl(var(--analytics-text))]">
-                  <span className="mr-2">Flow:</span>
-                  <div className="flex items-center min-w-0 flex-1">
-                    <span className="truncate">{ticket.flow.split(' → ')[0]}</span>
-                    <ArrowRight className="h-3 w-3 lg:h-4 lg:w-4 mx-1 flex-shrink-0" />
-                    <span className="truncate">{ticket.flow.split(' → ')[1]}</span>
-                  </div>
+              </div>
+              
+              {/* Title and TAT */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 text-base">{ticket.title}</h3>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium text-gray-700">TAT :</span>
+                  <span className="text-sm font-bold text-blue-600">"{ticket.tat}"</span>
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-1 sm:gap-2 lg:gap-3">
+              {/* Details */}
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Category</span>
+                  <span className="text-sm text-gray-700">:</span>
+                  <span className="text-sm text-gray-900">{ticket.category}</span>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Sub-Category</span>
+                  <span className="text-sm text-gray-700">:</span>
+                  <span className="text-sm text-gray-900">{ticket.subCategory}</span>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <User className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Assignee Name</span>
+                  <span className="text-sm text-gray-700">:</span>
+                  <span className="text-sm text-gray-900">{ticket.assigneeName}</span>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Globe className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Site</span>
+                  <span className="text-sm text-gray-700">:</span>
+                  <span className="text-sm text-gray-900">{ticket.site}</span>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <RotateCcw className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Update</span>
+                  <span className="text-sm text-gray-700">:</span>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="italic text-gray-600">{ticket.status}</span>
+                    <ChevronRight className="h-3 w-3 text-gray-600" />
+                    <span className="italic text-gray-600">{ticket.nextStatus}</span>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-600 ml-7">
+                  (Handled By {ticket.handledBy})
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="text-xs lg:text-sm border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-1))]/20 hover:border-[hsl(var(--analytics-chart-1))] min-w-0 px-2 lg:px-3"
+                  className="text-xs border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-1 px-3"
                   onClick={() => handleAddComment(ticket.id)}
                 >
-                  <MessageSquare className="h-3 w-3 lg:h-4 lg:w-4 mr-1 flex-shrink-0" />
-                  <span className="hidden sm:inline lg:inline">Comment</span>
-                  <span className="sm:hidden lg:hidden">Add</span>
+                  <MessageSquare className="h-3 w-3 text-red-500" />
+                  Add Comment
                 </Button>
+                
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className={`text-xs lg:text-sm border-[hsl(var(--analytics-border))] hover:bg-[hsl(var(--analytics-chart-2))]/20 hover:border-[hsl(var(--analytics-chart-2))] min-w-0 px-2 lg:px-3 ${
+                  className={`text-xs border-gray-300 hover:bg-gray-100 flex items-center gap-1 px-3 ${
                     flaggedTickets.has(ticket.id) 
-                      ? 'bg-[hsl(var(--analytics-error))]/20 text-[hsl(var(--analytics-error))] border-[hsl(var(--analytics-error))]' 
-                      : 'text-[hsl(var(--analytics-text))]'
+                      ? 'bg-red-100 text-red-700 border-red-300' 
+                      : 'text-gray-700'
                   }`}
                   onClick={() => handleFlag(ticket.id)}
                 >
-                  <Flag className="h-3 w-3 lg:h-4 lg:w-4 mr-1 flex-shrink-0" />
-                  <span className="hidden sm:inline lg:inline">Flag</span>
-                  <span className="sm:hidden lg:hidden">F</span>
+                  <Flag className="h-3 w-3 text-red-500" />
+                  Flag Issue
                 </Button>
+                
                 <Button 
                   size="sm" 
-                  variant="outline" 
-                  className="text-xs lg:text-sm border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-3))]/20 hover:border-[hsl(var(--analytics-chart-3))] min-w-0 px-2 lg:px-3"
+                  variant="link" 
+                  className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-normal"
                   onClick={() => handleViewDetails(ticket.id)}
                 >
-                  <Eye className="h-3 w-3 lg:h-4 lg:w-4 mr-1 flex-shrink-0" />
-                  <span className="hidden sm:inline lg:inline">View</span>
-                  <span className="sm:hidden lg:hidden">V</span>
+                  View Details&gt;&gt;
                 </Button>
               </div>
             </div>
