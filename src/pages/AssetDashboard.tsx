@@ -168,7 +168,7 @@ export const AssetDashboard = () => {
 
         <TabsContent value="analytics" className="space-y-6 mt-6">
           {/* Analytics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
             {/* Total Assets Available */}
             <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
               <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
