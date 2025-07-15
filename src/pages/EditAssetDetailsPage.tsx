@@ -2688,7 +2688,7 @@ export const EditAssetDetailsPage = () => {
                     </div>
 
                     {/* Meter Details Categories */}
-                    <div className="mb-6">
+                    <div className="mb-6" style={{ backgroundColor: '#f6f4ee' }}>
                       <h3 className="text-[#C72030] font-semibold mb-4  p-3 rounded text-sm">METER DETAILS</h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {getMeterCategoryOptions().map(option => {
