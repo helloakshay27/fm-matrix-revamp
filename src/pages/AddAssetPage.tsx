@@ -385,6 +385,224 @@ const AddAssetPage = () => {
           </div>
         </div>
 
+        {/* Land Asset Details - Show when Land is selected */}
+        {selectedAssetCategory === 'Land' && (
+          <div className="space-y-6">
+            {/* Basic Identification */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#C72030] text-lg font-semibold">🧾 Basic Identification</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Asset ID / Code</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter unique identifier"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Asset Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter land name"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Land Type</label>
+                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                      <option value="">Select Land Type</option>
+                      <option value="raw">Raw Land</option>
+                      <option value="developed">Developed Land</option>
+                      <option value="leased">Leased</option>
+                      <option value="agricultural">Agricultural</option>
+                      <option value="special">Special Use</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Location & Ownership */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#C72030] text-lg font-semibold">📍 Location & Ownership</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Location</label>
+                    <input 
+                      type="text" 
+                      placeholder="Full address or GPS coordinates"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Ownership Type</label>
+                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                      <option value="">Select Ownership Type</option>
+                      <option value="owned">Owned</option>
+                      <option value="leased">Leased</option>
+                      <option value="allotted">Allotted</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Legal Document Ref No.</label>
+                    <input 
+                      type="text" 
+                      placeholder="Title deed, lease ID, etc."
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Zoning Classification</label>
+                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                      <option value="">Select Zoning</option>
+                      <option value="residential">Residential</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="agricultural">Agricultural</option>
+                      <option value="industrial">Industrial</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Encumbrance Status</label>
+                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                      <option value="">Select Status</option>
+                      <option value="clear">Clear</option>
+                      <option value="mortgage">Under Mortgage</option>
+                      <option value="disputed">Disputed</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Land Size & Value */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#C72030] text-lg font-semibold">📐 Land Size & Value</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Area</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="number" 
+                        placeholder="Enter area"
+                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      />
+                      <select className="w-24 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                        <option value="sqft">Sq. Ft.</option>
+                        <option value="acres">Acres</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Date of Acquisition</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Acquisition Cost (INR)</label>
+                    <div className="flex gap-2">
+                      <select className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                        <option value="inr">INR</option>
+                      </select>
+                      <input 
+                        type="number" 
+                        placeholder="Enter cost"
+                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Market Value (INR)</label>
+                    <input 
+                      type="number" 
+                      placeholder="Enter current value"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Land Usage & Development */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#C72030] text-lg font-semibold">🏗️ Land Usage & Development</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Purpose / Use</label>
+                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                      <option value="">Select Purpose</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="residential">Residential</option>
+                      <option value="reserved">Reserved</option>
+                      <option value="institutional">Institutional</option>
+                      <option value="industrial">Industrial</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Land Improvements</label>
+                    <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
+                      <option value="">Select Improvements</option>
+                      <option value="fencing">Fencing</option>
+                      <option value="landscaping">Landscaping</option>
+                      <option value="roads">Roads</option>
+                      <option value="other">Other (Manual Input)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Responsible Department</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter department or user"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Miscellaneous */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#C72030] text-lg font-semibold">📎 Miscellaneous</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Remarks / Notes</label>
+                  <textarea 
+                    placeholder="Special remarks, legal concerns, or development plans"
+                    rows={4}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Attachment</label>
+                  <input 
+                    type="file" 
+                    multiple
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Upload deed copy, layout, map, lease, etc.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Location Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
