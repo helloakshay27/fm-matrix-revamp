@@ -3180,8 +3180,285 @@ export const EditAssetDetailsPage = () => {
                 </div>
               )}
             </div>
-          </>
-        )}
+
+            {/* Asset Details */}
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+              <div onClick={() => toggleSection('asset')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                    <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </span>
+                  ASSET DETAILS
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCustomFieldModal('assetDetails');
+                    }}
+                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Custom Field
+                  </button>
+                  {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </div>
+              </div>
+              {expandedSections.asset && (
+                <div className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <TextField
+                      required
+                      label="Asset Name"
+                      placeholder="Enter Asset Name"
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      required
+                      label="Model No."
+                      placeholder="Enter Model No"
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      required
+                      label="Manufacturer"
+                      placeholder="Enter Manufacturer"
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>Group</InputLabel>
+                      <MuiSelect label="Group" displayEmpty value="" sx={fieldStyles} required>
+                        <MenuItem value=""><em>Select Group</em></MenuItem>
+                        <MenuItem value="group1">Group 1</MenuItem>
+                        <MenuItem value="group2">Group 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>Subgroup</InputLabel>
+                      <MuiSelect label="Subgroup" displayEmpty value="" sx={fieldStyles} required>
+                        <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
+                        <MenuItem value="subgroup1">Subgroup 1</MenuItem>
+                        <MenuItem value="subgroup2">Subgroup 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-[#C72030] mb-2 block">Status</label>
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="status-inuse"
+                          name="status"
+                          value="inuse"
+                          defaultChecked
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                        />
+                        <label htmlFor="status-inuse" className="text-sm">In Use</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="status-breakdown"
+                          name="status"
+                          value="breakdown"
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                        />
+                        <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* IT Assets Details - Show only for IT Equipment */}
+            {selectedAssetCategory === 'IT Equipment' && (
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+                <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                      <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </span>
+                    IT ASSETS DETAILS
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">If Applicable</span>
+                      <div className="relative inline-block w-12 h-6">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          id="it-assets-toggle"
+                          checked={itAssetsToggle}
+                          onChange={(e) => handleItAssetsToggleChange(e.target.checked)}
+                        />
+                        <label
+                          htmlFor="it-assets-toggle"
+                          className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                            itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                              itAssetsToggle ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          ></span>
+                        </label>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setItAssetsCustomFieldModalOpen(true)}
+                      className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80 bg-[#F6F4EE] text-[#C72030]"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Custom Field
+                    </button>
+                    {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </div>
+                {expandedSections.warranty && (
+                  <div className="p-4 sm:p-6">
+                    <div className="mb-6">
+                      <h3 className="font-semibold mb-4 text-[#C72030]">SYSTEM DETAILS</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <TextField
+                          label="OS"
+                          placeholder="Enter OS"
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
+                        />
+                        <TextField
+                          label="Total Memory"
+                          placeholder="Enter Total Memory"
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
+                        />
+                        <TextField
+                          label="Processor"
+                          placeholder="Enter Processor"
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-4 text-[#C72030]">HARD DISK DETAILS</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <TextField
+                          label="Model"
+                          placeholder="Enter Model"
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
+                        />
+                        <TextField
+                          label="Serial No."
+                          placeholder="Enter Serial No."
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
+                        />
+                        <TextField
+                          label="Capacity"
+                          placeholder="Enter Capacity"
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Meter Details */}
+            {selectedAssetCategory !== 'Tools & Instruments' && (
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+                <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                      <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </span>
+                    METER DETAILS
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">If Applicable</span>
+                      <div className="relative inline-block w-12 h-6">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          id="meter-details-toggle"
+                          checked={meterDetailsToggle}
+                          onChange={(e) => handleMeterDetailsToggleChange(e.target.checked)}
+                        />
+                        <label
+                          htmlFor="meter-details-toggle"
+                          className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                            meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                              meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          ></span>
+                        </label>
+                      </div>
+                    </div>
+                    {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </div>
+                {expandedSections.meterCategory && (
+                  <div className="p-4 sm:p-6">
+                    <div className="mb-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
+                        <div className="flex gap-6">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="meter-type-parent"
+                              name="meterType"
+                              value="parent"
+                              checked={meterType === 'parent'}
+                              onChange={(e) => setMeterType(e.target.value)}
+                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                            />
+                            <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="meter-type-sub"
+                              name="meterType"
+                              value="sub"
+                              checked={meterType === 'sub'}
+                              onChange={(e) => setMeterType(e.target.value)}
+                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                            />
+                            <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
         {/* Purchase Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -3335,6 +3612,8 @@ export const EditAssetDetailsPage = () => {
             </div>
           )}
         </div>
+          </>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
