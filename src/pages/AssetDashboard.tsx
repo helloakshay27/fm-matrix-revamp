@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -169,7 +170,7 @@ export const AssetDashboard = () => {
           {/* Analytics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
             {/* Total Assets Available */}
-            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+            <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
               <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
                 <Package className="w-6 h-6 text-[#C72030]" />
               </div>
@@ -180,7 +181,7 @@ export const AssetDashboard = () => {
             </div>
 
             {/* Asset In Use */}
-            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+            <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
               <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
                 <Activity className="w-6 h-6 text-[#C72030]" />
               </div>
@@ -191,7 +192,7 @@ export const AssetDashboard = () => {
             </div>
 
             {/* Asset In Breakdown */}
-            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+            <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
               <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-[#C72030]" />
               </div>
@@ -202,7 +203,7 @@ export const AssetDashboard = () => {
             </div>
 
             {/* Critical Assets In Breakdown */}
-            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+            <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
               <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
                 <Zap className="w-6 h-6 text-[#C72030]" />
               </div>
@@ -213,7 +214,7 @@ export const AssetDashboard = () => {
             </div>
 
             {/* PPM Overdue */}
-            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+            <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
               <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
                 <Wrench className="w-6 h-6 text-[#C72030]" />
               </div>
@@ -224,7 +225,7 @@ export const AssetDashboard = () => {
             </div>
 
             {/* Customer Average */}
-            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+            <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
               <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-[#C72030]" />
               </div>
