@@ -212,8 +212,8 @@ export const TicketDashboard = () => {
 
   // Analytics data with updated colors matching design
   const statusData = [
-    { name: 'Open', value: openTickets, color: 'hsl(35, 35%, 75%)' },
-    { name: 'Closed', value: closedTickets, color: 'hsl(25, 45%, 55%)' }
+    { name: 'Open', value: openTickets, color: '#c6b692' },
+    { name: 'Closed', value: closedTickets, color: '#d8dcdd' }
   ];
 
   const categoryData = ticketData.reduce((acc, ticket) => {
@@ -235,8 +235,8 @@ export const TicketDashboard = () => {
   const proactiveTickets = totalTickets - reactiveTickets;
 
   const typeData = [
-    { name: 'Reactive', value: reactiveTickets, color: 'hsl(35, 35%, 75%)' },
-    { name: 'Proactive', value: proactiveTickets, color: 'hsl(25, 45%, 55%)' }
+    { name: 'Open', value: reactiveTickets, color: '#c6b692' },
+    { name: 'Closed', value: proactiveTickets, color: '#d8dcdd' }
   ];
 
   const handleViewDetails = (ticketId: string) => {
@@ -355,22 +355,24 @@ export const TicketDashboard = () => {
               {/* Top Row - Two Donut Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Tickets Chart */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Tickets</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-[#C72030]">Tickets</h3>
+                    <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
                   </div>
-                  <div className="flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={200}>
+                  <div className="relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
                           data={statusData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={80}
+                          innerRadius={60}
+                          outerRadius={100}
                           paddingAngle={2}
                           dataKey="value"
+                          label={({ value }) => value}
+                          labelLine={false}
                         >
                           {statusData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -379,37 +381,41 @@ export const TicketDashboard = () => {
                         <Tooltip />
                       </PieChart>
                     </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-center gap-4 mt-4">
+                  <div className="flex justify-center gap-6 mt-4">
                     {statusData.map((item, index) => (
-                      <div key={index} className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
-                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
-                        </div>
-                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-sm font-medium text-gray-700">{item.name}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Reactive Proactive Tickets Chart */}
-                <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Reactive Proactive Ticket</h3>
-                    <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-[#C72030]">Reactive Proactive Ticket</h3>
+                    <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
                   </div>
-                  <div className="flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={200}>
+                  <div className="relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
                           data={typeData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={80}
+                          innerRadius={60}
+                          outerRadius={100}
                           paddingAngle={2}
                           dataKey="value"
+                          label={({ value }) => value}
+                          labelLine={false}
                         >
                           {typeData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -418,15 +424,17 @@ export const TicketDashboard = () => {
                         <Tooltip />
                       </PieChart>
                     </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-gray-700">Total : {reactiveTickets + proactiveTickets}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-center gap-4 mt-4">
+                  <div className="flex justify-center gap-6 mt-4">
                     {typeData.map((item, index) => (
-                      <div key={index} className="text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <div className="w-3 h-3" style={{ backgroundColor: item.color }}></div>
-                          <span className="text-sm text-[hsl(var(--analytics-text))]">{item.name}</span>
-                        </div>
-                        <div className="text-lg font-semibold text-[hsl(var(--analytics-text))]">{item.value}</div>
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-sm font-medium text-gray-700">{item.name}</span>
                       </div>
                     ))}
                   </div>
