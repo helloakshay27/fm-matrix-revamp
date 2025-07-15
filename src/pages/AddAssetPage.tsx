@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive, Calendar, DollarSign, CheckCircle, Wrench, Car, Cog, Users2, TrendingUp as Performance, ShieldCheck } from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Autocomplete, InputAdornment } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -616,6 +619,411 @@ const AddAssetPage = () => {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Leasehold Improvement Asset Details - Show when Leasehold Improvement is selected */}
+        {selectedAssetCategory === 'Leasehold Improvement' && (
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <div className="space-y-6">
+              {/* Basic Identification */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Basic Identification
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Asset ID / Code"
+                      placeholder="Enter alphanumeric code"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Improvement Description"
+                      placeholder="e.g., Flooring, IT Cabling"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Location & Association */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Location & Association
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TextField
+                      label="Location / Site"
+                      placeholder="Enter location"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Leased Property ID</InputLabel>
+                      <MuiSelect
+                        label="Leased Property ID"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Property</MenuItem>
+                        <MenuItem value="prop001">Property 001</MenuItem>
+                        <MenuItem value="prop002">Property 002</MenuItem>
+                        <MenuItem value="prop003">Property 003</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Ownership Type"
+                      value="Lessee"
+                      variant="outlined"
+                      fullWidth
+                      disabled
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Improvement Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Construction className="w-5 h-5" />
+                    Improvement Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Type of Improvement</InputLabel>
+                      <MuiSelect
+                        label="Type of Improvement"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Type</MenuItem>
+                        <MenuItem value="civil">Civil</MenuItem>
+                        <MenuItem value="electrical">Electrical</MenuItem>
+                        <MenuItem value="hvac">HVAC</MenuItem>
+                        <MenuItem value="plumbing">Plumbing</MenuItem>
+                        <MenuItem value="it">IT Infrastructure</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Vendor / Contractor Name</InputLabel>
+                      <MuiSelect
+                        label="Vendor / Contractor Name"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Vendor</MenuItem>
+                        <MenuItem value="vendor1">ABC Construction</MenuItem>
+                        <MenuItem value="vendor2">XYZ Contractors</MenuItem>
+                        <MenuItem value="vendor3">PQR Services</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Invoice Number"
+                      placeholder="Enter invoice number"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Date of Improvement"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Improvement Cost (INR)"
+                      placeholder="Enter cost"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Financial & Depreciation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Financial & Depreciation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Depreciation Method</InputLabel>
+                      <MuiSelect
+                        label="Depreciation Method"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Method</MenuItem>
+                        <MenuItem value="straight">Straight Line</MenuItem>
+                        <MenuItem value="wdv">Written Down Value</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Useful Life (Years)"
+                      placeholder="Enter years"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Depreciation Rate (%)"
+                      placeholder="Enter rate"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Current Book Value (INR)"
+                      placeholder="Enter value"
+                      variant="outlined"
+                      fullWidth
+                      type="number"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Asset Capitalized On"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Lease & Maintenance Linkages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Lease & Maintenance Linkages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DatePicker
+                      label="Lease Start Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <DatePicker
+                      label="Lease End Date"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: { xs: '36px', md: '45px' }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>AMC / PPM Linked</InputLabel>
+                      <MuiSelect
+                        label="AMC / PPM Linked"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Status</MenuItem>
+                        <MenuItem value="yes">Yes</MenuItem>
+                        <MenuItem value="no">No</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Oversight & Documentation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                    <Users2 className="w-5 h-5" />
+                    Oversight & Documentation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormControl 
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    >
+                      <InputLabel>Responsible Department</InputLabel>
+                      <MuiSelect
+                        label="Responsible Department"
+                        defaultValue=""
+                      >
+                        <MenuItem value="">Select Department</MenuItem>
+                        <MenuItem value="facilities">Facilities Management</MenuItem>
+                        <MenuItem value="admin">Administration</MenuItem>
+                        <MenuItem value="maintenance">Maintenance</MenuItem>
+                        <MenuItem value="it">IT Department</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <div className="md:col-span-2">
+                      <TextField
+                        label="Remarks / Notes"
+                        placeholder="Enter remarks or notes"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={4}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          className="hidden"
+                          id="leasehold-attachments"
+                        />
+                        <label htmlFor="leasehold-attachments" className="cursor-pointer">
+                          <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-600">
+                            Click to upload attachments
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Upload invoices, contracts, improvement photos, etc.
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </LocalizationProvider>
         )}
 
         {/* Vehicle Asset Details - Show when Vehicle is selected */}
