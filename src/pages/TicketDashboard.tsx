@@ -322,7 +322,7 @@ export const TicketDashboard = () => {
   };
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+    <div className="p-2 sm:p-4 lg:p-6 w-full min-h-screen">
       <Tabs defaultValue="analytics" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b mb-4 sm:mb-6">
           <TabsTrigger 
