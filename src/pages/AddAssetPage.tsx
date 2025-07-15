@@ -2217,17 +2217,23 @@ const AddAssetPage = () => {
           </LocalizationProvider>
         )}
 
-        {/* Location Details */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              LOCATION DETAILS
-            </div>
-            {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
+        {/* Conditional Sections - Show only for specific asset categories */}
+        {(selectedAssetCategory === 'Furniture & Fixtures' || 
+          selectedAssetCategory === 'IT Equipment' || 
+          selectedAssetCategory === 'Machinery & Equipment' || 
+          selectedAssetCategory === 'Tools & Instruments') && (
+          <>
+            {/* Location Details */}
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+              <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </span>
+                  LOCATION DETAILS
+                </div>
+                {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </div>
           {expandedSections.location && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                 {['Site', 'Building', 'Wing', 'Area', 'Floor'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
@@ -2901,72 +2907,74 @@ const AddAssetPage = () => {
             </div>}
         </div>
 
-        {/* Attachments */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              ATTACHMENTS
-            </div>
-            {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-          {expandedSections.attachments && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {[{
-              label: 'Manuals Upload',
-              id: 'manuals-upload',
-              category: 'manualsUpload',
-              accept: '.pdf,.doc,.docx,.txt'
-            }, {
-              label: 'Insurance Details',
-              id: 'insurance-upload',
-              category: 'insuranceDetails',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }, {
-              label: 'Purchase Invoice',
-              id: 'invoice-upload',
-              category: 'purchaseInvoice',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }, {
-              label: 'AMC',
-              id: 'amc-upload',
-              category: 'amc',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }].map(field => <div key={field.id}>
-                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <input type="file" multiple accept={field.accept} onChange={e => handleFileUpload(field.category, e.target.files)} className="hidden" id={field.id} />
-                      <label htmlFor={field.id} className="cursor-pointer block">
-                        <div className="flex items-center justify-center space-x-2 mb-2">
-                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
-                          <span className="text-gray-500 text-xs sm:text-sm">
-                            {attachments[field.category].length > 0 ? `${attachments[field.category].length} file(s) selected` : 'No file chosen'}
-                          </span>
-                        </div>
-                      </label>
-                      {attachments[field.category].length > 0 && <div className="mt-2 space-y-1">
-                          {attachments[field.category].map((file, index) => <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                              <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                              <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>)}
-                        </div>}
-                      <div className="mt-2">
-                        <label htmlFor={field.id}>
-                          <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
-                            <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
-                            Upload Files
-                          </button>
-                        </label>
-                      </div>
-                    </div>
-                  </div>)}
+            {/* Attachments */}
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+              <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                    <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </span>
+                  ATTACHMENTS
+                </div>
+                {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </div>
-            </div>}
-        </div>
+              {expandedSections.attachments && <div className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    {[{
+                  label: 'Manuals Upload',
+                  id: 'manuals-upload',
+                  category: 'manualsUpload',
+                  accept: '.pdf,.doc,.docx,.txt'
+                }, {
+                  label: 'Insurance Details',
+                  id: 'insurance-upload',
+                  category: 'insuranceDetails',
+                  accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                }, {
+                  label: 'Purchase Invoice',
+                  id: 'invoice-upload',
+                  category: 'purchaseInvoice',
+                  accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                }, {
+                  label: 'AMC',
+                  id: 'amc-upload',
+                  category: 'amc',
+                  accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                }].map(field => <div key={field.id}>
+                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                          <input type="file" multiple accept={field.accept} onChange={e => handleFileUpload(field.category, e.target.files)} className="hidden" id={field.id} />
+                          <label htmlFor={field.id} className="cursor-pointer block">
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
+                              <span className="text-gray-500 text-xs sm:text-sm">
+                                {attachments[field.category].length > 0 ? `${attachments[field.category].length} file(s) selected` : 'No file chosen'}
+                              </span>
+                            </div>
+                          </label>
+                          {attachments[field.category].length > 0 && <div className="mt-2 space-y-1">
+                              {attachments[field.category].map((file, index) => <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                                  <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                                  <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>)}
+                            </div>}
+                          <div className="mt-2">
+                            <label htmlFor={field.id}>
+                              <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
+                                <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                                Upload Files
+                              </button>
+                            </label>
+                          </div>
+                        </div>
+                      </div>)}
+                  </div>
+                </div>}
+            </div>
+          </>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
