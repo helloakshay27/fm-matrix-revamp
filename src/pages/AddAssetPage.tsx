@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
@@ -391,7 +391,10 @@ const AddAssetPage = () => {
             {/* Basic Identification */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold">🧾 Basic Identification</CardTitle>
+                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Basic Identification
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -429,7 +432,10 @@ const AddAssetPage = () => {
             {/* Location & Ownership */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold">📍 Location & Ownership</CardTitle>
+                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Location & Ownership
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -484,7 +490,10 @@ const AddAssetPage = () => {
             {/* Land Size & Value */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold">📐 Land Size & Value</CardTitle>
+                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                  <Ruler className="w-5 h-5" />
+                  Land Size & Value
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -537,7 +546,10 @@ const AddAssetPage = () => {
             {/* Land Usage & Development */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold">🏗️ Land Usage & Development</CardTitle>
+                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                  <Construction className="w-5 h-5" />
+                  Land Usage & Development
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -577,7 +589,10 @@ const AddAssetPage = () => {
             {/* Miscellaneous */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-[#C72030] text-lg font-semibold">📎 Miscellaneous</CardTitle>
+                <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center gap-2">
+                  <Archive className="w-5 h-5" />
+                  Miscellaneous
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
