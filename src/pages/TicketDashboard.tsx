@@ -350,9 +350,9 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-7 gap-4 sm:gap-6">
             {/* Left Section - Charts */}
-            <div className="xl:col-span-4 space-y-4 sm:space-y-6">
+            <div className="xl:col-span-5 space-y-4 sm:space-y-6">
               {/* Top Row - Two Donut Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Tickets Chart */}
@@ -580,7 +580,7 @@ export const TicketDashboard = () => {
             </div>
 
             {/* Right Sidebar - Recent Tickets */}
-            <div className="xl:col-span-1 order-first xl:order-last">
+            <div className="xl:col-span-2 order-first xl:order-last">
               <RecentTicketsSidebar />
             </div>
           </div>
