@@ -4010,6 +4010,105 @@ export const EditAssetDetailsPage = () => {
           )}
         </div>
 
+        {/* Asset Loaned */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('assetLoaned')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ASSET LOANED
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">If Applicable</span>
+                <div className="relative inline-block w-12 h-6">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    id="asset-loaned-toggle"
+                    checked={assetLoanedToggle}
+                    onChange={(e) => handleAssetLoanedToggleChange(e.target.checked)}
+                  />
+                  <label
+                    htmlFor="asset-loaned-toggle"
+                    className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                      assetLoanedToggle ? 'bg-green-400' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                        assetLoanedToggle ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    ></span>
+                  </label>
+                </div>
+              </div>
+              {expandedSections.assetLoaned ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+          </div>
+          {expandedSections.assetLoaned && (
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                {/* Vendor Name */}
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Vendor Name*</InputLabel>
+                  <MuiSelect 
+                    label="Vendor Name*" 
+                    displayEmpty 
+                    defaultValue=""
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' }
+                      }
+                    }}
+                  >
+                    <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                    <MenuItem value="vendor1">ABC Corporation</MenuItem>
+                    <MenuItem value="vendor2">XYZ Technologies</MenuItem>
+                    <MenuItem value="vendor3">Tech Solutions Inc</MenuItem>
+                    <MenuItem value="vendor4">Global Services Ltd</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Agreement Start Date */}
+                <DatePicker
+                  label="Agreement Start Date *"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: 'outlined',
+                      placeholder: 'dd/mm/yyyy',
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }
+                    }
+                  }}
+                />
+
+                {/* Agreement End Date */}
+                <DatePicker
+                  label="Agreement End Date *"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: 'outlined',
+                      placeholder: 'dd/mm/yyyy',
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
           <button
