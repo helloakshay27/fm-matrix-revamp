@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -66,6 +68,7 @@ const AddAssetPage = () => {
     purchaseInvoice: [],
     amc: []
   });
+  const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
 
   const handleGoBack = () => {
     navigate(-1);
@@ -339,6 +342,49 @@ const AddAssetPage = () => {
       </div>
 
       <div className="space-y-4 sm:space-y-6">
+        {/* Asset Category Selection */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ASSET CATEGORY
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <RadioGroup 
+                value={selectedAssetCategory} 
+                onValueChange={setSelectedAssetCategory}
+                className="contents"
+              >
+                {[
+                  'Land',
+                  'Building', 
+                  'Leasehold Improvement',
+                  'Vehicle',
+                  'Furniture & Fixtures',
+                  'IT Equipment',
+                  'Machinery & Equipment',
+                  'Tools & Instruments'
+                ].map((category) => (
+                  <div key={category} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <RadioGroupItem 
+                      value={category} 
+                      id={category}
+                    />
+                    <label 
+                      htmlFor={category} 
+                      className="text-sm font-medium cursor-pointer flex-1"
+                    >
+                      {category}
+                    </label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          </div>
+        </div>
+
         {/* Location Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
