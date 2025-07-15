@@ -338,7 +338,7 @@ export const TicketDashboard = () => {
           >
             <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden xs:inline">Analytics</span>
-            <span className="xs:hidden">Stats</span>
+            <span className="xs:hidden">Analytics</span>
           </TabsTrigger>
           <TabsTrigger 
             value="tickets" 
