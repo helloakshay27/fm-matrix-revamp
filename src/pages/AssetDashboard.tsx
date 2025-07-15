@@ -88,7 +88,7 @@ export const AssetDashboard = () => {
     assetType: true
   });
   const [chartOrder, setChartOrder] = useState<string[]>([
-    'assetStatus', 'assetType', 'categoryChart', 'agingMatrix', 'performanceMetrics'
+    'donutCharts', 'categoryChart', 'agingMatrix', 'performanceMetrics'
   ]);
 
   // Drag and drop sensors
@@ -322,168 +322,10 @@ export const AssetDashboard = () => {
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                   <div className="space-y-6">
                     {chartOrder.map((chartId) => {
-                      if (chartId === 'assetStatus') {
+                      if (chartId === 'donutCharts') {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
-                              {/* Download Icon */}
-                              <div className="absolute top-4 right-4">
-                                <Download className="w-4 h-4 text-red-500 cursor-pointer hover:text-red-600" />
-                              </div>
-
-                              {/* Title */}
-                              <h3 className="text-lg font-bold mb-4" style={{ color: '#C72030' }}>
-                                Asset Status
-                              </h3>
-
-                              {/* Chart */}
-                              <div className="flex items-center justify-center mb-4">
-                                <ResponsiveContainer width="100%" height={200}>
-                                  <PieChart>
-                                    <Pie
-                                      data={statusData}
-                                      cx="50%"
-                                      cy="50%"
-                                      labelLine={false}
-                                      label={({ cx, cy, midAngle, innerRadius, outerRadius, value }) => {
-                                        const RADIAN = Math.PI / 180;
-                                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                                        return (
-                                          <text 
-                                            x={x} 
-                                            y={y} 
-                                            fill="white" 
-                                            textAnchor={x > cx ? 'start' : 'end'} 
-                                            dominantBaseline="central"
-                                            className="text-sm font-medium"
-                                          >
-                                            {value}
-                                          </text>
-                                        );
-                                      }}
-                                      innerRadius={50}
-                                      outerRadius={80}
-                                      paddingAngle={2}
-                                      dataKey="value"
-                                    >
-                                      {statusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                      ))}
-                                    </Pie>
-                                    <Tooltip 
-                                      formatter={(value, name) => [value, name]}
-                                      contentStyle={{ 
-                                        backgroundColor: 'white', 
-                                        border: '1px solid #e5e7eb',
-                                        borderRadius: '6px'
-                                      }}
-                                    />
-                                    <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-gray-700">
-                                      <tspan x="50%" dy="-0.5em" className="text-sm font-medium">Total:</tspan>
-                                      <tspan x="50%" dy="1.2em" className="text-lg font-bold">{statusData.reduce((sum, entry) => sum + entry.value, 0)}</tspan>
-                                    </text>
-                                  </PieChart>
-                                </ResponsiveContainer>
-                              </div>
-
-                              {/* Legend */}
-                              <div className="flex justify-center gap-4">
-                                {statusData.map((item, index) => (
-                                  <div key={index} className="flex items-center gap-2">
-                                    <div 
-                                      className="w-3 h-3 rounded-sm" 
-                                      style={{ backgroundColor: item.color }}
-                                    />
-                                    <span className="text-sm text-gray-700 font-medium">{item.name}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
-
-                      if (chartId === 'assetType') {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
-                              {/* Download Icon */}
-                              <div className="absolute top-4 right-4">
-                                <Download className="w-4 h-4 text-red-500 cursor-pointer hover:text-red-600" />
-                              </div>
-
-                              {/* Title */}
-                              <h3 className="text-lg font-bold mb-4" style={{ color: '#C72030' }}>
-                                Asset Type Distribution
-                              </h3>
-
-                              {/* Chart */}
-                              <div className="flex items-center justify-center mb-4">
-                                <ResponsiveContainer width="100%" height={200}>
-                                  <PieChart>
-                                    <Pie
-                                      data={assetTypeData}
-                                      cx="50%"
-                                      cy="50%"
-                                      labelLine={false}
-                                      label={({ cx, cy, midAngle, innerRadius, outerRadius, value }) => {
-                                        const RADIAN = Math.PI / 180;
-                                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                                        return (
-                                          <text 
-                                            x={x} 
-                                            y={y} 
-                                            fill="white" 
-                                            textAnchor={x > cx ? 'start' : 'end'} 
-                                            dominantBaseline="central"
-                                            className="text-sm font-medium"
-                                          >
-                                            {value}
-                                          </text>
-                                        );
-                                      }}
-                                      innerRadius={50}
-                                      outerRadius={80}
-                                      paddingAngle={2}
-                                      dataKey="value"
-                                    >
-                                      {assetTypeData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                      ))}
-                                    </Pie>
-                                    <Tooltip 
-                                      formatter={(value, name) => [value, name]}
-                                      contentStyle={{ 
-                                        backgroundColor: 'white', 
-                                        border: '1px solid #e5e7eb',
-                                        borderRadius: '6px'
-                                      }}
-                                    />
-                                    <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-gray-700">
-                                      <tspan x="50%" dy="-0.5em" className="text-sm font-medium">Total:</tspan>
-                                      <tspan x="50%" dy="1.2em" className="text-lg font-bold">{assetTypeData.reduce((sum, entry) => sum + entry.value, 0)}</tspan>
-                                    </text>
-                                  </PieChart>
-                                </ResponsiveContainer>
-                              </div>
-
-                              {/* Legend */}
-                              <div className="flex justify-center gap-4">
-                                {assetTypeData.map((item, index) => (
-                                  <div key={index} className="flex items-center gap-2">
-                                    <div 
-                                      className="w-3 h-3 rounded-sm" 
-                                      style={{ backgroundColor: item.color }}
-                                    />
-                                    <span className="text-sm text-gray-700 font-medium">{item.name}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+                            <DonutChartGrid />
                           </SortableChartItem>
                         );
                       }
