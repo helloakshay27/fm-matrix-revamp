@@ -187,40 +187,40 @@ export function RecentTicketsSidebar() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-1 sm:gap-2 lg:gap-2 xl:gap-1 2xl:gap-2">
+              <div className="grid grid-cols-3 gap-1 sm:gap-2 lg:gap-3">
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="text-xs xl:text-xs 2xl:text-sm border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-1))]/20 hover:border-[hsl(var(--analytics-chart-1))] min-w-0 px-1 sm:px-2 xl:px-1 2xl:px-2"
+                  className="text-xs lg:text-sm border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-1))]/20 hover:border-[hsl(var(--analytics-chart-1))] min-w-0 px-2 lg:px-3"
                   onClick={() => handleAddComment(ticket.id)}
                 >
-                  <MessageSquare className="h-3 w-3 xl:h-3 xl:w-3 2xl:h-4 2xl:w-4 mr-0.5 sm:mr-1 flex-shrink-0" />
-                  <span className="hidden sm:inline xl:hidden 2xl:inline">Comment</span>
-                  <span className="sm:hidden xl:inline 2xl:hidden">Add</span>
+                  <MessageSquare className="h-3 w-3 lg:h-4 lg:w-4 mr-1 flex-shrink-0" />
+                  <span className="hidden sm:inline lg:inline">Comment</span>
+                  <span className="sm:hidden lg:hidden">Add</span>
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className={`text-xs xl:text-xs 2xl:text-sm border-[hsl(var(--analytics-border))] hover:bg-[hsl(var(--analytics-chart-2))]/20 hover:border-[hsl(var(--analytics-chart-2))] min-w-0 px-1 sm:px-2 xl:px-1 2xl:px-2 ${
+                  className={`text-xs lg:text-sm border-[hsl(var(--analytics-border))] hover:bg-[hsl(var(--analytics-chart-2))]/20 hover:border-[hsl(var(--analytics-chart-2))] min-w-0 px-2 lg:px-3 ${
                     flaggedTickets.has(ticket.id) 
                       ? 'bg-[hsl(var(--analytics-error))]/20 text-[hsl(var(--analytics-error))] border-[hsl(var(--analytics-error))]' 
                       : 'text-[hsl(var(--analytics-text))]'
                   }`}
                   onClick={() => handleFlag(ticket.id)}
                 >
-                  <Flag className="h-3 w-3 xl:h-3 xl:w-3 2xl:h-4 2xl:w-4 mr-0.5 sm:mr-1 flex-shrink-0" />
-                  <span className="hidden sm:inline xl:hidden 2xl:inline">Flag</span>
-                  <span className="sm:hidden xl:inline 2xl:hidden">F</span>
+                  <Flag className="h-3 w-3 lg:h-4 lg:w-4 mr-1 flex-shrink-0" />
+                  <span className="hidden sm:inline lg:inline">Flag</span>
+                  <span className="sm:hidden lg:hidden">F</span>
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="text-xs xl:text-xs 2xl:text-sm border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-3))]/20 hover:border-[hsl(var(--analytics-chart-3))] min-w-0 px-1 sm:px-2 xl:px-1 2xl:px-2"
+                  className="text-xs lg:text-sm border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-chart-3))]/20 hover:border-[hsl(var(--analytics-chart-3))] min-w-0 px-2 lg:px-3"
                   onClick={() => handleViewDetails(ticket.id)}
                 >
-                  <Eye className="h-3 w-3 xl:h-3 xl:w-3 2xl:h-4 2xl:w-4 mr-0.5 sm:mr-1 flex-shrink-0" />
-                  <span className="hidden sm:inline xl:hidden 2xl:inline">View</span>
-                  <span className="sm:hidden xl:inline 2xl:hidden">V</span>
+                  <Eye className="h-3 w-3 lg:h-4 lg:w-4 mr-1 flex-shrink-0" />
+                  <span className="hidden sm:inline lg:inline">View</span>
+                  <span className="sm:hidden lg:hidden">V</span>
                 </Button>
               </div>
             </div>
