@@ -70,6 +70,14 @@
   }
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE/Edge */
+  scrollbar-width: none !important;    /* Firefox */
+}
+
 /* Comprehensive Date Picker - Exact Design Implementation */
 .date-picker-container {
   /* Container dimensions - exact measurements */

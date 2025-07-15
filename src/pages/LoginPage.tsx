@@ -1,101 +1,116 @@
-
-import React, { useState } from 'react';
-import { TextField } from '@mui/material';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building2, Check } from 'lucide-react';
+import { useState } from "react";
+import { TextField } from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Building2, Check } from "lucide-react";
+import { useAppDispatch } from "@/hooks/slice-hooks";
+import { login, oaganizationsByEmail } from "@/redux/login/loginSlice";
+import { useNavigate } from "react-router-dom";
 
 const muiFieldStyles = {
-  width: '100%',
-  marginBottom: '16px',
-  '& .MuiOutlinedInput-root': {
-    height: '56px',
-    borderRadius: '28px',
-    backgroundColor: '#FFFFFF',
-    '& fieldset': {
-      borderColor: 'transparent'
+  width: "100%",
+  marginBottom: "16px",
+  "& .MuiOutlinedInput-root": {
+    height: "56px",
+    borderRadius: "28px",
+    backgroundColor: "#FFFFFF",
+    "& fieldset": {
+      borderColor: "transparent",
     },
-    '&:hover fieldset': {
-      borderColor: 'transparent'
+    "&:hover fieldset": {
+      borderColor: "transparent",
     },
-    '&.Mui-focused fieldset': {
-      borderColor: 'transparent'
-    }
+    "&.Mui-focused fieldset": {
+      borderColor: "transparent",
+    },
   },
-  '& .MuiInputLabel-root': {
-    color: '#999999',
-    fontSize: '16px',
-    '&.Mui-focused': {
-      color: '#999999'
-    }
+  "& .MuiInputLabel-root": {
+    color: "#999999",
+    fontSize: "16px",
+    "&.Mui-focused": {
+      color: "#999999",
+    },
   },
-  '& .MuiOutlinedInput-input': {
-    color: '#333333',
-    fontSize: '16px',
-    padding: '16px 20px',
-    '&::placeholder': {
-      color: '#999999',
-      opacity: 1
-    }
-  }
+  "& .MuiOutlinedInput-input": {
+    color: "#333333",
+    fontSize: "16px",
+    padding: "16px 20px",
+    "&::placeholder": {
+      color: "#999999",
+      opacity: 1,
+    },
+  },
 };
 
-interface Organization {
-  id: string;
+export interface Organization {
+  id: number;
   name: string;
-  logo?: string;
+  active: boolean;
+  created_by_id: number;
+  logo?: {
+    url: string;
+  } | null;
+  created_at: string; // ISO date string
+  updated_at: string; // ISO date string
+  domain: string;
+  sub_domain: string;
+  country_id: number | null;
   description?: string;
 }
 
-const mockOrganizations: Organization[] = [
-  {
-    id: '1',
-    name: 'Tech Solutions Inc.',
-    description: 'Technology & Software'
-  },
-  {
-    id: '2',
-    name: 'Global Manufacturing Co.',
-    description: 'Manufacturing & Production'
-  },
-  {
-    id: '3',
-    name: 'Healthcare Partners',
-    description: 'Healthcare Services'
-  }
-];
-
 export const LoginPage = () => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const [currentStep, setCurrentStep] = useState(1);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [selectedOrganization, setSelectedOrganization] =
+    useState<Organization | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEmailSubmit = async () => {
     if (!email) return;
-    
+
     setIsLoading(true);
     // Simulate API call to fetch organizations
-    setTimeout(() => {
-      setOrganizations(mockOrganizations);
+    try {
+      const response = await dispatch(oaganizationsByEmail({ email })).unwrap();
+      setOrganizations(response);
       setCurrentStep(2);
       setIsLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleOrganizationSelect = (org: Organization) => {
+    localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     setSelectedOrganization(org);
     setCurrentStep(3);
   };
 
-  const handleLogin = () => {
-    console.log('Login attempt:', { 
-      email, 
-      organization: selectedOrganization?.name, 
-      password 
-    });
-    // Add your final login logic here
+  const handleLogin = async () => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (baseUrl) {
+      try {
+        setIsLoading(true);
+        const response = await dispatch(login({ baseUrl, email, password })).unwrap();
+        localStorage.setItem("token", response.access_token);
+        const user = {
+          id: response.id,
+          email: response.email,
+          firstname: response.firstname,
+          lastname: response.lastname,
+        };
+        localStorage.setItem("user", JSON.stringify(user));
+        navigate("/");
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   const handleBack = () => {
@@ -114,21 +129,18 @@ export const LoginPage = () => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step === currentStep
-                ? 'bg-yellow-500 text-black'
-                : step < currentStep
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-300 text-gray-600'
-            }`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === currentStep
+              ? "bg-yellow-500 text-black"
+              : step < currentStep
+                ? "bg-green-500 text-white"
+                : "bg-gray-300 text-gray-600"
+              }`}
           >
             {step < currentStep ? <Check size={16} /> : step}
           </div>
         ))}
       </div>
-      <p className="text-gray-300 text-sm">
-        Step {currentStep} of 3
-      </p>
+      <p className="text-gray-300 text-sm">Step {currentStep} of 3</p>
     </div>
   );
 
@@ -144,14 +156,14 @@ export const LoginPage = () => {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         sx={muiFieldStyles}
-        onKeyPress={(e) => e.key === 'Enter' && handleEmailSubmit()}
+        onKeyPress={(e) => e.key === "Enter" && handleEmailSubmit()}
       />
       <Button
         onClick={handleEmailSubmit}
         disabled={!email || isLoading}
         className="w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-full text-lg"
       >
-        {isLoading ? 'Finding Organizations...' : 'CONTINUE'}
+        {isLoading ? "Finding Organizations..." : "CONTINUE"}
       </Button>
     </>
   );
@@ -174,8 +186,8 @@ export const LoginPage = () => {
       <p className="text-gray-300 text-sm mb-6">
         Email: <span className="text-white">{email}</span>
       </p>
-      
-      <div className="space-y-3 mb-6">
+
+      <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto no-scrollbar">
         {organizations.map((org) => (
           <div
             key={org.id}
@@ -185,6 +197,11 @@ export const LoginPage = () => {
             <div className="flex items-center">
               <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mr-4">
                 <Building2 className="text-black" size={24} />
+                {/* <img
+                  src={`https://uat.lockated.com/${org.logo.url}`}
+                  className="w-full h-full"
+                  alt=""
+                /> */}
               </div>
               <div>
                 <h3 className="text-white font-medium">{org.name}</h3>
@@ -196,7 +213,7 @@ export const LoginPage = () => {
           </div>
         ))}
       </div>
-      
+
       {organizations.length === 0 && (
         <div className="text-center text-gray-300 py-8">
           <p>No organizations found for this email address.</p>
@@ -220,7 +237,7 @@ export const LoginPage = () => {
           Enter Password
         </h2>
       </div>
-      
+
       {selectedOrganization && (
         <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 mb-6">
           <div className="flex items-center">
@@ -228,7 +245,9 @@ export const LoginPage = () => {
               <Building2 className="text-black" size={20} />
             </div>
             <div>
-              <h3 className="text-white font-medium">{selectedOrganization.name}</h3>
+              <h3 className="text-white font-medium">
+                {selectedOrganization.name}
+              </h3>
               <p className="text-gray-300 text-sm">{email}</p>
             </div>
           </div>
@@ -242,16 +261,16 @@ export const LoginPage = () => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         sx={muiFieldStyles}
-        onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+        onKeyPress={(e) => e.key === "Enter" && handleLogin()}
       />
 
       {/* Terms and Privacy */}
       <div className="text-center text-sm text-gray-300 mb-6">
-        By clicking Log in you are accepting our{' '}
+        By clicking Log in you are accepting our{" "}
         <span className="text-blue-300 hover:underline cursor-pointer">
           Privacy Policy
-        </span>{' '}
-        & agree to the{' '}
+        </span>{" "}
+        & agree to the{" "}
         <span className="text-blue-300 hover:underline cursor-pointer">
           Terms & Conditions
         </span>
@@ -261,7 +280,7 @@ export const LoginPage = () => {
       {/* Login Button */}
       <Button
         onClick={handleLogin}
-        disabled={!password}
+        disabled={!password || isLoading}
         className="w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-full text-lg"
       >
         LOGIN
@@ -279,21 +298,21 @@ export const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('https://images.pexels.com/photos/6493936/pexels-photo-6493936.jpeg')`
+          backgroundImage: `url('https://images.pexels.com/photos/6493936/pexels-photo-6493936.jpeg')`,
         }}
       />
-      
+
       {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-30" />
-      
+
       {/* Login Card */}
       <div className="relative z-10 bg-slate-700 bg-opacity-90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
+          <img
             src="https://app.lockated.com/assets/logo-87235e425cea36e6c4c9386959ec756051a0331c3a77aa6826425c1d9fabf82e.png"
             alt="Lockated Logo"
             className="mx-auto mb-4 h-20 w-auto"
