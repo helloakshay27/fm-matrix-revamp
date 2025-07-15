@@ -3261,7 +3261,7 @@ export const EditAssetDetailsPage = () => {
                           const input = document.querySelector('input[type="file"]') as HTMLInputElement;
                           input?.click();
                         }}
-                        className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+                        className="flex items-center gap-2 bg-[#f6f4ee] text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-[#e8e5d9] transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                         Upload Files
@@ -3303,7 +3303,7 @@ export const EditAssetDetailsPage = () => {
                           <span className="text-gray-500 font-normal">No file chosen</span>
                         </span>
                       </label>
-                      <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                      <button className="flex items-center gap-2 bg-[#f6f4ee] text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-[#e8e5d9] transition-colors">
                         <Plus className="w-4 h-4" />
                         Upload Files
                       </button>
@@ -3344,7 +3344,7 @@ export const EditAssetDetailsPage = () => {
                           <span className="text-gray-500 font-normal">No file chosen</span>
                         </span>
                       </label>
-                      <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                      <button className="flex items-center gap-2 bg-[#f6f4ee] text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-[#e8e5d9] transition-colors">
                         <Plus className="w-4 h-4" />
                         Upload Files
                       </button>
@@ -3385,7 +3385,7 @@ export const EditAssetDetailsPage = () => {
                           <span className="text-gray-500 font-normal">No file chosen</span>
                         </span>
                       </label>
-                      <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
+                      <button className="flex items-center gap-2 bg-[#f6f4ee] text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-[#e8e5d9] transition-colors">
                         <Plus className="w-4 h-4" />
                         Upload Files
                       </button>
