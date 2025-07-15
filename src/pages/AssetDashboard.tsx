@@ -169,63 +169,69 @@ export const AssetDashboard = () => {
           {/* Analytics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
             {/* Total Assets Available */}
-            <div className="bg-gradient-to-br from-orange-400 to-purple-600 p-4 rounded-lg text-white">
-              <div className="flex items-center justify-between mb-2">
-                <Package className="w-6 h-6" />
-                <span className="text-xs opacity-90">Total</span>
+            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+                <Package className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <div className="text-xs opacity-90">Total Assets Available</div>
+              <div>
+                <div className="text-2xl font-bold text-[#C72030]">{stats.total}</div>
+                <div className="text-sm text-gray-600">Total Assets</div>
+              </div>
             </div>
 
             {/* Asset In Use */}
-            <div className="bg-gradient-to-br from-green-400 to-green-600 p-4 rounded-lg text-white">
-              <div className="flex items-center justify-between mb-2">
-                <Activity className="w-6 h-6" />
-                <span className="text-xs opacity-90">Active</span>
+            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+                <Activity className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-2xl font-bold">{stats.inUse}</div>
-              <div className="text-xs opacity-90">Asset In Use</div>
+              <div>
+                <div className="text-2xl font-bold text-[#C72030]">{stats.inUse}</div>
+                <div className="text-sm text-gray-600">Asset In Use</div>
+              </div>
             </div>
 
             {/* Asset In Breakdown */}
-            <div className="bg-gradient-to-br from-red-500 to-red-700 p-4 rounded-lg text-white">
-              <div className="flex items-center justify-between mb-2">
-                <AlertTriangle className="w-6 h-6" />
-                <span className="text-xs opacity-90">Issues</span>
+            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-2xl font-bold">{stats.breakdown}</div>
-              <div className="text-xs opacity-90">Asset In Breakdown</div>
+              <div>
+                <div className="text-2xl font-bold text-[#C72030]">{stats.breakdown}</div>
+                <div className="text-sm text-gray-600">Asset In Breakdown</div>
+              </div>
             </div>
 
             {/* Critical Assets In Breakdown */}
-            <div className="bg-gradient-to-br from-red-600 to-purple-700 p-4 rounded-lg text-white">
-              <div className="flex items-center justify-between mb-2">
-                <Zap className="w-6 h-6" />
-                <span className="text-xs opacity-90">Critical</span>
+            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+                <Zap className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-2xl font-bold">15</div>
-              <div className="text-xs opacity-90">Critical Assets In Breakdown</div>
+              <div>
+                <div className="text-2xl font-bold text-[#C72030]">15</div>
+                <div className="text-sm text-gray-600">Critical Assets In Breakdown</div>
+              </div>
             </div>
 
             {/* PPM Overdue */}
-            <div className="bg-gradient-to-br from-red-500 to-purple-600 p-4 rounded-lg text-white">
-              <div className="flex items-center justify-between mb-2">
-                <Wrench className="w-6 h-6" />
-                <span className="text-xs opacity-90">PPM</span>
+            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+                <Wrench className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-2xl font-bold">0</div>
-              <div className="text-xs opacity-90">PPM Overdue</div>
+              <div>
+                <div className="text-2xl font-bold text-[#C72030]">0</div>
+                <div className="text-sm text-gray-600">PPM Overdue</div>
+              </div>
             </div>
 
             {/* Customer Average */}
-            <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-lg text-white">
-              <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-6 h-6" />
-                <span className="text-xs opacity-90">Rating</span>
+            <div className="bg-[#F8F4F4] p-4 rounded-lg flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-2xl font-bold">0</div>
-              <div className="text-xs opacity-90">Customer Average</div>
+              <div>
+                <div className="text-2xl font-bold text-[#C72030]">0</div>
+                <div className="text-sm text-gray-600">Customer Average</div>
+              </div>
             </div>
           </div>
 
