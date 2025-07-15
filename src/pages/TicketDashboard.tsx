@@ -371,7 +371,36 @@ export const TicketDashboard = () => {
                           outerRadius={100}
                           paddingAngle={2}
                           dataKey="value"
-                          label={({ value, name }) => name === 'Open' ? '2' : value}
+                          label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                            if (name === 'Open') {
+                              return (
+                                <text 
+                                  x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                  y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                  fill="black"
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fontSize="16"
+                                  fontWeight="bold"
+                                >
+                                  2
+                                </text>
+                              );
+                            }
+                            return (
+                              <text 
+                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                fill="black"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize="16"
+                                fontWeight="bold"
+                              >
+                                {value}
+                              </text>
+                            );
+                          }}
                           labelLine={false}
                         >
                           {statusData.map((entry, index) => (
