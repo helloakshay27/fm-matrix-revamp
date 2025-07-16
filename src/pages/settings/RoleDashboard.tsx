@@ -410,8 +410,8 @@ export const RoleDashboard = () => {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        currentPermissions.map((permission) => (
-                        <TableRow key={permission.name} className="hover:bg-gray-50">
+                        currentPermissions.map((permission, index) => (
+                        <TableRow key={`${currentRole?.id}-${activeTab}-${permission.name}-${index}`} className="hover:bg-gray-50">
                           <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
                             {permission.name}
                           </TableCell>
