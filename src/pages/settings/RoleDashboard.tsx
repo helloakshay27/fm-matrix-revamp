@@ -309,8 +309,8 @@ export const RoleDashboard = () => {
         lock_modules: null
       };
 
-      // Make PUT request
-      const response = await fetch('https://fm-uat-api.lockated.com/lock_functions.json', {
+      // Make PATCH request
+      const response = await fetch(`https://fm-uat-api.lockated.com/lock_roles/${selectedRole.id}.json`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
