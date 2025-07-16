@@ -396,6 +396,8 @@ import { BuildingPage } from './pages/master/BuildingPage';
 import { WingPage } from './pages/master/WingPage';
 import { AreaPage } from './pages/master/AreaPage';
 import { FloorPage } from './pages/master/FloorPage';
+import { UnitPage } from './pages/master/UnitPage';
+import { RoomPage } from './pages/master/RoomPage';
 
 // Import Address Master page
 import { AddressMasterPage } from './pages/AddressMasterPage';
@@ -760,6 +762,8 @@ function App() {
                <Route path="/master/location/wing" element={<WingPage />} />
                <Route path="/master/location/area" element={<AreaPage />} />
                <Route path="/master/location/floor" element={<FloorPage />} />
+               <Route path="/master/location/unit" element={<UnitPage />} />
+               <Route path="/master/location/room" element={<RoomPage />} />
 
                <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
                <Route path="maintenance/task" element={<ScheduledTaskDashboard />} />
