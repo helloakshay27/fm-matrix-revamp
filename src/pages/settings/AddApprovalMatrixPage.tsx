@@ -133,6 +133,7 @@ const AddApprovalMatrixPage = () => {
           <FormControl fullWidth>
             <InputLabel 
               required
+              shrink={true}
               sx={{ 
                 color: '#1a1a1a',
                 '&.Mui-focused': { color: '#C72030' }
@@ -185,6 +186,7 @@ const AddApprovalMatrixPage = () => {
                     value={level.order}
                     type="number"
                     InputProps={{ readOnly: true }}
+                    InputLabelProps={{ shrink: true }}
                     size="small"
                     fullWidth
                     sx={{
@@ -206,6 +208,7 @@ const AddApprovalMatrixPage = () => {
                     placeholder="Enter Name of Level"
                     value={level.name}
                     onChange={(e) => updateApprovalLevel(index, 'name', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
                     size="small"
                     fullWidth
                     sx={{
@@ -224,6 +227,7 @@ const AddApprovalMatrixPage = () => {
                   <FormControl fullWidth size="small">
                     <InputLabel 
                       required
+                      shrink={true}
                       sx={{ 
                         color: '#1a1a1a',
                         '&.Mui-focused': { color: '#C72030' }
