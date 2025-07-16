@@ -198,6 +198,11 @@ export const AddSchedulePage = () => {
   const [selectedDatesOfMonth, setSelectedDatesOfMonth] = useState<number[]>([]);
   const [daySelectionType, setDaySelectionType] = useState<'weekdays' | 'dates'>('weekdays');
   
+  // Month state
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [monthRange, setMonthRange] = useState({ start: 'January', end: 'January' });
+  const [everyMonthBetween, setEveryMonthBetween] = useState(false);
+  
   // Attachments
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   
@@ -314,6 +319,22 @@ export const AddSchedulePage = () => {
       setSelectedDaysOfWeek(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
     } else {
       setSelectedDaysOfWeek([]);
+    }
+  };
+  
+  const toggleMonth = (month: string) => {
+    setSelectedMonths(prev => 
+      prev.includes(month) 
+        ? prev.filter(m => m !== month)
+        : [...prev, month]
+    );
+  };
+  
+  const toggleAllMonths = (checked: boolean) => {
+    if (checked) {
+      setSelectedMonths(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']);
+    } else {
+      setSelectedMonths([]);
     }
   };
   
@@ -1160,6 +1181,99 @@ export const AddSchedulePage = () => {
                         labelPlacement="end"
                       />
                     ))}
+                  </Box>
+                </Box>
+              )}
+
+              {timeTab === 3 && (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={!everyMonthBetween}
+                        onChange={() => setEveryMonthBetween(false)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Placeholder"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedMonths.length === 12}
+                        onChange={(e) => toggleAllMonths(e.target.checked)}
+                        sx={{ 
+                          color: '#C72030', 
+                          '&.Mui-checked': { color: '#C72030' }
+                        }}
+                      />
+                    }
+                    label="Select All"
+                    sx={{ mb: 2, display: 'block' }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1, mb: 3 }}>
+                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
+                      <FormControlLabel
+                        key={month}
+                        control={
+                          <Checkbox
+                            checked={selectedMonths.includes(month)}
+                            onChange={() => toggleMonth(month)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={month}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={everyMonthBetween}
+                        onChange={() => setEveryMonthBetween(true)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Every month between"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                    <FormControl size="small">
+                      <Select 
+                        value={monthRange.start} 
+                        onChange={(e) => setMonthRange({...monthRange, start: e.target.value})}
+                        displayEmpty
+                      >
+                        {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
+                          <MenuItem key={month} value={month}>{month}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    
+                    <Typography>and</Typography>
+                    
+                    <FormControl size="small">
+                      <Select 
+                        value={monthRange.end} 
+                        onChange={(e) => setMonthRange({...monthRange, end: e.target.value})}
+                        displayEmpty
+                      >
+                        {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
+                          <MenuItem key={month} value={month}>{month}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </Box>
                 </Box>
               )}
