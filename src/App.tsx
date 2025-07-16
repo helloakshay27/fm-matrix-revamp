@@ -415,6 +415,10 @@ import { RoomPage } from './pages/master/RoomPage';
 // Import Address Master page
 import { AddressMasterPage } from './pages/AddressMasterPage';
 
+// Import new master pages
+import { ChecklistMasterPage } from './pages/ChecklistMasterPage';
+import { UnitMasterByDefaultPage } from './pages/UnitMasterByDefaultPage';
+
 // Import Add Address page
 import { AddAddressPage } from './pages/AddAddressPage';
 
@@ -483,16 +487,21 @@ function App() {
               <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
               <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsPage />} />
 
-              {/* Settings Masters Routes */}
-              <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
-              <Route path="/settings/masters/checklist-master" element={<ChecklistMasterDashboard />} />
-              <Route path="/settings/masters/checklist-master/add" element={<AddChecklistMasterPage />} />
-              <Route path="/settings/masters/checklist-master/edit/:id" element={<EditChecklistMasterPage />} />
-              <Route path="/settings/masters/checklist-master/view/:id" element={<ViewChecklistMasterPage />} />
-              <Route path="/settings/masters/unit" element={<UnitMasterPage />} />
-              <Route path="/settings/masters/address" element={<AddressMasterPage />} />
-              <Route path="/settings/masters/address/add" element={<AddAddressPage />} />
-              <Route path="/settings/masters/address/edit" element={<EditAddressPage />} />
+               {/* Settings Masters Routes */}
+               <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
+               <Route path="/settings/masters/checklist-master" element={<ChecklistMasterDashboard />} />
+               <Route path="/settings/masters/checklist-master/add" element={<AddChecklistMasterPage />} />
+               <Route path="/settings/masters/checklist-master/edit/:id" element={<EditChecklistMasterPage />} />
+               <Route path="/settings/masters/checklist-master/view/:id" element={<ViewChecklistMasterPage />} />
+               <Route path="/settings/masters/unit" element={<UnitMasterPage />} />
+               <Route path="/settings/masters/address" element={<AddressMasterPage />} />
+               <Route path="/settings/masters/address/add" element={<AddAddressPage />} />
+               <Route path="/settings/masters/address/edit" element={<EditAddressPage />} />
+
+               {/* Master Routes */}
+               <Route path="/master/checklist" element={<ChecklistMasterPage />} />
+               <Route path="/master/address" element={<AddressMasterPage />} />
+               <Route path="/master/unit-default" element={<UnitMasterByDefaultPage />} />
 
               {/* CRM Routes */}
               <Route path="/crm/campaign" element={<CRMCampaignPage />} />
