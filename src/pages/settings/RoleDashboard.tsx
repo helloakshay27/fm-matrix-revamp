@@ -148,6 +148,9 @@ export const RoleDashboard = () => {
       roles.forEach(role => {
         // Only reinitialize if this role doesn't have permissions yet
         if (!rolePermissions[role.id]) {
+          console.log('Initializing permissions for role:', role.name, 'ID:', role.id);
+          console.log('Raw permissions_hash:', role.permissions_hash);
+          
           initialPermissions[role.id] = {};
           
           // Parse permissions_hash from API
@@ -157,6 +160,7 @@ export const RoleDashboard = () => {
             const parsedData = JSON.parse(permissionsHashValue);
             // Handle case where JSON.parse returns null (when permissions_hash is "null" string)
             rolePermissionsData = parsedData && typeof parsedData === 'object' ? parsedData : {};
+            console.log('Parsed permissions data:', rolePermissionsData);
           } catch (error) {
             console.error('Error parsing permissions_hash for role:', role.name, error);
             rolePermissionsData = {};
@@ -173,6 +177,7 @@ export const RoleDashboard = () => {
                 // First try direct match with function name
                 if (rolePermissionsData[func.name]) {
                   apiPermissions = rolePermissionsData[func.name];
+                  console.log(`Direct match for ${func.name}:`, apiPermissions);
                 } else {
                   // Try to find by reverse mapping - look for API key that maps to this function name
                   const apiKey = Object.keys(rolePermissionsData).find(key => 
@@ -180,10 +185,13 @@ export const RoleDashboard = () => {
                   );
                   if (apiKey) {
                     apiPermissions = rolePermissionsData[apiKey];
+                    console.log(`Mapped match for ${func.name} (${apiKey}):`, apiPermissions);
+                  } else {
+                    console.log(`No match found for function: ${func.name}`);
                   }
                 }
                 
-                return {
+                const permission = {
                   name: func.name,
                   all: apiPermissions.all === "true",
                   add: apiPermissions.create === "true", 
@@ -191,6 +199,9 @@ export const RoleDashboard = () => {
                   edit: apiPermissions.update === "true",
                   disable: apiPermissions.destroy === "true"
                 };
+                
+                console.log(`Final permission for ${func.name}:`, permission);
+                return permission;
               });
           });
         }
