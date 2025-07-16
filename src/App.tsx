@@ -438,6 +438,7 @@ import BookingListDashboard from './pages/BookingListDashboard';
 // Import Booking Setup Dashboard
 import { BookingSetupDashboard } from './pages/BookingSetupDashboard';
 import { BookingSetupDetailPage } from './pages/BookingSetupDetailPage';
+import { AddBookingSetupPage } from './pages/AddBookingSetupPage';
 
 // Import Add Facility Booking page
 import { AddFacilityBookingPage } from './pages/AddFacilityBookingPage';
@@ -829,6 +830,7 @@ function App() {
               <Route path="/settings/safety/incident" element={<IncidentSetupDashboard />} />
                <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
                <Route path="/settings/vas/booking/setup" element={<BookingSetupDashboard />} />
+               <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
             </Route>
 

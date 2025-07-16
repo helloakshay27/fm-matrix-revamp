@@ -76,7 +76,7 @@ export const BookingSetupDashboard = () => {
     fetchBookingSetupData();
   }, []);
   const handleAddBooking = () => {
-    setIsAddBookingOpen(true);
+    navigate('/settings/vas/booking/setup/add');
   };
   const handleStatusToggle = (id: string) => {
     setBookingSetupData(prevData => prevData.map(booking => booking.id === id ? {
