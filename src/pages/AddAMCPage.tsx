@@ -28,10 +28,20 @@ export const AddAMCPage = () => {
     invoices: [] as File[]
   });
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      // Clear the assetName when switching between Asset and Service
+      if (field === 'details' && prev.details !== value) {
+        return {
+          ...prev,
+          [field]: value,
+          assetName: ''
+        };
+      }
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
   };
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
     if (files) {
@@ -139,16 +149,30 @@ export const AddAMCPage = () => {
             </div>
 
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
-                <MuiSelect labelId="asset-select-label" label="Assets" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select an Option...</em></MenuItem>
-                  <MenuItem value="adani-electric-meter">Adani Electric Meter</MenuItem>
-                  <MenuItem value="laptop-dell">Laptop Dell Vostro</MenuItem>
-                  <MenuItem value="samsung">Samsung</MenuItem>
-                  <MenuItem value="vinayak-testing-1">Vinayak Testing 1</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              {formData.details === 'Asset' ? (
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
+                  <MuiSelect labelId="asset-select-label" label="Assets" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
+                    <MenuItem value=""><em>Select an Option...</em></MenuItem>
+                    <MenuItem value="adani-electric-meter">Adani Electric Meter</MenuItem>
+                    <MenuItem value="laptop-dell">Laptop Dell Vostro</MenuItem>
+                    <MenuItem value="samsung">Samsung</MenuItem>
+                    <MenuItem value="vinayak-testing-1">Vinayak Testing 1</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              ) : (
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="service-select-label" shrink>Service</InputLabel>
+                  <MuiSelect labelId="service-select-label" label="Service" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
+                    <MenuItem value=""><em>Select a Service...</em></MenuItem>
+                    <MenuItem value="maintenance-service">Maintenance Service</MenuItem>
+                    <MenuItem value="repair-service">Repair Service</MenuItem>
+                    <MenuItem value="cleaning-service">Cleaning Service</MenuItem>
+                    <MenuItem value="security-service">Security Service</MenuItem>
+                    <MenuItem value="hvac-service">HVAC Service</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              )}
             </div>
 
             <div>
