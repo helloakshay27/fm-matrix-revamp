@@ -140,6 +140,89 @@ export const RoleDashboard = () => {
     return mapping[apiKey] || apiKey;
   };
 
+  // Helper function to map function name back to API key
+  const mapFunctionNameToApiKey = (functionName: string): string => {
+    const reverseMapping: { [key: string]: string } = {
+      'Broadcast': 'pms_notices',
+      'Tickets': 'pms_complaints', 
+      'Documents': 'pms_documents',
+      'Supplier': 'pms_supplier',
+      'Tasks': 'pms_tasks',
+      'Service': 'pms_services',
+      'Meters': 'pms_energy',
+      'AMC': 'pms_asset_amcs',
+      'Asset': 'pms_assets',
+      'Materials': 'pms_materials',
+      'PO': 'pms_purchase_orders',
+      'WO': 'pms_work_orders',
+      'Report': 'pms_complaint_reports',
+      'Attendance': 'pms_attendances',
+      'Business Directory': 'pms_business_directories',
+      'PO Approval': 'pms_purchase_orders_approval',
+      'Dashboard': 'pms_dashboard',
+      'Tracing': 'pms_tracings',
+      'BI Reports': 'pms_bi_reports',
+      'Restaurants': 'pms_restaurants',
+      'My Ledgers': 'pms_my_ledgers',
+      'Letter Of Indent': 'pms_loi',
+      'Wo Invoices': 'pms_work_order_invoices',
+      'Bill': 'pms_bills',
+      'Engineering Reports': 'pms_engineering_reports',
+      'Events': 'pms_events',
+      'Customers': 'customers',
+      'QuickGate Report': 'quikgate_report',
+      'Task Management': 'task_management',
+      'CEO Dashboard': 'pms_ceo_dashboard',
+      'Operational Audit': 'operational_audits',
+      'Mom Details': 'mom_details',
+      'Pms Design Inputs': 'pms_design_inputs',
+      'Vendor Audit': 'vendor_audit',
+      'Permits': 'permits',
+      'Pending Approvals': 'pending_approvals',
+      'Accounts': 'accounts',
+      'Customer Bills': 'customer_bills',
+      'My Bills': 'my_bills',
+      'Water': 'pms_water',
+      'STP': 'pms_stp',
+      'Daily Readings': 'daily_readings',
+      'Utility Consumption': 'utility_consumption',
+      'Utility Request': 'utility_request',
+      'Space': 'space',
+      'Project Management': 'project_management',
+      'Pms Incidents': 'pms_incidents',
+      'Site Dashboard': 'site_dashboard',
+      'Steppstone Dashboard': 'stepathone_dashboard',
+      'Transport': 'transport',
+      'Waste Generation': 'waste_generation',
+      'GDN': 'gdn',
+      'Parking': 'parking',
+      'GDN Dispatch': 'gdn_dispatch',
+      'Inventory': 'pms_inventories',
+      'GRN': 'pms_grns',
+      'SRNS': 'pms_srns',
+      'Consumption': 'pms_consumption',
+      'Account': 'pms_setup',
+      'User & Roles': 'pms_user_roles',
+      'Meter Types': 'pms_meter_types',
+      'Asset Groups': 'pms_asset_groups',
+      'Ticket': 'pms_helpdesk_categories',
+      'Email Rule': 'pms_email_rule_setup',
+      'FM Groups': 'pms_usergroups',
+      'Export': 'pms_export',
+      'SAC/HSN Setup': 'pms_hsns',
+      'Addresses': 'pms_billing_addresses',
+      'Master Checklist': 'pms_master_checklist',
+      'Visitors': 'pms_visitors',
+      'R Vehicles': 'pms_rvehicles',
+      'G Vehicles': 'pms_gvehicles',
+      'Staffs': 'pms_staffs',
+      'Goods In Out': 'goods_in_out',
+      'Patrolling': 'pms_patrolling'
+    };
+    
+    return reverseMapping[functionName] || functionName.toLowerCase().replace(/\s+/g, '_');
+  };
+
   // Initialize permissions for roles when functions are loaded
   useEffect(() => {
     if (functions.length > 0 && roles.length > 0 && !isUpdating) {
@@ -315,7 +398,9 @@ export const RoleDashboard = () => {
       // Build permissions hash for current tab
       const currentTabPermissionsHash: any = {};
       currentTabPermissions.forEach(permission => {
-        currentTabPermissionsHash[permission.name.toLowerCase().replace(/\s+/g, '_')] = {
+        // Use the proper API key mapping instead of lowercase transformation
+        const apiKey = mapFunctionNameToApiKey(permission.name);
+        currentTabPermissionsHash[apiKey] = {
           all: permission.all ? "true" : "false",
           create: permission.add ? "true" : "false", 
           show: permission.view ? "true" : "false",
