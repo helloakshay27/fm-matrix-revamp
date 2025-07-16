@@ -1307,7 +1307,7 @@ export const AddSchedulePage = () => {
         
       case 4: // Mapping
         return (
-          <Box>
+          <Box sx={{ mt: 4 }}>
             {/* Header Outside the Box */}
             <Box sx={{ 
               display: 'flex', 
