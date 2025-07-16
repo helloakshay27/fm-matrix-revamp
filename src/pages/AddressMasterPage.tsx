@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Edit, Plus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -28,9 +29,86 @@ const addressData = [
   }
 ];
 
+interface NewMeterTypeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const NewMeterTypeModal = ({ isOpen, onClose }: NewMeterTypeModalProps) => {
+  const [formData, setFormData] = useState({
+    meterType: '',
+    meterCategory: '',
+    unitName: ''
+  });
+
+  const handleSubmit = () => {
+    console.log('Submitting new meter type:', formData);
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">New Meter Type</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label className="text-sm">Meter Type</Label>
+            <Select value={formData.meterType} onValueChange={(value) => setFormData({...formData, meterType: value})}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select Type" />
+              </SelectTrigger>
+              <SelectContent className="bg-white z-50">
+                <SelectItem value="Digital">Digital</SelectItem>
+                <SelectItem value="Analog">Analog</SelectItem>
+                <SelectItem value="Smart">Smart</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">
+              Meter Category <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              value={formData.meterCategory}
+              onChange={(e) => setFormData({...formData, meterCategory: e.target.value})}
+              className="bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">
+              Unit Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              value={formData.unitName}
+              onChange={(e) => setFormData({...formData, unitName: e.target.value})}
+              placeholder="Enter Unit Name"
+              className="bg-white"
+            />
+          </div>
+
+          <div className="flex justify-center pt-4">
+            <Button 
+              className="bg-[#8B5A99] hover:bg-[#8B5A99]/90 text-white px-8"
+              onClick={handleSubmit}
+            >
+              Submit
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const AddressMasterPage = () => {
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
+  const [newMeterModalOpen, setNewMeterModalOpen] = useState(false);
 
   useEffect(() => {
     setCurrentSection('Master');
@@ -281,7 +359,11 @@ export const AddressMasterPage = () => {
                   <TableCell>{address.createdOn}</TableCell>
                   <TableCell>{address.updatedOn}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setNewMeterModalOpen(true)}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                   </TableCell>
@@ -290,6 +372,11 @@ export const AddressMasterPage = () => {
             </TableBody>
           </Table>
         </div>
+
+        <NewMeterTypeModal
+          isOpen={newMeterModalOpen}
+          onClose={() => setNewMeterModalOpen(false)}
+        />
       </div>
     </div>
   );
