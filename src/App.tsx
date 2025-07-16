@@ -391,6 +391,12 @@ import { ViewChecklistMasterPage } from './pages/ViewChecklistMasterPage';
 // Import Unit Master page
 import { UnitMasterPage } from './pages/UnitMasterPage';
 
+// Import Location Master pages
+import { BuildingPage } from './pages/master/BuildingPage';
+import { WingPage } from './pages/master/WingPage';
+import { AreaPage } from './pages/master/AreaPage';
+import { FloorPage } from './pages/master/FloorPage';
+
 // Import Address Master page
 import { AddressMasterPage } from './pages/AddressMasterPage';
 
@@ -747,12 +753,18 @@ function App() {
               <Route path="/vas/booking/list" element={<BookingListDashboard />} />
               <Route path="/vas/booking/add" element={<AddFacilityBookingPage />} />
               <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
-              <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
+               <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
 
-              <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
-              <Route path="maintenance/task" element={<ScheduledTaskDashboard />} />
-              <Route path="task-details/:id" element={<TaskDetailsPage />} />
-              <Route path="*" element={<NotFound />} />
+               {/* Master Location Routes */}
+               <Route path="/master/location/building" element={<BuildingPage />} />
+               <Route path="/master/location/wing" element={<WingPage />} />
+               <Route path="/master/location/area" element={<AreaPage />} />
+               <Route path="/master/location/floor" element={<FloorPage />} />
+
+               <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
+               <Route path="maintenance/task" element={<ScheduledTaskDashboard />} />
+               <Route path="task-details/:id" element={<TaskDetailsPage />} />
+               <Route path="*" element={<NotFound />} />
             </Route>
 
             {/* Settings Routes */}
