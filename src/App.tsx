@@ -18,6 +18,8 @@ import { AddInvoiceApprovalsPage } from './pages/settings/AddInvoiceApprovalsPag
 
 // Import Asset Groups page
 import { AssetGroupsPage } from './pages/AssetGroupsPage';
+import { AssetGroupsPageNew } from './pages/AssetGroupsPageNew';
+import { ChecklistGroupsPage } from './pages/ChecklistGroupsPage';
 
 // Import Snagging pages
 import { SnaggingDashboard } from './pages/SnaggingDashboard';
@@ -491,7 +493,10 @@ function App() {
 
               {/* Settings Asset Setup Routes */}
               <Route path="/settings/asset-setup/approval-matrix" element={<InvoiceApprovalsPage />} />
-              <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsPage />} />
+              <Route path="/settings/asset-setup/asset-groups" element={<AssetGroupsPageNew />} />
+              
+              {/* Settings Checklist Setup Routes */}
+              <Route path="/settings/checklist-setup/groups" element={<ChecklistGroupsPage />} />
 
                {/* Settings Masters Routes */}
                <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
@@ -820,7 +825,7 @@ function App() {
             <Route path="/settings/approval-matrix/setup/add" element={<AddApprovalMatrixPage />} />
             <Route path="/settings/invoice-approvals/add" element={<AddInvoiceApprovalsPage />} />
 
-              <Route path="/settings/checklist-setup/group" element={<AssetGroupsDashboard />} />
+              <Route path="/settings/checklist-setup/group" element={<ChecklistGroupsPage />} />
               <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
               <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
               <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
