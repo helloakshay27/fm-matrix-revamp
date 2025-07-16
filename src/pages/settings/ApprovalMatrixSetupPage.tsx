@@ -1,10 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Search, Edit } from "lucide-react";
 const ApprovalMatrixSetupPage = () => {
+  const navigate = useNavigate();
+  
   // Mock data for the table
   const approvalData = [{
     id: 198,
@@ -72,7 +75,10 @@ const ApprovalMatrixSetupPage = () => {
 
       {/* Action Bar */}
       <div className="flex justify-between items-center mb-6">
-        <Button className="bg-[#C72030] hover:bg-[#A61B28] text-white">
+        <Button 
+          onClick={() => navigate('/settings/approval-matrix/setup/add')}
+          className="bg-[#C72030] hover:bg-[#A61B28] text-white"
+        >
           + Add
         </Button>
         

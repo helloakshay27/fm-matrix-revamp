@@ -424,6 +424,7 @@ import { AddFacilityBookingPage } from './pages/AddFacilityBookingPage';
 import { AssetGroupsDashboard } from './pages/setup/AssetGroupsDashboard';
 
 import ApprovalMatrixSetupPage from './pages/settings/ApprovalMatrixSetupPage';
+import AddApprovalMatrixPage from './pages/settings/AddApprovalMatrixPage';
 
 import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
 import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
@@ -778,6 +779,7 @@ function App() {
                        <Route path="/settings" element={<Layout><div /></Layout>}>
 
             <Route path="/settings/approval-matrix/setup" element={<ApprovalMatrixSetupPage />} />
+            <Route path="/settings/approval-matrix/setup/add" element={<AddApprovalMatrixPage />} />
 
               <Route path="/settings/checklist-setup/group" element={<AssetGroupsDashboard />} />
               <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
