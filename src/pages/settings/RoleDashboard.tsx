@@ -172,12 +172,38 @@ export const RoleDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all_functions');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [rolePermissions, setRolePermissions] = useState<{ [roleId: number]: { [tab: string]: Permission[] } }>({});
 
   // Fetch roles and functions from API
   useEffect(() => {
     dispatch(fetchRoles());
     dispatch(fetchFunctions());
   }, [dispatch]);
+
+  // Initialize permissions for roles when functions are loaded
+  useEffect(() => {
+    if (functions.length > 0 && roles.length > 0) {
+      const initialPermissions: { [roleId: number]: { [tab: string]: Permission[] } } = {};
+      
+      roles.forEach(role => {
+        initialPermissions[role.id] = {};
+        tabs.forEach(tab => {
+          initialPermissions[role.id][tab] = functions
+            .filter(func => func.parent_function === tab)
+            .map(func => ({
+              name: func.name,
+              all: false,
+              add: false,
+              view: false,
+              edit: false,
+              disable: false
+            }));
+        });
+      });
+      
+      setRolePermissions(initialPermissions);
+    }
+  }, [functions, roles]);
 
   // Get unique parent_function values as tabs
   const tabs = ['all_functions', 'inventory', 'setup', 'quickgate'];
@@ -187,23 +213,11 @@ export const RoleDashboard = () => {
     role.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Transform API functions to permissions format and filter by active tab
-  const getPermissionsForTab = (tab: string): Permission[] => {
-    return functions
-      .filter(func => func.parent_function === tab)
-      .map(func => ({
-        name: func.name,
-        all: false,
-        add: false,
-        view: false,
-        edit: false,
-        disable: false
-      }));
-  };
-
   // Get permissions for the selected role, default to first role if none selected
   const currentRole = selectedRole || roles[0];
-  const currentPermissions = getPermissionsForTab(activeTab);
+  const currentPermissions = currentRole && rolePermissions[currentRole.id] 
+    ? rolePermissions[currentRole.id][activeTab] || []
+    : [];
 
   const handleRoleClick = (role: Role) => {
     setSelectedRole(role);
@@ -220,10 +234,9 @@ export const RoleDashboard = () => {
   };
 
   const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return;
+    if (!rolePermissions[roleId] || !rolePermissions[roleId][activeTab]) return;
 
-    const updatedPermissions = role.permissions[activeTab].map(permission => {
+    const updatedPermissions = rolePermissions[roleId][activeTab].map(permission => {
       if (permission.name === permissionName) {
         const updatedPermission = { ...permission, [field]: value };
         
@@ -258,26 +271,24 @@ export const RoleDashboard = () => {
       return permission;
     });
 
-    // Update Redux state
-    dispatch(updateRolePermissions({
-      roleId,
-      tab: activeTab,
-      permissions: updatedPermissions
+    // Update local state
+    setRolePermissions(prev => ({
+      ...prev,
+      [roleId]: {
+        ...prev[roleId],
+        [activeTab]: updatedPermissions
+      }
     }));
-
-    // Update selected role if it's the one being modified
-    if (selectedRole && selectedRole.id === roleId) {
-      const updatedRole = { ...selectedRole };
-      updatedRole.permissions[activeTab] = updatedPermissions;
-      setSelectedRole(updatedRole);
-    }
   };
 
   const handleUpdatePermissions = () => {
+    if (!currentRole) return;
+    
+    const permissions = rolePermissions[currentRole.id]?.[activeTab] || [];
     console.log('Updating permissions for role:', currentRole);
     console.log('Active tab:', activeTab);
-    console.log('Permissions:', currentPermissions);
-    alert(`Permissions updated for ${currentRole.name} in ${activeTab} tab`);
+    console.log('Permissions:', permissions);
+    alert(`Permissions updated for ${currentRole.name} in ${tabLabels[tabs.indexOf(activeTab)]} tab`);
     // Here you would typically save to backend
   };
 
@@ -419,9 +430,11 @@ export const RoleDashboard = () => {
                             <div className="flex justify-center">
                               <Checkbox
                                 checked={permission.all}
-                                onCheckedChange={(checked) => 
-                                  handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean)
-                                }
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean);
+                                  }
+                                }}
                                 className="w-4 h-4"
                               />
                             </div>
@@ -430,9 +443,11 @@ export const RoleDashboard = () => {
                             <div className="flex justify-center">
                               <Checkbox
                                 checked={permission.add}
-                                onCheckedChange={(checked) => 
-                                  handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean)
-                                }
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean);
+                                  }
+                                }}
                                 className="w-4 h-4"
                               />
                             </div>
@@ -441,9 +456,11 @@ export const RoleDashboard = () => {
                             <div className="flex justify-center">
                               <Checkbox
                                 checked={permission.view}
-                                onCheckedChange={(checked) => 
-                                  handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean)
-                                }
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean);
+                                  }
+                                }}
                                 className="w-4 h-4"
                               />
                             </div>
@@ -452,9 +469,11 @@ export const RoleDashboard = () => {
                             <div className="flex justify-center">
                               <Checkbox
                                 checked={permission.edit}
-                                onCheckedChange={(checked) => 
-                                  handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean)
-                                }
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean);
+                                  }
+                                }}
                                 className="w-4 h-4"
                               />
                             </div>
@@ -463,9 +482,11 @@ export const RoleDashboard = () => {
                             <div className="flex justify-center">
                               <Checkbox
                                 checked={permission.disable}
-                                onCheckedChange={(checked) => 
-                                  handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean)
-                                }
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean);
+                                  }
+                                }}
                                 className="w-4 h-4"
                               />
                             </div>
