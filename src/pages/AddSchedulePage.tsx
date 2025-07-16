@@ -419,181 +419,197 @@ export const AddSchedulePage = () => {
         
       case 1: // Schedule Setup
         return (
-          <SectionCard>
-            <SectionHeader>
-              <RedIcon />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#D42F2F' }}>
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
                 Schedule Setup
               </Typography>
-              <Box sx={{ flex: 1 }} />
-              <IconButton size="small">
-                <Edit fontSize="small" sx={{ color: '#D42F2F' }} />
-              </IconButton>
-            </SectionHeader>
-            
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Checklist Type</Typography>
-              <RadioGroup
-                row
-                value={formData.checklistType}
-                onChange={(e) => setFormData({...formData, checklistType: e.target.value})}
-              >
-                <FormControlLabel 
-                  value="Individual" 
-                  control={<Radio sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }} />} 
-                  label="Individual" 
-                />
-                <FormControlLabel 
-                  value="Asset Group" 
-                  control={<Radio sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }} />} 
-                  label="Asset Group" 
-                />
-                <FormControlLabel 
-                  value="Branching" 
-                  control={<Radio sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }} />} 
-                  label="Branching" 
-                />
-              </RadioGroup>
             </Box>
-            
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-              <FormControl fullWidth>
-                <InputLabel>Asset</InputLabel>
-                <Select value={formData.asset} onChange={(e) => setFormData({...formData, asset: e.target.value})}>
-                  <MenuItem value="">Select Asset</MenuItem>
-                  <MenuItem value="asset1">Asset 1</MenuItem>
-                  <MenuItem value="asset2">Asset 2</MenuItem>
-                </Select>
-              </FormControl>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Checklist Type</Typography>
+                <RadioGroup
+                  row
+                  value={formData.checklistType}
+                  onChange={(e) => setFormData({...formData, checklistType: e.target.value})}
+                >
+                  <FormControlLabel 
+                    value="Individual" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Individual" 
+                  />
+                  <FormControlLabel 
+                    value="Asset Group" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Asset Group" 
+                  />
+                  <FormControlLabel 
+                    value="Branching" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Branching" 
+                  />
+                </RadioGroup>
+              </Box>
               
-              <FormControl fullWidth>
-                <InputLabel>Assign To</InputLabel>
-                <Select value={formData.assignTo} onChange={(e) => setFormData({...formData, assignTo: e.target.value})}>
-                  <MenuItem value="">Select Assign To</MenuItem>
-                  <MenuItem value="user1">User 1</MenuItem>
-                  <MenuItem value="user2">User 2</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Backup Assignee</InputLabel>
-                <Select value={formData.backupAssignee} onChange={(e) => setFormData({...formData, backupAssignee: e.target.value})}>
-                  <MenuItem value="">Select Backup Assignee</MenuItem>
-                  <MenuItem value="backup1">Backup 1</MenuItem>
-                  <MenuItem value="backup2">Backup 2</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Plan Duration</InputLabel>
-                <Select value={formData.planDuration} onChange={(e) => setFormData({...formData, planDuration: e.target.value})}>
-                  <MenuItem value="">Select Plan Duration</MenuItem>
-                  <MenuItem value="1h">1 Hour</MenuItem>
-                  <MenuItem value="2h">2 Hours</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Email Trigger Rule</InputLabel>
-                <Select value={formData.emailTriggerRule} onChange={(e) => setFormData({...formData, emailTriggerRule: e.target.value})}>
-                  <MenuItem value="">Select Email Trigger Rule</MenuItem>
-                  <MenuItem value="immediate">Immediate</MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Scan Type</InputLabel>
-                <Select value={formData.scanType} onChange={(e) => setFormData({...formData, scanType: e.target.value})}>
-                  <MenuItem value="">Select Scan Type</MenuItem>
-                  <MenuItem value="qr">QR Code</MenuItem>
-                  <MenuItem value="barcode">Barcode</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
-                  <MenuItem value="">Select Category</MenuItem>
-                  <MenuItem value="maintenance">Maintenance</MenuItem>
-                  <MenuItem value="inspection">Inspection</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Submission Time</InputLabel>
-                <Select value={formData.submissionTime} onChange={(e) => setFormData({...formData, submissionTime: e.target.value})}>
-                  <MenuItem value="">Select Submission Time</MenuItem>
-                  <MenuItem value="9am">9:00 AM</MenuItem>
-                  <MenuItem value="12pm">12:00 PM</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Supervisors</InputLabel>
-                <Select value={formData.supervisors} onChange={(e) => setFormData({...formData, supervisors: e.target.value})}>
-                  <MenuItem value="">Select Supervisors</MenuItem>
-                  <MenuItem value="supervisor1">Supervisor 1</MenuItem>
-                  <MenuItem value="supervisor2">Supervisor 2</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Lock Overdue Task</InputLabel>
-                <Select value={formData.lockOverdueTask} onChange={(e) => setFormData({...formData, lockOverdueTask: e.target.value})}>
-                  <MenuItem value="">Select Lock Status</MenuItem>
-                  <MenuItem value="yes">Yes</MenuItem>
-                  <MenuItem value="no">No</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Frequency</InputLabel>
-                <Select value={formData.frequency} onChange={(e) => setFormData({...formData, frequency: e.target.value})}>
-                  <MenuItem value="">Select Frequency</MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                  <MenuItem value="weekly">Weekly</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Grace Time</InputLabel>
-                <Select value={formData.graceTime} onChange={(e) => setFormData({...formData, graceTime: e.target.value})}>
-                  <MenuItem value="">Select Grace Time</MenuItem>
-                  <MenuItem value="30min">30 Minutes</MenuItem>
-                  <MenuItem value="1h">1 Hour</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>End At</InputLabel>
-                <Select value={formData.endAt} onChange={(e) => setFormData({...formData, endAt: e.target.value})}>
-                  <MenuItem value="">Select End Date</MenuItem>
-                  <MenuItem value="2024-12-31">Dec 31, 2024</MenuItem>
-                  <MenuItem value="2025-06-30">Jun 30, 2025</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Supplier</InputLabel>
-                <Select value={formData.supplier} onChange={(e) => setFormData({...formData, supplier: e.target.value})}>
-                  <MenuItem value="">Select Supplier</MenuItem>
-                  <MenuItem value="supplier1">Supplier 1</MenuItem>
-                  <MenuItem value="supplier2">Supplier 2</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth>
-                <InputLabel>Start From</InputLabel>
-                <Select value={formData.startFrom} onChange={(e) => setFormData({...formData, startFrom: e.target.value})}>
-                  <MenuItem value="">Select Start Date</MenuItem>
-                  <MenuItem value="2024-01-01">Jan 1, 2024</MenuItem>
-                  <MenuItem value="2024-02-01">Feb 1, 2024</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </SectionCard>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Asset</InputLabel>
+                  <Select value={formData.asset} onChange={(e) => setFormData({...formData, asset: e.target.value})}>
+                    <MenuItem value="">Select Asset</MenuItem>
+                    <MenuItem value="asset1">Asset 1</MenuItem>
+                    <MenuItem value="asset2">Asset 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Assign To</InputLabel>
+                  <Select value={formData.assignTo} onChange={(e) => setFormData({...formData, assignTo: e.target.value})}>
+                    <MenuItem value="">Select Assign To</MenuItem>
+                    <MenuItem value="user1">User 1</MenuItem>
+                    <MenuItem value="user2">User 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Backup Assignee</InputLabel>
+                  <Select value={formData.backupAssignee} onChange={(e) => setFormData({...formData, backupAssignee: e.target.value})}>
+                    <MenuItem value="">Select Backup Assignee</MenuItem>
+                    <MenuItem value="backup1">Backup 1</MenuItem>
+                    <MenuItem value="backup2">Backup 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Plan Duration</InputLabel>
+                  <Select value={formData.planDuration} onChange={(e) => setFormData({...formData, planDuration: e.target.value})}>
+                    <MenuItem value="">Select Plan Duration</MenuItem>
+                    <MenuItem value="1h">1 Hour</MenuItem>
+                    <MenuItem value="2h">2 Hours</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Email Trigger Rule</InputLabel>
+                  <Select value={formData.emailTriggerRule} onChange={(e) => setFormData({...formData, emailTriggerRule: e.target.value})}>
+                    <MenuItem value="">Select Email Trigger Rule</MenuItem>
+                    <MenuItem value="immediate">Immediate</MenuItem>
+                    <MenuItem value="daily">Daily</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Scan Type</InputLabel>
+                  <Select value={formData.scanType} onChange={(e) => setFormData({...formData, scanType: e.target.value})}>
+                    <MenuItem value="">Select Scan Type</MenuItem>
+                    <MenuItem value="qr">QR Code</MenuItem>
+                    <MenuItem value="barcode">Barcode</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Category</InputLabel>
+                  <Select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+                    <MenuItem value="">Select Category</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                    <MenuItem value="inspection">Inspection</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Submission Time</InputLabel>
+                  <Select value={formData.submissionTime} onChange={(e) => setFormData({...formData, submissionTime: e.target.value})}>
+                    <MenuItem value="">Select Submission Time</MenuItem>
+                    <MenuItem value="9am">9:00 AM</MenuItem>
+                    <MenuItem value="12pm">12:00 PM</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Supervisors</InputLabel>
+                  <Select value={formData.supervisors} onChange={(e) => setFormData({...formData, supervisors: e.target.value})}>
+                    <MenuItem value="">Select Supervisors</MenuItem>
+                    <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+                    <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Lock Overdue Task</InputLabel>
+                  <Select value={formData.lockOverdueTask} onChange={(e) => setFormData({...formData, lockOverdueTask: e.target.value})}>
+                    <MenuItem value="">Select Lock Status</MenuItem>
+                    <MenuItem value="yes">Yes</MenuItem>
+                    <MenuItem value="no">No</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Frequency</InputLabel>
+                  <Select value={formData.frequency} onChange={(e) => setFormData({...formData, frequency: e.target.value})}>
+                    <MenuItem value="">Select Frequency</MenuItem>
+                    <MenuItem value="daily">Daily</MenuItem>
+                    <MenuItem value="weekly">Weekly</MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Grace Time</InputLabel>
+                  <Select value={formData.graceTime} onChange={(e) => setFormData({...formData, graceTime: e.target.value})}>
+                    <MenuItem value="">Select Grace Time</MenuItem>
+                    <MenuItem value="30min">30 Minutes</MenuItem>
+                    <MenuItem value="1h">1 Hour</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>End At</InputLabel>
+                  <Select value={formData.endAt} onChange={(e) => setFormData({...formData, endAt: e.target.value})}>
+                    <MenuItem value="">Select End Date</MenuItem>
+                    <MenuItem value="2024-12-31">Dec 31, 2024</MenuItem>
+                    <MenuItem value="2025-06-30">Jun 30, 2025</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Supplier</InputLabel>
+                  <Select value={formData.supplier} onChange={(e) => setFormData({...formData, supplier: e.target.value})}>
+                    <MenuItem value="">Select Supplier</MenuItem>
+                    <MenuItem value="supplier1">Supplier 1</MenuItem>
+                    <MenuItem value="supplier2">Supplier 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Start From</InputLabel>
+                  <Select value={formData.startFrom} onChange={(e) => setFormData({...formData, startFrom: e.target.value})}>
+                    <MenuItem value="">Select Start Date</MenuItem>
+                    <MenuItem value="2024-01-01">Jan 1, 2024</MenuItem>
+                    <MenuItem value="2024-02-01">Feb 1, 2024</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </SectionCard>
+          </Box>
         );
         
       case 2: // Question Setup
