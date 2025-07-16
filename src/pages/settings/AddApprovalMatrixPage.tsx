@@ -243,7 +243,7 @@ const AddApprovalMatrixPage = () => {
                       renderValue={(selected) => 
                         selected.length === 0 
                           ? 'Select up to 15 Options...'
-                          : `${selected.length} selected`
+                          : selected.join(', ')
                       }
                       displayEmpty
                       sx={{
