@@ -113,7 +113,7 @@ export const AddBookingSetupPage = () => {
       breakTimeEnd: { hour: '00', minute: '00' },
       endTime: { hour: '00', minute: '00' },
       concurrentSlots: '',
-      slotBy: '15 Minutes',
+      slotBy: 15,
       wrapTime: ''
     }
   ]);
@@ -152,7 +152,7 @@ export const AddBookingSetupPage = () => {
       breakTimeEnd: { hour: '00', minute: '00' },
       endTime: { hour: '00', minute: '00' },
       concurrentSlots: '',
-      slotBy: '15 Minutes',
+      slotBy: 15,
       wrapTime: ''
     }]);
   };
@@ -190,8 +190,8 @@ export const AddBookingSetupPage = () => {
                   label="Active*"
                 >
                   <MenuItem value="Select">Select</MenuItem>
-                  <MenuItem value="Active">Active</MenuItem>
-                  <MenuItem value="Inactive">Inactive</MenuItem>
+                  <MenuItem value="1">Yes</MenuItem>
+                  <MenuItem value="0">No</MenuItem>
                 </Select>
               </FormControl>
               <FormControl>
@@ -413,9 +413,11 @@ export const AddBookingSetupPage = () => {
                   <TextField size="small" value={slot.concurrentSlots} variant="outlined" />
                   <FormControl size="small">
                     <Select value={slot.slotBy}>
-                      <MenuItem value="15 Minutes">15 Minutes</MenuItem>
-                      <MenuItem value="30 Minutes">30 Minutes</MenuItem>
-                      <MenuItem value="60 Minutes">60 Minutes</MenuItem>
+                      <MenuItem value={15}>15 Minutes</MenuItem>
+                      <MenuItem value={30}>Half hour</MenuItem>
+                      <MenuItem value={45}>45 Minutes</MenuItem>
+                      <MenuItem value={60}>1 hour</MenuItem>
+                      <MenuItem value={90}>1 and a half hours</MenuItem>
                     </Select>
                   </FormControl>
                   <TextField size="small" value={slot.wrapTime} variant="outlined" />
