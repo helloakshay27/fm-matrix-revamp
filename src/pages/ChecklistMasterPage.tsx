@@ -114,7 +114,7 @@ export const ChecklistMasterPage = () => {
   return (
     <MasterLayout>
       <div className="w-full min-h-screen bg-[#fafafa] p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="w-full max-w-none space-y-6">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">CHECKLIST MASTER</h1>
 
           {/* Basic Info Section */}

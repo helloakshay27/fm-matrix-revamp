@@ -90,7 +90,7 @@ export const OccupantUserMasterDashboard = () => {
 
   return (
     <MasterLayout>
-      <div className="space-y-6">
+      <div className="w-full p-6 space-y-6">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600">
           Master &gt; User Master &gt; Occupant Users

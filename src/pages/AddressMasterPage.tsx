@@ -63,7 +63,7 @@ export const AddressMasterPage = () => {
   return (
     <MasterLayout>
       <div className="w-full min-h-screen bg-[#fafafa] p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">ADDRESS MASTER</h1>
 
           {/* Address Setup Form */}
