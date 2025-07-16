@@ -884,6 +884,13 @@ export const AddSchedulePage = () => {
               <Box sx={{ padding: 3, backgroundColor: 'white' }}>
                 {timeTab === 0 && (
                   <Box sx={{ backgroundColor: '#F5F5F5', padding: 2, borderRadius: 1 }}>
+                    {/* Header Labels */}
+                    <Box sx={{ display: 'flex', gap: 4, mb: 2, fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Hour</Typography>
+                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Minutes</Typography>
+                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Day</Typography>
+                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Month</Typography>
+                    </Box>
                     <FormControlLabel
                       control={
                         <Radio 
