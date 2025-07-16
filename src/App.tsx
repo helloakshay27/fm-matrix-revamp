@@ -229,6 +229,9 @@ import { OccupantUserMasterDashboard } from './pages/master/OccupantUserMasterDa
 import { AddFMUserPage } from './pages/master/AddFMUserPage';
 import { EditFMUserPage } from './pages/master/EditFMUserPage';
 
+// Import Material Master page
+import { MaterialMasterPage } from './pages/MaterialMasterPage';
+
 // Import RVehiclesInDashboard and RVehiclesOutDashboard
 import { RVehiclesInDashboard } from './pages/RVehiclesInDashboard';
 import { RVehiclesOutDashboard } from './pages/RVehiclesOutDashboard';
@@ -789,11 +792,14 @@ function App() {
                <Route path="/master/location/unit" element={<UnitPage />} />
                <Route path="/master/location/room" element={<RoomPage />} />
 
-               {/* Master User Routes */}
-               <Route path="/master/user/fm-users" element={<FMUserMasterDashboard />} />
-               <Route path="/master/user/fm-users/add" element={<AddFMUserPage />} />
-               <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
-               <Route path="/master/user/occupant-users" element={<OccupantUserMasterDashboard />} />
+                {/* Master User Routes */}
+                <Route path="/master/user/fm-users" element={<FMUserMasterDashboard />} />
+                <Route path="/master/user/fm-users/add" element={<AddFMUserPage />} />
+                <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
+                <Route path="/master/user/occupant-users" element={<OccupantUserMasterDashboard />} />
+
+                {/* Material Master Route */}
+                <Route path="/master/material-ebom" element={<MaterialMasterPage />} />
 
                <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
                <Route path="maintenance/task" element={<ScheduledTaskDashboard />} />
