@@ -614,127 +614,204 @@ export const AddSchedulePage = () => {
         
       case 2: // Question Setup
         return (
-          <SectionCard>
-            <SectionHeader>
-              <RedIcon />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#D42F2F' }}>
-                Question Setup
-              </Typography>
-              <Box sx={{ flex: 1 }} />
-              <MuiSwitch 
-                checked={autoTicket}
-                onChange={(e) => setAutoTicket(e.target.checked)}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': { color: '#D42F2F' },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#D42F2F' }
-                }}
-              />
-              <Typography variant="body2">Auto Ticket</Typography>
-              <RedButton startIcon={<Add />} onClick={() => {}}>+ Weightage</RedButton>
-              <RedButton startIcon={<Add />} onClick={() => {}}>+ Add Section</RedButton>
-            </SectionHeader>
-            
-            {tasks.map((task, index) => (
-              <Paper key={task.id} sx={{ padding: 3, marginBottom: 2, border: '2px dashed #E0E0E0' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Task {index + 1}</Typography>
-                  <IconButton size="small">
-                    <Edit fontSize="small" sx={{ color: '#D42F2F' }} />
-                  </IconButton>
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  backgroundColor: '#C72030',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Cog size={16} color="white" />
                 </Box>
-                
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Group</InputLabel>
-                    <Select 
-                      value={task.group} 
-                      onChange={(e) => updateTask(task.id, 'group', e.target.value)}
-                    >
-                      <MenuItem value="">Select Group</MenuItem>
-                      <MenuItem value="group1">Group 1</MenuItem>
-                      <MenuItem value="group2">Group 2</MenuItem>
-                    </Select>
-                  </FormControl>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                  Question Setup
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MuiSwitch 
+                    checked={autoTicket}
+                    onChange={(e) => setAutoTicket(e.target.checked)}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ color: '#666' }}>Auto Ticket</Typography>
+                </Box>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<Add />}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  + Weightage
+                </MuiButton>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<Add />}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  + Add Section
+                </MuiButton>
+              </Box>
+            </Box>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              {tasks.map((task, index) => (
+                <Box key={task.id} sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                    Task {index + 1}
+                  </Typography>
                   
-                  <FormControl fullWidth>
-                    <InputLabel>Sub-Group</InputLabel>
-                    <Select 
-                      value={task.subGroup} 
-                      onChange={(e) => updateTask(task.id, 'subGroup', e.target.value)}
-                    >
-                      <MenuItem value="">Select Sub-Group</MenuItem>
-                      <MenuItem value="subgroup1">Sub-Group 1</MenuItem>
-                      <MenuItem value="subgroup2">Sub-Group 2</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-                
-                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <FormControlLabel
-                    control={
-                      <Radio 
-                        checked={task.mandatory}
-                        onChange={(e) => updateTask(task.id, 'mandatory', e.target.checked)}
-                        sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Group</InputLabel>
+                      <Select 
+                        value={task.group} 
+                        onChange={(e) => updateTask(task.id, 'group', e.target.value)}
+                      >
+                        <MenuItem value="">Select Group</MenuItem>
+                        <MenuItem value="group1">Group 1</MenuItem>
+                        <MenuItem value="group2">Group 2</MenuItem>
+                      </Select>
+                    </FormControl>
+                    
+                    <FormControl fullWidth>
+                      <InputLabel>Sub-Group</InputLabel>
+                      <Select 
+                        value={task.subGroup} 
+                        onChange={(e) => updateTask(task.id, 'subGroup', e.target.value)}
+                      >
+                        <MenuItem value="">Select Sub-Group</MenuItem>
+                        <MenuItem value="subgroup1">Sub-Group 1</MenuItem>
+                        <MenuItem value="subgroup2">Sub-Group 2</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  
+                  {/* Dashed Border Section */}
+                  <Box sx={{ 
+                    border: '2px dashed #E0E0E0', 
+                    padding: 2, 
+                    borderRadius: '8px',
+                    backgroundColor: '#FAFAFA'
+                  }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 4 }}>
+                        <FormControlLabel
+                          control={
+                            <Radio 
+                              checked={task.mandatory}
+                              onChange={(e) => updateTask(task.id, 'mandatory', e.target.checked)}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+                          }
+                          label="Mandatory"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Radio 
+                              checked={task.helpText}
+                              onChange={(e) => updateTask(task.id, 'helpText', e.target.checked)}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+                          }
+                          label="Help Text"
+                        />
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <MuiSwitch 
+                          checked={task.autoTicket}
+                          onChange={(e) => updateTask(task.id, 'autoTicket', e.target.checked)}
+                          sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                          }}
+                        />
+                        <Typography variant="body2" sx={{ color: '#666' }}>Auto Ticket</Typography>
+                      </Box>
+                    </Box>
+                    
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
+                      <TextField
+                        label="Task"
+                        placeholder="Enter Task"
+                        fullWidth
+                        value={task.task}
+                        onChange={(e) => updateTask(task.id, 'task', e.target.value)}
                       />
-                    }
-                    label="Mandatory"
-                  />
-                  <FormControlLabel
-                    control={
-                      <Radio 
-                        checked={task.helpText}
-                        onChange={(e) => updateTask(task.id, 'helpText', e.target.checked)}
-                        sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }}
-                      />
-                    }
-                    label="Help Text"
-                  />
-                  <Box sx={{ flex: 1 }} />
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MuiSwitch 
-                      checked={task.autoTicket}
-                      onChange={(e) => updateTask(task.id, 'autoTicket', e.target.checked)}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': { color: '#D42F2F' },
-                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#D42F2F' }
-                      }}
-                    />
-                    <Typography variant="body2">Auto Ticket</Typography>
+                      
+                      <FormControl fullWidth>
+                        <InputLabel>Input Type</InputLabel>
+                        <Select 
+                          value={task.inputType} 
+                          onChange={(e) => updateTask(task.id, 'inputType', e.target.value)}
+                        >
+                          <MenuItem value="">Select Input Type</MenuItem>
+                          <MenuItem value="text">Text</MenuItem>
+                          <MenuItem value="number">Number</MenuItem>
+                          <MenuItem value="dropdown">Dropdown</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
                   </Box>
                 </Box>
-                
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
-                  <TextField
-                    label="Task"
-                    placeholder="Enter Task"
-                    fullWidth
-                    value={task.task}
-                    onChange={(e) => updateTask(task.id, 'task', e.target.value)}
-                  />
-                  
-                  <FormControl fullWidth>
-                    <InputLabel>Input Type</InputLabel>
-                    <Select 
-                      value={task.inputType} 
-                      onChange={(e) => updateTask(task.id, 'inputType', e.target.value)}
-                    >
-                      <MenuItem value="">Select Input Type</MenuItem>
-                      <MenuItem value="text">Text</MenuItem>
-                      <MenuItem value="number">Number</MenuItem>
-                      <MenuItem value="dropdown">Dropdown</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Paper>
-            ))}
-            
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <RedButton startIcon={<Add />} onClick={addTask}>
-                + Add Question
-              </RedButton>
-            </Box>
-          </SectionCard>
+              ))}
+              
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<Add />}
+                  onClick={addTask}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  + Add Question
+                </MuiButton>
+              </Box>
+            </SectionCard>
+          </Box>
         );
         
       case 3: // Time Setup
