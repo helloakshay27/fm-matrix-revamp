@@ -290,7 +290,22 @@ export const AddSchedulePage = () => {
   };
 
   const renderStepContent = () => {
-    switch (activeStep) {
+    // Show all steps up to and including the current active step
+    const stepsToShow = [];
+    
+    for (let i = 0; i <= activeStep; i++) {
+      stepsToShow.push(
+        <Box key={`step-${i}`}>
+          {renderSingleStep(i)}
+        </Box>
+      );
+    }
+    
+    return stepsToShow;
+  };
+
+  const renderSingleStep = (stepIndex: number) => {
+    switch (stepIndex) {
       case 0: // Basic Configuration
         return (
           <Box>
