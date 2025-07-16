@@ -4,7 +4,7 @@ import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbS
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel, Box } from '@mui/material';
-import { Plus, X } from "lucide-react";
+import { Plus, X, ArrowLeft } from "lucide-react";
 
 interface ApprovalLevel {
   order: number;
@@ -122,10 +122,19 @@ const AddApprovalMatrixPage = () => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Title */}
-      <Heading level="h1" className="text-[#1a1a1a] mb-6">
-        ADD APPROVAL MATRIX
-      </Heading>
+      {/* Title with Back Button */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/settings/approval-matrix/setup')}
+          className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#1a1a1a] w-10 h-10 rounded-lg p-0"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <Heading level="h1" className="text-[#1a1a1a]">
+          ADD APPROVAL MATRIX
+        </Heading>
+      </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         {/* Function Selection */}
