@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2 } from 'lucide-react';
@@ -20,6 +21,7 @@ interface User {
 }
 
 export const AddInvoiceApprovalsPage = () => {
+  const navigate = useNavigate();
   const [selectedFunction, setSelectedFunction] = useState('');
   const [approvalLevels, setApprovalLevels] = useState<ApprovalLevel[]>([
     { order: 1, name: '', users: [], sendEmails: false }
@@ -129,9 +131,8 @@ export const AddInvoiceApprovalsPage = () => {
 
       toast.success('Invoice approval matrix created successfully');
       
-      // Reset form
-      setSelectedFunction('');
-      setApprovalLevels([{ order: 1, name: '', users: [], sendEmails: false }]);
+      // Navigate to invoice approvals list page
+      navigate('/settings/asset-setup/approval-matrix');
       
     } catch (error) {
       console.error('Error creating invoice approval matrix:', error);
