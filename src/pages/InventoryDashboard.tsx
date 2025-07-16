@@ -455,10 +455,22 @@ export const InventoryDashboard = () => {
       </div>
 
       <Tabs defaultValue="analytics" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="list">Inventory List</TabsTrigger>
-        </TabsList>
+        <div className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger 
+            value="analytics" 
+            className="bg-[#C72030] text-white data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-600 rounded-none py-3 font-medium"
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger 
+            value="list" 
+            className="bg-gray-100 text-gray-600 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-600 rounded-none py-3 font-medium"
+          >
+            <Package className="w-4 h-4 mr-2" />
+            Inventory List
+          </TabsTrigger>
+        </div>
 
         <TabsContent value="analytics" className="space-y-6">
           <div className="flex items-center justify-end mb-6">
