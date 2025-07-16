@@ -90,7 +90,7 @@ export const DepartmentDashboard = () => {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">DEPARTMENT</h1>
       
       <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
