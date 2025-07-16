@@ -17,79 +17,45 @@ import {
 } from "@/components/ui/pagination";
 
 interface AMCRecord {
-  id: string;
-  assetName: string;
-  type: string;
-  vendor: string;
-  startDate: string;
-  endDate: string;
-  firstService: string;
-  status: boolean;
-  createdOn: string;
+  id: number;
+  asset_id: number | null;
+  amc_vendor_name: string | null;
+  amc_vendor_mobile: string | null;
+  amc_vendor_email: string | null;
+  amc_contract: string | null;
+  amc_invoice: string | null;
+  amc_cost: number;
+  amc_start_date: string;
+  amc_end_date: string;
+  amc_first_service: string;
+  amc_frequency: string | null;
+  created_at: string;
+  updated_at: string;
+  vendor_mobile_number: string | null;
+  vendor_email: string | null;
+  vendor_name: string | null;
+  supplier_id: number;
+  resource_id: number | null;
+  resource_type: string;
+  pms_site_id: number;
+  active: boolean;
+  payment_term: string;
+  no_of_visits: number;
+  remarks: string;
 }
 
-const initialAmcData: AMCRecord[] = [{
-  id: '51016',
-  assetName: '',
-  type: 'Asset',
-  vendor: 'MODWIN NETWORKS PVT.LTD',
-  startDate: '04/04/2025',
-  endDate: '02/05/2025',
-  firstService: '04/04/2025',
-  status: true,
-  createdOn: '04/04/2025, 03:25PM'
-}, {
-  id: '51015',
-  assetName: '',
-  type: 'Asset',
-  vendor: 'TBS ELECTRICAL',
-  startDate: '01/04/2025',
-  endDate: '10/05/2025',
-  firstService: '09/04/2025',
-  status: true,
-  createdOn: '04/04/2025, 03:24PM'
-}, {
-  id: '49130',
-  assetName: '',
-  type: 'Asset',
-  vendor: 'Mohan Khopade',
-  startDate: '04/02/2025',
-  endDate: '04/02/2025',
-  firstService: '04/02/2025',
-  status: true,
-  createdOn: '04/02/2025, 04:29PM'
-}, {
-  id: '49120',
-  assetName: '',
-  type: 'Asset',
-  vendor: 'MODWIN NETWORKS PVT.LTD',
-  startDate: '04/02/2025',
-  endDate: '04/02/2025',
-  firstService: '04/02/2025',
-  status: true,
-  createdOn: '04/02/2025, 12:43AM'
-}, {
-  id: '49119',
-  assetName: '',
-  type: 'Asset',
-  vendor: 'Mohammad Sageer',
-  startDate: '04/02/2025',
-  endDate: '04/02/2025',
-  firstService: '04/02/2025',
-  status: true,
-  createdOn: '04/02/2025, 12:31AM'
-}];
+const initialAmcData: AMCRecord[] = [];
 
 const columns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
-  { key: 'assetName', label: 'Asset Name', sortable: true, defaultVisible: true },
-  { key: 'type', label: 'Type', sortable: true, defaultVisible: true },
-  { key: 'vendor', label: 'Vendor', sortable: true, defaultVisible: true },
-  { key: 'startDate', label: 'Start Date', sortable: true, defaultVisible: true },
-  { key: 'endDate', label: 'End Date', sortable: true, defaultVisible: true },
-  { key: 'firstService', label: 'First Service', sortable: true, defaultVisible: true },
-  { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
-  { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+  { key: 'amc_vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
+  { key: 'amc_cost', label: 'AMC Cost', sortable: true, defaultVisible: true },
+  { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
+  { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
+  { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
+  { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
+  { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
+  { key: 'payment_term', label: 'Payment Term', sortable: true, defaultVisible: true },
 ];
 
 export const AMCDashboard = () => {
@@ -124,11 +90,11 @@ export const AMCDashboard = () => {
     navigate('/maintenance/amc/add');
   };
 
-  const handleViewDetails = (id: string) => {
-    navigate(`/maintenance/amc/details/${id}`);
+  const handleViewDetails = (id: number) => {
+    navigate(`/maintenance/amc/${id}`);
   };
 
-  const handleStatusToggle = (id: string) => {
+  const handleStatusToggle = (id: number) => {
     // For now, just log the status toggle since we're using API data
     console.log('Status toggle for AMC ID:', id);
     // In a real implementation, you would make an API call to update the status
@@ -136,7 +102,7 @@ export const AMCDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(amcData.map(item => item.id));
+      setSelectedItems(amcData.map(item => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -161,37 +127,37 @@ export const AMCDashboard = () => {
     switch (columnKey) {
       case 'id':
         return <span className="font-medium">{item.id}</span>;
-      case 'assetName':
-        return item.assetName || '-';
-      case 'type':
-        return item.type;
-      case 'vendor':
-        return item.vendor;
-      case 'startDate':
-        return item.startDate;
-      case 'endDate':
-        return item.endDate;
-      case 'firstService':
-        return item.firstService;
-      case 'status':
+      case 'amc_vendor_name':
+        return item.amc_vendor_name || '-';
+      case 'amc_cost':
+        return item.amc_cost ? `₹${item.amc_cost}` : '-';
+      case 'amc_start_date':
+        return item.amc_start_date ? new Date(item.amc_start_date).toLocaleDateString() : '-';
+      case 'amc_end_date':
+        return item.amc_end_date ? new Date(item.amc_end_date).toLocaleDateString() : '-';
+      case 'amc_first_service':
+        return item.amc_first_service ? new Date(item.amc_first_service).toLocaleDateString() : '-';
+      case 'active':
         return (
           <div className="flex items-center">
             <div 
               className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                item.status ? 'bg-green-500' : 'bg-gray-300'
+                item.active ? 'bg-green-500' : 'bg-gray-300'
               }`} 
               onClick={() => handleStatusToggle(item.id)}
             >
               <span 
                 className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                  item.status ? 'translate-x-6' : 'translate-x-1'
+                  item.active ? 'translate-x-6' : 'translate-x-1'
                 }`} 
               />
             </div>
           </div>
         );
-      case 'createdOn':
-        return item.createdOn;
+      case 'created_at':
+        return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
+      case 'payment_term':
+        return item.payment_term || '-';
       default:
         return '-';
     }
@@ -378,6 +344,7 @@ export const AMCDashboard = () => {
           selectedItems={selectedItems}
           onSelectAll={handleSelectAll}
           onSelectItem={handleSelectItem}
+          getItemId={(item) => item.id.toString()}
           storageKey="amc-dashboard-table"
           emptyMessage="No AMC records found"
           searchPlaceholder="Search AMC records..."
