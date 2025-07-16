@@ -173,9 +173,107 @@ export const AddBookingSetupPage = () => {
     }
   };
 
-  const handleSave = () => {
-    console.log('Saving booking setup:', formData);
-    navigate('/settings/vas/booking/setup');
+  const handleSave = async () => {
+    try {
+      const formDataToSend = new FormData();
+
+      // Basic Facility Info
+      formDataToSend.append('facility_setup[fac_type]', formData.isBookable ? 'bookable' : 'request');
+      formDataToSend.append('facility_setup[fac_name]', formData.facilityName);
+      formDataToSend.append('facility_setup[active]', formData.active === '1' ? '1' : '0');
+      
+      // Find department ID from selected department name
+      const selectedDept = departments.find(dept => dept.department_name === formData.department);
+      const departmentId = selectedDept ? selectedDept.id.toString() : '1';
+      formDataToSend.append('facility_setup[department_id]', departmentId);
+      
+      formDataToSend.append('facility_setup[app_key]', formData.appKey);
+      formDataToSend.append('facility_setup[postpaid]', formData.postpaid ? '1' : '0');
+      formDataToSend.append('facility_setup[prepaid]', formData.prepaid ? '1' : '0');
+      formDataToSend.append('facility_setup[pay_on_facility]', formData.payOnFacility ? '1' : '0');
+      formDataToSend.append('facility_setup[complementary]', formData.complimentary ? '1' : '0');
+      formDataToSend.append('facility_setup[gst]', formData.gstPercentage || '0');
+      formDataToSend.append('facility_setup[sgst]', formData.sgstPercentage || '0');
+      formDataToSend.append('facility_setup[facility_charge_attributes][per_slot_charge]', formData.perSlotCharge || '0');
+      formDataToSend.append('facility_setup[booking_limit]', '3');
+      formDataToSend.append('facility_setup[description]', formData.termsConditions || '');
+      formDataToSend.append('facility_setup[terms]', formData.termsConditions || '');
+      formDataToSend.append('facility_setup[cancellation_policy]', formData.cancellationText || '');
+      formDataToSend.append('facility_setup[cutoff_hr]', '03');
+      formDataToSend.append('facility_setup[cutoff_min]', '00');
+      formDataToSend.append('facility_setup[return_percentage]', '10');
+      formDataToSend.append('facility_setup[cutoff_second_min]', '00');
+      formDataToSend.append('facility_setup[cutoff_third_min]', '00');
+      formDataToSend.append('facility_setup[book_by]', 'slot');
+      formDataToSend.append('facility_setup[create_by]', '12437');
+
+      // Generic Tags (Amenities)
+      const amenities = [];
+      if (formData.amenities.tv) amenities.push("TV");
+      if (formData.amenities.whiteboard) amenities.push("Whiteboard");
+      if (formData.amenities.casting) amenities.push("Casting");
+      if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
+      if (formData.amenities.wirelessCharging) amenities.push("Wireless Charging");
+      if (formData.amenities.meetingRoomInventory) amenities.push("Meeting Room Inventory");
+
+      amenities.forEach((name, index) => {
+        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, 'amenity_things');
+        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, name);
+        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, '0');
+        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, '1');
+      });
+
+      // Facility Slots
+      if (slots.length > 0) {
+        const slot = slots[0]; // Using first slot
+        formDataToSend.append('facility_slots[][slot_no]', '1');
+        formDataToSend.append('facility_slots[][dayofweek]', '');
+        formDataToSend.append('facility_slots[][start_hour]', slot.startTime.hour);
+        formDataToSend.append('facility_slots[][start_min]', slot.startTime.minute);
+        formDataToSend.append('facility_slots[][break_start_hour]', slot.breakTimeStart.hour);
+        formDataToSend.append('facility_slots[][break_start_min]', slot.breakTimeStart.minute);
+        formDataToSend.append('facility_slots[][break_end_hour]', slot.breakTimeEnd.hour);
+        formDataToSend.append('facility_slots[][break_end_min]', slot.breakTimeEnd.minute);
+        formDataToSend.append('facility_slots[][end_hour]', slot.endTime.hour);
+        formDataToSend.append('facility_slots[][end_min]', slot.endTime.minute);
+        formDataToSend.append('facility_slots[][max_bookings]', slot.concurrentSlots || '1');
+        formDataToSend.append('facility_slots[][breakminutes]', slot.slotBy.toString());
+        formDataToSend.append('facility_slots[][wrap_time]', slot.wrapTime || '5');
+      }
+
+      // Booking Window Configs
+      formDataToSend.append('book_before_day', '1');
+      formDataToSend.append('book_before_hour', '1');
+      formDataToSend.append('book_before_min', '1');
+      formDataToSend.append('advance_booking_day', '1');
+      formDataToSend.append('advance_booking_hour', '1');
+      formDataToSend.append('advance_booking_min', '1');
+      formDataToSend.append('cancel_day', '1');
+      formDataToSend.append('cancel_hour', '1');
+      formDataToSend.append('cancel_min', '1');
+
+      // Extra Info
+      formDataToSend.append('seater_info', formData.seaterInfo !== 'Select a seater' ? formData.seaterInfo : '');
+      formDataToSend.append('location_info', formData.floorInfo !== 'Select a floor' ? formData.floorInfo : '');
+      formDataToSend.append('shared_content_info', formData.sharedContentInfo || '');
+
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/facility_setups.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        console.log('Booking setup saved successfully');
+        navigate('/settings/vas/booking/setup');
+      } else {
+        console.error('Failed to save booking setup:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error saving booking setup:', error);
+    }
   };
 
   const handleClose = () => {
