@@ -1,19 +1,14 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import axios from 'axios'
 import createApiSlice from '../api/apiSlice'
+import { apiClient } from '@/utils/apiClient'
+import { ENDPOINTS } from '@/config/apiConfig'
 
 // AMC API call
 export const fetchAMCData = createAsyncThunk(
   'amc/fetchAMCData',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('https://fm-uat-api.lockated.com/pms/asset_amcs.json', {
-        headers: {
-          'Authorization': 'Bearer BhjBK-S87DQ4GniPUs32IzL1adZU7eImCFB63RDLt9A',
-          'Content-Type': 'application/json',
-        },
-      })
-
+      const response = await apiClient.get(ENDPOINTS.AMC)
       return response.data
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Failed to fetch AMC data'
