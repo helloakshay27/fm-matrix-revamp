@@ -5,13 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Switch } from "@/components/ui/switch";
 import { Plus, Filter, Eye } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
-import { BookingSetupForm } from "@/components/BookingSetupForm";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 export const BookingSetupDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
   const [bookingSetupData, setBookingSetupData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -170,9 +168,6 @@ export const BookingSetupDashboard = () => {
 
         {/* Filter Modal */}
         <BookingSetupFilterModal open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleFilterApply} />
-
-        {/* Add Booking Setup Form */}
-        {isAddBookingOpen && <BookingSetupForm onClose={() => setIsAddBookingOpen(false)} />}
       </div>
     </div>;
 };
