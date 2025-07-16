@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from '@/hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -16,6 +17,7 @@ import { roleService, ApiRole } from '@/services/roleService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchRoles, updateRolePermissions } from '@/store/slices/roleSlice';
 import { fetchFunctions } from '@/store/slices/functionSlice';
+import { getAuthHeader } from '@/config/apiConfig';
 
 interface Permission {
   name: string;
@@ -43,7 +45,7 @@ export const RoleDashboard = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all_functions');
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = useState<ApiRole | null>(null);
   const [rolePermissions, setRolePermissions] = useState<{ [roleId: number]: { [tab: string]: Permission[] } }>({});
 
   // Fetch roles and functions from API
@@ -208,7 +210,7 @@ export const RoleDashboard = () => {
     ? rolePermissions[currentRole.id][activeTab] || []
     : [];
 
-  const handleRoleClick = (role: Role) => {
+  const handleRoleClick = (role: ApiRole) => {
     setSelectedRole(role);
   };
 
@@ -270,15 +272,74 @@ export const RoleDashboard = () => {
     }));
   };
 
-  const handleUpdatePermissions = () => {
+  const handleUpdatePermissions = async () => {
     if (!currentRole) return;
     
-    const permissions = rolePermissions[currentRole.id]?.[activeTab] || [];
-    console.log('Updating permissions for role:', currentRole);
-    console.log('Active tab:', activeTab);
-    console.log('Permissions:', permissions);
-    alert(`Permissions updated for ${currentRole.name} in ${tabLabels[tabs.indexOf(activeTab)]} tab`);
-    // Here you would typically save to backend
+    try {
+      // Get current role's existing permissions from API
+      const existingPermissionsHash = currentRole.permissions_hash ? JSON.parse(currentRole.permissions_hash) : {};
+      
+      // Get current tab permissions from state
+      const currentTabPermissions = rolePermissions[currentRole.id]?.[activeTab] || [];
+      
+      // Build permissions hash for current tab
+      const currentTabPermissionsHash: any = {};
+      currentTabPermissions.forEach(permission => {
+        currentTabPermissionsHash[permission.name.toLowerCase().replace(/\s+/g, '_')] = {
+          all: permission.all ? "true" : "false",
+          create: permission.add ? "true" : "false", 
+          show: permission.view ? "true" : "false",
+          update: permission.edit ? "true" : "false",
+          destroy: permission.disable ? "true" : "false"
+        };
+      });
+      
+      // Merge with existing permissions (preserve other tabs' permissions)
+      const mergedPermissionsHash = {
+        ...existingPermissionsHash,
+        ...currentTabPermissionsHash
+      };
+      
+      // Prepare payload
+      const payload = {
+        lock_role: {
+          name: currentRole.name,
+        },
+        permissions_hash: mergedPermissionsHash,
+        lock_modules: null
+      };
+
+      // Make PUT request
+      const response = await fetch('https://fm-uat-api.lockated.com/lock_functions.json', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `Permissions updated successfully for ${currentRole.name}`,
+        });
+        
+        // Refresh roles data to reflect changes
+        dispatch(fetchRoles());
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update permissions');
+      }
+      
+    } catch (error) {
+      console.error('Error updating permissions:', error);
+      toast({
+        title: "Error",
+        description: `Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
