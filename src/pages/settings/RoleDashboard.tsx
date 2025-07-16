@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -367,11 +367,7 @@ export const RoleDashboard = () => {
 
   const handleUpdatePermissions = async () => {
     if (!currentRole) {
-      toast({
-        title: "Error",
-        description: "Please select a role first",
-        variant: "destructive",
-      });
+      toast.error("Please select a role first");
       return;
     }
     
@@ -424,10 +420,7 @@ export const RoleDashboard = () => {
       });
 
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: `Permissions updated successfully for ${currentRole.name}`,
-        });
+        toast.success(`Permissions updated successfully for ${currentRole.name}`);
         
         // Refresh roles data to reflect changes
         await dispatch(fetchRoles());
@@ -445,11 +438,7 @@ export const RoleDashboard = () => {
       
     } catch (error) {
       console.error('Error updating permissions:', error);
-      toast({
-        title: "Error",
-        description: `Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        variant: "destructive",
-      });
+      toast.error(`Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsUpdating(false);
     }
