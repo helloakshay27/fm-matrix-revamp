@@ -91,7 +91,7 @@ export const AMCDashboard = () => {
   };
 
   const handleViewDetails = (id: number) => {
-    navigate(`/maintenance/amc/${id}`);
+    navigate(`/maintenance/amc/details/${id}`);
   };
 
   const handleStatusToggle = (id: number) => {
