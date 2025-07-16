@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Upload } from "lucide-react";
 import { TextField, Select, MenuItem, FormControl, InputLabel, Box } from '@mui/material';
+import { getAuthHeader } from '@/config/apiConfig';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 // Custom theme for MUI components
@@ -144,7 +145,12 @@ export const AddBookingSetupPage = () => {
     
     setLoadingDepartments(true);
     try {
-      const response = await fetch('https://fm-uat-api.lockated.com/pms/departments.json');
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/departments.json', {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       setDepartments(data || []);
     } catch (error) {
