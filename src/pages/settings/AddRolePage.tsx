@@ -10,9 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { roleService, CreateRolePayload } from '@/services/roleService';
+import { transformPermissionsToApiFormat } from '@/utils/permissionMapper';
 
 interface Permission {
   name: string;
@@ -161,6 +163,7 @@ export const AddRolePage = () => {
   const [inventoryEnabled, setInventoryEnabled] = useState(false);
   const [setupEnabled, setSetupEnabled] = useState(false);
   const [quickgateEnabled, setQuickgateEnabled] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissions, setPermissions] = useState<{ [key: string]: Permission[] }>({
     'All Functions': [...allFunctionsPermissions],
     'Inventory': [...inventoryPermissions],
@@ -229,24 +232,61 @@ export const AddRolePage = () => {
     }));
   };
 
-  const handleSubmit = () => {
-    if (roleTitle.trim()) {
-      console.log('Adding new role:', roleTitle);
-      console.log('Permissions:', permissions);
-      
-      toast({
-        title: "Role Created",
-        description: `Role "${roleTitle}" has been successfully created!`,
-      });
-      
-      // Navigate back to roles list
-      navigate('/settings/roles/role');
-    } else {
+  const handleSubmit = async () => {
+    if (!roleTitle.trim()) {
       toast({
         title: "Error",
         description: "Please enter a role title.",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Transform permissions to API format
+      const apiPermissions = transformPermissionsToApiFormat(permissions);
+      
+      // Create the API payload
+      const payload: CreateRolePayload = {
+        lock_role: {
+          name: roleTitle.trim(),
+          display_name: roleTitle.trim(),
+          access_level: null,
+          access_to: null,
+          active: 1,
+          role_for: "pms"
+        },
+        permissions_hash: apiPermissions,
+        lock_modules: null
+      };
+
+      console.log('Creating role with payload:', payload);
+      
+      // Call the API
+      const response = await roleService.createRole(payload);
+      
+      console.log('Role creation response:', response);
+      
+      toast({
+        title: "Success",
+        description: `Role "${roleTitle}" has been successfully created!`,
+      });
+      
+      // Navigate back to roles list
+      navigate('/settings/roles/role');
+      
+    } catch (error: any) {
+      console.error('Error creating role:', error);
+      
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create role. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -447,9 +487,17 @@ export const AddRolePage = () => {
             </Button>
             <Button 
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
             >
-              Create Role
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Role'
+              )}
             </Button>
           </div>
         </div>
