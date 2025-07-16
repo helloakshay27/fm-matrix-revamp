@@ -333,7 +333,15 @@ export const RoleDashboard = () => {
         });
         
         // Refresh roles data to reflect changes
-        dispatch(fetchRoles());
+        await dispatch(fetchRoles());
+        
+        // Force re-initialization of permissions after roles are updated
+        if (functions.length > 0) {
+          const updatedRole = roles.find(r => r.id === currentRole.id);
+          if (updatedRole) {
+            setSelectedRole(updatedRole);
+          }
+        }
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update permissions');
