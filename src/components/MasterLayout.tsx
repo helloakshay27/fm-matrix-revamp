@@ -8,14 +8,12 @@ interface MasterLayoutProps {
 
 export const MasterLayout = ({ children }: MasterLayoutProps) => {
   return (
-    <div className="min-h-screen bg-[#fafafa] w-full overflow-x-hidden">
+    <div className="h-screen flex flex-col bg-[#fafafa] overflow-hidden">
       <Header />
-      <div className="flex w-full min-w-full">
+      <div className="flex flex-1 overflow-hidden">
         <MasterSidebar />
-        <main className="flex-1 w-full min-w-0 ml-64 mt-16 overflow-x-auto">
-          <div className="w-full min-w-full">
-            {children}
-          </div>
+        <main className="flex-1 overflow-auto">
+          {children}
         </main>
       </div>
     </div>
