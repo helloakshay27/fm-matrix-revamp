@@ -222,7 +222,7 @@ export const AddInvoiceApprovalsPage = () => {
                   </SelectTrigger>
                   <SelectContent className="bg-background border shadow-lg z-50">
                     {loading ? (
-                      <SelectItem value="" disabled>Loading users...</SelectItem>
+                      <div className="p-2 text-sm text-muted-foreground">Loading users...</div>
                     ) : users.length > 0 ? (
                       users.map((user) => (
                         <SelectItem key={user.id} value={user.id.toString()}>
@@ -230,7 +230,7 @@ export const AddInvoiceApprovalsPage = () => {
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="" disabled>No users available</SelectItem>
+                      <div className="p-2 text-sm text-muted-foreground">No users available</div>
                     )}
                   </SelectContent>
                 </Select>
