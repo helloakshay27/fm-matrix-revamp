@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MasterLayout } from '@/components/MasterLayout';
+import { useLayout } from '@/contexts/LayoutContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,8 +57,14 @@ export const EditFMUserPage = () => {
     navigate('/master/user/fm-users');
   };
 
+  const { setCurrentSection } = useLayout();
+  
+  useEffect(() => {
+    setCurrentSection('Master');
+  }, [setCurrentSection]);
+
   return (
-    <MasterLayout>
+    <div className="space-y-6">
       <div className="space-y-6">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600">
@@ -322,6 +328,6 @@ export const EditFMUserPage = () => {
           </div>
         </div>
       </div>
-    </MasterLayout>
+    </div>
   );
 };

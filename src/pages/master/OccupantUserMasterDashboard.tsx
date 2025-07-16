@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MasterLayout } from '@/components/MasterLayout';
+import { useLayout } from '@/contexts/LayoutContext';
 import { StatsCard } from '@/components/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,8 +88,14 @@ export const OccupantUserMasterDashboard = () => {
     setSearchTerm('');
   };
 
+  const { setCurrentSection } = useLayout();
+  
+  useEffect(() => {
+    setCurrentSection('Master');
+  }, [setCurrentSection]);
+
   return (
-    <MasterLayout>
+    <div className="w-full p-6 space-y-6">
       <div className="w-full p-6 space-y-6">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600">
@@ -248,6 +254,6 @@ export const OccupantUserMasterDashboard = () => {
           </div>
         </div>
       </div>
-    </MasterLayout>
+    </div>
   );
 };
