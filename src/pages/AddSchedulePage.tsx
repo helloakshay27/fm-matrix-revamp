@@ -133,6 +133,7 @@ export const AddSchedulePage = () => {
   
   // Stepper state
   const [activeStep, setActiveStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const steps = ['Basic Configuration', 'Schedule Setup', 'Question Setup', 'Time Setup', 'Mapping'];
   
   // Form data
@@ -194,6 +195,11 @@ export const AddSchedulePage = () => {
   const [autoTicket, setAutoTicket] = useState(false);
   
   const handleNext = () => {
+    // Mark current step as completed
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
+    }
+    
     if (activeStep < steps.length - 1) {
       setActiveStep(activeStep + 1);
     }
@@ -206,7 +212,16 @@ export const AddSchedulePage = () => {
   };
   
   const handleStepClick = (step: number) => {
+    // Mark current step as completed before moving
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
+    }
     setActiveStep(step);
+  };
+  
+  // Check if a step should be red (active or completed)
+  const isStepRed = (stepIndex: number) => {
+    return stepIndex === activeStep || completedSteps.includes(stepIndex);
   };
   
   const addTask = () => {
@@ -903,9 +918,9 @@ export const AddSchedulePage = () => {
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
-                  backgroundColor: index === activeStep ? '#C72030' : 'white',
-                  color: index === activeStep ? 'white' : '#C4B89D',
-                  border: `2px solid ${index === activeStep ? '#C72030' : '#C4B89D'}`,
+                  backgroundColor: isStepRed(index) ? '#C72030' : 'white',
+                  color: isStepRed(index) ? 'white' : '#C4B89D',
+                  border: `2px solid ${isStepRed(index) ? '#C72030' : '#C4B89D'}`,
                   padding: '12px 20px',
                   fontSize: '13px',
                   fontWeight: 500,
