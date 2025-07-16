@@ -841,25 +841,37 @@ export const AddSchedulePage = () => {
               </Typography>
             </Box>
 
-            {/* Main Content in Single White Box with Blue Border */}
+            {/* Main Content in Single Box with Blue Border and Light Gray Background */}
             <Box sx={{ 
-              backgroundColor: 'white',
+              backgroundColor: '#F5F5F5',
               borderRadius: '8px',
-              padding: 3,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              padding: 0,
               border: '2px solid #2196F3'
             }}>
               <Tabs 
                 value={timeTab} 
                 onChange={(e, newValue) => setTimeTab(newValue)}
                 sx={{ 
-                  borderBottom: 1, 
-                  borderColor: 'divider', 
-                  mb: 3,
+                  backgroundColor: '#F5F5F5',
+                  '& .MuiTab-root': {
+                    backgroundColor: '#F5F5F5',
+                    color: '#666',
+                    fontWeight: 600,
+                    minHeight: '48px',
+                    textTransform: 'none',
+                    border: 'none',
+                    borderRadius: 0
+                  },
                   '& .MuiTab-root.Mui-selected': {
                     backgroundColor: '#C72030',
                     color: 'white',
-                    borderRadius: '4px 4px 0 0'
+                    fontWeight: 600
+                  },
+                  '& .MuiTabs-indicator': {
+                    display: 'none'
+                  },
+                  '& .MuiTabs-flexContainer': {
+                    borderRadius: '8px 8px 0 0'
                   }
                 }}
               >
@@ -869,119 +881,121 @@ export const AddSchedulePage = () => {
                 <Tab label="Month" />
               </Tabs>
               
-              {timeTab === 0 && (
-                <Box>
-                  <FormControlLabel
-                    control={
-                      <Radio 
-                        checked={!everyHourBetween}
-                        onChange={() => setEveryHourBetween(false)}
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                      />
-                    }
-                    label="Choose one or more specific hours"
-                    sx={{ mb: 2 }}
-                  />
-                  
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        sx={{ 
-                          color: '#C72030', 
-                          '&.Mui-checked': { color: '#C72030' }
-                        }}
-                      />
-                    }
-                    label="Select All"
-                    sx={{ mb: 2, display: 'block' }}
-                  />
-                  
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 1, mb: 3 }}>
-                    {Array.from({length: 24}, (_, i) => (
-                      <FormControlLabel
-                        key={i}
-                        control={
-                          <Checkbox
-                            checked={selectedHours.includes(i)}
-                            onChange={() => toggleHour(i)}
-                            sx={{ 
-                              color: '#C72030', 
-                              '&.Mui-checked': { color: '#C72030' },
-                              padding: '4px'
-                            }}
-                          />
-                        }
-                        label={i.toString().padStart(2, '0')}
-                        sx={{ margin: 0, fontSize: '12px' }}
-                        labelPlacement="bottom"
-                      />
-                    ))}
-                  </Box>
-                  
-                  <FormControlLabel
-                    control={
-                      <Radio 
-                        checked={everyHourBetween}
-                        onChange={() => setEveryHourBetween(true)}
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                      />
-                    }
-                    label="Every hour between hour"
-                  />
-                  
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                    <FormControl size="small">
-                      <Select 
-                        value={hourRange.start} 
-                        onChange={(e) => setHourRange({...hourRange, start: Number(e.target.value)})}
-                        displayEmpty
-                      >
-                        {Array.from({length: 24}, (_, i) => (
-                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+              <Box sx={{ padding: 3, backgroundColor: '#F5F5F5' }}>
+                {timeTab === 0 && (
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Radio 
+                          checked={!everyHourBetween}
+                          onChange={() => setEveryHourBetween(false)}
+                          sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        />
+                      }
+                      label="Choose one or more specific hours"
+                      sx={{ mb: 2 }}
+                    />
                     
-                    <Typography>and hour</Typography>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          sx={{ 
+                            color: '#C72030', 
+                            '&.Mui-checked': { color: '#C72030' }
+                          }}
+                        />
+                      }
+                      label="Select All"
+                      sx={{ mb: 2, display: 'block' }}
+                    />
                     
-                    <FormControl size="small">
-                      <Select 
-                        value={hourRange.end} 
-                        onChange={(e) => setHourRange({...hourRange, end: Number(e.target.value)})}
-                        displayEmpty
-                      >
-                        {Array.from({length: 24}, (_, i) => (
-                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 1, mb: 3 }}>
+                      {Array.from({length: 24}, (_, i) => (
+                        <FormControlLabel
+                          key={i}
+                          control={
+                            <Checkbox
+                              checked={selectedHours.includes(i)}
+                              onChange={() => toggleHour(i)}
+                              sx={{ 
+                                color: '#C72030', 
+                                '&.Mui-checked': { color: '#C72030' },
+                                padding: '4px'
+                              }}
+                            />
+                          }
+                          label={i.toString().padStart(2, '0')}
+                          sx={{ margin: 0, fontSize: '12px' }}
+                          labelPlacement="bottom"
+                        />
+                      ))}
+                    </Box>
+                    
+                    <FormControlLabel
+                      control={
+                        <Radio 
+                          checked={everyHourBetween}
+                          onChange={() => setEveryHourBetween(true)}
+                          sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        />
+                      }
+                      label="Every hour between hour"
+                    />
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                      <FormControl size="small">
+                        <Select 
+                          value={hourRange.start} 
+                          onChange={(e) => setHourRange({...hourRange, start: Number(e.target.value)})}
+                          displayEmpty
+                        >
+                          {Array.from({length: 24}, (_, i) => (
+                            <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      
+                      <Typography>and hour</Typography>
+                      
+                      <FormControl size="small">
+                        <Select 
+                          value={hourRange.end} 
+                          onChange={(e) => setHourRange({...hourRange, end: Number(e.target.value)})}
+                          displayEmpty
+                        >
+                          {Array.from({length: 24}, (_, i) => (
+                            <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
                   </Box>
-                </Box>
-              )}
+                )}
 
-              {/* Summary Table in the same container */}
-              <TableContainer sx={{ mt: 3 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: '#F9F9F9' }}>
-                      <TableCell><strong>Hours</strong></TableCell>
-                      <TableCell><strong>Minutes</strong></TableCell>
-                      <TableCell><strong>Day Of Month</strong></TableCell>
-                      <TableCell><strong>Month</strong></TableCell>
-                      <TableCell><strong>Day Of Week</strong></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>00</TableCell>
-                      <TableCell>00</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                {/* Summary Table in the same container */}
+                <TableContainer sx={{ mt: 3 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: '#F9F9F9' }}>
+                        <TableCell><strong>Hours</strong></TableCell>
+                        <TableCell><strong>Minutes</strong></TableCell>
+                        <TableCell><strong>Day Of Month</strong></TableCell>
+                        <TableCell><strong>Month</strong></TableCell>
+                        <TableCell><strong>Day Of Week</strong></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>00</TableCell>
+                        <TableCell>00</TableCell>
+                        <TableCell>-</TableCell>
+                        <TableCell>-</TableCell>
+                        <TableCell>-</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
             </Box>
           </Box>
         );
