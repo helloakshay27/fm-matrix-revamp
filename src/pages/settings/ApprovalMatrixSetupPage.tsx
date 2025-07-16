@@ -1,45 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Search, Edit } from "lucide-react";
+import { apiClient } from "@/utils/apiClient";
+import { format } from "date-fns";
+interface ApprovalData {
+  id: number;
+  approval_function_name: string;
+  created_at: string;
+  created_by: string;
+}
+
 const ApprovalMatrixSetupPage = () => {
   const navigate = useNavigate();
-  
-  // Mock data for the table
-  const approvalData = [{
-    id: 198,
-    function: "Custom Form 11372",
-    createdOn: "08/10/2024",
-    createdBy: "Vinayak Mane"
-  }, {
-    id: 173,
-    function: "Gdn",
-    createdOn: "10/04/2024",
-    createdBy: "Vinayak Mane"
-  }, {
-    id: 172,
-    function: "Work Order",
-    createdOn: "10/04/2024",
-    createdBy: "Robert Day2"
-  }, {
-    id: 108,
-    function: "Grn",
-    createdOn: "01/08/2023",
-    createdBy: "Robert Day2"
-  }, {
-    id: 34,
-    function: "Work Order Invoice",
-    createdOn: "23/11/2022",
-    createdBy: "Robert Day2"
-  }, {
-    id: 33,
-    function: "Purchase Order",
-    createdOn: "15/11/2022",
-    createdBy: "Robert Day2"
-  }];
+  const [approvalData, setApprovalData] = useState<ApprovalData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApprovalData = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('/pms/admin/invoice_approvals.json');
+        setApprovalData(response.data);
+      } catch (error) {
+        console.error('Error fetching approval data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApprovalData();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy');
+    } catch (error) {
+      return dateString;
+    }
+  };
   return <div className="p-8 min-h-screen bg-transparent">
       {/* Breadcrumbs */}
       <Breadcrumb className="mb-6">
@@ -101,17 +103,33 @@ const ApprovalMatrixSetupPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {approvalData.map(item => <TableRow key={item.id}>
-                <TableCell>
-                  <Button variant="ghost" size="sm" className="p-1">
-                    <Edit className="w-4 h-4 text-[#1a1a1a]" />
-                  </Button>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  Loading...
                 </TableCell>
-                <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell>{item.function}</TableCell>
-                <TableCell>{item.createdOn}</TableCell>
-                <TableCell>{item.createdBy}</TableCell>
-              </TableRow>)}
+              </TableRow>
+            ) : approvalData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  No approval matrix data found
+                </TableCell>
+              </TableRow>
+            ) : (
+              approvalData.map(item => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" className="p-1">
+                      <Edit className="w-4 h-4 text-[#1a1a1a]" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="font-medium">{item.id}</TableCell>
+                  <TableCell>{item.approval_function_name}</TableCell>
+                  <TableCell>{formatDate(item.created_at)}</TableCell>
+                  <TableCell>{item.created_by}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
