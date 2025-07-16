@@ -841,12 +841,13 @@ export const AddSchedulePage = () => {
               </Typography>
             </Box>
 
-            {/* Main Content in Single White Box */}
+            {/* Main Content in Single White Box with Blue Border */}
             <Box sx={{ 
               backgroundColor: 'white',
               borderRadius: '8px',
               padding: 3,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              border: '2px solid #2196F3'
             }}>
               <Tabs 
                 value={timeTab} 
