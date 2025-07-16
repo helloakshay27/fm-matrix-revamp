@@ -10,14 +10,18 @@ export interface ApiRole {
 export interface CreateRolePayload {
   lock_role: {
     name: string;
-    display_name: string;
-    access_level: null;
-    access_to: null;
-    active: number;
-    role_for: string;
   };
   permissions_hash: Record<string, any>;
-  lock_modules: null;
+  lock_modules: number;
+  parent_function: boolean;
+}
+
+export interface LockFunction {
+  id: number;
+  action_name: string;
+  module_name: string;
+  function_name: string;
+  description?: string;
 }
 
 export interface CreateRoleResponse {
@@ -34,6 +38,17 @@ export const roleService = {
       return response.data
     } catch (error) {
       console.error('Error fetching roles:', error)
+      throw error
+    }
+  },
+
+  // Fetch lock functions
+  async getLockFunctions(): Promise<LockFunction[]> {
+    try {
+      const response = await apiClient.get<LockFunction[]>(ENDPOINTS.FUNCTIONS)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching lock functions:', error)
       throw error
     }
   },
