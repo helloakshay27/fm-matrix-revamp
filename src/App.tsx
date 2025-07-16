@@ -223,6 +223,12 @@ import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
 import { ChecklistMasterDashboard } from './pages/ChecklistMasterDashboard';
 import { AddChecklistMasterPage } from './pages/AddChecklistMasterPage';
 
+// Import Master User pages
+import { FMUserMasterDashboard } from './pages/master/FMUserMasterDashboard';
+import { OccupantUserMasterDashboard } from './pages/master/OccupantUserMasterDashboard';
+import { AddFMUserPage } from './pages/master/AddFMUserPage';
+import { EditFMUserPage } from './pages/master/EditFMUserPage';
+
 // Import RVehiclesInDashboard and RVehiclesOutDashboard
 import { RVehiclesInDashboard } from './pages/RVehiclesInDashboard';
 import { RVehiclesOutDashboard } from './pages/RVehiclesOutDashboard';
@@ -773,6 +779,12 @@ function App() {
                <Route path="/master/location/floor" element={<FloorPage />} />
                <Route path="/master/location/unit" element={<UnitPage />} />
                <Route path="/master/location/room" element={<RoomPage />} />
+
+               {/* Master User Routes */}
+               <Route path="/master/user/fm-users" element={<FMUserMasterDashboard />} />
+               <Route path="/master/user/fm-users/add" element={<AddFMUserPage />} />
+               <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
+               <Route path="/master/user/occupant-users" element={<OccupantUserMasterDashboard />} />
 
                <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
                <Route path="maintenance/task" element={<ScheduledTaskDashboard />} />

@@ -31,8 +31,8 @@ const masterItems = [
     icon: Users,
     hasChildren: true,
     children: [
-      { name: 'FM User', href: '/setup/fm-users' },
-      { name: 'OCCUPANT USERS', href: '/setup/occupant-users' }
+      { name: 'FM User', href: '/master/user/fm-users' },
+      { name: 'OCCUPANT USERS', href: '/master/user/occupant-users' }
     ]
   },
   {
