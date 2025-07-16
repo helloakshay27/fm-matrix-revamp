@@ -40,6 +40,7 @@ import {
   AttachFile,
   ArrowBack
 } from '@mui/icons-material';
+import { Cog } from 'lucide-react';
 
 // Styled Components
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
@@ -292,65 +293,89 @@ export const AddSchedulePage = () => {
     switch (activeStep) {
       case 0: // Basic Configuration
         return (
-          <SectionCard>
-            <SectionHeader>
-              <RedIcon />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#D42F2F' }}>
-                Basic Configuration
-              </Typography>
-              <Box sx={{ flex: 1 }} />
-              <Typography variant="body2" sx={{ color: '#666' }}>
-                Schedule For: <strong>Asset</strong>
-              </Typography>
-              <MuiSwitch 
-                checked={createTicket}
-                onChange={(e) => setCreateTicket(e.target.checked)}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': { color: '#D42F2F' },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#D42F2F' }
-                }}
-              />
-              <Typography variant="body2">Create Ticket</Typography>
-            </SectionHeader>
-            
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Type</Typography>
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  backgroundColor: '#C72030',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Cog size={16} color="white" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                  Basic Configuration
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <MuiSwitch 
+                  checked={createTicket}
+                  onChange={(e) => setCreateTicket(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                  }}
+                />
+                <Typography variant="body2" sx={{ color: '#666' }}>Create Ticket</Typography>
+              </Box>
+            </Box>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
+                <Typography variant="body2" sx={{ color: '#666' }}>
+                  Schedule For: <strong>Asset</strong>
+                </Typography>
+              </Box>
+              
               <RadioGroup
                 row
                 value={formData.type}
                 onChange={(e) => setFormData({...formData, type: e.target.value})}
+                sx={{ mb: 3 }}
               >
                 <FormControlLabel 
                   value="PPM" 
-                  control={<Radio sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }} />} 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                   label="PPM" 
                 />
                 <FormControlLabel 
                   value="AMC" 
-                  control={<Radio sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }} />} 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                   label="AMC" 
                 />
                 <FormControlLabel 
                   value="Preparedness" 
-                  control={<Radio sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }} />} 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                   label="Preparedness" 
                 />
                 <FormControlLabel 
                   value="Routine" 
-                  control={<Radio sx={{ color: '#D42F2F', '&.Mui-checked': { color: '#D42F2F' } }} />} 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                   label="Routine" 
                 />
               </RadioGroup>
-            </Box>
-            
-            <Box sx={{ mb: 3 }}>
+              
               <TextField
                 label="Activity Name"
                 placeholder="Enter Activity Name"
                 fullWidth
                 value={formData.activityName}
                 onChange={(e) => setFormData({...formData, activityName: e.target.value})}
-                sx={{ mb: 2 }}
+                sx={{ mb: 3 }}
               />
               
               <TextField
@@ -361,55 +386,11 @@ export const AddSchedulePage = () => {
                 rows={4}
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                sx={{ mb: 2 }}
+                sx={{ mb: 3 }}
               />
-            </Box>
-            
-            {/* Attachment Area */}
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ 
-                border: '2px dashed #E0E0E0', 
-                borderRadius: '8px', 
-                padding: '40px 20px', 
-                textAlign: 'center',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2
-              }}>
-                {attachments.length === 0 ? (
-                  <Typography variant="body2" color="textSecondary">
-                    Drop files here or click to upload
-                  </Typography>
-                ) : (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    {attachments.map((file) => (
-                      <Paper key={file.id} sx={{ 
-                        padding: 2, 
-                        border: '2px dashed #E0E0E0',
-                        position: 'relative',
-                        minHeight: '80px',
-                        width: '150px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <IconButton
-                          size="small"
-                          sx={{ position: 'absolute', top: 4, right: 4 }}
-                          onClick={() => removeAttachment(file.id)}
-                        >
-                          <Close fontSize="small" />
-                        </IconButton>
-                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
-                          {file.name}
-                        </Typography>
-                      </Paper>
-                    ))}
-                  </Box>
-                )}
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              
+              {/* Add Attachment Button */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <RedButton 
                   startIcon={<AttachFile />}
                   onClick={addAttachment}
@@ -417,8 +398,8 @@ export const AddSchedulePage = () => {
                   Add Attachment
                 </RedButton>
               </Box>
-            </Box>
-          </SectionCard>
+            </SectionCard>
+          </Box>
         );
         
       case 1: // Schedule Setup
