@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { testReducer, loginReducer } from './slices/testSlice'
+import { amcReducer } from './slices/amcSlice'
 
 export const store = configureStore({
   reducer: {
     test: testReducer,
     login: loginReducer,
+    amc: amcReducer,
   },
 })
 

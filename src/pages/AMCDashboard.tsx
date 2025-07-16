@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAMCData } from '@/store/slices/amcSlice';
 import {
   Pagination,
   PaginationContent,
@@ -92,10 +94,18 @@ const columns: ColumnConfig[] = [
 
 export const AMCDashboard = () => {
   const navigate = useNavigate();
-  const [amcData, setAmcData] = useState<AMCRecord[]>(initialAmcData);
+  const dispatch = useAppDispatch();
+  const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 2;
+
+  // Use API data if available, otherwise fallback to initial data
+  const amcData = apiData && Array.isArray(apiData) ? apiData : initialAmcData;
+
+  useEffect(() => {
+    dispatch(fetchAMCData());
+  }, [dispatch]);
 
   // Calculate pagination - ensure we always have pagination visible for testing
   const totalPages = Math.ceil(Math.max(amcData.length, 6) / pageSize); // Ensure minimum pages for testing
@@ -119,10 +129,9 @@ export const AMCDashboard = () => {
   };
 
   const handleStatusToggle = (id: string) => {
-    const updatedAmcData = amcData.map(amc => 
-      amc.id === id ? { ...amc, status: !amc.status } : amc
-    );
-    setAmcData(updatedAmcData);
+    // For now, just log the status toggle since we're using API data
+    console.log('Status toggle for AMC ID:', id);
+    // In a real implementation, you would make an API call to update the status
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -143,8 +152,9 @@ export const AMCDashboard = () => {
 
   const handleBulkDelete = (selectedItems: AMCRecord[]) => {
     const selectedIds = selectedItems.map(item => item.id);
-    setAmcData(prev => prev.filter(item => !selectedIds.includes(item.id)));
+    console.log('Bulk delete for AMC IDs:', selectedIds);
     setSelectedItems([]);
+    // In a real implementation, you would make an API call to delete the selected items
   };
 
   const renderCell = (item: AMCRecord, columnKey: string) => {
@@ -342,26 +352,42 @@ export const AMCDashboard = () => {
         </Button>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">Loading AMC data...</div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-600">Error: {error}</div>
+        </div>
+      )}
+
       {/* Enhanced Table */}
-      <EnhancedTable
-        data={paginatedData}
-        columns={columns}
-        renderCell={renderCell}
-        renderActions={renderActions}
-        onRowClick={(item) => handleViewDetails(item.id)}
-        selectable={true}
-        selectedItems={selectedItems}
-        onSelectAll={handleSelectAll}
-        onSelectItem={handleSelectItem}
-        storageKey="amc-dashboard-table"
-        emptyMessage="No AMC records found"
-        searchPlaceholder="Search AMC records..."
-        enableExport={true}
-        exportFileName="amc-records"
-        bulkActions={bulkActions}
-        showBulkActions={true}
-        pagination={false}
-      />
+      {!loading && (
+        <EnhancedTable
+          data={paginatedData}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          onRowClick={(item) => handleViewDetails(item.id)}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          storageKey="amc-dashboard-table"
+          emptyMessage="No AMC records found"
+          searchPlaceholder="Search AMC records..."
+          enableExport={true}
+          exportFileName="amc-records"
+          bulkActions={bulkActions}
+          showBulkActions={true}
+          pagination={false}
+        />
+      )}
 
       {/* Custom Pagination - Always show for debugging */}
       <div className="flex justify-center mt-6">
