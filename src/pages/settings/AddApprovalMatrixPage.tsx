@@ -123,7 +123,7 @@ const AddApprovalMatrixPage = () => {
       </Breadcrumb>
 
       {/* Title with Back Button */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-2 mb-6">
         <Button
           variant="ghost"
           onClick={() => navigate('/settings/approval-matrix/setup')}
