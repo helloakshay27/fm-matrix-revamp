@@ -444,40 +444,44 @@ export const InventoryDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
+    <div className="p-2 sm:p-4 lg:p-6">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-4">
           <span>Inventories</span>
           <span>&gt;</span>
           <span>Inventory Dashboard</span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
+        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
       </div>
 
       <Tabs defaultValue="analytics" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 
             value="analytics" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+            className="flex items-center gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
-            <BarChart3 className="w-4 h-4" />
-            Analytics
+            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Analytics</span>
+            <span className="sm:hidden">Charts</span>
           </TabsTrigger>
           <TabsTrigger 
             value="list" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+            className="flex items-center gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
-            <Package className="w-4 h-4" />
-            Inventory List
+            <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Inventory List</span>
+            <span className="sm:hidden">List</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="flex items-center justify-end mb-6">
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end mb-4 sm:mb-6">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="text-[#C72030] border-[#C72030]">
-                  Inventory Selector ({totalItems}) <ChevronDown className="w-4 h-4 ml-2" />
+                <Button variant="outline" className="text-[#C72030] border-[#C72030] text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Inventory Selector ({totalItems})</span>
+                  <span className="sm:hidden">Select ({totalItems})</span>
+                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -488,29 +492,30 @@ export const InventoryDashboard = () => {
             </DropdownMenu>
           </div>
 
-          <div className="flex gap-6">
+          <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 order-2 xl:order-1">
               {/* Top Charts Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                 {/* Items Status Chart */}
-                <div className="bg-white rounded-lg border p-6">
+                <div className="bg-white rounded-lg border p-3 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-[#C72030]">Items</h3>
-                    <Download className="w-4 h-4 text-[#C72030]" />
+                    <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Items</h3>
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
                   </div>
-                  <div className="flex items-center justify-center h-48">
+                  <div className="flex items-center justify-center h-32 sm:h-48">
                     <div className="relative">
-                      <ResponsiveContainer width={200} height={200}>
+                      <ResponsiveContainer width={150} height={150} className="sm:w-[200px] sm:h-[200px]">
                         <PieChart>
                           <Pie
                             data={itemStatusData}
-                            cx={100}
-                            cy={100}
-                            innerRadius={60}
-                            outerRadius={90}
+                            cx={75}
+                            cy={75}
+                            innerRadius={45}
+                            outerRadius={65}
                             dataKey="value"
                             labelLine={false}
+                            className="sm:cx-[100] sm:cy-[100] sm:inner-radius-[60] sm:outer-radius-[90]"
                           >
                             {itemStatusData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -525,36 +530,37 @@ export const InventoryDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-center gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-[#C7B894] rounded"></div>
+                  <div className="flex justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#C7B894] rounded"></div>
                       <span>Active</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-gray-300 rounded"></div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 rounded"></div>
                       <span>Inactive</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Criticality Chart */}
-                <div className="bg-white rounded-lg border p-6">
+                <div className="bg-white rounded-lg border p-3 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-[#C72030]">Critical Non-Critical Items</h3>
-                    <Download className="w-4 h-4 text-[#C72030]" />
+                    <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Critical Non-Critical Items</h3>
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
                   </div>
-                  <div className="flex items-center justify-center h-48">
+                  <div className="flex items-center justify-center h-32 sm:h-48">
                     <div className="relative">
-                      <ResponsiveContainer width={200} height={200}>
+                      <ResponsiveContainer width={150} height={150} className="sm:w-[200px] sm:h-[200px]">
                         <PieChart>
                           <Pie
                             data={criticalityData}
-                            cx={100}
-                            cy={100}
-                            innerRadius={60}
-                            outerRadius={90}
+                            cx={75}
+                            cy={75}
+                            innerRadius={45}
+                            outerRadius={65}
                             dataKey="value"
                             labelLine={false}
+                            className="sm:cx-[100] sm:cy-[100] sm:inner-radius-[60] sm:outer-radius-[90]"
                           >
                             {criticalityData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -569,13 +575,13 @@ export const InventoryDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-center gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-[#C7B894] rounded"></div>
+                  <div className="flex justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#C7B894] rounded"></div>
                       <span>Critical</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-gray-300 rounded"></div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 rounded"></div>
                       <span>Non-Critical</span>
                     </div>
                   </div>
@@ -583,19 +589,19 @@ export const InventoryDashboard = () => {
               </div>
 
               {/* Bar Chart */}
-              <div className="bg-white rounded-lg border p-6 mb-6">
+              <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-[#C72030]">Unit Category-wise Items</h3>
-                  <Download className="w-4 h-4 text-[#C72030]" />
+                  <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Unit Category-wise Items</h3>
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
                 </div>
-                <div className="h-64">
+                <div className="h-48 sm:h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
                       data={groupChartData}
                       margin={{
                         top: 20,
-                        right: 30,
-                        left: 20,
+                        right: 10,
+                        left: 10,
                         bottom: 60,
                       }}
                     >
@@ -604,23 +610,25 @@ export const InventoryDashboard = () => {
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 12, fill: '#666' }}
+                        tick={{ fontSize: 10, fill: '#666' }}
                         angle={-45}
                         textAnchor="end"
                         height={60}
+                        className="sm:text-xs"
                       />
                       <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fontSize: 12, fill: '#666' }}
+                        tick={{ fontSize: 10, fill: '#666' }}
                         domain={[0, 'dataMax + 1']}
+                        className="sm:text-xs"
                       />
                       <Tooltip 
                         contentStyle={{
                           backgroundColor: '#fff',
                           border: '1px solid #ccc',
                           borderRadius: '4px',
-                          fontSize: '12px'
+                          fontSize: '11px'
                         }}
                         labelStyle={{ color: '#333' }}
                       />
@@ -636,34 +644,34 @@ export const InventoryDashboard = () => {
               </div>
 
               {/* Aging Matrix */}
-              <div className="bg-white rounded-lg border p-6 mb-6">
+              <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-[#C72030]">Items Ageing Matrix</h3>
-                  <Download className="w-4 h-4 text-[#C72030]" />
+                  <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Items Ageing Matrix</h3>
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[600px]">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="text-left p-3 font-medium text-gray-700">Priority</th>
-                        <th className="text-center p-3 font-medium text-gray-700">No. of Days</th>
-                        <th className="text-center p-3 font-medium text-gray-700">0-10</th>
-                        <th className="text-center p-3 font-medium text-gray-700">11-20</th>
-                        <th className="text-center p-3 font-medium text-gray-700">21-30</th>
-                        <th className="text-center p-3 font-medium text-gray-700">31-40</th>
-                        <th className="text-center p-3 font-medium text-gray-700">41-50</th>
+                        <th className="text-left p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">Priority</th>
+                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">No. of Days</th>
+                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">0-10</th>
+                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">11-20</th>
+                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">21-30</th>
+                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">31-40</th>
+                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">41-50</th>
                       </tr>
                     </thead>
                     <tbody>
                       {agingMatrixData.map((row, index) => (
                         <tr key={row.priority} className="border-b">
-                          <td className="p-3 font-medium">{row.priority}</td>
-                          <td className="p-3 text-center">-</td>
-                          <td className="p-3 text-center">{row['0-10']}</td>
-                          <td className="p-3 text-center">{row['11-20']}</td>
-                          <td className="p-3 text-center">{row['21-30']}</td>
-                          <td className="p-3 text-center">{row['31-40']}</td>
-                          <td className="p-3 text-center">{row['41-50']}</td>
+                          <td className="p-2 sm:p-3 font-medium text-xs sm:text-sm">{row.priority}</td>
+                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">-</td>
+                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['0-10']}</td>
+                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['11-20']}</td>
+                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['21-30']}</td>
+                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['31-40']}</td>
+                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['41-50']}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -672,147 +680,149 @@ export const InventoryDashboard = () => {
               </div>
 
               {/* Average Resolution Time */}
-              <div className="bg-gray-100 rounded-lg p-8 text-center">
-                <div className="text-6xl font-bold text-gray-800 mb-2">42 Days</div>
-                <div className="text-gray-600">Average Time Taken To Process An Item</div>
+              <div className="bg-gray-100 rounded-lg p-4 sm:p-8 text-center">
+                <div className="text-3xl sm:text-6xl font-bold text-gray-800 mb-2">42 Days</div>
+                <div className="text-sm sm:text-base text-gray-600">Average Time Taken To Process An Item</div>
               </div>
             </div>
 
-        {/* Right Sidebar */}
-        <div className="w-80">
-          <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-red-600 mb-2">
-                Recent Items
-              </h2>
-              <div className="text-sm font-medium text-gray-800">
-                16/07/2025
-              </div>
-            </div>
-            
-            {/* Items List */}
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {recentItems.map((item, index) => (
-                <div key={`${item.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
-                  {/* Header with ID, Star, and Priority */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-semibold text-gray-800 text-sm">{item.id}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 text-yellow-500">★</div>
-                      <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
-                        {item.priority}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Title and TAT */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900 text-base">{item.title}</h3>
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-medium text-gray-700">TAT :</span>
-                      <span className="text-sm font-bold text-blue-600">{item.tat}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Details */}
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-3">
-                      <Package className="h-4 w-4 text-red-500" />
-                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Category</span>
-                      <span className="text-sm text-gray-700">:</span>
-                      <span className="text-sm text-gray-900">{item.subtitle.replace('Category: ', '')}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Package className="h-4 w-4 text-red-500" />
-                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Sub-Category</span>
-                      <span className="text-sm text-gray-700">:</span>
-                      <span className="text-sm text-gray-900">{item.subcategory.replace('Sub-Category: ', '')}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-orange-400"></div>
-                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Assignee Name</span>
-                      <span className="text-sm text-gray-700">:</span>
-                      <span className="text-sm text-gray-900">{item.assignee.replace('Manager: ', '')}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-red-400"></div>
-                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Site</span>
-                      <span className="text-sm text-gray-700">:</span>
-                      <span className="text-sm text-gray-900">{item.site.replace('Site: ', '')}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <RotateCcw className="h-4 w-4 text-red-500" />
-                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Update</span>
-                      <span className="text-sm text-gray-700">:</span>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="italic text-gray-600">In Progress</span>
-                        <ChevronRight className="h-3 w-3 text-gray-600" />
-                        <span className="italic text-gray-600">Processed</span>
-                      </div>
-                    </div>
-                    
-                    <div className="text-sm text-gray-600 ml-7">
-                      (Handled By Manager)
-                    </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-6">
-                      <button 
-                        className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80"
-                      >
-                        <FileText className="h-4 w-4 text-red-500" />
-                        Add Comment
-                      </button>
-                      
-                      <button 
-                        className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80"
-                      >
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                        Flag Issue
-                      </button>
-                    </div>
-                    
-                    <button 
-                      className="text-blue-600 text-sm font-medium underline hover:text-blue-800"
-                      onClick={() => handleViewItem(item.id)}
-                    >
-                      View Detail&gt;&gt;
-                    </button>
+            {/* Right Sidebar */}
+            <div className="w-full xl:w-80 order-1 xl:order-2">
+              <div className="w-full bg-[#C4B89D]/25 border xl:border-l border-gray-200 rounded-lg xl:rounded-none p-3 sm:p-4 h-auto xl:h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="mb-4 sm:mb-6">
+                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-2">
+                    Recent Items
+                  </h2>
+                  <div className="text-xs sm:text-sm font-medium text-gray-800">
+                    16/07/2025
                   </div>
                 </div>
-              ))}
+                
+                {/* Items List */}
+                <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 max-h-96 xl:max-h-none">
+                  {recentItems.map((item, index) => (
+                    <div key={`${item.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-3 sm:p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
+                      {/* Header with ID, Star, and Priority */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-semibold text-gray-800 text-xs sm:text-sm">{item.id}</span>
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500">★</div>
+                          <span className="bg-pink-300 text-pink-800 px-1 sm:px-2 py-1 rounded text-xs font-medium">
+                            {item.priority}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Title and TAT */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{item.title}</h3>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700">TAT :</span>
+                          <span className="text-xs sm:text-sm font-bold text-blue-600">{item.tat}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Details */}
+                      <div className="space-y-2 sm:space-y-3 mb-4">
+                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                          <Package className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Category</span>
+                          <span className="text-xs sm:text-sm text-gray-700">:</span>
+                          <span className="text-xs sm:text-sm text-gray-900 break-words">{item.subtitle.replace('Category: ', '')}</span>
+                        </div>
+                        
+                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                          <Package className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Sub-Category</span>
+                          <span className="text-xs sm:text-sm text-gray-700">:</span>
+                          <span className="text-xs sm:text-sm text-gray-900 break-words">{item.subcategory.replace('Sub-Category: ', '')}</span>
+                        </div>
+                        
+                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-orange-400 mt-0.5 sm:mt-0"></div>
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Assignee Name</span>
+                          <span className="text-xs sm:text-sm text-gray-700">:</span>
+                          <span className="text-xs sm:text-sm text-gray-900 break-words">{item.assignee.replace('Manager: ', '')}</span>
+                        </div>
+                        
+                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-400 mt-0.5 sm:mt-0"></div>
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Site</span>
+                          <span className="text-xs sm:text-sm text-gray-700">:</span>
+                          <span className="text-xs sm:text-sm text-gray-900 break-words">{item.site.replace('Site: ', '')}</span>
+                        </div>
+                        
+                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                          <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
+                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Update</span>
+                          <span className="text-xs sm:text-sm text-gray-700">:</span>
+                          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                            <span className="italic text-gray-600">In Progress</span>
+                            <ChevronRight className="h-2 w-2 sm:h-3 sm:w-3 text-gray-600" />
+                            <span className="italic text-gray-600">Processed</span>
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs sm:text-sm text-gray-600 ml-5 sm:ml-7">
+                          (Handled By Manager)
+                        </div>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                          <button 
+                            className="flex items-center gap-1 sm:gap-2 text-black text-xs sm:text-sm font-medium hover:opacity-80"
+                          >
+                            <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
+                            Add Comment
+                          </button>
+                          
+                          <button 
+                            className="flex items-center gap-1 sm:gap-2 text-black text-xs sm:text-sm font-medium hover:opacity-80"
+                          >
+                            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
+                            Flag Issue
+                          </button>
+                        </div>
+                        
+                        <button 
+                          className="text-blue-600 text-xs sm:text-sm font-medium underline hover:text-blue-800 self-start sm:self-auto"
+                          onClick={() => handleViewItem(item.id)}
+                        >
+                          View Detail&gt;&gt;
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="list" className="space-y-6">
+        <TabsContent value="list" className="space-y-4 sm:space-y-6">
           <div className="mb-4">
             {renderCustomActions()}
           </div>
 
-          <EnhancedTable
-            data={paginatedData}
-            columns={columns}
-            renderCell={renderCell}
-            renderActions={renderRowActions}
-            bulkActions={bulkActions}
-            showBulkActions={true}
-            selectable={true}
-            pagination={false}
-            enableExport={true}
-            exportFileName="inventory"
-            onRowClick={handleViewItem}
-            storageKey="inventory-table"
-          />
+          <div className="overflow-x-auto">
+            <EnhancedTable
+              data={paginatedData}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderRowActions}
+              bulkActions={bulkActions}
+              showBulkActions={true}
+              selectable={true}
+              pagination={false}
+              enableExport={true}
+              exportFileName="inventory"
+              onRowClick={handleViewItem}
+              storageKey="inventory-table"
+            />
+          </div>
 
           {/* Custom Pagination */}
           {totalPages > 1 && (
