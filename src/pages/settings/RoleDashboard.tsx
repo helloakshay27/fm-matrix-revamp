@@ -273,7 +273,14 @@ export const RoleDashboard = () => {
   };
 
   const handleUpdatePermissions = async () => {
-    if (!currentRole) return;
+    if (!currentRole) {
+      toast({
+        title: "Error",
+        description: "Please select a role first",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       // Get current role's existing permissions from API
@@ -310,7 +317,7 @@ export const RoleDashboard = () => {
       };
 
       // Make PATCH request
-      const response = await fetch(`https://fm-uat-api.lockated.com/lock_roles/${selectedRole.id}.json`, {
+      const response = await fetch(`https://fm-uat-api.lockated.com/lock_roles/${currentRole.id}.json`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
