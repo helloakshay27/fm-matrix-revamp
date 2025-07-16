@@ -1307,37 +1307,58 @@ export const AddSchedulePage = () => {
         
       case 4: // Mapping
         return (
-          <SectionCard>
-            <SectionHeader>
-              <RedIcon />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#D42F2F' }}>
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
                 Mapping
               </Typography>
-            </SectionHeader>
-            
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <TextField
-                label="Asset Name"
-                placeholder="Enter Asset Name"
-                fullWidth
-                value={formData.assetName}
-                onChange={(e) => setFormData({...formData, assetName: e.target.value})}
-              />
-              
-              <FormControl fullWidth>
-                <InputLabel>Parameter</InputLabel>
-                <Select 
-                  value={formData.parameter} 
-                  onChange={(e) => setFormData({...formData, parameter: e.target.value})}
-                >
-                  <MenuItem value="">Select Parameter</MenuItem>
-                  <MenuItem value="temperature">Temperature</MenuItem>
-                  <MenuItem value="pressure">Pressure</MenuItem>
-                  <MenuItem value="voltage">Voltage</MenuItem>
-                </Select>
-              </FormControl>
             </Box>
-          </SectionCard>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+                <TextField
+                  label="Asset Name"
+                  placeholder="Energy Meter"
+                  fullWidth
+                  value={formData.assetName}
+                  onChange={(e) => setFormData({...formData, assetName: e.target.value})}
+                />
+                
+                <FormControl fullWidth>
+                  <InputLabel>Parameter</InputLabel>
+                  <Select 
+                    value={formData.parameter} 
+                    onChange={(e) => setFormData({...formData, parameter: e.target.value})}
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Parameter</MenuItem>
+                    <MenuItem value="temperature">Temperature</MenuItem>
+                    <MenuItem value="pressure">Pressure</MenuItem>
+                    <MenuItem value="voltage">Voltage</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </SectionCard>
+          </Box>
         );
         
       default:
