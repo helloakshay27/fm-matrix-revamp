@@ -6,6 +6,8 @@ import { Plus, Upload, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogTitle, TextField, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 const groupsData = [
   { id: 1, srNo: 1, groupName: 'Electronic Devices', status: true },
@@ -108,6 +110,10 @@ export const AssetGroupsPage = () => {
   const [selectedGroup, setSelectedGroup] = useState('');
   const [subGroupName, setSubGroupName] = useState('');
   
+  // Loading states
+  const [groupLoading, setGroupLoading] = useState(false);
+  const [subGroupLoading, setSubGroupLoading] = useState(false);
+  
   // MUI theme
   const theme = createTheme({
     palette: {
@@ -127,33 +133,78 @@ export const AssetGroupsPage = () => {
     ));
   };
 
-  const handleAddGroup = () => {
+  const handleAddGroup = async () => {
     if (groupName.trim()) {
-      const newGroup = {
-        id: groups.length + 1,
-        srNo: groups.length + 1,
-        groupName: groupName.trim(),
-        status: true
-      };
-      setGroups(prev => [...prev, newGroup]);
-      setGroupName('');
-      setAddGroupOpen(false);
+      setGroupLoading(true);
+      try {
+        const payload = {
+          pms_asset_group: {
+            name: groupName.trim(),
+            group_type: "asset"
+          }
+        };
+
+        const response = await apiClient.post('/pms/asset_groups.json', payload);
+        
+        if (response.data) {
+          const newGroup = {
+            id: response.data.id || groups.length + 1,
+            srNo: groups.length + 1,
+            groupName: groupName.trim(),
+            status: true
+          };
+          setGroups(prev => [...prev, newGroup]);
+          setGroupName('');
+          setAddGroupOpen(false);
+          toast.success('Group created successfully');
+        }
+      } catch (error) {
+        console.error('Error creating group:', error);
+        toast.error('Failed to create group');
+      } finally {
+        setGroupLoading(false);
+      }
     }
   };
 
-  const handleAddSubGroup = () => {
+  const handleAddSubGroup = async () => {
     if (selectedGroup && subGroupName.trim()) {
-      const newSubGroup = {
-        id: subGroups.length + 1,
-        srNo: subGroups.length + 1,
-        groupName: selectedGroup,
-        subGroupName: subGroupName.trim(),
-        status: true
-      };
-      setSubGroups(prev => [...prev, newSubGroup]);
-      setSelectedGroup('');
-      setSubGroupName('');
-      setAddSubGroupOpen(false);
+      setSubGroupLoading(true);
+      try {
+        // Find the selected group's ID
+        const selectedGroupData = groups.find(group => group.groupName === selectedGroup);
+        if (!selectedGroupData) {
+          toast.error('Selected group not found');
+          return;
+        }
+
+        const params = new URLSearchParams({
+          'pms_asset_sub_group[name]': subGroupName.trim(),
+          'pms_asset_sub_group[group_id]': selectedGroupData.id.toString()
+        });
+
+        const response = await apiClient.post(`/pms/asset_sub_groups.json?${params.toString()}`);
+        
+        if (response.data) {
+          const newSubGroup = {
+            id: response.data.id || subGroups.length + 1,
+            srNo: subGroups.length + 1,
+            groupName: selectedGroup,
+            subGroupName: subGroupName.trim(),
+            status: true
+          };
+          setSubGroups(prev => [...prev, newSubGroup]);
+          setSelectedGroup('');
+          setSubGroupName('');
+          setAddSubGroupOpen(false);
+          toast.success('Sub group created successfully');
+        }
+      } catch (error) {
+        console.error('Error creating sub group:', error);
+        toast.error('Failed to create sub group');
+      } finally {
+        setSubGroupLoading(false);
+      }
     }
   };
 
@@ -286,9 +337,10 @@ export const AssetGroupsPage = () => {
                 <div className="flex justify-end pt-4">
                   <Button 
                     onClick={handleAddGroup}
+                    disabled={groupLoading}
                     className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
                   >
-                    Submit
+                    {groupLoading ? 'Creating...' : 'Submit'}
                   </Button>
                 </div>
               </div>
@@ -344,9 +396,10 @@ export const AssetGroupsPage = () => {
               <div className="flex justify-end pt-6">
                 <Button 
                   onClick={handleAddSubGroup}
+                  disabled={subGroupLoading}
                   className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
                 >
-                  Submit
+                  {subGroupLoading ? 'Creating...' : 'Submit'}
                 </Button>
               </div>
             </DialogContent>
