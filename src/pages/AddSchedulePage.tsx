@@ -846,8 +846,7 @@ export const AddSchedulePage = () => {
               border: '2px dashed #E0E0E0', 
               borderRadius: '8px',
               backgroundColor: 'white',
-              padding: 3,
-              mb: 3
+              padding: 3
             }}>
               <Tabs 
                 value={timeTab} 
@@ -958,31 +957,31 @@ export const AddSchedulePage = () => {
                   </Box>
                 </Box>
               )}
+              
+              {/* Summary Table inside the same container */}
+              <TableContainer sx={{ mt: 3, border: 'none' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: '#F9F9F9' }}>
+                      <TableCell><strong>Hours</strong></TableCell>
+                      <TableCell><strong>Minutes</strong></TableCell>
+                      <TableCell><strong>Day Of Month</strong></TableCell>
+                      <TableCell><strong>Month</strong></TableCell>
+                      <TableCell><strong>Day Of Week</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>00</TableCell>
+                      <TableCell>00</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
-            
-            {/* Summary Table */}
-            <TableContainer component={Paper} sx={{ mt: 2 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: '#F9F9F9' }}>
-                    <TableCell><strong>Hours</strong></TableCell>
-                    <TableCell><strong>Minutes</strong></TableCell>
-                    <TableCell><strong>Day Of Month</strong></TableCell>
-                    <TableCell><strong>Month</strong></TableCell>
-                    <TableCell><strong>Day Of Week</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>00</TableCell>
-                    <TableCell>00</TableCell>
-                    <TableCell>-</TableCell>
-                    <TableCell>-</TableCell>
-                    <TableCell>-</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
           </Box>
         );
         
