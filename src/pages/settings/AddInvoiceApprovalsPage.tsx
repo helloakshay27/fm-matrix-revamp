@@ -178,7 +178,7 @@ export const AddInvoiceApprovalsPage = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#C72030' }}></div>
-              <h3 className="text-lg font-semibold text-destructive">Approval Levels</h3>
+              <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Approval Levels</h3>
             </div>
 
             {approvalLevels.map((level, index) => (
