@@ -258,29 +258,36 @@ export const AddRolePage = () => {
     setIsSubmitting(true);
     
     try {
-      // Transform permissions to API format
-      const permissions_hash: Record<string, any> = {};
+      // Build dynamic permissions hash based on API action_names
+      const permissions_hash: Record<string, { create?: string; update?: string; destroy?: string }> = {};
       let hasAnyPermission = false;
-      
-      Object.entries(permissions).forEach(([tabName, tabPermissions]) => {
-        tabPermissions.forEach(permission => {
-          if (permission.add || permission.view || permission.edit || permission.disable) {
-            const actions: Record<string, string> = {};
-            
-            if (permission.view) actions.show = "true";
-            if (permission.add) actions.create = "true";
-            if (permission.edit) actions.update = "true";
-            if (permission.disable) actions.destroy = "true";
-            
-            if (Object.keys(actions).length > 0) {
-              // Find the corresponding lock function to get action_name
-              const lockFunction = lockFunctions.find(lf => lf.function_name === permission.name);
-              const actionName = lockFunction?.action_name || permission.name.toLowerCase().replace(/\s+/g, '_');
-              permissions_hash[actionName] = actions;
-              hasAnyPermission = true;
-            }
+
+      // Iterate through all lock functions from API to build dynamic payload
+      lockFunctions.forEach(lockFunction => {
+        const { action_name, function_name } = lockFunction;
+        
+        // Find if this function has permissions set in any tab
+        let functionPermissions = null;
+        for (const tab of tabs) {
+          const tabPermissions = permissions[tab];
+          functionPermissions = tabPermissions.find(p => p.name === function_name);
+          if (functionPermissions) break;
+        }
+
+        // If permissions found, build the action object
+        if (functionPermissions) {
+          const actions: { create?: string; update?: string; destroy?: string } = {};
+          
+          if (functionPermissions.add) actions.create = "true";
+          if (functionPermissions.edit) actions.update = "true";
+          if (functionPermissions.disable) actions.destroy = "true";
+          
+          // Only add to payload if at least one permission is selected
+          if (Object.keys(actions).length > 0) {
+            permissions_hash[action_name] = actions;
+            hasAnyPermission = true;
           }
-        });
+        }
       });
       
       // Create the API payload
