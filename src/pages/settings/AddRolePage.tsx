@@ -262,33 +262,57 @@ export const AddRolePage = () => {
       const permissions_hash: Record<string, { create?: string; update?: string; destroy?: string }> = {};
       let hasAnyPermission = false;
 
-      // Iterate through all lock functions from API to build dynamic payload
-      lockFunctions.forEach(lockFunction => {
-        const { action_name, function_name } = lockFunction;
-        
-        // Find if this function has permissions set in any tab
-        let functionPermissions = null;
-        for (const tab of tabs) {
-          const tabPermissions = permissions[tab];
-          functionPermissions = tabPermissions.find(p => p.name === function_name);
-          if (functionPermissions) break;
-        }
+      console.log('Lock functions from API:', lockFunctions);
+      console.log('Current permissions state:', permissions);
 
-        // If permissions found, build the action object
-        if (functionPermissions) {
-          const actions: { create?: string; update?: string; destroy?: string } = {};
-          
-          if (functionPermissions.add) actions.create = "true";
-          if (functionPermissions.edit) actions.update = "true";
-          if (functionPermissions.disable) actions.destroy = "true";
-          
-          // Only add to payload if at least one permission is selected
-          if (Object.keys(actions).length > 0) {
-            permissions_hash[action_name] = actions;
-            hasAnyPermission = true;
+      // Iterate through selected permissions and find matching lock functions
+      Object.entries(permissions).forEach(([tabName, tabPermissions]) => {
+        tabPermissions.forEach(permission => {
+          // Check if any permission is selected for this function
+          if (permission.add || permission.view || permission.edit || permission.disable) {
+            console.log(`Processing permission: ${permission.name}`);
+            
+            // Find corresponding lock function - try multiple matching strategies
+            let lockFunction = lockFunctions.find(lf => 
+              lf.function_name?.toLowerCase() === permission.name.toLowerCase() ||
+              lf.action_name?.toLowerCase() === permission.name.toLowerCase() ||
+              lf.function_name?.toLowerCase().replace(/\s+/g, '_') === permission.name.toLowerCase().replace(/\s+/g, '_')
+            );
+            
+            if (!lockFunction) {
+              console.log(`No matching lock function found for: ${permission.name}`);
+              // Fallback to using permission name as action name
+              const fallbackActionName = permission.name.toLowerCase().replace(/\s+/g, '_');
+              console.log(`Using fallback action name: ${fallbackActionName}`);
+              
+              const actions: { create?: string; update?: string; destroy?: string } = {};
+              if (permission.add) actions.create = "true";
+              if (permission.edit) actions.update = "true";
+              if (permission.disable) actions.destroy = "true";
+              
+              if (Object.keys(actions).length > 0) {
+                permissions_hash[fallbackActionName] = actions;
+                hasAnyPermission = true;
+              }
+            } else {
+              console.log(`Found matching lock function: ${lockFunction.function_name} -> ${lockFunction.action_name}`);
+              
+              const actions: { create?: string; update?: string; destroy?: string } = {};
+              if (permission.add) actions.create = "true";
+              if (permission.edit) actions.update = "true";
+              if (permission.disable) actions.destroy = "true";
+              
+              if (Object.keys(actions).length > 0) {
+                permissions_hash[lockFunction.action_name] = actions;
+                hasAnyPermission = true;
+              }
+            }
           }
-        }
+        });
       });
+
+      console.log('Final permissions_hash:', permissions_hash);
+      console.log('Has any permission:', hasAnyPermission);
       
       // Create the API payload
       const payload: CreateRolePayload = {
