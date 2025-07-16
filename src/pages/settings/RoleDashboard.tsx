@@ -311,7 +311,7 @@ export const RoleDashboard = () => {
 
       // Make PUT request
       const response = await fetch('https://fm-uat-api.lockated.com/lock_functions.json', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': getAuthHeader()
