@@ -29,6 +29,193 @@ const addressData = [
   }
 ];
 
+interface AddressSetupModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const AddressSetupModal = ({ isOpen, onClose }: AddressSetupModalProps) => {
+  const [formData, setFormData] = useState({
+    addressTitle: '',
+    buildingName: '',
+    email: '',
+    state: '',
+    phoneNumber: '',
+    faxNumber: '',
+    panNumber: '',
+    gstNumber: '',
+    address: '',
+    notes: ''
+  });
+
+  const handleSubmit = () => {
+    console.log('Submitting address setup:', formData);
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+            <span>Addresses</span>
+            <span>&gt;</span>
+            <span>New Address</span>
+          </div>
+          <DialogTitle className="text-xl font-bold">ADDRESSES</DialogTitle>
+          <div className="flex items-center space-x-2 mt-4">
+            <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">!</span>
+            </div>
+            <span className="text-orange-600 font-medium">ADDRESS SETUP</span>
+          </div>
+        </DialogHeader>
+        
+        <div className="space-y-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Address Title <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={formData.addressTitle}
+                onChange={(e) => setFormData({...formData, addressTitle: e.target.value})}
+                placeholder="demo"
+                className="bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Building Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={formData.buildingName}
+                onChange={(e) => setFormData({...formData, buildingName: e.target.value})}
+                placeholder="jyoti"
+                className="bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Email <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                placeholder="slyfesamanergy146@gmail.com"
+                className="bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                State <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.state} onValueChange={(value) => setFormData({...formData, state: value})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="MAHARASHTRA" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-50">
+                  <SelectItem value="MAHARASHTRA">MAHARASHTRA</SelectItem>
+                  <SelectItem value="KARNATAKA">KARNATAKA</SelectItem>
+                  <SelectItem value="GUJARAT">GUJARAT</SelectItem>
+                  <SelectItem value="DELHI">DELHI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Phone Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
+                placeholder="7239013238"
+                className="bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Fax Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={formData.faxNumber}
+                onChange={(e) => setFormData({...formData, faxNumber: e.target.value})}
+                placeholder="789848ugdy636565"
+                className="bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Pan Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={formData.panNumber}
+                onChange={(e) => setFormData({...formData, panNumber: e.target.value})}
+                placeholder="86986779796"
+                className="bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                GST Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={formData.gstNumber}
+                onChange={(e) => setFormData({...formData, gstNumber: e.target.value})}
+                placeholder="75nyy8776657"
+                className="bg-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Address <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                value={formData.address}
+                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                placeholder="demo world"
+                className="bg-white resize-none"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Notes <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                placeholder="test"
+                className="bg-white resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-center pt-6">
+            <Button 
+              className="bg-[#8B5A99] hover:bg-[#8B5A99]/90 text-white px-8"
+              onClick={handleSubmit}
+            >
+              Submit
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 interface NewMeterTypeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -109,6 +296,7 @@ export const AddressMasterPage = () => {
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const [newMeterModalOpen, setNewMeterModalOpen] = useState(false);
+  const [addressSetupModalOpen, setAddressSetupModalOpen] = useState(false);
 
   useEffect(() => {
     setCurrentSection('Master');
@@ -362,7 +550,7 @@ export const AddressMasterPage = () => {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setNewMeterModalOpen(true)}
+                      onClick={() => setAddressSetupModalOpen(true)}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -372,6 +560,11 @@ export const AddressMasterPage = () => {
             </TableBody>
           </Table>
         </div>
+
+        <AddressSetupModal
+          isOpen={addressSetupModalOpen}
+          onClose={() => setAddressSetupModalOpen(false)}
+        />
 
         <NewMeterTypeModal
           isOpen={newMeterModalOpen}
