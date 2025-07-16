@@ -841,13 +841,12 @@ export const AddSchedulePage = () => {
               </Typography>
             </Box>
 
-            {/* Main Content in White Box with Dashed Border */}
+            {/* Main Content in Single White Box */}
             <Box sx={{ 
-              border: '2px dashed #E0E0E0', 
-              borderRadius: '8px',
               backgroundColor: 'white',
+              borderRadius: '8px',
               padding: 3,
-              mb: 3
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
               <Tabs 
                 value={timeTab} 
@@ -958,16 +957,9 @@ export const AddSchedulePage = () => {
                   </Box>
                 </Box>
               )}
-            </Box>
 
-            {/* Summary Table in separate white box */}
-            <Box sx={{ 
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: 2,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <TableContainer>
+              {/* Summary Table in the same container */}
+              <TableContainer sx={{ mt: 3 }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ backgroundColor: '#F9F9F9' }}>
