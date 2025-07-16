@@ -17,7 +17,7 @@ const masterItems = [
     icon: MapPin,
     hasChildren: true,
     children: [
-      { name: 'Account', href: '/master/location/account' },
+      { name: 'Account', href: '/settings/account' },
       { name: 'Building', href: '/master/location/building' },
       { name: 'Wing', href: '/master/location/wing' },
       { name: 'Area', href: '/master/location/area' },
