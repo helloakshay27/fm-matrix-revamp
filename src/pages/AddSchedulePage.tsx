@@ -892,14 +892,12 @@ export const AddSchedulePage = () => {
       </Box>
 
       {/* Custom Stepper - Bordered Box Design */}
-      <Box sx={{ mb: 4, px: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          width: '100%',
-          maxWidth: '1000px',
-          margin: '0 auto'
+          width: '100%'
         }}>
           {steps.map((label, index) => (
             <React.Fragment key={label}>
