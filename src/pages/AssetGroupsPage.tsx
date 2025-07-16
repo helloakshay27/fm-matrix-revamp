@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogTitle, TextField, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 const groupsData = [
   { id: 1, srNo: 1, groupName: 'Electronic Devices', status: true },
@@ -96,6 +98,22 @@ const subGroupsData = [
 export const AssetGroupsPage = () => {
   const [groups, setGroups] = useState(groupsData);
   const [subGroups, setSubGroups] = useState(subGroupsData);
+  
+  // Modal states
+  const [addGroupOpen, setAddGroupOpen] = useState(false);
+  const [addSubGroupOpen, setAddSubGroupOpen] = useState(false);
+  
+  // Form states
+  const [groupName, setGroupName] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [subGroupName, setSubGroupName] = useState('');
+  
+  // MUI theme
+  const theme = createTheme({
+    palette: {
+      mode: 'light',
+    },
+  });
 
   const toggleGroupStatus = (id: number) => {
     setGroups(prev => prev.map(group => 
@@ -109,6 +127,36 @@ export const AssetGroupsPage = () => {
     ));
   };
 
+  const handleAddGroup = () => {
+    if (groupName.trim()) {
+      const newGroup = {
+        id: groups.length + 1,
+        srNo: groups.length + 1,
+        groupName: groupName.trim(),
+        status: true
+      };
+      setGroups(prev => [...prev, newGroup]);
+      setGroupName('');
+      setAddGroupOpen(false);
+    }
+  };
+
+  const handleAddSubGroup = () => {
+    if (selectedGroup && subGroupName.trim()) {
+      const newSubGroup = {
+        id: subGroups.length + 1,
+        srNo: subGroups.length + 1,
+        groupName: selectedGroup,
+        subGroupName: subGroupName.trim(),
+        status: true
+      };
+      setSubGroups(prev => [...prev, newSubGroup]);
+      setSelectedGroup('');
+      setSubGroupName('');
+      setAddSubGroupOpen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f6f4ee] p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -120,11 +168,17 @@ export const AssetGroupsPage = () => {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+            onClick={() => setAddGroupOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Group
           </Button>
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+            onClick={() => setAddSubGroupOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Subgroup
           </Button>
@@ -201,6 +255,103 @@ export const AssetGroupsPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Add Group Modal */}
+        <ThemeProvider theme={theme}>
+          <Dialog 
+            open={addGroupOpen} 
+            onClose={() => setAddGroupOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <div className="flex items-center justify-between p-6 border-b">
+              <DialogTitle className="text-xl font-bold p-0">ADD Group</DialogTitle>
+              <IconButton onClick={() => setAddGroupOpen(false)}>
+                <X className="w-5 h-5" />
+              </IconButton>
+            </div>
+            <DialogContent className="p-6">
+              <div className="space-y-6">
+                <TextField
+                  label="Group Name"
+                  placeholder="Enter Group Name"
+                  variant="outlined"
+                  fullWidth
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    onClick={handleAddGroup}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Sub Group Modal */}
+          <Dialog 
+            open={addSubGroupOpen} 
+            onClose={() => setAddSubGroupOpen(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <div className="flex items-center justify-between p-6 border-b">
+              <DialogTitle className="text-xl font-bold p-0">ADD Sub Group</DialogTitle>
+              <IconButton onClick={() => setAddSubGroupOpen(false)}>
+                <X className="w-5 h-5" />
+              </IconButton>
+            </div>
+            <DialogContent className="p-6">
+              <div className="grid grid-cols-2 gap-6">
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Group Name</InputLabel>
+                  <Select
+                    value={selectedGroup}
+                    onChange={(e) => setSelectedGroup(e.target.value)}
+                    label="Group Name"
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>
+                      Select Group
+                    </MenuItem>
+                    {groups.map((group) => (
+                      <MenuItem key={group.id} value={group.groupName}>
+                        {group.groupName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                
+                <TextField
+                  label="Group Name"
+                  placeholder="Enter Sub Group Name"
+                  variant="outlined"
+                  fullWidth
+                  value={subGroupName}
+                  onChange={(e) => setSubGroupName(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </div>
+              <div className="flex justify-end pt-6">
+                <Button 
+                  onClick={handleAddSubGroup}
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
+                >
+                  Submit
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </ThemeProvider>
       </div>
     </div>
   );
