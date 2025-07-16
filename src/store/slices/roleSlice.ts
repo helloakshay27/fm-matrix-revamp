@@ -13,6 +13,7 @@ interface Permission {
 interface Role {
   id: number;
   name: string;
+  permissions_hash: string;
   permissions: {
     [key: string]: Permission[];
   };
@@ -118,6 +119,7 @@ const roleSlice = createSlice({
         state.roles = action.payload.map((apiRole: ApiRole) => ({
           id: apiRole.id,
           name: apiRole.name,
+          permissions_hash: apiRole.permissions_hash || '',
           permissions: {
             'All Functions': [...allFunctionsPermissions],
             'Inventory': [...inventoryPermissions],

@@ -4,6 +4,7 @@ import { ENDPOINTS } from '@/config/apiConfig'
 export interface ApiRole {
   id: number;
   name: string;
+  permissions_hash: string;
 }
 
 export const roleService = {
