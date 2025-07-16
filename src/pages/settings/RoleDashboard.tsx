@@ -13,6 +13,8 @@ import {
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { roleService, ApiRole } from '@/services/roleService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchRoles, updateRolePermissions } from '@/store/slices/roleSlice';
 
 interface Permission {
   name: string;
@@ -162,42 +164,17 @@ const quickgatePermissions: Permission[] = [
 
 export const RoleDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { roles, loading, error } = useAppSelector((state) => state.role);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All Functions');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Fetch roles from API
   useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        setLoading(true);
-        const apiRoles = await roleService.fetchRoles();
-        
-        // Convert API roles to internal format with default permissions
-        const rolesWithPermissions: Role[] = apiRoles.map(apiRole => ({
-          id: apiRole.id,
-          name: apiRole.name,
-          permissions: {
-            'All Functions': [...allFunctionsPermissions],
-            'Inventory': [...inventoryPermissions],
-            'Setup': [...setupPermissions],
-            'Quickgate': [...quickgatePermissions]
-          }
-        }));
-        
-        setRoles(rolesWithPermissions);
-      } catch (error) {
-        console.error('Failed to fetch roles:', error);
-        // Keep empty array as fallback
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRoles();
-  }, []);
+    dispatch(fetchRoles());
+  }, [dispatch]);
 
   const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
 
@@ -224,55 +201,57 @@ export const RoleDashboard = () => {
   };
 
   const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
-    setRoles(roles.map(role => {
-      if (role.id === roleId) {
-        const updatedPermissions = { ...role.permissions };
-        updatedPermissions[activeTab] = role.permissions[activeTab].map(permission => {
-          if (permission.name === permissionName) {
-            const updatedPermission = { ...permission, [field]: value };
-            
-            // If "All" is checked, check all other permissions
-            if (field === 'all' && value) {
-              updatedPermission.add = true;
-              updatedPermission.view = true;
-              updatedPermission.edit = true;
-              updatedPermission.disable = true;
-            }
-            // If "All" is unchecked, uncheck all other permissions
-            else if (field === 'all' && !value) {
-              updatedPermission.add = false;
-              updatedPermission.view = false;
-              updatedPermission.edit = false;
-              updatedPermission.disable = false;
-            }
-            // If any individual permission is unchecked, uncheck "All"
-            else if (!value && field !== 'all') {
-              updatedPermission.all = false;
-            }
-            // If all individual permissions are checked, check "All"
-            else if (value && field !== 'all') {
-              const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
-              if (allIndividualChecked) {
-                updatedPermission.all = true;
-              }
-            }
-            
-            return updatedPermission;
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+
+    const updatedPermissions = role.permissions[activeTab].map(permission => {
+      if (permission.name === permissionName) {
+        const updatedPermission = { ...permission, [field]: value };
+        
+        // If "All" is checked, check all other permissions
+        if (field === 'all' && value) {
+          updatedPermission.add = true;
+          updatedPermission.view = true;
+          updatedPermission.edit = true;
+          updatedPermission.disable = true;
+        }
+        // If "All" is unchecked, uncheck all other permissions
+        else if (field === 'all' && !value) {
+          updatedPermission.add = false;
+          updatedPermission.view = false;
+          updatedPermission.edit = false;
+          updatedPermission.disable = false;
+        }
+        // If any individual permission is unchecked, uncheck "All"
+        else if (!value && field !== 'all') {
+          updatedPermission.all = false;
+        }
+        // If all individual permissions are checked, check "All"
+        else if (value && field !== 'all') {
+          const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
+          if (allIndividualChecked) {
+            updatedPermission.all = true;
           }
-          return permission;
-        });
-        
-        const updatedRole = { ...role, permissions: updatedPermissions };
-        
-        // Update selected role if it's the one being modified
-        if (selectedRole && selectedRole.id === roleId) {
-          setSelectedRole(updatedRole);
         }
         
-        return updatedRole;
+        return updatedPermission;
       }
-      return role;
+      return permission;
+    });
+
+    // Update Redux state
+    dispatch(updateRolePermissions({
+      roleId,
+      tab: activeTab,
+      permissions: updatedPermissions
     }));
+
+    // Update selected role if it's the one being modified
+    if (selectedRole && selectedRole.id === roleId) {
+      const updatedRole = { ...selectedRole };
+      updatedRole.permissions[activeTab] = updatedPermissions;
+      setSelectedRole(updatedRole);
+    }
   };
 
   const handleUpdatePermissions = () => {
