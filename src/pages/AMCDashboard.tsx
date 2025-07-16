@@ -64,7 +64,7 @@ export const AMCDashboard = () => {
   const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 2;
+  const pageSize = 7;
 
   // Use API data if available, otherwise fallback to initial data
   const amcData = apiData && Array.isArray(apiData) ? apiData : initialAmcData;
