@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/utils/apiClient';
-import { TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox as MuiCheckbox } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox as MuiCheckbox, ListItemText } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 interface ApprovalLevel {
@@ -232,7 +232,17 @@ export const AddInvoiceApprovalsPage = () => {
                       ) : users.length > 0 ? (
                         users.map((user) => (
                           <MenuItem key={user.id} value={user.id.toString()}>
-                            {user.full_name}
+                            <MuiCheckbox 
+                              checked={level.users.includes(user.id.toString())}
+                              sx={{ 
+                                color: '#dc2626',
+                                '&.Mui-checked': {
+                                  color: '#dc2626',
+                                },
+                                marginRight: 1
+                              }}
+                            />
+                            <ListItemText primary={user.full_name} />
                           </MenuItem>
                         ))
                       ) : (
