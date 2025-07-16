@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 
 import {
   Pagination,
@@ -590,19 +590,46 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={groupChartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
+                    <BarChart 
+                      data={groupChartData}
+                      margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 60,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis 
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 12 }}
+                        tick={{ fontSize: 12, fill: '#666' }}
                         angle={-45}
                         textAnchor="end"
                         height={60}
                       />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                      <Bar dataKey="value" fill="#C7B894" radius={[4, 4, 0, 0]} />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 12, fill: '#666' }}
+                        domain={[0, 'dataMax + 1']}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          fontSize: '12px'
+                        }}
+                        labelStyle={{ color: '#333' }}
+                      />
+                      <Bar 
+                        dataKey="value" 
+                        fill="#C7B894" 
+                        radius={[4, 4, 0, 0]}
+                        name="Items Count"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
