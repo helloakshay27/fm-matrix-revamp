@@ -827,7 +827,8 @@ function App() {
               <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
               <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
               <Route path="/settings/safety/incident" element={<IncidentSetupDashboard />} />
-              <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
+               <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
+               <Route path="/settings/vas/booking/setup" element={<BookingSetupDashboard />} />
 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
             </Route>
 
