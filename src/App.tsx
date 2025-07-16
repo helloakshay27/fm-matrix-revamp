@@ -14,6 +14,7 @@ import { LoginPage } from './pages/LoginPage';
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
+import { AddInvoiceApprovalsPage } from './pages/settings/AddInvoiceApprovalsPage';
 
 // Import Asset Groups page
 import { AssetGroupsPage } from './pages/AssetGroupsPage';
@@ -817,6 +818,7 @@ function App() {
 
             <Route path="/settings/approval-matrix/setup" element={<ApprovalMatrixSetupPage />} />
             <Route path="/settings/approval-matrix/setup/add" element={<AddApprovalMatrixPage />} />
+            <Route path="/settings/invoice-approvals/add" element={<AddInvoiceApprovalsPage />} />
 
               <Route path="/settings/checklist-setup/group" element={<AssetGroupsDashboard />} />
               <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />

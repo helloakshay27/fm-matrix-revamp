@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Plus, MoreVertical, Grid3X3, ExternalLink, Edit } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface InvoiceApproval {
   id: number;
@@ -52,6 +53,7 @@ const mockData: InvoiceApproval[] = [
 ];
 
 export const InvoiceApprovalsPage = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredData, setFilteredData] = useState(mockData);
 
@@ -105,7 +107,10 @@ export const InvoiceApprovalsPage = () => {
 
       {/* Add Button */}
       <div className="flex justify-start">
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button 
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+          onClick={() => navigate('/settings/invoice-approvals/add')}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
