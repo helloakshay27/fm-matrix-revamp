@@ -233,18 +233,21 @@ export const AddAMCPage = () => {
                     </FormControl>
                   </div>
 
-                  <div>
-                    <FormControl fullWidth variant="outlined">
-                      <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
-                      <MuiSelect labelId="group-service-select-label" label="Service" displayEmpty value={formData.service} onChange={e => handleInputChange('service', e.target.value)} sx={fieldStyles}>
-                        <MenuItem value=""><em>Select Service</em></MenuItem>
-                        <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
-                        <MenuItem value="corrective-maintenance">Corrective Maintenance</MenuItem>
-                        <MenuItem value="emergency-service">Emergency Service</MenuItem>
-                        <MenuItem value="inspection-service">Inspection Service</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
+                  {/* Only show Service dropdown when Details is "Service" */}
+                  {formData.details === 'Service' && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
+                        <MuiSelect labelId="group-service-select-label" label="Service" displayEmpty value={formData.service} onChange={e => handleInputChange('service', e.target.value)} sx={fieldStyles}>
+                          <MenuItem value=""><em>Select Service</em></MenuItem>
+                          <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
+                          <MenuItem value="corrective-maintenance">Corrective Maintenance</MenuItem>
+                          <MenuItem value="emergency-service">Emergency Service</MenuItem>
+                          <MenuItem value="inspection-service">Inspection Service</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+                  )}
 
                   <div>
                     <FormControl fullWidth variant="outlined">
