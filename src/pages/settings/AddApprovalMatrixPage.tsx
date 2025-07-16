@@ -310,7 +310,7 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="ghost"
             onClick={addApprovalLevel}
-            className="bg-[#6B2C91] hover:bg-[#5A2478] text-white w-12 h-12 rounded-lg p-0"
+            className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#6B2C91] w-12 h-12 rounded-lg p-0"
           >
             <Plus className="w-6 h-6" />
           </Button>
