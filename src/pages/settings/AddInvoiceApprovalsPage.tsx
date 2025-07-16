@@ -215,12 +215,17 @@ export const AddInvoiceApprovalsPage = () => {
                   <FormControl fullWidth variant="outlined" size="small">
                     <InputLabel>Users *</InputLabel>
                     <Select
-                      value={level.users.join(',')}
+                      multiple
+                      value={level.users}
                       onChange={(e) => {
-                        const userIds = e.target.value ? e.target.value.split(',') : [];
-                        updateApprovalLevel(index, 'users', userIds);
+                        const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                        updateApprovalLevel(index, 'users', value);
                       }}
                       label="Users *"
+                      renderValue={(selected) => {
+                        const selectedUsers = users.filter(user => selected.includes(user.id.toString()));
+                        return selectedUsers.map(user => user.full_name).join(', ');
+                      }}
                     >
                       {loading ? (
                         <MenuItem disabled>Loading users...</MenuItem>
