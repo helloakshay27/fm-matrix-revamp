@@ -39,11 +39,15 @@ export const departmentService = {
     }
   },
 
-  // Update department (you can implement this when needed)
-  async updateDepartment(id: number, department: Partial<Department>): Promise<Department> {
+  // Update department (using the correct API payload format)
+  async updateDepartment(id: number, departmentName: string): Promise<Department> {
     try {
-      // Implementation will depend on your API
-      const response = await apiClient.put<Department>(`${ENDPOINTS.DEPARTMENTS}/${id}`, department)
+      const payload = {
+        pms_department: {
+          department_name: departmentName
+        }
+      };
+      const response = await apiClient.put<Department>(`/pms/departments/${id}.json`, payload)
       return response.data
     } catch (error) {
       console.error('Error updating department:', error)

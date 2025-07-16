@@ -48,9 +48,14 @@ export const addDepartment = createAsyncThunk(
 // Update department API call
 export const updateDepartment = createAsyncThunk(
   'department/updateDepartment',
-  async ({ id, department }: { id: number; department: Partial<Department> }, { rejectWithValue }) => {
+  async ({ id, departmentName }: { id: number; departmentName: string }, { rejectWithValue }) => {
     try {
-      const response = await apiClient.put<Department>(`${ENDPOINTS.DEPARTMENTS}/${id}`, department)
+      const payload = {
+        pms_department: {
+          department_name: departmentName
+        }
+      };
+      const response = await apiClient.put<Department>(`/pms/departments/${id}.json`, payload)
       return response.data
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || 'Failed to update department'
