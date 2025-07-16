@@ -150,6 +150,12 @@ import { SeatTypeDashboard } from './pages/SeatTypeDashboard';
 // Import Shift page
 import { ShiftDashboard } from './pages/setup/ShiftDashboard';
 
+// Import Setup User pages
+import { FMUserDashboard } from './pages/setup/FMUserDashboard';
+import { AddFMUserDashboard } from './pages/setup/AddFMUserDashboard';
+import { OccupantUsersDashboard } from './pages/setup/OccupantUsersDashboard';
+import { AddOccupantUserDashboard } from './pages/setup/AddOccupantUserDashboard';
+
 // Import User Roasters pages
 import { UserRoastersDashboard } from './pages/setup/UserRoastersDashboard';
 import { CreateRosterTemplateDashboard } from './pages/setup/CreateRosterTemplateDashboard';
@@ -798,6 +804,12 @@ function App() {
             {/* Setup Routes - Outside of settings parent route */}
             <Route path="/setup/permit" element={<PermitSetupDashboard />} />
             <Route path="/setup/incident" element={<IncidentSetupDashboard />} />
+            
+            {/* Setup User Management Routes */}
+            <Route path="/setup/fm-users" element={<FMUserDashboard />} />
+            <Route path="/setup/fm-users/add" element={<AddFMUserDashboard />} />
+            <Route path="/setup/occupant-users" element={<OccupantUsersDashboard />} />
+            <Route path="/setup/occupant-users/add" element={<AddOccupantUserDashboard />} />
 
             </Routes>
             <Toaster />
