@@ -962,12 +962,12 @@ export const AddSchedulePage = () => {
               <TableContainer sx={{ mt: 3 }}>
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ backgroundColor: '#F9F9F9' }}>
-                      <TableCell><strong>Hours</strong></TableCell>
-                      <TableCell><strong>Minutes</strong></TableCell>
-                      <TableCell><strong>Day Of Month</strong></TableCell>
-                      <TableCell><strong>Month</strong></TableCell>
-                      <TableCell><strong>Day Of Week</strong></TableCell>
+                    <TableRow>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Hours</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Minutes</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Day Of Month</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Month</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Day Of Week</strong></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
