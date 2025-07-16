@@ -47,6 +47,7 @@ export const RoleDashboard = () => {
   const [activeTab, setActiveTab] = useState('all_functions');
   const [selectedRole, setSelectedRole] = useState<ApiRole | null>(null);
   const [rolePermissions, setRolePermissions] = useState<{ [roleId: number]: { [tab: string]: Permission[] } }>({});
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch roles and functions from API
   useEffect(() => {
@@ -141,60 +142,69 @@ export const RoleDashboard = () => {
 
   // Initialize permissions for roles when functions are loaded
   useEffect(() => {
-    if (functions.length > 0 && roles.length > 0) {
+    if (functions.length > 0 && roles.length > 0 && !isUpdating) {
       const initialPermissions: { [roleId: number]: { [tab: string]: Permission[] } } = {};
       
       roles.forEach(role => {
-        initialPermissions[role.id] = {};
-        
-        // Parse permissions_hash from API
-        let rolePermissionsData: any = {};
-        try {
-          const permissionsHashValue = role.permissions_hash || '{}';
-          const parsedData = JSON.parse(permissionsHashValue);
-          // Handle case where JSON.parse returns null (when permissions_hash is "null" string)
-          rolePermissionsData = parsedData && typeof parsedData === 'object' ? parsedData : {};
-        } catch (error) {
-          console.error('Error parsing permissions_hash for role:', role.name, error);
-          rolePermissionsData = {};
-        }
-        
-        tabs.forEach(tab => {
-          initialPermissions[role.id][tab] = functions
-            .filter(func => func.parent_function === tab)
-            .map(func => {
-              // Look for matching API permission using the function name directly 
-              // or try to find by mapped name
-              let apiPermissions: any = {};
-              
-              // First try direct match with function name
-              if (rolePermissionsData[func.name]) {
-                apiPermissions = rolePermissionsData[func.name];
-              } else {
-                // Try to find by reverse mapping - look for API key that maps to this function name
-                const apiKey = Object.keys(rolePermissionsData).find(key => 
-                  mapApiKeyToFunctionName(key) === func.name
-                );
-                if (apiKey) {
-                  apiPermissions = rolePermissionsData[apiKey];
+        // Only reinitialize if this role doesn't have permissions yet
+        if (!rolePermissions[role.id]) {
+          initialPermissions[role.id] = {};
+          
+          // Parse permissions_hash from API
+          let rolePermissionsData: any = {};
+          try {
+            const permissionsHashValue = role.permissions_hash || '{}';
+            const parsedData = JSON.parse(permissionsHashValue);
+            // Handle case where JSON.parse returns null (when permissions_hash is "null" string)
+            rolePermissionsData = parsedData && typeof parsedData === 'object' ? parsedData : {};
+          } catch (error) {
+            console.error('Error parsing permissions_hash for role:', role.name, error);
+            rolePermissionsData = {};
+          }
+          
+          tabs.forEach(tab => {
+            initialPermissions[role.id][tab] = functions
+              .filter(func => func.parent_function === tab)
+              .map(func => {
+                // Look for matching API permission using the function name directly 
+                // or try to find by mapped name
+                let apiPermissions: any = {};
+                
+                // First try direct match with function name
+                if (rolePermissionsData[func.name]) {
+                  apiPermissions = rolePermissionsData[func.name];
+                } else {
+                  // Try to find by reverse mapping - look for API key that maps to this function name
+                  const apiKey = Object.keys(rolePermissionsData).find(key => 
+                    mapApiKeyToFunctionName(key) === func.name
+                  );
+                  if (apiKey) {
+                    apiPermissions = rolePermissionsData[apiKey];
+                  }
                 }
-              }
-              
-              return {
-                name: func.name,
-                all: apiPermissions.all === "true",
-                add: apiPermissions.create === "true", 
-                view: apiPermissions.show === "true",
-                edit: apiPermissions.update === "true",
-                disable: apiPermissions.destroy === "true"
-              };
-            });
-        });
+                
+                return {
+                  name: func.name,
+                  all: apiPermissions.all === "true",
+                  add: apiPermissions.create === "true", 
+                  view: apiPermissions.show === "true",
+                  edit: apiPermissions.update === "true",
+                  disable: apiPermissions.destroy === "true"
+                };
+              });
+          });
+        }
       });
       
-      setRolePermissions(initialPermissions);
+      // Only update if we have new permissions to add
+      if (Object.keys(initialPermissions).length > 0) {
+        setRolePermissions(prev => ({
+          ...prev,
+          ...initialPermissions
+        }));
+      }
     }
-  }, [functions, roles]);
+  }, [functions, roles, isUpdating]);
 
   // Get unique parent_function values as tabs
   const tabs = ['all_functions', 'inventory', 'setup', 'quickgate'];
@@ -282,6 +292,8 @@ export const RoleDashboard = () => {
       return;
     }
     
+    setIsUpdating(true);
+    
     try {
       // Get current role's existing permissions from API
       const existingPermissionsHash = currentRole.permissions_hash ? JSON.parse(currentRole.permissions_hash) : {};
@@ -349,6 +361,8 @@ export const RoleDashboard = () => {
         description: `Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
