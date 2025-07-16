@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown } from 'lucide-react';
+import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { InventoryFilterDialog } from '@/components/InventoryFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -651,81 +651,119 @@ export const InventoryDashboard = () => {
               </div>
             </div>
 
-            {/* Right Sidebar */}
-            <div className="w-80">
-              <div className="bg-white rounded-lg border">
-                <div className="p-4 border-b">
-                  <h3 className="font-semibold text-[#C72030]">Recent Items</h3>
-                  <div className="text-sm text-gray-500 mt-1">16/07/2025</div>
-                </div>
-                <div className="p-4 space-y-4">
-                  {recentItems.map((item, index) => (
-                    <div key={item.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{item.id}</span>
-                          <div className="flex items-center">
-                            <div className="w-4 h-4 text-yellow-500">★</div>
-                            <span className="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded ml-1">
-                              {item.priority}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="text-xs text-gray-500">TAT : {item.tat}</span>
-                      </div>
-                      
-                      <h4 className="font-medium text-sm mb-2">{item.title}</h4>
-                      
-                      <div className="space-y-1 text-xs text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Package className="w-3 h-3 text-[#C72030]" />
-                          <span>{item.subtitle}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Package className="w-3 h-3 text-[#C72030]" />
-                          <span>{item.subcategory}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-orange-400"></div>
-                          <span>{item.assignee}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                          <span>{item.site}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                          <span className="text-xs">In Progress</span>
-                          <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                          <span className="text-xs">Processed</span>
-                        </div>
-                      </div>
-                      
-                      <div className="text-xs text-gray-500 mt-2">
-                        (Handled By Manager)
-                      </div>
-                      
-                      <div className="flex gap-2 mt-3">
-                        <button className="text-xs text-gray-600 border rounded px-2 py-1 flex items-center gap-1">
-                          <FileText className="w-3 h-3" />
-                          Add Comment
-                        </button>
-                        <button className="text-xs text-gray-600 border rounded px-2 py-1 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />
-                          Flag Issue
-                        </button>
-                        <button className="text-xs text-[#C72030] underline">
-                          View Detail&gt;&gt;
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* Right Sidebar */}
+        <div className="w-80">
+          <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-red-600 mb-2">
+                Recent Items
+              </h2>
+              <div className="text-sm font-medium text-gray-800">
+                16/07/2025
               </div>
             </div>
+            
+            {/* Items List */}
+            <div className="flex-1 overflow-y-auto space-y-4">
+              {recentItems.map((item, index) => (
+                <div key={`${item.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
+                  {/* Header with ID, Star, and Priority */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-semibold text-gray-800 text-sm">{item.id}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 text-yellow-500">★</div>
+                      <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
+                        {item.priority}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Title and TAT */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900 text-base">{item.title}</h3>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium text-gray-700">TAT :</span>
+                      <span className="text-sm font-bold text-blue-600">{item.tat}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Details */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center gap-3">
+                      <Package className="h-4 w-4 text-red-500" />
+                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Category</span>
+                      <span className="text-sm text-gray-700">:</span>
+                      <span className="text-sm text-gray-900">{item.subtitle.replace('Category: ', '')}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <Package className="h-4 w-4 text-red-500" />
+                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Sub-Category</span>
+                      <span className="text-sm text-gray-700">:</span>
+                      <span className="text-sm text-gray-900">{item.subcategory.replace('Sub-Category: ', '')}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full bg-orange-400"></div>
+                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Assignee Name</span>
+                      <span className="text-sm text-gray-700">:</span>
+                      <span className="text-sm text-gray-900">{item.assignee.replace('Manager: ', '')}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full bg-red-400"></div>
+                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Site</span>
+                      <span className="text-sm text-gray-700">:</span>
+                      <span className="text-sm text-gray-900">{item.site.replace('Site: ', '')}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <RotateCcw className="h-4 w-4 text-red-500" />
+                      <span className="text-sm font-medium text-gray-700 min-w-[100px]">Update</span>
+                      <span className="text-sm text-gray-700">:</span>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="italic text-gray-600">In Progress</span>
+                        <ChevronRight className="h-3 w-3 text-gray-600" />
+                        <span className="italic text-gray-600">Processed</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 ml-7">
+                      (Handled By Manager)
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-6">
+                      <button 
+                        className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80"
+                      >
+                        <FileText className="h-4 w-4 text-red-500" />
+                        Add Comment
+                      </button>
+                      
+                      <button 
+                        className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80"
+                      >
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        Flag Issue
+                      </button>
+                    </div>
+                    
+                    <button 
+                      className="text-blue-600 text-sm font-medium underline hover:text-blue-800"
+                      onClick={() => handleViewItem(item.id)}
+                    >
+                      View Detail&gt;&gt;
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
           </div>
         </TabsContent>
 
