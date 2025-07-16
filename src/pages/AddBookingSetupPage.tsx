@@ -700,9 +700,21 @@ export const AddBookingSetupPage = () => {
                   label="Seater Info"
                 >
                   <MenuItem value="Select a seater">Select a seater</MenuItem>
-                  <MenuItem value="2-4 People">2-4 People</MenuItem>
-                  <MenuItem value="5-10 People">5-10 People</MenuItem>
-                  <MenuItem value="10+ People">10+ People</MenuItem>
+                  <MenuItem value="1 Seater">1 Seater</MenuItem>
+                  <MenuItem value="2 Seater">2 Seater</MenuItem>
+                  <MenuItem value="3 Seater">3 Seater</MenuItem>
+                  <MenuItem value="4 Seater">4 Seater</MenuItem>
+                  <MenuItem value="5 Seater">5 Seater</MenuItem>
+                  <MenuItem value="6 Seater">6 Seater</MenuItem>
+                  <MenuItem value="7 Seater">7 Seater</MenuItem>
+                  <MenuItem value="8 Seater">8 Seater</MenuItem>
+                  <MenuItem value="9 Seater">9 Seater</MenuItem>
+                  <MenuItem value="10 Seater">10 Seater</MenuItem>
+                  <MenuItem value="11 Seater">11 Seater</MenuItem>
+                  <MenuItem value="12 Seater">12 Seater</MenuItem>
+                  <MenuItem value="13 Seater">13 Seater</MenuItem>
+                  <MenuItem value="14 Seater">14 Seater</MenuItem>
+                  <MenuItem value="15 Seater">15 Seater</MenuItem>
                 </Select>
               </FormControl>
             </div>
@@ -721,9 +733,21 @@ export const AddBookingSetupPage = () => {
                   label="Floor Info"
                 >
                   <MenuItem value="Select a floor">Select a floor</MenuItem>
-                  <MenuItem value="Ground Floor">Ground Floor</MenuItem>
                   <MenuItem value="1st Floor">1st Floor</MenuItem>
                   <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+                  <MenuItem value="3rd Floor">3rd Floor</MenuItem>
+                  <MenuItem value="4th Floor">4th Floor</MenuItem>
+                  <MenuItem value="5th Floor">5th Floor</MenuItem>
+                  <MenuItem value="6th Floor">6th Floor</MenuItem>
+                  <MenuItem value="7th Floor">7th Floor</MenuItem>
+                  <MenuItem value="8th Floor">8th Floor</MenuItem>
+                  <MenuItem value="9th Floor">9th Floor</MenuItem>
+                  <MenuItem value="10th Floor">10th Floor</MenuItem>
+                  <MenuItem value="11th Floor">11th Floor</MenuItem>
+                  <MenuItem value="12th Floor">12th Floor</MenuItem>
+                  <MenuItem value="13th Floor">13th Floor</MenuItem>
+                  <MenuItem value="14th Floor">14th Floor</MenuItem>
+                  <MenuItem value="15th Floor">15th Floor</MenuItem>
                 </Select>
               </FormControl>
             </div>
