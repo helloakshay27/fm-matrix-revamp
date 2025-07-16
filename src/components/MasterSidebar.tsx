@@ -10,6 +10,7 @@ import {
   Package, 
   FileText 
 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const masterItems = [
   {
@@ -137,16 +138,16 @@ export const MasterSidebar = () => {
   };
 
   return (
-    <div className="w-64 bg-white border-r border-[#D5DbDB] fixed left-0 top-16 bottom-0 z-20">
-      <div className="p-4 border-b border-[#D5DbDB]">
+    <div className="w-64 bg-white border-r border-[#D5DbDB] fixed left-0 top-16 bottom-0 z-20 flex flex-col">
+      <div className="p-4 border-b border-[#D5DbDB] flex-shrink-0">
         <h2 className="text-lg font-semibold text-[#1a1a1a]">Master</h2>
       </div>
       
-      <div className="flex-1 overflow-y-auto">
+      <ScrollArea className="flex-1">
         <nav className="py-2">
           {masterItems.map((item) => renderMenuItem(item))}
         </nav>
-      </div>
+      </ScrollArea>
     </div>
   );
 };
