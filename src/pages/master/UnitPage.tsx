@@ -85,8 +85,8 @@ export const UnitPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 ml-64">
+    <div className="w-full min-h-screen bg-gray-50">
+      <div className="w-full">
         <div className="p-6">
           {/* Breadcrumb */}
           <div className="mb-4">
