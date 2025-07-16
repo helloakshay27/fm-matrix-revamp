@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,9 +19,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Plus } from 'lucide-react';
+import { Edit, Plus, Loader2 } from 'lucide-react';
 
-interface Department {
+import { departmentService, Department } from '@/services/departmentService';
+
+interface LocalDepartment extends Department {
   id: number;
   name: string;
   status: boolean;
@@ -31,27 +33,55 @@ export const DepartmentDashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState('');
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<LocalDepartment | null>(null);
   const [editDepartmentName, setEditDepartmentName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: '1', status: true },
-    { id: 2, name: 'ABC', status: false },
-    { id: 3, name: 'abc', status: true },
-    { id: 4, name: 'Accounts', status: true },
-    { id: 5, name: 'Admin', status: true },
-    { id: 6, name: 'Aeronautics department', status: true },
-    { id: 7, name: 'BMC DEPARTMENT', status: true },
-    { id: 8, name: 'Chokidar', status: true },
-    { id: 9, name: 'DEMO DEPT', status: true },
-  ]);
+  const [departments, setDepartments] = useState<LocalDepartment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch departments from API
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiDepartments = await departmentService.fetchDepartments();
+        
+        // Transform API data to local format
+        const transformedDepartments: LocalDepartment[] = apiDepartments.map((dept, index) => ({
+          id: index + 1, // Generate ID since API might not provide it
+          name: dept.department_name,
+          status: dept.active,
+          department_name: dept.department_name,
+          active: dept.active
+        }));
+        
+        setDepartments(transformedDepartments);
+      } catch (err) {
+        setError('Failed to fetch departments');
+        console.error('Error fetching departments:', err);
+        // Fallback to dummy data on error
+        setDepartments([
+          { id: 1, name: 'Sales', status: true, department_name: 'Sales', active: true },
+          { id: 2, name: 'Marketing', status: false, department_name: 'Marketing', active: false },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = () => {
     if (departmentName.trim()) {
-      const newDepartment: Department = {
+      const newDepartment: LocalDepartment = {
         id: departments.length + 1,
         name: departmentName,
         status: true,
+        department_name: departmentName,
+        active: true,
       };
       setDepartments([...departments, newDepartment]);
       setDepartmentName('');
@@ -72,7 +102,7 @@ export const DepartmentDashboard = () => {
     }
   };
 
-  const openEditDialog = (department: Department) => {
+  const openEditDialog = (department: LocalDepartment) => {
     setEditingDepartment(department);
     setEditDepartmentName(department.name);
     setIsEditDialogOpen(true);
@@ -94,6 +124,24 @@ export const DepartmentDashboard = () => {
       <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">DEPARTMENT</h1>
       
       <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <span>Loading departments...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
+
+        {/* Content - only show if not loading */}
+        {!loading && (
+          <>
         {/* Header with Add Department button */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -247,6 +295,8 @@ export const DepartmentDashboard = () => {
             </div>
           </DialogContent>
         </Dialog>
+          </>
+        )}
       </div>
     </div>
   );
