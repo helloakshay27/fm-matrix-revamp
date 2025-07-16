@@ -881,9 +881,9 @@ export const AddSchedulePage = () => {
                 <Tab label="Month" />
               </Tabs>
               
-              <Box sx={{ padding: 3, backgroundColor: '#F5F5F5' }}>
+              <Box sx={{ padding: 3, backgroundColor: 'white' }}>
                 {timeTab === 0 && (
-                  <Box>
+                  <Box sx={{ backgroundColor: '#F5F5F5', padding: 2, borderRadius: 1 }}>
                     <FormControlLabel
                       control={
                         <Radio 
