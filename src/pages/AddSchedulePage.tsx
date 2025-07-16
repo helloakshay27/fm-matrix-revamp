@@ -38,7 +38,8 @@ import {
   Add,
   Close,
   AttachFile,
-  ArrowBack
+  ArrowBack,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { Cog } from 'lucide-react';
 
@@ -398,6 +399,24 @@ export const AddSchedulePage = () => {
               </Box>
               
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      '&:hover': {
+                        backgroundColor: '#C72030',
+                        color: 'white'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
                 <MuiSwitch 
                   checked={createTicket}
                   onChange={(e) => setCreateTicket(e.target.checked)}
@@ -487,24 +506,45 @@ export const AddSchedulePage = () => {
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: 2,
+              justifyContent: 'space-between',
               mb: 3,
               px: 1
             }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  backgroundColor: '#C72030',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Cog size={16} color="white" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                  Schedule Setup
+                </Typography>
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Schedule Setup
-              </Typography>
+              
+              {stepIndex < activeStep && (
+                <MuiButton
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleStepClick(stepIndex)}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    '&:hover': {
+                      backgroundColor: '#C72030',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  Edit
+                </MuiButton>
+              )}
             </Box>
 
             {/* Main Content in White Box */}
@@ -704,6 +744,24 @@ export const AddSchedulePage = () => {
               </Box>
               
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      '&:hover': {
+                        backgroundColor: '#C72030',
+                        color: 'white'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <MuiSwitch 
                     checked={autoTicket}
@@ -884,24 +942,45 @@ export const AddSchedulePage = () => {
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: 2,
+              justifyContent: 'space-between',
               mb: 3,
               px: 1
             }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  backgroundColor: '#C72030',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Cog size={16} color="white" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                  Time Setup
+                </Typography>
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Time Setup
-              </Typography>
+              
+              {stepIndex < activeStep && (
+                <MuiButton
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleStepClick(stepIndex)}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    '&:hover': {
+                      backgroundColor: '#C72030',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  Edit
+                </MuiButton>
+              )}
             </Box>
 
             {/* Main Content in Single White Box */}
@@ -1312,24 +1391,45 @@ export const AddSchedulePage = () => {
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: 2,
+              justifyContent: 'space-between',
               mb: 3,
               px: 1
             }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  backgroundColor: '#C72030',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Cog size={16} color="white" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                  Mapping
+                </Typography>
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Mapping
-              </Typography>
+              
+              {stepIndex < activeStep && (
+                <MuiButton
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleStepClick(stepIndex)}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    '&:hover': {
+                      backgroundColor: '#C72030',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  Edit
+                </MuiButton>
+              )}
             </Box>
 
             {/* Main Content in White Box */}
