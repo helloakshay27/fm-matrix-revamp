@@ -49,9 +49,18 @@ const AddApprovalMatrixPage = () => {
       try {
         setLoadingUsers(true);
         const response = await apiClient.get('/pms/users/get_escalate_to_users.json');
-        setUsers(response.data);
+        console.log('Users API response:', response.data);
+        
+        // Ensure we always set an array
+        if (Array.isArray(response.data)) {
+          setUsers(response.data);
+        } else {
+          console.error('API response is not an array:', response.data);
+          setUsers([]);
+        }
       } catch (error) {
         console.error('Error fetching users:', error);
+        setUsers([]); // Ensure users is always an array on error
       } finally {
         setLoadingUsers(false);
       }
@@ -263,6 +272,7 @@ const AddApprovalMatrixPage = () => {
                       label="Users"
                       renderValue={(selected) => {
                         if (selected.length === 0) return 'Select up to 15 Options...';
+                        if (!Array.isArray(users)) return 'Loading...';
                         const selectedUsers = users.filter(user => selected.includes(user.id.toString()));
                         return selectedUsers.map(user => user.full_name).join(', ');
                       }}
@@ -281,6 +291,8 @@ const AddApprovalMatrixPage = () => {
                     >
                       {loadingUsers ? (
                         <MenuItem disabled>Loading users...</MenuItem>
+                      ) : !Array.isArray(users) ? (
+                        <MenuItem disabled>Error loading users</MenuItem>
                       ) : (
                         users.map((user) => (
                           <MenuItem key={user.id} value={user.id.toString()}>
