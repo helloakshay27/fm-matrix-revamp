@@ -887,24 +887,35 @@ export const AddSchedulePage = () => {
         </Typography>
       </Box>
 
-      {/* Custom Stepper */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+      {/* Custom Stepper - Exact Match */}
+      <Box sx={{ mb: 4, px: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '100%',
+          maxWidth: '1000px',
+          margin: '0 auto'
+        }}>
           {steps.map((label, index) => (
-            <Box key={label} sx={{ display: 'flex', alignItems: 'center' }}>
+            <React.Fragment key={label}>
               <Box
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
                   backgroundColor: index === activeStep ? '#C72030' : '#C4B89D',
                   color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
+                  padding: '12px 20px',
+                  fontSize: '13px',
                   fontWeight: 500,
                   textAlign: 'center',
-                  minWidth: '120px',
+                  minWidth: '140px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   border: 'none',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
                   '&:hover': {
                     opacity: 0.9
                   }
@@ -915,20 +926,22 @@ export const AddSchedulePage = () => {
               {index < steps.length - 1 && (
                 <Box
                   sx={{
-                    width: '40px',
-                    height: '2px',
-                    background: `repeating-linear-gradient(
-                      to right,
-                      #C4B89D,
-                      #C4B89D 4px,
-                      transparent 4px,
-                      transparent 8px
-                    )`,
-                    mx: 0
+                    width: '60px',
+                    height: '1px',
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '1px',
+                      backgroundImage: 'repeating-linear-gradient(to right, #C4B89D 0px, #C4B89D 6px, transparent 6px, transparent 12px)',
+                    }
                   }}
                 />
               )}
-            </Box>
+            </React.Fragment>
           ))}
         </Box>
       </Box>
