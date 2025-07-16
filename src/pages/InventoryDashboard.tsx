@@ -645,44 +645,54 @@ export const InventoryDashboard = () => {
 
               {/* Aging Matrix */}
               <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Items Ageing Matrix</h3>
-                  <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Items Ageing Matrix</h3>
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[600px]">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="text-left p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">Priority</th>
-                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">No. of Days</th>
-                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">0-10</th>
-                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">11-20</th>
-                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">21-30</th>
-                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">31-40</th>
-                        <th className="text-center p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-sm">41-50</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {agingMatrixData.map((row, index) => (
-                        <tr key={row.priority} className="border-b">
-                          <td className="p-2 sm:p-3 font-medium text-xs sm:text-sm">{row.priority}</td>
-                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">-</td>
-                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['0-10']}</td>
-                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['11-20']}</td>
-                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['21-30']}</td>
-                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['31-40']}</td>
-                          <td className="p-2 sm:p-3 text-center text-xs sm:text-sm">{row['41-50']}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Table - Horizontally scrollable on mobile */}
+                  <div className="overflow-x-auto -mx-3 sm:mx-0">
+                    <div className="min-w-[500px] px-3 sm:px-0">
+                      <table className="w-full border-collapse border border-gray-300">
+                        <thead>
+                          <tr style={{ backgroundColor: '#EDE4D8' }}>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
+                            <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
+                          </tr>
+                          <tr style={{ backgroundColor: '#EDE4D8' }}>
+                            <th className="border border-gray-300 p-2 sm:p-3"></th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
+                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {agingMatrixData.map((row, index) => (
+                            <tr key={index} className="bg-white">
+                              <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
+                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
 
-              {/* Average Resolution Time */}
-              <div className="bg-gray-100 rounded-lg p-4 sm:p-8 text-center">
-                <div className="text-3xl sm:text-6xl font-bold text-gray-800 mb-2">42 Days</div>
-                <div className="text-sm sm:text-base text-gray-600">Average Time Taken To Process An Item</div>
+                  {/* Summary Box - Full Width Below Table */}
+                  <div className="w-full">
+                    <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
+                      <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">42 Days</div>
+                      <div className="text-sm sm:text-base text-black">Average Time Taken To Process An Item</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
