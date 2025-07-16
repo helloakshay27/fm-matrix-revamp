@@ -22,6 +22,8 @@ import { Switch } from '@/components/ui/switch';
 import { Edit, Plus, Loader2 } from 'lucide-react';
 
 import { departmentService, Department } from '@/services/departmentService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 
 interface LocalDepartment extends Department {
   id: number;
@@ -30,6 +32,9 @@ interface LocalDepartment extends Department {
 }
 
 export const DepartmentDashboard = () => {
+  const dispatch = useAppDispatch();
+  const { data: departmentData, loading, error } = useAppSelector((state) => state.department);
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState('');
@@ -37,42 +42,36 @@ export const DepartmentDashboard = () => {
   const [editDepartmentName, setEditDepartmentName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [departments, setDepartments] = useState<LocalDepartment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch departments from API
+  // Transform API data to local format
+  const transformDepartments = (apiDepartments: Department[]): LocalDepartment[] => {
+    return apiDepartments.map((dept, index) => ({
+      id: index + 1,
+      name: dept.department_name,
+      status: dept.active,
+      department_name: dept.department_name,
+      active: dept.active
+    }));
+  };
+
+  // Fetch departments from Redux store
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const apiDepartments = await departmentService.fetchDepartments();
-        
-        // Transform API data to local format
-        const transformedDepartments: LocalDepartment[] = apiDepartments.map((dept, index) => ({
-          id: index + 1, // Generate ID since API might not provide it
-          name: dept.department_name,
-          status: dept.active,
-          department_name: dept.department_name,
-          active: dept.active
-        }));
-        
-        setDepartments(transformedDepartments);
-      } catch (err) {
-        setError('Failed to fetch departments');
-        console.error('Error fetching departments:', err);
-        // Fallback to dummy data on error
-        setDepartments([
-          { id: 1, name: 'Sales', status: true, department_name: 'Sales', active: true },
-          { id: 2, name: 'Marketing', status: false, department_name: 'Marketing', active: false },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    dispatch(fetchDepartmentData());
+  }, [dispatch]);
 
-    fetchDepartments();
-  }, []);
+  // Update local departments when Redux data changes
+  useEffect(() => {
+    if (departmentData && Array.isArray(departmentData)) {
+      const transformedDepartments = transformDepartments(departmentData);
+      setDepartments(transformedDepartments);
+    } else if (error) {
+      // Fallback to dummy data on error
+      setDepartments([
+        { id: 1, name: 'Sales', status: true, department_name: 'Sales', active: true },
+        { id: 2, name: 'Marketing', status: false, department_name: 'Marketing', active: false },
+      ]);
+    }
+  }, [departmentData, error]);
 
   const handleSubmit = () => {
     if (departmentName.trim()) {
@@ -135,7 +134,7 @@ export const DepartmentDashboard = () => {
         {/* Error State */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-red-600">{error}</p>
+            <p className="text-red-600">{typeof error === 'string' ? error : 'Failed to fetch departments'}</p>
           </div>
         )}
 
