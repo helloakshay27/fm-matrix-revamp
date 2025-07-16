@@ -8,11 +8,11 @@ interface MasterLayoutProps {
 
 export const MasterLayout = ({ children }: MasterLayoutProps) => {
   return (
-    <div className="min-h-screen bg-[#fafafa] w-full">
+    <div className="min-h-screen bg-[#fafafa]">
       <Header />
-      <div className="flex w-full">
+      <div className="flex">
         <MasterSidebar />
-        <main className="flex-1 ml-64 mt-16 p-6 w-full min-w-0">
+        <main className="flex-1 ml-64 mt-16 p-6">
           {children}
         </main>
       </div>
