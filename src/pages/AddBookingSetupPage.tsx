@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -106,6 +106,9 @@ export const AddBookingSetupPage = () => {
     sharedContentInfo: 'Text content will appear on meeting room share icon in Application'
   });
 
+  const [departments, setDepartments] = useState([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+
   const [slots, setSlots] = useState([
     {
       startTime: { hour: '00', minute: '00' },
@@ -135,6 +138,22 @@ export const AddBookingSetupPage = () => {
       deduction: ''
     }
   ]);
+
+  const fetchDepartments = async () => {
+    if (departments.length > 0) return; // Don't fetch if already loaded
+    
+    setLoadingDepartments(true);
+    try {
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/departments.json');
+      const data = await response.json();
+      setDepartments(data || []);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      setDepartments([]);
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
 
   const handleSave = () => {
     console.log('Saving booking setup:', formData);
@@ -199,12 +218,17 @@ export const AddBookingSetupPage = () => {
                 <Select
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  onFocus={fetchDepartments}
                   label="Department"
                 >
-                  <MenuItem value="Select Department">Select Department</MenuItem>
-                  <MenuItem value="IT">IT</MenuItem>
-                  <MenuItem value="HR">HR</MenuItem>
-                  <MenuItem value="Finance">Finance</MenuItem>
+                  <MenuItem value="Select Department">
+                    {loadingDepartments ? "Loading..." : "Select Department"}
+                  </MenuItem>
+                  {departments.map((dept, index) => (
+                    <MenuItem key={index} value={dept.department_name}>
+                      {dept.department_name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </div>
