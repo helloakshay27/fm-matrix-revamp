@@ -152,7 +152,19 @@ export const AddBookingSetupPage = () => {
         }
       });
       const data = await response.json();
-      setDepartments(data || []);
+      
+      // Handle different response structures
+      let departmentsList = [];
+      if (Array.isArray(data)) {
+        departmentsList = data;
+      } else if (data && Array.isArray(data.departments)) {
+        departmentsList = data.departments;
+      } else if (data && data.length !== undefined) {
+        // Handle case where data might be array-like
+        departmentsList = Array.from(data);
+      }
+      
+      setDepartments(departmentsList);
     } catch (error) {
       console.error('Error fetching departments:', error);
       setDepartments([]);
@@ -230,7 +242,7 @@ export const AddBookingSetupPage = () => {
                   <MenuItem value="Select Department">
                     {loadingDepartments ? "Loading..." : "Select Department"}
                   </MenuItem>
-                  {departments.map((dept, index) => (
+                  {Array.isArray(departments) && departments.map((dept, index) => (
                     <MenuItem key={index} value={dept.department_name}>
                       {dept.department_name}
                     </MenuItem>
