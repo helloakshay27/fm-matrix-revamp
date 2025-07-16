@@ -16,123 +16,212 @@ import { useToast } from '@/hooks/use-toast';
 import { roleService, CreateRolePayload, LockFunction } from '@/services/roleService';
 
 interface Permission {
-  action_name: string;
-  module_name: string;
-  function_name: string;
-  actions: {
-    show: boolean;
-    create: boolean;
-    update: boolean;
-    destroy: boolean;
-  };
+  name: string;
   all: boolean;
+  add: boolean;
+  view: boolean;
+  edit: boolean;
+  disable: boolean;
 }
+
+const allFunctionsPermissions: Permission[] = [
+  { name: 'Broadcast', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Asset', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Documents', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Tickets', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Supplier', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Tasks', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Service', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Meters', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'AMC', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Schedule', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Materials', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'PO', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'WO', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Attendance', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Business Directory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'PO Approval', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Tracing', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'BI Reports', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Restaurants', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'My Ledgers', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Letter Of Indent', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Wo Invoices', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Bill', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Engineering Reports', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Events', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customers', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'QuickGate Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Task Management', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'CEO Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Operational Audit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Mom Details', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Pms Design Inputs', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vendor Audit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Permits', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Pending Approvals', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Bills', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'My Bills', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Water', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'STP', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Daily Readings', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Utility Consumption', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Utility Request', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Space', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Project Management', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Pms Incidents', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Site Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Steppstone Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Transport', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Waste Generation', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'GDN', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Parking', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'GDN Dispatch', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'EV Consumption', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Msafe', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Permit Extend', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Local Travel Module', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'KRCC', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Training', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Approve Krcc', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi Register User', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi DeRegister User', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Line Manager Check', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Senior Management Tour', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Solar Generator', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Permit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Parkings', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Wallet', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Site Banners', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Testimonials', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Group And Channel Config', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Shared Content Config', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Site And Facility Config', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Occupant Users', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Clear SnagAnswers', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Non Re Users', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Download Msafe Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Download Msafe Detailed Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'training_list', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi Miles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Krcc List', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi MSafe Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi Miles Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Resume Permit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Permit Checklist', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Send To Sap', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Community Module', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Facility Setup', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Mail Room', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Parking Setup', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const inventoryPermissions: Permission[] = [
+  { name: 'Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'GRN', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'SRNS', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Consumption', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Update Partial Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Update All Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Clone Inventory', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const setupPermissions: Permission[] = [
+  { name: 'Account', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'User & Roles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Meter Types', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Asset Groups', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Ticket', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Email Rule', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'FM Groups', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Export', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'SAC/HSN Setup', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Addresses', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Master Checklist', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const quickgatePermissions: Permission[] = [
+  { name: 'Visitors', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'R Vehicles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'G Vehicles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Staffs', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Goods In Out', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Patrolling', all: false, add: false, view: false, edit: false, disable: false },
+];
 
 export const AddRolePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [roleTitle, setRoleTitle] = useState('');
-  const [activeTab, setActiveTab] = useState('');
+  const [activeTab, setActiveTab] = useState('All Functions');
+  const [allFunctionsEnabled, setAllFunctionsEnabled] = useState(false);
+  const [inventoryEnabled, setInventoryEnabled] = useState(false);
+  const [setupEnabled, setSetupEnabled] = useState(false);
+  const [quickgateEnabled, setQuickgateEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [permissions, setPermissions] = useState<{ [key: string]: Permission[] }>({});
-  const [lockFunctions, setLockFunctions] = useState<LockFunction[]>([]);
-  const [tabs, setTabs] = useState<string[]>([]);
+  const [permissions, setPermissions] = useState<{ [key: string]: Permission[] }>({
+    'All Functions': [...allFunctionsPermissions],
+    'Inventory': [...inventoryPermissions],
+    'Setup': [...setupPermissions],
+    'Quickgate': [...quickgatePermissions],
+  });
 
-  useEffect(() => {
-    const fetchLockFunctions = async () => {
-      try {
-        setIsLoading(true);
-        const functions = await roleService.getLockFunctions();
-        setLockFunctions(functions);
-        
-        // Group functions by module_name
-        const groupedPermissions: { [key: string]: Permission[] } = {};
-        const moduleNames = new Set<string>();
-        
-        functions.forEach(func => {
-          const moduleName = func.module_name || 'Other';
-          moduleNames.add(moduleName);
-          
-          if (!groupedPermissions[moduleName]) {
-            groupedPermissions[moduleName] = [];
-          }
-          
-          groupedPermissions[moduleName].push({
-            action_name: func.action_name,
-            module_name: func.module_name,
-            function_name: func.function_name,
-            actions: {
-              show: false,
-              create: false,
-              update: false,
-              destroy: false
-            },
-            all: false
-          });
-        });
-        
-        setPermissions(groupedPermissions);
-        const tabNames = Array.from(moduleNames);
-        setTabs(tabNames);
-        if (tabNames.length > 0) {
-          setActiveTab(tabNames[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching lock functions:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load permissions. Please refresh the page.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLockFunctions();
-  }, [toast]);
+  const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'] as const;
 
   const handleTabOverallChange = (tab: string, enabled: boolean) => {
+    if (tab === 'All Functions') setAllFunctionsEnabled(enabled);
+    if (tab === 'Inventory') setInventoryEnabled(enabled);
+    if (tab === 'Setup') setSetupEnabled(enabled);
+    if (tab === 'Quickgate') setQuickgateEnabled(enabled);
+
     setPermissions(prev => ({
       ...prev,
       [tab]: prev[tab].map(permission => ({
         ...permission,
         all: enabled,
-        actions: {
-          show: enabled,
-          create: enabled,
-          update: enabled,
-          destroy: enabled,
-        }
+        add: enabled,
+        view: enabled,
+        edit: enabled,
+        disable: enabled,
       }))
     }));
   };
 
-  const handlePermissionChange = (tab: string, actionName: string, field: string, value: boolean) => {
+  const handlePermissionChange = (tab: string, permissionName: string, field: keyof Permission, value: boolean) => {
     setPermissions(prev => ({
       ...prev,
       [tab]: prev[tab].map(permission => {
-        if (permission.action_name === actionName) {
-          const updatedPermission = { ...permission };
+        if (permission.name === permissionName) {
+          const updatedPermission = { ...permission, [field]: value };
           
-          if (field === 'all') {
-            updatedPermission.all = value;
-            updatedPermission.actions = {
-              show: value,
-              create: value,
-              update: value,
-              destroy: value,
-            };
-          } else {
-            updatedPermission.actions = {
-              ...updatedPermission.actions,
-              [field]: value
-            };
-            
-            // Check if all actions are selected to update "all"
-            const allActionsSelected = Object.values(updatedPermission.actions).every(Boolean);
-            updatedPermission.all = allActionsSelected;
+          // If "All" is checked, check all other permissions
+          if (field === 'all' && value) {
+            updatedPermission.add = true;
+            updatedPermission.view = true;
+            updatedPermission.edit = true;
+            updatedPermission.disable = true;
+          }
+          // If "All" is unchecked, uncheck all other permissions
+          else if (field === 'all' && !value) {
+            updatedPermission.add = false;
+            updatedPermission.view = false;
+            updatedPermission.edit = false;
+            updatedPermission.disable = false;
+          }
+          // If any individual permission is unchecked, uncheck "All"
+          else if (!value && field !== 'all') {
+            updatedPermission.all = false;
+          }
+          // If all individual permissions are checked, check "All"
+          else if (value && field !== 'all') {
+            const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
+            if (allIndividualChecked) {
+              updatedPermission.all = true;
+            }
           }
           
           return updatedPermission;
@@ -159,21 +248,23 @@ export const AddRolePage = () => {
       const permissions_hash: Record<string, any> = {};
       let hasAnyPermission = false;
       
-      Object.values(permissions).flat().forEach(permission => {
-        const selectedActions: Record<string, string> = {};
-        let hasPermissionInGroup = false;
-        
-        Object.entries(permission.actions).forEach(([action, isSelected]) => {
-          if (isSelected) {
-            selectedActions[action] = "true";
-            hasPermissionInGroup = true;
-            hasAnyPermission = true;
+      Object.entries(permissions).forEach(([tabName, tabPermissions]) => {
+        tabPermissions.forEach(permission => {
+          if (permission.add || permission.view || permission.edit || permission.disable) {
+            const actions: Record<string, string> = {};
+            
+            if (permission.view) actions.show = "true";
+            if (permission.add) actions.create = "true";
+            if (permission.edit) actions.update = "true";
+            if (permission.disable) actions.destroy = "true";
+            
+            if (Object.keys(actions).length > 0) {
+              // Use permission name as action_name for API
+              permissions_hash[permission.name.toLowerCase().replace(/\s+/g, '_')] = actions;
+              hasAnyPermission = true;
+            }
           }
         });
-        
-        if (hasPermissionInGroup) {
-          permissions_hash[permission.action_name] = selectedActions;
-        }
       });
       
       // Create the API payload
@@ -219,17 +310,12 @@ export const AddRolePage = () => {
   };
 
   const getTabEnabled = (tab: string) => {
-    if (!permissions[tab]) return false;
-    return permissions[tab].some(permission => permission.all);
+    if (tab === 'All Functions') return allFunctionsEnabled;
+    if (tab === 'Inventory') return inventoryEnabled;
+    if (tab === 'Setup') return setupEnabled;
+    if (tab === 'Quickgate') return quickgateEnabled;
+    return false;
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
@@ -321,31 +407,31 @@ export const AddRolePage = () => {
                             All
                           </TableHead>
                           <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
-                            Create
+                            Add
                           </TableHead>
                           <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
-                            Show
+                            View
                           </TableHead>
                           <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
-                            Update
+                            Edit
                           </TableHead>
                           <TableHead className="font-semibold text-gray-700 text-center min-w-[70px] text-xs lg:text-sm">
-                            Destroy
+                            Disable
                           </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {permissions[activeTab]?.map((permission) => (
-                          <TableRow key={permission.action_name} className="hover:bg-gray-50">
+                          <TableRow key={permission.name} className="hover:bg-gray-50">
                             <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
-                              {permission.function_name || permission.action_name}
+                              {permission.name}
                             </TableCell>
                             <TableCell className="text-center py-2 lg:py-3">
                               <div className="flex justify-center">
                                 <Checkbox
                                   checked={permission.all}
                                   onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.action_name, 'all', checked as boolean)
+                                    handlePermissionChange(activeTab, permission.name, 'all', checked as boolean)
                                   }
                                   className="w-4 h-4"
                                 />
@@ -354,9 +440,9 @@ export const AddRolePage = () => {
                             <TableCell className="text-center py-2 lg:py-3">
                               <div className="flex justify-center">
                                 <Checkbox
-                                  checked={permission.actions.create}
+                                  checked={permission.add}
                                   onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.action_name, 'create', checked as boolean)
+                                    handlePermissionChange(activeTab, permission.name, 'add', checked as boolean)
                                   }
                                   className="w-4 h-4"
                                 />
@@ -365,9 +451,9 @@ export const AddRolePage = () => {
                             <TableCell className="text-center py-2 lg:py-3">
                               <div className="flex justify-center">
                                 <Checkbox
-                                  checked={permission.actions.show}
+                                  checked={permission.view}
                                   onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.action_name, 'show', checked as boolean)
+                                    handlePermissionChange(activeTab, permission.name, 'view', checked as boolean)
                                   }
                                   className="w-4 h-4"
                                 />
@@ -376,9 +462,9 @@ export const AddRolePage = () => {
                             <TableCell className="text-center py-2 lg:py-3">
                               <div className="flex justify-center">
                                 <Checkbox
-                                  checked={permission.actions.update}
+                                  checked={permission.edit}
                                   onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.action_name, 'update', checked as boolean)
+                                    handlePermissionChange(activeTab, permission.name, 'edit', checked as boolean)
                                   }
                                   className="w-4 h-4"
                                 />
@@ -387,9 +473,9 @@ export const AddRolePage = () => {
                             <TableCell className="text-center py-2 lg:py-3">
                               <div className="flex justify-center">
                                 <Checkbox
-                                  checked={permission.actions.destroy}
+                                  checked={permission.disable}
                                   onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.action_name, 'destroy', checked as boolean)
+                                    handlePermissionChange(activeTab, permission.name, 'disable', checked as boolean)
                                   }
                                   className="w-4 h-4"
                                 />
