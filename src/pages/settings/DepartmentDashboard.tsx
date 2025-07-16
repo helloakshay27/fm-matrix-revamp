@@ -45,8 +45,8 @@ export const DepartmentDashboard = () => {
 
   // Transform API data to local format
   const transformDepartments = (apiDepartments: Department[]): LocalDepartment[] => {
-    return apiDepartments.map((dept, index) => ({
-      id: index + 1,
+    return apiDepartments.map((dept) => ({
+      id: dept.id || 0, // Use the actual record ID from API
       name: dept.department_name,
       status: dept.active,
       department_name: dept.department_name,
