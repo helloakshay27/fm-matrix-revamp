@@ -208,6 +208,10 @@ export const RoleDashboard = () => {
     ? rolePermissions[currentRole.id][activeTab] || []
     : [];
 
+  console.log('Current role:', currentRole);
+  console.log('Current permissions:', currentPermissions);
+  console.log('Role permissions state:', rolePermissions);
+
   const handleRoleClick = (role: Role) => {
     setSelectedRole(role);
   };
