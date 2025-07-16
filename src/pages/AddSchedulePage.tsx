@@ -413,10 +413,35 @@ export const AddSchedulePage = () => {
             {/* Main Content in White Box */}
             <SectionCard>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
-                <Typography variant="body2" sx={{ color: '#666' }}>
-                  Schedule For: <strong>Asset</strong>
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#666' }}>
+                      Schedule For: <strong>Asset</strong>
+                    </Typography>
+                    {stepIndex < activeStep && (
+                      <MuiButton
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Edit />}
+                        onClick={() => handleStepClick(stepIndex)}
+                        sx={{
+                          color: '#C72030',
+                          borderColor: '#C72030',
+                          fontSize: '12px',
+                          padding: '4px 12px',
+                          minWidth: 'auto',
+                          '&:hover': {
+                            borderColor: '#C72030',
+                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                          }
+                        }}
+                      >
+                        Edit
+                      </MuiButton>
+                    )}
+                  </Box>
+                </Box>
               </Box>
               
               <RadioGroup
@@ -509,8 +534,31 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Checklist Type</Typography>
                 <RadioGroup
                   row
                   value={formData.checklistType}
@@ -752,6 +800,30 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Questions</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
               {tasks.map((task, index) => (
                 <Box key={task.id} sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
@@ -911,7 +983,31 @@ export const AddSchedulePage = () => {
               padding: 3,
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <Tabs 
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Time Configuration</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
+              <Tabs
                 value={timeTab} 
                 onChange={(e, newValue) => setTimeTab(newValue)}
                 sx={{ 
@@ -1334,6 +1430,30 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Asset Mapping</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                 <TextField
                   label="Asset Name"
