@@ -72,61 +72,79 @@ const roleSlice = createSlice({
       })
       .addCase(fetchRoles.fulfilled, (state, action) => {
         state.loading = false
-        // Convert API roles to internal format with default permissions
-        const allFunctionsPermissions: Permission[] = [
-          { name: 'Broadcast', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Asset', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Documents', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Tickets', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Supplier', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Tasks', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Service', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Meters', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'AMC', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Schedule', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Materials', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'PO', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'WO', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Report', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Attendance', all: false, add: false, view: false, edit: false, disable: false },
-        ];
+        
+        // Helper function to map API keys to function names
+        const mapApiKeyToFunctionName = (apiKey: string): string => {
+          const mapping: { [key: string]: string } = {
+            'pms_notices': 'Broadcast',
+            'pms_assets': 'Asset', 
+            'pms_services': 'Service',
+            'pms_tasks': 'Tasks',
+            'pms_complaints': 'Tickets',
+            'pms_helpdesk_categories': 'Ticket'
+          };
+          return mapping[apiKey] || apiKey;
+        };
 
-        const inventoryPermissions: Permission[] = [
-          { name: 'Inventory', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'GRN', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'SRNS', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Consumption', all: false, add: false, view: false, edit: false, disable: false },
-        ];
+        // Helper function to create permissions from API data
+        const createPermissionsFromAPI = (functionNames: string[], apiPermissionsData: any) => {
+          return functionNames.map(funcName => {
+            let apiPermissions = { all: "false", create: "false", show: "false", update: "false", destroy: "false" };
+            
+            // First try direct match with function name
+            if (apiPermissionsData[funcName]) {
+              apiPermissions = apiPermissionsData[funcName];
+            } else {
+              // Try to find by reverse mapping - look for API key that maps to this function name
+              const apiKey = Object.keys(apiPermissionsData).find(key => 
+                mapApiKeyToFunctionName(key) === funcName
+              );
+              if (apiKey) {
+                apiPermissions = apiPermissionsData[apiKey];
+              }
+            }
+            
+            return {
+              name: funcName,
+              all: apiPermissions.all === "true",
+              add: apiPermissions.create === "true", 
+              view: apiPermissions.show === "true",
+              edit: apiPermissions.update === "true",
+              disable: apiPermissions.destroy === "true"
+            };
+          });
+        };
 
-        const setupPermissions: Permission[] = [
-          { name: 'Account', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'User & Roles', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Meter Types', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Asset Groups', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Ticket', all: false, add: false, view: false, edit: false, disable: false },
-        ];
+        // Define function groups
+        const allFunctionsNames = ['Broadcast', 'Asset', 'Documents', 'Tickets', 'Supplier', 'Tasks', 'Service', 'Meters', 'AMC', 'Schedule', 'Materials', 'PO', 'WO', 'Report', 'Attendance'];
+        const inventoryNames = ['Inventory', 'GRN', 'SRNS', 'Accounts', 'Consumption'];
+        const setupNames = ['Account', 'User & Roles', 'Meter Types', 'Asset Groups', 'Ticket'];
+        const quickgateNames = ['Visitors', 'R Vehicles', 'G Vehicles', 'Staffs', 'Goods In Out', 'Patrolling'];
 
-        const quickgatePermissions: Permission[] = [
-          { name: 'Visitors', all: true, add: false, view: true, edit: false, disable: false },
-          { name: 'R Vehicles', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'G Vehicles', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Staffs', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Goods In Out', all: false, add: false, view: false, edit: false, disable: false },
-          { name: 'Patrolling', all: false, add: false, view: false, edit: false, disable: false },
-        ];
-
-        state.roles = action.payload.map((apiRole: ApiRole) => ({
-          id: apiRole.id,
-          name: apiRole.name,
-          permissions_hash: apiRole.permissions_hash || '',
-          permissions: {
-            'All Functions': [...allFunctionsPermissions],
-            'Inventory': [...inventoryPermissions],
-            'Setup': [...setupPermissions],
-            'Quickgate': [...quickgatePermissions]
+        state.roles = action.payload.map((apiRole: ApiRole) => {
+          // Parse permissions_hash from API
+          let rolePermissionsData = {};
+          try {
+            const permissionsHashValue = apiRole.permissions_hash;
+            const parsedData = JSON.parse(permissionsHashValue);
+            rolePermissionsData = parsedData && typeof parsedData === 'object' ? parsedData : {};
+          } catch (error) {
+            console.error('Error parsing permissions_hash for role:', apiRole.name, error);
+            rolePermissionsData = {};
           }
-        }));
+
+          return {
+            id: apiRole.id,
+            name: apiRole.name,
+            permissions_hash: apiRole.permissions_hash || '',
+            permissions: {
+              'All Functions': createPermissionsFromAPI(allFunctionsNames, rolePermissionsData),
+              'Inventory': createPermissionsFromAPI(inventoryNames, rolePermissionsData),
+              'Setup': createPermissionsFromAPI(setupNames, rolePermissionsData),
+              'Quickgate': createPermissionsFromAPI(quickgateNames, rolePermissionsData)
+            }
+          };
+        });
       })
       .addCase(fetchRoles.rejected, (state, action) => {
         state.loading = false
