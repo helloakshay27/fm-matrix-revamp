@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/utils/apiClient';
+import { TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox as MuiCheckbox } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 interface ApprovalLevel {
   order: number;
@@ -27,6 +27,13 @@ export const AddInvoiceApprovalsPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // MUI theme for consistent styling
+  const theme = createTheme({
+    palette: {
+      mode: 'light',
+    },
+  });
 
   // Function options as specified
   const functionOptions = [
@@ -138,162 +145,159 @@ export const AddInvoiceApprovalsPage = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-muted-foreground">
-        Setup &gt; Invoice Approvals &gt; Add
-      </div>
-
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ADD INVOICE APPROVALS</h1>
-      </div>
-
-      <div className="bg-card rounded-lg border p-6 space-y-6">
-        {/* Function Selection */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Function <span className="text-destructive">*</span>
-          </label>
-          <Select value={selectedFunction} onValueChange={setSelectedFunction}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Function" />
-            </SelectTrigger>
-            <SelectContent className="bg-background border shadow-lg z-50">
-              {functionOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <ThemeProvider theme={theme}>
+      <div className="p-6 space-y-6">
+        {/* Breadcrumb */}
+        <div className="text-sm text-muted-foreground">
+          Setup &gt; Invoice Approvals &gt; Add
         </div>
 
-        {/* Approval Levels Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-destructive rounded-full"></div>
-            <h3 className="text-lg font-semibold text-destructive">Approval Levels</h3>
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">ADD INVOICE APPROVALS</h1>
+        </div>
+
+        <div className="bg-card rounded-lg border p-6 space-y-6">
+          {/* Function Selection */}
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Function *</InputLabel>
+            <Select
+              value={selectedFunction}
+              onChange={(e) => setSelectedFunction(e.target.value)}
+              label="Function *"
+            >
+              {functionOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Approval Levels Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-destructive rounded-full"></div>
+              <h3 className="text-lg font-semibold text-destructive">Approval Levels</h3>
+            </div>
+
+            {approvalLevels.map((level, index) => (
+              <div key={index} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
+                {/* Order */}
+                <div className="col-span-2">
+                  <TextField
+                    label="Order *"
+                    type="number"
+                    variant="outlined"
+                    fullWidth
+                    value={level.order}
+                    onChange={(e) => updateApprovalLevel(index, 'order', parseInt(e.target.value) || 1)}
+                    inputProps={{ min: 1 }}
+                    size="small"
+                  />
+                </div>
+
+                {/* Name of Level */}
+                <div className="col-span-3">
+                  <TextField
+                    label="Name of Level *"
+                    variant="outlined"
+                    fullWidth
+                    value={level.name}
+                    onChange={(e) => updateApprovalLevel(index, 'name', e.target.value)}
+                    placeholder="Enter Name of Level"
+                    size="small"
+                  />
+                </div>
+
+                {/* Users */}
+                <div className="col-span-4">
+                  <FormControl fullWidth variant="outlined" size="small">
+                    <InputLabel>Users *</InputLabel>
+                    <Select
+                      value={level.users.join(',')}
+                      onChange={(e) => {
+                        const userIds = e.target.value ? e.target.value.split(',') : [];
+                        updateApprovalLevel(index, 'users', userIds);
+                      }}
+                      label="Users *"
+                    >
+                      {loading ? (
+                        <MenuItem disabled>Loading users...</MenuItem>
+                      ) : users.length > 0 ? (
+                        users.map((user) => (
+                          <MenuItem key={user.id} value={user.id.toString()}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No users available</MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Send Emails */}
+                <div className="col-span-2 flex items-center">
+                  <FormControlLabel
+                    control={
+                      <MuiCheckbox
+                        checked={level.sendEmails}
+                        onChange={(e) => updateApprovalLevel(index, 'sendEmails', e.target.checked)}
+                        size="small"
+                      />
+                    }
+                    label="Send Emails"
+                  />
+                </div>
+
+                {/* Remove Button */}
+                <div className="col-span-1 flex justify-end">
+                  {approvalLevels.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeApprovalLevel(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Add More Level Button */}
+            <Button
+              variant="ghost"
+              onClick={addApprovalLevel}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <Plus className="w-4 h-4" />
+              Add More Level
+            </Button>
           </div>
 
-          {approvalLevels.map((level, index) => (
-            <div key={index} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
-              {/* Order */}
-              <div className="col-span-2">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Order <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  type="number"
-                  value={level.order}
-                  onChange={(e) => updateApprovalLevel(index, 'order', parseInt(e.target.value) || 1)}
-                  className="mt-1"
-                  min="1"
-                />
-              </div>
-
-              {/* Name of Level */}
-              <div className="col-span-3">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Name of Level <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  value={level.name}
-                  onChange={(e) => updateApprovalLevel(index, 'name', e.target.value)}
-                  placeholder="Enter Name of Level"
-                  className="mt-1"
-                />
-              </div>
-
-              {/* Users */}
-              <div className="col-span-4">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Users <span className="text-destructive">*</span>
-                </label>
-                <Select
-                  value={level.users.join(',')}
-                  onValueChange={(value) => {
-                    const userIds = value ? value.split(',') : [];
-                    updateApprovalLevel(index, 'users', userIds);
-                  }}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select up to 15 Options..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border shadow-lg z-50">
-                    {loading ? (
-                      <div className="p-2 text-sm text-muted-foreground">Loading users...</div>
-                    ) : users.length > 0 ? (
-                      users.map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.full_name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="p-2 text-sm text-muted-foreground">No users available</div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Send Emails */}
-              <div className="col-span-2 flex items-center space-x-2">
-                <Checkbox
-                  id={`send-emails-${index}`}
-                  checked={level.sendEmails}
-                  onCheckedChange={(checked) => updateApprovalLevel(index, 'sendEmails', checked)}
-                />
-                <label htmlFor={`send-emails-${index}`} className="text-sm font-medium">
-                  Send Emails
-                </label>
-              </div>
-
-              {/* Remove Button */}
-              <div className="col-span-1 flex justify-end">
-                {approvalLevels.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeApprovalLevel(index)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* Add More Level Button */}
-          <Button
-            variant="ghost"
-            onClick={addApprovalLevel}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <Plus className="w-4 h-4" />
-            Add More Level
-          </Button>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-4 pt-6">
-          <Button
-            onClick={handleCreate}
-            disabled={submitting}
-            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-          >
-            {submitting ? 'Creating...' : 'Create'}
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={handleSaveAndCreateNew}
-            className="border-destructive text-destructive hover:bg-destructive/10"
-          >
-            Save And Create New
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-6">
+            <Button
+              onClick={handleCreate}
+              disabled={submitting}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {submitting ? 'Creating...' : 'Create'}
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={handleSaveAndCreateNew}
+              className="border-destructive text-destructive hover:bg-destructive/10"
+            >
+              Save And Create New
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 };
