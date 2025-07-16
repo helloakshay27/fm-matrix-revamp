@@ -112,13 +112,16 @@ export const AddInvoiceApprovalsPage = () => {
       setSubmitting(true);
 
       const payload = {
-        function: selectedFunction,
-        invoice_approval: approvalLevels.map(level => ({
-          order: level.order,
-          name: level.name,
-          user_ids: level.users,
-          send_emails: level.sendEmails
-        }))
+        invoice_approval: {
+          approval_type: selectedFunction,
+          invoice_approval_levels_attributes: approvalLevels.map(level => ({
+            name: level.name,
+            order: level.order,
+            active: true,
+            send_email: level.sendEmails,
+            escalate_to_users: level.users.map(userId => parseInt(userId))
+          }))
+        }
       };
 
       // Create the invoice approval matrix using the existing API endpoint
