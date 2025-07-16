@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 // Remove dummy data - now using API data
 
 export const AssetGroupsPage = () => {
+  // Fixed selectedGroup reference error
   const [groups, setGroups] = useState([]);
   const [subGroups, setSubGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +127,7 @@ export const AssetGroupsPage = () => {
   };
 
   const handleAddSubGroup = async () => {
+    console.log('selectedGroupId:', selectedGroupId, 'subGroupName:', subGroupName);
     if (selectedGroupId && subGroupName.trim()) {
       setSubGroupLoading(true);
       try {
