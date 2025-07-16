@@ -29,7 +29,11 @@ const masterItems = [
   {
     name: 'User Master',
     icon: Users,
-    href: '/master/user'
+    hasChildren: true,
+    children: [
+      { name: 'FM User', href: '/setup/fm-users' },
+      { name: 'OCCUPANT USERS', href: '/setup/occupant-users' }
+    ]
   },
   {
     name: 'Checklist Master',
