@@ -353,13 +353,13 @@ export const InventoryDashboard = () => {
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-3">
-      <Button onClick={handleAddInventory} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 border-0">
+      <Button onClick={handleAddInventory} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
-      <Button onClick={() => setShowBulkUpload(true)} variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
+      <Button onClick={() => setShowBulkUpload(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Upload className="w-4 h-4 mr-2" /> Import
       </Button>
-      <Button onClick={() => setShowFilter(true)} variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
+      <Button onClick={() => setShowFilter(true)} variant="outline">
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
     </div>

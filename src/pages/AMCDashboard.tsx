@@ -6,9 +6,6 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCData } from '@/store/slices/amcSlice';
-import { ListPageActions } from '@/components/ListPageActions';
-import { AMCImportModal } from '@/components/modals/AMCImportModal';
-import { AMCFilterModal } from '@/components/filters/AMCFilterModal';
 import {
   Pagination,
   PaginationContent,
@@ -67,9 +64,6 @@ export const AMCDashboard = () => {
   const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchValue, setSearchValue] = useState('');
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const pageSize = 7;
 
   // Use API data if available, otherwise fallback to initial data
@@ -94,22 +88,6 @@ export const AMCDashboard = () => {
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
-  };
-
-  const handleImportClick = () => {
-    setShowImportModal(true);
-  };
-
-  const handleFiltersClick = () => {
-    setShowFilterModal(true);
-  };
-
-  const handleApplyFilters = (filters: any) => {
-    console.log('Applied filters:', filters);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
   };
 
   const handleViewDetails = (id: number) => {
@@ -321,17 +299,24 @@ export const AMCDashboard = () => {
 
   return (
     <div className="p-6">
-      {/* Header and Actions */}
-      <ListPageActions
-        title="AMC LIST"
-        breadcrumb="AMC > AMC List"
-        searchValue={searchValue}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Search AMC records..."
-        onAddClick={handleAddClick}
-        onImportClick={handleImportClick}
-        onFiltersClick={handleFiltersClick}
-      />
+      {/* Header */}
+      <div className="mb-6">
+        <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
+          AMC LIST
+        </h1>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button 
+          onClick={handleAddClick} 
+          className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+      </div>
 
       {/* Loading State */}
       {loading && (
@@ -393,17 +378,6 @@ export const AMCDashboard = () => {
           </PaginationContent>
         </Pagination>
       </div>
-
-      {/* Modals */}
-      <AMCImportModal
-        open={showImportModal}
-        onOpenChange={setShowImportModal}
-      />
-      <AMCFilterModal
-        open={showFilterModal}
-        onOpenChange={setShowFilterModal}
-        onApplyFilters={handleApplyFilters}
-      />
     </div>
   );
 };

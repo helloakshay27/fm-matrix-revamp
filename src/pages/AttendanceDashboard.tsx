@@ -4,9 +4,6 @@ import { Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { ListPageActions } from '@/components/ListPageActions';
-import { AttendanceImportModal } from '@/components/modals/AttendanceImportModal';
-import { AttendanceFilterModal } from '@/components/filters/AttendanceFilterModal';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 interface AttendanceRecord {
   id: number;
@@ -110,35 +107,12 @@ export const AttendanceDashboard = () => {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(attendanceData);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchValue, setSearchValue] = useState('');
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const pageSize = 10;
 
   // Calculate pagination
   const totalPages = Math.ceil(attendance.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = attendance.slice(startIndex, startIndex + pageSize);
-  const handleAddClick = () => {
-    navigate('/maintenance/attendance/add');
-  };
-
-  const handleImportClick = () => {
-    setShowImportModal(true);
-  };
-
-  const handleFiltersClick = () => {
-    setShowFilterModal(true);
-  };
-
-  const handleApplyFilters = (filters: any) => {
-    console.log('Applied filters:', filters);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-  };
-
   const handleViewDetails = (id: number) => {
     navigate(`/maintenance/attendance/details/${id}`);
   };
@@ -255,17 +229,11 @@ export const AttendanceDashboard = () => {
     return items;
   };
   return <div className="p-6">
-      {/* Header and Actions */}
-      <ListPageActions
-        title="ATTENDANCE LIST"
-        breadcrumb="Attendance > Attendance List"
-        searchValue={searchValue}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Search attendance records..."
-        onAddClick={handleAddClick}
-        onImportClick={handleImportClick}
-        onFiltersClick={handleFiltersClick}
-      />
+      {/* Header */}
+      <div className="mb-6">
+        <p className="text-[#1a1a1a] opacity-70 mb-2">Attendance &gt; Attendance List</p>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE LIST</h1>
+      </div>
 
       {/* Enhanced Table */}
       <EnhancedTable data={paginatedData} columns={columns} renderCell={renderCell} renderActions={renderActions} onRowClick={item => handleViewDetails(item.id)} selectable={true} selectedItems={selectedItems} onSelectAll={handleSelectAll} onSelectItem={handleSelectItem} getItemId={item => String(item.id)} storageKey="attendance-dashboard-table" emptyMessage="No attendance records found" searchPlaceholder="Search attendance records..." enableExport={true} exportFileName="attendance-records" bulkActions={bulkActions} showBulkActions={true} pagination={false} />
@@ -287,15 +255,9 @@ export const AttendanceDashboard = () => {
           </Pagination>
         </div>}
 
-      {/* Modals */}
-      <AttendanceImportModal
-        open={showImportModal}
-        onOpenChange={setShowImportModal}
-      />
-      <AttendanceFilterModal
-        open={showFilterModal}
-        onOpenChange={setShowFilterModal}
-        onApplyFilters={handleApplyFilters}
-      />
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        
+      </div>
     </div>;
 };

@@ -4,10 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Upload, Filter, Download, Search, Eye, Edit, Copy } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { ListPageActions } from '@/components/ListPageActions';
-import { ScheduleImportModal } from '@/components/modals/ScheduleImportModal';
-import { ScheduleFilterModal } from '@/components/filters/ScheduleFilterModal';
 
 const scheduleData = [
   {
@@ -40,27 +36,8 @@ const scheduleData = [
 ];
 
 export const ScheduleDashboard = () => {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredSchedules, setFilteredSchedules] = useState(scheduleData);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-
-  const handleAddClick = () => {
-    navigate('/maintenance/schedule/add');
-  };
-
-  const handleImportClick = () => {
-    setShowImportModal(true);
-  };
-
-  const handleFiltersClick = () => {
-    setShowFilterModal(true);
-  };
-
-  const handleApplyFilters = (filters: any) => {
-    console.log('Applied filters:', filters);
-  };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -78,36 +55,49 @@ export const ScheduleDashboard = () => {
 
   return (
     <div className="p-6">
-      {/* Header and Actions */}
-      <ListPageActions
-        title="SCHEDULE LIST"
-        breadcrumb="Schedule > Schedule List"
-        searchValue={searchTerm}
-        onSearchChange={handleSearch}
-        searchPlaceholder="Enter Activity Name"
-        onAddClick={handleAddClick}
-        onImportClick={handleImportClick}
-        onFiltersClick={handleFiltersClick}
-        customActions={[
-          {
-            type: 'custom',
-            label: 'Export',
-            icon: Download,
-            variant: 'outline',
-            onClick: () => console.log('Export clicked')
-          },
-          {
-            type: 'custom',
-            label: '',
-            customElement: (
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="allowMapping" />
-                <label htmlFor="allowMapping" className="text-sm">Allow Automatic Mapping</label>
-              </div>
-            )
-          }
-        ]}
-      />
+      {/* Header */}
+      <div className="mb-6">
+        <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule</p>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">Schedule List</h1>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Upload className="w-4 h-4 mr-2" />
+          Import
+        </Button>
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Filter className="w-4 h-4 mr-2" />
+          Filters
+        </Button>
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Download className="w-4 h-4 mr-2" />
+          Export
+        </Button>
+        <div className="flex items-center gap-2">
+          <input type="checkbox" id="allowMapping" />
+          <label htmlFor="allowMapping" className="text-sm">Allow Automatic Mapping</label>
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <Input
+            placeholder="Enter Activity Name"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-64"
+          />
+          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+            Go!
+          </Button>
+          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+            Reset
+          </Button>
+        </div>
+      </div>
 
       {/* Schedule Table */}
       <div className="bg-white rounded-lg border">
@@ -177,17 +167,6 @@ export const ScheduleDashboard = () => {
           </TableBody>
         </Table>
       </div>
-
-      {/* Modals */}
-      <ScheduleImportModal
-        open={showImportModal}
-        onOpenChange={setShowImportModal}
-      />
-      <ScheduleFilterModal
-        open={showFilterModal}
-        onOpenChange={setShowFilterModal}
-        onApplyFilters={handleApplyFilters}
-      />
     </div>
   );
 };
