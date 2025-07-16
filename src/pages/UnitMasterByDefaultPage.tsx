@@ -34,6 +34,81 @@ const meterData = [
   }
 ];
 
+interface AddMeterModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const AddMeterModal = ({ isOpen, onClose }: AddMeterModalProps) => {
+  const [formData, setFormData] = useState({
+    meterType: '',
+    meterCategory: '',
+    unitName: ''
+  });
+
+  const handleSubmit = () => {
+    // Add validation and submit logic here
+    console.log('Submitting new meter type:', formData);
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">New Meter Type</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label className="text-sm">Meter Type</Label>
+            <Select value={formData.meterType} onValueChange={(value) => setFormData({...formData, meterType: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Digital">Digital</SelectItem>
+                <SelectItem value="Analog">Analog</SelectItem>
+                <SelectItem value="Smart">Smart</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">
+              Meter Category <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              value={formData.meterCategory}
+              onChange={(e) => setFormData({...formData, meterCategory: e.target.value})}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">
+              Unit Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              value={formData.unitName}
+              onChange={(e) => setFormData({...formData, unitName: e.target.value})}
+              placeholder="Enter Unit Name"
+            />
+          </div>
+
+          <div className="flex justify-center pt-4">
+            <Button 
+              className="bg-[#8B5A99] hover:bg-[#8B5A99]/90 text-white px-8"
+              onClick={handleSubmit}
+            >
+              Submit
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -127,6 +202,7 @@ const EditMeterModal = ({ isOpen, onClose, meterData }: EditModalProps) => {
 export const UnitMasterByDefaultPage = () => {
   const { setCurrentSection } = useLayout();
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [selectedMeter, setSelectedMeter] = useState(null);
   const [meters, setMeters] = useState(meterData);
 
@@ -150,7 +226,10 @@ export const UnitMasterByDefaultPage = () => {
       <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">UNIT MASTER (BY DEFAULT)</h1>
-          <Button className="bg-[#C72030] hover:bg-[#C72030]/90">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#C72030]/90"
+            onClick={() => setAddModalOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
@@ -193,6 +272,11 @@ export const UnitMasterByDefaultPage = () => {
             </TableBody>
           </Table>
         </div>
+
+        <AddMeterModal
+          isOpen={addModalOpen}
+          onClose={() => setAddModalOpen(false)}
+        />
 
         <EditMeterModal
           isOpen={editModalOpen}
