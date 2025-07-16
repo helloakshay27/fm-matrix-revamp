@@ -71,7 +71,7 @@ const AddApprovalMatrixPage = () => {
 
   const addApprovalLevel = () => {
     const newLevel: ApprovalLevel = {
-      order: approvalLevels.length + 1,
+      order: 1,
       name: '',
       users: [],
       sendEmails: false
@@ -82,12 +82,7 @@ const AddApprovalMatrixPage = () => {
   const removeApprovalLevel = (index: number) => {
     if (approvalLevels.length > 1) {
       const updatedLevels = approvalLevels.filter((_, i) => i !== index);
-      // Reorder the remaining levels
-      const reorderedLevels = updatedLevels.map((level, i) => ({
-        ...level,
-        order: i + 1
-      }));
-      setApprovalLevels(reorderedLevels);
+      setApprovalLevels(updatedLevels);
     }
   };
 
@@ -215,7 +210,7 @@ const AddApprovalMatrixPage = () => {
                     required
                     value={level.order}
                     type="number"
-                    InputProps={{ readOnly: true }}
+                    onChange={(e) => updateApprovalLevel(index, 'order', parseInt(e.target.value) || 1)}
                     InputLabelProps={{ shrink: true }}
                     size="small"
                     fullWidth
