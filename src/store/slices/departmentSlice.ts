@@ -29,9 +29,14 @@ export const fetchDepartmentData = createAsyncThunk(
 // Add department API call
 export const addDepartment = createAsyncThunk(
   'department/addDepartment',
-  async (department: Omit<Department, 'id'>, { rejectWithValue }) => {
+  async (departmentName: string, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post<Department>(ENDPOINTS.DEPARTMENTS, department)
+      const payload = {
+        pms_department: {
+          department_name: departmentName
+        }
+      };
+      const response = await apiClient.post<Department>(ENDPOINTS.DEPARTMENTS, payload)
       return response.data
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || 'Failed to add department'

@@ -23,11 +23,15 @@ export const departmentService = {
     }
   },
 
-  // Add new department (you can implement this when needed)
-  async addDepartment(department: Omit<Department, 'id'>): Promise<Department> {
+  // Add new department (using the correct API payload format)
+  async addDepartment(departmentName: string): Promise<Department> {
     try {
-      // Implementation will depend on your API
-      const response = await apiClient.post<Department>(ENDPOINTS.DEPARTMENTS, department)
+      const payload = {
+        pms_department: {
+          department_name: departmentName
+        }
+      };
+      const response = await apiClient.post<Department>(ENDPOINTS.DEPARTMENTS, payload)
       return response.data
     } catch (error) {
       console.error('Error adding department:', error)

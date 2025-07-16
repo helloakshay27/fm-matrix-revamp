@@ -23,7 +23,7 @@ import { Edit, Plus, Loader2 } from 'lucide-react';
 
 import { departmentService, Department } from '@/services/departmentService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchDepartmentData } from '@/store/slices/departmentSlice';
+import { fetchDepartmentData, addDepartment } from '@/store/slices/departmentSlice';
 
 interface LocalDepartment extends Department {
   id: number;
@@ -73,18 +73,22 @@ export const DepartmentDashboard = () => {
     }
   }, [departmentData, error]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (departmentName.trim()) {
-      const newDepartment: LocalDepartment = {
-        id: departments.length + 1,
-        name: departmentName,
-        status: true,
-        department_name: departmentName,
-        active: true,
-      };
-      setDepartments([...departments, newDepartment]);
-      setDepartmentName('');
-      setIsDialogOpen(false);
+      try {
+        // Call the API to add department
+        await dispatch(addDepartment(departmentName.trim())).unwrap();
+        
+        // Clear form and close dialog
+        setDepartmentName('');
+        setIsDialogOpen(false);
+        
+        // Refresh the department list
+        dispatch(fetchDepartmentData());
+      } catch (error) {
+        console.error('Error adding department:', error);
+        // You can add toast notification here if needed
+      }
     }
   };
 
