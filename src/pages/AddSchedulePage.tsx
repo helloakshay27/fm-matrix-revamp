@@ -887,43 +887,51 @@ export const AddSchedulePage = () => {
         </Typography>
       </Box>
 
-      {/* Stepper */}
-      <Paper sx={{ padding: 2, mb: 4, borderRadius: 2 }}>
-        <Stepper 
-          activeStep={activeStep} 
-          connector={<CustomStepConnector />}
-          sx={{ mb: 0 }}
-        >
+      {/* Custom Stepper */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
           {steps.map((label, index) => (
-            <CustomStep key={label}>
-              <StepLabel
+            <Box key={label} sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box
                 onClick={() => handleStepClick(index)}
-                sx={{ 
+                sx={{
                   cursor: 'pointer',
-                  '& .MuiStepLabel-iconContainer': {
-                    '& .MuiStepIcon-root': {
-                      color: index === activeStep ? '#D42F2F' : '#E0E0E0',
-                      '&.Mui-active': { color: '#D42F2F' },
-                      '&.Mui-completed': { color: '#D42F2F' }
-                    }
+                  backgroundColor: index === activeStep ? '#C72030' : '#C4B89D',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  textAlign: 'center',
+                  minWidth: '120px',
+                  border: 'none',
+                  '&:hover': {
+                    opacity: 0.9
                   }
                 }}
               >
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontWeight: index === activeStep ? 600 : 400,
-                    color: index === activeStep ? '#D42F2F' : '#666',
-                    fontSize: '12px'
+                {label}
+              </Box>
+              {index < steps.length - 1 && (
+                <Box
+                  sx={{
+                    width: '40px',
+                    height: '2px',
+                    background: `repeating-linear-gradient(
+                      to right,
+                      #C4B89D,
+                      #C4B89D 4px,
+                      transparent 4px,
+                      transparent 8px
+                    )`,
+                    mx: 0
                   }}
-                >
-                  {label}
-                </Typography>
-              </StepLabel>
-            </CustomStep>
+                />
+              )}
+            </Box>
           ))}
-        </Stepper>
-      </Paper>
+        </Box>
+      </Box>
 
       {/* Step Content */}
       {renderStepContent()}
