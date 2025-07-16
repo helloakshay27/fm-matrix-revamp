@@ -37,13 +37,9 @@ const masterItems = [
     ]
   },
   {
-    name: 'Checklist Management',
+    name: 'Checklist Master',
     icon: CheckSquare,
-    hasChildren: true,
-    children: [
-      { name: 'View Checklists', href: '/master/checklist' },
-      { name: 'Create Checklist', href: '/master/checklist/add' }
-    ]
+    href: '/master/checklist'
   },
   {
     name: 'Address Master',
