@@ -222,6 +222,8 @@ import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
 // Import Checklist Master pages
 import { ChecklistMasterDashboard } from './pages/ChecklistMasterDashboard';
 import { AddChecklistMasterPage } from './pages/AddChecklistMasterPage';
+import { ChecklistListPage } from './pages/ChecklistListPage';
+import { ChecklistMasterPage } from './pages/ChecklistMasterPage';
 
 // Import Master User pages
 import { FMUserMasterDashboard } from './pages/master/FMUserMasterDashboard';
@@ -419,7 +421,6 @@ import { RoomPage } from './pages/master/RoomPage';
 import { AddressMasterPage } from './pages/AddressMasterPage';
 
 // Import new master pages
-import { ChecklistMasterPage } from './pages/ChecklistMasterPage';
 import { UnitMasterByDefaultPage } from './pages/UnitMasterByDefaultPage';
 
 // Import Add Address page
@@ -502,7 +503,9 @@ function App() {
                <Route path="/settings/masters/address/edit" element={<EditAddressPage />} />
 
                {/* Master Routes */}
-               <Route path="/master/checklist" element={<ChecklistMasterPage />} />
+               <Route path="/master/checklist" element={<ChecklistListPage />} />
+               <Route path="/master/checklist/create" element={<ChecklistMasterPage />} />
+               <Route path="/master/checklist/edit/:id" element={<ChecklistMasterPage />} />
                <Route path="/master/address" element={<AddressMasterPage />} />
                <Route path="/master/unit-default" element={<UnitMasterByDefaultPage />} />
 
