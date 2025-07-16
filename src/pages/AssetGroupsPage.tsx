@@ -22,7 +22,7 @@ export const AssetGroupsPage = () => {
   
   // Form states
   const [groupName, setGroupName] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
   const [subGroupName, setSubGroupName] = useState('');
   
   // Loading states
@@ -126,19 +126,12 @@ export const AssetGroupsPage = () => {
   };
 
   const handleAddSubGroup = async () => {
-    if (selectedGroup && subGroupName.trim()) {
+    if (selectedGroupId && subGroupName.trim()) {
       setSubGroupLoading(true);
       try {
-        // Find the selected group's ID
-        const selectedGroupData = groups.find(group => group.groupName === selectedGroup);
-        if (!selectedGroupData) {
-          toast.error('Selected group not found');
-          return;
-        }
-
         const params = new URLSearchParams({
           'pms_asset_sub_group[name]': subGroupName.trim(),
-          'pms_asset_sub_group[group_id]': selectedGroupData.id.toString()
+          'pms_asset_sub_group[group_id]': selectedGroupId.toString()
         });
 
         const response = await apiClient.post(`/pms/asset_sub_groups.json?${params.toString()}`);
@@ -146,7 +139,7 @@ export const AssetGroupsPage = () => {
         if (response.data) {
           // Refresh the data after creating a new subgroup
           await fetchGroupsData();
-          setSelectedGroup('');
+          setSelectedGroupId('');
           setSubGroupName('');
           setAddSubGroupOpen(false);
           toast.success('Sub group created successfully');
@@ -317,16 +310,24 @@ export const AssetGroupsPage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Group Name</InputLabel>
                   <Select
-                    value={selectedGroup}
-                    onChange={(e) => setSelectedGroup(e.target.value)}
+                    value={selectedGroupId}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}
                     label="Group Name"
                     displayEmpty
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          backgroundColor: 'white',
+                          zIndex: 9999,
+                        },
+                      },
+                    }}
                   >
                     <MenuItem value="" disabled>
                       Select Group
                     </MenuItem>
                     {groups.map((group) => (
-                      <MenuItem key={group.id} value={group.groupName}>
+                      <MenuItem key={group.id} value={group.id}>
                         {group.groupName}
                       </MenuItem>
                     ))}
