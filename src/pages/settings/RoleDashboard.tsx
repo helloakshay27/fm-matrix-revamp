@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { roleService, ApiRole } from '@/services/roleService';
 
 interface Permission {
   name: string;
@@ -164,108 +165,39 @@ export const RoleDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All Functions');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [roles, setRoles] = useState<Role[]>([
-    { 
-      id: 1, 
-      name: 'Account Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch roles from API
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        setLoading(true);
+        const apiRoles = await roleService.fetchRoles();
+        
+        // Convert API roles to internal format with default permissions
+        const rolesWithPermissions: Role[] = apiRoles.map(apiRole => ({
+          id: apiRole.id,
+          name: apiRole.name,
+          permissions: {
+            'All Functions': [...allFunctionsPermissions],
+            'Inventory': [...inventoryPermissions],
+            'Setup': [...setupPermissions],
+            'Quickgate': [...quickgatePermissions]
+          }
+        }));
+        
+        setRoles(rolesWithPermissions);
+      } catch (error) {
+        console.error('Failed to fetch roles:', error);
+        // Keep empty array as fallback
+      } finally {
+        setLoading(false);
       }
-    },
-    { 
-      id: 21, 
-      name: 'Executive', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 22, 
-      name: 'Process Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 23, 
-      name: 'Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 34, 
-      name: 'Lcoated Role Test', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 36, 
-      name: 'Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 41, 
-      name: 'Technician', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 49, 
-      name: 'Admin', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 108, 
-      name: 'Inventory Role', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 202, 
-      name: 'Admin', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-  ]);
+    };
+
+    fetchRoles();
+  }, []);
 
   const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
 
@@ -390,21 +322,29 @@ export const RoleDashboard = () => {
           <div className="w-full xl:w-80 bg-gray-50 rounded-lg p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Roles List</h3>
             <div className="space-y-2 max-h-64 xl:max-h-96 overflow-y-auto">
-              {filteredRoles.map((role) => (
-                <div
-                  key={role.id}
-                  onClick={() => handleRoleClick(role)}
-                  className={`p-3 rounded border cursor-pointer transition-colors ${
-                    currentRole?.id === role.id 
-                      ? 'bg-[#C72030] text-white border-[#C72030]' 
-                      : 'bg-white hover:bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="text-sm font-medium">
-                    {role.id} - {role.name}
-                  </div>
+              {loading ? (
+                <div className="flex justify-center py-4">
+                  <div className="text-gray-500">Loading roles...</div>
                 </div>
-              ))}
+              ) : filteredRoles.length > 0 ? (
+                filteredRoles.map((role) => (
+                  <div
+                    key={role.id}
+                    onClick={() => handleRoleClick(role)}
+                    className={`p-3 rounded border cursor-pointer transition-colors ${
+                      currentRole?.id === role.id 
+                        ? 'bg-[#C72030] text-white border-[#C72030]' 
+                        : 'bg-white hover:bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="text-sm font-medium">
+                      {role.id} - {role.name}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-4">No roles found</div>
+              )}
             </div>
           </div>
 

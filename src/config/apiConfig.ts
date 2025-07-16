@@ -5,6 +5,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     AMC: '/pms/asset_amcs.json',
     DEPARTMENTS: '/pms/departments.json',
+    ROLES: '/lock_roles.json',
   },
 } as const
 
