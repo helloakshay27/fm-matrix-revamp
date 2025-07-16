@@ -113,7 +113,7 @@ export const AddInvoiceApprovalsPage = () => {
 
       const payload = {
         function: selectedFunction,
-        approval_levels: approvalLevels.map(level => ({
+        invoice_approval: approvalLevels.map(level => ({
           order: level.order,
           name: level.name,
           user_ids: level.users,
