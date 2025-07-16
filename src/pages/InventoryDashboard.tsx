@@ -206,13 +206,13 @@ export const InventoryDashboard = () => {
 
   // Chart data for donut charts
   const itemStatusData = [
-    { name: 'Active', value: activeItems, fill: '#C7B894' },
-    { name: 'Inactive', value: totalItems - activeItems, fill: '#D1D5DB' }
+    { name: 'Active', value: activeItems, fill: '#c6b692' },
+    { name: 'Inactive', value: totalItems - activeItems, fill: '#d8dcdd' }
   ];
 
   const criticalityData = [
-    { name: 'Critical', value: criticalItems, fill: '#C7B894' },
-    { name: 'Non-Critical', value: nonCriticalItems, fill: '#D1D5DB' }
+    { name: 'Critical', value: criticalItems, fill: '#c6b692' },
+    { name: 'Non-Critical', value: nonCriticalItems, fill: '#d8dcdd' }
   ];
 
   // Group data for bar chart
@@ -498,92 +498,116 @@ export const InventoryDashboard = () => {
               {/* Top Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                 {/* Items Status Chart */}
-                <div className="bg-white rounded-lg border p-3 sm:p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Items</h3>
-                    <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Items</h3>
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                   </div>
-                  <div className="flex items-center justify-center h-32 sm:h-48">
-                    <div className="relative">
-                      <ResponsiveContainer width={150} height={150} className="sm:w-[200px] sm:h-[200px]">
-                        <PieChart>
-                          <Pie
-                            data={itemStatusData}
-                            cx={75}
-                            cy={75}
-                            innerRadius={45}
-                            outerRadius={65}
-                            dataKey="value"
-                            labelLine={false}
-                            className="sm:cx-[100] sm:cy-[100] sm:inner-radius-[60] sm:outer-radius-[90]"
-                          >
-                            {itemStatusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-xs text-gray-500">Total : {totalItems}</div>
-                        </div>
+                  <div className="relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                      <PieChart>
+                        <Pie
+                          data={itemStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                            return (
+                              <text 
+                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                fill="black"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize="14"
+                                fontWeight="bold"
+                              >
+                                {value}
+                              </text>
+                            );
+                          }}
+                          labelLine={false}
+                        >
+                          {itemStatusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalItems}</div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#C7B894] rounded"></div>
-                      <span>Active</span>
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 rounded"></div>
-                      <span>Inactive</span>
-                    </div>
+                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                    {itemStatusData.map((item, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.fill }}></div>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 {/* Criticality Chart */}
-                <div className="bg-white rounded-lg border p-3 sm:p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Critical Non-Critical Items</h3>
-                    <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Critical Non-Critical Items</h3>
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                   </div>
-                  <div className="flex items-center justify-center h-32 sm:h-48">
-                    <div className="relative">
-                      <ResponsiveContainer width={150} height={150} className="sm:w-[200px] sm:h-[200px]">
-                        <PieChart>
-                          <Pie
-                            data={criticalityData}
-                            cx={75}
-                            cy={75}
-                            innerRadius={45}
-                            outerRadius={65}
-                            dataKey="value"
-                            labelLine={false}
-                            className="sm:cx-[100] sm:cy-[100] sm:inner-radius-[60] sm:outer-radius-[90]"
-                          >
-                            {criticalityData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-xs text-gray-500">Total : {totalItems}</div>
-                        </div>
+                  <div className="relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                      <PieChart>
+                        <Pie
+                          data={criticalityData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                          label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                            return (
+                              <text 
+                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                fill="black"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize="14"
+                                fontWeight="bold"
+                              >
+                                {value}
+                              </text>
+                            );
+                          }}
+                          labelLine={false}
+                        >
+                          {criticalityData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalItems}</div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#C7B894] rounded"></div>
-                      <span>Critical</span>
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 rounded"></div>
-                      <span>Non-Critical</span>
-                    </div>
+                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                    {criticalityData.map((item, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.fill }}></div>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
