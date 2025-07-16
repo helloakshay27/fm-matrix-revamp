@@ -86,6 +86,7 @@ export const MaterialMasterPage = () => {
   const { toast } = useToast();
   
   useEffect(() => {
+    console.log('MaterialMasterPage component mounted');
     setCurrentSection('Master');
   }, [setCurrentSection]);
 
