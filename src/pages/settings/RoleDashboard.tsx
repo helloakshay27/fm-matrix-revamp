@@ -432,8 +432,12 @@ export const RoleDashboard = () => {
         // Refresh roles data to reflect changes
         await dispatch(fetchRoles());
         
-        // Don't reset permissions, they're already correct in local state
-        // The useEffect will handle re-initialization when roles update
+        // Clear the local permissions for this role to force re-initialization with fresh API data
+        setRolePermissions(prev => {
+          const updated = { ...prev };
+          delete updated[currentRole.id];
+          return updated;
+        });
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update permissions');
