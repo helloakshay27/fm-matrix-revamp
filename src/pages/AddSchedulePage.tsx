@@ -38,8 +38,7 @@ import {
   Add,
   Close,
   AttachFile,
-  ArrowBack,
-  Edit as EditIcon
+  ArrowBack
 } from '@mui/icons-material';
 import { Cog } from 'lucide-react';
 
@@ -415,29 +414,9 @@ export const AddSchedulePage = () => {
             <SectionCard>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    Schedule For: <strong>Asset</strong>
-                  </Typography>
-                  {stepIndex < activeStep && (
-                    <MuiButton
-                      variant="outlined"
-                      size="small"
-                      startIcon={<EditIcon />}
-                      onClick={() => handleStepClick(stepIndex)}
-                      sx={{
-                        color: '#C72030',
-                        borderColor: '#C72030',
-                        '&:hover': {
-                          backgroundColor: '#C72030',
-                          color: 'white'
-                        }
-                      }}
-                    >
-                      Edit
-                    </MuiButton>
-                  )}
-                </Box>
+                <Typography variant="body2" sx={{ color: '#666' }}>
+                  Schedule For: <strong>Asset</strong>
+                </Typography>
               </Box>
               
               <RadioGroup
@@ -530,50 +509,30 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             <SectionCard>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
-                {stepIndex < activeStep && (
-                  <MuiButton
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleStepClick(stepIndex)}
-                    sx={{
-                      color: '#C72030',
-                      borderColor: '#C72030',
-                      '&:hover': {
-                        backgroundColor: '#C72030',
-                        color: 'white'
-                      }
-                    }}
-                  >
-                    Edit
-                  </MuiButton>
-                )}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Checklist Type</Typography>
+                <RadioGroup
+                  row
+                  value={formData.checklistType}
+                  onChange={(e) => setFormData({...formData, checklistType: e.target.value})}
+                >
+                  <FormControlLabel 
+                    value="Individual" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Individual" 
+                  />
+                  <FormControlLabel 
+                    value="Asset Group" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Asset Group" 
+                  />
+                  <FormControlLabel 
+                    value="Branching" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Branching" 
+                  />
+                </RadioGroup>
               </Box>
-              
-              <RadioGroup
-                row
-                value={formData.checklistType}
-                onChange={(e) => setFormData({...formData, checklistType: e.target.value})}
-                sx={{ mb: 3 }}
-              >
-                <FormControlLabel 
-                  value="Individual" 
-                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                  label="Individual" 
-                />
-                <FormControlLabel 
-                  value="Asset Group" 
-                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                  label="Asset Group" 
-                />
-                <FormControlLabel 
-                  value="Branching" 
-                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                  label="Branching" 
-                />
-              </RadioGroup>
               
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
                 <FormControl fullWidth>
@@ -607,8 +566,8 @@ export const AddSchedulePage = () => {
                   <InputLabel>Plan Duration</InputLabel>
                   <Select value={formData.planDuration} onChange={(e) => setFormData({...formData, planDuration: e.target.value})}>
                     <MenuItem value="">Select Plan Duration</MenuItem>
-                    <MenuItem value="30">30 minutes</MenuItem>
-                    <MenuItem value="60">1 hour</MenuItem>
+                    <MenuItem value="1h">1 Hour</MenuItem>
+                    <MenuItem value="2h">2 Hours</MenuItem>
                   </Select>
                 </FormControl>
                 
@@ -643,8 +602,8 @@ export const AddSchedulePage = () => {
                   <InputLabel>Submission Time</InputLabel>
                   <Select value={formData.submissionTime} onChange={(e) => setFormData({...formData, submissionTime: e.target.value})}>
                     <MenuItem value="">Select Submission Time</MenuItem>
-                    <MenuItem value="immediate">Immediate</MenuItem>
-                    <MenuItem value="end_of_day">End of Day</MenuItem>
+                    <MenuItem value="9am">9:00 AM</MenuItem>
+                    <MenuItem value="12pm">12:00 PM</MenuItem>
                   </Select>
                 </FormControl>
                 
@@ -672,6 +631,7 @@ export const AddSchedulePage = () => {
                     <MenuItem value="">Select Frequency</MenuItem>
                     <MenuItem value="daily">Daily</MenuItem>
                     <MenuItem value="weekly">Weekly</MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
                   </Select>
                 </FormControl>
                 
@@ -679,8 +639,8 @@ export const AddSchedulePage = () => {
                   <InputLabel>Grace Time</InputLabel>
                   <Select value={formData.graceTime} onChange={(e) => setFormData({...formData, graceTime: e.target.value})}>
                     <MenuItem value="">Select Grace Time</MenuItem>
-                    <MenuItem value="15">15 minutes</MenuItem>
-                    <MenuItem value="30">30 minutes</MenuItem>
+                    <MenuItem value="30min">30 Minutes</MenuItem>
+                    <MenuItem value="1h">1 Hour</MenuItem>
                   </Select>
                 </FormControl>
                 
@@ -689,7 +649,7 @@ export const AddSchedulePage = () => {
                   <Select value={formData.endAt} onChange={(e) => setFormData({...formData, endAt: e.target.value})}>
                     <MenuItem value="">Select End Date</MenuItem>
                     <MenuItem value="2024-12-31">Dec 31, 2024</MenuItem>
-                    <MenuItem value="2025-12-31">Dec 31, 2025</MenuItem>
+                    <MenuItem value="2025-06-30">Jun 30, 2025</MenuItem>
                   </Select>
                 </FormControl>
                 
@@ -792,98 +752,109 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             <SectionCard>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>Task 1</Typography>
-                {stepIndex < activeStep && (
-                  <MuiButton
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleStepClick(stepIndex)}
-                    sx={{
-                      color: '#C72030',
-                      borderColor: '#C72030',
-                      '&:hover': {
-                        backgroundColor: '#C72030',
-                        color: 'white'
-                      }
-                    }}
-                  >
-                    Edit
-                  </MuiButton>
-                )}
-              </Box>
-              
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
-                <FormControl fullWidth>
-                  <InputLabel>Group</InputLabel>
-                  <Select value={tasks[0]?.group || ''} onChange={(e) => updateTask('1', 'group', e.target.value)}>
-                    <MenuItem value="">Select Group</MenuItem>
-                    <MenuItem value="group1">Group 1</MenuItem>
-                    <MenuItem value="group2">Group 2</MenuItem>
-                  </Select>
-                </FormControl>
-                
-                <FormControl fullWidth>
-                  <InputLabel>Sub-Group</InputLabel>
-                  <Select value={tasks[0]?.subGroup || ''} onChange={(e) => updateTask('1', 'subGroup', e.target.value)}>
-                    <MenuItem value="">Select Sub-Group</MenuItem>
-                    <MenuItem value="subgroup1">Sub-Group 1</MenuItem>
-                    <MenuItem value="subgroup2">Sub-Group 2</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              
-              <Box sx={{ border: '1px dashed #ccc', padding: 3, borderRadius: 2, backgroundColor: '#f9f9f9' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={tasks[0]?.mandatory || false}
-                        onChange={(e) => updateTask('1', 'mandatory', e.target.checked)}
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                      />
-                    }
-                    label="Mandatory"
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={tasks[0]?.helpText || false}
-                        onChange={(e) => updateTask('1', 'helpText', e.target.checked)}
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                      />
-                    }
-                    label="Help Text"
-                  />
-                  <Typography variant="body2" sx={{ color: '#666', ml: 'auto' }}>Auto Ticket</Typography>
-                </Box>
-                
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                  <TextField
-                    label="Task"
-                    placeholder="Enter Task"
-                    fullWidth
-                    value={tasks[0]?.task || ''}
-                    onChange={(e) => updateTask('1', 'task', e.target.value)}
-                  />
+              {tasks.map((task, index) => (
+                <Box key={task.id} sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                    Task {index + 1}
+                  </Typography>
                   
-                  <FormControl fullWidth>
-                    <InputLabel>Input Type</InputLabel>
-                    <Select 
-                      value={tasks[0]?.inputType || ''} 
-                      onChange={(e) => updateTask('1', 'inputType', e.target.value)}
-                    >
-                      <MenuItem value="">Select Input Type</MenuItem>
-                      <MenuItem value="text">Text</MenuItem>
-                      <MenuItem value="number">Number</MenuItem>
-                      <MenuItem value="dropdown">Dropdown</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Group</InputLabel>
+                      <Select 
+                        value={task.group} 
+                        onChange={(e) => updateTask(task.id, 'group', e.target.value)}
+                      >
+                        <MenuItem value="">Select Group</MenuItem>
+                        <MenuItem value="group1">Group 1</MenuItem>
+                        <MenuItem value="group2">Group 2</MenuItem>
+                      </Select>
+                    </FormControl>
+                    
+                    <FormControl fullWidth>
+                      <InputLabel>Sub-Group</InputLabel>
+                      <Select 
+                        value={task.subGroup} 
+                        onChange={(e) => updateTask(task.id, 'subGroup', e.target.value)}
+                      >
+                        <MenuItem value="">Select Sub-Group</MenuItem>
+                        <MenuItem value="subgroup1">Sub-Group 1</MenuItem>
+                        <MenuItem value="subgroup2">Sub-Group 2</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  
+                  {/* Dashed Border Section */}
+                  <Box sx={{ 
+                    border: '2px dashed #E0E0E0', 
+                    padding: 2, 
+                    borderRadius: '8px',
+                    backgroundColor: '#FAFAFA'
+                  }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 4 }}>
+                        <FormControlLabel
+                          control={
+                            <Radio 
+                              checked={task.mandatory}
+                              onChange={(e) => updateTask(task.id, 'mandatory', e.target.checked)}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+                          }
+                          label="Mandatory"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Radio 
+                              checked={task.helpText}
+                              onChange={(e) => updateTask(task.id, 'helpText', e.target.checked)}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+                          }
+                          label="Help Text"
+                        />
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <MuiSwitch 
+                          checked={task.autoTicket}
+                          onChange={(e) => updateTask(task.id, 'autoTicket', e.target.checked)}
+                          sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                          }}
+                        />
+                        <Typography variant="body2" sx={{ color: '#666' }}>Auto Ticket</Typography>
+                      </Box>
+                    </Box>
+                    
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
+                      <TextField
+                        label="Task"
+                        placeholder="Enter Task"
+                        fullWidth
+                        value={task.task}
+                        onChange={(e) => updateTask(task.id, 'task', e.target.value)}
+                      />
+                      
+                      <FormControl fullWidth>
+                        <InputLabel>Input Type</InputLabel>
+                        <Select 
+                          value={task.inputType} 
+                          onChange={(e) => updateTask(task.id, 'inputType', e.target.value)}
+                        >
+                          <MenuItem value="">Select Input Type</MenuItem>
+                          <MenuItem value="text">Text</MenuItem>
+                          <MenuItem value="number">Number</MenuItem>
+                          <MenuItem value="dropdown">Dropdown</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  </Box>
                 </Box>
-              </Box>
+              ))}
               
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                 <MuiButton
                   variant="outlined"
                   startIcon={<Add />}
@@ -891,6 +862,8 @@ export const AddSchedulePage = () => {
                   sx={{
                     color: '#C72030',
                     borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
                     '&:hover': {
                       borderColor: '#C72030',
                       backgroundColor: 'rgba(199, 32, 48, 0.04)'
@@ -906,7 +879,7 @@ export const AddSchedulePage = () => {
         
       case 3: // Time Setup
         return (
-          <Box sx={{ mt: 4 }}>
+          <Box>
             {/* Header Outside the Box */}
             <Box sx={{ 
               display: 'flex', 
@@ -931,35 +904,13 @@ export const AddSchedulePage = () => {
               </Typography>
             </Box>
 
-            {/* Main Content in White Box */}
+            {/* Main Content in Single White Box */}
             <Box sx={{ 
-              backgroundColor: '#F5F5F5', 
-              border: '2px dashed #ccc', 
-              borderRadius: 2, 
-              p: 3 
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: 3,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>Time Setup</Typography>
-                {stepIndex < activeStep && (
-                  <MuiButton
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleStepClick(stepIndex)}
-                    sx={{
-                      color: '#C72030',
-                      borderColor: '#C72030',
-                      '&:hover': {
-                        backgroundColor: '#C72030',
-                        color: 'white'
-                      }
-                    }}
-                  >
-                    Edit
-                  </MuiButton>
-                )}
-              </Box>
-              
               <Tabs 
                 value={timeTab} 
                 onChange={(e, newValue) => setTimeTab(newValue)}
@@ -1383,28 +1334,6 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             <SectionCard>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Asset Mapping</Typography>
-                {stepIndex < activeStep && (
-                  <MuiButton
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleStepClick(stepIndex)}
-                    sx={{
-                      color: '#C72030',
-                      borderColor: '#C72030',
-                      '&:hover': {
-                        backgroundColor: '#C72030',
-                        color: 'white'
-                      }
-                    }}
-                  >
-                    Edit
-                  </MuiButton>
-                )}
-              </Box>
-              
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                 <TextField
                   label="Asset Name"
@@ -1475,58 +1404,89 @@ export const AddSchedulePage = () => {
   return (
     <Box sx={{ padding: 3, maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => navigate(-1)}>
-            <ArrowBack />
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <IconButton onClick={() => navigate('/maintenance/schedule')}>
+            <ArrowBack sx={{ color: '#D42F2F' }} />
           </IconButton>
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            Add Schedule
-          </Typography>
         </Box>
-        
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <DraftButton onClick={handleSaveDraft}>
-            Save to draft
-          </DraftButton>
-          <RedButton onClick={handleSave}>
-            Proceed to save
-          </RedButton>
+        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+          Schedule &gt; Add Schedule
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+          ADD SCHEDULE
+        </Typography>
+      </Box>
+
+      {/* Custom Stepper - Bordered Box Design */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '100%'
+        }}>
+          {steps.map((label, index) => (
+            <React.Fragment key={label}>
+              <Box
+                onClick={() => handleStepClick(index)}
+                sx={{
+                  cursor: 'pointer',
+                  backgroundColor: isStepRed(index) ? '#C72030' : 'white',
+                  color: isStepRed(index) ? 'white' : '#C4B89D',
+                  border: `2px solid ${isStepRed(index) ? '#C72030' : '#C4B89D'}`,
+                  padding: '12px 20px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  textAlign: 'center',
+                  minWidth: '140px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    opacity: 0.9
+                  }
+                }}
+              >
+                {label}
+              </Box>
+              {index < steps.length - 1 && (
+                <Box
+                  sx={{
+                    width: '60px',
+                    height: '1px',
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '1px',
+                      backgroundImage: 'repeating-linear-gradient(to right, #C4B89D 0px, #C4B89D 6px, transparent 6px, transparent 12px)',
+                    }
+                  }}
+                />
+              )}
+            </React.Fragment>
+          ))}
         </Box>
       </Box>
 
-      {/* Stepper */}
-      <Stepper 
-        activeStep={activeStep} 
-        connector={<CustomStepConnector />}
-        sx={{ mb: 4 }}
-      >
-        {steps.map((label, index) => (
-          <CustomStep 
-            key={label} 
-            onClick={() => handleStepClick(index)}
-            sx={{ cursor: 'pointer' }}
-          >
-            <StepLabel
-              sx={{
-                '& .MuiStepLabel-label': {
-                  color: isStepRed(index) ? '#D42F2F !important' : 'inherit',
-                  fontWeight: isStepRed(index) ? 600 : 400,
-                },
-                '& .MuiStepIcon-root': {
-                  color: isStepRed(index) ? '#D42F2F' : 'inherit',
-                },
-              }}
-            >
-              {label}
-            </StepLabel>
-          </CustomStep>
-        ))}
-      </Stepper>
-
       {/* Step Content */}
-      <Box>
-        {renderStepContent()}
+      {renderStepContent()}
+
+      {/* Action Buttons */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
+        <RedButton onClick={handleSave}>
+          Proceed to save
+        </RedButton>
+        <DraftButton onClick={handleSaveDraft}>
+          Save to draft
+        </DraftButton>
       </Box>
     </Box>
   );
