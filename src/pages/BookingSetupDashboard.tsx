@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,69 +6,75 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Filter, Eye } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { BookingSetupForm } from "@/components/BookingSetupForm";
+import { apiClient } from "@/utils/apiClient";
+import { toast } from "sonner";
 export const BookingSetupDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
+  const [bookingSetupData, setBookingSetupData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const handleFilterApply = (filters: any) => {
     console.log('Applied booking setup filters:', filters);
   };
-  const [bookingSetupData, setBookingSetupData] = useState([{
-    id: "1307",
-    name: "conference room now",
-    type: "bookable",
-    department: "Slot",
-    bookBy: "D • H • M",
-    bookBefore: "D • H • M",
-    advanceBooking: "04/03/2025 10:00 AM",
-    createdOn: "22/11/2022 12:36 PM",
-    createdBy: "",
-    status: true
-  }, {
-    id: "756",
-    name: "Legacy Board Room ( HOUSE - 2ND FLOOR)",
-    type: "bookable",
-    department: "Slot",
-    bookBy: "00 • 0H • 2M",
-    bookBefore: "PD • 0H • 4M",
-    advanceBooking: "",
-    createdOn: "",
-    createdBy: "Sony Bhogle",
-    status: true
-  }, {
-    id: "741",
-    name: "Admin Room",
-    type: "bookable",
-    department: "Slot",
-    bookBy: "00 • 0H • 2M",
-    bookBefore: "D • H • M",
-    advanceBooking: "14/09/2022 5:54 PM",
-    createdOn: "",
-    createdBy: "",
-    status: true
-  }, {
-    id: "740",
-    name: "Conference Room",
-    type: "bookable",
-    department: "Slot",
-    bookBy: "00 • 0H • 2M",
-    bookBefore: "D • H • M",
-    advanceBooking: "14/09/2022 5:52 PM",
-    createdOn: "",
-    createdBy: "",
-    status: true
-  }, {
-    id: "664",
-    name: "Gryfindor Focus Room",
-    type: "bookable",
-    department: "Slot",
-    bookBy: "00 • 0H • 2M",
-    bookBefore: "D • H • M",
-    advanceBooking: "28/02/2022 6:11 PM",
-    createdOn: "",
-    createdBy: "Ankit Gupta",
-    status: true
-  }]);
+
+  // Format dhm object to string like "0D • 0H • 4M"
+  const formatDHM = (dhm: { d: number; h: number; m: number } | null) => {
+    if (!dhm) return "";
+    return `${dhm.d}D • ${dhm.h}H • ${dhm.m}M`;
+  };
+
+  // Format date string to "22/11/2022 12:36 PM" format
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).replace(',', '');
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Fetch booking setup data from API
+  const fetchBookingSetupData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/pms/admin/facility_bookings.json');
+      
+      if (response.data && response.data.facility_setups) {
+        const formattedData = response.data.facility_setups.map((item: any) => ({
+          id: item.id.toString(),
+          name: item.fac_name || "",
+          type: item.fac_type || "",
+          department: item.department_name || "",
+          bookBy: item.book_by || "",
+          bookBefore: formatDHM(item.bb_dhm),
+          advanceBooking: formatDHM(item.ab_dhm),
+          createdOn: formatDate(item.create_at),
+          createdBy: item.create_by_user || "",
+          status: item.active || false
+        }));
+        setBookingSetupData(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching booking setup data:', error);
+      toast.error('Failed to fetch booking setup data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookingSetupData();
+  }, []);
   const handleAddBooking = () => {
     setIsAddBookingOpen(true);
   };
@@ -119,29 +125,45 @@ export const BookingSetupDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookingSetupData.map((booking, index) => <TableRow key={booking.id}>
-                  <TableCell>
-                    <Button 
-                      size="sm" 
-                      variant="ghost"
-                      onClick={() => handleViewDetails(booking.id)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8">
+                    Loading booking data...
                   </TableCell>
-                  <TableCell className="text-black font-medium">{booking.id}</TableCell>
-                  <TableCell className="text-black">{booking.name}</TableCell>
-                  <TableCell>{booking.type}</TableCell>
-                  <TableCell>{booking.department}</TableCell>
-                  <TableCell>{booking.bookBy}</TableCell>
-                  <TableCell>{booking.bookBefore}</TableCell>
-                  <TableCell>{booking.advanceBooking}</TableCell>
-                  <TableCell>{booking.createdOn}</TableCell>
-                  <TableCell>{booking.createdBy}</TableCell>
-                  <TableCell>
-                    <Switch checked={booking.status} onCheckedChange={() => handleStatusToggle(booking.id)} />
+                </TableRow>
+              ) : bookingSetupData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8">
+                    No booking data found
                   </TableCell>
-                </TableRow>)}
+                </TableRow>
+              ) : (
+                bookingSetupData.map((booking, index) => (
+                  <TableRow key={booking.id}>
+                    <TableCell>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => handleViewDetails(booking.id)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-black font-medium">{booking.id}</TableCell>
+                    <TableCell className="text-black">{booking.name}</TableCell>
+                    <TableCell>{booking.type}</TableCell>
+                    <TableCell>{booking.department}</TableCell>
+                    <TableCell>{booking.bookBy}</TableCell>
+                    <TableCell>{booking.bookBefore}</TableCell>
+                    <TableCell>{booking.advanceBooking}</TableCell>
+                    <TableCell>{booking.createdOn}</TableCell>
+                    <TableCell>{booking.createdBy}</TableCell>
+                    <TableCell>
+                      <Switch checked={booking.status} onCheckedChange={() => handleStatusToggle(booking.id)} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
