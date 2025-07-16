@@ -412,7 +412,14 @@ export const AddBookingSetupPage = () => {
                   </div>
                   <TextField size="small" value={slot.concurrentSlots} variant="outlined" />
                   <FormControl size="small">
-                    <Select value={slot.slotBy}>
+                    <Select 
+                      value={slot.slotBy}
+                      onChange={(e) => {
+                        const newSlots = [...slots];
+                        newSlots[index].slotBy = e.target.value;
+                        setSlots(newSlots);
+                      }}
+                    >
                       <MenuItem value={15}>15 Minutes</MenuItem>
                       <MenuItem value={30}>Half hour</MenuItem>
                       <MenuItem value={45}>45 Minutes</MenuItem>
