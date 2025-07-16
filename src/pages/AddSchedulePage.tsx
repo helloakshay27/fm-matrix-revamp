@@ -188,6 +188,11 @@ export const AddSchedulePage = () => {
   const [hourRange, setHourRange] = useState({ start: 0, end: 23 });
   const [everyHourBetween, setEveryHourBetween] = useState(false);
   
+  // Minutes state
+  const [selectedMinutes, setSelectedMinutes] = useState<number[]>([]);
+  const [minuteRange, setMinuteRange] = useState({ start: 0, end: 59 });
+  const [everyMinuteBetween, setEveryMinuteBetween] = useState(false);
+  
   // Attachments
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   
@@ -272,6 +277,14 @@ export const AddSchedulePage = () => {
       prev.includes(hour) 
         ? prev.filter(h => h !== hour)
         : [...prev, hour]
+    );
+  };
+  
+  const toggleMinute = (minute: number) => {
+    setSelectedMinutes(prev => 
+      prev.includes(minute) 
+        ? prev.filter(m => m !== minute)
+        : [...prev, minute]
     );
   };
   
@@ -950,6 +963,83 @@ export const AddSchedulePage = () => {
                         displayEmpty
                       >
                         {Array.from({length: 24}, (_, i) => (
+                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+              )}
+
+              {timeTab === 1 && (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={!everyMinuteBetween}
+                        onChange={() => setEveryMinuteBetween(false)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Specific minutes (choose one or many)"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1, mb: 3 }}>
+                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
+                      <FormControlLabel
+                        key={minute}
+                        control={
+                          <Checkbox
+                            checked={selectedMinutes.includes(minute)}
+                            onChange={() => toggleMinute(minute)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={`${minute.toString().padStart(2, '0')} minute${minute !== 1 ? 's' : ''}`}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={everyMinuteBetween}
+                        onChange={() => setEveryMinuteBetween(true)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Every minute between minute"
+                  />
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                    <FormControl size="small">
+                      <Select 
+                        value={minuteRange.start} 
+                        onChange={(e) => setMinuteRange({...minuteRange, start: Number(e.target.value)})}
+                        displayEmpty
+                      >
+                        {Array.from({length: 60}, (_, i) => (
+                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    
+                    <Typography>and minute</Typography>
+                    
+                    <FormControl size="small">
+                      <Select 
+                        value={minuteRange.end} 
+                        onChange={(e) => setMinuteRange({...minuteRange, end: Number(e.target.value)})}
+                        displayEmpty
+                      >
+                        {Array.from({length: 60}, (_, i) => (
                           <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
                         ))}
                       </Select>
