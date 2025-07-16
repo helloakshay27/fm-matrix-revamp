@@ -1,56 +1,63 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { createAsyncThunk } from '@reduxjs/toolkit'
+import createApiSlice from '../api/apiSlice'
 
 // Dummy API call for testing - NOT integrated in components
 export const fetchDummyData = createAsyncThunk(
   'test/fetchDummyData',
-  async () => {
-    // Simulate API call with delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    return {
-      id: Math.random().toString(36).substr(2, 9),
-      message: 'This is dummy test data',
-      timestamp: new Date().toISOString(),
+  async (_, { rejectWithValue }) => {
+    try {
+      // Simulate API call with delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        message: 'This is dummy test data',
+        timestamp: new Date().toISOString(),
+      }
+    } catch (error) {
+      const message = error?.message || 'Failed to fetch dummy data'
+      return rejectWithValue(message)
     }
   }
 )
 
-interface TestState {
-  data: any
-  loading: boolean
-  error: string | null
-}
+// Another dummy API call for testing login pattern
+export const login = createAsyncThunk(
+  'login',
+  async (
+    {
+      baseUrl,
+      email,
+      password,
+    }: { baseUrl: string; email: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      // Simulate login API call
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      if (email === 'test@example.com' && password === 'password') {
+        return {
+          user: { id: 1, email, name: 'Test User' },
+          token: 'dummy-jwt-token',
+          message: 'Login successful'
+        }
+      } else {
+        throw new Error('Invalid credentials')
+      }
+    } catch (error) {
+      const message = error?.message || 'Failed to Login'
+      return rejectWithValue(message)
+    }
+  }
+)
 
-const initialState: TestState = {
-  data: null,
-  loading: false,
-  error: null,
-}
+// Create slices using the createApiSlice utility
+export const testSlice = createApiSlice('test', fetchDummyData)
+export const loginSlice = createApiSlice('login', login)
 
-const testSlice = createSlice({
-  name: 'test',
-  initialState,
-  reducers: {
-    clearTestData: (state) => {
-      state.data = null
-      state.error = null
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchDummyData.pending, (state) => {
-        state.loading = true
-        state.error = null
-      })
-      .addCase(fetchDummyData.fulfilled, (state, action) => {
-        state.loading = false
-        state.data = action.payload
-      })
-      .addCase(fetchDummyData.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.error.message || 'Failed to fetch dummy data'
-      })
-  },
-})
+// Export reducers
+export const testReducer = testSlice.reducer
+export const loginReducer = loginSlice.reducer
 
-export const { clearTestData } = testSlice.actions
-export default testSlice.reducer
+// Export the default reducer (for the store)
+export default testReducer
