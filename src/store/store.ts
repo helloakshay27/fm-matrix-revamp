@@ -3,6 +3,7 @@ import { testReducer, loginReducer } from './slices/testSlice'
 import { amcReducer } from './slices/amcSlice'
 import { departmentReducer } from './slices/departmentSlice'
 import roleReducer from './slices/roleSlice'
+import { functionReducer } from './slices/functionSlice'
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     amc: amcReducer,
     department: departmentReducer,
     role: roleReducer,
+    function: functionReducer,
   },
 })
 

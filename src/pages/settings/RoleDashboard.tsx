@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { roleService, ApiRole } from '@/services/roleService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchRoles, updateRolePermissions } from '@/store/slices/roleSlice';
+import { fetchFunctions } from '@/store/slices/functionSlice';
 
 interface Permission {
   name: string;
@@ -166,25 +167,43 @@ export const RoleDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { roles, loading, error } = useAppSelector((state) => state.role);
+  const { functions, loading: functionsLoading } = useAppSelector((state) => state.function);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('All Functions');
+  const [activeTab, setActiveTab] = useState('all_functions');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
-  // Fetch roles from API
+  // Fetch roles and functions from API
   useEffect(() => {
     dispatch(fetchRoles());
+    dispatch(fetchFunctions());
   }, [dispatch]);
 
-  const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
+  // Get unique parent_function values as tabs
+  const tabs = ['all_functions', 'inventory', 'setup', 'quickgate'];
+  const tabLabels = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
 
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Transform API functions to permissions format and filter by active tab
+  const getPermissionsForTab = (tab: string): Permission[] => {
+    return functions
+      .filter(func => func.parent_function === tab)
+      .map(func => ({
+        name: func.name,
+        all: false,
+        add: false,
+        view: false,
+        edit: false,
+        disable: false
+      }));
+  };
+
   // Get permissions for the selected role, default to first role if none selected
   const currentRole = selectedRole || roles[0];
-  const currentPermissions = currentRole?.permissions[activeTab] || [];
+  const currentPermissions = getPermissionsForTab(activeTab);
 
   const handleRoleClick = (role: Role) => {
     setSelectedRole(role);
@@ -335,7 +354,7 @@ export const RoleDashboard = () => {
             
             {/* Tabs - Responsive scrolling */}
             <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-              {tabs.map((tab) => (
+              {tabs.map((tab, index) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -345,7 +364,7 @@ export const RoleDashboard = () => {
                       : 'bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10'
                   }`}
                 >
-                  {tab}
+                  {tabLabels[index]}
                 </button>
               ))}
             </div>
@@ -378,7 +397,20 @@ export const RoleDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {currentPermissions.map((permission) => (
+                      {functionsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-4">
+                            Loading functions...
+                          </TableCell>
+                        </TableRow>
+                      ) : currentPermissions.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                            No functions found for this category
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        currentPermissions.map((permission) => (
                         <TableRow key={permission.name} className="hover:bg-gray-50">
                           <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
                             {permission.name}
@@ -439,7 +471,8 @@ export const RoleDashboard = () => {
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
