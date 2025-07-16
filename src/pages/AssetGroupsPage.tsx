@@ -165,24 +165,27 @@ export const AssetGroupsPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto text-sm"
+            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[120px] text-sm px-3 py-2"
             onClick={() => setAddGroupOpen(true)}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Group
+            <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Add Group</span>
           </Button>
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto text-sm"
+            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[140px] text-sm px-3 py-2"
             onClick={() => setAddSubGroupOpen(true)}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Subgroup
+            <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Add Subgroup</span>
           </Button>
-          <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50 w-full sm:w-auto text-sm">
-            <Upload className="w-4 h-4 mr-2" />
-            Bulk Upload
+          <Button 
+            variant="outline" 
+            className="border-purple-700 text-purple-700 hover:bg-purple-50 w-full sm:w-auto min-w-0 sm:min-w-[130px] text-sm px-3 py-2"
+          >
+            <Upload className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Bulk Upload</span>
           </Button>
         </div>
 
