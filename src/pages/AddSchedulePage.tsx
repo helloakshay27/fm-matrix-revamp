@@ -193,6 +193,11 @@ export const AddSchedulePage = () => {
   const [minuteRange, setMinuteRange] = useState({ start: 0, end: 59 });
   const [everyMinuteBetween, setEveryMinuteBetween] = useState(false);
   
+  // Day state
+  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<string[]>([]);
+  const [selectedDatesOfMonth, setSelectedDatesOfMonth] = useState<number[]>([]);
+  const [daySelectionType, setDaySelectionType] = useState<'weekdays' | 'dates'>('weekdays');
+  
   // Attachments
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   
@@ -286,6 +291,30 @@ export const AddSchedulePage = () => {
         ? prev.filter(m => m !== minute)
         : [...prev, minute]
     );
+  };
+  
+  const toggleDayOfWeek = (day: string) => {
+    setSelectedDaysOfWeek(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+  
+  const toggleDateOfMonth = (date: number) => {
+    setSelectedDatesOfMonth(prev => 
+      prev.includes(date) 
+        ? prev.filter(d => d !== date)
+        : [...prev, date]
+    );
+  };
+  
+  const toggleAllDaysOfWeek = (checked: boolean) => {
+    if (checked) {
+      setSelectedDaysOfWeek(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
+    } else {
+      setSelectedDaysOfWeek([]);
+    }
   };
   
   const handleSave = () => {
@@ -1044,6 +1073,93 @@ export const AddSchedulePage = () => {
                         ))}
                       </Select>
                     </FormControl>
+                  </Box>
+                </Box>
+              )}
+
+              {timeTab === 2 && (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={daySelectionType === 'weekdays'}
+                        onChange={() => setDaySelectionType('weekdays')}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Placeholder"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedDaysOfWeek.length === 7}
+                        onChange={(e) => toggleAllDaysOfWeek(e.target.checked)}
+                        sx={{ 
+                          color: '#C72030', 
+                          '&.Mui-checked': { color: '#C72030' }
+                        }}
+                      />
+                    }
+                    label="Select All"
+                    sx={{ mb: 2, display: 'block' }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, mb: 3 }}>
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                      <FormControlLabel
+                        key={day}
+                        control={
+                          <Checkbox
+                            checked={selectedDaysOfWeek.includes(day)}
+                            onChange={() => toggleDayOfWeek(day)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={day}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={daySelectionType === 'dates'}
+                        onChange={() => setDaySelectionType('dates')}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Specific date of month (choose one or many)"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 1, mb: 3 }}>
+                    {Array.from({length: 31}, (_, i) => i + 1).map((date) => (
+                      <FormControlLabel
+                        key={date}
+                        control={
+                          <Checkbox
+                            checked={selectedDatesOfMonth.includes(date)}
+                            onChange={() => toggleDateOfMonth(date)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={date.toString().padStart(2, '0')}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
                   </Box>
                 </Box>
               )}
