@@ -207,14 +207,22 @@ export const AddSchedulePage = () => {
   
   const handleBack = () => {
     if (activeStep > 0) {
-      setActiveStep(activeStep - 1);
+      const newActiveStep = activeStep - 1;
+      // Remove completion status from steps after the new active step
+      setCompletedSteps(completedSteps.filter(step => step < newActiveStep));
+      setActiveStep(newActiveStep);
     }
   };
   
   const handleStepClick = (step: number) => {
-    // Mark current step as completed before moving
-    if (!completedSteps.includes(activeStep)) {
-      setCompletedSteps([...completedSteps, activeStep]);
+    if (step < activeStep) {
+      // Going backwards - remove completion status from steps after the clicked step
+      setCompletedSteps(completedSteps.filter(stepIndex => stepIndex < step));
+    } else if (step > activeStep) {
+      // Going forwards - mark current step as completed
+      if (!completedSteps.includes(activeStep)) {
+        setCompletedSteps([...completedSteps, activeStep]);
+      }
     }
     setActiveStep(step);
   };
