@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from "@/utils/apiClient";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -13,40 +14,51 @@ interface ApprovalLevel {
   sendEmails: boolean;
 }
 
+interface User {
+  id: number;
+  full_name: string;
+}
+
 const AddApprovalMatrixPage = () => {
   const navigate = useNavigate();
   const [selectedFunction, setSelectedFunction] = useState('');
   const [approvalLevels, setApprovalLevels] = useState<ApprovalLevel[]>([
     { order: 1, name: '', users: [], sendEmails: false }
   ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
 
-  // Mock data for dropdowns
-  const functions = [
-    'Custom Form 11372',
-    'Gdn',
-    'Work Order',
-    'Grn', 
-    'Work Order Invoice',
-    'Purchase Order'
+  // Function options with label-value pairs
+  const functionOptions = [
+    { label: 'Purchase Order', value: 'purchase_order' },
+    { label: 'GRN', value: 'grn' },
+    { label: 'Work Order', value: 'work_order' },
+    { label: 'Work Order Invoice', value: 'work_order_invoice' },
+    { label: 'Bill', value: 'bill' },
+    { label: 'Vendor Evaluation', value: 'vendor_audit' },
+    { label: 'Permit', value: 'permit' },
+    { label: 'Permit Extend', value: 'permit_extend' },
+    { label: 'Permit Closure', value: 'permit_closure' },
+    { label: 'Supplier', value: 'supplier' },
+    { label: 'GDN', value: 'gdn' },
+    { label: 'Asset Movement', value: 'asset_movement' }
   ];
 
-  const userOptions = [
-    'Jayesh P',
-    'Rajesh K',
-    'Priya S',
-    'Amit T',
-    'Kavya R',
-    'Suresh M',
-    'Anita D',
-    'Ravi N',
-    'Sneha L',
-    'Manoj B',
-    'Divya A',
-    'Kiran J',
-    'Pooja V',
-    'Arun C',
-    'Meera H'
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        const response = await apiClient.get('/pms/users/get_escalate_to_users.json');
+        setUsers(response.data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const addApprovalLevel = () => {
     const newLevel: ApprovalLevel = {
@@ -166,9 +178,9 @@ const AddApprovalMatrixPage = () => {
                 },
               }}
             >
-              {functions.map((func) => (
-                <MenuItem key={func} value={func}>
-                  {func}
+              {functionOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
                 </MenuItem>
               ))}
             </MuiSelect>
@@ -249,11 +261,11 @@ const AddApprovalMatrixPage = () => {
                       value={level.users}
                       onChange={(e) => updateApprovalLevel(index, 'users', e.target.value)}
                       label="Users"
-                      renderValue={(selected) => 
-                        selected.length === 0 
-                          ? 'Select up to 15 Options...'
-                          : selected.join(', ')
-                      }
+                      renderValue={(selected) => {
+                        if (selected.length === 0) return 'Select up to 15 Options...';
+                        const selectedUsers = users.filter(user => selected.includes(user.id.toString()));
+                        return selectedUsers.map(user => user.full_name).join(', ');
+                      }}
                       displayEmpty
                       sx={{
                         '& .MuiOutlinedInput-notchedOutline': {
@@ -267,18 +279,22 @@ const AddApprovalMatrixPage = () => {
                         },
                       }}
                     >
-                      {userOptions.map((user) => (
-                        <MenuItem key={user} value={user}>
-                          <Checkbox 
-                            checked={level.users.includes(user)}
-                            sx={{
-                              color: '#C72030',
-                              '&.Mui-checked': { color: '#C72030' },
-                            }}
-                          />
-                          {user}
-                        </MenuItem>
-                      ))}
+                      {loadingUsers ? (
+                        <MenuItem disabled>Loading users...</MenuItem>
+                      ) : (
+                        users.map((user) => (
+                          <MenuItem key={user.id} value={user.id.toString()}>
+                            <Checkbox 
+                              checked={level.users.includes(user.id.toString())}
+                              sx={{
+                                color: '#C72030',
+                                '&.Mui-checked': { color: '#C72030' },
+                              }}
+                            />
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      )}
                     </MuiSelect>
                   </FormControl>
                 </div>
