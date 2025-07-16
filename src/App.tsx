@@ -1,6 +1,8 @@
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
@@ -428,10 +430,11 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <Router>
-      <QueryClientProvider client={queryClient}>
-        <LayoutProvider>
-          <Routes>
+    <Provider store={store}>
+      <Router>
+        <QueryClientProvider client={queryClient}>
+          <LayoutProvider>
+            <Routes>
             {/* Login Route */}
             <Route path="/login" element={<LoginPage />} />
 
@@ -776,11 +779,12 @@ function App() {
             <Route path="/setup/permit" element={<PermitSetupDashboard />} />
             <Route path="/setup/incident" element={<IncidentSetupDashboard />} />
 
-          </Routes>
-          <Toaster />
-        </LayoutProvider>
-      </QueryClientProvider>
-    </Router>
+            </Routes>
+            <Toaster />
+          </LayoutProvider>
+        </QueryClientProvider>
+      </Router>
+    </Provider>
   );
 }
 
