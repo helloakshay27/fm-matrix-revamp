@@ -47,7 +47,7 @@ export const BookingSetupDashboard = () => {
   const fetchBookingSetupData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/pms/admin/facility_bookings.json');
+      const response = await apiClient.get('/pms/admin/facility_setups.json');
       
       if (response.data && response.data.facility_setups) {
         const formattedData = response.data.facility_setups.map((item: any) => ({
