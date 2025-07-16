@@ -887,7 +887,7 @@ export const AddSchedulePage = () => {
         </Typography>
       </Box>
 
-      {/* Custom Stepper - Exact Match */}
+      {/* Custom Stepper - Bordered Box Design */}
       <Box sx={{ mb: 4, px: 2 }}>
         <Box sx={{ 
           display: 'flex', 
@@ -903,8 +903,9 @@ export const AddSchedulePage = () => {
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
-                  backgroundColor: index === activeStep ? '#C72030' : '#C4B89D',
-                  color: 'white',
+                  backgroundColor: index === activeStep ? '#C72030' : 'white',
+                  color: index === activeStep ? 'white' : '#C4B89D',
+                  border: `2px solid ${index === activeStep ? '#C72030' : '#C4B89D'}`,
                   padding: '12px 20px',
                   fontSize: '13px',
                   fontWeight: 500,
@@ -914,8 +915,8 @@ export const AddSchedulePage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: 'none',
                   boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
+                  transition: 'all 0.2s ease',
                   '&:hover': {
                     opacity: 0.9
                   }
