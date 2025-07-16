@@ -1,68 +1,43 @@
-
 import React from 'react';
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Search, Edit } from "lucide-react";
-
 const ApprovalMatrixSetupPage = () => {
   // Mock data for the table
-  const approvalData = [
-    {
-      id: 198,
-      function: "Custom Form 11372",
-      createdOn: "08/10/2024",
-      createdBy: "Vinayak Mane"
-    },
-    {
-      id: 173,
-      function: "Gdn",
-      createdOn: "10/04/2024",
-      createdBy: "Vinayak Mane"
-    },
-    {
-      id: 172,
-      function: "Work Order",
-      createdOn: "10/04/2024",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 108,
-      function: "Grn",
-      createdOn: "01/08/2023",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 34,
-      function: "Work Order Invoice",
-      createdOn: "23/11/2022",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 33,
-      function: "Purchase Order",
-      createdOn: "15/11/2022",
-      createdBy: "Robert Day2"
-    }
-  ];
-
-  return (
-    <div className="p-8 bg-[#f6f4ee] min-h-screen">
+  const approvalData = [{
+    id: 198,
+    function: "Custom Form 11372",
+    createdOn: "08/10/2024",
+    createdBy: "Vinayak Mane"
+  }, {
+    id: 173,
+    function: "Gdn",
+    createdOn: "10/04/2024",
+    createdBy: "Vinayak Mane"
+  }, {
+    id: 172,
+    function: "Work Order",
+    createdOn: "10/04/2024",
+    createdBy: "Robert Day2"
+  }, {
+    id: 108,
+    function: "Grn",
+    createdOn: "01/08/2023",
+    createdBy: "Robert Day2"
+  }, {
+    id: 34,
+    function: "Work Order Invoice",
+    createdOn: "23/11/2022",
+    createdBy: "Robert Day2"
+  }, {
+    id: 33,
+    function: "Purchase Order",
+    createdOn: "15/11/2022",
+    createdBy: "Robert Day2"
+  }];
+  return <div className="p-8 min-h-screen bg-transparent">
       {/* Breadcrumbs */}
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
@@ -103,11 +78,7 @@ const ApprovalMatrixSetupPage = () => {
         
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search"
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030] w-64"
-          />
+          <input type="text" placeholder="Search" className="pl-10 pr-4 py-2 border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030] w-64" />
         </div>
       </div>
 
@@ -124,8 +95,7 @@ const ApprovalMatrixSetupPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {approvalData.map((item) => (
-              <TableRow key={item.id}>
+            {approvalData.map(item => <TableRow key={item.id}>
                 <TableCell>
                   <Button variant="ghost" size="sm" className="p-1">
                     <Edit className="w-4 h-4 text-[#1a1a1a]" />
@@ -135,13 +105,10 @@ const ApprovalMatrixSetupPage = () => {
                 <TableCell>{item.function}</TableCell>
                 <TableCell>{item.createdOn}</TableCell>
                 <TableCell>{item.createdBy}</TableCell>
-              </TableRow>
-            ))}
+              </TableRow>)}
           </TableBody>
         </Table>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ApprovalMatrixSetupPage;
