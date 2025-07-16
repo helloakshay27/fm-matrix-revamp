@@ -399,24 +399,6 @@ export const AddSchedulePage = () => {
               </Box>
               
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {stepIndex < activeStep && (
-                  <MuiButton
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleStepClick(stepIndex)}
-                    sx={{
-                      color: '#C72030',
-                      borderColor: '#C72030',
-                      '&:hover': {
-                        backgroundColor: '#C72030',
-                        color: 'white'
-                      }
-                    }}
-                  >
-                    Edit
-                  </MuiButton>
-                )}
                 <MuiSwitch 
                   checked={createTicket}
                   onChange={(e) => setCreateTicket(e.target.checked)}
@@ -432,11 +414,32 @@ export const AddSchedulePage = () => {
             {/* Main Content in White Box */}
             <SectionCard>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
-                <Typography variant="body2" sx={{ color: '#666' }}>
-                  Schedule For: <strong>Asset</strong>
-                </Typography>
-              </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#666' }}>
+                      Schedule For: <strong>Asset</strong>
+                    </Typography>
+                    {stepIndex < activeStep && (
+                      <MuiButton
+                        variant="outlined"
+                        size="small"
+                        startIcon={<EditIcon />}
+                        onClick={() => handleStepClick(stepIndex)}
+                        sx={{
+                          color: '#C72030',
+                          borderColor: '#C72030',
+                          '&:hover': {
+                            backgroundColor: '#C72030',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        Edit
+                      </MuiButton>
+                    )}
+                  </Box>
+                </Box>
               
               <RadioGroup
                 row
@@ -506,51 +509,67 @@ export const AddSchedulePage = () => {
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
-              justifyContent: 'space-between',
+              gap: 2,
               mb: 3,
               px: 1
             }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{
-                  backgroundColor: '#C72030',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Cog size={16} color="white" />
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                  Schedule Setup
-                </Typography>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
               </Box>
-              
-              {stepIndex < activeStep && (
-                <MuiButton
-                  variant="outlined"
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={() => handleStepClick(stepIndex)}
-                  sx={{
-                    color: '#C72030',
-                    borderColor: '#C72030',
-                    '&:hover': {
-                      backgroundColor: '#C72030',
-                      color: 'white'
-                    }
-                  }}
-                >
-                  Edit
-                </MuiButton>
-              )}
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                Schedule Setup
+              </Typography>
             </Box>
 
             {/* Main Content in White Box */}
             <SectionCard>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Checklist Type</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      '&:hover': {
+                        backgroundColor: '#C72030',
+                        color: 'white'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      '&:hover': {
+                        backgroundColor: '#C72030',
+                        color: 'white'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
                 <RadioGroup
                   row
                   value={formData.checklistType}
