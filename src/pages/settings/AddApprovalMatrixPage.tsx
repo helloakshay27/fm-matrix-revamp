@@ -52,10 +52,10 @@ const AddApprovalMatrixPage = () => {
         console.log('Users API response:', response.data);
         
         // Ensure we always set an array
-        if (Array.isArray(response.data)) {
-          setUsers(response.data);
+        if (Array.isArray(response.data.users)) {
+          setUsers(response.data.users);
         } else {
-          console.error('API response is not an array:', response.data);
+          console.error('API response.data.users is not an array:', response.data);
           setUsers([]);
         }
       } catch (error) {
