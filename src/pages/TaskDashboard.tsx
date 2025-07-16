@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter, Download, Ticket, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Filter, Download, Ticket, Clock, AlertCircle, CheckCircle, Upload } from 'lucide-react';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
+import { TaskImportModal } from '@/components/modals/TaskImportModal';
+import { TaskFilterModal } from '@/components/filters/TaskFilterModal';
+import { ListPageActions } from '@/components/ListPageActions';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 
 const taskData = [{
@@ -67,11 +70,33 @@ const taskData = [{
 export const TaskDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
   const totalTasks = taskData.length;
   const openTasks = taskData.filter(t => t.status === 'Open').length;
   const inProgressTasks = taskData.filter(t => t.status === 'In Progress').length;
   const pendingTasks = taskData.filter(t => t.status === 'Pending').length;
   const closedTasks = taskData.filter(t => t.status === 'Closed').length;
+
+  const handleAddClick = () => {
+    navigate('/maintenance/task/add');
+  };
+
+  const handleImportClick = () => {
+    setShowImportModal(true);
+  };
+
+  const handleFiltersClick = () => {
+    setIsFilterOpen(true);
+  };
+
+  const handleApplyFilters = (filters: any) => {
+    console.log('Applied filters:', filters);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+  };
 
   const handleViewDetails = (taskId: string) => {
     navigate(`/maintenance/task/details/${taskId}`);
@@ -154,10 +179,17 @@ export const TaskDashboard = () => {
   };
 
   return <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <p className="text-gray-600 mb-2 text-sm">Tasks &gt; Task List</p>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">TASK LIST</h1>
-      </div>
+      {/* Header and Actions */}
+      <ListPageActions
+        title="TASK LIST"
+        breadcrumb="Tasks > Task List"
+        searchValue={searchValue}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search tasks..."
+        onAddClick={handleAddClick}
+        onImportClick={handleImportClick}
+        onFiltersClick={handleFiltersClick}
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {[{
@@ -216,9 +248,16 @@ export const TaskDashboard = () => {
         storageKey="tasks-table" 
       />
 
-      <TaskAdvancedFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={filters => {
-      console.log('Applied filters:', filters);
-      setIsFilterOpen(false);
-    }} />
+      {/* Modals */}
+      <TaskImportModal
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+      />
+      <TaskFilterModal
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        onApplyFilters={handleApplyFilters}
+      />
+      <TaskAdvancedFilterDialog open={false} onOpenChange={() => {}} onApply={() => {}} />
     </div>;
 };

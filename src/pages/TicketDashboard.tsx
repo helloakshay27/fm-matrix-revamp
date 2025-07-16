@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Upload } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
+import { TicketImportModal } from '@/components/modals/TicketImportModal';
+import { TicketFilterModal } from '@/components/filters/TicketFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TicketSelector } from '@/components/TicketSelector';
@@ -238,6 +240,7 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix'
   ]);
@@ -359,10 +362,13 @@ export const TicketDashboard = () => {
   }];
 
   const renderCustomActions = () => <div className="flex flex-wrap gap-3">
-      <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+      <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 border-0">
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
-      <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
+      <Button variant="outline" onClick={() => navigate('/maintenance/ticket/import')} className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
+        <Upload className="w-4 h-4 mr-2" /> Import
+      </Button>
+      <Button variant="outline" onClick={() => setIsFilterOpen(true)} className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
     </div>;
