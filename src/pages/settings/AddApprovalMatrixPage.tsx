@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from "@/utils/apiClient";
+import { useToast } from "@/hooks/use-toast";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -21,12 +22,14 @@ interface User {
 
 const AddApprovalMatrixPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedFunction, setSelectedFunction] = useState('');
   const [approvalLevels, setApprovalLevels] = useState<ApprovalLevel[]>([
     { order: 1, name: '', users: [], sendEmails: false }
   ]);
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Function options with label-value pairs
   const functionOptions = [
@@ -92,9 +95,59 @@ const AddApprovalMatrixPage = () => {
     setApprovalLevels(updatedLevels);
   };
 
-  const handleCreate = () => {
-    console.log('Creating approval matrix:', { selectedFunction, approvalLevels });
-    navigate('/settings/approval-matrix/setup');
+  const handleCreate = async () => {
+    if (!selectedFunction) {
+      toast({
+        title: "Error",
+        description: "Please select a function",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (approvalLevels.some(level => !level.name || level.users.length === 0)) {
+      toast({
+        title: "Error", 
+        description: "Please fill in all approval level details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      const payload = {
+        invoice_approval: {
+          approval_type: selectedFunction,
+          invoice_approval_levels_attributes: approvalLevels.map(level => ({
+            name: level.name,
+            order: level.order,
+            active: true,
+            send_email: level.sendEmails,
+            escalate_to_users: level.users
+          }))
+        }
+      };
+
+      await apiClient.post('/pms/admin/invoice_approvals.json', payload);
+      
+      toast({
+        title: "Success",
+        description: "Approval matrix created successfully",
+      });
+      
+      navigate('/settings/approval-matrix/setup');
+    } catch (error) {
+      console.error('Error creating approval matrix:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create approval matrix. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSaveAndCreateNew = () => {
@@ -352,9 +405,10 @@ const AddApprovalMatrixPage = () => {
         <div className="flex gap-4 pt-6 border-t border-gray-200">
           <Button
             onClick={handleCreate}
-            className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-8"
+            disabled={isSubmitting}
+            className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-8 disabled:opacity-50"
           >
-            Create
+            {isSubmitting ? 'Creating...' : 'Create'}
           </Button>
           
           <Button
