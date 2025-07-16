@@ -371,15 +371,15 @@ export const RoleDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#1a1a1a]">ROLE</h1>
+    <div className="space-y-6 p-4 lg:p-6">
+      <h1 className="text-xl lg:text-2xl font-bold text-[#1a1a1a]">ROLE</h1>
       
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6">
         {/* Header with Add Role button */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <Button 
             onClick={handleAddRole}
-            className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+            className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Role
@@ -387,27 +387,28 @@ export const RoleDashboard = () => {
         </div>
 
         {/* Search */}
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Input
             placeholder="Search Role"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs"
+            className="w-full sm:max-w-xs"
           />
           <Button 
             onClick={handleSearchRole}
-            className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+            className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
           >
             <Search className="w-4 h-4 mr-2" />
             Search Role
           </Button>
         </div>
 
-        {/* Left panel with roles and right panel with permissions */}
-        <div className="flex gap-6">
+        {/* Responsive Layout: Stack on mobile, side-by-side on desktop */}
+        <div className="flex flex-col xl:flex-row gap-6">
           {/* Left Panel - Roles List */}
-          <div className="w-80 bg-gray-50 rounded-lg p-4">
-            <div className="space-y-2">
+          <div className="w-full xl:w-80 bg-gray-50 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Roles List</h3>
+            <div className="space-y-2 max-h-64 xl:max-h-96 overflow-y-auto">
               {filteredRoles.map((role) => (
                 <div
                   key={role.id}
@@ -427,14 +428,18 @@ export const RoleDashboard = () => {
           </div>
 
           {/* Right Panel - Permissions Matrix */}
-          <div className="flex-1">
-            {/* Tabs */}
-            <div className="flex gap-2 mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Permissions for: {currentRole?.name}
+            </h3>
+            
+            {/* Tabs - Responsive scrolling */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
               {tabs.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded border text-sm font-medium transition-colors ${
+                  className={`px-3 lg:px-4 py-2 rounded border text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab
                       ? 'bg-[#C72030] text-white border-[#C72030]'
                       : 'bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10'
@@ -445,76 +450,109 @@ export const RoleDashboard = () => {
               ))}
             </div>
 
-            {/* Permissions Table */}
-            <div className="border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
-              <Table>
-                <TableHeader className="sticky top-0 bg-white z-10">
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-700 w-48"></TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">All</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">Add</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">View</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">Edit</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">Disable</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentPermissions.map((permission) => (
-                    <TableRow key={permission.name} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{permission.name}</TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.all}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.add}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.view}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.edit}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.disable}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            {/* Permissions Table - Responsive with horizontal scroll */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <div className="max-h-64 lg:max-h-96 overflow-y-auto">
+                  <Table className="min-w-full">
+                    <TableHeader className="sticky top-0 bg-white z-10">
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold text-gray-700 min-w-[200px] lg:w-48 text-xs lg:text-sm">
+                          Permission
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          All
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          Add
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          View
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          Edit
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[70px] text-xs lg:text-sm">
+                          Disable
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentPermissions.map((permission) => (
+                        <TableRow key={permission.name} className="hover:bg-gray-50">
+                          <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
+                            {permission.name}
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.all}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.add}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.view}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.edit}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.disable}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </div>
 
             {/* Update Button */}
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex flex-col sm:flex-row justify-end">
               <Button 
                 onClick={handleUpdatePermissions}
-                className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+                className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
               >
-                Update
+                Update Permissions
               </Button>
             </div>
           </div>
