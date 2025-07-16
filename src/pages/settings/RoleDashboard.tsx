@@ -208,10 +208,6 @@ export const RoleDashboard = () => {
     ? rolePermissions[currentRole.id][activeTab] || []
     : [];
 
-  console.log('Current role:', currentRole);
-  console.log('Current permissions:', currentPermissions);
-  console.log('Role permissions state:', rolePermissions);
-
   const handleRoleClick = (role: Role) => {
     setSelectedRole(role);
   };
@@ -227,12 +223,7 @@ export const RoleDashboard = () => {
   };
 
   const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
-    console.log('handlePermissionChange called:', { roleId, permissionName, field, value });
-    console.log('Current rolePermissions:', rolePermissions[roleId]?.[activeTab]);
-    if (!rolePermissions[roleId] || !rolePermissions[roleId][activeTab]) {
-      console.log('Early return - no permissions found');
-      return;
-    }
+    if (!rolePermissions[roleId] || !rolePermissions[roleId][activeTab]) return;
 
     const updatedPermissions = rolePermissions[roleId][activeTab].map(permission => {
       if (permission.name === permissionName) {
@@ -429,9 +420,7 @@ export const RoleDashboard = () => {
                                <Checkbox
                                 checked={permission.all}
                                 onCheckedChange={(checked) => {
-                                  console.log('Checkbox clicked:', permission.name, 'field: all', 'value:', checked);
                                   if (currentRole) {
-                                    console.log('Current role:', currentRole.id);
                                     handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean);
                                   }
                                 }}
