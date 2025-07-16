@@ -127,7 +127,7 @@ const AddApprovalMatrixPage = () => {
         <Button
           variant="ghost"
           onClick={() => navigate('/settings/approval-matrix/setup')}
-          className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#1a1a1a] w-10 h-10 rounded-lg p-0"
+          className="text-[#1a1a1a] w-10 h-10 rounded-lg p-0"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
