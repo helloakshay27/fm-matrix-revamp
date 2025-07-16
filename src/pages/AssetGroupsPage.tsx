@@ -209,37 +209,37 @@ export const AssetGroupsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-transparent p-3 sm:p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">GROUPS</h1>
-            <p className="text-sm text-gray-600 mt-1">Setup &gt; Groups</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">GROUPS</h1>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">Setup &gt; Groups</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white"
+            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto text-sm"
             onClick={() => setAddGroupOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Group
           </Button>
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white"
+            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto text-sm"
             onClick={() => setAddSubGroupOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Subgroup
           </Button>
-          <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
+          <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50 w-full sm:w-auto text-sm">
             <Upload className="w-4 h-4 mr-2" />
             Bulk Upload
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {/* Groups Table */}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">
@@ -360,8 +360,8 @@ export const AssetGroupsPage = () => {
                 <X className="w-5 h-5" />
               </IconButton>
             </div>
-            <DialogContent className="p-6">
-              <div className="grid grid-cols-2 gap-6">
+            <DialogContent className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Group Name</InputLabel>
                   <Select
@@ -382,7 +382,7 @@ export const AssetGroupsPage = () => {
                 </FormControl>
                 
                 <TextField
-                  label="Group Name"
+                  label="Sub Group Name"
                   placeholder="Enter Sub Group Name"
                   variant="outlined"
                   fullWidth
