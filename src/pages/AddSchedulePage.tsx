@@ -1341,19 +1341,54 @@ export const AddSchedulePage = () => {
                   fullWidth
                   value={formData.assetName}
                   onChange={(e) => setFormData({...formData, assetName: e.target.value})}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#C72030',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#C72030',
+                    },
+                  }}
                 />
                 
-                <FormControl fullWidth>
+                <FormControl 
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#C72030',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#C72030',
+                    },
+                  }}
+                >
                   <InputLabel>Parameter</InputLabel>
                   <Select 
                     value={formData.parameter} 
                     onChange={(e) => setFormData({...formData, parameter: e.target.value})}
+                    label="Parameter"
                     displayEmpty
                   >
-                    <MenuItem value="">Select Parameter</MenuItem>
+                    <MenuItem value="">
+                      <em>Select Parameter</em>
+                    </MenuItem>
                     <MenuItem value="temperature">Temperature</MenuItem>
                     <MenuItem value="pressure">Pressure</MenuItem>
                     <MenuItem value="voltage">Voltage</MenuItem>
+                    <MenuItem value="current">Current</MenuItem>
+                    <MenuItem value="power">Power</MenuItem>
+                    <MenuItem value="frequency">Frequency</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
