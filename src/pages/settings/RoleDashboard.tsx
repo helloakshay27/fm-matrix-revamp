@@ -237,9 +237,11 @@ export const RoleDashboard = () => {
           let rolePermissionsData: any = {};
           try {
             const permissionsHashValue = role.permissions_hash || '{}';
+            console.log(`Loading permissions for role ${role.name}:`, permissionsHashValue);
             const parsedData = JSON.parse(permissionsHashValue);
             // Handle case where JSON.parse returns null (when permissions_hash is "null" string)
             rolePermissionsData = parsedData && typeof parsedData === 'object' ? parsedData : {};
+            console.log('Parsed permissions data:', rolePermissionsData);
           } catch (error) {
             console.error('Error parsing permissions_hash for role:', role.name, error);
             rolePermissionsData = {};
