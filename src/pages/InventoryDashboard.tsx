@@ -181,7 +181,9 @@ export const InventoryDashboard = () => {
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(['consumption-green', 'consumption-report-green', 'inventory', 'inventory-trends']);
+  const [visibleSections, setVisibleSections] = useState<string[]>([
+    'statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix'
+  ]);
   const pageSize = 5;
 
   // Calculate pagination
@@ -247,6 +249,10 @@ export const InventoryDashboard = () => {
     priority: index === 0 ? 'P1' : 'P1',
     tat: '"A"'
   }));
+
+  const handleSelectionChange = (visibleSections: string[]) => {
+    setVisibleSections(visibleSections);
+  };
 
   const handleViewItem = (itemId: string) => {
     navigate(`/maintenance/inventory/details/${itemId}`);
@@ -476,20 +482,7 @@ export const InventoryDashboard = () => {
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end mb-4 sm:mb-6">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="text-[#C72030] border-[#C72030] text-xs sm:text-sm">
-                  <span className="hidden sm:inline">Inventory Selector ({totalItems})</span>
-                  <span className="sm:hidden">Select ({totalItems})</span>
-                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>All Items</DropdownMenuItem>
-                <DropdownMenuItem>Critical Items</DropdownMenuItem>
-                <DropdownMenuItem>Low Stock Items</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <InventorySelector onSelectionChange={handleSelectionChange} />
           </div>
 
           <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
@@ -498,226 +491,234 @@ export const InventoryDashboard = () => {
               {/* Top Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                 {/* Items Status Chart */}
-                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Items</h3>
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                  </div>
-                  <div className="relative flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                      <PieChart>
-                        <Pie
-                          data={itemStatusData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={40}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                          label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                            return (
-                              <text 
-                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                fill="black"
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                fontSize="14"
-                                fontWeight="bold"
-                              >
-                                {value}
-                              </text>
-                            );
-                          }}
-                          labelLine={false}
-                        >
-                          {itemStatusData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalItems}</div>
+                {visibleSections.includes('statusChart') && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                      <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Items</h3>
+                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                    </div>
+                    <div className="relative flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                        <PieChart>
+                          <Pie
+                            data={itemStatusData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={80}
+                            paddingAngle={2}
+                            dataKey="value"
+                            label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                              return (
+                                <text 
+                                  x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                  y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                  fill="black"
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                >
+                                  {value}
+                                </text>
+                              );
+                            }}
+                            labelLine={false}
+                          >
+                            {itemStatusData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalItems}</div>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                      {itemStatusData.map((item, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.fill }}></div>
+                          <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                    {itemStatusData.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.fill }}></div>
-                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
 
                 {/* Criticality Chart */}
-                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Critical Non-Critical Items</h3>
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                  </div>
-                  <div className="relative flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                      <PieChart>
-                        <Pie
-                          data={criticalityData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={40}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                          label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                            return (
-                              <text 
-                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                fill="black"
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                fontSize="14"
-                                fontWeight="bold"
-                              >
-                                {value}
-                              </text>
-                            );
-                          }}
-                          labelLine={false}
-                        >
-                          {criticalityData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalItems}</div>
+                {visibleSections.includes('criticalityChart') && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                      <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Critical Non-Critical Items</h3>
+                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                    </div>
+                    <div className="relative flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                        <PieChart>
+                          <Pie
+                            data={criticalityData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={80}
+                            paddingAngle={2}
+                            dataKey="value"
+                            label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                              return (
+                                <text 
+                                  x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                  y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                  fill="black"
+                                  textAnchor="middle"
+                                  dominantBaseline="middle"
+                                  fontSize="14"
+                                  fontWeight="bold"
+                                >
+                                  {value}
+                                </text>
+                              );
+                            }}
+                            labelLine={false}
+                          >
+                            {criticalityData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalItems}</div>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                      {criticalityData.map((item, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.fill }}></div>
+                          <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                    {criticalityData.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.fill }}></div>
-                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Bar Chart */}
-              <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Unit Category-wise Items</h3>
-                  <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
-                </div>
-                <div className="h-48 sm:h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={groupChartData}
-                      margin={{
-                        top: 20,
-                        right: 10,
-                        left: 10,
-                        bottom: 60,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="name" 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: '#666' }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                        className="sm:text-xs"
-                      />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fontSize: 10, fill: '#666' }}
-                        domain={[0, 'dataMax + 1']}
-                        className="sm:text-xs"
-                      />
-                      <Tooltip 
-                        contentStyle={{
-                          backgroundColor: '#fff',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          fontSize: '11px'
+              {visibleSections.includes('categoryChart') && (
+                <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">Unit Category-wise Items</h3>
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
+                  </div>
+                  <div className="h-48 sm:h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart 
+                        data={groupChartData}
+                        margin={{
+                          top: 20,
+                          right: 10,
+                          left: 10,
+                          bottom: 60,
                         }}
-                        labelStyle={{ color: '#333' }}
-                      />
-                      <Bar 
-                        dataKey="value" 
-                        fill="#C7B894" 
-                        radius={[4, 4, 0, 0]}
-                        name="Items Count"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis 
+                          dataKey="name" 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 10, fill: '#666' }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          className="sm:text-xs"
+                        />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fontSize: 10, fill: '#666' }}
+                          domain={[0, 'dataMax + 1']}
+                          className="sm:text-xs"
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '11px'
+                          }}
+                          labelStyle={{ color: '#333' }}
+                        />
+                        <Bar 
+                          dataKey="value" 
+                          fill="#C7B894" 
+                          radius={[4, 4, 0, 0]}
+                          name="Items Count"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Aging Matrix */}
-              <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Items Ageing Matrix</h3>
-                  <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
-                </div>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  {/* Table - Horizontally scrollable on mobile */}
-                  <div className="overflow-x-auto -mx-3 sm:mx-0">
-                    <div className="min-w-[500px] px-3 sm:px-0">
-                      <table className="w-full border-collapse border border-gray-300">
-                        <thead>
-                          <tr style={{ backgroundColor: '#EDE4D8' }}>
-                            <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
-                            <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
-                          </tr>
-                          <tr style={{ backgroundColor: '#EDE4D8' }}>
-                            <th className="border border-gray-300 p-2 sm:p-3"></th>
-                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
-                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
-                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
-                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
-                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {agingMatrixData.map((row, index) => (
-                            <tr key={index} className="bg-white">
-                              <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
-                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
-                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
-                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
-                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
+              {visibleSections.includes('agingMatrix') && (
+                <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Items Ageing Matrix</h3>
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
+                  </div>
+                  
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Table - Horizontally scrollable on mobile */}
+                    <div className="overflow-x-auto -mx-3 sm:mx-0">
+                      <div className="min-w-[500px] px-3 sm:px-0">
+                        <table className="w-full border-collapse border border-gray-300">
+                          <thead>
+                            <tr style={{ backgroundColor: '#EDE4D8' }}>
+                              <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
+                              <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                            <tr style={{ backgroundColor: '#EDE4D8' }}>
+                              <th className="border border-gray-300 p-2 sm:p-3"></th>
+                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
+                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
+                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
+                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
+                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {agingMatrixData.map((row, index) => (
+                              <tr key={index} className="bg-white">
+                                <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
+                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
+                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
+                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
+                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Summary Box - Full Width Below Table */}
-                  <div className="w-full">
-                    <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
-                      <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">42 Days</div>
-                      <div className="text-sm sm:text-base text-black">Average Time Taken To Process An Item</div>
+                    {/* Summary Box - Full Width Below Table */}
+                    <div className="w-full">
+                      <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
+                        <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">42 Days</div>
+                        <div className="text-sm sm:text-base text-black">Average Time Taken To Process An Item</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Right Sidebar */}

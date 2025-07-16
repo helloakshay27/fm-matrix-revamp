@@ -2,93 +2,84 @@ import React, { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
-interface InventorySelectorOption {
-  id: string;
-  label: string;
-  checked: boolean;
-}
+const inventoryOptions = [
+  { id: 'items', label: 'Items', checked: true, chartSection: 'statusChart' },
+  { id: 'critical-items', label: 'Critical Non-Critical Items', checked: true, chartSection: 'criticalityChart' },
+  { id: 'category-wise', label: 'Unit Category-wise Items', checked: true, chartSection: 'categoryChart' },
+  { id: 'aging-matrix', label: 'Items Aging Matrix', checked: true, chartSection: 'agingMatrix' },
+  { id: 'low-stock', label: 'Low Stock Items', checked: false, chartSection: 'lowStockChart' },
+  { id: 'high-value', label: 'High Value Items', checked: false, chartSection: 'highValueChart' },
+  { id: 'consumable', label: 'Consumable Items', checked: false, chartSection: 'consumableChart' },
+  { id: 'non-consumable', label: 'Non-Consumable Items', checked: false, chartSection: 'nonConsumableChart' },
+  { id: 'critical-priority', label: 'Critical Priority Items', checked: false, chartSection: 'criticalPriorityChart' },
+  { id: 'maintenance-due', label: 'Maintenance Due Items', checked: false, chartSection: 'maintenanceDueChart' },
+];
 
 interface InventorySelectorProps {
-  onSelectionChange: (selectedOptions: string[]) => void;
-  className?: string;
+  onSelectionChange?: (visibleSections: string[]) => void;
 }
 
-export const InventorySelector: React.FC<InventorySelectorProps> = ({
-  onSelectionChange,
-  className = ''
-}) => {
-  const [options, setOptions] = useState<InventorySelectorOption[]>([
-    { id: 'consumption-green', label: 'Inventory Consumption Green', checked: true },
-    { id: 'consumption-report-green', label: 'Inventory Consumption Report Green', checked: true },
-    { id: 'inventory', label: 'Inventory', checked: true },
-    { id: 'inventory-trends', label: 'Inventory Trends', checked: true },
-    { id: 'current-stock', label: 'Current Stock', checked: false },
-    { id: 'current-stock-green', label: 'Current Stock Green', checked: false },
-    { id: 'consumption', label: 'Inventory Consumption', checked: false },
-    { id: 'consumption-report', label: 'Inventory Consumption Report', checked: false }
-  ]);
+export function InventorySelector({ onSelectionChange }: InventorySelectorProps) {
+  const [options, setOptions] = useState(inventoryOptions);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleOptionToggle = (optionId: string) => {
-    const updatedOptions = options.map(option =>
-      option.id === optionId ? { ...option, checked: !option.checked } : option
-    );
-    setOptions(updatedOptions);
-    
-    const selectedOptions = updatedOptions
-      .filter(option => option.checked)
-      .map(option => option.id);
-    onSelectionChange(selectedOptions);
+  const toggleOption = (id: string) => {
+    setOptions(prev => {
+      const newOptions = prev.map(option => 
+        option.id === id ? { ...option, checked: !option.checked } : option
+      );
+      
+      // Get visible chart sections
+      const visibleSections = newOptions
+        .filter(opt => opt.checked)
+        .map(opt => opt.chartSection);
+      
+      // Notify parent component
+      onSelectionChange?.(visibleSections);
+      
+      return newOptions;
+    });
   };
 
-  const selectedCount = options.filter(option => option.checked).length;
+  const selectedCount = options.filter(opt => opt.checked).length;
 
   return (
-    <div className={`w-full max-w-md ${className}`}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-between bg-background/60 backdrop-blur-sm border-primary/20 hover:bg-background/80"
-          >
-            <span className="text-sm font-medium">
-              Inventory Analytics ({selectedCount} selected)
-            </span>
-            <ChevronDown className="h-4 w-4 ml-2" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          className="w-80 p-2 max-h-96 overflow-y-auto bg-background/95 backdrop-blur-md border-primary/20"
-          align="start"
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button 
+          variant="outline" 
+          className="bg-white border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-background))]"
         >
-          <div className="space-y-1">
+          Inventory Selector ({selectedCount})
+          <ChevronDown className="ml-2 h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="end">
+        <div className="bg-white border border-[hsl(var(--analytics-border))]">
+          <div className="p-3 border-b border-[hsl(var(--analytics-border))]">
+            <h3 className="font-medium text-[hsl(var(--analytics-text))]">Select Items</h3>
+          </div>
+          <div className="max-h-64 overflow-y-auto">
             {options.map((option) => (
-              <DropdownMenuItem
+              <div 
                 key={option.id}
-                className="flex items-center space-x-3 p-3 rounded-md cursor-pointer hover:bg-muted/50"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  handleOptionToggle(option.id);
-                }}
+                className="flex items-center p-3 hover:bg-[hsl(var(--analytics-background))] cursor-pointer"
+                onClick={() => toggleOption(option.id)}
               >
-                <div className={`w-4 h-4 border-2 rounded-sm flex items-center justify-center ${
-                  option.checked 
-                    ? 'bg-primary border-primary' 
-                    : 'border-muted-foreground/30'
-                }`}>
-                  {option.checked && <Check className="w-3 h-3 text-primary-foreground" />}
+                <div className="flex items-center justify-center w-4 h-4 mr-3 border border-[hsl(var(--analytics-border))] bg-white">
+                  {option.checked && <Check className="h-3 w-3 text-[hsl(var(--analytics-text))]" />}
                 </div>
-                <span className="text-sm font-medium flex-1">{option.label}</span>
-              </DropdownMenuItem>
+                <span className="text-sm text-[hsl(var(--analytics-text))]">{option.label}</span>
+              </div>
             ))}
           </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
-};
+}
