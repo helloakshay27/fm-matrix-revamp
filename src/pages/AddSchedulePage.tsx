@@ -841,18 +841,17 @@ export const AddSchedulePage = () => {
               </Typography>
             </Box>
 
-            {/* Main Content in Single Box with Blue Border and Light Gray Background */}
+            {/* Main Content with Dashed Border matching the image */}
             <Box sx={{ 
-              backgroundColor: '#F5F5F5',
+              border: '2px dashed #E0E0E0',
               borderRadius: '8px',
-              padding: 0,
-              border: '2px solid #2196F3'
+              backgroundColor: 'white',
+              padding: 0
             }}>
               <Tabs 
                 value={timeTab} 
                 onChange={(e, newValue) => setTimeTab(newValue)}
                 sx={{ 
-                  backgroundColor: '#F5F5F5',
                   '& .MuiTab-root': {
                     backgroundColor: '#F5F5F5',
                     color: '#666',
@@ -869,9 +868,6 @@ export const AddSchedulePage = () => {
                   },
                   '& .MuiTabs-indicator': {
                     display: 'none'
-                  },
-                  '& .MuiTabs-flexContainer': {
-                    borderRadius: '8px 8px 0 0'
                   }
                 }}
               >
@@ -881,16 +877,9 @@ export const AddSchedulePage = () => {
                 <Tab label="Month" />
               </Tabs>
               
-              <Box sx={{ padding: 3, backgroundColor: 'white' }}>
+              <Box sx={{ padding: 3, backgroundColor: '#F5F5F5' }}>
                 {timeTab === 0 && (
-                  <Box sx={{ backgroundColor: '#F5F5F5', padding: 2, borderRadius: 1 }}>
-                    {/* Header Labels */}
-                    <Box sx={{ display: 'flex', gap: 4, mb: 2, fontWeight: 600 }}>
-                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Hour</Typography>
-                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Minutes</Typography>
-                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Day</Typography>
-                      <Typography variant="body2" sx={{ minWidth: '60px', fontWeight: 600 }}>Month</Typography>
-                    </Box>
+                  <Box>
                     <FormControlLabel
                       control={
                         <Radio 
