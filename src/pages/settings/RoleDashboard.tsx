@@ -223,7 +223,12 @@ export const RoleDashboard = () => {
   };
 
   const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
-    if (!rolePermissions[roleId] || !rolePermissions[roleId][activeTab]) return;
+    console.log('handlePermissionChange called:', { roleId, permissionName, field, value });
+    console.log('Current rolePermissions:', rolePermissions[roleId]?.[activeTab]);
+    if (!rolePermissions[roleId] || !rolePermissions[roleId][activeTab]) {
+      console.log('Early return - no permissions found');
+      return;
+    }
 
     const updatedPermissions = rolePermissions[roleId][activeTab].map(permission => {
       if (permission.name === permissionName) {
@@ -417,10 +422,12 @@ export const RoleDashboard = () => {
                           </TableCell>
                           <TableCell className="text-center py-2 lg:py-3">
                             <div className="flex justify-center">
-                              <Checkbox
+                               <Checkbox
                                 checked={permission.all}
                                 onCheckedChange={(checked) => {
+                                  console.log('Checkbox clicked:', permission.name, 'field: all', 'value:', checked);
                                   if (currentRole) {
+                                    console.log('Current role:', currentRole.id);
                                     handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean);
                                   }
                                 }}
