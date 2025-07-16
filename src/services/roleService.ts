@@ -13,7 +13,7 @@ export interface CreateRolePayload {
   };
   permissions_hash: Record<string, any>;
   lock_modules: number;
-  parent_function: boolean;
+  parent_function?: boolean;
 }
 
 export interface LockFunction {

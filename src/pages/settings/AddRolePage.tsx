@@ -163,6 +163,7 @@ export const AddRolePage = () => {
   const [setupEnabled, setSetupEnabled] = useState(false);
   const [quickgateEnabled, setQuickgateEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lockFunctions, setLockFunctions] = useState<LockFunction[]>([]);
   const [permissions, setPermissions] = useState<{ [key: string]: Permission[] }>({
     'All Functions': [...allFunctionsPermissions],
     'Inventory': [...inventoryPermissions],
@@ -171,6 +172,19 @@ export const AddRolePage = () => {
   });
 
   const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'] as const;
+
+  useEffect(() => {
+    const fetchLockFunctions = async () => {
+      try {
+        const functions = await roleService.getLockFunctions();
+        setLockFunctions(functions);
+      } catch (error) {
+        console.error('Error fetching lock functions:', error);
+      }
+    };
+
+    fetchLockFunctions();
+  }, []);
 
   const handleTabOverallChange = (tab: string, enabled: boolean) => {
     if (tab === 'All Functions') setAllFunctionsEnabled(enabled);
@@ -259,8 +273,10 @@ export const AddRolePage = () => {
             if (permission.disable) actions.destroy = "true";
             
             if (Object.keys(actions).length > 0) {
-              // Use permission name as action_name for API
-              permissions_hash[permission.name.toLowerCase().replace(/\s+/g, '_')] = actions;
+              // Find the corresponding lock function to get action_name
+              const lockFunction = lockFunctions.find(lf => lf.function_name === permission.name);
+              const actionName = lockFunction?.action_name || permission.name.toLowerCase().replace(/\s+/g, '_');
+              permissions_hash[actionName] = actions;
               hasAnyPermission = true;
             }
           }
@@ -273,9 +289,13 @@ export const AddRolePage = () => {
           name: roleTitle.trim()
         },
         permissions_hash,
-        lock_modules: 1,
-        parent_function: hasAnyPermission
+        lock_modules: 1
       };
+
+      // Only add parent_function if permissions are selected
+      if (hasAnyPermission) {
+        payload.parent_function = true;
+      }
 
       console.log('Creating role with payload:', payload);
       
