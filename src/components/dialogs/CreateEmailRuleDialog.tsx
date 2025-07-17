@@ -133,6 +133,14 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
                   {...field}
                   label="Trigger Type"
                   notched
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        zIndex: 9999,
+                        backgroundColor: 'white'
+                      }
+                    }
+                  }}
                 >
                   {TRIGGER_TYPES.map((type) => (
                     <MenuItem key={type} value={type}>
@@ -157,6 +165,14 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
                   {...field}
                   label="Trigger To"
                   notched
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        zIndex: 9999,
+                        backgroundColor: 'white'
+                      }
+                    }
+                  }}
                 >
                   {TRIGGER_TO_OPTIONS.map((option) => (
                     <MenuItem key={option} value={option}>
@@ -193,6 +209,15 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
                       return selected.join(', ');
                     }
                     return selected;
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        zIndex: 9999,
+                        backgroundColor: 'white',
+                        maxHeight: 300
+                      }
+                    }
                   }}
                 >
                   {roles.map((role) => (
@@ -239,6 +264,14 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
                     {...field}
                     label="Period Type"
                     notched
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          zIndex: 9999,
+                          backgroundColor: 'white'
+                        }
+                      }
+                    }}
                   >
                     {PERIOD_TYPES.map((type) => (
                       <MenuItem key={type} value={type}>
