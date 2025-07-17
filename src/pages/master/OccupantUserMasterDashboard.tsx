@@ -95,7 +95,7 @@ export const OccupantUserMasterDashboard = () => {
   }, [setCurrentSection]);
 
   return (
-    <div className="w-full p-6 space-y-6">
+      <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="w-full p-6 space-y-6">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600">
