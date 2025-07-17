@@ -8,6 +8,8 @@ import fmUserReducer from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
 import occupantUsersReducer from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
+import projectReducer from './slices/projectSlice'
+import siteReducer from './slices/siteSlice'
 
 export const store = configureStore({
   reducer: {
@@ -21,6 +23,8 @@ export const store = configureStore({
     userCounts: userCountsReducer,
     occupantUsers: occupantUsersReducer,
     occupantUserCounts: occupantUserCountsReducer,
+    project: projectReducer,
+    site: siteReducer,
   },
 })
 

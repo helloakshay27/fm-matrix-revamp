@@ -9,6 +9,10 @@ export const API_CONFIG = {
     FUNCTIONS: '/lock_functions.json',
     EMAIL_RULES: '/pms/email_rule_setups.json',
     FM_USERS: '/pms/account_setups/fm_users.json',
+    ALLOWED_COMPANIES: '/allowed_companies.json',
+    CHANGE_COMPANY: '/change_company.json',
+    ALLOWED_SITES: '/pms/sites/allowed_sites.json',
+    CHANGE_SITE: '/change_site.json',
   },
 } as const
 

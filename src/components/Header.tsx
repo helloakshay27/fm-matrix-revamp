@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Bell, User, MapPin, ChevronDown, Home } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, User, MapPin, ChevronDown, Home, Loader2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,11 +9,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SearchWithSuggestions } from './SearchWithSuggestions';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/store/store';
+import { fetchAllowedCompanies, changeCompany } from '@/store/slices/projectSlice';
+import { fetchAllowedSites, changeSite, clearSites } from '@/store/slices/siteSlice';
 
 export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
+  const dispatch = useDispatch<AppDispatch>();
+  
   const currentPath = window.location.pathname;
+  
+  // Redux state
+  const { companies, selectedCompany, loading: projectLoading } = useSelector((state: RootState) => state.project);
+  const { sites, selectedSite, loading: siteLoading } = useSelector((state: RootState) => state.site);
+  
+  // Mock user ID - in real app, this would come from auth state
+  const userId = 87989;
 
   const assetSuggestions = [
     'sdcdsc', 'test', 'asus zenbook', 'Diesel Generator', 'A.c', 'Energy Meter 23',
@@ -23,6 +35,39 @@ export const Header = () => {
 
   const handleSearch = (searchTerm: string) => {
     console.log('Search term:', searchTerm);
+  };
+
+  // Load initial data
+  useEffect(() => {
+    dispatch(fetchAllowedCompanies());
+  }, [dispatch]);
+
+  // Load sites when company changes
+  useEffect(() => {
+    if (selectedCompany) {
+      dispatch(fetchAllowedSites(userId));
+    } else {
+      dispatch(clearSites());
+    }
+  }, [selectedCompany, userId, dispatch]);
+
+  // Handle company change
+  const handleCompanyChange = async (companyId: number) => {
+    try {
+      await dispatch(changeCompany(companyId)).unwrap();
+      // Sites will be loaded automatically via useEffect
+    } catch (error) {
+      console.error('Failed to change company:', error);
+    }
+  };
+
+  // Handle site change
+  const handleSiteChange = async (siteId: number) => {
+    try {
+      await dispatch(changeSite(siteId)).unwrap();
+    } catch (error) {
+      console.error('Failed to change site:', error);
+    }
   };
 
   return (
@@ -43,13 +88,25 @@ export const Header = () => {
           {/* Project Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-              <span className="text-sm font-medium">Project Change</span>
+              {projectLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <span className="text-sm font-medium">
+                  {selectedCompany?.name || 'Select Project'}
+                </span>
+              )}
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-              <DropdownMenuItem>Project Alpha</DropdownMenuItem>
-              <DropdownMenuItem>Project Beta</DropdownMenuItem>
-              <DropdownMenuItem>Project Gamma</DropdownMenuItem>
+              {companies.map((company) => (
+                <DropdownMenuItem
+                  key={company.id}
+                  onClick={() => handleCompanyChange(company.id)}
+                  className={selectedCompany?.id === company.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
+                >
+                  {company.name}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -57,13 +114,31 @@ export const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <MapPin className="w-4 h-4" />
-              <span className="text-sm font-medium">Lockastead Site 1</span>
+              {siteLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <span className="text-sm font-medium">
+                  {selectedSite?.name || 'Select Site'}
+                </span>
+              )}
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-              <DropdownMenuItem>Lockastead Site 1</DropdownMenuItem>
-              <DropdownMenuItem>Lockastead Site 2</DropdownMenuItem>
-              <DropdownMenuItem>Downtown Office</DropdownMenuItem>
+              {sites.length > 0 ? (
+                sites.map((site) => (
+                  <DropdownMenuItem
+                    key={site.id}
+                    onClick={() => handleSiteChange(site.id)}
+                    className={selectedSite?.id === site.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
+                  >
+                    {site.name}
+                  </DropdownMenuItem>
+                ))
+              ) : (
+                <DropdownMenuItem disabled>
+                  {selectedCompany ? 'No sites available' : 'Select a project first'}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
