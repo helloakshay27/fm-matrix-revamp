@@ -67,7 +67,7 @@ export const deleteResponseEscalation = createAsyncThunk(
   'responseEscalation/delete',
   async (id: number, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post(`/pms/admin/create_complaint_worker/${id}.json`)
+      const response = await apiClient.post(`/pms/admin/delete_complaint_worker/${id}.json`)
       return { id, ...response.data }
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to delete response escalation rule')
