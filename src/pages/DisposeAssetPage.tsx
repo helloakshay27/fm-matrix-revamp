@@ -11,6 +11,8 @@ import { DisposalAssetTable } from '@/components/DisposalAssetTable';
 import { HandedOverToSection } from '@/components/HandedOverToSection';
 import { CommentsAttachmentsSection } from '@/components/CommentsAttachmentsSection';
 
+console.log('DisposeAssetPage module is being loaded');
+
 // Custom theme for MUI components
 const muiTheme = createTheme({
   components: {
@@ -78,6 +80,7 @@ const muiTheme = createTheme({
 });
 
 export const DisposeAssetPage: React.FC = () => {
+  console.log('DisposeAssetPage component is being loaded');
   const navigate = useNavigate();
   const location = useLocation();
   const selectedAssets = location.state?.selectedAssets || [];
