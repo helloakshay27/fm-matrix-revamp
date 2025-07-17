@@ -79,31 +79,9 @@ export const AddFMUserPage = () => {
       </div>
 
       {/* Rest of the content stays the same */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Picture Section */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Picture</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300">
-                  <Upload className="w-8 h-8 text-gray-400" />
-                </div>
-                <Button variant="outline" className="w-full">
-                  Upload Picture
-                </Button>
-                <p className="text-xs text-gray-500 text-center">
-                  Upload a profile picture (JPG, PNG up to 2MB)
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
+      <div className="grid grid-cols-1 gap-6">
         {/* Form Section */}
-        <div className="lg:col-span-2">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle>User Information</CardTitle>
