@@ -26,6 +26,7 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
   const [floor, setFloor] = useState('');
   const [room, setRoom] = useState('');
   const [department, setDepartment] = useState('');
+  const [user, setUser] = useState('');
 
   const handleSubmit = () => {
     console.log('Moving assets:', selectedAssets);
@@ -74,6 +75,8 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
             setAllocateTo={setAllocateTo}
             department={department}
             setDepartment={setDepartment}
+            user={user}
+            setUser={setUser}
           />
 
           {/* Attachment Section */}

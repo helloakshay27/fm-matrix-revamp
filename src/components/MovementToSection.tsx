@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { TextField, MenuItem, ThemeProvider, createTheme } from '@mui/material';
+import React, { useEffect } from 'react';
+import { useLocationData } from '@/hooks/useLocationData';
 
 interface MovementToSectionProps {
   site: string;
@@ -17,77 +16,6 @@ interface MovementToSectionProps {
   setRoom: (value: string) => void;
 }
 
-// Custom theme for MUI dropdowns
-const dropdownTheme = createTheme({
-  components: {
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          width: '100%',
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '6px', // rounded-md
-            backgroundColor: '#FFFFFF',
-            height: '45px', // Desktop height
-            '@media (max-width: 768px)': {
-              height: '36px', // Mobile height
-            },
-            '& fieldset': {
-              borderColor: '#E0E0E0',
-              borderRadius: '6px',
-            },
-            '&:hover fieldset': {
-              borderColor: '#1A1A1A',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#C72030',
-              borderWidth: 2,
-            },
-          },
-          '& .MuiInputLabel-root': {
-            color: '#1A1A1A',
-            fontWeight: 500,
-            '&.Mui-focused': {
-              color: '#C72030',
-            },
-          },
-          '& .MuiSelect-select': {
-            color: '#1A1A1A',
-            fontSize: '14px',
-            '@media (max-width: 768px)': {
-              fontSize: '12px',
-            },
-          },
-        },
-      },
-    },
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          '&:hover': {
-            backgroundColor: '#f5f5f5',
-          },
-          '&.Mui-selected': {
-            backgroundColor: '#C72030',
-            color: '#FFFFFF',
-            '&:hover': {
-              backgroundColor: '#B01E2F',
-            },
-          },
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#FFFFFF',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          borderRadius: '6px',
-        },
-      },
-    },
-  },
-});
-
 export const MovementToSection: React.FC<MovementToSectionProps> = ({
   site,
   setSite,
@@ -102,188 +30,188 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
   room,
   setRoom,
 }) => {
-  // Sample options for dropdowns
-  const siteOptions = ['Haven Infoline', 'Site 2', 'Site 3'];
-  const buildingOptions = ['Jyoti Tower', 'Building 2', 'Building 3'];
-  const wingOptions = ['J', 'A', 'B', 'C'];
-  const areaOptions = ['East', 'West', 'North', 'South'];
-  const floorOptions = ['1', '2', '3', '4', '5'];
-  const roomOptions = ['R 101', 'R 102', 'R 201', 'R 202', 'R 301'];
+  const {
+    sites,
+    buildings,
+    wings,
+    areas,
+    floors,
+    rooms,
+    loading,
+    fetchBuildings,
+    fetchWings,
+    fetchAreas,
+    fetchFloors,
+    fetchRooms,
+  } = useLocationData();
+
+  // Handle cascading dropdown changes
+  useEffect(() => {
+    if (site) {
+      fetchBuildings(site);
+      // Clear dependent fields
+      setBuilding('');
+      setWing('');
+      setArea('');
+      setFloor('');
+      setRoom('');
+    }
+  }, [site]);
+
+  useEffect(() => {
+    if (building) {
+      fetchWings(building);
+      // Clear dependent fields
+      setWing('');
+      setArea('');
+      setFloor('');
+      setRoom('');
+    }
+  }, [building]);
+
+  useEffect(() => {
+    if (wing) {
+      fetchAreas(wing);
+      // Clear dependent fields
+      setArea('');
+      setFloor('');
+      setRoom('');
+    }
+  }, [wing]);
+
+  useEffect(() => {
+    if (area) {
+      fetchFloors(area);
+      // Clear dependent fields
+      setFloor('');
+      setRoom('');
+    }
+  }, [area]);
+
+  useEffect(() => {
+    if (floor) {
+      fetchRooms(floor);
+      // Clear dependent fields
+      setRoom('');
+    }
+  }, [floor]);
 
   return (
-    <div className="mb-6">
-      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">Movement To</h3>
-      <ThemeProvider theme={dropdownTheme}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-          <TextField
-            select
-            label="Site*"
+    <div className="mt-6">
+      <h3 className="text-sm font-medium text-gray-700 mb-4">Movement To</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Site */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Site <span className="text-red-500">*</span>
+          </label>
+          <select
             value={site}
             onChange={(e) => setSite(e.target.value)}
-            variant="outlined"
-            size="small"
-            placeholder="Select Site"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            SelectProps={{
-              displayEmpty: true,
-              renderValue: (selected) => {
-                if (!selected) {
-                  return <span style={{ color: '#9CA3AF' }}>Select Site</span>;
-                }
-                return selected as string;
-              },
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={loading.sites}
           >
-            {siteOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
+            <option value="">Select Site</option>
+            {sites.map((s) => (
+              <option key={s.id} value={s.id.toString()}>
+                {s.name}
+              </option>
             ))}
-          </TextField>
+          </select>
+        </div>
 
-          <TextField
-            select
-            label="Building*"
+        {/* Building */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Building <span className="text-red-500">*</span>
+          </label>
+          <select
             value={building}
             onChange={(e) => setBuilding(e.target.value)}
-            variant="outlined"
-            size="small"
-            placeholder="Select Building"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            SelectProps={{
-              displayEmpty: true,
-              renderValue: (selected) => {
-                if (!selected) {
-                  return <span style={{ color: '#9CA3AF' }}>Select Building</span>;
-                }
-                return selected as string;
-              },
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={!site || loading.buildings}
           >
-            {buildingOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
+            <option value="">Select Building</option>
+            {buildings.map((b) => (
+              <option key={b.id} value={b.id.toString()}>
+                {b.name}
+              </option>
             ))}
-          </TextField>
+          </select>
+        </div>
 
-          <TextField
-            select
-            label="Wing*"
+        {/* Wing */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Wing</label>
+          <select
             value={wing}
             onChange={(e) => setWing(e.target.value)}
-            variant="outlined"
-            size="small"
-            placeholder="Select Wing"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            SelectProps={{
-              displayEmpty: true,
-              renderValue: (selected) => {
-                if (!selected) {
-                  return <span style={{ color: '#9CA3AF' }}>Select Wing</span>;
-                }
-                return selected as string;
-              },
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={!building || loading.wings}
           >
-            {wingOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
+            <option value="">Select Wing</option>
+            {wings.map((w) => (
+              <option key={w.id} value={w.id.toString()}>
+                {w.name}
+              </option>
             ))}
-          </TextField>
+          </select>
+        </div>
 
-          <TextField
-            select
-            label="Area*"
+        {/* Area */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Area</label>
+          <select
             value={area}
             onChange={(e) => setArea(e.target.value)}
-            variant="outlined"
-            size="small"
-            placeholder="Select Area"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            SelectProps={{
-              displayEmpty: true,
-              renderValue: (selected) => {
-                if (!selected) {
-                  return <span style={{ color: '#9CA3AF' }}>Select Area</span>;
-                }
-                return selected as string;
-              },
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={!wing || loading.areas}
           >
-            {areaOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
+            <option value="">Select Area</option>
+            {areas.map((a) => (
+              <option key={a.id} value={a.id.toString()}>
+                {a.name}
+              </option>
             ))}
-          </TextField>
+          </select>
+        </div>
 
-          <TextField
-            select
-            label="Floor*"
+        {/* Floor */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Floor</label>
+          <select
             value={floor}
             onChange={(e) => setFloor(e.target.value)}
-            variant="outlined"
-            size="small"
-            placeholder="Select Floor"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            SelectProps={{
-              displayEmpty: true,
-              renderValue: (selected) => {
-                if (!selected) {
-                  return <span style={{ color: '#9CA3AF' }}>Select Floor</span>;
-                }
-                return selected as string;
-              },
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={!area || loading.floors}
           >
-            {floorOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
+            <option value="">Select Floor</option>
+            {floors.map((f) => (
+              <option key={f.id} value={f.id.toString()}>
+                {f.name}
+              </option>
             ))}
-          </TextField>
+          </select>
+        </div>
 
-          <TextField
-            select
-            label="Room*"
+        {/* Room */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Room</label>
+          <select
             value={room}
             onChange={(e) => setRoom(e.target.value)}
-            variant="outlined"
-            size="small"
-            placeholder="Select Room"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            SelectProps={{
-              displayEmpty: true,
-              renderValue: (selected) => {
-                if (!selected) {
-                  return <span style={{ color: '#9CA3AF' }}>Select Room</span>;
-                }
-                return selected as string;
-              },
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={!floor || loading.rooms}
           >
-            {roomOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
+            <option value="">Select Room</option>
+            {rooms.map((r) => (
+              <option key={r.id} value={r.id.toString()}>
+                {r.name}
+              </option>
             ))}
-          </TextField>
+          </select>
         </div>
-      </ThemeProvider>
+      </div>
     </div>
   );
 };
