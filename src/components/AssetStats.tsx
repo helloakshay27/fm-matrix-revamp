@@ -5,7 +5,7 @@ import { Package, DollarSign, Settings, Monitor, AlertTriangle, Trash2 } from 'l
 interface AssetStatsProps {
   stats: {
     total: number;
-    totalValue: number;
+    totalValue: string;
     nonItAssets: number;
     itAssets: number;
     inUse: number;
@@ -18,7 +18,7 @@ interface AssetStatsProps {
 export const AssetStats: React.FC<AssetStatsProps> = ({ stats }) => {
   const statData = [
     { label: "Total Assets", value: stats.total, icon: <Package className="w-6 h-6 text-[#C72030]" /> },
-    { label: "Total Value", value: `₹${stats.totalValue.toFixed(2)}`, icon: <DollarSign className="w-6 h-6 text-[#C72030]" /> },
+    { label: "Total Value", value: stats.totalValue, icon: <DollarSign className="w-6 h-6 text-[#C72030]" /> },
     { label: "Non IT Assets", value: stats.nonItAssets, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
     { label: "IT Assets", value: stats.itAssets, icon: <Monitor className="w-6 h-6 text-[#C72030]" /> },
     { label: "In Use", value: stats.inUse, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },

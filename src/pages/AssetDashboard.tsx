@@ -23,7 +23,7 @@ import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
-import { useAssetData } from '@/hooks/useAssetData';
+import { useAssets } from '@/hooks/useAssets';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -61,10 +61,12 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  // Removed isMoveAssetOpen and isDisposeAssetOpen states - now navigating to pages
   const [selectedAnalyticsItems, setSelectedAnalyticsItems] = useState<string[]>([
     'total-available', 'assets-in-use', 'asset-breakdown', 'critical-breakdown'
   ]);
@@ -89,6 +91,9 @@ export const AssetDashboard = () => {
     'donutCharts', 'categoryChart', 'agingMatrix', 'performanceMetrics'
   ]);
 
+  // Use the API hook
+  const { assets, stats, pagination, loading, error, refetch } = useAssets(currentPage);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -97,21 +102,45 @@ export const AssetDashboard = () => {
     })
   );
 
-  const {
-    filteredAssets,
-    selectedAssets,
-    searchTerm,
-    stats,
-    handleSearch,
-    handleSelectAll,
-    handleSelectAsset
-  } = useAssetData();
+  // Filter assets based on search term
+  const filteredAssets = assets.filter(asset =>
+    asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.assetNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Handle search
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  // Handle asset selection
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(filteredAssets.map(asset => asset.id));
+    } else {
+      setSelectedAssets([]);
+    }
+  };
+
+  const handleSelectAsset = (assetId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(prev => [...prev, assetId]);
+    } else {
+      setSelectedAssets(prev => prev.filter(id => id !== assetId));
+    }
+  };
 
   // Get selected asset objects with id and name
   const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
     id: asset.id,
     name: asset.name
   }));
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
@@ -132,7 +161,7 @@ export const AssetDashboard = () => {
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    refetch();
   };
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
@@ -440,104 +469,114 @@ export const AssetDashboard = () => {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-6 mt-6">
-          <AssetStats stats={stats} />
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="text-lg">Loading assets...</div>
+            </div>
+          ) : error ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="text-red-500">Error: {error}</div>
+            </div>
+          ) : (
+            <>
+              <AssetStats stats={stats} />
 
-          <AssetActions
-            searchTerm={searchTerm}
-            onSearch={handleSearch}
-            onAddAsset={handleAddAsset}
-            onImport={handleImport}
-            onUpdate={handleUpdate}
-            onFilterOpen={() => setIsFilterOpen(true)}
-            onRefresh={handleRefresh}
-            visibleColumns={visibleColumns}
-            onColumnChange={handleColumnChange}
-          />
-
-          <div className="relative">
-            <AssetDataTable
-              assets={filteredAssets}
-              selectedAssets={selectedAssets}
-              visibleColumns={visibleColumns}
-              onSelectAll={handleSelectAll}
-              onSelectAsset={handleSelectAsset}
-              onViewAsset={handleViewAsset}
-            />
-
-            {/* Selection Panel - positioned as overlay within table container */}
-            {selectedAssets.length > 0 && (
-              <AssetSelectionPanel
-                selectedCount={selectedAssets.length}
-                selectedAssets={selectedAssetObjects}
-                onMoveAsset={handleMoveAsset}
-                onDisposeAsset={handleDisposeAsset}
-                onPrintQRCode={handlePrintQRCode}
-                onCheckIn={handleCheckIn}
-                onClearSelection={handleClearSelection}
+              <AssetActions
+                searchTerm={searchTerm}
+                onSearch={handleSearch}
+                onAddAsset={handleAddAsset}
+                onImport={handleImport}
+                onUpdate={handleUpdate}
+                onFilterOpen={() => setIsFilterOpen(true)}
+                onRefresh={handleRefresh}
+                visibleColumns={visibleColumns}
+                onColumnChange={handleColumnChange}
               />
-            )}
-          </div>
 
-          <div className="mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious href="#" />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#" isActive>
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    2
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    3
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    4
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    5
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    6
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    7
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    8
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    Last
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+              <div className="relative">
+                <AssetDataTable
+                  assets={filteredAssets}
+                  selectedAssets={selectedAssets}
+                  visibleColumns={visibleColumns}
+                  onSelectAll={handleSelectAll}
+                  onSelectAsset={handleSelectAsset}
+                  onViewAsset={handleViewAsset}
+                />
+
+                {/* Selection Panel - positioned as overlay within table container */}
+                {selectedAssets.length > 0 && (
+                  <AssetSelectionPanel
+                    selectedCount={selectedAssets.length}
+                    selectedAssets={selectedAssetObjects}
+                    onMoveAsset={handleMoveAsset}
+                    onDisposeAsset={handleDisposeAsset}
+                    onPrintQRCode={handlePrintQRCode}
+                    onCheckIn={handleCheckIn}
+                    onClearSelection={handleClearSelection}
+                  />
+                )}
+              </div>
+
+              {/* API-driven Pagination */}
+              <div className="mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (pagination.currentPage > 1) {
+                            handlePageChange(pagination.currentPage - 1);
+                          }
+                        }}
+                        className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: Math.min(pagination.totalPages, 10) }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink 
+                          href="#" 
+                          isActive={page === pagination.currentPage}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(page);
+                          }}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    {pagination.totalPages > 10 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (pagination.currentPage < pagination.totalPages) {
+                            handlePageChange(pagination.currentPage + 1);
+                          }
+                        }}
+                        className={pagination.currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+                
+                <div className="text-center mt-2 text-sm text-gray-600">
+                  Showing page {pagination.currentPage} of {pagination.totalPages} 
+                  ({pagination.totalCount} total assets)
+                </div>
+              </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
