@@ -1,8 +1,7 @@
-import { createAsyncThunk } from '@reduxjs/toolkit'
-import createApiSlice from '../api/apiSlice'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
-import { CostApprovalPayload } from '@/types/costApproval'
+import { CostApprovalPayload, CostApprovalGetResponse } from '@/types/costApproval'
 
 export interface CostApprovalResponse {
   id: number;
@@ -22,6 +21,19 @@ export interface CostApprovalResponse {
   issue_related_to: string | null;
 }
 
+// Async thunk for fetching cost approvals
+export const fetchCostApprovals = createAsyncThunk(
+  'costApproval/fetchAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get(ENDPOINTS.COST_APPROVALS)
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Failed to fetch cost approvals')
+    }
+  }
+)
+
 // Async thunk for creating cost approval
 export const createCostApproval = createAsyncThunk(
   'costApproval/create',
@@ -35,7 +47,55 @@ export const createCostApproval = createAsyncThunk(
   }
 )
 
+interface CostApprovalState {
+  rules: CostApprovalGetResponse[];
+  createLoading: boolean;
+  fetchLoading: boolean;
+  error: string | null;
+}
+
+const initialState: CostApprovalState = {
+  rules: [],
+  createLoading: false,
+  fetchLoading: false,
+  error: null,
+}
+
 // Create the cost approval slice
-const costApprovalSlice = createApiSlice<CostApprovalResponse>('costApproval', createCostApproval)
+const costApprovalSlice = createSlice({
+  name: 'costApproval',
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      // Fetch cost approvals
+      .addCase(fetchCostApprovals.pending, (state) => {
+        state.fetchLoading = true
+        state.error = null
+      })
+      .addCase(fetchCostApprovals.fulfilled, (state, action) => {
+        state.fetchLoading = false
+        state.rules = action.payload
+      })
+      .addCase(fetchCostApprovals.rejected, (state, action) => {
+        state.fetchLoading = false
+        state.error = action.payload as string
+      })
+      // Create cost approval
+      .addCase(createCostApproval.pending, (state) => {
+        state.createLoading = true
+        state.error = null
+      })
+      .addCase(createCostApproval.fulfilled, (state, action) => {
+        state.createLoading = false
+        // Add the new rule to the existing rules
+        state.rules.push(action.payload)
+      })
+      .addCase(createCostApproval.rejected, (state, action) => {
+        state.createLoading = false
+        state.error = action.payload as string
+      })
+  },
+})
 
 export default costApprovalSlice.reducer

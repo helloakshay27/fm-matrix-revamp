@@ -53,6 +53,24 @@ export interface CostApprovalFormData {
   }[];
 }
 
+export interface CostApprovalGetResponse {
+  id: number;
+  cost_from: number | null;
+  cost_to: number;
+  cost_unit: CostUnit;
+  related_to: 'FM' | 'Project';
+  category_type_id: number | null;
+  resource_id: number;
+  resource_type: string;
+  active: boolean;
+  level: string;
+  created_by_id: number;
+  no_approval_required_from: number | null;
+  no_approval_required_to: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export const APPROVAL_LEVELS = ['L1', 'L2', 'L3', 'L4', 'L5'] as const;
 
 export const ACCESS_LEVELS = ['User Level', 'PM'] as const;

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,29 +18,63 @@ import {
   CostApprovalFormData, 
   CostApprovalPayload, 
   FMUserDropdown,
-  CostUnit
+  CostUnit,
+  CostApprovalGetResponse
 } from '@/types/costApproval';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
-import { createCostApproval } from '@/store/slices/costApprovalSlice';
+import { createCostApproval, fetchCostApprovals } from '@/store/slices/costApprovalSlice';
 import { AppDispatch, RootState } from '@/store/store';
 
-const costApprovalSchema = z.object({
-  costUnit: z.enum(['between', 'greater_than', 'greater_than_equal']),
-  costFrom: z.number().optional(),
-  costTo: z.number().min(1, 'Cost must be greater than 0'),
-  approvalLevels: z.array(z.object({
-    level: z.enum(['L1', 'L2', 'L3', 'L4', 'L5']),
-    escalateToUsers: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
-  })).length(5),
-}).refine((data) => {
-  if (data.costUnit === 'between' && (!data.costFrom || data.costFrom >= data.costTo)) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Cost from must be less than cost to when using 'between'",
-  path: ["costFrom"],
-});
+const createCostApprovalSchema = (existingRules: CostApprovalGetResponse[], activeTab: string) => 
+  z.object({
+    costUnit: z.enum(['between', 'greater_than', 'greater_than_equal']),
+    costFrom: z.number().positive().optional(),
+    costTo: z.number().positive(),
+    approvalLevels: z.array(z.object({
+      level: z.enum(['L1', 'L2', 'L3', 'L4', 'L5']),
+      escalateToUsers: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
+    })),
+  }).refine((data) => {
+    if (data.costUnit === 'between') {
+      return data.costFrom !== undefined && data.costFrom > 0 && data.costFrom < data.costTo
+    }
+    return true
+  }, {
+    message: 'Cost from must be less than cost to when using between option',
+    path: ['costFrom'],
+  }).refine((data) => {
+    // Filter existing rules by related_to (activeTab)
+    const relatedRules = existingRules.filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project'))
+    
+    if (relatedRules.length === 0) return true
+    
+    // Check for overlapping ranges
+    const hasOverlap = relatedRules.some(rule => {
+      if (data.costUnit === 'between' && data.costFrom !== undefined) {
+        // Check if new range overlaps with existing range
+        if (rule.cost_unit === 'between' && rule.cost_from !== null) {
+          return !(data.costTo <= rule.cost_from || data.costFrom >= rule.cost_to)
+        }
+        if (rule.cost_unit === 'greater_than' || rule.cost_unit === 'greater_than_equal') {
+          return data.costTo > rule.cost_to
+        }
+      } else if (data.costUnit === 'greater_than' || data.costUnit === 'greater_than_equal') {
+        // Check if new greater_than value conflicts with existing ranges
+        if (rule.cost_unit === 'between' && rule.cost_from !== null) {
+          return data.costTo <= rule.cost_to
+        }
+        if (rule.cost_unit === 'greater_than' || rule.cost_unit === 'greater_than_equal') {
+          return data.costTo <= rule.cost_to
+        }
+      }
+      return false
+    })
+    
+    return !hasOverlap
+  }, {
+    message: 'Cost range conflicts with existing rules. Please ensure your range is greater than the last added cost.',
+    path: ['costTo'],
+  })
 
 export const CostApprovalPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,9 +82,14 @@ export const CostApprovalPage: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<{ [key: string]: number[] }>({});
 
   const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers);
-  const { loading: costApprovalLoading } = useSelector((state: RootState) => state.costApproval);
+  const { rules, createLoading, fetchLoading } = useSelector((state: RootState) => state.costApproval);
 
   const fmUsers: FMUserDropdown[] = fmUsersData?.fm_users || [];
+
+  const costApprovalSchema = useMemo(() => 
+    createCostApprovalSchema(rules, activeTab), 
+    [rules, activeTab]
+  )
 
   const createDefaultApprovalLevels = () => {
     return APPROVAL_LEVELS.map(level => ({
@@ -71,9 +110,17 @@ export const CostApprovalPage: React.FC = () => {
 
   const costUnit = form.watch('costUnit');
 
+  // Fetch FM users and cost approvals on component mount
   useEffect(() => {
     dispatch(fetchFMUsers());
+    dispatch(fetchCostApprovals());
   }, [dispatch]);
+
+  // Filter rules based on active tab
+  const filteredRules = useMemo(() => 
+    rules.filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project')),
+    [rules, activeTab]
+  )
 
   const handleUserSelect = (level: string, userId: number) => {
     const currentUsers = selectedUsers[level] || [];
@@ -132,6 +179,9 @@ export const CostApprovalPage: React.FC = () => {
         title: 'Success',
         description: 'Cost approval rule created successfully',
       });
+
+      // Refresh the cost approvals list
+      dispatch(fetchCostApprovals());
 
       // Reset form
       form.reset({
@@ -290,9 +340,9 @@ export const CostApprovalPage: React.FC = () => {
               <Button 
                 type="submit" 
                 className="px-8"
-                disabled={costApprovalLoading}
+                disabled={createLoading}
               >
-                {costApprovalLoading ? 'Creating...' : 'Submit'}
+                {createLoading ? 'Creating...' : 'Submit'}
               </Button>
             </div>
           </form>
@@ -314,11 +364,131 @@ export const CostApprovalPage: React.FC = () => {
         </TabsList>
         
         <TabsContent value="project" className="space-y-6">
-          {renderForm()}
+          <div className="space-y-6">
+            {renderForm()}
+            
+            {/* Existing Rules Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Existing Cost Approval Rules</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {fetchLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="text-sm text-muted-foreground">Loading existing rules...</div>
+                  </div>
+                ) : filteredRules.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No cost approval rules found for Project
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-3 font-medium">Cost Range</th>
+                          <th className="text-left p-3 font-medium">Unit</th>
+                          <th className="text-left p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Created Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredRules.map((rule) => (
+                          <tr key={rule.id} className="border-b hover:bg-muted/50">
+                            <td className="p-3">
+                              {rule.cost_unit === 'between' && rule.cost_from !== null
+                                ? `₹${rule.cost_from} - ₹${rule.cost_to}`
+                                : `> ₹${rule.cost_to}`
+                              }
+                            </td>
+                            <td className="p-3 capitalize">
+                              {rule.cost_unit.replace('_', ' ')}
+                            </td>
+                            <td className="p-3">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                rule.active 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {rule.active ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm text-muted-foreground">
+                              {new Date(rule.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
         <TabsContent value="fm" className="space-y-6">
-          {renderForm()}
+          <div className="space-y-6">
+            {renderForm()}
+            
+            {/* Existing Rules Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Existing Cost Approval Rules</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {fetchLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="text-sm text-muted-foreground">Loading existing rules...</div>
+                  </div>
+                ) : filteredRules.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No cost approval rules found for FM
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-3 font-medium">Cost Range</th>
+                          <th className="text-left p-3 font-medium">Unit</th>
+                          <th className="text-left p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Created Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredRules.map((rule) => (
+                          <tr key={rule.id} className="border-b hover:bg-muted/50">
+                            <td className="p-3">
+                              {rule.cost_unit === 'between' && rule.cost_from !== null
+                                ? `₹${rule.cost_from} - ₹${rule.cost_to}`
+                                : `> ₹${rule.cost_to}`
+                              }
+                            </td>
+                            <td className="p-3 capitalize">
+                              {rule.cost_unit.replace('_', ' ')}
+                            </td>
+                            <td className="p-3">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                rule.active 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {rule.active ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm text-muted-foreground">
+                              {new Date(rule.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
