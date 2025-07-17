@@ -96,21 +96,7 @@ const mapAssetData = (asset: Asset): MappedAsset => ({
   assetType: mapAssetTypeToDisplay(asset.asset_type)
 });
 
-export interface AssetFilters {
-  assetNameOrNumber?: string;
-  assetName?: string;
-  assetId?: string;
-  pmsAssetGroupId?: string;
-  pmsSubGroupId?: string;
-  pmsSiteId?: string;
-  pmsBuildingId?: string;
-  pmsWingId?: string;
-  pmsAreaId?: string;
-  pmsFloorId?: string;
-  pmsRoomId?: string;
-}
-
-export const useAssets = (page: number = 1, perPage: number = 20, filters: AssetFilters = {}) => {
+export const useAssets = (page: number = 1, perPage: number = 20) => {
   const [assets, setAssets] = useState<MappedAsset[]>([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -130,54 +116,16 @@ export const useAssets = (page: number = 1, perPage: number = 20, filters: Asset
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAssets = async (currentPage: number = page, currentFilters: AssetFilters = filters) => {
+  const fetchAssets = async (currentPage: number = page) => {
     try {
       setLoading(true);
       setError(null);
       
-      // Build query parameters
-      const params: any = {
-        page: currentPage,
-        per_page: perPage
-      };
-
-      // Add filter parameters
-      if (currentFilters.assetNameOrNumber) {
-        params["q[name_or_asset_number_cont]"] = currentFilters.assetNameOrNumber;
-      }
-      if (currentFilters.assetName) {
-        params["q[name_cont]"] = currentFilters.assetName;
-      }
-      if (currentFilters.assetId) {
-        params["q[id_eq]"] = currentFilters.assetId;
-      }
-      if (currentFilters.pmsAssetGroupId) {
-        params["q[pms_asset_group_id_eq]"] = currentFilters.pmsAssetGroupId;
-      }
-      if (currentFilters.pmsSubGroupId) {
-        params["q[pms_sub_group_id_eq]"] = currentFilters.pmsSubGroupId;
-      }
-      if (currentFilters.pmsSiteId) {
-        params["q[pms_site_id_eq]"] = currentFilters.pmsSiteId;
-      }
-      if (currentFilters.pmsBuildingId) {
-        params["q[pms_building_id_eq]"] = currentFilters.pmsBuildingId;
-      }
-      if (currentFilters.pmsWingId) {
-        params["q[pms_wing_id_eq]"] = currentFilters.pmsWingId;
-      }
-      if (currentFilters.pmsAreaId) {
-        params["q[pms_area_id_eq]"] = currentFilters.pmsAreaId;
-      }
-      if (currentFilters.pmsFloorId) {
-        params["q[pms_floor_id_eq]"] = currentFilters.pmsFloorId;
-      }
-      if (currentFilters.pmsRoomId) {
-        params["q[pms_room_id_eq]"] = currentFilters.pmsRoomId;
-      }
-      
       const response = await apiClient.get<ApiResponse>(`${ENDPOINTS.ASSETS || '/pms/assets.json'}`, {
-        params
+        params: {
+          page: currentPage,
+          per_page: perPage
+        }
       });
 
       const mappedAssets = response.data.assets.map(mapAssetData);
@@ -201,16 +149,16 @@ export const useAssets = (page: number = 1, perPage: number = 20, filters: Asset
   };
 
   useEffect(() => {
-    fetchAssets(page, filters);
-  }, [page, perPage, filters]);
+    fetchAssets(page);
+  }, [page, perPage]);
 
-  const refetch = (currentFilters: AssetFilters = filters) => {
-    fetchAssets(pagination.current_page, currentFilters);
+  const refetch = () => {
+    fetchAssets(pagination.current_page);
   };
 
-  const changePage = (newPage: number, currentFilters: AssetFilters = filters) => {
+  const changePage = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.total_pages) {
-      fetchAssets(newPage, currentFilters);
+      fetchAssets(newPage);
     }
   };
 

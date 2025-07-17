@@ -183,7 +183,7 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <span className="text-destructive">{error}</span>
-        <Button onClick={() => refetch()} variant="outline">
+        <Button onClick={refetch} variant="outline">
           Try Again
         </Button>
       </div>
