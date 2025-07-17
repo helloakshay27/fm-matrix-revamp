@@ -45,6 +45,7 @@ export const GroupsPageTemplate = ({
   // Modal states
   const [addGroupOpen, setAddGroupOpen] = useState(false);
   const [addSubGroupOpen, setAddSubGroupOpen] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   
   // Form states
   const [groupName, setGroupName] = useState('');
@@ -205,6 +206,7 @@ export const GroupsPageTemplate = ({
           <Button 
             variant="outline" 
             className="border-purple-700 text-purple-700 hover:bg-purple-50 w-full sm:w-auto min-w-0 sm:min-w-[130px] text-sm px-3 py-2"
+            onClick={() => setBulkUploadOpen(true)}
           >
             <Upload className="w-4 h-4 mr-2 flex-shrink-0" />
             <span className="truncate">Bulk Upload</span>
@@ -381,6 +383,58 @@ export const GroupsPageTemplate = ({
                 >
                   {subGroupLoading ? 'Creating...' : 'Submit'}
                 </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Bulk Upload Modal */}
+          <Dialog 
+            open={bulkUploadOpen} 
+            onClose={() => setBulkUploadOpen(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <div className="flex items-center justify-between p-6 border-b">
+              <DialogTitle className="text-xl font-bold p-0">ADD Sub Group</DialogTitle>
+              <IconButton onClick={() => setBulkUploadOpen(false)}>
+                <X className="w-5 h-5" />
+              </IconButton>
+            </div>
+            <DialogContent className="p-6">
+              <div className="space-y-6">
+                {/* Drag & Drop File Upload Area */}
+                <div className="border-2 border-dashed border-orange-400 rounded-lg p-8 text-center bg-purple-50">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <p className="text-lg text-gray-700">
+                      Drag & Drop or <span className="text-orange-500 font-medium cursor-pointer hover:underline">Choose file</span>
+                    </p>
+                    <p className="text-gray-500">No file chosen</p>
+                  </div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept=".csv,.xlsx,.xls"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        console.log('File selected:', file.name);
+                      }
+                    }}
+                  />
+                </div>
+                
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    onClick={() => {
+                      console.log('Bulk upload submitted');
+                      setBulkUploadOpen(false);
+                      toast.success('Bulk upload initiated');
+                    }}
+                    className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
+                  >
+                    Submit
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
