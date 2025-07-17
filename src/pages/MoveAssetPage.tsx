@@ -41,7 +41,7 @@ export const MoveAssetPage: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-lg shadow-sm">
           <div className="p-6">
             <AssetTableDisplay selectedAssets={selectedAssets} />
             
