@@ -98,19 +98,6 @@ export const AssetDashboard = () => {
   // Use search hook
   const { assets: searchAssets, loading: searchLoading, error: searchError, searchAssets: performSearch } = useAssetSearch();
 
-  // Handle filter application
-  const handleApplyFilters = async (filters: Record<string, string>) => {
-    // If filters include search by name, use the search endpoint
-    if (filters['q[name_cont]'] || filters['q[id_eq]']) {
-      const searchQuery = filters['q[name_cont]'] || filters['q[id_eq]'];
-      await performSearch(searchQuery);
-    } else {
-      // For other filters, you might want to extend the useAssets hook or create a new hook
-      // For now, we'll refetch the assets
-      await refetch();
-    }
-  };
-
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -606,7 +593,6 @@ export const AssetDashboard = () => {
       <AssetFilterDialog 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        onApplyFilters={handleApplyFilters}
       />
 
       {/* Removed MoveAssetDialog and DisposeAssetDialog - now using respective pages */}

@@ -7,14 +7,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, CircularProgress } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
-import { useFilterData } from '@/hooks/useFilterData';
 
 interface AssetFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyFilters: (filters: Record<string, string>) => void;
 }
 
 const fieldStyles = {
@@ -24,150 +22,48 @@ const fieldStyles = {
   },
 };
 
-export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose, onApplyFilters }) => {
-  // Asset Details filters
+export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const [assetName, setAssetName] = useState('');
   const [assetId, setAssetId] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('');
-  const [selectedSubgroup, setSelectedSubgroup] = useState('');
-  
-  // Location Details filters
-  const [selectedSite, setSelectedSite] = useState('');
-  const [selectedBuilding, setSelectedBuilding] = useState('');
-  const [selectedWing, setSelectedWing] = useState('');
-  const [selectedArea, setSelectedArea] = useState('');
-  const [selectedFloor, setSelectedFloor] = useState('');
-  const [selectedRoom, setSelectedRoom] = useState('');
+  const [group, setGroup] = useState('');
+  const [subgroup, setSubgroup] = useState('');
+  const [building, setBuilding] = useState('');
+  const [wing, setWing] = useState('');
+  const [area, setArea] = useState('');
+  const [floor, setFloor] = useState('');
+  const [room, setRoom] = useState('');
 
-  // Get filter data and loading states
-  const {
-    groups,
-    subgroups,
-    loadingGroups,
-    loadingSubgroups,
-    fetchSubgroups,
-    sites,
-    buildings,
-    wings,
-    areas,
-    floors,
-    rooms,
-    loadingBuildings,
-    loadingWings,
-    loadingAreas,
-    loadingFloors,
-    loadingRooms,
-    fetchBuildings,
-    fetchWings,
-    fetchAreas,
-    fetchFloors,
-    fetchRooms,
-    clearDependentData,
-  } = useFilterData();
-
-  const handleGroupChange = (value: string) => {
-    setSelectedGroup(value);
-    setSelectedSubgroup('');
-    clearDependentData('group');
-    if (value) {
-      fetchSubgroups(parseInt(value));
-    }
+  const handleSubmit = () => {
+    const filters = {
+      assetName,
+      assetId,
+      group,
+      subgroup,
+      building,
+      wing,
+      area,
+      floor,
+      room,
+    };
+    console.log('Apply filters:', filters);
+    onClose();
   };
 
-  const handleSiteChange = (value: string) => {
-    setSelectedSite(value);
-    setSelectedBuilding('');
-    setSelectedWing('');
-    setSelectedArea('');
-    setSelectedFloor('');
-    setSelectedRoom('');
-    clearDependentData('site');
-    if (value) {
-      fetchBuildings(parseInt(value));
-    }
-  };
-
-  const handleBuildingChange = (value: string) => {
-    setSelectedBuilding(value);
-    setSelectedWing('');
-    setSelectedArea('');
-    setSelectedFloor('');
-    setSelectedRoom('');
-    clearDependentData('building');
-    if (value) {
-      fetchWings(parseInt(value));
-    }
-  };
-
-  const handleWingChange = (value: string) => {
-    setSelectedWing(value);
-    setSelectedArea('');
-    setSelectedFloor('');
-    setSelectedRoom('');
-    clearDependentData('wing');
-    if (value) {
-      fetchAreas(parseInt(value));
-    }
-  };
-
-  const handleAreaChange = (value: string) => {
-    setSelectedArea(value);
-    setSelectedFloor('');
-    setSelectedRoom('');
-    clearDependentData('area');
-    if (value) {
-      fetchFloors(parseInt(value));
-    }
-  };
-
-  const handleFloorChange = (value: string) => {
-    setSelectedFloor(value);
-    setSelectedRoom('');
-    clearDependentData('floor');
-    if (value) {
-      fetchRooms(parseInt(value));
-    }
-  };
-
-  const handleApply = () => {
-    const filters: Record<string, string> = {};
-    
-    // Asset Details filters
-    if (assetName) filters['q[name_cont]'] = assetName;
-    if (assetId) filters['q[id_eq]'] = assetId;
-    if (selectedGroup) filters['q[pms_asset_group_id_eq]'] = selectedGroup;
-    if (selectedSubgroup) filters['q[pms_sub_group_id_eq]'] = selectedSubgroup;
-    
-    // Location Details filters
-    if (selectedSite) filters['q[pms_site_id_eq]'] = selectedSite;
-    if (selectedBuilding) filters['q[pms_building_id_eq]'] = selectedBuilding;
-    if (selectedWing) filters['q[pms_wing_id_eq]'] = selectedWing;
-    if (selectedArea) filters['q[pms_area_id_eq]'] = selectedArea;
-    if (selectedFloor) filters['q[pms_floor_id_eq]'] = selectedFloor;
-    if (selectedRoom) filters['q[pms_room_id_eq]'] = selectedRoom;
-    
-    onApplyFilters(filters);
+  const handleExport = () => {
+    console.log('Export filtered data');
     onClose();
   };
 
   const handleReset = () => {
-    // Reset Asset Details
     setAssetName('');
     setAssetId('');
-    setSelectedGroup('');
-    setSelectedSubgroup('');
-    
-    // Reset Location Details
-    setSelectedSite('');
-    setSelectedBuilding('');
-    setSelectedWing('');
-    setSelectedArea('');
-    setSelectedFloor('');
-    setSelectedRoom('');
-    
-    // Clear dependent data
-    clearDependentData('group');
-    clearDependentData('site');
+    setGroup('');
+    setSubgroup('');
+    setBuilding('');
+    setWing('');
+    setArea('');
+    setFloor('');
+    setRoom('');
   };
 
   return (
@@ -217,44 +113,30 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 <MuiSelect
                   labelId="group-label"
                   label="Group"
-                  value={selectedGroup}
-                  onChange={(e) => handleGroupChange(e.target.value)}
+                  value={group}
+                  onChange={(e) => setGroup(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disabled={loadingGroups}
                 >
-                  <MenuItem value=""><em>Select Group</em></MenuItem>
-                  {groups.map((group) => (
-                    <MenuItem key={group.id} value={group.id.toString()}>
-                      {group.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value="category1">Category 1</MenuItem>
+                  <MenuItem value="category2">Category 2</MenuItem>
                 </MuiSelect>
-                {loadingGroups && (
-                  <CircularProgress size={20} style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)' }} />
-                )}
               </FormControl>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="subgroup-label" shrink>Subgroup</InputLabel>
                 <MuiSelect
                   labelId="subgroup-label"
                   label="Subgroup"
-                  value={selectedSubgroup}
-                  onChange={(e) => setSelectedSubgroup(e.target.value)}
+                  value={subgroup}
+                  onChange={(e) => setSubgroup(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disabled={!selectedGroup || loadingSubgroups}
                 >
-                  <MenuItem value=""><em>Select Subgroup</em></MenuItem>
-                  {subgroups.map((subgroup) => (
-                    <MenuItem key={subgroup.id} value={subgroup.id.toString()}>
-                      {subgroup.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value=""><em>Select Sub Group</em></MenuItem>
+                  <MenuItem value="subgroup1">Sub Group 1</MenuItem>
+                  <MenuItem value="subgroup2">Sub Group 2</MenuItem>
                 </MuiSelect>
-                {loadingSubgroups && (
-                  <CircularProgress size={20} style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)' }} />
-                )}
               </FormControl>
             </div>
           </div>
@@ -264,142 +146,89 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
             <div className="grid grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined">
-                <InputLabel id="site-label" shrink>Site</InputLabel>
-                <MuiSelect
-                  labelId="site-label"
-                  label="Site"
-                  value={selectedSite}
-                  onChange={(e) => handleSiteChange(e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Site</em></MenuItem>
-                  {sites.map((site) => (
-                    <MenuItem key={site.id} value={site.id.toString()}>
-                      {site.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              <FormControl fullWidth variant="outlined">
                 <InputLabel id="building-label" shrink>Building</InputLabel>
                 <MuiSelect
                   labelId="building-label"
                   label="Building"
-                  value={selectedBuilding}
-                  onChange={(e) => handleBuildingChange(e.target.value)}
+                  value={building}
+                  onChange={(e) => setBuilding(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disabled={!selectedSite || loadingBuildings}
                 >
                   <MenuItem value=""><em>Select Building</em></MenuItem>
-                  {buildings.map((building) => (
-                    <MenuItem key={building.id} value={building.id.toString()}>
-                      {building.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="building1">Building 1</MenuItem>
+                  <MenuItem value="building2">Building 2</MenuItem>
                 </MuiSelect>
-                {loadingBuildings && (
-                  <CircularProgress size={20} style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)' }} />
-                )}
               </FormControl>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="wing-label" shrink>Wing</InputLabel>
                 <MuiSelect
                   labelId="wing-label"
                   label="Wing"
-                  value={selectedWing}
-                  onChange={(e) => handleWingChange(e.target.value)}
+                  value={wing}
+                  onChange={(e) => setWing(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disabled={!selectedBuilding || loadingWings}
                 >
                   <MenuItem value=""><em>Select Wing</em></MenuItem>
-                  {wings.map((wing) => (
-                    <MenuItem key={wing.id} value={wing.id.toString()}>
-                      {wing.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="wing1">Wing 1</MenuItem>
+                  <MenuItem value="wing2">Wing 2</MenuItem>
                 </MuiSelect>
-                {loadingWings && (
-                  <CircularProgress size={20} style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)' }} />
-                )}
               </FormControl>
-            </div>
-            <div className="grid grid-cols-3 gap-6 mt-4">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="area-label" shrink>Area</InputLabel>
                 <MuiSelect
                   labelId="area-label"
                   label="Area"
-                  value={selectedArea}
-                  onChange={(e) => handleAreaChange(e.target.value)}
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disabled={!selectedWing || loadingAreas}
                 >
                   <MenuItem value=""><em>Select Area</em></MenuItem>
-                  {areas.map((area) => (
-                    <MenuItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="area1">Area 1</MenuItem>
+                  <MenuItem value="area2">Area 2</MenuItem>
                 </MuiSelect>
-                {loadingAreas && (
-                  <CircularProgress size={20} style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)' }} />
-                )}
               </FormControl>
+            </div>
+            <div className="grid grid-cols-2 gap-6 mt-4">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="floor-label" shrink>Floor</InputLabel>
                 <MuiSelect
                   labelId="floor-label"
                   label="Floor"
-                  value={selectedFloor}
-                  onChange={(e) => handleFloorChange(e.target.value)}
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disabled={!selectedArea || loadingFloors}
                 >
                   <MenuItem value=""><em>Select Floor</em></MenuItem>
-                  {floors.map((floor) => (
-                    <MenuItem key={floor.id} value={floor.id.toString()}>
-                      {floor.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="floor1">Floor 1</MenuItem>
+                  <MenuItem value="floor2">Floor 2</MenuItem>
                 </MuiSelect>
-                {loadingFloors && (
-                  <CircularProgress size={20} style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)' }} />
-                )}
               </FormControl>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="room-label" shrink>Room</InputLabel>
                 <MuiSelect
                   labelId="room-label"
                   label="Room"
-                  value={selectedRoom}
-                  onChange={(e) => setSelectedRoom(e.target.value)}
+                  value={room}
+                  onChange={(e) => setRoom(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disabled={!selectedFloor || loadingRooms}
                 >
                   <MenuItem value=""><em>Select Room</em></MenuItem>
-                  {rooms.map((room) => (
-                    <MenuItem key={room.id} value={room.id.toString()}>
-                      {room.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="room1">Room 1</MenuItem>
+                  <MenuItem value="room2">Room 2</MenuItem>
                 </MuiSelect>
-                {loadingRooms && (
-                  <CircularProgress size={20} style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)' }} />
-                )}
               </FormControl>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
-            <Button variant="secondary" onClick={handleApply} className="flex-1 h-11">
-              Apply Filters
+            <Button variant="secondary" onClick={handleSubmit} className="flex-1 h-11">
+              Submit
             </Button>
             <Button variant="outline" onClick={handleReset} className="flex-1 h-11">
               Reset
