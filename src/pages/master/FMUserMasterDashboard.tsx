@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
 import { StatsCard } from '@/components/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,70 +29,33 @@ import {
   Box
 } from '@mui/material';
 
-// Sample FM Users data
-const fmUsersData = [
-  {
-    id: 'FMU001',
-    userName: 'John Smith',
-    gender: 'Male',
-    mobile: '+91 9876543210',
-    email: 'john.smith@company.com',
-    vendorCompany: 'Tech Solutions Ltd',
-    entityName: 'Headquarters',
-    unit: 'Unit A-101',
-    role: 'Senior Technician',
-    employeeId: 'EMP001',
-    createdBy: 'Admin User',
-    accessLevel: 'Level 2',
-    type: 'Internal',
-    status: 'Active',
-    faceRecognition: true,
-    appDownloaded: true,
-    active: true
-  },
-  {
-    id: 'FMU002',
-    userName: 'Sarah Johnson',
-    gender: 'Female',
-    mobile: '+91 9876543211',
-    email: 'sarah.johnson@vendor.com',
-    vendorCompany: 'Maintenance Corp',
-    entityName: 'Branch Office',
-    unit: 'Unit B-205',
-    role: 'Facility Manager',
-    employeeId: 'EMP002',
-    createdBy: 'HR Admin',
-    accessLevel: 'Level 3',
-    type: 'External',
-    status: 'Active',
-    faceRecognition: false,
-    appDownloaded: true,
-    active: true
-  },
-  {
-    id: 'FMU003',
-    userName: 'Mike Davis',
-    gender: 'Male',
-    mobile: '+91 9876543212',
-    email: 'mike.davis@company.com',
-    vendorCompany: 'Internal Team',
-    entityName: 'Regional Office',
-    unit: 'Unit C-301',
-    role: 'Maintenance Staff',
-    employeeId: 'EMP003',
-    createdBy: 'Super Admin',
-    accessLevel: 'Level 1',
-    type: 'Internal',
-    status: 'Inactive',
-    faceRecognition: true,
-    appDownloaded: false,
-    active: false
-  }
-];
+// Transform API data to table format
+const transformFMUserData = (apiUser: FMUser) => ({
+  id: apiUser.id.toString(),
+  userName: `${apiUser.firstname} ${apiUser.lastname}`,
+  gender: apiUser.gender,
+  mobile: apiUser.mobile,
+  email: apiUser.email,
+  vendorCompany: apiUser.company_name || 'N/A',
+  entityName: `Entity ${apiUser.entity_id}`,
+  unit: `Unit ${apiUser.unit_id}`,
+  role: apiUser.designation || 'N/A',
+  employeeId: apiUser.employee_id || 'N/A',
+  createdBy: `User ${apiUser.created_by_id}`,
+  accessLevel: apiUser.lock_user_permission.access_level,
+  type: apiUser.user_type === 'pms_admin' ? 'Internal' : 'External',
+  status: apiUser.lock_user_permission_status === 'approved' ? 'Active' : 'Inactive',
+  faceRecognition: apiUser.face_added,
+  appDownloaded: apiUser.app_downloaded === 'Yes',
+  active: apiUser.lock_user_permission_status === 'approved'
+});
 
 export const FMUserMasterDashboard = () => {
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: fmUsersResponse, loading, error } = useSelector((state: RootState) => state.fmUsers);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -97,9 +63,13 @@ export const FMUserMasterDashboard = () => {
     email: ''
   });
 
+  // Transform API data to table format
+  const fmUsersData = fmUsersResponse?.fm_users ? fmUsersResponse.fm_users.map(transformFMUserData) : [];
+
   useEffect(() => {
     setCurrentSection('Master');
-  }, [setCurrentSection]);
+    dispatch(fetchFMUsers());
+  }, [setCurrentSection, dispatch]);
 
   // Apply filters to users
   const filteredUsers = fmUsersData.filter(user => {
@@ -147,6 +117,26 @@ export const FMUserMasterDashboard = () => {
       [field]: value
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="w-full p-6 space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading FM Users...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full p-6 space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full p-6 space-y-6">
