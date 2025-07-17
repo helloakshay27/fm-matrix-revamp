@@ -82,5 +82,35 @@ export const emailRuleService = {
       console.error('Error creating email rule:', error);
       throw error;
     }
+  },
+
+  // Update existing email rule
+  async updateEmailRule(id: string, data: {
+    ruleName: string;
+    triggerType: string;
+    triggerTo: string;
+    roleIds: string[];
+    periodValue: number;
+    periodType: string;
+  }): Promise<any> {
+    try {
+      const payload: CreateEmailRulePayload = {
+        pms_email_rule_setup: {
+          rule_name: data.ruleName,
+          trigger_type: data.triggerType,
+          trigger_to: data.triggerTo,
+          role_ids: data.roleIds,
+          period_value: data.periodValue.toString(),
+          period_type: data.periodType,
+          active: 1,
+        },
+      };
+
+      const response = await apiClient.put(`${ENDPOINTS.EMAIL_RULES.replace('.json', '')}/${id}.json`, payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating email rule:', error);
+      throw error;
+    }
   }
 };

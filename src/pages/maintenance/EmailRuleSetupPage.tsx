@@ -241,6 +241,7 @@ export const EmailRuleSetupPage: React.FC = () => {
           }}
           onSubmit={handleEditRule}
           emailRule={editingRule}
+          onSuccess={fetchEmailRules} // Pass the refresh function
         />
       </div>
     </div>

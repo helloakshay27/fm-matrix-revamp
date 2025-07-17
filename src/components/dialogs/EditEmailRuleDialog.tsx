@@ -20,6 +20,8 @@ import {
 } from '@mui/material';
 import { EmailRule, TRIGGER_TYPES, TRIGGER_TO_OPTIONS, PERIOD_TYPES } from '@/types/emailRule';
 import { roleService, ApiRole } from '@/services/roleService';
+import { emailRuleService } from '@/services/emailRuleService';
+import { toast } from 'sonner';
 
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
@@ -37,6 +39,7 @@ interface EditEmailRuleDialogProps {
   onClose: () => void;
   onSubmit: (id: string, data: Partial<EmailRule>) => void;
   emailRule: EmailRule | null;
+  onSuccess?: () => void; // Add callback for successful API call
 }
 
 export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
@@ -44,9 +47,12 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
   onClose,
   onSubmit,
   emailRule,
+  onSuccess,
 }) => {
   const [roles, setRoles] = useState<ApiRole[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<EmailRuleFormData>({
     resolver: zodResolver(emailRuleSchema),
@@ -79,29 +85,56 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
   }, [open]);
 
   useEffect(() => {
-    if (emailRule) {
-      // Convert comma-separated string back to array for editing
-      const roleArray = emailRule.role ? emailRule.role.split(', ').map(r => r.trim()) : [];
+    if (emailRule && roles.length > 0) {
+      // Convert comma-separated role names to role IDs
+      const roleNames = emailRule.role ? emailRule.role.split(', ').map(r => r.trim()) : [];
+      const roleIds = roleNames.map(name => {
+        const role = roles.find(r => r.name === name);
+        return role ? role.id.toString() : '';
+      }).filter(Boolean);
+      
+      setSelectedRoleIds(roleIds);
       reset({
         ruleName: emailRule.ruleName,
         triggerType: emailRule.triggerType,
         triggerTo: emailRule.triggerTo,
-        role: roleArray,
+        role: roleIds,
         periodValue: emailRule.periodValue,
         periodType: emailRule.periodType,
       });
     }
-  }, [emailRule, reset]);
+  }, [emailRule, roles, reset]);
 
-  const handleSubmitForm = (data: EmailRuleFormData) => {
+  const handleSubmitForm = async (data: EmailRuleFormData) => {
     if (emailRule) {
-      // Convert array back to comma-separated string for storage
-      const submissionData = {
-        ...data,
-        role: data.role.join(', ')
-      };
-      onSubmit(emailRule.id, submissionData);
-      onClose();
+      try {
+        setIsSubmitting(true);
+        
+        // Map form data to API format
+        const apiData = {
+          ruleName: data.ruleName,
+          triggerType: data.triggerType,
+          triggerTo: data.triggerTo,
+          roleIds: data.role, // Already an array of role IDs
+          periodValue: data.periodValue,
+          periodType: data.periodType,
+        };
+
+        await emailRuleService.updateEmailRule(emailRule.id, apiData);
+        
+        toast.success('Email rule updated successfully!');
+        onClose();
+        
+        // Call the success callback to refresh the table
+        if (onSuccess) {
+          onSuccess();
+        }
+      } catch (error) {
+        console.error('Failed to update email rule:', error);
+        toast.error('Failed to update email rule. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -204,13 +237,16 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
                   }}
                   renderValue={(selected) => {
                     if (Array.isArray(selected)) {
-                      return selected.join(', ');
+                      return selected.map(id => {
+                        const role = roles.find(r => r.id.toString() === id);
+                        return role ? role.name : '';
+                      }).filter(Boolean).join(', ');
                     }
                     return selected;
                   }}
                 >
                   {roles.map((role) => (
-                    <MenuItem key={role.id} value={role.name}>
+                    <MenuItem key={role.id} value={role.id.toString()}>
                       {role.name}
                     </MenuItem>
                   ))}
@@ -272,7 +308,9 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Update</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Updating...' : 'Update'}
+            </Button>
           </div>
         </form>
       </DialogContent>
