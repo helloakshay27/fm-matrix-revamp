@@ -52,7 +52,7 @@ export const deleteCostApproval = createAsyncThunk(
   'costApproval/delete',
   async (id: number, { rejectWithValue }) => {
     try {
-      await apiClient.patch(`${ENDPOINTS.COST_APPROVALS}/${id}`, {
+      await apiClient.patch(`/pms/admin/cost_approvals/${id}.json`, {
         cost_approval: { active: false }
       })
       return id
