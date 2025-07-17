@@ -403,10 +403,10 @@ export const GroupsPageTemplate = ({
             <DialogContent className="p-6">
               <div className="space-y-6">
                 {/* Drag & Drop File Upload Area */}
-                <div className="border-2 border-dashed border-orange-400 rounded-lg p-8 text-center bg-purple-50">
+                <div className="border-2 border-dashed border-red-400 rounded-lg p-8 text-center bg-gray-50">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <p className="text-lg text-gray-700">
-                      Drag & Drop or <span className="text-orange-500 font-medium cursor-pointer hover:underline">Choose file</span>
+                      Drag & Drop or <span className="text-red-500 font-medium cursor-pointer hover:underline">Choose file</span>
                     </p>
                     <p className="text-gray-500">No file chosen</p>
                   </div>
