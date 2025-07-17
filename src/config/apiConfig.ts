@@ -15,6 +15,7 @@ export const API_CONFIG = {
     CHANGE_SITE: '/change_site.json',
     HELPDESK_CATEGORIES: '/pms/admin/helpdesk_categories.json',
     CREATE_COMPLAINT_WORKER: '/pms/admin/create_complaint_worker.json',
+    COST_APPROVALS: '/pms/admin/cost_approvals.json',
     USER_ACCOUNT: '/api/users/account.json',
   },
 } as const

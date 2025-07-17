@@ -17,6 +17,42 @@ export interface CostApprovalRule {
   active: boolean;
 }
 
+// API Types
+export type CostUnit = 'between' | 'greater_than' | 'greater_than_equal';
+
+export interface CostApprovalLevelAttribute {
+  name: string;
+  escalate_to_users: (number | string)[];
+}
+
+export interface CostApprovalPayload {
+  cost_approval: {
+    related_to: 'FM' | 'Project';
+    level: string;
+    cost_unit: CostUnit;
+    cost_from?: number;
+    cost_to: number;
+    cost_approval_levels_attributes: CostApprovalLevelAttribute[];
+  };
+}
+
+export interface FMUserDropdown {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+}
+
+export interface CostApprovalFormData {
+  costUnit: CostUnit;
+  costFrom?: number;
+  costTo: number;
+  approvalLevels: {
+    level: 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+    escalateToUsers: number[];
+  }[];
+}
+
 export const APPROVAL_LEVELS = ['L1', 'L2', 'L3', 'L4', 'L5'] as const;
 
 export const ACCESS_LEVELS = ['User Level', 'PM'] as const;
@@ -39,13 +75,8 @@ export const MOCK_APPROVERS = [
   'Meera H'
 ];
 
-export const UNITS = [
-  'Engineering',
-  'Maintenance',
-  'Operations',
-  'IT',
-  'Facilities',
-  'Security',
-  'HR',
-  'Finance'
+export const COST_UNITS = [
+  { label: 'Between', value: 'between' as CostUnit },
+  { label: 'Greater Than', value: 'greater_than' as CostUnit },
+  { label: 'Greater Than Equal', value: 'greater_than_equal' as CostUnit },
 ];

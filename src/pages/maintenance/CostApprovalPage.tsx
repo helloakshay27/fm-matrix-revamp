@@ -1,117 +1,305 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useDispatch, useSelector } from 'react-redux';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, X } from 'lucide-react';
-import { APPROVAL_LEVELS, ACCESS_LEVELS, MOCK_APPROVERS, UNITS, CostApprovalRule, ApprovalLevel } from '@/types/costApproval';
+import { X } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { 
+  APPROVAL_LEVELS, 
+  COST_UNITS, 
+  CostApprovalFormData, 
+  CostApprovalPayload, 
+  FMUserDropdown,
+  CostUnit
+} from '@/types/costApproval';
+import { fetchFMUsers } from '@/store/slices/fmUserSlice';
+import { createCostApproval } from '@/store/slices/costApprovalSlice';
+import { AppDispatch, RootState } from '@/store/store';
 
 const costApprovalSchema = z.object({
-  unit: z.string().min(1, 'Unit is required'),
-  accessLevels: z.array(z.string()).min(1, 'At least one access level is required'),
-  costRangeMin: z.number().min(0, 'Minimum cost must be 0 or greater'),
-  costRangeMax: z.number().min(1, 'Maximum cost must be greater than 0'),
+  costUnit: z.enum(['between', 'greater_than', 'greater_than_equal']),
+  costFrom: z.number().optional(),
+  costTo: z.number().min(1, 'Cost must be greater than 0'),
   approvalLevels: z.array(z.object({
     level: z.enum(['L1', 'L2', 'L3', 'L4', 'L5']),
-    approvers: z.array(z.string()).max(15, 'Maximum 15 approvers allowed per level'),
+    escalateToUsers: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
   })).length(5),
+}).refine((data) => {
+  if (data.costUnit === 'between' && (!data.costFrom || data.costFrom >= data.costTo)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Cost from must be less than cost to when using 'between'",
+  path: ["costFrom"],
 });
 
-type CostApprovalFormData = z.infer<typeof costApprovalSchema>;
-
 export const CostApprovalPage: React.FC = () => {
-  const [rules, setRules] = useState<CostApprovalRule[]>([]);
-  const [selectedApprovers, setSelectedApprovers] = useState<{ [key: string]: string[] }>({});
+  const dispatch = useDispatch<AppDispatch>();
+  const [activeTab, setActiveTab] = useState<'project' | 'fm'>('project');
+  const [selectedUsers, setSelectedUsers] = useState<{ [key: string]: number[] }>({});
 
-  const createDefaultApprovalLevels = (): ApprovalLevel[] => {
+  const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers);
+  const { loading: costApprovalLoading } = useSelector((state: RootState) => state.costApproval);
+
+  const fmUsers: FMUserDropdown[] = fmUsersData?.fm_users || [];
+
+  const createDefaultApprovalLevels = () => {
     return APPROVAL_LEVELS.map(level => ({
       level,
-      approvers: [],
+      escalateToUsers: [],
     }));
   };
 
   const form = useForm<CostApprovalFormData>({
     resolver: zodResolver(costApprovalSchema),
     defaultValues: {
-      unit: '',
-      accessLevels: [],
-      costRangeMin: 0,
-      costRangeMax: 0,
-      approvalLevels: createDefaultApprovalLevels() as ApprovalLevel[],
+      costUnit: 'between',
+      costFrom: undefined,
+      costTo: 0,
+      approvalLevels: createDefaultApprovalLevels(),
     },
   });
 
-  const handleAccessLevelChange = (accessLevel: string, checked: boolean) => {
-    const currentAccessLevels = form.getValues('accessLevels');
-    if (checked) {
-      form.setValue('accessLevels', [...currentAccessLevels, accessLevel]);
-    } else {
-      form.setValue('accessLevels', currentAccessLevels.filter(level => level !== accessLevel));
-    }
-  };
+  const costUnit = form.watch('costUnit');
 
-  const handleApproverSelect = (level: string, approver: string) => {
-    const currentApprovers = selectedApprovers[level] || [];
-    if (!currentApprovers.includes(approver) && currentApprovers.length < 15) {
-      const newApprovers = [...currentApprovers, approver];
-      setSelectedApprovers(prev => ({ ...prev, [level]: newApprovers }));
+  useEffect(() => {
+    dispatch(fetchFMUsers());
+  }, [dispatch]);
+
+  const handleUserSelect = (level: string, userId: number) => {
+    const currentUsers = selectedUsers[level] || [];
+    if (!currentUsers.includes(userId) && currentUsers.length < 15) {
+      const newUsers = [...currentUsers, userId];
+      setSelectedUsers(prev => ({ ...prev, [level]: newUsers }));
       
       // Update form data
       const levelIndex = APPROVAL_LEVELS.indexOf(level as any);
       const currentLevels = form.getValues('approvalLevels');
-      currentLevels[levelIndex].approvers = newApprovers;
+      currentLevels[levelIndex].escalateToUsers = newUsers;
       form.setValue('approvalLevels', currentLevels);
     }
   };
 
-  const removeApprover = (level: string, approverToRemove: string) => {
-    const currentApprovers = selectedApprovers[level] || [];
-    const newApprovers = currentApprovers.filter(approver => approver !== approverToRemove);
-    setSelectedApprovers(prev => ({ ...prev, [level]: newApprovers }));
+  const removeUser = (level: string, userIdToRemove: number) => {
+    const currentUsers = selectedUsers[level] || [];
+    const newUsers = currentUsers.filter(userId => userId !== userIdToRemove);
+    setSelectedUsers(prev => ({ ...prev, [level]: newUsers }));
     
     // Update form data
     const levelIndex = APPROVAL_LEVELS.indexOf(level as any);
     const currentLevels = form.getValues('approvalLevels');
-    currentLevels[levelIndex].approvers = newApprovers;
+    currentLevels[levelIndex].escalateToUsers = newUsers;
     form.setValue('approvalLevels', currentLevels);
   };
 
-  const handleSubmit = (data: CostApprovalFormData) => {
-    const newRule: CostApprovalRule = {
-      id: Date.now().toString(),
-      costRange: {
-        min: data.costRangeMin,
-        max: data.costRangeMax,
-      },
-      accessLevel: data.accessLevels.join(', ') as any,
-      unit: data.unit,
-      approvalLevels: data.approvalLevels as ApprovalLevel[],
-      createdOn: new Date().toISOString(),
-      createdBy: 'Current User',
-      active: true,
-    };
-
-    setRules(prev => [...prev, newRule]);
-    form.reset({
-      unit: '',
-      accessLevels: [],
-      costRangeMin: 0,
-      costRangeMax: 0,
-      approvalLevels: createDefaultApprovalLevels() as ApprovalLevel[],
-    });
-    setSelectedApprovers({});
+  const getUserDisplayName = (userId: number): string => {
+    const user = fmUsers.find(u => u.id === userId);
+    return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
   };
 
-  const deleteRule = (ruleId: string) => {
-    setRules(prev => prev.filter(rule => rule.id !== ruleId));
+  const handleSubmit = async (data: CostApprovalFormData) => {
+    try {
+      const payload: CostApprovalPayload = {
+        cost_approval: {
+          related_to: activeTab === 'fm' ? 'FM' : 'Project',
+          level: '',
+          cost_unit: data.costUnit,
+          cost_to: data.costTo,
+          cost_approval_levels_attributes: data.approvalLevels.map(level => ({
+            name: level.level,
+            escalate_to_users: level.escalateToUsers.length > 0 ? level.escalateToUsers : [''],
+          })),
+        },
+      };
+
+      // Add cost_from only for 'between' option
+      if (data.costUnit === 'between' && data.costFrom !== undefined) {
+        payload.cost_approval.cost_from = data.costFrom;
+      }
+
+      await dispatch(createCostApproval(payload)).unwrap();
+      
+      toast({
+        title: 'Success',
+        description: 'Cost approval rule created successfully',
+      });
+
+      // Reset form
+      form.reset({
+        costUnit: 'between',
+        costFrom: undefined,
+        costTo: 0,
+        approvalLevels: createDefaultApprovalLevels(),
+      });
+      setSelectedUsers({});
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create cost approval rule',
+        variant: 'destructive',
+      });
+    }
   };
+
+  const renderForm = () => (
+    <Card>
+      <CardContent className="p-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            {/* Cost Unit Selection */}
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="costUnit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cost Unit</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Cost Unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {COST_UNITS.map(unit => (
+                          <SelectItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Conditional Cost Fields */}
+              {costUnit === 'between' && (
+                <FormField
+                  control={form.control}
+                  name="costFrom"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost From</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value) || undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              <FormField
+                control={form.control}
+                name="costTo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {costUnit === 'between' ? 'Cost To' : 
+                       costUnit === 'greater_than' ? 'Greater Than' : 'Greater Than Equal'}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="10000"
+                        {...field}
+                        onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Approval Levels */}
+            <div className="border rounded-lg">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="p-3 text-left text-sm font-medium">Levels</th>
+                    <th className="p-3 text-left text-sm font-medium">Approvers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {APPROVAL_LEVELS.map((level) => (
+                    <tr key={level} className="border-b last:border-b-0">
+                      <td className="p-3 text-sm font-medium">{level}</td>
+                      <td className="p-3">
+                        <div className="space-y-2">
+                          <Select 
+                            onValueChange={(value) => handleUserSelect(level, parseInt(value))}
+                            disabled={fmUsersLoading}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder={
+                                fmUsersLoading ? 'Loading users...' : 'Select up to 15 users...'
+                              } />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {fmUsers
+                                .filter(user => !(selectedUsers[level] || []).includes(user.id))
+                                .map(user => (
+                                  <SelectItem key={user.id} value={user.id.toString()}>
+                                    {user.firstname} {user.lastname}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          {selectedUsers[level] && selectedUsers[level].length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {selectedUsers[level].map(userId => (
+                                <Badge key={userId} variant="secondary" className="text-xs">
+                                  {getUserDisplayName(userId)}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeUser(level, userId)}
+                                    className="ml-1 text-xs hover:text-red-500"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-center">
+              <Button 
+                type="submit" 
+                className="px-8"
+                disabled={costApprovalLoading}
+              >
+                {costApprovalLoading ? 'Creating...' : 'Submit'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -119,475 +307,18 @@ export const CostApprovalPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900">Cost Approval</h1>
       </div>
 
-      <Tabs defaultValue="project" className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'project' | 'fm')} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="project">Project</TabsTrigger>
           <TabsTrigger value="fm">FM</TabsTrigger>
         </TabsList>
         
         <TabsContent value="project" className="space-y-6">
-          {/* Form Section */}
-          <Card>
-            <CardContent className="p-6">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  {/* Top section with Approval Level, Access Level and Unit */}
-                  <div className="grid grid-cols-12 gap-6">
-                    {/* Left side - Approval Level and Access Level */}
-                    <div className="col-span-3 space-y-4">
-                      <div>
-                        <h3 className="text-sm font-medium mb-3">Approval Level</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <span className="text-sm font-medium">Access Level</span>
-                            <div className="mt-2 space-y-2">
-                              {ACCESS_LEVELS.map(level => (
-                                <div key={level} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={level}
-                                    checked={form.watch('accessLevels').includes(level)}
-                                    onCheckedChange={(checked) => handleAccessLevelChange(level, checked as boolean)}
-                                  />
-                                  <label htmlFor={level} className="text-sm">{level}</label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <FormField
-                          control={form.control}
-                          name="unit"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Unit</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select Unit" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {UNITS.map(unit => (
-                                    <SelectItem key={unit} value={unit}>
-                                      {unit}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Right side - Levels and Approvers table */}
-                    <div className="col-span-9">
-                      <div className="border rounded-lg">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b bg-gray-50">
-                              <th className="p-3 text-left text-sm font-medium">Levels</th>
-                              <th className="p-3 text-left text-sm font-medium">Approvers</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {APPROVAL_LEVELS.map((level) => (
-                              <tr key={level} className="border-b last:border-b-0">
-                                <td className="p-3 text-sm font-medium">{level}</td>
-                                <td className="p-3">
-                                  <div className="space-y-2">
-                                    <Select onValueChange={(value) => handleApproverSelect(level, value)}>
-                                      <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select up to 15 Options..." />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {MOCK_APPROVERS.filter(approver => 
-                                          !(selectedApprovers[level] || []).includes(approver)
-                                        ).map(approver => (
-                                          <SelectItem key={approver} value={approver}>
-                                            {approver}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    
-                                    {selectedApprovers[level] && selectedApprovers[level].length > 0 && (
-                                      <div className="flex flex-wrap gap-1">
-                                        {selectedApprovers[level].map(approver => (
-                                          <Badge key={approver} variant="secondary" className="text-xs">
-                                            {approver}
-                                            <button
-                                              type="button"
-                                              onClick={() => removeApprover(level, approver)}
-                                              className="ml-1 text-xs hover:text-red-500"
-                                            >
-                                              <X className="h-3 w-3" />
-                                            </button>
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Cost Range - moved to bottom */}
-                  <div className="grid grid-cols-4 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="costRangeMin"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Minimum Cost</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              {...field}
-                              onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="costRangeMax"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Maximum Cost</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="10000"
-                              {...field}
-                              onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex justify-center">
-                    <Button type="submit" className="px-8">
-                      Submit
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
-          {/* Existing Rules */}
-          <div className="space-y-4">
-            {rules.map((rule, index) => (
-              <Card key={rule.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">Rule {index + 1}</CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => deleteRule(rule.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="border rounded-lg">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b bg-gray-50">
-                          <th className="p-3 text-left text-sm font-medium">Cost Range</th>
-                          <th className="p-3 text-left text-sm font-medium">Access Level</th>
-                          <th className="p-3 text-left text-sm font-medium">Levels</th>
-                          <th className="p-3 text-left text-sm font-medium">Approvers</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="p-3 text-sm">{rule.costRange.min} - {rule.costRange.max}</td>
-                          <td className="p-3 text-sm">{rule.accessLevel}</td>
-                          <td className="p-3">
-                            <div className="space-y-1 text-sm">
-                              {rule.approvalLevels.map(level => (
-                                <div key={level.level}>{level.level}</div>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <div className="space-y-1 text-sm">
-                              {rule.approvalLevels.map(level => (
-                                <div key={level.level}>
-                                  {level.approvers.length > 0 ? level.approvers.join(', ') : '-'}
-                                </div>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {rules.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Please select an item in the list.</p>
-              </div>
-            )}
-          </div>
+          {renderForm()}
         </TabsContent>
         
-        <TabsContent value="fm">
-              <Card>
-            <CardContent className="p-6">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  {/* Top section with Approval Level, Access Level and Unit */}
-                  <div className="grid grid-cols-12 gap-6">
-                    {/* Left side - Approval Level and Access Level */}
-                    <div className="col-span-3 space-y-4">
-                      <div>
-                        <h3 className="text-sm font-medium mb-3">Approval Level</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <span className="text-sm font-medium">Access Level</span>
-                            <div className="mt-2 space-y-2">
-                              {ACCESS_LEVELS.map(level => (
-                                <div key={level} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={level}
-                                    checked={form.watch('accessLevels').includes(level)}
-                                    onCheckedChange={(checked) => handleAccessLevelChange(level, checked as boolean)}
-                                  />
-                                  <label htmlFor={level} className="text-sm">{level}</label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <FormField
-                          control={form.control}
-                          name="unit"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Unit</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select Unit" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {UNITS.map(unit => (
-                                    <SelectItem key={unit} value={unit}>
-                                      {unit}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Right side - Levels and Approvers table */}
-                    <div className="col-span-9">
-                      <div className="border rounded-lg">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b bg-gray-50">
-                              <th className="p-3 text-left text-sm font-medium">Levels</th>
-                              <th className="p-3 text-left text-sm font-medium">Approvers</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {APPROVAL_LEVELS.map((level) => (
-                              <tr key={level} className="border-b last:border-b-0">
-                                <td className="p-3 text-sm font-medium">{level}</td>
-                                <td className="p-3">
-                                  <div className="space-y-2">
-                                    <Select onValueChange={(value) => handleApproverSelect(level, value)}>
-                                      <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select up to 15 Options..." />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {MOCK_APPROVERS.filter(approver => 
-                                          !(selectedApprovers[level] || []).includes(approver)
-                                        ).map(approver => (
-                                          <SelectItem key={approver} value={approver}>
-                                            {approver}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    
-                                    {selectedApprovers[level] && selectedApprovers[level].length > 0 && (
-                                      <div className="flex flex-wrap gap-1">
-                                        {selectedApprovers[level].map(approver => (
-                                          <Badge key={approver} variant="secondary" className="text-xs">
-                                            {approver}
-                                            <button
-                                              type="button"
-                                              onClick={() => removeApprover(level, approver)}
-                                              className="ml-1 text-xs hover:text-red-500"
-                                            >
-                                              <X className="h-3 w-3" />
-                                            </button>
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Cost Range - moved to bottom */}
-                  <div className="grid grid-cols-4 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="costRangeMin"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Minimum Cost</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              {...field}
-                              onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="costRangeMax"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Maximum Cost</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="10000"
-                              {...field}
-                              onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex justify-center">
-                    <Button type="submit" className="px-8">
-                      Submit
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
-          {/* Existing Rules */}
-          <div className="space-y-4">
-            {rules.map((rule, index) => (
-              <Card key={rule.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">Rule {index + 1}</CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => deleteRule(rule.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="border rounded-lg">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b bg-gray-50">
-                          <th className="p-3 text-left text-sm font-medium">Cost Range</th>
-                          <th className="p-3 text-left text-sm font-medium">Access Level</th>
-                          <th className="p-3 text-left text-sm font-medium">Levels</th>
-                          <th className="p-3 text-left text-sm font-medium">Approvers</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="p-3 text-sm">{rule.costRange.min} - {rule.costRange.max}</td>
-                          <td className="p-3 text-sm">{rule.accessLevel}</td>
-                          <td className="p-3">
-                            <div className="space-y-1 text-sm">
-                              {rule.approvalLevels.map(level => (
-                                <div key={level.level}>{level.level}</div>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <div className="space-y-1 text-sm">
-                              {rule.approvalLevels.map(level => (
-                                <div key={level.level}>
-                                  {level.approvers.length > 0 ? level.approvers.join(', ') : '-'}
-                                </div>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <TabsContent value="fm" className="space-y-6">
+          {renderForm()}
         </TabsContent>
       </Tabs>
     </div>
