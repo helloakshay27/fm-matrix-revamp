@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,18 +14,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
-import { AssetSelectionPanel } from './AssetSelectionPanel';
+import { AssetSelectionDialog } from './AssetSelectionDialog';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { useAssets, type MappedAsset } from '@/hooks/useAssets';
-import { StatusBadge } from './StatusBadge';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { useAssets, MappedAsset } from '@/hooks/useAssets';
 
 interface AssetTableProps {
   searchTerm: string;
@@ -32,13 +24,27 @@ interface AssetTableProps {
   onPageChange?: (page: number) => void;
 }
 
+const getStatusBadgeVariant = (status: string) => {
+  switch (status) {
+    case 'In Use':
+      return 'default';
+    case 'In Store':
+      return 'secondary';
+    case 'Breakdown':
+      return 'destructive';
+    case 'Disposed':
+      return 'outline';
+    default:
+      return 'secondary';
+  }
+};
+
 export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetTableProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [showSelectionPanel, setShowSelectionPanel] = useState(false);
-  
-  const { assets, pagination, loading, error, refetch } = useAssets(currentPage);
+  const [showSelectionDialog, setShowSelectionDialog] = useState(false);
+  const { assets, pagination, loading, error, refetch, changePage } = useAssets(currentPage);
 
   const columns: ColumnConfig[] = useMemo(() => [
     { key: 'serialNumber', label: 'Serial Number', sortable: true, hideable: true, draggable: true },
@@ -107,6 +113,17 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
     </DropdownMenu>
   );
 
+  const renderCell = (asset: MappedAsset, columnKey: string) => {
+    if (columnKey === 'assetStatus') {
+      return (
+        <Badge variant={getStatusBadgeVariant(asset.assetStatus)}>
+          {asset.assetStatus}
+        </Badge>
+      );
+    }
+    return asset[columnKey as keyof MappedAsset] || 'NA';
+  };
+
   const handleRowClick = (asset: MappedAsset) => {
     navigate(`/utility/asset-details/${asset.id}`);
   };
@@ -118,25 +135,25 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       if (checked) {
-        setSelectedItems(assets.map(asset => asset.id));
-        setShowSelectionPanel(true);
+        setSelectedItems(filteredData.map(asset => asset.id));
+        setShowSelectionDialog(true);
       } else {
         setSelectedItems([]);
-        setShowSelectionPanel(false);
+        setShowSelectionDialog(false);
       }
     },
-    [assets, setSelectedItems]
+    [filteredData, setSelectedItems]
   );
 
   const handleSelectItem = useCallback(
     (assetId: string, checked: boolean) => {
       if (checked) {
         setSelectedItems(prev => [...prev, assetId]);
-        setShowSelectionPanel(true);
+        setShowSelectionDialog(true);
       } else {
         setSelectedItems(prev => prev.filter(id => id !== assetId));
         if (selectedItems.length === 1) {
-          setShowSelectionPanel(false);
+          setShowSelectionDialog(false);
         }
       }
     },
@@ -145,28 +162,34 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
 
   const getItemId = (asset: MappedAsset) => asset.id;
 
-  const bulkActions = [
-    {
-      label: 'Move Asset',
-      onClick: (selectedAssets) => {
-        alert(`Moving ${selectedAssets.length} assets`);
-      }
-    },
-    {
-      label: 'Dispose Asset',
-      onClick: (selectedAssets) => {
-        alert(`Disposing ${selectedAssets.length} assets`);
-      }
+  const handlePageChange = (page: number) => {
+    changePage(page);
+    if (onPageChange) {
+      onPageChange(page);
     }
-  ];
-
-  const handleMoveAsset = () => {
-    alert(`Moving ${selectedItems.length} assets`);
   };
 
-  const handleDisposeAsset = () => {
-    alert(`Disposing ${selectedItems.length} assets`);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading assets...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <span className="text-destructive">{error}</span>
+        <Button onClick={refetch} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
 
   const handlePrintQRCode = () => {
     alert(`Printing QR codes for ${selectedItems.length} assets`);
@@ -178,32 +201,8 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
 
   const handleClearSelection = () => {
     setSelectedItems([]);
-    setShowSelectionPanel(false);
+    setShowSelectionDialog(false);
   };
-
-  // Custom cell renderer for status
-  const renderCell = (item: MappedAsset, columnKey: string) => {
-    if (columnKey === 'assetStatus') {
-      return <StatusBadge status={item.assetStatus} />;
-    }
-    return item[columnKey as keyof MappedAsset];
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading assets...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-500">Error: {error}</div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative space-y-4">
@@ -218,62 +217,53 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
         onSelectAll={handleSelectAll}
         onSelectItem={handleSelectItem}
         getItemId={getItemId}
-        bulkActions={bulkActions}
-        showBulkActions={true}
         storageKey="energy-assets-table"
         hideTableExport={true}
         hideTableSearch={true}
+        pagination={false}
       />
 
       {/* Custom Pagination */}
       {pagination.total_pages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing page {pagination.current_page} of {pagination.total_pages} ({pagination.total_count} total assets)
+          <div className="text-sm text-muted-foreground">
+            Showing {((pagination.current_page || 1) - 1) * (pagination.per_page || 20) + 1} to{' '}
+            {Math.min((pagination.current_page || 1) * (pagination.per_page || 20), pagination.total_count || 0)} of{' '}
+            {pagination.total_count || 0} results
           </div>
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => onPageChange?.(Math.max(1, pagination.current_page - 1))}
-                  className={pagination.current_page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
-              </PaginationItem>
-              
-              {[...Array(pagination.total_pages)].map((_, index) => (
-                <PaginationItem key={index + 1}>
-                  <PaginationLink
-                    onClick={() => onPageChange?.(index + 1)}
-                    isActive={pagination.current_page === index + 1}
-                    className="cursor-pointer"
-                  >
-                    {index + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => onPageChange?.(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                  className={pagination.current_page === pagination.total_pages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(pagination.current_page - 1)}
+              disabled={pagination.current_page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {pagination.current_page || 1} of {pagination.total_pages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(pagination.current_page + 1)}
+              disabled={pagination.current_page === pagination.total_pages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
 
-      {showSelectionPanel && selectedItems.length > 0 && (
-        <AssetSelectionPanel
-          selectedCount={selectedItems.length}
-          selectedAssets={selectedAssetObjects}
-          onMoveAsset={handleMoveAsset}
-          onDisposeAsset={handleDisposeAsset}
-          onPrintQRCode={handlePrintQRCode}
-          onCheckIn={handleCheckIn}
-          onClearSelection={handleClearSelection}
-        />
-      )}
+      <AssetSelectionDialog
+        open={showSelectionDialog && selectedItems.length > 0}
+        onOpenChange={setShowSelectionDialog}
+        selectedCount={selectedItems.length}
+        selectedAssets={selectedAssetObjects}
+        onPrintQRCode={handlePrintQRCode}
+        onCheckIn={handleCheckIn}
+        onClearSelection={handleClearSelection}
+      />
     </div>
   );
 };

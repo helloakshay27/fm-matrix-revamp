@@ -1,64 +1,79 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useAssets } from './useAssets';
 
-export interface AssetStats {
-  total: number;
-  inUse: number;
-  inStore: number;
-  breakdown: number;
-  disposed: number;
-}
-
 export const useAssetDashboard = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const { assets, pagination, loading, error, refetch } = useAssets(currentPage);
-  const [stats, setStats] = useState<AssetStats>({
-    total: 0,
-    inUse: 0,
-    inStore: 0,
-    breakdown: 0,
-    disposed: 0
-  });
+  
+  const { assets, pagination, statsData, loading, error, refetch, changePage } = useAssets(currentPage);
 
-  // Calculate stats from assets
-  useEffect(() => {
-    if (assets && assets.length > 0) {
-      const newStats = assets.reduce((acc, asset) => {
-        acc.total++;
-        switch (asset.assetStatus) {
-          case 'In Use':
-            acc.inUse++;
-            break;
-          case 'In Store':
-            acc.inStore++;
-            break;
-          case 'Breakdown':
-            acc.breakdown++;
-            break;
-          case 'Disposed':
-            acc.disposed++;
-            break;
-        }
-        return acc;
-      }, { total: 0, inUse: 0, inStore: 0, breakdown: 0, disposed: 0 });
+  // Use stats from API data
+  const stats = useMemo(() => {
+    return {
+      total: pagination.total_count || 0,
+      inUse: statsData.in_use_count || 0,
+      breakdown: statsData.breakdown_count || 0,
+      inStore: statsData.in_store || 0,
+      dispose: statsData.dispose_assets || 0,
+      totalValue: statsData.total_value || 0,
+      nonItAssets: statsData.non_it_assets || 0,
+      itAssets: statsData.it_assets || 0,
+      critical: statsData.breakdown_count || 0,
+      maintenance: 0
+    };
+  }, [statsData, pagination.total_count]);
 
-      // Use pagination total_count for actual total across all pages
-      newStats.total = pagination.total_count || assets.length;
-      setStats(newStats);
+  // Filter assets based on search term
+  const filteredAssets = useMemo(() => {
+    if (!searchTerm) return assets;
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return assets.filter(asset =>
+      asset.name.toLowerCase().includes(lowerSearchTerm) ||
+      asset.assetId.toLowerCase().includes(lowerSearchTerm) ||
+      asset.assetNo.toLowerCase().includes(lowerSearchTerm) ||
+      asset.serialNumber.toLowerCase().includes(lowerSearchTerm)
+    );
+  }, [assets, searchTerm]);
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(filteredAssets.map(asset => asset.id));
+    } else {
+      setSelectedAssets([]);
     }
-  }, [assets, pagination.total_count]);
+  };
+
+  const handleSelectAsset = (assetId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(prev => [...prev, assetId]);
+    } else {
+      setSelectedAssets(prev => prev.filter(id => id !== assetId));
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    changePage(page);
   };
 
   return {
-    assets,
+    assets: filteredAssets,
+    allAssets: assets,
+    selectedAssets,
+    searchTerm,
+    stats,
     pagination,
     loading,
     error,
-    stats,
     currentPage,
+    handleSearch,
+    handleSelectAll,
+    handleSelectAsset,
     handlePageChange,
     refetch
   };

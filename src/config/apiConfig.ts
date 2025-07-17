@@ -3,7 +3,6 @@ export const API_CONFIG = {
   BASE_URL: 'https://fm-uat-api.lockated.com',
   TOKEN: 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
   ENDPOINTS: {
-    ASSETS: '/pms/assets.json',
     AMC: '/pms/asset_amcs.json',
     DEPARTMENTS: '/pms/departments.json',
     ROLES: '/lock_roles.json',
@@ -22,6 +21,7 @@ export const API_CONFIG = {
     RESOLUTION_ESCALATION: '/pms/admin/resolution_escalation',
     UPDATE_COMPLAINT_WORKER: '/pms/admin/update_complaint_worker.json',
     DELETE_COMPLAINT_WORKER: '/pms/admin/delete_complaint_worker',
+    ASSETS: '/pms/assets.json',
   },
 } as const
 
