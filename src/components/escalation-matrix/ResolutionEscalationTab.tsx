@@ -22,7 +22,7 @@ import {
   clearState 
 } from '@/store/slices/resolutionEscalationSlice';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
-import { fetchFMUsers } from '@/store/slices/fmUsersSlice';
+import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { useToast } from '@/hooks/use-toast';
 import ReactSelect from 'react-select';
 
@@ -98,8 +98,8 @@ export const ResolutionEscalationTab: React.FC = () => {
     deleteLoading
   } = useAppSelector((state) => state.resolutionEscalation);
   
-  const { data: categories, loading: categoriesLoading } = useAppSelector((state) => state.helpdeskCategory);
-  const { data: fmUsers, loading: fmUsersLoading } = useAppSelector((state) => state.fmUser);
+  const { data: categories, loading: categoriesLoading } = useAppSelector((state) => state.helpdeskCategories);
+  const { data: fmUsers, loading: fmUsersLoading } = useAppSelector((state) => state.fmUsers);
 
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
   const [filteredRules, setFilteredRules] = useState(resolutionEscalations);
@@ -388,8 +388,8 @@ export const ResolutionEscalationTab: React.FC = () => {
   };
 
   // Options for react-select
-  const categoryOptions = categories.map(cat => ({ value: cat.id, label: cat.name }));
-  const userOptions = fmUsers.map(user => ({ value: user.id, label: user.displayName }));
+  const categoryOptions = categories?.helpdesk_categories?.map(cat => ({ value: cat.id, label: cat.name })) || [];
+  const userOptions = fmUsers?.fm_users?.map(user => ({ value: user.id, label: `${user.firstname} ${user.lastname}` })) || [];
 
   const escalationLevels = ['e1', 'e2', 'e3', 'e4', 'e5'] as const;
   const priorities = ['p1', 'p2', 'p3', 'p4', 'p5'] as const;
@@ -504,7 +504,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
+                  {categories?.helpdesk_categories?.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>
@@ -535,7 +535,7 @@ export const ResolutionEscalationTab: React.FC = () => {
             <div className="space-y-0">
               {filteredRules.map((rule, index) => {
                 const isExpanded = expandedRules.has(rule.id);
-                const categoryName = categories.find(cat => cat.id === rule.category_id)?.name || 'Unknown';
+                const categoryName = categories?.helpdesk_categories?.find(cat => cat.id === rule.category_id)?.name || 'Unknown';
                 
                 return (
                   <div key={rule.id} className="border-b last:border-b-0">
@@ -611,8 +611,8 @@ export const ResolutionEscalationTab: React.FC = () => {
                                 const escalateToUsers = escalation.escalate_to_users ? 
                                   JSON.parse(escalation.escalate_to_users as string) : [];
                                 const userNames = escalateToUsers.map((userId: number) => {
-                                  const user = fmUsers.find(u => u.id === userId);
-                                  return user ? user.displayName : `User ${userId}`;
+                                  const user = fmUsers?.fm_users?.find(u => u.id === userId);
+                                  return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
                                 }).join(', ');
 
                                 return (
