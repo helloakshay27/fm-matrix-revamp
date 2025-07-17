@@ -128,28 +128,17 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
             control={control}
             render={({ field }) => (
               <MuiFormControl fullWidth variant="outlined" error={!!errors.triggerType}>
-                <InputLabel id="trigger-type-label">Trigger Type</InputLabel>
+                <InputLabel shrink>Trigger Type</InputLabel>
                 <MuiSelect
                   {...field}
-                  labelId="trigger-type-label"
                   label="Trigger Type"
-                  value={field.value || ''}
+                  notched
                   MenuProps={{
-                    disablePortal: false,
                     PaperProps: {
                       style: {
-                        zIndex: 10000,
-                        backgroundColor: 'white',
-                        position: 'absolute'
+                        zIndex: 9999,
+                        backgroundColor: 'white'
                       }
-                    },
-                    anchorOrigin: {
-                      vertical: 'bottom',
-                      horizontal: 'left'
-                    },
-                    transformOrigin: {
-                      vertical: 'top',
-                      horizontal: 'left'
                     }
                   }}
                 >
@@ -171,28 +160,17 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
             control={control}
             render={({ field }) => (
               <MuiFormControl fullWidth variant="outlined" error={!!errors.triggerTo}>
-                <InputLabel id="trigger-to-label">Trigger To</InputLabel>
+                <InputLabel shrink>Trigger To</InputLabel>
                 <MuiSelect
                   {...field}
-                  labelId="trigger-to-label"
                   label="Trigger To"
-                  value={field.value || ''}
+                  notched
                   MenuProps={{
-                    disablePortal: false,
                     PaperProps: {
                       style: {
-                        zIndex: 10000,
-                        backgroundColor: 'white',
-                        position: 'absolute'
+                        zIndex: 9999,
+                        backgroundColor: 'white'
                       }
-                    },
-                    anchorOrigin: {
-                      vertical: 'bottom',
-                      horizontal: 'left'
-                    },
-                    transformOrigin: {
-                      vertical: 'top',
-                      horizontal: 'left'
                     }
                   }}
                 >
@@ -214,12 +192,12 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
             control={control}
             render={({ field }) => (
               <MuiFormControl fullWidth variant="outlined" error={!!errors.role}>
-                <InputLabel id="role-label">Role</InputLabel>
+                <InputLabel shrink>Role</InputLabel>
                 <MuiSelect
                   {...field}
-                  labelId="role-label"
                   multiple
                   label="Role"
+                  notched
                   disabled={loadingRoles}
                   value={field.value || []}
                   onChange={(e) => {
@@ -233,22 +211,12 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
                     return selected;
                   }}
                   MenuProps={{
-                    disablePortal: false,
                     PaperProps: {
                       style: {
-                        zIndex: 10000,
+                        zIndex: 9999,
                         backgroundColor: 'white',
-                        maxHeight: 300,
-                        position: 'absolute'
+                        maxHeight: 300
                       }
-                    },
-                    anchorOrigin: {
-                      vertical: 'bottom',
-                      horizontal: 'left'
-                    },
-                    transformOrigin: {
-                      vertical: 'top',
-                      horizontal: 'left'
                     }
                   }}
                 >
@@ -291,28 +259,17 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
               control={control}
               render={({ field }) => (
                 <MuiFormControl fullWidth variant="outlined" error={!!errors.periodType}>
-                  <InputLabel id="period-type-label">Period Type</InputLabel>
+                  <InputLabel shrink>Period Type</InputLabel>
                   <MuiSelect
                     {...field}
-                    labelId="period-type-label"
                     label="Period Type"
-                    value={field.value || ''}
+                    notched
                     MenuProps={{
-                      disablePortal: false,
                       PaperProps: {
                         style: {
-                          zIndex: 10000,
-                          backgroundColor: 'white',
-                          position: 'absolute'
+                          zIndex: 9999,
+                          backgroundColor: 'white'
                         }
-                      },
-                      anchorOrigin: {
-                        vertical: 'bottom',
-                        horizontal: 'left'
-                      },
-                      transformOrigin: {
-                        vertical: 'top',
-                        horizontal: 'left'
                       }
                     }}
                   >
