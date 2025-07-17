@@ -37,13 +37,6 @@ export interface ApiResponse {
     total_count: number;
     per_page: number;
   };
-  breakdown_count: number;
-  dispose_assets: number;
-  in_store: number;
-  in_use_count: number;
-  it_assets: number;
-  non_it_assets: number;
-  total_value: number | string;
 }
 
 export interface MappedAsset {
@@ -104,15 +97,6 @@ export const useAssets = (page: number = 1, perPage: number = 20) => {
     total_count: 0,
     per_page: 20
   });
-  const [statsData, setStatsData] = useState({
-    breakdown_count: 0,
-    dispose_assets: 0,
-    in_store: 0,
-    in_use_count: 0,
-    it_assets: 0,
-    non_it_assets: 0,
-    total_value: 0
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,15 +115,6 @@ export const useAssets = (page: number = 1, perPage: number = 20) => {
       const mappedAssets = response.data.assets.map(mapAssetData);
       setAssets(mappedAssets);
       setPagination(response.data.pagination);
-      setStatsData({
-        breakdown_count: response.data.breakdown_count || 0,
-        dispose_assets: response.data.dispose_assets || 0,
-        in_store: response.data.in_store || 0,
-        in_use_count: response.data.in_use_count || 0,
-        it_assets: response.data.it_assets || 0,
-        non_it_assets: response.data.non_it_assets || 0,
-        total_value: typeof response.data.total_value === 'string' ? 0 : (response.data.total_value || 0)
-      });
     } catch (err) {
       console.error('Error fetching assets:', err);
       setError('Failed to fetch assets. Please try again.');
@@ -165,7 +140,6 @@ export const useAssets = (page: number = 1, perPage: number = 20) => {
   return {
     assets,
     pagination,
-    statsData,
     loading,
     error,
     refetch,

@@ -251,9 +251,9 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
       {pagination.total_pages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Showing {((pagination.current_page || 1) - 1) * (pagination.per_page || 20) + 1} to{' '}
-            {Math.min((pagination.current_page || 1) * (pagination.per_page || 20), pagination.total_count || 0)} of{' '}
-            {pagination.total_count || 0} results
+            Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
+            {Math.min(pagination.current_page * pagination.per_page, pagination.total_count)} of{' '}
+            {pagination.total_count} results
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -265,7 +265,7 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
               Previous
             </Button>
             <span className="text-sm">
-              Page {pagination.current_page || 1} of {pagination.total_pages || 1}
+              Page {pagination.current_page} of {pagination.total_pages}
             </span>
             <Button
               variant="outline"
