@@ -356,7 +356,7 @@ export const FMUserMasterDashboard = () => {
             </Box>
           </div>
 
-          <div className="flex justify-end gap-3 p-6 pt-0 border-t">
+          <div className="flex justify-end gap-3 p-6 pt-0 border-t mt-4">
             <Button
               onClick={handleResetFilters}
               variant="outline"
