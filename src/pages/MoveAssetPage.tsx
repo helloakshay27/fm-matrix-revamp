@@ -22,7 +22,7 @@ export const MoveAssetPage: React.FC = () => {
     navigate(-1); // Go back to previous page
   };
   const handleBack = () => {
-    navigate(-1);
+    navigate('/maintenance/asset');
   };
   return <div className="min-h-screen bg-gray-50">
       {/* Header */}
