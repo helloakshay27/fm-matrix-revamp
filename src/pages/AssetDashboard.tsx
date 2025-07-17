@@ -24,6 +24,7 @@ import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
 import { useAssets } from '@/hooks/useAssets';
+import { useAssetSearch } from '@/hooks/useAssetSearch';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -93,6 +94,9 @@ export const AssetDashboard = () => {
 
   // Use the API hook
   const { assets, stats, pagination, loading, error, refetch } = useAssets(currentPage);
+  
+  // Use search hook
+  const { assets: searchAssets, loading: searchLoading, error: searchError, searchAssets: performSearch } = useAssetSearch();
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -102,22 +106,22 @@ export const AssetDashboard = () => {
     })
   );
 
-  // Filter assets based on search term
-  const filteredAssets = assets.filter(asset =>
-    asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.assetNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Use search results if search term exists, otherwise use paginated assets
+  const displayAssets = searchTerm.trim() ? searchAssets : assets;
+  const isSearchMode = searchTerm.trim().length > 0;
 
-  // Handle search
+  // Handle search with API call
   const handleSearch = (term: string) => {
     setSearchTerm(term);
+    if (term.trim()) {
+      performSearch(term);
+    }
   };
 
   // Handle asset selection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedAssets(filteredAssets.map(asset => asset.id));
+      setSelectedAssets(displayAssets.map(asset => asset.id));
     } else {
       setSelectedAssets([]);
     }
@@ -132,7 +136,7 @@ export const AssetDashboard = () => {
   };
 
   // Get selected asset objects with id and name
-  const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
+  const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
     id: asset.id,
     name: asset.name
   }));
@@ -171,7 +175,7 @@ export const AssetDashboard = () => {
   // Selection panel handlers
   const handleMoveAsset = () => {
     console.log('Move asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/move', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     handleSelectAll(false);
@@ -179,7 +183,7 @@ export const AssetDashboard = () => {
 
   const handleDisposeAsset = () => {
     console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/dispose', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     handleSelectAll(false);
@@ -495,7 +499,7 @@ export const AssetDashboard = () => {
 
               <div className="relative">
                 <AssetDataTable
-                  assets={filteredAssets}
+                  assets={displayAssets}
                   selectedAssets={selectedAssets}
                   visibleColumns={visibleColumns}
                   onSelectAll={handleSelectAll}
