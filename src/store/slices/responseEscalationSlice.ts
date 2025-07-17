@@ -54,7 +54,7 @@ export const updateResponseEscalation = createAsyncThunk(
   'responseEscalation/update',
   async (payload: UpdateResponseEscalationPayload, { rejectWithValue }) => {
     try {
-      const response = await apiClient.patch(ENDPOINTS.UPDATE_COMPLAINT_WORKER, payload)
+      const response = await apiClient.post(ENDPOINTS.UPDATE_COMPLAINT_WORKER, payload)
       return response.data
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update response escalation rule')
@@ -67,7 +67,7 @@ export const deleteResponseEscalation = createAsyncThunk(
   'responseEscalation/delete',
   async (id: number, { rejectWithValue }) => {
     try {
-      const response = await apiClient.delete(`${ENDPOINTS.CREATE_COMPLAINT_WORKER}/${id}`)
+      const response = await apiClient.delete(`/pms/admin/create_complaint_worker/${id}.json`)
       return { id, ...response.data }
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to delete response escalation rule')
