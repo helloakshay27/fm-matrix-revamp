@@ -51,8 +51,8 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     setIsExporting(true);
     
     try {
-      const assetIds = selectedAssets.map(asset => asset.id).join(',');
-      const url = `${BASE_URL}/pms/assets/assets_data_report.xlsx?q[id_in]=[${assetIds}]`;
+      const assetIdsParams = selectedAssets.map(asset => `q[id_in][]=${asset.id}`).join('&');
+      const url = `${BASE_URL}/pms/assets/assets_data_report.xlsx?${assetIdsParams}`;
       
       const response = await fetch(url, {
         method: 'GET',
