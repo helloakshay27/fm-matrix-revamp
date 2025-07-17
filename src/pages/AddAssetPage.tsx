@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive, Calendar, DollarSign, CheckCircle, Wrench, Car, Cog, Users2, TrendingUp as Performance, ShieldCheck, Edit3, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive, Calendar, DollarSign, CheckCircle, Wrench, Car, Cog, Users2, TrendingUp as Performance, ShieldCheck } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Autocomplete, InputAdornment } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -39,13 +39,6 @@ const AddAssetPage = () => {
   const [currentSection, setCurrentSection] = useState('');
   const [itAssetsCustomFieldModalOpen, setItAssetsCustomFieldModalOpen] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
-  const [hardDiskHeading, setHardDiskHeading] = useState(() => {
-    return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
-  });
-  const [isEditingHardDiskHeading, setIsEditingHardDiskHeading] = useState(false);
-  const [editingHardDiskHeadingText, setEditingHardDiskHeadingText] = useState(() => {
-    return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
-  });
   const [customFields, setCustomFields] = useState({
     // Land sections
     basicIdentification: [],
@@ -116,7 +109,7 @@ const AddAssetPage = () => {
   const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
 
   const handleGoBack = () => {
-    navigate('/maintenance/asset');
+    navigate(-1);
   };
 
   // Meter category options matching the images
@@ -3309,54 +3302,9 @@ const AddAssetPage = () => {
 
               {/* Hard Disk Details */}
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  {isEditingHardDiskHeading ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={editingHardDiskHeadingText}
-                        onChange={(e) => setEditingHardDiskHeadingText(e.target.value)}
-                        className="font-semibold text-sm bg-transparent border-b focus:outline-none"
-                        style={{ color: '#C72030', borderColor: '#C72030' }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            setHardDiskHeading(editingHardDiskHeadingText);
-                            localStorage.setItem('hardDiskHeading', editingHardDiskHeadingText);
-                            setIsEditingHardDiskHeading(false);
-                          }
-                          if (e.key === 'Escape') {
-                            setEditingHardDiskHeadingText(hardDiskHeading);
-                            setIsEditingHardDiskHeading(false);
-                          }
-                        }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => {
-                          setHardDiskHeading(editingHardDiskHeadingText);
-                          localStorage.setItem('hardDiskHeading', editingHardDiskHeadingText);
-                          setIsEditingHardDiskHeading(false);
-                        }}
-                        className="text-green-600 hover:text-green-700"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold" style={{ color: '#C72030' }}>{hardDiskHeading}</h3>
-                      <button
-                        onClick={() => {
-                          setEditingHardDiskHeadingText(hardDiskHeading);
-                          setIsEditingHardDiskHeading(true);
-                        }}
-                        className="text-gray-500 hover:text-red-600 transition-colors"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <h3 className="font-semibold mb-4" style={{
+              color: '#C72030'
+            }}>HARD DISK DETAILS</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <TextField label="Model" placeholder="Enter Model" name="hdModel" fullWidth variant="outlined" InputLabelProps={{
                 shrink: true

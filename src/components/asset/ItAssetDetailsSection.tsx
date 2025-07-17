@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Percent, Plus, X, Edit3, Check } from 'lucide-react';
+import React from 'react';
+import { ChevronDown, ChevronUp, Percent, Plus, X } from 'lucide-react';
 import { TextField } from '@mui/material';
 
 const fieldStyles = {
@@ -39,8 +39,6 @@ interface ItAssetDetailsProps {
   onItCustomFieldChange: (id: string, value: string) => void;
   onRemoveItCustomField: (id: string) => void;
   onOpenCustomFieldModal: () => void;
-  hardDiskHeading: string;
-  onHardDiskHeadingChange: (newHeading: string) => void;
 }
 
 export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
@@ -51,12 +49,8 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
   itCustomFields,
   onItCustomFieldChange,
   onRemoveItCustomField,
-  onOpenCustomFieldModal,
-  hardDiskHeading,
-  onHardDiskHeadingChange
+  onOpenCustomFieldModal
 }) => {
-  const [isEditingHeading, setIsEditingHeading] = useState(false);
-  const [editingHeadingText, setEditingHeadingText] = useState(hardDiskHeading);
   return (
     <div className="bg-white shadow-sm rounded-lg overflow-hidden">
       <div onClick={onToggle} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
@@ -153,51 +147,7 @@ export const ItAssetDetailsSection: React.FC<ItAssetDetailsProps> = ({
 
           {/* Hard Disk Details Section */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              {isEditingHeading ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={editingHeadingText}
-                    onChange={(e) => setEditingHeadingText(e.target.value)}
-                    className="text-[#C72030] font-semibold text-sm bg-transparent border-b border-[#C72030] focus:outline-none"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        onHardDiskHeadingChange(editingHeadingText);
-                        setIsEditingHeading(false);
-                      }
-                      if (e.key === 'Escape') {
-                        setEditingHeadingText(hardDiskHeading);
-                        setIsEditingHeading(false);
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => {
-                      onHardDiskHeadingChange(editingHeadingText);
-                      setIsEditingHeading(false);
-                    }}
-                    className="text-green-600 hover:text-green-700"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <h3 className="text-[#C72030] font-semibold text-sm">{hardDiskHeading}</h3>
-                  <button
-                    onClick={() => {
-                      setEditingHeadingText(hardDiskHeading);
-                      setIsEditingHeading(true);
-                    }}
-                    className="text-gray-500 hover:text-[#C72030] transition-colors"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
+            <h3 className="text-[#C72030] font-semibold text-sm mb-4">HARD DISK DETAILS</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <TextField
                 label="Model"

@@ -60,8 +60,6 @@ export const useAssetForm = () => {
     capacity: ''
   });
 
-  const [hardDiskHeading, setHardDiskHeading] = useState('HARD DISK DETAILS');
-
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -90,20 +88,14 @@ export const useAssetForm = () => {
     }));
   };
 
-  const handleHardDiskHeadingChange = (newHeading: string) => {
-    setHardDiskHeading(newHeading);
-  };
-
   return {
     expandedSections,
     locationData,
     formData,
     itAssetData,
-    hardDiskHeading,
     toggleSection,
     handleLocationChange,
     handleInputChange,
-    handleItAssetChange,
-    handleHardDiskHeadingChange
+    handleItAssetChange
   };
 };
