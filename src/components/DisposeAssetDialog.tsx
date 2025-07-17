@@ -102,6 +102,7 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
   const [assetStatus, setAssetStatus] = useState('Disposed');
   const [soldValue, setSoldValue] = useState('');
   const [breakdown, setBreakdown] = useState('Breakdown');
+  const [vendorBids, setVendorBids] = useState([{ vendorName: '', biddingCost: '' }]);
 
   const handleSubmit = () => {
     console.log('Dispose Asset submitted:', {
@@ -113,7 +114,8 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
       selectedAssets,
       assetStatus,
       soldValue,
-      breakdown
+      breakdown,
+      vendorBids
     });
     onClose();
   };
@@ -167,6 +169,8 @@ export const DisposeAssetDialog: React.FC<DisposeAssetDialogProps> = ({
                 onHandedOverToChange={setHandedOverTo}
                 vendor={vendor}
                 onVendorChange={setVendor}
+                vendorBids={vendorBids}
+                onVendorBidsChange={setVendorBids}
               />
             </div>
 

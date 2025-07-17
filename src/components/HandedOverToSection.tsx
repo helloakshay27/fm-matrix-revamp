@@ -3,19 +3,29 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { VendorBiddingSection } from './VendorBiddingSection';
+
+interface VendorBid {
+  vendorName: string;
+  biddingCost: string;
+}
 
 interface HandedOverToSectionProps {
   handedOverTo: string;
   onHandedOverToChange: (value: string) => void;
   vendor: string;
   onVendorChange: (vendor: string) => void;
+  vendorBids: VendorBid[];
+  onVendorBidsChange: (bids: VendorBid[]) => void;
 }
 
 export const HandedOverToSection: React.FC<HandedOverToSectionProps> = ({
   handedOverTo,
   onHandedOverToChange,
   vendor,
-  onVendorChange
+  onVendorChange,
+  vendorBids,
+  onVendorBidsChange
 }) => {
   const vendors = [
     'ABC Disposal Services',
@@ -69,6 +79,12 @@ export const HandedOverToSection: React.FC<HandedOverToSectionProps> = ({
           </Select>
         </FormControl>
       </div>
+
+      {/* Vendor Bidding Section */}
+      <VendorBiddingSection
+        vendorBids={vendorBids}
+        onVendorBidsChange={onVendorBidsChange}
+      />
     </>
   );
 };

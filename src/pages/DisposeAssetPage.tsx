@@ -93,6 +93,7 @@ export const DisposeAssetPage: React.FC = () => {
   const [assetStatus, setAssetStatus] = useState('Disposed');
   const [soldValue, setSoldValue] = useState('');
   const [breakdown, setBreakdown] = useState('Breakdown');
+  const [vendorBids, setVendorBids] = useState([{ vendorName: '', biddingCost: '' }]);
 
   const handleSubmit = () => {
     console.log('Dispose Asset submitted:', {
@@ -104,7 +105,8 @@ export const DisposeAssetPage: React.FC = () => {
       selectedAssets,
       assetStatus,
       soldValue,
-      breakdown
+      breakdown,
+      vendorBids
     });
     navigate('/maintenance/asset');
   };
@@ -169,6 +171,8 @@ export const DisposeAssetPage: React.FC = () => {
                   onHandedOverToChange={setHandedOverTo}
                   vendor={vendor}
                   onVendorChange={setVendor}
+                  vendorBids={vendorBids}
+                  onVendorBidsChange={setVendorBids}
                 />
               </div>
 
