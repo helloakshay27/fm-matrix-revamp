@@ -18,9 +18,12 @@ export const OccupantUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
   
   const { users: occupantUsersData, loading, error } = useSelector((state: RootState) => state.occupantUsers);
-  const { total: totalUsers, approved: approvedUsers, pending: pendingUsers, rejected: rejectedUsers, appDownloaded } = useSelector((state: RootState) => state.occupantUserCounts);
+  const occupantUserCounts = useSelector((state: RootState) => state.occupantUserCounts);
+  const { total: totalUsers = 0, approved: approvedUsers = 0, pending: pendingUsers = 0, rejected: rejectedUsers = 0, appDownloaded = 0 } = occupantUserCounts || {};
 
   const filteredUsers = occupantUsersData.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -28,6 +31,28 @@ export const OccupantUserMasterDashboard = () => {
     user.mobile.includes(searchTerm) ||
     user.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentPageUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
 
   const handleViewUser = (id: number) => {
@@ -41,6 +66,7 @@ export const OccupantUserMasterDashboard = () => {
 
   const handleReset = () => {
     setSearchTerm('');
+    setCurrentPage(1);
   };
 
   const { setCurrentSection } = useLayout();
@@ -152,7 +178,7 @@ export const OccupantUserMasterDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {currentPageUsers.map((user) => (
                   <TableRow key={user.id} className="hover:bg-gray-50">
                     <TableCell className="font-medium">{user.srNo}</TableCell>
                     <TableCell>
@@ -194,16 +220,40 @@ export const OccupantUserMasterDashboard = () => {
           <div className="px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-500">
-                Showing 1 to {filteredUsers.length} of {totalUsers} entries
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} entries
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" disabled>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handlePrevious}
+                  disabled={currentPage === 1}
+                >
                   Previous
                 </Button>
-                <Button variant="outline" size="sm" className="bg-[#C72030] text-white border-[#C72030]">
-                  1
-                </Button>
-                <Button variant="outline" size="sm" disabled>
+                
+                {/* Page numbers */}
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const page = index + 1;
+                  return (
+                    <Button
+                      key={page}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className={currentPage === page ? "bg-[#C72030] text-white border-[#C72030]" : ""}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleNext}
+                  disabled={currentPage === totalPages}
+                >
                   Next
                 </Button>
               </div>
