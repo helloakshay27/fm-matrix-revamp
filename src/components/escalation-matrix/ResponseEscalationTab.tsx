@@ -183,14 +183,14 @@ export const ResponseEscalationTab: React.FC = () => {
   }
 
   const getCategoryName = (id: number) => {
-    return categoriesData?.categories?.find(cat => cat.id === id)?.name || 'Unknown Category'
+    return categoriesData?.helpdesk_categories?.find(cat => cat.id === id)?.name || 'Unknown Category'
   }
 
   const getUserName = (id: number) => {
     return fmUsers.find(user => user.id === id)?.displayName || 'Unknown User'
   }
 
-  const availableCategories = categoriesData?.categories?.filter(
+  const availableCategories = categoriesData?.helpdesk_categories?.filter(
     cat => !selectedCategories.includes(cat.id)
   ) || []
 

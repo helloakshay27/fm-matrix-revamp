@@ -5,7 +5,8 @@ import { ENDPOINTS } from '@/config/apiConfig'
 import { HelpdeskCategory } from '@/types/escalationMatrix'
 
 export interface HelpdeskCategoriesResponse {
-  categories: HelpdeskCategory[];
+  helpdesk_categories: HelpdeskCategory[];
+  statuses: any[];
 }
 
 // Async thunk for fetching helpdesk categories
