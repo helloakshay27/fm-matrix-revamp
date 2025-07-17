@@ -1,14 +1,14 @@
 
 import React from 'react';
-import { useAllocationData } from '@/hooks/useAllocationData';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { CustomTextField } from '@/components/ui/custom-text-field';
 
 interface AllocateToSectionProps {
   allocateTo: string;
   setAllocateTo: (value: string) => void;
   department: string;
   setDepartment: (value: string) => void;
-  user: string;
-  setUser: (value: string) => void;
 }
 
 export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
@@ -16,82 +16,39 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
   setAllocateTo,
   department,
   setDepartment,
-  user,
-  setUser,
 }) => {
-  const { departments, users, loading } = useAllocationData();
-
   return (
-    <div className="mt-6">
-      <h3 className="text-sm font-medium text-gray-700 mb-4">Allocate To</h3>
-      
-      {/* Radio buttons */}
-      <div className="flex gap-6 mb-4">
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="department"
-            checked={allocateTo === 'department'}
-            onChange={(e) => setAllocateTo(e.target.value)}
-            className="mr-2 text-blue-600 focus:ring-blue-500"
-          />
-          <span className="text-sm text-gray-700">Department</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="user"
-            checked={allocateTo === 'user'}
-            onChange={(e) => setAllocateTo(e.target.value)}
-            className="mr-2 text-blue-600 focus:ring-blue-500"
-          />
-          <span className="text-sm text-gray-700">User</span>
-        </label>
-      </div>
-
-      {/* Department dropdown */}
-      {allocateTo === 'department' && (
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Select Department
-          </label>
+    <div className="mb-6">
+      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3">Allocate To</h3>
+      <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-8">
+        <div className="flex-shrink-0">
+          <RadioGroup value={allocateTo} onValueChange={setAllocateTo} className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="department" id="department" />
+              <Label htmlFor="department" className="text-sm">Department</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="user" id="user" />
+              <Label htmlFor="user" className="text-sm">User</Label>
+            </div>
+          </RadioGroup>
+        </div>
+        <div className="flex-1 max-w-full lg:max-w-xs">
           <select
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={loading.departments}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">Select Department</option>
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.id.toString()}>
-                {dept.name}
-              </option>
-            ))}
+            <option value="hr">Human Resources</option>
+            <option value="it">Information Technology</option>
+            <option value="finance">Finance</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="security">Security</option>
+            <option value="admin">Administration</option>
           </select>
         </div>
-      )}
-
-      {/* User dropdown */}
-      {allocateTo === 'user' && (
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Select User
-          </label>
-          <select
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-            className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={loading.users}
-          >
-            <option value="">Select User</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id.toString()}>
-                {u.name} {u.email && `(${u.email})`}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
