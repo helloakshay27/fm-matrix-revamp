@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive, Calendar, DollarSign, CheckCircle, Wrench, Car, Cog, Users2, TrendingUp as Performance, ShieldCheck, Edit3, Check } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Autocomplete, InputAdornment } from '@mui/material';
@@ -39,9 +39,13 @@ const AddAssetPage = () => {
   const [currentSection, setCurrentSection] = useState('');
   const [itAssetsCustomFieldModalOpen, setItAssetsCustomFieldModalOpen] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
-  const [hardDiskHeading, setHardDiskHeading] = useState('HARD DISK DETAILS');
+  const [hardDiskHeading, setHardDiskHeading] = useState(() => {
+    return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
+  });
   const [isEditingHardDiskHeading, setIsEditingHardDiskHeading] = useState(false);
-  const [editingHardDiskHeadingText, setEditingHardDiskHeadingText] = useState('HARD DISK DETAILS');
+  const [editingHardDiskHeadingText, setEditingHardDiskHeadingText] = useState(() => {
+    return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
+  });
   const [customFields, setCustomFields] = useState({
     // Land sections
     basicIdentification: [],
@@ -3317,6 +3321,7 @@ const AddAssetPage = () => {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             setHardDiskHeading(editingHardDiskHeadingText);
+                            localStorage.setItem('hardDiskHeading', editingHardDiskHeadingText);
                             setIsEditingHardDiskHeading(false);
                           }
                           if (e.key === 'Escape') {
@@ -3329,6 +3334,7 @@ const AddAssetPage = () => {
                       <button
                         onClick={() => {
                           setHardDiskHeading(editingHardDiskHeadingText);
+                          localStorage.setItem('hardDiskHeading', editingHardDiskHeadingText);
                           setIsEditingHardDiskHeading(false);
                         }}
                         className="text-green-600 hover:text-green-700"
