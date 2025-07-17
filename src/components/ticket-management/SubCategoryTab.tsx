@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { EditSubCategoryModal } from './modals/EditSubCategoryModal';
 import { toast } from 'sonner';
 import { Edit, Trash2, Upload } from 'lucide-react';
 
@@ -84,6 +85,8 @@ const categories = ['Electrical', 'Plumbing', 'HVAC', 'Security', 'Cleaning'];
 export const SubCategoryTab: React.FC = () => {
   const [subCategories, setSubCategories] = useState<SubCategoryType[]>(mockSubCategories);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingSubCategory, setEditingSubCategory] = useState<SubCategoryType | null>(null);
 
   const form = useForm<SubCategoryFormData>({
     resolver: zodResolver(subCategorySchema),
@@ -113,6 +116,22 @@ export const SubCategoryTab: React.FC = () => {
     }
   };
 
+  const handleEdit = (subCategory: SubCategoryType) => {
+    setEditingSubCategory(subCategory);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdate = (updatedSubCategory: SubCategoryType) => {
+    setSubCategories(subCategories.map(sub => 
+      sub.id === updatedSubCategory.id ? updatedSubCategory : sub
+    ));
+  };
+
+  const handleDelete = (subCategory: SubCategoryType) => {
+    setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
+    toast.success('Sub-category deleted successfully!');
+  };
+
   const columns = [
     { key: 'srNo', label: 'S.No', sortable: true },
     { key: 'category', label: 'Category', sortable: true },
@@ -134,10 +153,10 @@ export const SubCategoryTab: React.FC = () => {
 
   const renderActions = (item: SubCategoryType) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -322,6 +341,13 @@ export const SubCategoryTab: React.FC = () => {
           />
         </CardContent>
       </Card>
+
+      <EditSubCategoryModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        subCategory={editingSubCategory}
+        onUpdate={handleUpdate}
+      />
     </div>
   );
 };
