@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
-import { ResolutionEscalationMatrixPayload, ResolutionEscalationGetResponse, UpdateResolutionEscalationPayload } from '@/types/escalationMatrix'
+import { ResolutionEscalationMatrixPayload, ResolutionEscalationGetResponse, UpdateResolutionEscalationPayload, DeleteComplaintWorkerPayload } from '@/types/escalationMatrix'
 
 interface ResolutionEscalationState {
   loading: boolean
@@ -67,7 +67,13 @@ export const deleteResolutionEscalation = createAsyncThunk(
   'resolutionEscalation/delete',
   async (id: number, { rejectWithValue }) => {
     try {
-      const response = await apiClient.delete(`${ENDPOINTS.CREATE_COMPLAINT_WORKER}/${id}`)
+      const payload: DeleteComplaintWorkerPayload = {
+        id,
+        complaint_worker: {
+          assign: 0
+        }
+      }
+      const response = await apiClient.post(ENDPOINTS.DELETE_COMPLAINT_WORKER, payload)
       return { id, ...response.data }
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to delete resolution escalation rule')

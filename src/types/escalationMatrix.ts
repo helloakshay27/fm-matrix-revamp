@@ -215,3 +215,11 @@ export interface UpdateResolutionEscalationPayload {
     e5: { name: string; escalate_to_users?: number[]; p1: number; p2: number; p3: number; p4: number; p5: number };
   };
 }
+
+// Delete API Payload Types
+export interface DeleteComplaintWorkerPayload {
+  id: number;
+  complaint_worker: {
+    assign: number;
+  };
+}

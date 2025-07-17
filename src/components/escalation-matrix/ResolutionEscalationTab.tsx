@@ -9,13 +9,27 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, ChevronDown, ChevronUp, Filter, Eye, EyeOff, Plus, X } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Trash2, ChevronDown, ChevronUp, Filter, Eye, EyeOff, Plus, X, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
-import { createResolutionEscalation } from '@/store/slices/resolutionEscalationSlice';
-import { EscalationLevel, PriorityTiming, ResolutionEscalationRule, ESCALATION_LEVELS, PRIORITY_LEVELS, ResolutionEscalationApiFormData, ResolutionEscalationMatrixPayload, FMUserDropdown } from '@/types/escalationMatrix';
+import { 
+  createResolutionEscalation, 
+  fetchResolutionEscalations, 
+  updateResolutionEscalation, 
+  deleteResolutionEscalation 
+} from '@/store/slices/resolutionEscalationSlice';
+import { 
+  ResolutionEscalationGetResponse, 
+  ResolutionEscalationMatrixPayload, 
+  UpdateResolutionEscalationPayload,
+  FMUserDropdown 
+} from '@/types/escalationMatrix';
 
 // Schema for form validation
 const resolutionEscalationSchema = z.object({
@@ -100,14 +114,19 @@ export const ResolutionEscalationTab: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   
   // Redux state
-  const { data: categoriesData, loading: categoriesLoading, error: categoriesError } = useSelector((state: RootState) => state.helpdeskCategories);
-  const { data: fmUsersData, loading: fmUsersLoading, error: fmUsersError } = useSelector((state: RootState) => state.fmUsers);
-  const { loading: submitting, error: submitError } = useSelector((state: RootState) => state.resolutionEscalation);
+  const { data: categoriesData, loading: categoriesLoading } = useSelector((state: RootState) => state.helpdeskCategories);
+  const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers);
+  const { 
+    loading: submitting, 
+    data: resolutionRules, 
+    fetchLoading, 
+    updateLoading, 
+    deleteLoading 
+  } = useSelector((state: RootState) => state.resolutionEscalation);
 
   // Local state
-  const [rules, setRules] = useState<ResolutionEscalationRule[]>([]);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
-  const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
+  const [expandedRules, setExpandedRules] = useState<Set<number>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<{
     e1: number[];
@@ -122,6 +141,8 @@ export const ResolutionEscalationTab: React.FC = () => {
     e4: [],
     e5: [],
   });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<ResolutionEscalationGetResponse | null>(null);
 
   // Get FM users as dropdown options
   const fmUsers: FMUserDropdown[] = React.useMemo(() => {
@@ -139,11 +160,27 @@ export const ResolutionEscalationTab: React.FC = () => {
   useEffect(() => {
     dispatch(fetchHelpdeskCategories());
     dispatch(fetchFMUsers());
+    dispatch(fetchResolutionEscalations());
   }, [dispatch]);
 
   // Helper function to convert time to total minutes
   const convertToMinutes = (days: number, hours: number, minutes: number): number => {
     return (days * 24 * 60) + (hours * 60) + minutes;
+  };
+
+  // Helper function to convert minutes to day/hour/minute format
+  const convertFromMinutes = (totalMinutes: number) => {
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    return { days, hours, minutes };
+  };
+
+  // Helper function to format time display
+  const formatTimeDisplay = (totalMinutes: number): string => {
+    if (totalMinutes === 0) return "0 day, 0 hour, 0 minute";
+    const { days, hours, minutes } = convertFromMinutes(totalMinutes);
+    return `${days} day, ${hours} hour, ${minutes} minute`;
   };
 
   // Helper function to create default priority timings
@@ -173,7 +210,6 @@ export const ResolutionEscalationTab: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (data: ResolutionEscalationFormData) => {
     try {
-      // Get society_id from localStorage
       const societyId = JSON.parse(localStorage.getItem('selectedSiteId') || '0');
       
       if (!societyId) {
@@ -181,7 +217,6 @@ export const ResolutionEscalationTab: React.FC = () => {
         return;
       }
 
-      // Transform form data to API payload
       const payload: ResolutionEscalationMatrixPayload = {
         complaint_worker: {
           society_id: societyId,
@@ -239,7 +274,7 @@ export const ResolutionEscalationTab: React.FC = () => {
         },
       };
 
-      const result = await dispatch(createResolutionEscalation(payload)).unwrap();
+      await dispatch(createResolutionEscalation(payload)).unwrap();
       
       toast.success('Resolution escalation rule created successfully!');
       
@@ -263,8 +298,181 @@ export const ResolutionEscalationTab: React.FC = () => {
         e5: [],
       });
 
+      // Refresh the rules list
+      dispatch(fetchResolutionEscalations());
+
     } catch (error: any) {
       toast.error(error.message || 'Failed to create resolution escalation rule');
+    }
+  };
+
+  // Handle edit
+  const handleEdit = (rule: ResolutionEscalationGetResponse) => {
+    setEditingRule(rule);
+    
+    // Pre-populate form with existing data
+    const categoryName = categoriesData?.helpdesk_categories?.find(cat => cat.id === rule.category_id)?.name || '';
+    
+    // Convert escalation data to form format
+    const formData = {
+      categoryIds: [rule.category_id],
+      escalationLevels: {
+        e1: {
+          users: rule.escalations.find(e => e.name === 'E1')?.escalate_to_users 
+            ? JSON.parse(rule.escalations.find(e => e.name === 'E1')?.escalate_to_users as string || '[]')
+            : [],
+          priorities: {
+            p1: convertFromMinutes(rule.escalations.find(e => e.name === 'E1')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find(e => e.name === 'E1')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find(e => e.name === 'E1')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find(e => e.name === 'E1')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find(e => e.name === 'E1')?.p5 || 0),
+          },
+        },
+        e2: {
+          users: rule.escalations.find(e => e.name === 'E2')?.escalate_to_users 
+            ? JSON.parse(rule.escalations.find(e => e.name === 'E2')?.escalate_to_users as string || '[]')
+            : [],
+          priorities: {
+            p1: convertFromMinutes(rule.escalations.find(e => e.name === 'E2')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find(e => e.name === 'E2')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find(e => e.name === 'E2')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find(e => e.name === 'E2')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find(e => e.name === 'E2')?.p5 || 0),
+          },
+        },
+        e3: {
+          users: rule.escalations.find(e => e.name === 'E3')?.escalate_to_users 
+            ? JSON.parse(rule.escalations.find(e => e.name === 'E3')?.escalate_to_users as string || '[]')
+            : [],
+          priorities: {
+            p1: convertFromMinutes(rule.escalations.find(e => e.name === 'E3')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find(e => e.name === 'E3')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find(e => e.name === 'E3')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find(e => e.name === 'E3')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find(e => e.name === 'E3')?.p5 || 0),
+          },
+        },
+        e4: {
+          users: rule.escalations.find(e => e.name === 'E4')?.escalate_to_users 
+            ? JSON.parse(rule.escalations.find(e => e.name === 'E4')?.escalate_to_users as string || '[]')
+            : [],
+          priorities: {
+            p1: convertFromMinutes(rule.escalations.find(e => e.name === 'E4')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find(e => e.name === 'E4')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find(e => e.name === 'E4')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find(e => e.name === 'E4')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find(e => e.name === 'E4')?.p5 || 0),
+          },
+        },
+        e5: {
+          users: rule.escalations.find(e => e.name === 'E5')?.escalate_to_users 
+            ? JSON.parse(rule.escalations.find(e => e.name === 'E5')?.escalate_to_users as string || '[]')
+            : [],
+          priorities: {
+            p1: convertFromMinutes(rule.escalations.find(e => e.name === 'E5')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find(e => e.name === 'E5')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find(e => e.name === 'E5')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find(e => e.name === 'E5')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find(e => e.name === 'E5')?.p5 || 0),
+          },
+        },
+      },
+    };
+
+    form.reset(formData);
+    setSelectedCategories([rule.category_id]);
+    setSelectedUsers({
+      e1: formData.escalationLevels.e1.users,
+      e2: formData.escalationLevels.e2.users,
+      e3: formData.escalationLevels.e3.users,
+      e4: formData.escalationLevels.e4.users,
+      e5: formData.escalationLevels.e5.users,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle update
+  const handleUpdate = async (data: ResolutionEscalationFormData) => {
+    if (!editingRule) return;
+
+    try {
+      const payload: UpdateResolutionEscalationPayload = {
+        id: editingRule.id,
+        complaint_worker: {
+          category_id: data.categoryIds[0],
+        },
+        escalation_matrix: {
+          e1: {
+            name: 'E1',
+            escalate_to_users: data.escalationLevels.e1.users,
+            p1: convertToMinutes(data.escalationLevels.e1.priorities.p1.days, data.escalationLevels.e1.priorities.p1.hours, data.escalationLevels.e1.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e1.priorities.p2.days, data.escalationLevels.e1.priorities.p2.hours, data.escalationLevels.e1.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e1.priorities.p3.days, data.escalationLevels.e1.priorities.p3.hours, data.escalationLevels.e1.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e1.priorities.p4.days, data.escalationLevels.e1.priorities.p4.hours, data.escalationLevels.e1.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e1.priorities.p5.days, data.escalationLevels.e1.priorities.p5.hours, data.escalationLevels.e1.priorities.p5.minutes),
+          },
+          e2: {
+            name: 'E2',
+            escalate_to_users: data.escalationLevels.e2.users,
+            p1: convertToMinutes(data.escalationLevels.e2.priorities.p1.days, data.escalationLevels.e2.priorities.p1.hours, data.escalationLevels.e2.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e2.priorities.p2.days, data.escalationLevels.e2.priorities.p2.hours, data.escalationLevels.e2.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e2.priorities.p3.days, data.escalationLevels.e2.priorities.p3.hours, data.escalationLevels.e2.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e2.priorities.p4.days, data.escalationLevels.e2.priorities.p4.hours, data.escalationLevels.e2.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e2.priorities.p5.days, data.escalationLevels.e2.priorities.p5.hours, data.escalationLevels.e2.priorities.p5.minutes),
+          },
+          e3: {
+            name: 'E3',
+            escalate_to_users: data.escalationLevels.e3.users,
+            p1: convertToMinutes(data.escalationLevels.e3.priorities.p1.days, data.escalationLevels.e3.priorities.p1.hours, data.escalationLevels.e3.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e3.priorities.p2.days, data.escalationLevels.e3.priorities.p2.hours, data.escalationLevels.e3.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e3.priorities.p3.days, data.escalationLevels.e3.priorities.p3.hours, data.escalationLevels.e3.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e3.priorities.p4.days, data.escalationLevels.e3.priorities.p4.hours, data.escalationLevels.e3.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e3.priorities.p5.days, data.escalationLevels.e3.priorities.p5.hours, data.escalationLevels.e3.priorities.p5.minutes),
+          },
+          e4: {
+            name: 'E4',
+            escalate_to_users: data.escalationLevels.e4.users,
+            p1: convertToMinutes(data.escalationLevels.e4.priorities.p1.days, data.escalationLevels.e4.priorities.p1.hours, data.escalationLevels.e4.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e4.priorities.p2.days, data.escalationLevels.e4.priorities.p2.hours, data.escalationLevels.e4.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e4.priorities.p3.days, data.escalationLevels.e4.priorities.p3.hours, data.escalationLevels.e4.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e4.priorities.p4.days, data.escalationLevels.e4.priorities.p4.hours, data.escalationLevels.e4.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e4.priorities.p5.days, data.escalationLevels.e4.priorities.p5.hours, data.escalationLevels.e4.priorities.p5.minutes),
+          },
+          e5: {
+            name: 'E5',
+            escalate_to_users: data.escalationLevels.e5.users,
+            p1: convertToMinutes(data.escalationLevels.e5.priorities.p1.days, data.escalationLevels.e5.priorities.p1.hours, data.escalationLevels.e5.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e5.priorities.p2.days, data.escalationLevels.e5.priorities.p2.hours, data.escalationLevels.e5.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e5.priorities.p3.days, data.escalationLevels.e5.priorities.p3.hours, data.escalationLevels.e5.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e5.priorities.p4.days, data.escalationLevels.e5.priorities.p4.hours, data.escalationLevels.e5.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e5.priorities.p5.days, data.escalationLevels.e5.priorities.p5.hours, data.escalationLevels.e5.priorities.p5.minutes),
+          },
+        },
+      };
+
+      await dispatch(updateResolutionEscalation(payload)).unwrap();
+      
+      toast.success('Resolution escalation rule updated successfully!');
+      setIsEditDialogOpen(false);
+      setEditingRule(null);
+      
+      // Refresh the rules list
+      dispatch(fetchResolutionEscalations());
+
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update resolution escalation rule');
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (ruleId: number) => {
+    try {
+      await dispatch(deleteResolutionEscalation(ruleId)).unwrap();
+      toast.success('Resolution escalation rule deleted successfully!');
+      dispatch(fetchResolutionEscalations());
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete resolution escalation rule');
     }
   };
 
@@ -314,7 +522,7 @@ export const ResolutionEscalationTab: React.FC = () => {
   }
 
   // Toggle rule expansion
-  const toggleRuleExpansion = (ruleId: string) => {
+  const toggleRuleExpansion = (ruleId: number) => {
     const newExpanded = new Set(expandedRules);
     if (newExpanded.has(ruleId)) {
       newExpanded.delete(ruleId);
@@ -326,8 +534,11 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   // Filter rules based on category
   const filteredRules = selectedCategoryFilter === 'all' 
-    ? rules 
-    : rules.filter(rule => rule.categoryType === selectedCategoryFilter);
+    ? resolutionRules 
+    : resolutionRules.filter(rule => {
+        const categoryName = getCategoryName(rule.category_id);
+        return categoryName === selectedCategoryFilter;
+      });
 
   return (
     <div className="space-y-6">
@@ -337,7 +548,7 @@ export const ResolutionEscalationTab: React.FC = () => {
           <CardTitle>Create Resolution Escalation Rule</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(isEditDialogOpen ? handleUpdate : handleSubmit)} className="space-y-6">
             {/* Category Type Selection */}
             <div className="space-y-2">
               <Label>Category Type (max 15)</Label>
@@ -364,7 +575,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-
+              
               {/* Selected Categories */}
               {selectedCategories.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -379,144 +590,106 @@ export const ResolutionEscalationTab: React.FC = () => {
                   ))}
                 </div>
               )}
-
-              <p className="text-sm text-muted-foreground">
-                {selectedCategories.length}/15 categories selected
-              </p>
-
-              {form.formState.errors.categoryIds && (
-                <p className="text-sm text-red-600">{form.formState.errors.categoryIds.message}</p>
-              )}
             </div>
 
             {/* Escalation Levels */}
-            <div className="space-y-4">
-              <Label>Escalation Levels & Priority Timings</Label>
-              {ESCALATION_LEVELS.map((level) => {
-                const levelKey = level.toLowerCase() as keyof typeof selectedUsers;
-                return (
-                  <Card key={level} className="p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-lg">{level}</h4>
+            {(['e1', 'e2', 'e3', 'e4', 'e5'] as const).map((level) => (
+              <div key={level} className="space-y-4 p-4 border rounded-lg">
+                <h3 className="text-lg font-semibold">{level.toUpperCase()}</h3>
+                
+                {/* Users Selection */}
+                <div className="space-y-2">
+                  <Label>Escalate To Users (max 15)</Label>
+                  
+                  <Select
+                    onValueChange={(value) => addUser(level, parseInt(value))}
+                    disabled={fmUsersLoading || selectedUsers[level].length >= 15}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={
+                        fmUsersLoading 
+                          ? "Loading users..." 
+                          : selectedUsers[level].length >= 15
+                          ? "Maximum users selected"
+                          : "Select users"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableUsers(level).map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Selected Users */}
+                  {selectedUsers[level].length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedUsers[level].map((userId) => (
+                        <Badge key={userId} variant="secondary" className="flex items-center gap-1">
+                          {getUserName(userId)}
+                          <X 
+                            className="h-3 w-3 cursor-pointer" 
+                            onClick={() => removeUser(level, userId)}
+                          />
+                        </Badge>
+                      ))}
                     </div>
-                    
-                    {/* User Selection for this level */}
-                    <div className="space-y-3 mb-4">
-                      <Label>Escalate To Users (max 15)</Label>
+                  )}
+                </div>
+
+                {/* Priority Timings */}
+                <div className="grid grid-cols-5 gap-4">
+                  {(['p1', 'p2', 'p3', 'p4', 'p5'] as const).map((priority) => (
+                    <div key={priority} className="space-y-2">
+                      <Label className="text-sm font-medium">{priority.toUpperCase()}</Label>
                       
-                      <Select
-                        onValueChange={(value) => addUser(levelKey, parseInt(value))}
-                        disabled={fmUsersLoading || selectedUsers[levelKey].length >= 15}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={
-                            fmUsersLoading 
-                              ? "Loading users..." 
-                              : selectedUsers[levelKey].length >= 15
-                              ? "Maximum users selected"
-                              : "Select users"
-                          } />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableUsers(levelKey).map((user) => (
-                            <SelectItem key={user.id} value={user.id.toString()}>
-                              {user.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {/* Selected Users */}
-                      {selectedUsers[levelKey].length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {selectedUsers[levelKey].map((userId) => (
-                            <Badge key={userId} variant="outline" className="flex items-center gap-1">
-                              {getUserName(userId)}
-                              <X 
-                                className="h-3 w-3 cursor-pointer" 
-                                onClick={() => removeUser(levelKey, userId)}
-                              />
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      <p className="text-sm text-muted-foreground">
-                        {selectedUsers[levelKey].length}/15 users selected
-                      </p>
+                      <div className="space-y-1">
+                        <Input
+                          type="number"
+                          placeholder="Days"
+                          min="0"
+                          {...form.register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Hours"
+                          min="0"
+                          max="23"
+                          {...form.register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Minutes"
+                          min="0"
+                          max="59"
+                          {...form.register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
+                        />
+                      </div>
                     </div>
-
-                    {/* Priority Timings for this level */}
-                    <div className="space-y-3">
-                      <Label>Priority Timings</Label>
-                      {PRIORITY_LEVELS.map((priority) => {
-                        const priorityKey = priority.toLowerCase() as 'p1' | 'p2' | 'p3' | 'p4' | 'p5';
-                        return (
-                          <div key={priority} className="grid grid-cols-4 gap-4 items-center">
-                            <Label className="font-medium">{priority}</Label>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Days</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                {...form.register(`escalationLevels.${levelKey}.priorities.${priorityKey}.days`, { valueAsNumber: true })}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Hours</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="23"
-                                placeholder="0"
-                                {...form.register(`escalationLevels.${levelKey}.priorities.${priorityKey}.hours`, { valueAsNumber: true })}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Minutes</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="59"
-                                placeholder="0"
-                                {...form.register(`escalationLevels.${levelKey}.priorities.${priorityKey}.minutes`, { valueAsNumber: true })}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {submitError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">{submitError}</p>
+                  ))}
+                </div>
               </div>
-            )}
+            ))}
 
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create Resolution Escalation Rule'}
+            <Button type="submit" disabled={submitting || updateLoading} className="w-full">
+              {submitting || updateLoading ? 'Processing...' : isEditDialogOpen ? 'Update Rule' : 'Create Rule'}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Filter Section */}
+      {/* Filter and Rules Display Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Filter Rules</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="block text-sm font-medium mb-2">Category Type</Label>
+          <div className="flex items-center justify-between">
+            <CardTitle>Resolution Escalation Rules</CardTitle>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
               <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Category Type" />
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
@@ -528,90 +701,185 @@ export const ResolutionEscalationTab: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end gap-2">
-              <Button variant="outline" size="sm">
-                Apply
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedCategoryFilter('all')}
-              >
-                Reset
-              </Button>
-            </div>
           </div>
+        </CardHeader>
+        <CardContent>
+          {fetchLoading ? (
+            <div className="text-center py-4">Loading rules...</div>
+          ) : filteredRules.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              No resolution escalation rules found.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Category Type</TableHead>
+                  <TableHead>Levels</TableHead>
+                  <TableHead>P1</TableHead>
+                  <TableHead>P2</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRules.map((rule) => {
+                  const activeE1 = rule.escalations.find(e => e.name === 'E1');
+                  const activeLevels = rule.escalations.filter(e => 
+                    e.escalate_to_users && JSON.parse(e.escalate_to_users as string || '[]').length > 0
+                  );
+                  
+                  return (
+                    <React.Fragment key={rule.id}>
+                      <TableRow>
+                        <TableCell>{getCategoryName(rule.category_id)}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {rule.escalations.map((escalation) => {
+                              const hasUsers = escalation.escalate_to_users && 
+                                JSON.parse(escalation.escalate_to_users as string || '[]').length > 0;
+                              return (
+                                <Badge 
+                                  key={escalation.id} 
+                                  variant={hasUsers ? "default" : "outline"}
+                                >
+                                  {escalation.name}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {activeE1 ? formatTimeDisplay(activeE1.p1 || 0) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {activeE1 ? formatTimeDisplay(activeE1.p2 || 0) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleRuleExpansion(rule.id)}
+                            >
+                              {expandedRules.has(rule.id) ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(rule)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Resolution Escalation Rule</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this resolution escalation rule for {getCategoryName(rule.category_id)}? 
+                                    This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(rule.id)}
+                                    disabled={deleteLoading}
+                                  >
+                                    {deleteLoading ? 'Deleting...' : 'Delete'}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      
+                      {/* Expanded Details */}
+                      {expandedRules.has(rule.id) && (
+                        <TableRow>
+                          <TableCell colSpan={5}>
+                            <div className="p-4 bg-muted/50 rounded-lg">
+                              <h4 className="font-semibold mb-3">Detailed Escalation Matrix</h4>
+                              <div className="space-y-3">
+                                {rule.escalations.map((escalation) => {
+                                  const users = escalation.escalate_to_users 
+                                    ? JSON.parse(escalation.escalate_to_users as string || '[]')
+                                    : [];
+                                  
+                                  return (
+                                    <div key={escalation.id} className="flex items-center gap-4 p-2 border rounded">
+                                      <Badge variant={users.length > 0 ? "default" : "outline"}>
+                                        {escalation.name}
+                                      </Badge>
+                                      <div className="flex-1">
+                                        <div className="text-sm text-muted-foreground mb-1">Escalate To:</div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {users.length > 0 ? users.map((userId: number) => (
+                                            <Badge key={userId} variant="secondary" className="text-xs">
+                                              {getUserName(userId)}
+                                            </Badge>
+                                          )) : (
+                                            <span className="text-sm text-muted-foreground">No users assigned</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-5 gap-2 text-xs">
+                                        <div>
+                                          <div className="font-medium">P1</div>
+                                          <div>{formatTimeDisplay(escalation.p1 || 0)}</div>
+                                        </div>
+                                        <div>
+                                          <div className="font-medium">P2</div>
+                                          <div>{formatTimeDisplay(escalation.p2 || 0)}</div>
+                                        </div>
+                                        <div>
+                                          <div className="font-medium">P3</div>
+                                          <div>{formatTimeDisplay(escalation.p3 || 0)}</div>
+                                        </div>
+                                        <div>
+                                          <div className="font-medium">P4</div>
+                                          <div>{formatTimeDisplay(escalation.p4 || 0)}</div>
+                                        </div>
+                                        <div>
+                                          <div className="font-medium">P5</div>
+                                          <div>{formatTimeDisplay(escalation.p5 || 0)}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {/* Existing Rules Table */}
-      <div className="space-y-4">
-        {filteredRules.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-muted-foreground">No resolution escalation rules found. Create your first rule above.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredRules.map((rule, index) => (
-            <Card key={rule.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium">Rule {index + 1}</span>
-                    <Badge variant="outline">{rule.categoryType}</Badge>
-                    <Badge variant={rule.active ? "default" : "secondary"}>
-                      {rule.active ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => toggleRuleExpansion(rule.id)}
-                  >
-                    <ChevronDown 
-                      className={`h-4 w-4 transition-transform ${
-                        expandedRules.has(rule.id) ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </Button>
-                </div>
-              </CardHeader>
-              
-              {expandedRules.has(rule.id) && (
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Escalation Levels</h4>
-                      <div className="border rounded-lg overflow-hidden">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="bg-muted">
-                              <th className="border-r px-4 py-3 text-left font-medium">Level</th>
-                              <th className="px-4 py-3 text-left font-medium">Escalation To</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rule.escalationLevels.map((level) => (
-                              <tr key={level.level} className="border-t">
-                                <td className="border-r px-4 py-3 font-medium">{level.level}</td>
-                                <td className="px-4 py-3">{level.escalationTo}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Created by {rule.createdBy} on {new Date(rule.createdOn).toLocaleDateString()}
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))
-        )}
-      </div>
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Resolution Escalation Rule</DialogTitle>
+          </DialogHeader>
+          {/* Form content is shared with the main form above */}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
