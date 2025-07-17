@@ -86,3 +86,42 @@ export interface ResponseEscalationApiFormData {
     e5: number[];
   };
 }
+
+// Resolution Escalation API interfaces
+export interface ResolutionEscalationMatrixLevel {
+  name: string;
+  escalate_to_users?: number[];
+  p1: number;
+  p2: number;
+  p3: number;
+  p4: number;
+  p5: number;
+}
+
+export interface ResolutionEscalationMatrixPayload {
+  complaint_worker: {
+    society_id: number;
+    esc_type: string;
+    of_phase: string;
+    of_atype: string;
+  };
+  category_ids: number[];
+  escalation_matrix: {
+    e1: ResolutionEscalationMatrixLevel;
+    e2: ResolutionEscalationMatrixLevel;
+    e3: ResolutionEscalationMatrixLevel;
+    e4: ResolutionEscalationMatrixLevel;
+    e5: ResolutionEscalationMatrixLevel;
+  };
+}
+
+export interface ResolutionEscalationApiFormData {
+  categoryIds: number[];
+  escalationLevels: {
+    e1: { users: number[]; priorities: { p1: number; p2: number; p3: number; p4: number; p5: number; } };
+    e2: { users: number[]; priorities: { p1: number; p2: number; p3: number; p4: number; p5: number; } };
+    e3: { users: number[]; priorities: { p1: number; p2: number; p3: number; p4: number; p5: number; } };
+    e4: { users: number[]; priorities: { p1: number; p2: number; p3: number; p4: number; p5: number; } };
+    e5: { users: number[]; priorities: { p1: number; p2: number; p3: number; p4: number; p5: number; } };
+  };
+}
