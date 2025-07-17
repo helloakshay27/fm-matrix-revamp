@@ -23,7 +23,8 @@ import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
-import { useAssetData } from '@/hooks/useAssetData';
+import { useAssetDashboard } from '@/hooks/useAssetDashboard';
+import { AssetTable } from '@/components/AssetTable';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -98,17 +99,21 @@ export const AssetDashboard = () => {
   );
 
   const {
-    filteredAssets,
-    selectedAssets,
-    searchTerm,
+    assets,
+    pagination,
+    loading,
+    error,
     stats,
-    handleSearch,
-    handleSelectAll,
-    handleSelectAsset
-  } = useAssetData();
+    currentPage,
+    handlePageChange,
+    refetch
+  } = useAssetDashboard();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
 
   // Get selected asset objects with id and name
-  const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
+  const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
     id: asset.id,
     name: asset.name
   }));
@@ -142,18 +147,18 @@ export const AssetDashboard = () => {
   // Selection panel handlers
   const handleMoveAsset = () => {
     console.log('Move asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/move', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
-    handleSelectAll(false);
+    setSelectedAssets([]);
   };
 
   const handleDisposeAsset = () => {
     console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/dispose', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
-    handleSelectAll(false);
+    setSelectedAssets([]);
   };
 
   const handlePrintQRCode = () => {
@@ -166,8 +171,8 @@ export const AssetDashboard = () => {
 
   const handleClearSelection = () => {
     console.log('Clear selection called, current selected assets:', selectedAssets.length);
-    handleSelectAll(false);
-    console.log('Selection cleared using handleSelectAll(false)');
+    setSelectedAssets([]);
+    console.log('Selection cleared');
   };
 
   // Handle drag end for chart reordering
@@ -187,12 +192,14 @@ export const AssetDashboard = () => {
   // Analytics data
   const statusData = [
     { name: 'In Use', value: stats.inUse, color: 'hsl(120, 70%, 50%)' },
-    { name: 'Breakdown', value: stats.breakdown, color: 'hsl(0, 70%, 50%)' }
+    { name: 'In Store', value: stats.inStore, color: 'hsl(210, 70%, 50%)' },
+    { name: 'Breakdown', value: stats.breakdown, color: 'hsl(0, 70%, 50%)' },
+    { name: 'Disposed', value: stats.disposed, color: 'hsl(0, 0%, 50%)' }
   ];
 
   const assetTypeData = [
-    { name: 'IT Equipment', value: stats.itAssets, color: 'hsl(35, 35%, 75%)' },
-    { name: 'Non-IT Equipment', value: stats.nonItAssets, color: 'hsl(25, 45%, 55%)' }
+    { name: 'Comprehensive', value: (assets || []).filter(a => a.assetType === 'Comprehensive').length, color: 'hsl(35, 35%, 75%)' },
+    { name: 'Non-Comprehensive', value: (assets || []).filter(a => a.assetType === 'Non-Comprehensive').length, color: 'hsl(25, 45%, 55%)' }
   ];
 
   const categoryData = [
@@ -440,104 +447,34 @@ export const AssetDashboard = () => {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-6 mt-6">
-          <AssetStats stats={stats} />
+          <AssetStats stats={{
+            total: stats.total,
+            totalValue: 0, // Not available from API yet
+            nonItAssets: (assets || []).filter(a => a.assetType === 'Non-Comprehensive').length,
+            itAssets: (assets || []).filter(a => a.assetType === 'Comprehensive').length,
+            inUse: stats.inUse,
+            breakdown: stats.breakdown,
+            inStore: stats.inStore,
+            dispose: stats.disposed
+          }} />
 
           <AssetActions
             searchTerm={searchTerm}
-            onSearch={handleSearch}
+            onSearch={setSearchTerm}
             onAddAsset={handleAddAsset}
             onImport={handleImport}
             onUpdate={handleUpdate}
             onFilterOpen={() => setIsFilterOpen(true)}
-            onRefresh={handleRefresh}
+            onRefresh={refetch}
             visibleColumns={visibleColumns}
             onColumnChange={handleColumnChange}
           />
 
-          <div className="relative">
-            <AssetDataTable
-              assets={filteredAssets}
-              selectedAssets={selectedAssets}
-              visibleColumns={visibleColumns}
-              onSelectAll={handleSelectAll}
-              onSelectAsset={handleSelectAsset}
-              onViewAsset={handleViewAsset}
-            />
-
-            {/* Selection Panel - positioned as overlay within table container */}
-            {selectedAssets.length > 0 && (
-              <AssetSelectionPanel
-                selectedCount={selectedAssets.length}
-                selectedAssets={selectedAssetObjects}
-                onMoveAsset={handleMoveAsset}
-                onDisposeAsset={handleDisposeAsset}
-                onPrintQRCode={handlePrintQRCode}
-                onCheckIn={handleCheckIn}
-                onClearSelection={handleClearSelection}
-              />
-            )}
-          </div>
-
-          <div className="mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious href="#" />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#" isActive>
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    2
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    3
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    4
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    5
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    6
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    7
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    8
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    Last
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          <AssetTable 
+            searchTerm={searchTerm}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+          />
         </TabsContent>
       </Tabs>
 
