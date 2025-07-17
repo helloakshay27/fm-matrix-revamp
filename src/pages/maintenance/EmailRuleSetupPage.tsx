@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { CreateEmailRuleDialog } from '@/components/dialogs/CreateEmailRuleDialog';
 import { EditEmailRuleDialog } from '@/components/dialogs/EditEmailRuleDialog';
 import { EmailRule } from '@/types/emailRule';
+import { emailRuleService } from '@/services/emailRuleService';
 
 // Mock data
 const mockEmailRules: EmailRule[] = [
@@ -54,11 +55,30 @@ const mockEmailRules: EmailRule[] = [
 ];
 
 export const EmailRuleSetupPage: React.FC = () => {
-  const [emailRules, setEmailRules] = useState<EmailRule[]>(mockEmailRules);
+  const [emailRules, setEmailRules] = useState<EmailRule[]>([]);
   const [selectedRules, setSelectedRules] = useState<string[]>([]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<EmailRule | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEmailRules = async () => {
+      try {
+        setLoading(true);
+        const rules = await emailRuleService.getEmailRules();
+        setEmailRules(rules);
+      } catch (error) {
+        console.error('Failed to fetch email rules:', error);
+        // Fallback to mock data on error
+        setEmailRules(mockEmailRules);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmailRules();
+  }, []);
 
   const columns: ColumnConfig[] = [
     { key: 'edit', label: 'Edit', sortable: false, hideable: false, defaultVisible: true },

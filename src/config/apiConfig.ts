@@ -7,6 +7,7 @@ export const API_CONFIG = {
     DEPARTMENTS: '/pms/departments.json',
     ROLES: '/lock_roles.json',
     FUNCTIONS: '/lock_functions.json',
+    EMAIL_RULES: '/pms/email_rule_setups.json',
   },
 } as const
 
