@@ -4,6 +4,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
+import { fetchUserCounts } from '@/store/slices/userCountsSlice';
 import { StatsCard } from '@/components/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +65,7 @@ export const FMUserMasterDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { data: fmUsersResponse, loading, error } = useSelector((state: RootState) => state.fmUsers);
+  const { data: userCounts, loading: countsLoading } = useSelector((state: RootState) => state.userCounts);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
@@ -80,6 +82,7 @@ export const FMUserMasterDashboard = () => {
   useEffect(() => {
     setCurrentSection('Master');
     dispatch(fetchFMUsers());
+    dispatch(fetchUserCounts());
   }, [setCurrentSection, dispatch]);
 
   // Apply filters to users
@@ -100,9 +103,12 @@ export const FMUserMasterDashboard = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
 
-  const activeUsers = fmUsersData.filter(user => user.active).length;
-  const inactiveUsers = fmUsersData.filter(user => !user.active).length;
-  const appDownloaded = fmUsersData.filter(user => user.appDownloaded).length;
+  // Use API data for stats if available, otherwise fallback to calculated values
+  const totalUsers = userCounts?.total_users ?? fmUsersData.length;
+  const approvedUsers = userCounts?.approved ?? fmUsersData.filter(user => user.active).length;
+  const pendingUsers = userCounts?.pending ?? 0;
+  const rejectedUsers = userCounts?.rejected ?? fmUsersData.filter(user => !user.active).length;
+  const appDownloaded = userCounts?.app_downloaded_count ?? fmUsersData.filter(user => user.appDownloaded).length;
 
   const handleAddUser = () => {
     navigate('/master/user/fm-users/add');
@@ -282,20 +288,25 @@ export const FMUserMasterDashboard = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <StatsCard
           title="Total Users"
-          value={fmUsersData.length}
+          value={totalUsers}
           icon={<Users className="w-6 h-6" />}
         />
         <StatsCard
-          title="Active Users"
-          value={activeUsers}
+          title="Approved Users"
+          value={approvedUsers}
           icon={<Users className="w-6 h-6" />}
         />
         <StatsCard
-          title="Inactive Users"
-          value={inactiveUsers}
+          title="Pending Users"
+          value={pendingUsers}
+          icon={<Users className="w-6 h-6" />}
+        />
+        <StatsCard
+          title="Rejected Users"
+          value={rejectedUsers}
           icon={<Users className="w-6 h-6" />}
         />
         <StatsCard
