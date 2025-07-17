@@ -1,20 +1,21 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TextField, MenuItem, ThemeProvider, createTheme } from '@mui/material';
+import { useLocationData } from '@/hooks/useLocationData';
 
 interface MovementToSectionProps {
-  site: string;
-  setSite: (value: string) => void;
-  building: string;
-  setBuilding: (value: string) => void;
-  wing: string;
-  setWing: (value: string) => void;
-  area: string;
-  setArea: (value: string) => void;
-  floor: string;
-  setFloor: (value: string) => void;
-  room: string;
-  setRoom: (value: string) => void;
+  siteId: number | null;
+  setSiteId: (value: number | null) => void;
+  buildingId: number | null;
+  setBuildingId: (value: number | null) => void;
+  wingId: number | null;
+  setWingId: (value: number | null) => void;
+  areaId: number | null;
+  setAreaId: (value: number | null) => void;
+  floorId: number | null;
+  setFloorId: (value: number | null) => void;
+  roomId: number | null;
+  setRoomId: (value: number | null) => void;
 }
 
 // Custom theme for MUI dropdowns
@@ -89,26 +90,84 @@ const dropdownTheme = createTheme({
 });
 
 export const MovementToSection: React.FC<MovementToSectionProps> = ({
-  site,
-  setSite,
-  building,
-  setBuilding,
-  wing,
-  setWing,
-  area,
-  setArea,
-  floor,
-  setFloor,
-  room,
-  setRoom,
+  siteId,
+  setSiteId,
+  buildingId,
+  setBuildingId,
+  wingId,
+  setWingId,
+  areaId,
+  setAreaId,
+  floorId,
+  setFloorId,
+  roomId,
+  setRoomId,
 }) => {
-  // Sample options for dropdowns
-  const siteOptions = ['Haven Infoline', 'Site 2', 'Site 3'];
-  const buildingOptions = ['Jyoti Tower', 'Building 2', 'Building 3'];
-  const wingOptions = ['J', 'A', 'B', 'C'];
-  const areaOptions = ['East', 'West', 'North', 'South'];
-  const floorOptions = ['1', '2', '3', '4', '5'];
-  const roomOptions = ['R 101', 'R 102', 'R 201', 'R 202', 'R 301'];
+  const {
+    sites,
+    buildings,
+    wings,
+    areas,
+    floors,
+    rooms,
+    loading,
+    fetchBuildings,
+    fetchWings,
+    fetchAreas,
+    fetchFloors,
+    fetchRooms,
+  } = useLocationData();
+
+  // Handle cascading dropdown changes
+  useEffect(() => {
+    if (siteId) {
+      fetchBuildings(siteId);
+      // Reset dependent dropdowns
+      setBuildingId(null);
+      setWingId(null);
+      setAreaId(null);
+      setFloorId(null);
+      setRoomId(null);
+    }
+  }, [siteId]);
+
+  useEffect(() => {
+    if (buildingId) {
+      fetchWings(buildingId);
+      // Reset dependent dropdowns
+      setWingId(null);
+      setAreaId(null);
+      setFloorId(null);
+      setRoomId(null);
+    }
+  }, [buildingId]);
+
+  useEffect(() => {
+    if (wingId) {
+      fetchAreas(wingId);
+      // Reset dependent dropdowns
+      setAreaId(null);
+      setFloorId(null);
+      setRoomId(null);
+    }
+  }, [wingId]);
+
+  useEffect(() => {
+    if (areaId) {
+      fetchFloors(areaId);
+      // Reset dependent dropdowns
+      setFloorId(null);
+      setRoomId(null);
+    }
+  }, [areaId]);
+
+  useEffect(() => {
+    if (floorId) {
+      fetchRooms(floorId);
+      // Reset dependent dropdowns
+      setRoomId(null);
+    }
+  }, [floorId]);
 
   return (
     <div className="mb-6">
@@ -118,11 +177,12 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
           <TextField
             select
             label="Site*"
-            value={site}
-            onChange={(e) => setSite(e.target.value)}
+            value={siteId || ''}
+            onChange={(e) => setSiteId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
             size="small"
             placeholder="Select Site"
+            disabled={loading.sites}
             InputLabelProps={{
               shrink: true,
             }}
@@ -132,13 +192,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Site</span>;
                 }
-                return selected as string;
+                const site = sites.find(s => s.id === Number(selected));
+                return site?.name || 'Select Site';
               },
             }}
           >
-            {siteOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {sites.map((site) => (
+              <MenuItem key={site.id} value={site.id}>
+                {site.name}
               </MenuItem>
             ))}
           </TextField>
@@ -146,11 +207,12 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
           <TextField
             select
             label="Building*"
-            value={building}
-            onChange={(e) => setBuilding(e.target.value)}
+            value={buildingId || ''}
+            onChange={(e) => setBuildingId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
             size="small"
             placeholder="Select Building"
+            disabled={!siteId || loading.buildings}
             InputLabelProps={{
               shrink: true,
             }}
@@ -160,13 +222,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Building</span>;
                 }
-                return selected as string;
+                const building = buildings.find(b => b.building.id === Number(selected));
+                return building?.building.name || 'Select Building';
               },
             }}
           >
-            {buildingOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {buildings.map((building) => (
+              <MenuItem key={building.building.id} value={building.building.id}>
+                {building.building.name}
               </MenuItem>
             ))}
           </TextField>
@@ -174,11 +237,12 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
           <TextField
             select
             label="Wing*"
-            value={wing}
-            onChange={(e) => setWing(e.target.value)}
+            value={wingId || ''}
+            onChange={(e) => setWingId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
             size="small"
             placeholder="Select Wing"
+            disabled={!buildingId || loading.wings}
             InputLabelProps={{
               shrink: true,
             }}
@@ -188,13 +252,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Wing</span>;
                 }
-                return selected as string;
+                const wing = wings.find(w => w.wings.id === Number(selected));
+                return wing?.wings.name || 'Select Wing';
               },
             }}
           >
-            {wingOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {wings.map((wing) => (
+              <MenuItem key={wing.wings.id} value={wing.wings.id}>
+                {wing.wings.name}
               </MenuItem>
             ))}
           </TextField>
@@ -202,11 +267,12 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
           <TextField
             select
             label="Area*"
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
+            value={areaId || ''}
+            onChange={(e) => setAreaId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
             size="small"
             placeholder="Select Area"
+            disabled={!wingId || loading.areas}
             InputLabelProps={{
               shrink: true,
             }}
@@ -216,13 +282,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Area</span>;
                 }
-                return selected as string;
+                const area = areas.find(a => a.id === Number(selected));
+                return area?.name || 'Select Area';
               },
             }}
           >
-            {areaOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {areas.map((area) => (
+              <MenuItem key={area.id} value={area.id}>
+                {area.name}
               </MenuItem>
             ))}
           </TextField>
@@ -230,11 +297,12 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
           <TextField
             select
             label="Floor*"
-            value={floor}
-            onChange={(e) => setFloor(e.target.value)}
+            value={floorId || ''}
+            onChange={(e) => setFloorId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
             size="small"
             placeholder="Select Floor"
+            disabled={!areaId || loading.floors}
             InputLabelProps={{
               shrink: true,
             }}
@@ -244,13 +312,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Floor</span>;
                 }
-                return selected as string;
+                const floor = floors.find(f => f.id === Number(selected));
+                return floor?.name || 'Select Floor';
               },
             }}
           >
-            {floorOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {floors.map((floor) => (
+              <MenuItem key={floor.id} value={floor.id}>
+                {floor.name}
               </MenuItem>
             ))}
           </TextField>
@@ -258,11 +327,12 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
           <TextField
             select
             label="Room*"
-            value={room}
-            onChange={(e) => setRoom(e.target.value)}
+            value={roomId || ''}
+            onChange={(e) => setRoomId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
             size="small"
             placeholder="Select Room"
+            disabled={!floorId || loading.rooms}
             InputLabelProps={{
               shrink: true,
             }}
@@ -272,13 +342,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Room</span>;
                 }
-                return selected as string;
+                const room = rooms.find(r => r.rooms.id === Number(selected));
+                return room?.rooms.name || 'Select Room';
               },
             }}
           >
-            {roomOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {rooms.map((room) => (
+              <MenuItem key={room.rooms.id} value={room.rooms.id}>
+                {room.rooms.name}
               </MenuItem>
             ))}
           </TextField>

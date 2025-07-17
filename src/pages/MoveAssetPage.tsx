@@ -10,16 +10,63 @@ export const MoveAssetPage: React.FC = () => {
   const location = useLocation();
   const selectedAssets = location.state?.selectedAssets || [];
   const [allocateTo, setAllocateTo] = useState('department');
-  const [site, setSite] = useState('');
-  const [building, setBuilding] = useState('');
-  const [wing, setWing] = useState('');
-  const [area, setArea] = useState('');
-  const [floor, setFloor] = useState('');
-  const [room, setRoom] = useState('');
-  const [department, setDepartment] = useState('');
-  const handleSubmit = () => {
-    console.log('Moving assets:', selectedAssets);
-    navigate(-1); // Go back to previous page
+  const [siteId, setSiteId] = useState<number | null>(null);
+  const [buildingId, setBuildingId] = useState<number | null>(null);
+  const [wingId, setWingId] = useState<number | null>(null);
+  const [areaId, setAreaId] = useState<number | null>(null);
+  const [floorId, setFloorId] = useState<number | null>(null);
+  const [roomId, setRoomId] = useState<number | null>(null);
+  const [allocatedToId, setAllocatedToId] = useState<number | null>(null);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [comments, setComments] = useState('');
+  const handleSubmit = async () => {
+    if (!selectedAssets.length) {
+      alert('No assets selected');
+      return;
+    }
+
+    const formData = new FormData();
+    
+    // Add asset IDs
+    selectedAssets.forEach((asset, index) => {
+      formData.append(`asset_ids[${index}]`, asset.id.toString());
+    });
+
+    // Add location data
+    if (siteId) formData.append('site_id', siteId.toString());
+    if (buildingId) formData.append('building_id', buildingId.toString());
+    if (wingId) formData.append('wing_id', wingId.toString());
+    if (areaId) formData.append('area_id', areaId.toString());
+    if (floorId) formData.append('floor_id', floorId.toString());
+    if (roomId) formData.append('room_id', roomId.toString());
+
+    // Add allocation data
+    formData.append('allocation_type', allocateTo);
+    if (allocatedToId) formData.append('allocated_to_id', allocatedToId.toString());
+
+    // Add attachment and comments
+    if (attachment) formData.append('attachment', attachment);
+    if (comments) formData.append('comments', comments);
+
+    try {
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/asset_movement.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert('Assets moved successfully!');
+        navigate('/maintenance/asset'); // Redirect to asset list
+      } else {
+        alert('Failed to move assets. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error moving assets:', error);
+      alert('An error occurred. Please try again.');
+    }
   };
   const handleBack = () => {
     navigate('/maintenance/asset');
@@ -45,26 +92,56 @@ export const MoveAssetPage: React.FC = () => {
           <div className="p-6">
             <AssetTableDisplay selectedAssets={selectedAssets} />
             
-            <MovementToSection site={site} setSite={setSite} building={building} setBuilding={setBuilding} wing={wing} setWing={setWing} area={area} setArea={setArea} floor={floor} setFloor={setFloor} room={room} setRoom={setRoom} />
+            <MovementToSection 
+              siteId={siteId} 
+              setSiteId={setSiteId} 
+              buildingId={buildingId} 
+              setBuildingId={setBuildingId} 
+              wingId={wingId} 
+              setWingId={setWingId} 
+              areaId={areaId} 
+              setAreaId={setAreaId} 
+              floorId={floorId} 
+              setFloorId={setFloorId} 
+              roomId={roomId} 
+              setRoomId={setRoomId} 
+            />
 
-            <AllocateToSection allocateTo={allocateTo} setAllocateTo={setAllocateTo} department={department} setDepartment={setDepartment} />
+            <AllocateToSection 
+              allocateTo={allocateTo} 
+              setAllocateTo={setAllocateTo} 
+              allocatedToId={allocatedToId} 
+              setAllocatedToId={setAllocatedToId} 
+            />
 
             {/* Attachment Section */}
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-700 mb-2">Attachment</h3>
               <div className="flex items-center">
-                <input type="file" id="attachment" className="hidden" />
+                <input 
+                  type="file" 
+                  id="attachment" 
+                  className="hidden"
+                  onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                />
                 <label htmlFor="attachment" className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded cursor-pointer text-sm">
                   Choose File
                 </label>
-                <span className="ml-3 text-sm text-gray-500">No file chosen</span>
+                <span className="ml-3 text-sm text-gray-500">
+                  {attachment ? attachment.name : 'No file chosen'}
+                </span>
               </div>
             </div>
 
-            {/* Remarks Section */}
+            {/* Comments Section */}
             <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Remarks</h3>
-              <textarea placeholder="Add Remarks" className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Comments</h3>
+              <textarea 
+                placeholder="Add Comments" 
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" 
+              />
             </div>
           </div>
 

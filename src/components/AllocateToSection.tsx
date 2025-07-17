@@ -2,21 +2,22 @@
 import React from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CustomTextField } from '@/components/ui/custom-text-field';
+import { useAllocationData } from '@/hooks/useAllocationData';
 
 interface AllocateToSectionProps {
   allocateTo: string;
   setAllocateTo: (value: string) => void;
-  department: string;
-  setDepartment: (value: string) => void;
+  allocatedToId: number | null;
+  setAllocatedToId: (value: number | null) => void;
 }
 
 export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
   allocateTo,
   setAllocateTo,
-  department,
-  setDepartment,
+  allocatedToId,
+  setAllocatedToId,
 }) => {
+  const { departments, users, loading } = useAllocationData();
   return (
     <div className="mb-6">
       <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3">Allocate To</h3>
@@ -35,17 +36,26 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
         </div>
         <div className="flex-1 max-w-full lg:max-w-xs">
           <select
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
+            value={allocatedToId || ''}
+            onChange={(e) => setAllocatedToId(e.target.value ? Number(e.target.value) : null)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={loading.departments || loading.users}
           >
-            <option value="">Select Department</option>
-            <option value="hr">Human Resources</option>
-            <option value="it">Information Technology</option>
-            <option value="finance">Finance</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="security">Security</option>
-            <option value="admin">Administration</option>
+            <option value="">
+              {allocateTo === 'department' ? 'Select Department' : 'Select User'}
+            </option>
+            {allocateTo === 'department' 
+              ? departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.department_name}
+                  </option>
+                ))
+              : users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.full_name}
+                  </option>
+                ))
+            }
           </select>
         </div>
       </div>

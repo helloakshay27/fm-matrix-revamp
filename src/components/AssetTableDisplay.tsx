@@ -34,36 +34,36 @@ export const AssetTableDisplay: React.FC<AssetTableDisplayProps> = ({ selectedAs
 
   return (
     <div className="mb-6">
-      <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px] sm:min-w-[800px] lg:min-w-[1000px] xl:min-w-[1200px]">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Name</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Code</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Asset Status</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Site</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Building</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Wing</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Floor</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Area</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Room</th>
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Asset Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Asset Code</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Site</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Building</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Wing</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Floor</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Area</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Room</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-white divide-y divide-gray-200">
               {selectedAssets.map((asset, index) => (
-                <tr key={asset.id || index} className="border-t border-gray-200">
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.name || 'N/A'}</td>
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.assetNumber || asset.id || 'N/A'}</td>
-                  <td className="px-2 sm:px-3 py-2">
+                <tr key={asset.id || index} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.asset_number || asset.id || 'N/A'}</td>
+                  <td className="px-4 py-3">
                     {getStatusBadge(asset.status || 'unknown')}
                   </td>
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.siteName || 'N/A'}</td>
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.building?.name || 'N/A'}</td>
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.wing?.name || 'N/A'}</td>
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.floor?.name || 'N/A'}</td>
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.area?.name || 'N/A'}</td>
-                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.pmsRoom?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.site_name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.building?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.wing?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.floor?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.area?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.pms_room?.name || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
