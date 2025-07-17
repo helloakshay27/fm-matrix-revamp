@@ -6,6 +6,32 @@ interface AssetTableDisplayProps {
 }
 
 export const AssetTableDisplay: React.FC<AssetTableDisplayProps> = ({ selectedAssets }) => {
+  const getStatusBadge = (status: string) => {
+    const statusConfig: { [key: string]: { bg: string; text: string; label: string } } = {
+      'in_use': { bg: 'bg-green-100', text: 'text-green-800', label: 'In Use' },
+      'in_storage': { bg: 'bg-blue-100', text: 'text-blue-800', label: 'In Store' },
+      'breakdown': { bg: 'bg-red-100', text: 'text-red-800', label: 'Breakdown' },
+      'disposed': { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Disposed' },
+    };
+    
+    const config = statusConfig[status] || { bg: 'bg-gray-100', text: 'text-gray-800', label: status };
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${config.bg} ${config.text}`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  if (!selectedAssets || selectedAssets.length === 0) {
+    return (
+      <div className="mb-6">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+          <p className="text-gray-500">No assets selected</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-6">
       <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
@@ -22,42 +48,24 @@ export const AssetTableDisplay: React.FC<AssetTableDisplayProps> = ({ selectedAs
                 <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Floor</th>
                 <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Area</th>
                 <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Room</th>
-                <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-700">Department/User</th>
               </tr>
             </thead>
             <tbody className="bg-white">
-              <tr className="border-t border-gray-200">
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Dell Laptop</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">#3423</td>
-                <td className="px-2 sm:px-3 py-2">
-                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                    In Use
-                  </span>
-                </td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Haven Infoline</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Jyoti Tower</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">J</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">2</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">East</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">R 202</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-blue-600">👤 Technical</td>
-              </tr>
-              <tr className="border-t border-gray-200">
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Computer Table</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">#1233</td>
-                <td className="px-2 sm:px-3 py-2">
-                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
-                    Breakdown
-                  </span>
-                </td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Haven Infoline</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">Jyoti Tower</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">J</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">2</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">East</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">R 202</td>
-                <td className="px-2 sm:px-3 py-2 text-xs text-orange-600">👤 Rakesh K.</td>
-              </tr>
+              {selectedAssets.map((asset, index) => (
+                <tr key={asset.id || index} className="border-t border-gray-200">
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.name || 'N/A'}</td>
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.assetNumber || asset.id || 'N/A'}</td>
+                  <td className="px-2 sm:px-3 py-2">
+                    {getStatusBadge(asset.status || 'unknown')}
+                  </td>
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.siteName || 'N/A'}</td>
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.building?.name || 'N/A'}</td>
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.wing?.name || 'N/A'}</td>
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.floor?.name || 'N/A'}</td>
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.area?.name || 'N/A'}</td>
+                  <td className="px-2 sm:px-3 py-2 text-xs text-gray-900">{asset.pmsRoom?.name || 'N/A'}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
