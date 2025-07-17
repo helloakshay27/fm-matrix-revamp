@@ -19,8 +19,7 @@ import { AssetStats } from '@/components/AssetStats';
 import { AssetActions } from '@/components/AssetActions';
 import { AssetDataTable } from '@/components/AssetDataTable';
 import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
-// Removed MoveAssetDialog import - now using MoveAssetPage
-import { DisposeAssetDialog } from '@/components/DisposeAssetDialog';
+// Removed MoveAssetDialog and DisposeAssetDialog imports - now using respective pages
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
@@ -65,8 +64,7 @@ export const AssetDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  // Removed isMoveAssetOpen state - now navigating to page
-  const [isDisposeAssetOpen, setIsDisposeAssetOpen] = useState(false);
+  // Removed isMoveAssetOpen and isDisposeAssetOpen states - now navigating to pages
   const [selectedAnalyticsItems, setSelectedAnalyticsItems] = useState<string[]>([
     'total-available', 'assets-in-use', 'asset-breakdown', 'critical-breakdown'
   ]);
@@ -152,7 +150,8 @@ export const AssetDashboard = () => {
 
   const handleDisposeAsset = () => {
     console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
-    setIsDisposeAssetOpen(true);
+    const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id));
+    navigate('/maintenance/asset/dispose', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     handleSelectAll(false);
   };
@@ -553,13 +552,7 @@ export const AssetDashboard = () => {
         onClose={() => setIsFilterOpen(false)}
       />
 
-      {/* Removed MoveAssetDialog - now using MoveAssetPage */}
-
-      <DisposeAssetDialog
-        isOpen={isDisposeAssetOpen}
-        onClose={() => setIsDisposeAssetOpen(false)}
-        selectedAssets={selectedAssets}
-      />
+      {/* Removed MoveAssetDialog and DisposeAssetDialog - now using respective pages */}
     </div>
   );
 };
