@@ -10,13 +10,18 @@ import { UtilityFilterDialog } from '../components/UtilityFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
 import { AssetTable } from '../components/AssetTable';
 import { StatsCard } from '../components/StatsCard';
+import { useAssetDashboard } from '../hooks/useAssetDashboard';
 
 export const UtilityDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
+
+  // Get dashboard data from API
+  const { dashboardStats, loading: statsLoading } = useAssetDashboard(searchTerm, currentPage);
 
   const handleAdd = () => {
     navigate('/utility/add-asset');
@@ -83,17 +88,17 @@ export const UtilityDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatsCard
           title="Total Asset"
-          value="2"
+          value={statsLoading ? "..." : dashboardStats.totalAssets.toString()}
           icon={<Package className="w-8 h-8" />}
         />
         <StatsCard
           title="In Use"
-          value="2"
+          value={statsLoading ? "..." : dashboardStats.inUse.toString()}
           icon={<CheckCircle className="w-8 h-8" />}
         />
         <StatsCard
           title="Breakdown"
-          value="0"
+          value={statsLoading ? "..." : dashboardStats.breakdown.toString()}
           icon={<AlertTriangle className="w-8 h-8" />}
         />
       </div>
@@ -175,7 +180,11 @@ export const UtilityDashboard = () => {
       {/* Data Table with search functionality */}
       <Card>
         <CardContent className="p-0">
-          <AssetTable searchTerm={searchTerm} />
+          <AssetTable 
+            searchTerm={searchTerm} 
+            currentPage={currentPage}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </CardContent>
       </Card>
 

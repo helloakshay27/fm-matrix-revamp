@@ -4,6 +4,7 @@ export const API_CONFIG = {
   TOKEN: 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
   ENDPOINTS: {
     AMC: '/pms/asset_amcs.json',
+    ASSETS: '/pms/assets.json',
     DEPARTMENTS: '/pms/departments.json',
     ROLES: '/lock_roles.json',
     FUNCTIONS: '/lock_functions.json',

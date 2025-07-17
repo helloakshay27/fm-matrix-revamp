@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,100 +14,50 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { AssetSelectionPanel } from './AssetSelectionPanel';
+import { StatusBadge } from './StatusBadge';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-
-interface Asset {
-  id: string;
-  name: string;
-  assetId: string;
-  assetCode: string;
-  assetNo: string;
-  assetStatus: string;
-  equipmentId: string;
-  site: string;
-  building: string;
-  wing: string;
-  floor: string;
-  area: string;
-  room: string;
-  meterType: string;
-  assetType: string;
-}
+import { useAssets, MappedAsset } from '@/hooks/useAssets';
 
 interface AssetTableProps {
   searchTerm: string;
+  currentPage: number;
+  onPageChange: (page: number) => void;
 }
 
-const mockAssets: Asset[] = [
-  {
-    id: '1',
-    name: 'Diesel Generator',
-    assetId: '53614',
-    assetCode: '83898732f107c5df0119',
-    assetNo: '501',
-    assetStatus: 'In Use',
-    equipmentId: '',
-    site: 'Located Site 1',
-    building: 'Sarova',
-    wing: 'SW1',
-    floor: 'FW1',
-    area: 'AW1',
-    room: '',
-    meterType: 'Main Meter',
-    assetType: 'Comprehensive'
-  },
-  {
-    id: '2',
-    name: 'Panel meter',
-    assetId: '53616',
-    assetCode: 'f32e0f1a1a8b5c2d3e4f',
-    assetNo: '503',
-    assetStatus: 'In Use',
-    equipmentId: '',
-    site: 'Located Site 1',
-    building: 'Twin Tower',
-    wing: 'TW1',
-    floor: 'FTW1',
-    area: 'ATW1',
-    room: '',
-    meterType: 'Sub Meter',
-    assetType: 'Non-Comprehensive'
-  }
-];
-
-export const AssetTable = ({ searchTerm }: AssetTableProps) => {
+export const AssetTable = ({ searchTerm, currentPage, onPageChange }: AssetTableProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showSelectionPanel, setShowSelectionPanel] = useState(false);
+  
+  // Fetch assets from API
+  const { assets, loading, error, pagination, refetch, statsData } = useAssets(currentPage, searchTerm);
 
   const columns: ColumnConfig[] = useMemo(() => [
+    { key: 'serialNumber', label: 'Serial Number', sortable: true, hideable: true, draggable: true },
     { key: 'name', label: 'Asset Name', sortable: true, hideable: false, draggable: true },
     { key: 'assetId', label: 'Asset ID', sortable: true, hideable: true, draggable: true },
-    { key: 'assetCode', label: 'Asset Code', sortable: true, hideable: true, draggable: true },
     { key: 'assetNo', label: 'Asset No.', sortable: true, hideable: true, draggable: true },
     { key: 'assetStatus', label: 'Asset Status', sortable: true, hideable: true, draggable: true },
-    { key: 'equipmentId', label: 'Equipment Id', sortable: true, hideable: true, draggable: true },
     { key: 'site', label: 'Site', sortable: true, hideable: true, draggable: true },
     { key: 'building', label: 'Building', sortable: true, hideable: true, draggable: true },
     { key: 'wing', label: 'Wing', sortable: true, hideable: true, draggable: true },
     { key: 'floor', label: 'Floor', sortable: true, hideable: true, draggable: true },
     { key: 'area', label: 'Area', sortable: true, hideable: true, draggable: true },
     { key: 'room', label: 'Room', sortable: true, hideable: true, draggable: true },
-    { key: 'meterType', label: 'Meter Type', sortable: true, hideable: true, draggable: true },
+    { key: 'group', label: 'Group', sortable: true, hideable: true, draggable: true },
+    { key: 'subGroup', label: 'Sub-Group', sortable: true, hideable: true, draggable: true },
     { key: 'assetType', label: 'Asset Type', sortable: true, hideable: true, draggable: true },
     { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
   ], []);
 
-  const sortedData = useMemo(() => {
-    if (!searchTerm) return mockAssets;
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    return mockAssets.filter(asset =>
-      Object.values(asset).some(value =>
-        typeof value === 'string' && value.toLowerCase().includes(lowerSearchTerm)
-      )
-    );
-  }, [searchTerm]);
+  // Custom cell renderer for status
+  const renderCell = useCallback((asset: MappedAsset, key: string) => {
+    if (key === 'assetStatus') {
+      return <StatusBadge status={asset.assetStatus} />;
+    }
+    return asset[key as keyof MappedAsset];
+  }, []);
 
   const handleEdit = (id: string) => {
     navigate(`/utility/edit-asset/${id}`);
@@ -124,7 +74,7 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
     navigate(`/utility/asset-details/${id}`);
   };
 
-  const renderActions = (asset: Asset) => (
+  const renderActions = (asset: MappedAsset) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -148,25 +98,25 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
     </DropdownMenu>
   );
 
-  const handleRowClick = (asset: Asset) => {
+  const handleRowClick = (asset: MappedAsset) => {
     navigate(`/utility/asset-details/${asset.id}`);
   };
 
   const selectedAssetObjects = useMemo(() => {
-    return mockAssets.filter(asset => selectedItems.includes(asset.id));
-  }, [selectedItems]);
+    return assets.filter(asset => selectedItems.includes(asset.id));
+  }, [selectedItems, assets]);
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       if (checked) {
-        setSelectedItems(mockAssets.map(asset => asset.id));
+        setSelectedItems(assets.map(asset => asset.id));
         setShowSelectionPanel(true);
       } else {
         setSelectedItems([]);
         setShowSelectionPanel(false);
       }
     },
-    [mockAssets, setSelectedItems]
+    [assets, setSelectedItems]
   );
 
   const handleSelectItem = useCallback(
@@ -184,7 +134,7 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
     [selectedItems, setSelectedItems]
   );
 
-  const getItemId = (asset: Asset) => asset.id;
+  const getItemId = (asset: MappedAsset) => asset.id;
 
   const bulkActions = [
     {
@@ -222,12 +172,35 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
     setShowSelectionPanel(false);
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading assets...</span>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={() => refetch()} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <EnhancedTable
-        data={sortedData}
+        data={assets}
         columns={columns}
         renderActions={renderActions}
+        renderCell={renderCell}
         onRowClick={handleRowClick}
         selectable={true}
         selectedItems={selectedItems}
@@ -239,6 +212,7 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
         storageKey="energy-assets-table"
         hideTableExport={true}
         hideTableSearch={true}
+        pagination={false}
       />
 
       {showSelectionPanel && selectedItems.length > 0 && (
@@ -252,6 +226,43 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
           onClearSelection={handleClearSelection}
         />
       )}
+      
+      {/* Custom Pagination */}
+      <div className="flex items-center justify-between py-4">
+        <div className="text-sm text-muted-foreground">
+          Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
+          {Math.min(pagination.current_page * pagination.per_page, pagination.total_count)} of{' '}
+          {pagination.total_count} results
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(pagination.current_page - 1)}
+            disabled={pagination.current_page === 1}
+          >
+            Previous
+          </Button>
+          {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={page}
+              variant={page === pagination.current_page ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(page)}
+            >
+              {page}
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(pagination.current_page + 1)}
+            disabled={pagination.current_page === pagination.total_pages}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
