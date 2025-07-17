@@ -25,7 +25,7 @@ const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
   triggerType: z.enum(['PPM', 'AMC']),
   triggerTo: z.enum(['Supplier', 'Occupant Admin', 'Other']),
-  role: z.string().min(1, 'Role is required'),
+  role: z.array(z.string()).min(1, 'At least one role is required'),
   periodValue: z.number().min(1, 'Period value must be at least 1'),
   periodType: z.enum(['days', 'weeks', 'months']),
 });
@@ -52,7 +52,7 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
       ruleName: '',
       triggerType: 'PPM',
       triggerTo: 'Supplier',
-      role: '',
+      role: [],
       periodValue: 1,
       periodType: 'days',
     },
@@ -81,7 +81,7 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
       ruleName: data.ruleName,
       triggerType: data.triggerType,
       triggerTo: data.triggerTo,
-      role: data.role,
+      role: data.role.join(', '), // Convert array to comma-separated string
       periodValue: data.periodValue,
       periodType: data.periodType,
     };
@@ -179,9 +179,21 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
                 <InputLabel shrink>Role</InputLabel>
                 <MuiSelect
                   {...field}
+                  multiple
                   label="Role"
                   notched
                   disabled={loadingRoles}
+                  value={field.value || []}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    field.onChange(typeof value === 'string' ? value.split(',') : value);
+                  }}
+                  renderValue={(selected) => {
+                    if (Array.isArray(selected)) {
+                      return selected.join(', ');
+                    }
+                    return selected;
+                  }}
                 >
                   {roles.map((role) => (
                     <MenuItem key={role.id} value={role.name}>
