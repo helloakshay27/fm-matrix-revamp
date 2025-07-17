@@ -1,0 +1,696 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Search, Upload, X, Edit, File } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+
+export const LocationAccountPage = () => {
+  const [activeTab, setActiveTab] = useState('organization');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [companyName, setCompanyName] = useState('Lockated HO');
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [dailyReport, setDailyReport] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState('25');
+  const [entityName, setEntityName] = useState('');
+  const [isAddCountryOpen, setIsAddCountryOpen] = useState(false);
+  const [isAddRegionOpen, setIsAddRegionOpen] = useState(false);
+  const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
+  const [isAddEntityOpen, setIsAddEntityOpen] = useState(false);
+
+  // Sample data with state management
+  const [countries, setCountries] = useState([
+    { name: 'Afghanistan', status: false },
+    { name: 'India', status: true },
+    { name: 'Indonesia', status: true },
+    { name: 'Italy', status: false },
+    { name: 'United Arab Emirates', status: true },
+  ]);
+
+  const [regions, setRegions] = useState([
+    { country: 'India', region: 'East', status: true },
+    { country: 'India', region: 'South', status: true },
+    { country: 'India', region: 'North', status: true },
+    { country: 'India', region: 'West', status: true },
+  ]);
+
+  const [zones, setZones] = useState([
+    { country: 'India', region: 'West', zone: 'Bali', status: true, icon: '/placeholder.svg' },
+    { country: 'India', region: 'North', zone: 'Delhi', status: true, icon: '/placeholder.svg' },
+    { country: 'India', region: 'West', zone: 'Mumbai', status: true, icon: '/placeholder.svg' },
+  ]);
+
+  const [sites, setSites] = useState([
+    { country: 'India', region: 'West', zone: 'Mumbai', site: 'Lockated', latitude: '19.0760', longitude: '72.8777', status: true, qrCode: '/placeholder.svg' },
+  ]);
+
+  const [entities, setEntities] = useState([
+    { entity: 'GoPhygital', status: true },
+    { entity: 'TCS', status: true },
+    { entity: 'Andheri', status: false },
+    { entity: 'Noid 62', status: true },
+    { entity: 'HSBC', status: true },
+    { entity: 'lockated', status: true },
+    { entity: 'demo', status: false },
+    { entity: 'Sohail Ansari', status: true },
+  ]);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      toast.success('File uploaded successfully');
+    }
+  };
+
+  const handleSubmitCompany = () => {
+    toast.success('Company details updated successfully');
+  };
+
+  const handleSubmitEntity = () => {
+    if (!entityName.trim()) {
+      toast.error('Please enter an entity name');
+      return;
+    }
+    toast.success('Entity added successfully');
+    setEntityName('');
+  };
+
+  const handleImportEntity = () => {
+    toast.success('Entity import functionality triggered');
+  };
+
+  const handleSampleFormat = () => {
+    toast.info('Sample format downloaded');
+  };
+
+  const handleCountryStatusChange = (index: number, checked: boolean) => {
+    const updatedCountries = [...countries];
+    updatedCountries[index].status = checked;
+    setCountries(updatedCountries);
+  };
+
+  const handleRegionStatusChange = (index: number, checked: boolean) => {
+    const updatedRegions = [...regions];
+    updatedRegions[index].status = checked;
+    setRegions(updatedRegions);
+  };
+
+  const handleZoneStatusChange = (index: number, checked: boolean) => {
+    const updatedZones = [...zones];
+    updatedZones[index].status = checked;
+    setZones(updatedZones);
+  };
+
+  const handleSiteStatusChange = (index: number, checked: boolean) => {
+    const updatedSites = [...sites];
+    updatedSites[index].status = checked;
+    setSites(updatedSites);
+  };
+
+  const handleEntityStatusChange = (index: number, checked: boolean) => {
+    const updatedEntities = [...entities];
+    updatedEntities[index].status = checked;
+    setEntities(updatedEntities);
+  };
+
+  return (
+    <div className="p-6 bg-white min-h-screen">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">ACCOUNT</h1>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-7 mb-6">
+          <TabsTrigger value="organization">Organization</TabsTrigger>
+          <TabsTrigger value="company">Company</TabsTrigger>
+          <TabsTrigger value="country">Country</TabsTrigger>
+          <TabsTrigger value="region">Region</TabsTrigger>
+          <TabsTrigger value="zone">Zone</TabsTrigger>
+          <TabsTrigger value="site">Site</TabsTrigger>
+          <TabsTrigger value="entity">Entity</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="organization" className="space-y-4">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
+                <Upload className="w-8 h-8 text-gray-400" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#1a1a1a] mb-2">Lockated H.O</h2>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="company" className="space-y-4">
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              {/* File Upload */}
+              <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center">
+                <p className="text-gray-600">
+                  Drag & Drop or{' '}
+                  <label className="text-orange-500 cursor-pointer underline">
+                    Choose File
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      accept="image/*"
+                    />
+                  </label>
+                  {' '}No file chosen
+                </p>
+              </div>
+
+              {/* Company Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+              </div>
+
+              {/* Checkboxes */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="removeLogo"
+                    checked={removeLogo}
+                    onChange={(e) => setRemoveLogo(e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="removeLogo" className="text-sm text-gray-700">
+                    Remove Logo
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="dailyReport"
+                    checked={dailyReport}
+                    onChange={(e) => setDailyReport(e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="dailyReport" className="text-sm text-gray-700">
+                    Daily Helpdesk Report Email
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleSubmitCompany}
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+                >
+                  Submit
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="country" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog open={isAddCountryOpen} onOpenChange={setIsAddCountryOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Countries
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Country</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country Name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      placeholder="Enter country name"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                      Add Country
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <div className="flex items-center gap-4">
+              <select
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="text-sm text-gray-600">entries per page</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+                <Button size="sm" variant="outline">Search</Button>
+              </div>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Country</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {countries.map((country, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{country.name}</TableCell>
+                      <TableCell>
+                        <Switch 
+                          checked={country.status} 
+                          onCheckedChange={(checked) => handleCountryStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="region" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog open={isAddRegionOpen} onOpenChange={setIsAddRegionOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                  Add Region
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Region</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country
+                    </label>
+                    <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                      <option value="">Select Country</option>
+                      {countries.map((country, index) => (
+                        <option key={index} value={country.name}>{country.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Region Name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      placeholder="Enter region name"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsAddRegionOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                      Add Region
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <div className="flex items-center gap-4">
+              <select
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="text-sm text-gray-600">entries per page</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+                <Button size="sm" variant="outline">Search</Button>
+              </div>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Country</TableHead>
+                    <TableHead className="font-semibold">Region</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {regions.map((region, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{region.country}</TableCell>
+                      <TableCell>{region.region}</TableCell>
+                      <TableCell>
+                        <Switch 
+                          checked={region.status} 
+                          onCheckedChange={(checked) => handleRegionStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="zone" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-2">
+              <Dialog open={isAddZoneOpen} onOpenChange={setIsAddZoneOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                    Add Zone
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Zone</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Country
+                      </label>
+                      <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                        <option value="">Select Country</option>
+                        {countries.map((country, index) => (
+                          <option key={index} value={country.name}>{country.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Region
+                      </label>
+                      <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                        <option value="">Select Region</option>
+                        {regions.map((region, index) => (
+                          <option key={index} value={region.region}>{region.region}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Zone Name
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                        placeholder="Enter zone name"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setIsAddZoneOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                        Add Zone
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                Edit Zone
+              </Button>
+            </div>
+            <div className="flex items-center gap-4">
+              <select
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="text-sm text-gray-600">entries per page</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+                <Button size="sm" variant="outline">Search</Button>
+              </div>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Country</TableHead>
+                    <TableHead className="font-semibold">Region</TableHead>
+                    <TableHead className="font-semibold">Zone</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Icon</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {zones.map((zone, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{zone.country}</TableCell>
+                      <TableCell>{zone.region}</TableCell>
+                      <TableCell>{zone.zone}</TableCell>
+                      <TableCell>
+                        <Switch 
+                          checked={zone.status} 
+                          onCheckedChange={(checked) => handleZoneStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                          <img src={zone.icon} alt="Zone icon" className="w-6 h-6" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="site" className="space-y-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Country</TableHead>
+                    <TableHead className="font-semibold">Region</TableHead>
+                    <TableHead className="font-semibold">Zone</TableHead>
+                    <TableHead className="font-semibold">Site</TableHead>
+                    <TableHead className="font-semibold">Latitude</TableHead>
+                    <TableHead className="font-semibold">Longitude</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">QR Code</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sites.map((site, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{site.country}</TableCell>
+                      <TableCell>{site.region}</TableCell>
+                      <TableCell>{site.zone}</TableCell>
+                      <TableCell>{site.site}</TableCell>
+                      <TableCell>{site.latitude}</TableCell>
+                      <TableCell>{site.longitude}</TableCell>
+                      <TableCell>
+                        <Switch 
+                          checked={site.status} 
+                          onCheckedChange={(checked) => handleSiteStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                          <img src={site.qrCode} alt="QR Code" className="w-6 h-6" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="entity" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog open={isAddEntityOpen} onOpenChange={setIsAddEntityOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                  <File className="w-4 h-4 mr-2" />
+                  Add Entity
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Entity</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Entity Name
+                    </label>
+                    <input
+                      type="text"
+                      value={entityName}
+                      onChange={(e) => setEntityName(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      placeholder="Enter entity name"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsAddEntityOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      onClick={handleSubmitEntity}
+                    >
+                      Add Entity
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              {/* Entity Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Entity Name
+                </label>
+                <input
+                  type="text"
+                  value={entityName}
+                  onChange={(e) => setEntityName(e.target.value)}
+                  className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                  placeholder="Enter entity name"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSubmitEntity}
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                >
+                  Submit
+                </Button>
+                <Button
+                  onClick={handleSampleFormat}
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                >
+                  Sample Format
+                </Button>
+                <Button
+                  onClick={handleImportEntity}
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                >
+                  Import
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Actions</TableHead>
+                    <TableHead className="font-semibold">Active</TableHead>
+                    <TableHead className="font-semibold">Entity</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {entities.map((entity, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Switch 
+                          checked={entity.status} 
+                          onCheckedChange={(checked) => handleEntityStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
+                      </TableCell>
+                      <TableCell>{entity.entity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};

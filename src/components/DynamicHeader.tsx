@@ -12,6 +12,7 @@ const packages = [
   'Security',
   'Value Added Services',
   'Market Place',
+  'Master',
   'Settings'
 ];
 

@@ -1,111 +1,175 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  Box,
+  Typography,
+  Paper,
+  Stepper,
+  Step,
+  StepLabel,
+  Tabs,
+  Tab,
+  IconButton,
+  FormGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button as MuiButton,
+  Switch as MuiSwitch,
+  StepConnector,
+  styled
+} from '@mui/material';
+import {
+  Settings,
+  Edit,
+  Add,
+  Close,
+  AttachFile,
+  ArrowBack
+} from '@mui/icons-material';
+import { Cog } from 'lucide-react';
 
-interface TaskSection {
+// Styled Components
+const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
+  '& .MuiStepConnector-line': {
+    borderColor: '#E0E0E0',
+    borderTopWidth: 2,
+    borderStyle: 'dotted',
+  },
+}));
+
+const CustomStep = styled(Step)(({ theme }) => ({
+  '& .MuiStepLabel-root .Mui-completed': {
+    color: '#D42F2F',
+  },
+  '& .MuiStepLabel-root .Mui-active': {
+    color: '#D42F2F',
+  },
+  '& .MuiStepLabel-label': {
+    fontSize: '14px',
+    fontWeight: 500,
+  },
+}));
+
+const RedButton = styled(MuiButton)(({ theme }) => ({
+  backgroundColor: '#D42F2F',
+  color: 'white',
+  borderRadius: '8px',
+  textTransform: 'none',
+  padding: '8px 16px',
+  boxShadow: '0 2px 4px rgba(212, 47, 47, 0.2)',
+  '&:hover': {
+    backgroundColor: '#B8252F',
+    boxShadow: '0 4px 8px rgba(212, 47, 47, 0.3)',
+  },
+}));
+
+const DraftButton = styled(MuiButton)(({ theme }) => ({
+  backgroundColor: '#F5F1E8',
+  color: '#8B7355',
+  borderRadius: '8px',
+  textTransform: 'none',
+  padding: '8px 16px',
+  '&:hover': {
+    backgroundColor: '#EDE6D8',
+  },
+}));
+
+const SectionCard = styled(Paper)(({ theme }) => ({
+  padding: '24px',
+  borderRadius: '12px',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  border: '1px solid #F0F0F0',
+  marginBottom: '24px',
+}));
+
+const SectionHeader = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+  marginBottom: '24px',
+}));
+
+const RedIcon = styled(Settings)(({ theme }) => ({
+  color: '#D42F2F',
+  backgroundColor: '#D42F2F',
+  borderRadius: '50%',
+  padding: '8px',
+  fontSize: '32px',
+}));
+
+interface AttachmentFile {
+  id: string;
+  name: string;
+  url: string;
+}
+
+interface TaskQuestion {
   id: string;
   group: string;
   subGroup: string;
   task: string;
   inputType: string;
   mandatory: boolean;
-  reading: boolean;
-  helpText: string;
-  weightageValue: string;
-  failing: boolean;
+  helpText: boolean;
+  autoTicket: boolean;
 }
-
-const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
-  },
-};
-
-// Floating MUI TextField styles
-const floatingFieldStyles = {
-  width: '100%',
-  '& .MuiOutlinedInput-root': {
-    height: { xs: '36px', md: '45px' },
-    borderRadius: '8px',
-    backgroundColor: '#FFFFFF',
-    '& fieldset': {
-      borderColor: '#E0E0E0',
-    },
-    '&:hover fieldset': {
-      borderColor: '#1A1A1A',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-      borderWidth: 2,
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: '#666666',
-    fontSize: '16px',
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
-    '&.MuiInputLabel-shrink': {
-      transform: 'translate(14px, -9px) scale(0.75)',
-      backgroundColor: '#FFFFFF',
-      padding: '0 4px',
-    },
-  },
-  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
-    color: '#1A1A1A',
-    fontSize: '14px',
-    padding: { xs: '8px 14px', md: '12px 14px' },
-    height: 'auto',
-    '&::placeholder': {
-      color: '#999999',
-      opacity: 1,
-    },
-  },
-};
-
-const multilineFieldStyles = {
-  ...floatingFieldStyles,
-  '& .MuiOutlinedInput-root': {
-    ...floatingFieldStyles['& .MuiOutlinedInput-root'],
-    height: 'auto',
-    alignItems: 'flex-start',
-  },
-};
-
-// Custom styles for radio buttons and checkboxes
-const customRadioStyles = {
-  accentColor: '#C72030',
-  outline: 'none',
-  boxShadow: 'none',
-  border: 'none',
-};
-
-const customCheckboxStyles = {
-  accentColor: '#C72030',
-  outline: 'none',
-  boxShadow: 'none',
-  border: 'none',
-};
 
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [createNew, setCreateNew] = useState(false);
-  const [createTicket, setCreateTicket] = useState(false);
-  const [weightage, setWeightage] = useState(false);
-  const [activeTab, setActiveTab] = useState('Minutes');
   
-  // Task sections state
-  const [taskSections, setTaskSections] = useState<TaskSection[]>([
+  // Stepper state
+  const [activeStep, setActiveStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const steps = ['Basic Configuration', 'Schedule Setup', 'Question Setup', 'Time Setup', 'Mapping'];
+  
+  // Form data
+  const [formData, setFormData] = useState({
+    // Basic Configuration
+    type: 'PPM',
+    scheduleFor: 'Asset',
+    activityName: '',
+    description: '',
+    
+    // Schedule Setup
+    checklistType: 'Individual',
+    asset: '',
+    assignTo: '',
+    backupAssignee: '',
+    planDuration: '',
+    emailTriggerRule: '',
+    scanType: '',
+    category: '',
+    submissionTime: '',
+    supervisors: '',
+    lockOverdueTask: '',
+    frequency: '',
+    graceTime: '',
+    endAt: '',
+    supplier: '',
+    startFrom: '',
+    
+    // Mapping
+    assetName: '',
+    parameter: ''
+  });
+  
+  // Question Setup
+  const [tasks, setTasks] = useState<TaskQuestion[]>([
     {
       id: '1',
       group: '',
@@ -113,1174 +177,1437 @@ export const AddSchedulePage = () => {
       task: '',
       inputType: '',
       mandatory: false,
-      reading: false,
-      helpText: '',
-      weightageValue: '',
-      failing: false
+      helpText: false,
+      autoTicket: false
     }
   ]);
   
-  // Form states
-  const [formData, setFormData] = useState({
-    template: '',
-    ticketLevel: 'Question Level',
-    assignedTo: '',
-    ticketCategory: '',
-    activityName: '',
-    description: '',
-    checklistType: 'Individual',
-    asset: '',
-    assignTo: '',
-    scanType: '',
-    planDuration: '',
-    priority: '',
-    emailTriggerRule: '',
-    supervisors: '',
-    category: '',
-    submissionTime: '',
-    graceTime: '',
-    lockOverdueTask: '',
-    frequency: '',
-    startFrom: '',
-    endAt: ''
-  });
-
-  // Cron form states
-  const [cronFormData, setCronFormData] = useState({
-    minuteStart: '00',
-    minuteEnd: '59',
-    hourStart: '00',
-    hourEnd: '23',
-    dayStart: '01',
-    dayEnd: '31',
-    monthStart: 'Jan',
-    monthEnd: 'Dec',
-    selectedMinutes: [] as number[],
-    selectedHours: [] as number[],
-    selectedDays: [] as number[],
-    selectedMonths: [] as number[],
-    minuteOption: 'specific',
-    hourOption: 'specific',
-    dayOption: 'specific',
-    monthOption: 'specific'
-  });
-
-  const toggleMinute = (minute: number) => {
-    setCronFormData(prev => ({
-      ...prev,
-      selectedMinutes: prev.selectedMinutes.includes(minute) 
-        ? prev.selectedMinutes.filter(m => m !== minute)
-        : [...prev.selectedMinutes, minute]
-    }));
-  };
-
-  const toggleHour = (hour: number) => {
-    setCronFormData(prev => ({
-      ...prev,
-      selectedHours: prev.selectedHours.includes(hour) 
-        ? prev.selectedHours.filter(h => h !== hour)
-        : [...prev.selectedHours, hour]
-    }));
-  };
-
-  const toggleDay = (day: number) => {
-    setCronFormData(prev => ({
-      ...prev,
-      selectedDays: prev.selectedDays.includes(day) 
-        ? prev.selectedDays.filter(d => d !== day)
-        : [...prev.selectedDays, day]
-    }));
-  };
-
-  const toggleMonth = (month: number) => {
-    setCronFormData(prev => ({
-      ...prev,
-      selectedMonths: prev.selectedMonths.includes(month) 
-        ? prev.selectedMonths.filter(m => m !== month)
-        : [...prev.selectedMonths, month]
-    }));
-  };
-
-  const generateCronExpression = () => {
-    const { selectedMinutes, selectedHours, selectedDays, selectedMonths } = cronFormData;
-    
-    let minutes = '*';
-    let hours = '*';
-    let days = '*';
-    let months = '*';
-    
-    if (selectedMinutes.length > 0) {
-      minutes = selectedMinutes.sort((a, b) => a - b).join(',');
-    }
-    if (selectedHours.length > 0) {
-      hours = selectedHours.sort((a, b) => a - b).join(',');
-    }
-    if (selectedDays.length > 0) {
-      days = selectedDays.sort((a, b) => a - b).join(',');
-    }
-    if (selectedMonths.length > 0) {
-      months = selectedMonths.sort((a, b) => a - b).join(',');
+  // Time Setup
+  const [timeTab, setTimeTab] = useState(0);
+  const [selectedHours, setSelectedHours] = useState<number[]>([]);
+  const [hourRange, setHourRange] = useState({ start: 0, end: 23 });
+  const [everyHourBetween, setEveryHourBetween] = useState(false);
+  
+  // Minutes state
+  const [selectedMinutes, setSelectedMinutes] = useState<number[]>([]);
+  const [minuteRange, setMinuteRange] = useState({ start: 0, end: 59 });
+  const [everyMinuteBetween, setEveryMinuteBetween] = useState(false);
+  
+  // Day state
+  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<string[]>([]);
+  const [selectedDatesOfMonth, setSelectedDatesOfMonth] = useState<number[]>([]);
+  const [daySelectionType, setDaySelectionType] = useState<'weekdays' | 'dates'>('weekdays');
+  
+  // Month state
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [monthRange, setMonthRange] = useState({ start: 'January', end: 'January' });
+  const [everyMonthBetween, setEveryMonthBetween] = useState(false);
+  
+  // Attachments
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  
+  // Toggles
+  const [createTicket, setCreateTicket] = useState(false);
+  const [autoTicket, setAutoTicket] = useState(false);
+  
+  const handleNext = () => {
+    // Mark current step as completed
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
     }
     
-    return `${minutes} ${hours} ${days} ${months} *`;
-  };
-
-  const renderCronTabContent = () => {
-    switch (activeTab) {
-      case 'Minutes':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="specific-minute"
-                name="minute-option"
-                checked={cronFormData.minuteOption === 'specific'}
-                onChange={() => setCronFormData(prev => ({ ...prev, minuteOption: 'specific' }))}
-                style={customRadioStyles}
-              />
-              <Label htmlFor="specific-minute" className="text-sm">Specific minute (choose one or many)</Label>
-            </div>
-            
-            <div className="grid grid-cols-10 gap-2">
-              {Array.from({ length: 60 }, (_, i) => (
-                <label key={i} className="flex items-center space-x-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={cronFormData.selectedMinutes.includes(i)}
-                    onChange={() => toggleMinute(i)}
-                    style={customCheckboxStyles}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">{i.toString().padStart(2, '0')}</span>
-                </label>
-              ))}
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="every-minute"
-                name="minute-option"
-                checked={cronFormData.minuteOption === 'range'}
-                onChange={() => setCronFormData(prev => ({ ...prev, minuteOption: 'range' }))}
-                style={customRadioStyles}
-              />
-              <Label htmlFor="every-minute" className="text-sm">Every minute between minute</Label>
-              <FormControl variant="outlined" sx={{ ...fieldStyles, minWidth: 80 }}>
-                <MuiSelect
-                  value={cronFormData.minuteStart}
-                  onChange={(e) => setCronFormData(prev => ({ ...prev, minuteStart: e.target.value }))}
-                  displayEmpty
-                >
-                  {Array.from({ length: 60 }, (_, i) => (
-                    <MenuItem key={i} value={i.toString().padStart(2, '0')}>
-                      {i.toString().padStart(2, '0')}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              <span className="text-sm">and minute</span>
-              <FormControl variant="outlined" sx={{ ...fieldStyles, minWidth: 80 }}>
-                <MuiSelect
-                  value={cronFormData.minuteEnd}
-                  onChange={(e) => setCronFormData(prev => ({ ...prev, minuteEnd: e.target.value }))}
-                  displayEmpty
-                >
-                  {Array.from({ length: 60 }, (_, i) => (
-                    <MenuItem key={i} value={i.toString().padStart(2, '0')}>
-                      {i.toString().padStart(2, '0')}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </div>
-        );
-      
-      case 'Hours':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="specific-hour"
-                name="hour-option"
-                checked={cronFormData.hourOption === 'specific'}
-                onChange={() => setCronFormData(prev => ({ ...prev, hourOption: 'specific' }))}
-                style={customRadioStyles}
-              />
-              <Label htmlFor="specific-hour" className="text-sm">Specific hour (choose one or many)</Label>
-            </div>
-            
-            <div className="grid grid-cols-12 gap-2">
-              {Array.from({ length: 24 }, (_, i) => (
-                <label key={i} className="flex items-center space-x-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={cronFormData.selectedHours.includes(i)}
-                    onChange={() => toggleHour(i)}
-                    style={customCheckboxStyles}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">{i.toString().padStart(2, '0')}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-      
-      case 'Day':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="specific-day"
-                name="day-option"
-                checked={cronFormData.dayOption === 'specific'}
-                onChange={() => setCronFormData(prev => ({ ...prev, dayOption: 'specific' }))}
-                style={customRadioStyles}
-              />
-              <Label htmlFor="specific-day" className="text-sm">Specific day of month (choose one or many)</Label>
-            </div>
-            
-            <div className="grid grid-cols-10 gap-2">
-              {Array.from({ length: 31 }, (_, i) => (
-                <label key={i + 1} className="flex items-center space-x-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={cronFormData.selectedDays.includes(i + 1)}
-                    onChange={() => toggleDay(i + 1)}
-                    style={customCheckboxStyles}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">{(i + 1).toString().padStart(2, '0')}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-      
-      case 'Month':
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="specific-month"
-                name="month-option"
-                checked={cronFormData.monthOption === 'specific'}
-                onChange={() => setCronFormData(prev => ({ ...prev, monthOption: 'specific' }))}
-                style={customRadioStyles}
-              />
-              <Label htmlFor="specific-month" className="text-sm">Specific month (choose one or many)</Label>
-            </div>
-            
-            <div className="grid grid-cols-6 gap-2">
-              {Array.from({ length: 12 }, (_, i) => (
-                <label key={i + 1} className="flex items-center space-x-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={cronFormData.selectedMonths.includes(i + 1)}
-                    onChange={() => toggleMonth(i + 1)}
-                    style={customCheckboxStyles}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">{monthNames[i]}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-      
-      default:
-        return null;
+    if (activeStep < steps.length - 1) {
+      setActiveStep(activeStep + 1);
     }
   };
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  
+  const handleBack = () => {
+    if (activeStep > 0) {
+      const newActiveStep = activeStep - 1;
+      // Remove completion status from steps after the new active step
+      setCompletedSteps(completedSteps.filter(step => step < newActiveStep));
+      setActiveStep(newActiveStep);
+    }
   };
-
-  const handleCronFormChange = (field: string, value: string) => {
-    setCronFormData(prev => ({ ...prev, [field]: value }));
+  
+  const handleStepClick = (step: number) => {
+    if (step < activeStep) {
+      // Going backwards - remove completion status from steps after the clicked step
+      setCompletedSteps(completedSteps.filter(stepIndex => stepIndex < step));
+    } else if (step > activeStep) {
+      // Going forwards - mark current step as completed
+      if (!completedSteps.includes(activeStep)) {
+        setCompletedSteps([...completedSteps, activeStep]);
+      }
+    }
+    setActiveStep(step);
   };
-
-  const handleTaskSectionChange = (sectionId: string, field: keyof TaskSection, value: any) => {
-    setTaskSections(prev => 
-      prev.map(section => 
-        section.id === sectionId 
-          ? { ...section, [field]: value }
-          : section
-      )
-    );
+  
+  // Check if a step should be red (active or completed)
+  const isStepRed = (stepIndex: number) => {
+    return stepIndex === activeStep || completedSteps.includes(stepIndex);
   };
-
-  const handleAddSection = () => {
-    const newSection: TaskSection = {
+  
+  const addTask = () => {
+    const newTask: TaskQuestion = {
       id: Date.now().toString(),
       group: '',
       subGroup: '',
       task: '',
       inputType: '',
       mandatory: false,
-      reading: false,
-      helpText: '',
-      weightageValue: '',
-      failing: false
+      helpText: false,
+      autoTicket: false
     };
-    setTaskSections(prev => [...prev, newSection]);
+    setTasks([...tasks, newTask]);
   };
-
-  const handleRemoveSection = (sectionId: string) => {
-    if (taskSections.length > 1) {
-      setTaskSections(prev => prev.filter(section => section.id !== sectionId));
+  
+  const updateTask = (id: string, field: keyof TaskQuestion, value: any) => {
+    setTasks(tasks.map(task => 
+      task.id === id ? { ...task, [field]: value } : task
+    ));
+  };
+  
+  const addAttachment = () => {
+    // In a real app, this would open a file picker
+    const newAttachment: AttachmentFile = {
+      id: Date.now().toString(),
+      name: 'attachment.pdf',
+      url: '#'
+    };
+    setAttachments([...attachments, newAttachment]);
+  };
+  
+  const removeAttachment = (id: string) => {
+    setAttachments(attachments.filter(att => att.id !== id));
+  };
+  
+  const toggleHour = (hour: number) => {
+    setSelectedHours(prev => 
+      prev.includes(hour) 
+        ? prev.filter(h => h !== hour)
+        : [...prev, hour]
+    );
+  };
+  
+  const toggleMinute = (minute: number) => {
+    setSelectedMinutes(prev => 
+      prev.includes(minute) 
+        ? prev.filter(m => m !== minute)
+        : [...prev, minute]
+    );
+  };
+  
+  const toggleDayOfWeek = (day: string) => {
+    setSelectedDaysOfWeek(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+  
+  const toggleDateOfMonth = (date: number) => {
+    setSelectedDatesOfMonth(prev => 
+      prev.includes(date) 
+        ? prev.filter(d => d !== date)
+        : [...prev, date]
+    );
+  };
+  
+  const toggleAllDaysOfWeek = (checked: boolean) => {
+    if (checked) {
+      setSelectedDaysOfWeek(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
+    } else {
+      setSelectedDaysOfWeek([]);
     }
   };
-
-  const handleSubmit = () => {
-    console.log('Submitting schedule data:', { formData, taskSections, cronFormData });
+  
+  const toggleMonth = (month: string) => {
+    setSelectedMonths(prev => 
+      prev.includes(month) 
+        ? prev.filter(m => m !== month)
+        : [...prev, month]
+    );
+  };
+  
+  const toggleAllMonths = (checked: boolean) => {
+    if (checked) {
+      setSelectedMonths(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']);
+    } else {
+      setSelectedMonths([]);
+    }
+  };
+  
+  const handleSave = () => {
     toast({
       title: "Success",
       description: "Schedule saved successfully!",
     });
-    navigate('/maintenance/schedule');
+  };
+  
+  const handleSaveDraft = () => {
+    toast({
+      title: "Draft Saved",
+      description: "Schedule saved as draft!",
+    });
+  };
+
+  const renderStepContent = () => {
+    // Show all steps up to and including the current active step
+    const stepsToShow = [];
+    
+    for (let i = 0; i <= activeStep; i++) {
+      stepsToShow.push(
+        <Box key={`step-${i}`}>
+          {renderSingleStep(i)}
+        </Box>
+      );
+    }
+    
+    return stepsToShow;
+  };
+
+  const renderSingleStep = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0: // Basic Configuration
+        return (
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  backgroundColor: '#C72030',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Cog size={16} color="white" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                  Basic Configuration
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <MuiSwitch 
+                  checked={createTicket}
+                  onChange={(e) => setCreateTicket(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                  }}
+                />
+                <Typography variant="body2" sx={{ color: '#666' }}>Create Ticket</Typography>
+              </Box>
+            </Box>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#666' }}>
+                      Schedule For: <strong>Asset</strong>
+                    </Typography>
+                    {stepIndex < activeStep && (
+                      <MuiButton
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Edit />}
+                        onClick={() => handleStepClick(stepIndex)}
+                        sx={{
+                          color: '#C72030',
+                          borderColor: '#C72030',
+                          fontSize: '12px',
+                          padding: '4px 12px',
+                          minWidth: 'auto',
+                          '&:hover': {
+                            borderColor: '#C72030',
+                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                          }
+                        }}
+                      >
+                        Edit
+                      </MuiButton>
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+              
+              <RadioGroup
+                row
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                sx={{ mb: 3 }}
+              >
+                <FormControlLabel 
+                  value="PPM" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="PPM" 
+                />
+                <FormControlLabel 
+                  value="AMC" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="AMC" 
+                />
+                <FormControlLabel 
+                  value="Preparedness" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Preparedness" 
+                />
+                <FormControlLabel 
+                  value="Routine" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Routine" 
+                />
+              </RadioGroup>
+              
+              <TextField
+                label="Activity Name"
+                placeholder="Enter Activity Name"
+                fullWidth
+                value={formData.activityName}
+                onChange={(e) => setFormData({...formData, activityName: e.target.value})}
+                sx={{ mb: 3 }}
+              />
+              
+              <TextField
+                label="Description"
+                placeholder="Enter Description/SOP"
+                fullWidth
+                multiline
+                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                sx={{ mb: 3 }}
+              />
+              
+              {/* Add Attachment Button */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <RedButton 
+                  startIcon={<AttachFile />}
+                  onClick={addAttachment}
+                >
+                  Add Attachment
+                </RedButton>
+              </Box>
+            </SectionCard>
+          </Box>
+        );
+        
+      case 1: // Schedule Setup
+        return (
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                Schedule Setup
+              </Typography>
+            </Box>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
+              <Box sx={{ mb: 3 }}>
+                <RadioGroup
+                  row
+                  value={formData.checklistType}
+                  onChange={(e) => setFormData({...formData, checklistType: e.target.value})}
+                >
+                  <FormControlLabel 
+                    value="Individual" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Individual" 
+                  />
+                  <FormControlLabel 
+                    value="Asset Group" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Asset Group" 
+                  />
+                  <FormControlLabel 
+                    value="Branching" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Branching" 
+                  />
+                </RadioGroup>
+              </Box>
+              
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Asset</InputLabel>
+                  <Select value={formData.asset} onChange={(e) => setFormData({...formData, asset: e.target.value})}>
+                    <MenuItem value="">Select Asset</MenuItem>
+                    <MenuItem value="asset1">Asset 1</MenuItem>
+                    <MenuItem value="asset2">Asset 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Assign To</InputLabel>
+                  <Select value={formData.assignTo} onChange={(e) => setFormData({...formData, assignTo: e.target.value})}>
+                    <MenuItem value="">Select Assign To</MenuItem>
+                    <MenuItem value="user1">User 1</MenuItem>
+                    <MenuItem value="user2">User 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Backup Assignee</InputLabel>
+                  <Select value={formData.backupAssignee} onChange={(e) => setFormData({...formData, backupAssignee: e.target.value})}>
+                    <MenuItem value="">Select Backup Assignee</MenuItem>
+                    <MenuItem value="backup1">Backup 1</MenuItem>
+                    <MenuItem value="backup2">Backup 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Plan Duration</InputLabel>
+                  <Select value={formData.planDuration} onChange={(e) => setFormData({...formData, planDuration: e.target.value})}>
+                    <MenuItem value="">Select Plan Duration</MenuItem>
+                    <MenuItem value="1h">1 Hour</MenuItem>
+                    <MenuItem value="2h">2 Hours</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Email Trigger Rule</InputLabel>
+                  <Select value={formData.emailTriggerRule} onChange={(e) => setFormData({...formData, emailTriggerRule: e.target.value})}>
+                    <MenuItem value="">Select Email Trigger Rule</MenuItem>
+                    <MenuItem value="immediate">Immediate</MenuItem>
+                    <MenuItem value="daily">Daily</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Scan Type</InputLabel>
+                  <Select value={formData.scanType} onChange={(e) => setFormData({...formData, scanType: e.target.value})}>
+                    <MenuItem value="">Select Scan Type</MenuItem>
+                    <MenuItem value="qr">QR Code</MenuItem>
+                    <MenuItem value="barcode">Barcode</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Category</InputLabel>
+                  <Select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+                    <MenuItem value="">Select Category</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                    <MenuItem value="inspection">Inspection</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Submission Time</InputLabel>
+                  <Select value={formData.submissionTime} onChange={(e) => setFormData({...formData, submissionTime: e.target.value})}>
+                    <MenuItem value="">Select Submission Time</MenuItem>
+                    <MenuItem value="9am">9:00 AM</MenuItem>
+                    <MenuItem value="12pm">12:00 PM</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Supervisors</InputLabel>
+                  <Select value={formData.supervisors} onChange={(e) => setFormData({...formData, supervisors: e.target.value})}>
+                    <MenuItem value="">Select Supervisors</MenuItem>
+                    <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+                    <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Lock Overdue Task</InputLabel>
+                  <Select value={formData.lockOverdueTask} onChange={(e) => setFormData({...formData, lockOverdueTask: e.target.value})}>
+                    <MenuItem value="">Select Lock Status</MenuItem>
+                    <MenuItem value="yes">Yes</MenuItem>
+                    <MenuItem value="no">No</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Frequency</InputLabel>
+                  <Select value={formData.frequency} onChange={(e) => setFormData({...formData, frequency: e.target.value})}>
+                    <MenuItem value="">Select Frequency</MenuItem>
+                    <MenuItem value="daily">Daily</MenuItem>
+                    <MenuItem value="weekly">Weekly</MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Grace Time</InputLabel>
+                  <Select value={formData.graceTime} onChange={(e) => setFormData({...formData, graceTime: e.target.value})}>
+                    <MenuItem value="">Select Grace Time</MenuItem>
+                    <MenuItem value="30min">30 Minutes</MenuItem>
+                    <MenuItem value="1h">1 Hour</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>End At</InputLabel>
+                  <Select value={formData.endAt} onChange={(e) => setFormData({...formData, endAt: e.target.value})}>
+                    <MenuItem value="">Select End Date</MenuItem>
+                    <MenuItem value="2024-12-31">Dec 31, 2024</MenuItem>
+                    <MenuItem value="2025-06-30">Jun 30, 2025</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Supplier</InputLabel>
+                  <Select value={formData.supplier} onChange={(e) => setFormData({...formData, supplier: e.target.value})}>
+                    <MenuItem value="">Select Supplier</MenuItem>
+                    <MenuItem value="supplier1">Supplier 1</MenuItem>
+                    <MenuItem value="supplier2">Supplier 2</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth>
+                  <InputLabel>Start From</InputLabel>
+                  <Select value={formData.startFrom} onChange={(e) => setFormData({...formData, startFrom: e.target.value})}>
+                    <MenuItem value="">Select Start Date</MenuItem>
+                    <MenuItem value="2024-01-01">Jan 1, 2024</MenuItem>
+                    <MenuItem value="2024-02-01">Feb 1, 2024</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </SectionCard>
+          </Box>
+        );
+        
+      case 2: // Question Setup
+        return (
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  backgroundColor: '#C72030',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Cog size={16} color="white" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                  Question Setup
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MuiSwitch 
+                    checked={autoTicket}
+                    onChange={(e) => setAutoTicket(e.target.checked)}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ color: '#666' }}>Auto Ticket</Typography>
+                </Box>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<Add />}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  + Weightage
+                </MuiButton>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<Add />}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  + Add Section
+                </MuiButton>
+              </Box>
+            </Box>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Questions</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
+              {tasks.map((task, index) => (
+                <Box key={task.id} sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                    Task {index + 1}
+                  </Typography>
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Group</InputLabel>
+                      <Select 
+                        value={task.group} 
+                        onChange={(e) => updateTask(task.id, 'group', e.target.value)}
+                      >
+                        <MenuItem value="">Select Group</MenuItem>
+                        <MenuItem value="group1">Group 1</MenuItem>
+                        <MenuItem value="group2">Group 2</MenuItem>
+                      </Select>
+                    </FormControl>
+                    
+                    <FormControl fullWidth>
+                      <InputLabel>Sub-Group</InputLabel>
+                      <Select 
+                        value={task.subGroup} 
+                        onChange={(e) => updateTask(task.id, 'subGroup', e.target.value)}
+                      >
+                        <MenuItem value="">Select Sub-Group</MenuItem>
+                        <MenuItem value="subgroup1">Sub-Group 1</MenuItem>
+                        <MenuItem value="subgroup2">Sub-Group 2</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  
+                  {/* Dashed Border Section */}
+                  <Box sx={{ 
+                    border: '2px dashed #E0E0E0', 
+                    padding: 2, 
+                    borderRadius: '8px',
+                    backgroundColor: '#FAFAFA'
+                  }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 4 }}>
+                        <FormControlLabel
+                          control={
+                            <Radio 
+                              checked={task.mandatory}
+                              onChange={(e) => updateTask(task.id, 'mandatory', e.target.checked)}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+                          }
+                          label="Mandatory"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Radio 
+                              checked={task.helpText}
+                              onChange={(e) => updateTask(task.id, 'helpText', e.target.checked)}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+                          }
+                          label="Help Text"
+                        />
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <MuiSwitch 
+                          checked={task.autoTicket}
+                          onChange={(e) => updateTask(task.id, 'autoTicket', e.target.checked)}
+                          sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                          }}
+                        />
+                        <Typography variant="body2" sx={{ color: '#666' }}>Auto Ticket</Typography>
+                      </Box>
+                    </Box>
+                    
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
+                      <TextField
+                        label="Task"
+                        placeholder="Enter Task"
+                        fullWidth
+                        value={task.task}
+                        onChange={(e) => updateTask(task.id, 'task', e.target.value)}
+                      />
+                      
+                      <FormControl fullWidth>
+                        <InputLabel>Input Type</InputLabel>
+                        <Select 
+                          value={task.inputType} 
+                          onChange={(e) => updateTask(task.id, 'inputType', e.target.value)}
+                        >
+                          <MenuItem value="">Select Input Type</MenuItem>
+                          <MenuItem value="text">Text</MenuItem>
+                          <MenuItem value="number">Number</MenuItem>
+                          <MenuItem value="dropdown">Dropdown</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+              
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<Add />}
+                  onClick={addTask}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  + Add Question
+                </MuiButton>
+              </Box>
+            </SectionCard>
+          </Box>
+        );
+        
+      case 3: // Time Setup
+        return (
+          <Box>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                Time Setup
+              </Typography>
+            </Box>
+
+            {/* Main Content in Single White Box */}
+            <Box sx={{ 
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: 3,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Time Configuration</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
+              <Tabs
+                value={timeTab} 
+                onChange={(e, newValue) => setTimeTab(newValue)}
+                sx={{ 
+                  borderBottom: 1, 
+                  borderColor: 'divider', 
+                  mb: 3,
+                  '& .MuiTab-root.Mui-selected': {
+                    backgroundColor: '#C72030',
+                    color: 'white',
+                    borderRadius: '4px 4px 0 0'
+                  }
+                }}
+              >
+                <Tab label="Hours" />
+                <Tab label="Minutes" />
+                <Tab label="Day" />
+                <Tab label="Month" />
+              </Tabs>
+              
+              {timeTab === 0 && (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={!everyHourBetween}
+                        onChange={() => setEveryHourBetween(false)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Choose one or more specific hours"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        sx={{ 
+                          color: '#C72030', 
+                          '&.Mui-checked': { color: '#C72030' }
+                        }}
+                      />
+                    }
+                    label="Select All"
+                    sx={{ mb: 2, display: 'block' }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 1, mb: 3 }}>
+                    {Array.from({length: 24}, (_, i) => (
+                      <FormControlLabel
+                        key={i}
+                        control={
+                          <Checkbox
+                            checked={selectedHours.includes(i)}
+                            onChange={() => toggleHour(i)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={i.toString().padStart(2, '0')}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="bottom"
+                      />
+                    ))}
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={everyHourBetween}
+                        onChange={() => setEveryHourBetween(true)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Every hour between hour"
+                  />
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                    <FormControl size="small">
+                      <Select 
+                        value={hourRange.start} 
+                        onChange={(e) => setHourRange({...hourRange, start: Number(e.target.value)})}
+                        displayEmpty
+                      >
+                        {Array.from({length: 24}, (_, i) => (
+                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    
+                    <Typography>and hour</Typography>
+                    
+                    <FormControl size="small">
+                      <Select 
+                        value={hourRange.end} 
+                        onChange={(e) => setHourRange({...hourRange, end: Number(e.target.value)})}
+                        displayEmpty
+                      >
+                        {Array.from({length: 24}, (_, i) => (
+                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+              )}
+
+              {timeTab === 1 && (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={!everyMinuteBetween}
+                        onChange={() => setEveryMinuteBetween(false)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Specific minutes (choose one or many)"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1, mb: 3 }}>
+                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
+                      <FormControlLabel
+                        key={minute}
+                        control={
+                          <Checkbox
+                            checked={selectedMinutes.includes(minute)}
+                            onChange={() => toggleMinute(minute)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={`${minute.toString().padStart(2, '0')} minute${minute !== 1 ? 's' : ''}`}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={everyMinuteBetween}
+                        onChange={() => setEveryMinuteBetween(true)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Every minute between minute"
+                  />
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                    <FormControl size="small">
+                      <Select 
+                        value={minuteRange.start} 
+                        onChange={(e) => setMinuteRange({...minuteRange, start: Number(e.target.value)})}
+                        displayEmpty
+                      >
+                        {Array.from({length: 60}, (_, i) => (
+                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    
+                    <Typography>and minute</Typography>
+                    
+                    <FormControl size="small">
+                      <Select 
+                        value={minuteRange.end} 
+                        onChange={(e) => setMinuteRange({...minuteRange, end: Number(e.target.value)})}
+                        displayEmpty
+                      >
+                        {Array.from({length: 60}, (_, i) => (
+                          <MenuItem key={i} value={i}>{i.toString().padStart(2, '0')}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+              )}
+
+              {timeTab === 2 && (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={daySelectionType === 'weekdays'}
+                        onChange={() => setDaySelectionType('weekdays')}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Placeholder"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedDaysOfWeek.length === 7}
+                        onChange={(e) => toggleAllDaysOfWeek(e.target.checked)}
+                        sx={{ 
+                          color: '#C72030', 
+                          '&.Mui-checked': { color: '#C72030' }
+                        }}
+                      />
+                    }
+                    label="Select All"
+                    sx={{ mb: 2, display: 'block' }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, mb: 3 }}>
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                      <FormControlLabel
+                        key={day}
+                        control={
+                          <Checkbox
+                            checked={selectedDaysOfWeek.includes(day)}
+                            onChange={() => toggleDayOfWeek(day)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={day}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={daySelectionType === 'dates'}
+                        onChange={() => setDaySelectionType('dates')}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Specific date of month (choose one or many)"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 1, mb: 3 }}>
+                    {Array.from({length: 31}, (_, i) => i + 1).map((date) => (
+                      <FormControlLabel
+                        key={date}
+                        control={
+                          <Checkbox
+                            checked={selectedDatesOfMonth.includes(date)}
+                            onChange={() => toggleDateOfMonth(date)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={date.toString().padStart(2, '0')}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {timeTab === 3 && (
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={!everyMonthBetween}
+                        onChange={() => setEveryMonthBetween(false)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Placeholder"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedMonths.length === 12}
+                        onChange={(e) => toggleAllMonths(e.target.checked)}
+                        sx={{ 
+                          color: '#C72030', 
+                          '&.Mui-checked': { color: '#C72030' }
+                        }}
+                      />
+                    }
+                    label="Select All"
+                    sx={{ mb: 2, display: 'block' }}
+                  />
+                  
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1, mb: 3 }}>
+                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
+                      <FormControlLabel
+                        key={month}
+                        control={
+                          <Checkbox
+                            checked={selectedMonths.includes(month)}
+                            onChange={() => toggleMonth(month)}
+                            sx={{ 
+                              color: '#C72030', 
+                              '&.Mui-checked': { color: '#C72030' },
+                              padding: '4px'
+                            }}
+                          />
+                        }
+                        label={month}
+                        sx={{ margin: 0, fontSize: '12px' }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Radio 
+                        checked={everyMonthBetween}
+                        onChange={() => setEveryMonthBetween(true)}
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      />
+                    }
+                    label="Every month between"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                    <FormControl size="small">
+                      <Select 
+                        value={monthRange.start} 
+                        onChange={(e) => setMonthRange({...monthRange, start: e.target.value})}
+                        displayEmpty
+                      >
+                        {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
+                          <MenuItem key={month} value={month}>{month}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    
+                    <Typography>and</Typography>
+                    
+                    <FormControl size="small">
+                      <Select 
+                        value={monthRange.end} 
+                        onChange={(e) => setMonthRange({...monthRange, end: e.target.value})}
+                        displayEmpty
+                      >
+                        {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
+                          <MenuItem key={month} value={month}>{month}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+              )}
+
+              {/* Summary Table in the same container */}
+              <TableContainer sx={{ mt: 3 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Hours</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Minutes</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Day Of Month</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Month</strong></TableCell>
+                      <TableCell sx={{ backgroundColor: '#f6f4ee' }}><strong>Day Of Week</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>00</TableCell>
+                      <TableCell>00</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Box>
+        );
+        
+      case 4: // Mapping
+        return (
+          <Box sx={{ mt: 4 }}>
+            {/* Header Outside the Box */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              mb: 3,
+              px: 1
+            }}>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                Mapping
+              </Typography>
+            </Box>
+
+            {/* Main Content in White Box */}
+            <SectionCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Asset Mapping</Typography>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+                <TextField
+                  label="Asset Name"
+                  placeholder="Energy Meter"
+                  fullWidth
+                  value={formData.assetName}
+                  onChange={(e) => setFormData({...formData, assetName: e.target.value})}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#C72030',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#C72030',
+                    },
+                  }}
+                />
+                
+                <FormControl 
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#C72030',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#C72030',
+                    },
+                  }}
+                >
+                  <InputLabel>Parameter</InputLabel>
+                  <Select 
+                    value={formData.parameter} 
+                    onChange={(e) => setFormData({...formData, parameter: e.target.value})}
+                    label="Parameter"
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <em>Select Parameter</em>
+                    </MenuItem>
+                    <MenuItem value="temperature">Temperature</MenuItem>
+                    <MenuItem value="pressure">Pressure</MenuItem>
+                    <MenuItem value="voltage">Voltage</MenuItem>
+                    <MenuItem value="current">Current</MenuItem>
+                    <MenuItem value="power">Power</MenuItem>
+                    <MenuItem value="frequency">Frequency</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </SectionCard>
+          </Box>
+        );
+        
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <Box sx={{ padding: 3, maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center gap-2 sm:gap-4 mb-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/maintenance/schedule')}
-            className="p-2 hover:bg-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />
-          </Button>
-        </div>
-        <div>
-          <p className="text-gray-600 mb-2 text-xs sm:text-sm">Schedule &gt; Add Schedule</p>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[#1a1a1a] uppercase">ADD SCHEDULE</h1>
-        </div>
-      </div>
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <IconButton onClick={() => navigate('/maintenance/schedule')}>
+            <ArrowBack sx={{ color: '#D42F2F' }} />
+          </IconButton>
+        </Box>
+        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+          Schedule &gt; Add Schedule
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+          ADD SCHEDULE
+        </Typography>
+      </Box>
 
-      {/* Toggles */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-        <div className="flex items-center space-x-2">
-          <Switch 
-            checked={createNew} 
-            onCheckedChange={setCreateNew}
-            id="create-new"
-            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
-          />
-          <Label htmlFor="create-new" className="text-sm">Create New</Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch 
-            checked={createTicket} 
-            onCheckedChange={setCreateTicket}
-            id="create-ticket"
-            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
-          />
-          <Label htmlFor="create-ticket" className="text-sm">Create Ticket</Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch 
-            checked={weightage} 
-            onCheckedChange={setWeightage}
-            id="weightage"
-            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
-          />
-          <Label htmlFor="weightage" className="text-sm">Weightage</Label>
-        </div>
-      </div>
-
-      {/* Create New Toggle Section */}
-      {createNew && (
-        <Card>
-          <CardContent className="pt-4 sm:pt-6">
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="template-label" shrink>Select from the existing Template</InputLabel>
-                <MuiSelect
-                  labelId="template-label"
-                  label="Select from the existing Template"
-                  displayEmpty
-                  value={formData.template}
-                  onChange={(e) => handleInputChange('template', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select from the existing Template</em></MenuItem>
-                  <MenuItem value="template1">Template 1</MenuItem>
-                  <MenuItem value="template2">Template 2</MenuItem>
-                  <MenuItem value="template3">Template 3</MenuItem>
-                  <MenuItem value="custom">Custom Template</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Create Ticket Toggle Section */}
-      {createTicket && (
-        <Card>
-          <CardContent className="pt-4 sm:pt-6">
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                <div className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    id="checklist-level" 
-                    name="ticketLevel" 
-                    value="Checklist Level"
-                    checked={formData.ticketLevel === 'Checklist Level'}
-                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
-                    style={customRadioStyles}
-                    className="focus:outline-none focus:ring-0"
-                  />
-                  <Label htmlFor="checklist-level" className="text-sm">Checklist Level</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    id="question-level" 
-                    name="ticketLevel" 
-                    value="Question Level"
-                    checked={formData.ticketLevel === 'Question Level'}
-                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
-                    style={customRadioStyles}
-                    className="focus:outline-none focus:ring-0"
-                  />
-                  <Label htmlFor="question-level" className="text-sm">Question Level</Label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel id="assigned-to-label" shrink>Select Assigned To</InputLabel>
-                    <MuiSelect
-                      labelId="assigned-to-label"
-                      label="Select Assigned To"
-                      displayEmpty
-                      value={formData.assignedTo}
-                      onChange={(e) => handleInputChange('assignedTo', e.target.value)}
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Assigned To</em></MenuItem>
-                      <MenuItem value="admin">Admin</MenuItem>
-                      <MenuItem value="supervisor">Supervisor</MenuItem>
-                      <MenuItem value="technician">Technician</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel id="ticket-category-label" shrink>Select Category</InputLabel>
-                    <MuiSelect
-                      labelId="ticket-category-label"
-                      label="Select Category"
-                      displayEmpty
-                      value={formData.ticketCategory}
-                      onChange={(e) => handleInputChange('ticketCategory', e.target.value)}
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Category</em></MenuItem>
-                      <MenuItem value="technical">Technical</MenuItem>
-                      <MenuItem value="non-technical">Non Technical</MenuItem>
-                      <MenuItem value="maintenance">Maintenance</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Basic Info Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">1</span>
-            Basic Info
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
-            <Label className="text-sm font-medium">Type</Label>
-            <div className="flex flex-wrap gap-2 sm:gap-4">
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="ppm" 
-                  name="type" 
-                  value="PPM" 
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="ppm" className="text-sm">PPM</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="amc" 
-                  name="type" 
-                  value="AMC" 
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="amc" className="text-sm">AMC</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="preparedness" 
-                  name="type" 
-                  value="Preparedness" 
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="preparedness" className="text-sm">Preparedness</Label>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
-            <Label className="text-sm font-medium">Schedule For</Label>
-            <div className="flex flex-wrap gap-2 sm:gap-4">
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="asset" 
-                  name="scheduleFor" 
-                  value="Asset" 
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="asset" className="text-sm">Asset</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="service" 
-                  name="scheduleFor" 
-                  value="Service" 
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="service" className="text-sm">Service</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="vendor" 
-                  name="scheduleFor" 
-                  value="Vendor" 
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="vendor" className="text-sm">Vendor</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="training" 
-                  name="scheduleFor" 
-                  value="Training" 
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="training" className="text-sm">Training</Label>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <TextField
-              label="Activity Name"
-              placeholder="Enter Activity Name"
-              value={formData.activityName}
-              onChange={(e) => handleInputChange('activityName', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={floatingFieldStyles}
-            />
-          </div>
-
-          <div>
-            <TextField
-              label="Description"
-              placeholder="Enter Description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={3}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={multilineFieldStyles}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Task Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">2</span>
-              <span className="text-sm sm:text-base">Task</span>
-            </div>
-            <Button 
-              onClick={handleAddSection}
-              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2"
-            >
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Add Section
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 sm:space-y-6">
-          {taskSections.map((section, index) => (
-            <div key={section.id} className="space-y-4 p-3 sm:p-4 border rounded-lg relative">
-              {taskSections.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveSection(section.id)}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 text-red-500 hover:text-red-700 p-1"
-                >
-                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                </Button>
-              )}
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel id={`group-${section.id}-label`} shrink>Group</InputLabel>
-                    <MuiSelect
-                      labelId={`group-${section.id}-label`}
-                      label="Group"
-                      displayEmpty
-                      value={section.group}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'group', e.target.value)}
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Group</em></MenuItem>
-                      <MenuItem value="group1">Group 1</MenuItem>
-                      <MenuItem value="group2">Group 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel id={`subgroup-${section.id}-label`} shrink>SubGroup</InputLabel>
-                    <MuiSelect
-                      labelId={`subgroup-${section.id}-label`}
-                      label="SubGroup"
-                      displayEmpty
-                      value={section.subGroup}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'subGroup', e.target.value)}
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                      <MenuItem value="subgroup1">Sub Group 1</MenuItem>
-                      <MenuItem value="subgroup2">Sub Group 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-1">
-                  <TextField
-                    label="Task"
-                    placeholder="Enter Task"
-                    value={section.task}
-                    onChange={(e) => handleTaskSectionChange(section.id, 'task', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={floatingFieldStyles}
-                  />
-                </div>
-                <div className="lg:col-span-1">
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel id={`input-type-${section.id}-label`} shrink>Input Type</InputLabel>
-                    <MuiSelect
-                      labelId={`input-type-${section.id}-label`}
-                      label="Input Type"
-                      displayEmpty
-                      value={section.inputType}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'inputType', e.target.value)}
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Input Type</em></MenuItem>
-                      <MenuItem value="text">Text</MenuItem>
-                      <MenuItem value="number">Number</MenuItem>
-                      <MenuItem value="dropdown">Dropdown</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-                <div className="lg:col-span-1 flex flex-wrap items-center gap-2 sm:gap-4 pt-2 sm:pt-6">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`mandatory-${section.id}`}
-                      checked={section.mandatory}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'mandatory', e.target.checked)}
-                      style={customCheckboxStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor={`mandatory-${section.id}`} className="text-xs sm:text-sm">Mandatory</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`reading-${section.id}`}
-                      checked={section.reading}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'reading', e.target.checked)}
-                      style={customCheckboxStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor={`reading-${section.id}`} className="text-xs sm:text-sm">Reading</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`help-text-${section.id}`}
-                      checked={!!section.helpText}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'helpText', e.target.checked ? 'Help text' : '')}
-                      style={customCheckboxStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor={`help-text-${section.id}`} className="text-xs sm:text-sm">Help Text</Label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Weightage option - only show when weightage toggle is on */}
-              {weightage && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <TextField
-                      label="Weightage"
-                      placeholder="Enter Weightage"
-                      value={section.weightageValue}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'weightageValue', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      sx={floatingFieldStyles}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2 pt-2 sm:pt-6">
-                    <input
-                      type="checkbox"
-                      id={`failing-${section.id}`}
-                      checked={section.failing}
-                      onChange={(e) => handleTaskSectionChange(section.id, 'failing', e.target.checked)}
-                      style={customCheckboxStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor={`failing-${section.id}`} className="text-sm">Failing</Label>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Schedule Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">3</span>
-            Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
-            <Label className="text-sm font-medium">Checklist Type</Label>
-            <div className="flex flex-wrap gap-2 sm:gap-4">
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="individual" 
-                  name="checklistType" 
-                  value="Individual" 
-                  checked={formData.checklistType === 'Individual'}
-                  onChange={(e) => handleInputChange('checklistType', e.target.value)}
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="individual" className="text-sm">Individual</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  id="asset-group" 
-                  name="checklistType" 
-                  value="Asset Group"
-                  checked={formData.checklistType === 'Asset Group'}
-                  onChange={(e) => handleInputChange('checklistType', e.target.value)}
-                  style={customRadioStyles}
-                  className="focus:outline-none focus:ring-0"
-                />
-                <Label htmlFor="asset-group" className="text-sm">Asset Group</Label>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="asset-label" shrink>Asset</InputLabel>
-                <MuiSelect
-                  labelId="asset-label"
-                  label="Asset"
-                  displayEmpty
-                  value={formData.asset}
-                  onChange={(e) => handleInputChange('asset', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Asset</em></MenuItem>
-                  <MenuItem value="asset1">Asset 1</MenuItem>
-                  <MenuItem value="asset2">Asset 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="assign-to-label" shrink>Assign To</InputLabel>
-                <MuiSelect
-                  labelId="assign-to-label"
-                  label="Assign To"
-                  displayEmpty
-                  value={formData.assignTo}
-                  onChange={(e) => handleInputChange('assignTo', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Assign To</em></MenuItem>
-                  <MenuItem value="user1">User 1</MenuItem>
-                  <MenuItem value="user2">User 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="scan-type-label" shrink>Scan Type</InputLabel>
-                <MuiSelect
-                  labelId="scan-type-label"
-                  label="Scan Type"
-                  displayEmpty
-                  value={formData.scanType}
-                  onChange={(e) => handleInputChange('scanType', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Scan Type</em></MenuItem>
-                  <MenuItem value="qr">QR Code</MenuItem>
-                  <MenuItem value="barcode">Barcode</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="plan-duration-label" shrink>Plan Duration</InputLabel>
-                <MuiSelect
-                  labelId="plan-duration-label"
-                  label="Plan Duration"
-                  displayEmpty
-                  value={formData.planDuration}
-                  onChange={(e) => handleInputChange('planDuration', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Plan Duration</em></MenuItem>
-                  <MenuItem value="1hour">1 Hour</MenuItem>
-                  <MenuItem value="2hours">2 Hours</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="priority-label" shrink>Priority</InputLabel>
-                <MuiSelect
-                  labelId="priority-label"
-                  label="Priority"
-                  displayEmpty
-                  value={formData.priority}
-                  onChange={(e) => handleInputChange('priority', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Priority</em></MenuItem>
-                  <MenuItem value="high">High</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="low">Low</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="email-trigger-label" shrink>Email Trigger Rule</InputLabel>
-                <MuiSelect
-                  labelId="email-trigger-label"
-                  label="Email Trigger Rule"
-                  displayEmpty
-                  value={formData.emailTriggerRule}
-                  onChange={(e) => handleInputChange('emailTriggerRule', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Email Trigger Rule</em></MenuItem>
-                  <MenuItem value="immediate">Immediate</MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="supervisors-label" shrink>Supervisors</InputLabel>
-                <MuiSelect
-                  labelId="supervisors-label"
-                  label="Supervisors"
-                  displayEmpty
-                  value={formData.supervisors}
-                  onChange={(e) => handleInputChange('supervisors', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Supervisors</em></MenuItem>
-                  <MenuItem value="supervisor1">Supervisor 1</MenuItem>
-                  <MenuItem value="supervisor2">Supervisor 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="category-label" shrink>Category</InputLabel>
-                <MuiSelect
-                  labelId="category-label"
-                  label="Category"
-                  displayEmpty
-                  value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="technical">Technical</MenuItem>
-                  <MenuItem value="non-technical">Non Technical</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <TextField
-                label="Submission Time"
-                type="time"
-                value={formData.submissionTime}
-                onChange={(e) => handleInputChange('submissionTime', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
+      {/* Custom Stepper - Bordered Box Design */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '100%'
+        }}>
+          {steps.map((label, index) => (
+            <React.Fragment key={label}>
+              <Box
+                onClick={() => handleStepClick(index)}
+                sx={{
+                  cursor: 'pointer',
+                  backgroundColor: isStepRed(index) ? '#C72030' : 'white',
+                  color: isStepRed(index) ? 'white' : '#C4B89D',
+                  border: `2px solid ${isStepRed(index) ? '#C72030' : '#C4B89D'}`,
+                  padding: '12px 20px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  textAlign: 'center',
+                  minWidth: '140px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    opacity: 0.9
+                  }
                 }}
-                sx={floatingFieldStyles}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <TextField
-                label="Grace Time"
-                placeholder="Enter Grace Time"
-                value={formData.graceTime}
-                onChange={(e) => handleInputChange('graceTime', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={floatingFieldStyles}
-              />
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="lock-overdue-label" shrink>Lock Overdue Task</InputLabel>
-                <MuiSelect
-                  labelId="lock-overdue-label"
-                  label="Lock Overdue Task"
-                  displayEmpty
-                  value={formData.lockOverdueTask}
-                  onChange={(e) => handleInputChange('lockOverdueTask', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select</em></MenuItem>
-                  <MenuItem value="yes">Yes</MenuItem>
-                  <MenuItem value="no">No</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="frequency-label" shrink>Frequency</InputLabel>
-                <MuiSelect
-                  labelId="frequency-label"
-                  label="Frequency"
-                  displayEmpty
-                  value={formData.frequency}
-                  onChange={(e) => handleInputChange('frequency', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Frequency</em></MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                  <MenuItem value="weekly">Weekly</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div>
-              <TextField
-                label="Start From"
-                type="date"
-                value={formData.startFrom}
-                onChange={(e) => handleInputChange('startFrom', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={floatingFieldStyles}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <TextField
-                label="End At"
-                type="date"
-                value={formData.endAt}
-                onChange={(e) => handleInputChange('endAt', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={floatingFieldStyles}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cron Form Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">
-              <span className="text-[#ffff] text-xs">4</span>
-            </span>
-            Cron form
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Tab Navigation */}
-          <div className="flex flex-wrap gap-2 sm:gap-4 mb-4">
-            {['Minutes', 'Hours', 'Day', 'Month'].map((tab) => (
-              <Button
-                key={tab}
-                variant={activeTab === tab ? "default" : "outline"}
-                onClick={() => setActiveTab(tab)}
-                className={`${
-                  activeTab === tab 
-                    ? "bg-[#5B9BD5] text-white hover:bg-[#4A8AC7]" 
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                } flex-1 sm:flex-none`}
               >
-                {tab}
-              </Button>
-            ))}
-          </div>
+                {label}
+              </Box>
+              {index < steps.length - 1 && (
+                <Box
+                  sx={{
+                    width: '60px',
+                    height: '1px',
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '1px',
+                      backgroundImage: 'repeating-linear-gradient(to right, #C4B89D 0px, #C4B89D 6px, transparent 6px, transparent 12px)',
+                    }
+                  }}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </Box>
+      </Box>
 
-          {/* Tab Content */}
-          <div className="p-3 sm:p-4 rounded-lg bg-white border">
-            {renderCronTabContent()}
-          </div>
+      {/* Step Content */}
+      {renderStepContent()}
 
-          {/* Resulting Cron Expression */}
-          <div className="mt-4 sm:mt-6">
-            <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
-            <div className="mt-2 p-3 bg-gray-100 rounded border text-sm sm:text-lg font-mono break-all">
-              {generateCronExpression()}
-            </div>
-          </div>
-
-          {/* Cron Expression Breakdown */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 text-center">
-            <div>
-              <Label className="text-xs sm:text-sm font-medium">Minutes</Label>
-              <div className="mt-1 text-sm sm:text-lg break-all">
-                {cronFormData.selectedMinutes.length > 0 ? cronFormData.selectedMinutes.join(',') : '*'}
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs sm:text-sm font-medium">Hours</Label>
-              <div className="mt-1 text-sm sm:text-lg break-all">
-                {cronFormData.selectedHours.length > 0 ? cronFormData.selectedHours.join(',') : '*'}
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs sm:text-sm font-medium">Day Of Month</Label>
-              <div className="mt-1 text-sm sm:text-lg break-all">
-                {cronFormData.selectedDays.length > 0 ? cronFormData.selectedDays.join(',') : '*'}
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs sm:text-sm font-medium">Month</Label>
-              <div className="mt-1 text-sm sm:text-lg break-all">
-                {cronFormData.selectedMonths.length > 0 ? cronFormData.selectedMonths.join(',') : '*'}
-              </div>
-            </div>
-            <div className="col-span-2 sm:col-span-3 lg:col-span-1">
-              <Label className="text-xs sm:text-sm font-medium">Day Of Week</Label>
-              <div className="mt-1 text-sm sm:text-lg">*</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Submit Button */}
-      <div className="flex justify-center">
-        <Button
-          onClick={handleSubmit}
-          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
-        >
-          Submit
-        </Button>
-      </div>
-    </div>
+      {/* Action Buttons */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
+        <RedButton onClick={handleSave}>
+          Proceed to save
+        </RedButton>
+        <DraftButton onClick={handleSaveDraft}>
+          Save to draft
+        </DraftButton>
+      </Box>
+    </Box>
   );
 };

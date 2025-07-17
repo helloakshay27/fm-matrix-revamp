@@ -1,101 +1,89 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogTitle, TextField, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
-const groupsData = [
-  { id: 1, srNo: 1, groupName: 'Electronic Devices', status: true },
-  { id: 2, srNo: 2, groupName: 'Electrical', status: true },
-  { id: 3, srNo: 3, groupName: 'Non Electrical', status: true },
-  { id: 4, srNo: 4, groupName: 'Stand', status: true },
-  { id: 5, srNo: 5, groupName: 'APS', status: true },
-  { id: 6, srNo: 6, groupName: 'Technical services', status: true },
-  { id: 7, srNo: 7, groupName: 'hvac', status: true },
-  { id: 8, srNo: 8, groupName: 'CCTV Camera', status: true },
-  { id: 9, srNo: 9, groupName: 'DVR', status: true },
-  { id: 10, srNo: 10, groupName: 'Water Dispenser', status: false },
-  { id: 11, srNo: 11, groupName: 'cd', status: false },
-  { id: 12, srNo: 12, groupName: 'Electronics', status: true },
-  { id: 13, srNo: 13, groupName: 'kitchen', status: false },
-  { id: 14, srNo: 14, groupName: 'Daikin', status: true },
-  { id: 15, srNo: 15, groupName: 'Camera', status: true },
-  { id: 16, srNo: 16, groupName: 'Carpenting', status: true },
-  { id: 17, srNo: 17, groupName: 'CASCOU', status: true },
-  { id: 18, srNo: 18, groupName: 'WESCA', status: true },
-  { id: 19, srNo: 19, groupName: 'FAN', status: true },
-  { id: 20, srNo: 20, groupName: 'CCTV', status: true },
-  { id: 21, srNo: 21, groupName: 'HVAC', status: true },
-  { id: 22, srNo: 22, groupName: 'Carron', status: true },
-  { id: 23, srNo: 23, groupName: 'SECSAF', status: true },
-  { id: 24, srNo: 24, groupName: 'CUSCHA', status: true },
-  { id: 25, srNo: 25, groupName: 'SMODET', status: true },
-  { id: 26, srNo: 26, groupName: 'Alarm', status: true },
-  { id: 27, srNo: 27, groupName: 'DG', status: true },
-  { id: 28, srNo: 28, groupName: 'Nikon', status: true },
-  { id: 29, srNo: 29, groupName: 'BB Electrical', status: true },
-  { id: 30, srNo: 30, groupName: 'Plumbing', status: true },
-  { id: 31, srNo: 31, groupName: 'Water Meter', status: true },
-  { id: 32, srNo: 32, groupName: 'IT Assets', status: true },
-  { id: 33, srNo: 33, groupName: 'laptop', status: true }
-];
-
-const subGroupsData = [
-  { id: 1, srNo: 1, groupName: 'Electronic Devices', subGroupName: 'Laptops', status: true },
-  { id: 2, srNo: 2, groupName: 'Electronic Devices', subGroupName: 'Tabs', status: true },
-  { id: 3, srNo: 3, groupName: 'Electronic Devices', subGroupName: 'Mobiles', status: true },
-  { id: 4, srNo: 4, groupName: 'Electronic Devices', subGroupName: 'AI Device', status: true },
-  { id: 5, srNo: 5, groupName: 'Electronic Devices', subGroupName: 'Sim Card', status: true },
-  { id: 6, srNo: 6, groupName: 'Electronic Devices', subGroupName: 'Charger', status: true },
-  { id: 7, srNo: 7, groupName: 'Electronic Devices', subGroupName: 'Mouse', status: true },
-  { id: 8, srNo: 8, groupName: 'Electronic Devices', subGroupName: 'External Hard Disk', status: true },
-  { id: 9, srNo: 9, groupName: 'Electronic Devices', subGroupName: 'Macbook', status: true },
-  { id: 10, srNo: 10, groupName: 'Electronic Devices', subGroupName: 'Temperature Scanning Device', status: true },
-  { id: 11, srNo: 11, groupName: 'Electronic Devices', subGroupName: 'ipad', status: true },
-  { id: 12, srNo: 12, groupName: 'Electrical', subGroupName: 'Electric Meter', status: true },
-  { id: 13, srNo: 13, groupName: 'Electrical', subGroupName: 'Air Conditioner', status: true },
-  { id: 14, srNo: 14, groupName: 'Electrical', subGroupName: 'Energy Meter', status: true },
-  { id: 15, srNo: 15, groupName: 'Electrical', subGroupName: 'Diesel Generator', status: true },
-  { id: 16, srNo: 16, groupName: 'Electrical', subGroupName: 'AC, AV, Electrical', status: true },
-  { id: 17, srNo: 17, groupName: 'Non Electrical', subGroupName: 'Non Electrical', status: true },
-  { id: 18, srNo: 18, groupName: 'Stand', subGroupName: 'Precision Metal Works', status: true },
-  { id: 19, srNo: 19, groupName: 'APS', subGroupName: 'BRS', status: true },
-  { id: 20, srNo: 20, groupName: 'hvac', subGroupName: 'Cassette Unit', status: true },
-  { id: 21, srNo: 21, groupName: 'hvac', subGroupName: 'high wall', status: true },
-  { id: 22, srNo: 22, groupName: 'CCTV Camera', subGroupName: 'CCTV Camera', status: true },
-  { id: 23, srNo: 23, groupName: 'DVR', subGroupName: 'DVR', status: true },
-  { id: 24, srNo: 24, groupName: 'Water Dispenser', subGroupName: 'Water Dispenser', status: false },
-  { id: 25, srNo: 25, groupName: 'cd', subGroupName: 'compact', status: false },
-  { id: 26, srNo: 26, groupName: 'Electronics', subGroupName: 'Motherboard', status: true },
-  { id: 27, srNo: 27, groupName: 'kitchen', subGroupName: 'oven', status: true },
-  { id: 28, srNo: 28, groupName: 'Daikin', subGroupName: 'Daikin AC', status: true },
-  { id: 29, srNo: 29, groupName: 'Camera', subGroupName: 'cctv camera', status: true },
-  { id: 30, srNo: 30, groupName: 'Carpenting', subGroupName: 'Furniture, Doors and Locks, Work station', status: false },
-  { id: 31, srNo: 31, groupName: 'CASCOU', subGroupName: 'Cash Counting Machine', status: true },
-  { id: 32, srNo: 32, groupName: 'CASCOU', subGroupName: 'Cash Counting Machine', status: true },
-  { id: 33, srNo: 33, groupName: 'WESCA', subGroupName: 'Weighing Scale', status: true },
-  { id: 34, srNo: 34, groupName: 'FAN', subGroupName: 'Oxyental High Speed', status: true },
-  { id: 35, srNo: 35, groupName: 'CCTV', subGroupName: 'CCTV Camera Bullet', status: true },
-  { id: 36, srNo: 36, groupName: 'CCTV', subGroupName: 'CCTV Camera', status: true },
-  { id: 37, srNo: 37, groupName: 'HVAC', subGroupName: 'HVAC high Wall', status: true },
-  { id: 38, srNo: 38, groupName: 'SECSAF', subGroupName: 'Security Safe', status: true },
-  { id: 39, srNo: 39, groupName: 'CUSCHA', subGroupName: 'Cashier Chair', status: true },
-  { id: 40, srNo: 40, groupName: 'SMODET', subGroupName: 'Smoke Detector', status: true },
-  { id: 41, srNo: 41, groupName: 'Alarm', subGroupName: 'Fire Alarm', status: true },
-  { id: 42, srNo: 42, groupName: 'DG', subGroupName: 'Diesel Generator', status: true },
-  { id: 43, srNo: 43, groupName: 'Nikon', subGroupName: 'DSLR', status: true },
-  { id: 44, srNo: 44, groupName: 'BB Electrical', subGroupName: 'UPS', status: true },
-  { id: 45, srNo: 45, groupName: 'BB Electrical', subGroupName: 'DG', status: true },
-  { id: 46, srNo: 46, groupName: 'BB Electrical', subGroupName: 'Lighting', status: true },
-  { id: 47, srNo: 47, groupName: 'Plumbing', subGroupName: 'FWTS', status: true },
-  { id: 48, srNo: 48, groupName: 'Water Meter', subGroupName: 'Water Meter', status: true },
-  { id: 49, srNo: 49, groupName: 'IT Assets', subGroupName: 'Laptops', status: true }
-];
+// Remove dummy data - now using API data
 
 export const AssetGroupsPage = () => {
-  const [groups, setGroups] = useState(groupsData);
-  const [subGroups, setSubGroups] = useState(subGroupsData);
+  // Fixed selectedGroup reference error
+  const [groups, setGroups] = useState([]);
+  const [subGroups, setSubGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Modal states
+  const [addGroupOpen, setAddGroupOpen] = useState(false);
+  const [addSubGroupOpen, setAddSubGroupOpen] = useState(false);
+  
+  // Form states
+  const [groupName, setGroupName] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [subGroupName, setSubGroupName] = useState('');
+  
+  // Loading states
+  const [groupLoading, setGroupLoading] = useState(false);
+  const [subGroupLoading, setSubGroupLoading] = useState(false);
+  
+  // MUI theme
+  const theme = createTheme({
+    palette: {
+      mode: 'light',
+    },
+  });
+
+  // Fetch groups and subgroups data
+  const fetchGroupsData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/pms/asset_groups.json?type=asset');
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Transform groups data
+        const transformedGroups = response.data.map((group, index) => ({
+          id: group.id,
+          srNo: index + 1,
+          groupName: group.name,
+          status: group.status === 'active'
+        }));
+
+        // Transform subgroups data - flatten from all groups
+        const transformedSubGroups = [];
+        let subGroupSerialNo = 1;
+        
+        response.data.forEach(group => {
+          if (group.sub_groups && Array.isArray(group.sub_groups)) {
+            group.sub_groups.forEach(subGroup => {
+              transformedSubGroups.push({
+                id: subGroup.id,
+                srNo: subGroupSerialNo++,
+                groupName: group.name,
+                subGroupName: subGroup.name,
+                status: subGroup.status === 'active'
+              });
+            });
+          }
+        });
+
+        setGroups(transformedGroups);
+        setSubGroups(transformedSubGroups);
+      }
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      toast.error('Failed to fetch groups data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroupsData();
+  }, []);
 
   const toggleGroupStatus = (id: number) => {
     setGroups(prev => prev.map(group => 
@@ -109,32 +97,99 @@ export const AssetGroupsPage = () => {
     ));
   };
 
+  const handleAddGroup = async () => {
+    if (groupName.trim()) {
+      setGroupLoading(true);
+      try {
+        const payload = {
+          pms_asset_group: {
+            name: groupName.trim(),
+            group_type: "asset"
+          }
+        };
+
+        const response = await apiClient.post('/pms/asset_groups.json', payload);
+        
+        if (response.data) {
+          // Refresh the data after creating a new group
+          await fetchGroupsData();
+          setGroupName('');
+          setAddGroupOpen(false);
+          toast.success('Group created successfully');
+        }
+      } catch (error) {
+        console.error('Error creating group:', error);
+        toast.error('Failed to create group');
+      } finally {
+        setGroupLoading(false);
+      }
+    }
+  };
+
+  const handleAddSubGroup = async () => {
+    console.log('selectedGroupId:', selectedGroupId, 'subGroupName:', subGroupName);
+    if (selectedGroupId && subGroupName.trim()) {
+      setSubGroupLoading(true);
+      try {
+        const params = new URLSearchParams({
+          'pms_asset_sub_group[name]': subGroupName.trim(),
+          'pms_asset_sub_group[group_id]': selectedGroupId.toString()
+        });
+
+        const response = await apiClient.post(`/pms/asset_sub_groups.json?${params.toString()}`);
+        
+        if (response.data) {
+          // Refresh the data after creating a new subgroup
+          await fetchGroupsData();
+          setSelectedGroupId('');
+          setSubGroupName('');
+          setAddSubGroupOpen(false);
+          toast.success('Sub group created successfully');
+        }
+      } catch (error) {
+        console.error('Error creating sub group:', error);
+        toast.error('Failed to create sub group');
+      } finally {
+        setSubGroupLoading(false);
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#f6f4ee] p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-transparent p-3 sm:p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">GROUPS</h1>
-            <p className="text-sm text-gray-600 mt-1">Setup &gt; Groups</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">GROUPS</h1>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">Setup &gt; Groups</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mb-6">
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Group
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[120px] text-sm px-3 py-2"
+            onClick={() => setAddGroupOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Add Group</span>
           </Button>
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Subgroup
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[140px] text-sm px-3 py-2"
+            onClick={() => setAddSubGroupOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Add Subgroup</span>
           </Button>
-          <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
-            <Upload className="w-4 h-4 mr-2" />
-            Bulk Upload
+          <Button 
+            variant="outline" 
+            className="border-purple-700 text-purple-700 hover:bg-purple-50 w-full sm:w-auto min-w-0 sm:min-w-[130px] text-sm px-3 py-2"
+          >
+            <Upload className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Bulk Upload</span>
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {/* Groups Table */}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">
@@ -201,6 +256,113 @@ export const AssetGroupsPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Add Group Modal */}
+        <ThemeProvider theme={theme}>
+          <Dialog 
+            open={addGroupOpen} 
+            onClose={() => setAddGroupOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <div className="flex items-center justify-between p-6 border-b">
+              <DialogTitle className="text-xl font-bold p-0">ADD Group</DialogTitle>
+              <IconButton onClick={() => setAddGroupOpen(false)}>
+                <X className="w-5 h-5" />
+              </IconButton>
+            </div>
+            <DialogContent className="p-6">
+              <div className="space-y-6">
+                <TextField
+                  label="Group Name"
+                  placeholder="Enter Group Name"
+                  variant="outlined"
+                  fullWidth
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    onClick={handleAddGroup}
+                    disabled={groupLoading}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+                  >
+                    {groupLoading ? 'Creating...' : 'Submit'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Sub Group Modal */}
+          <Dialog 
+            open={addSubGroupOpen} 
+            onClose={() => setAddSubGroupOpen(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <div className="flex items-center justify-between p-6 border-b">
+              <DialogTitle className="text-xl font-bold p-0">ADD Sub Group</DialogTitle>
+              <IconButton onClick={() => setAddSubGroupOpen(false)}>
+                <X className="w-5 h-5" />
+              </IconButton>
+            </div>
+            <DialogContent className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Group Name</InputLabel>
+                  <Select
+                    value={selectedGroupId}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}
+                    label="Group Name"
+                    displayEmpty
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          backgroundColor: 'white',
+                          zIndex: 9999,
+                        },
+                      },
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      Select Group
+                    </MenuItem>
+                    {groups.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>
+                        {group.groupName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                
+                <TextField
+                  label="Sub Group Name"
+                  placeholder="Enter Sub Group Name"
+                  variant="outlined"
+                  fullWidth
+                  value={subGroupName}
+                  onChange={(e) => setSubGroupName(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </div>
+              <div className="flex justify-end pt-6">
+                <Button 
+                  onClick={handleAddSubGroup}
+                  disabled={subGroupLoading}
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
+                >
+                  {subGroupLoading ? 'Creating...' : 'Submit'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </ThemeProvider>
       </div>
     </div>
   );

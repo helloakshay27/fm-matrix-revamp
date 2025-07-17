@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { EditComplaintModeModal } from './modals/EditComplaintModeModal';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 
@@ -56,6 +57,8 @@ const mockComplaintModes: ComplaintModeType[] = [
 export const ComplaintModeTab: React.FC = () => {
   const [complaintModes, setComplaintModes] = useState<ComplaintModeType[]>(mockComplaintModes);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingComplaintMode, setEditingComplaintMode] = useState<ComplaintModeType | null>(null);
 
   const form = useForm<ComplaintModeFormData>({
     resolver: zodResolver(complaintModeSchema),
@@ -84,6 +87,22 @@ export const ComplaintModeTab: React.FC = () => {
     }
   };
 
+  const handleEdit = (complaintMode: ComplaintModeType) => {
+    setEditingComplaintMode(complaintMode);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdate = (updatedComplaintMode: ComplaintModeType) => {
+    setComplaintModes(complaintModes.map(mode => 
+      mode.id === updatedComplaintMode.id ? updatedComplaintMode : mode
+    ));
+  };
+
+  const handleDelete = (complaintMode: ComplaintModeType) => {
+    setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
+    toast.success('Complaint mode deleted successfully!');
+  };
+
   const columns = [
     { key: 'srNo', label: 'Sr.No', sortable: true },
     { key: 'complaintMode', label: 'Complaint Mode', sortable: true },
@@ -95,10 +114,10 @@ export const ComplaintModeTab: React.FC = () => {
 
   const renderActions = (item: ComplaintModeType) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -151,6 +170,13 @@ export const ComplaintModeTab: React.FC = () => {
           />
         </CardContent>
       </Card>
+
+      <EditComplaintModeModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        complaintMode={editingComplaintMode}
+        onUpdate={handleUpdate}
+      />
     </div>
   );
 };

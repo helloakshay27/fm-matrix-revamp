@@ -75,6 +75,34 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
             department={department}
             setDepartment={setDepartment}
           />
+
+          {/* Attachment Section */}
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Attachment</h3>
+            <div className="flex items-center">
+              <input
+                type="file"
+                id="attachment"
+                className="hidden"
+              />
+              <label
+                htmlFor="attachment"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded cursor-pointer text-sm"
+              >
+                Choose File
+              </label>
+              <span className="ml-3 text-sm text-gray-500">No file chosen</span>
+            </div>
+          </div>
+
+          {/* Remarks Section */}
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Remarks</h3>
+            <textarea
+              placeholder="Add Remarks"
+              className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
         </div>
 
         {/* Submit Button - Fixed at bottom */}

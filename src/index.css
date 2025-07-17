@@ -12,7 +12,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 0 65% 45%; /* #C72030 */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -30,6 +30,23 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    
+    /* Analytics theme colors - beige/tan palette */
+    --analytics-primary: 35 25% 75%;
+    --analytics-secondary: 35 35% 85%;
+    --analytics-accent: 35 45% 65%;
+    --analytics-background: 45 25% 92%;
+    --analytics-border: 35 20% 80%;
+    --analytics-text: 25 25% 25%;
+    --analytics-muted: 35 15% 65%;
+    
+    /* Chart colors - matching design */
+    --chart-tan: 35 35% 75%;
+    --chart-beige: 45 25% 85%;
+    --chart-brown: 25 45% 55%;
+    --chart-cream: 50 20% 90%;
+    --chart-mocha: 20 35% 45%;
+    
     --radius: 0.5rem;
   }
 
@@ -58,6 +75,20 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* Analytics specific colors - Beige/Tan Theme */
+    --analytics-background: 249 246 237; /* Light beige background */
+    --analytics-border: 215 204 200; /* Tan border */
+    --analytics-text: 101 85 73; /* Dark brown text */
+    --analytics-accent: 180 140 102; /* Warm tan accent */
+    --analytics-chart-1: 205 164 94; /* Chart color 1 */
+    --analytics-chart-2: 139 115 85; /* Chart color 2 */
+    --analytics-chart-3: 160 134 104; /* Chart color 3 */
+    --analytics-chart-4: 185 155 121; /* Chart color 4 */
+    --analytics-success: 134 154 120; /* Muted green */
+    --analytics-warning: 204 154 104; /* Warm orange */
+    --analytics-error: 180 120 115; /* Muted red */
+    --analytics-muted: 145 130 120; /* Muted text color */
   }
 }
 

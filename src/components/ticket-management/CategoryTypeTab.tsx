@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { EditCategoryModal } from './modals/EditCategoryModal';
 import { toast } from 'sonner';
 import { Edit, Trash2, Upload } from 'lucide-react';
 
@@ -77,6 +78,8 @@ export const CategoryTypeTab: React.FC = () => {
   const [categories, setCategories] = useState<CategoryType[]>(mockCategories);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [faqItems, setFaqItems] = useState([{ question: '', answer: '' }]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -120,6 +123,22 @@ export const CategoryTypeTab: React.FC = () => {
     setFaqItems(faqItems.filter((_, i) => i !== index));
   };
 
+  const handleEdit = (category: CategoryType) => {
+    setEditingCategory(category);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdate = (updatedCategory: CategoryType) => {
+    setCategories(categories.map(cat => 
+      cat.id === updatedCategory.id ? updatedCategory : cat
+    ));
+  };
+
+  const handleDelete = (category: CategoryType) => {
+    setCategories(categories.filter(cat => cat.id !== category.id));
+    toast.success('Category deleted successfully!');
+  };
+
   const columns = [
     { key: 'srNo', label: 'S.No', sortable: true },
     { key: 'categoryType', label: 'Category Type', sortable: true },
@@ -144,10 +163,10 @@ export const CategoryTypeTab: React.FC = () => {
 
   const renderActions = (item: CategoryType) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -345,6 +364,13 @@ export const CategoryTypeTab: React.FC = () => {
           />
         </CardContent>
       </Card>
+
+      <EditCategoryModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        category={editingCategory}
+        onUpdate={handleUpdate}
+      />
     </div>
   );
 };

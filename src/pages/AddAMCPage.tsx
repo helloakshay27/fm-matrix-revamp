@@ -15,6 +15,10 @@ export const AddAMCPage = () => {
     type: 'Individual',
     assetName: '',
     vendor: '',
+    group: '',
+    subgroup: '',
+    service: '',
+    supplier: '',
     startDate: '',
     endDate: '',
     cost: '',
@@ -28,10 +32,31 @@ export const AddAMCPage = () => {
     invoices: [] as File[]
   });
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      // Clear the assetName when switching between Asset and Service
+      if (field === 'details' && prev.details !== value) {
+        return {
+          ...prev,
+          [field]: value,
+          assetName: ''
+        };
+      }
+      // Clear group-related fields when switching between Individual and Group
+      if (field === 'type' && prev.type !== value) {
+        return {
+          ...prev,
+          [field]: value,
+          group: '',
+          subgroup: '',
+          service: '',
+          supplier: ''
+        };
+      }
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
   };
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
     if (files) {
@@ -138,30 +163,107 @@ export const AddAMCPage = () => {
               </div>
             </div>
 
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
-                <MuiSelect labelId="asset-select-label" label="Assets" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select an Option...</em></MenuItem>
-                  <MenuItem value="adani-electric-meter">Adani Electric Meter</MenuItem>
-                  <MenuItem value="laptop-dell">Laptop Dell Vostro</MenuItem>
-                  <MenuItem value="samsung">Samsung</MenuItem>
-                  <MenuItem value="vinayak-testing-1">Vinayak Testing 1</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+            {/* Conditional rendering based on type selection */}
+            {formData.type === 'Individual' ? (
+              <>
+                {formData.details === 'Asset' ? (
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
+                    <MuiSelect labelId="asset-select-label" label="Assets" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
+                      <MenuItem value=""><em>Select an Option...</em></MenuItem>
+                      <MenuItem value="adani-electric-meter">Adani Electric Meter</MenuItem>
+                      <MenuItem value="laptop-dell">Laptop Dell Vostro</MenuItem>
+                      <MenuItem value="samsung">Samsung</MenuItem>
+                      <MenuItem value="vinayak-testing-1">Vinayak Testing 1</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                ) : (
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="service-select-label" shrink>Service</InputLabel>
+                    <MuiSelect labelId="service-select-label" label="Service" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
+                      <MenuItem value=""><em>Select a Service...</em></MenuItem>
+                      <MenuItem value="maintenance-service">Maintenance Service</MenuItem>
+                      <MenuItem value="repair-service">Repair Service</MenuItem>
+                      <MenuItem value="cleaning-service">Cleaning Service</MenuItem>
+                      <MenuItem value="security-service">Security Service</MenuItem>
+                      <MenuItem value="hvac-service">HVAC Service</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                )}
 
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
-                <MuiSelect labelId="vendor-select-label" label="Supplier" displayEmpty value={formData.vendor} onChange={e => handleInputChange('vendor', e.target.value)} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                  <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
-                  <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
-                  <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
+                    <MuiSelect labelId="vendor-select-label" label="Supplier" displayEmpty value={formData.vendor} onChange={e => handleInputChange('vendor', e.target.value)} sx={fieldStyles}>
+                      <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                      <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
+                      <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
+                      <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Group fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id="group-select-label" shrink>Group</InputLabel>
+                      <MuiSelect labelId="group-select-label" label="Group" displayEmpty value={formData.group} onChange={e => handleInputChange('group', e.target.value)} sx={fieldStyles}>
+                        <MenuItem value=""><em>Select Group</em></MenuItem>
+                        <MenuItem value="electrical-group">Electrical Group</MenuItem>
+                        <MenuItem value="mechanical-group">Mechanical Group</MenuItem>
+                        <MenuItem value="it-group">IT Group</MenuItem>
+                        <MenuItem value="facilities-group">Facilities Group</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <div>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id="subgroup-select-label" shrink>SubGroup</InputLabel>
+                      <MuiSelect labelId="subgroup-select-label" label="SubGroup" displayEmpty value={formData.subgroup} onChange={e => handleInputChange('subgroup', e.target.value)} sx={fieldStyles}>
+                        <MenuItem value=""><em>Select Sub Group</em></MenuItem>
+                        <MenuItem value="power-systems">Power Systems</MenuItem>
+                        <MenuItem value="lighting-systems">Lighting Systems</MenuItem>
+                        <MenuItem value="hvac-systems">HVAC Systems</MenuItem>
+                        <MenuItem value="security-systems">Security Systems</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Only show Service dropdown when Details is "Service" */}
+                  {formData.details === 'Service' && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
+                        <MuiSelect labelId="group-service-select-label" label="Service" displayEmpty value={formData.service} onChange={e => handleInputChange('service', e.target.value)} sx={fieldStyles}>
+                          <MenuItem value=""><em>Select Service</em></MenuItem>
+                          <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
+                          <MenuItem value="corrective-maintenance">Corrective Maintenance</MenuItem>
+                          <MenuItem value="emergency-service">Emergency Service</MenuItem>
+                          <MenuItem value="inspection-service">Inspection Service</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+                  )}
+
+                  <div>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
+                      <MuiSelect labelId="group-supplier-select-label" label="Supplier" displayEmpty value={formData.supplier} onChange={e => handleInputChange('supplier', e.target.value)} sx={fieldStyles}>
+                        <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                        <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
+                        <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
+                        <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
+                        <MenuItem value="l&t-services">L&T Services</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

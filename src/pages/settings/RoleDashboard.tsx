@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -11,7 +12,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Search } from 'lucide-react';
-import { AddRoleDialog } from '@/components/AddRoleDialog';
+import { useNavigate } from 'react-router-dom';
+import { roleService, ApiRole } from '@/services/roleService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchRoles, updateRolePermissions } from '@/store/slices/roleSlice';
+import { fetchFunctions } from '@/store/slices/functionSlice';
+import { getAuthHeader } from '@/config/apiConfig';
 
 interface Permission {
   name: string;
@@ -30,244 +36,264 @@ interface Role {
   };
 }
 
-const allFunctionsPermissions: Permission[] = [
-  { name: 'Broadcast', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Asset', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Documents', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Tickets', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Supplier', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Tasks', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Service', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Meters', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'AMC', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Schedule', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Materials', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'PO', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'WO', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Attendance', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Business Directory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'PO Approval', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Tracing', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'BI Reports', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Restaurants', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'My Ledgers', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Letter Of Indent', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Wo Invoices', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Bill', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Engineering Reports', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Events', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customers', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'QuickGate Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Task Management', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'CEO Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Operational Audit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Mom Details', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Pms Design Inputs', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vendor Audit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Permits', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Pending Approvals', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Bills', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'My Bills', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Water', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'STP', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Daily Readings', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Utility Consumption', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Utility Request', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Space', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Project Management', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Pms Incidents', all: true, add: true, view: true, edit: true, disable: true },
-  { name: 'Site Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Steppstone Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Transport', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Waste Generation', all: true, add: true, view: true, edit: true, disable: true },
-  { name: 'GDN', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Parking', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'GDN Dispatch', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'EV Consumption', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Msafe', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Permit Extend', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Local Travel Module', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'KRCC', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Training', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Approve Krcc', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi Register User', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi DeRegister User', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Line Manager Check', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Senior Management Tour', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Solar Generator', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Permit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Parkings', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Wallet', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Site Banners', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Testimonials', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Group And Channel Config', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Shared Content Config', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Site And Facility Config', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Occupant Users', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Clear SnagAnswers', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Non Re Users', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Download Msafe Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Download Msafe Detailed Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'training_list', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi Miles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Krcc List', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi MSafe Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi Miles Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Resume Permit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Permit Checklist', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Send To Sap', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Community Module', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Facility Setup', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Mail Room', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Parking Setup', all: false, add: false, view: false, edit: false, disable: false },
-];
-
-const inventoryPermissions: Permission[] = [
-  { name: 'Inventory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'GRN', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'SRNS', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Consumption', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Update Partial Inventory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Update All Inventory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Clone Inventory', all: false, add: false, view: false, edit: false, disable: false },
-];
-
-const setupPermissions: Permission[] = [
-  { name: 'Account', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'User & Roles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Meter Types', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Asset Groups', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Ticket', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Email Rule', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'FM Groups', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Export', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'SAC/HSN Setup', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Addresses', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Master Checklist', all: false, add: false, view: false, edit: false, disable: false },
-];
-
-const quickgatePermissions: Permission[] = [
-  { name: 'Visitors', all: true, add: false, view: true, edit: false, disable: false },
-  { name: 'R Vehicles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'G Vehicles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Staffs', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Goods In Out', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Patrolling', all: false, add: false, view: false, edit: false, disable: false },
-];
 
 export const RoleDashboard = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { roles, loading, error } = useAppSelector((state) => state.role);
+  const { functions, loading: functionsLoading } = useAppSelector((state) => state.function);
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('All Functions');
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
-  const [roles, setRoles] = useState<Role[]>([
-    { 
-      id: 1, 
-      name: 'Account Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 21, 
-      name: 'Executive', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 22, 
-      name: 'Process Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 23, 
-      name: 'Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 34, 
-      name: 'Lcoated Role Test', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 36, 
-      name: 'Manager', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 41, 
-      name: 'Technician', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 49, 
-      name: 'Admin', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 108, 
-      name: 'Inventory Role', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-    { 
-      id: 202, 
-      name: 'Admin', 
-      permissions: {
-        'All Functions': [...allFunctionsPermissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    },
-  ]);
+  const [activeTab, setActiveTab] = useState('all_functions');
+  const [selectedRole, setSelectedRole] = useState<ApiRole | null>(null);
+  const [rolePermissions, setRolePermissions] = useState<{ [roleId: number]: { [tab: string]: Permission[] } }>({});
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
+  // Fetch roles and functions from API
+  useEffect(() => {
+    dispatch(fetchRoles());
+    dispatch(fetchFunctions());
+  }, [dispatch]);
+
+  // Helper function to map API permission key to function name
+  const mapApiKeyToFunctionName = (apiKey: string): string => {
+    // Create mapping for common API keys to function names
+    const mapping: { [key: string]: string } = {
+      'pms_notices': 'Broadcast',
+      'pms_complaints': 'Tickets', 
+      'pms_documents': 'Documents',
+      'pms_supplier': 'Supplier',
+      'pms_tasks': 'Tasks',
+      'pms_services': 'Service',
+      'pms_energy': 'Meters',
+      'pms_asset_amcs': 'AMC',
+      'pms_assets': 'Asset',
+      'pms_materials': 'Materials',
+      'pms_purchase_orders': 'PO',
+      'pms_work_orders': 'WO',
+      'pms_complaint_reports': 'Report',
+      'pms_attendances': 'Attendance',
+      'pms_business_directories': 'Business Directory',
+      'pms_purchase_orders_approval': 'PO Approval',
+      'pms_dashboard': 'Dashboard',
+      'pms_tracings': 'Tracing',
+      'pms_bi_reports': 'BI Reports',
+      'pms_restaurants': 'Restaurants',
+      'pms_my_ledgers': 'My Ledgers',
+      'pms_loi': 'Letter Of Indent',
+      'pms_work_order_invoices': 'Wo Invoices',
+      'pms_bills': 'Bill',
+      'pms_engineering_reports': 'Engineering Reports',
+      'pms_events': 'Events',
+      'customers': 'Customers',
+      'quikgate_report': 'QuickGate Report',
+      'task_management': 'Task Management',
+      'pms_ceo_dashboard': 'CEO Dashboard',
+      'operational_audits': 'Operational Audit',
+      'mom_details': 'Mom Details',
+      'pms_design_inputs': 'Pms Design Inputs',
+      'vendor_audit': 'Vendor Audit',
+      'permits': 'Permits',
+      'pending_approvals': 'Pending Approvals',
+      'accounts': 'Accounts',
+      'customer_bills': 'Customer Bills',
+      'my_bills': 'My Bills',
+      'pms_water': 'Water',
+      'pms_stp': 'STP',
+      'daily_readings': 'Daily Readings',
+      'utility_consumption': 'Utility Consumption',
+      'utility_request': 'Utility Request',
+      'space': 'Space',
+      'project_management': 'Project Management',
+      'pms_incidents': 'Pms Incidents',
+      'site_dashboard': 'Site Dashboard',
+      'stepathone_dashboard': 'Steppstone Dashboard',
+      'transport': 'Transport',
+      'waste_generation': 'Waste Generation',
+      'gdn': 'GDN',
+      'parking': 'Parking',
+      'gdn_dispatch': 'GDN Dispatch',
+      'pms_inventories': 'Inventory',
+      'pms_grns': 'GRN',
+      'pms_srns': 'SRNS',
+      'pms_accounts': 'Accounts',
+      'pms_consumption': 'Consumption',
+      'pms_setup': 'Account',
+      'pms_user_roles': 'User & Roles',
+      'pms_meter_types': 'Meter Types',
+      'pms_asset_groups': 'Asset Groups',
+      'pms_helpdesk_categories': 'Ticket',
+      'pms_email_rule_setup': 'Email Rule',
+      'pms_usergroups': 'FM Groups',
+      'pms_export': 'Export',
+      'pms_hsns': 'SAC/HSN Setup',
+      'pms_billing_addresses': 'Addresses',
+      'pms_master_checklist': 'Master Checklist',
+      'pms_visitors': 'Visitors',
+      'pms_rvehicles': 'R Vehicles',
+      'pms_gvehicles': 'G Vehicles',
+      'pms_staffs': 'Staffs',
+      'goods_in_out': 'Goods In Out',
+      'pms_patrolling': 'Patrolling'
+    };
+    
+    return mapping[apiKey] || apiKey;
+  };
+
+  // Helper function to map function name back to API key
+  const mapFunctionNameToApiKey = (functionName: string): string => {
+    const reverseMapping: { [key: string]: string } = {
+      'Broadcast': 'pms_notices',
+      'Tickets': 'pms_complaints', 
+      'Documents': 'pms_documents',
+      'Supplier': 'pms_supplier',
+      'Tasks': 'pms_tasks',
+      'Service': 'pms_services',
+      'Meters': 'pms_energy',
+      'AMC': 'pms_asset_amcs',
+      'Asset': 'pms_assets',
+      'Materials': 'pms_materials',
+      'PO': 'pms_purchase_orders',
+      'WO': 'pms_work_orders',
+      'Report': 'pms_complaint_reports',
+      'Attendance': 'pms_attendances',
+      'Business Directory': 'pms_business_directories',
+      'PO Approval': 'pms_purchase_orders_approval',
+      'Dashboard': 'pms_dashboard',
+      'Tracing': 'pms_tracings',
+      'BI Reports': 'pms_bi_reports',
+      'Restaurants': 'pms_restaurants',
+      'My Ledgers': 'pms_my_ledgers',
+      'Letter Of Indent': 'pms_loi',
+      'Wo Invoices': 'pms_work_order_invoices',
+      'Bill': 'pms_bills',
+      'Engineering Reports': 'pms_engineering_reports',
+      'Events': 'pms_events',
+      'Customers': 'customers',
+      'QuickGate Report': 'quikgate_report',
+      'Task Management': 'task_management',
+      'CEO Dashboard': 'pms_ceo_dashboard',
+      'Operational Audit': 'operational_audits',
+      'Mom Details': 'mom_details',
+      'Pms Design Inputs': 'pms_design_inputs',
+      'Vendor Audit': 'vendor_audit',
+      'Permits': 'permits',
+      'Pending Approvals': 'pending_approvals',
+      'Accounts': 'accounts',
+      'Customer Bills': 'customer_bills',
+      'My Bills': 'my_bills',
+      'Water': 'pms_water',
+      'STP': 'pms_stp',
+      'Daily Readings': 'daily_readings',
+      'Utility Consumption': 'utility_consumption',
+      'Utility Request': 'utility_request',
+      'Space': 'space',
+      'Project Management': 'project_management',
+      'Pms Incidents': 'pms_incidents',
+      'Site Dashboard': 'site_dashboard',
+      'Steppstone Dashboard': 'stepathone_dashboard',
+      'Transport': 'transport',
+      'Waste Generation': 'waste_generation',
+      'GDN': 'gdn',
+      'Parking': 'parking',
+      'GDN Dispatch': 'gdn_dispatch',
+      'Inventory': 'pms_inventories',
+      'GRN': 'pms_grns',
+      'SRNS': 'pms_srns',
+      'Consumption': 'pms_consumption',
+      'Account': 'pms_setup',
+      'User & Roles': 'pms_user_roles',
+      'Meter Types': 'pms_meter_types',
+      'Asset Groups': 'pms_asset_groups',
+      'Ticket': 'pms_helpdesk_categories',
+      'Email Rule': 'pms_email_rule_setup',
+      'FM Groups': 'pms_usergroups',
+      'Export': 'pms_export',
+      'SAC/HSN Setup': 'pms_hsns',
+      'Addresses': 'pms_billing_addresses',
+      'Master Checklist': 'pms_master_checklist',
+      'Visitors': 'pms_visitors',
+      'R Vehicles': 'pms_rvehicles',
+      'G Vehicles': 'pms_gvehicles',
+      'Staffs': 'pms_staffs',
+      'Goods In Out': 'goods_in_out',
+      'Patrolling': 'pms_patrolling'
+    };
+    
+    return reverseMapping[functionName] || functionName.toLowerCase().replace(/\s+/g, '_');
+  };
+
+  // Initialize permissions for roles when functions are loaded
+  useEffect(() => {
+    if (functions.length > 0 && roles.length > 0 && !isUpdating) {
+      const initialPermissions: { [roleId: number]: { [tab: string]: Permission[] } } = {};
+      
+      roles.forEach(role => {
+        // Only reinitialize if this role doesn't have permissions yet
+        if (!rolePermissions[role.id]) {
+          initialPermissions[role.id] = {};
+          
+          // Parse permissions_hash from API
+          let rolePermissionsData: any = {};
+          try {
+            const permissionsHashValue = role.permissions_hash || '{}';
+            console.log(`Loading permissions for role ${role.name}:`, permissionsHashValue);
+            const parsedData = JSON.parse(permissionsHashValue);
+            // Handle case where JSON.parse returns null (when permissions_hash is "null" string)
+            rolePermissionsData = parsedData && typeof parsedData === 'object' ? parsedData : {};
+            console.log('Parsed permissions data:', rolePermissionsData);
+          } catch (error) {
+            console.error('Error parsing permissions_hash for role:', role.name, error);
+            rolePermissionsData = {};
+          }
+          
+          tabs.forEach(tab => {
+            initialPermissions[role.id][tab] = functions
+              .filter(func => func.parent_function === tab)
+              .map(func => {
+                // Look for matching API permission using the function name directly 
+                // or try to find by mapped name
+                let apiPermissions: any = {};
+                
+                // First try direct match with function name
+                if (rolePermissionsData[func.name]) {
+                  apiPermissions = rolePermissionsData[func.name];
+                } else {
+                  // Try to find by reverse mapping - look for API key that maps to this function name
+                  const apiKey = Object.keys(rolePermissionsData).find(key => 
+                    mapApiKeyToFunctionName(key) === func.name
+                  );
+                  if (apiKey) {
+                    apiPermissions = rolePermissionsData[apiKey];
+                  }
+                }
+                
+                return {
+                  name: func.name,
+                  all: apiPermissions.all === "true",
+                  add: apiPermissions.create === "true", 
+                  view: apiPermissions.show === "true",
+                  edit: apiPermissions.update === "true",
+                  disable: apiPermissions.destroy === "true"
+                };
+              });
+          });
+        }
+      });
+      
+      // Only update if we have new permissions to add
+      if (Object.keys(initialPermissions).length > 0) {
+        setRolePermissions(prev => ({
+          ...prev,
+          ...initialPermissions
+        }));
+      }
+    }
+  }, [functions, roles, isUpdating]);
+
+  // Get unique parent_function values as tabs
+  const tabs = ['all_functions', 'inventory', 'setup', 'quickgate'];
+  const tabLabels = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
 
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -275,34 +301,17 @@ export const RoleDashboard = () => {
 
   // Get permissions for the selected role, default to first role if none selected
   const currentRole = selectedRole || roles[0];
-  const currentPermissions = currentRole?.permissions[activeTab] || [];
+  const currentPermissions = currentRole && rolePermissions[currentRole.id] 
+    ? rolePermissions[currentRole.id][activeTab] || []
+    : [];
 
-  const handleRoleClick = (role: Role) => {
+  const handleRoleClick = (role: ApiRole) => {
     setSelectedRole(role);
   };
 
   const handleAddRole = () => {
-    console.log('Opening Add Role dialog...');
-    setIsAddRoleOpen(true);
-  };
-
-  const handleAddRoleSubmit = (roleName: string, permissions: any[]) => {
-    console.log('Adding new role:', roleName);
-    console.log('Permissions:', permissions);
-    
-    const newRole: Role = {
-      id: Math.max(...roles.map(r => r.id)) + 1,
-      name: roleName,
-      permissions: {
-        'All Functions': [...permissions],
-        'Inventory': [...inventoryPermissions],
-        'Setup': [...setupPermissions],
-        'Quickgate': [...quickgatePermissions]
-      }
-    };
-    
-    setRoles([...roles, newRole]);
-    alert(`Role "${roleName}" has been successfully added!`);
+    console.log('Navigating to Add Role page...');
+    navigate('/settings/roles/role/add');
   };
 
   const handleSearchRole = () => {
@@ -311,75 +320,142 @@ export const RoleDashboard = () => {
   };
 
   const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
-    setRoles(roles.map(role => {
-      if (role.id === roleId) {
-        const updatedPermissions = { ...role.permissions };
-        updatedPermissions[activeTab] = role.permissions[activeTab].map(permission => {
-          if (permission.name === permissionName) {
-            const updatedPermission = { ...permission, [field]: value };
-            
-            // If "All" is checked, check all other permissions
-            if (field === 'all' && value) {
-              updatedPermission.add = true;
-              updatedPermission.view = true;
-              updatedPermission.edit = true;
-              updatedPermission.disable = true;
-            }
-            // If "All" is unchecked, uncheck all other permissions
-            else if (field === 'all' && !value) {
-              updatedPermission.add = false;
-              updatedPermission.view = false;
-              updatedPermission.edit = false;
-              updatedPermission.disable = false;
-            }
-            // If any individual permission is unchecked, uncheck "All"
-            else if (!value && field !== 'all') {
-              updatedPermission.all = false;
-            }
-            // If all individual permissions are checked, check "All"
-            else if (value && field !== 'all') {
-              const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
-              if (allIndividualChecked) {
-                updatedPermission.all = true;
-              }
-            }
-            
-            return updatedPermission;
+    if (!rolePermissions[roleId] || !rolePermissions[roleId][activeTab]) return;
+
+    const updatedPermissions = rolePermissions[roleId][activeTab].map(permission => {
+      if (permission.name === permissionName) {
+        const updatedPermission = { ...permission, [field]: value };
+        
+        // If "All" is checked, check all other permissions
+        if (field === 'all' && value) {
+          updatedPermission.add = true;
+          updatedPermission.view = true;
+          updatedPermission.edit = true;
+          updatedPermission.disable = true;
+        }
+        // If "All" is unchecked, uncheck all other permissions
+        else if (field === 'all' && !value) {
+          updatedPermission.add = false;
+          updatedPermission.view = false;
+          updatedPermission.edit = false;
+          updatedPermission.disable = false;
+        }
+        // If any individual permission is unchecked, uncheck "All"
+        else if (!value && field !== 'all') {
+          updatedPermission.all = false;
+        }
+        // If all individual permissions are checked, check "All"
+        else if (value && field !== 'all') {
+          const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
+          if (allIndividualChecked) {
+            updatedPermission.all = true;
           }
-          return permission;
-        });
-        
-        const updatedRole = { ...role, permissions: updatedPermissions };
-        
-        // Update selected role if it's the one being modified
-        if (selectedRole && selectedRole.id === roleId) {
-          setSelectedRole(updatedRole);
         }
         
-        return updatedRole;
+        return updatedPermission;
       }
-      return role;
+      return permission;
+    });
+
+    // Update local state
+    setRolePermissions(prev => ({
+      ...prev,
+      [roleId]: {
+        ...prev[roleId],
+        [activeTab]: updatedPermissions
+      }
     }));
   };
 
-  const handleUpdatePermissions = () => {
-    console.log('Updating permissions for role:', currentRole);
-    console.log('Active tab:', activeTab);
-    console.log('Permissions:', currentPermissions);
-    alert(`Permissions updated for ${currentRole.name} in ${activeTab} tab`);
-    // Here you would typically save to backend
+  const handleUpdatePermissions = async () => {
+    if (!currentRole) {
+      toast.error("Please select a role first");
+      return;
+    }
+    
+    setIsUpdating(true);
+    
+    try {
+      // Get current role's existing permissions from API
+      const existingPermissionsHash = currentRole.permissions_hash ? JSON.parse(currentRole.permissions_hash) : {};
+      
+      // Get current tab permissions from state
+      const currentTabPermissions = rolePermissions[currentRole.id]?.[activeTab] || [];
+      
+      // Build permissions hash for current tab
+      const currentTabPermissionsHash: any = {};
+      currentTabPermissions.forEach(permission => {
+        // Use the proper API key mapping instead of lowercase transformation
+        const apiKey = mapFunctionNameToApiKey(permission.name);
+        currentTabPermissionsHash[apiKey] = {
+          all: permission.all ? "true" : "false",
+          create: permission.add ? "true" : "false", 
+          show: permission.view ? "true" : "false",
+          update: permission.edit ? "true" : "false",
+          destroy: permission.disable ? "true" : "false"
+        };
+      });
+      
+      // Merge with existing permissions (preserve other tabs' permissions)
+      const mergedPermissionsHash = {
+        ...existingPermissionsHash,
+        ...currentTabPermissionsHash
+      };
+      
+      // Prepare payload
+      const payload = {
+        lock_role: {
+          name: currentRole.name,
+        },
+        permissions_hash: mergedPermissionsHash,
+        lock_modules: null
+      };
+
+      // Make PATCH request
+      const response = await fetch(`https://fm-uat-api.lockated.com/lock_roles/${currentRole.id}.json`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        toast.success(`Permissions updated successfully for ${currentRole.name}`);
+        
+        // Refresh roles data to reflect changes
+        await dispatch(fetchRoles());
+        
+        // Clear the local permissions for this role to force re-initialization with fresh API data
+        setRolePermissions(prev => {
+          const updated = { ...prev };
+          delete updated[currentRole.id];
+          return updated;
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update permissions');
+      }
+      
+    } catch (error) {
+      console.error('Error updating permissions:', error);
+      toast.error(`Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#1a1a1a]">ROLE</h1>
+    <div className="space-y-6 p-4 lg:p-6">
+      <h1 className="text-xl lg:text-2xl font-bold text-[#1a1a1a]">ROLE</h1>
       
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6">
         {/* Header with Add Role button */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <Button 
             onClick={handleAddRole}
-            className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+            className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Role
@@ -387,146 +463,209 @@ export const RoleDashboard = () => {
         </div>
 
         {/* Search */}
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Input
             placeholder="Search Role"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs"
+            className="w-full sm:max-w-xs"
           />
           <Button 
             onClick={handleSearchRole}
-            className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+            className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
           >
             <Search className="w-4 h-4 mr-2" />
             Search Role
           </Button>
         </div>
 
-        {/* Left panel with roles and right panel with permissions */}
-        <div className="flex gap-6">
+        {/* Responsive Layout: Stack on mobile, side-by-side on desktop */}
+        <div className="flex flex-col xl:flex-row gap-6">
           {/* Left Panel - Roles List */}
-          <div className="w-80 bg-gray-50 rounded-lg p-4">
-            <div className="space-y-2">
-              {filteredRoles.map((role) => (
-                <div
-                  key={role.id}
-                  onClick={() => handleRoleClick(role)}
-                  className={`p-3 rounded border cursor-pointer transition-colors ${
-                    currentRole?.id === role.id 
-                      ? 'bg-[#C72030] text-white border-[#C72030]' 
-                      : 'bg-white hover:bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="text-sm font-medium">
-                    {role.id} - {role.name}
-                  </div>
+          <div className="w-full xl:w-80 bg-gray-50 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Roles List</h3>
+            <div className="space-y-2 max-h-64 xl:max-h-96 overflow-y-auto">
+              {loading ? (
+                <div className="flex justify-center py-4">
+                  <div className="text-gray-500">Loading roles...</div>
                 </div>
-              ))}
+              ) : filteredRoles.length > 0 ? (
+                filteredRoles.map((role) => (
+                  <div
+                    key={role.id}
+                    onClick={() => handleRoleClick(role)}
+                    className={`p-3 rounded border cursor-pointer transition-colors ${
+                      currentRole?.id === role.id 
+                        ? 'bg-[#C72030] text-white border-[#C72030]' 
+                        : 'bg-white hover:bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="text-sm font-medium">
+                      {role.id} - {role.name}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-4">No roles found</div>
+              )}
             </div>
           </div>
 
           {/* Right Panel - Permissions Matrix */}
-          <div className="flex-1">
-            {/* Tabs */}
-            <div className="flex gap-2 mb-4">
-              {tabs.map((tab) => (
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Permissions for: {currentRole?.name}
+            </h3>
+            
+            {/* Tabs - Responsive scrolling */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+              {tabs.map((tab, index) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded border text-sm font-medium transition-colors ${
+                  className={`px-3 lg:px-4 py-2 rounded border text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab
                       ? 'bg-[#C72030] text-white border-[#C72030]'
                       : 'bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10'
                   }`}
                 >
-                  {tab}
+                  {tabLabels[index]}
                 </button>
               ))}
             </div>
 
-            {/* Permissions Table */}
-            <div className="border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
-              <Table>
-                <TableHeader className="sticky top-0 bg-white z-10">
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-700 w-48"></TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">All</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">Add</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">View</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">Edit</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-center">Disable</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentPermissions.map((permission) => (
-                    <TableRow key={permission.name} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{permission.name}</TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.all}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.add}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.view}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.edit}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={permission.disable}
-                          onCheckedChange={(checked) => 
-                            handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            {/* Permissions Table - Responsive with horizontal scroll */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <div className="max-h-64 lg:max-h-96 overflow-y-auto">
+                  <Table className="min-w-full">
+                    <TableHeader className="sticky top-0 bg-white z-10">
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold text-gray-700 min-w-[200px] lg:w-48 text-xs lg:text-sm">
+                          Permission
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          All
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          Add
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          View
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
+                          Edit
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[70px] text-xs lg:text-sm">
+                          Disable
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {functionsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-4">
+                            Loading functions...
+                          </TableCell>
+                        </TableRow>
+                      ) : currentPermissions.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                            No functions found for this category
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        currentPermissions.map((permission, index) => (
+                        <TableRow key={`${currentRole?.id}-${activeTab}-${permission.name}-${index}`} className="hover:bg-gray-50">
+                          <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
+                            {permission.name}
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                               <Checkbox
+                                checked={permission.all}
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean);
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.add}
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean);
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.view}
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean);
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.edit}
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean);
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.disable}
+                                onCheckedChange={(checked) => {
+                                  if (currentRole) {
+                                    handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean);
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </div>
 
             {/* Update Button */}
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex flex-col sm:flex-row justify-end">
               <Button 
                 onClick={handleUpdatePermissions}
-                className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+                className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
               >
-                Update
+                Update Permissions
               </Button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Add Role Dialog */}
-      <AddRoleDialog 
-        open={isAddRoleOpen}
-        onOpenChange={setIsAddRoleOpen}
-        onSubmit={handleAddRoleSubmit}
-      />
     </div>
   );
 };

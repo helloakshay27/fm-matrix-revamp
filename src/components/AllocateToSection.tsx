@@ -34,13 +34,19 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
           </RadioGroup>
         </div>
         <div className="flex-1 max-w-full lg:max-w-xs">
-          <CustomTextField
-            label="Department*"
+          <select
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            placeholder="Select Department"
-            size="small"
-          />
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Select Department</option>
+            <option value="hr">Human Resources</option>
+            <option value="it">Information Technology</option>
+            <option value="finance">Finance</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="security">Security</option>
+            <option value="admin">Administration</option>
+          </select>
         </div>
       </div>
     </div>

@@ -1,14 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Plus } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { CreateEmailRuleDialog } from '@/components/dialogs/CreateEmailRuleDialog';
+import { CreateEmailRuleDialogNew } from '@/components/dialogs/CreateEmailRuleDialogNew';
 import { EditEmailRuleDialog } from '@/components/dialogs/EditEmailRuleDialog';
 import { EmailRule } from '@/types/emailRule';
+import { emailRuleService } from '@/services/emailRuleService';
 
 // Mock data
 const mockEmailRules: EmailRule[] = [
@@ -43,7 +44,7 @@ const mockEmailRules: EmailRule[] = [
     srNo: 3,
     ruleName: 'Weekly PPM Check',
     triggerType: 'PPM',
-    triggerTo: 'Other',
+    triggerTo: 'Site Admin',
     role: 'Technician',
     periodValue: 1,
     periodType: 'weeks',
@@ -54,11 +55,30 @@ const mockEmailRules: EmailRule[] = [
 ];
 
 export const EmailRuleSetupPage: React.FC = () => {
-  const [emailRules, setEmailRules] = useState<EmailRule[]>(mockEmailRules);
+  const [emailRules, setEmailRules] = useState<EmailRule[]>([]);
   const [selectedRules, setSelectedRules] = useState<string[]>([]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<EmailRule | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchEmailRules = async () => {
+    try {
+      setLoading(true);
+      const rules = await emailRuleService.getEmailRules();
+      setEmailRules(rules);
+    } catch (error) {
+      console.error('Failed to fetch email rules:', error);
+      // Fallback to mock data on error
+      setEmailRules(mockEmailRules);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmailRules();
+  }, []);
 
   const columns: ColumnConfig[] = [
     { key: 'edit', label: 'Edit', sortable: false, hideable: false, defaultVisible: true },
@@ -206,10 +226,11 @@ export const EmailRuleSetupPage: React.FC = () => {
         />
 
         {/* Dialogs */}
-        <CreateEmailRuleDialog
+        <CreateEmailRuleDialogNew
           open={createDialogOpen}
           onClose={() => setCreateDialogOpen(false)}
           onSubmit={handleCreateRule}
+          onSuccess={fetchEmailRules} // Pass the refresh function
         />
 
         <EditEmailRuleDialog
@@ -220,6 +241,7 @@ export const EmailRuleSetupPage: React.FC = () => {
           }}
           onSubmit={handleEditRule}
           emailRule={editingRule}
+          onSuccess={fetchEmailRules} // Pass the refresh function
         />
       </div>
     </div>

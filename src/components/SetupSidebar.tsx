@@ -124,15 +124,6 @@ export const SetupSidebar = () => {
           </div>
 
           {/* Individual Items */}
-          <Link to="/setup/fm-user" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Users className="w-5 h-5" />
-            FM User
-          </Link>
-
-          <Link to="/setup/occupant-users" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Users className="w-5 h-5" />
-            Occupant Users
-          </Link>
 
           <Link to="/setup/meter-type" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Settings className="w-5 h-5" />
