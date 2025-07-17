@@ -360,24 +360,12 @@ export const AddFMUserPage = () => {
               </Box>
               {/* Action Buttons */}
               <div className="flex justify-end pt-6">
-                <MuiButton 
+                <Button 
                   onClick={handleSubmit}
-                  variant="contained"
-                  sx={{
-                    backgroundColor: '#7B2D8E',
-                    color: 'white',
-                    borderRadius: '8px',
-                    padding: '12px 40px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: '#5A1E6B'
-                    }
-                  }}
+                  className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-8 py-3 text-base font-medium rounded-lg"
                 >
                   Submit
-                </MuiButton>
+                </Button>
               </div>
             </CardContent>
           </Card>
