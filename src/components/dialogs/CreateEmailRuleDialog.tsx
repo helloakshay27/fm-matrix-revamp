@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ import {
   FormHelperText
 } from '@mui/material';
 import { EmailRule, TRIGGER_TYPES, TRIGGER_TO_OPTIONS, PERIOD_TYPES } from '@/types/emailRule';
+import { roleService, ApiRole } from '@/services/roleService';
 
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
@@ -42,6 +43,9 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const [roles, setRoles] = useState<ApiRole[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+
   const { control, handleSubmit, reset, formState: { errors } } = useForm<EmailRuleFormData>({
     resolver: zodResolver(emailRuleSchema),
     defaultValues: {
@@ -53,6 +57,24 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
       periodType: 'days',
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      const fetchRoles = async () => {
+        try {
+          setLoadingRoles(true);
+          const roleData = await roleService.fetchRoles();
+          setRoles(roleData);
+        } catch (error) {
+          console.error('Failed to fetch roles:', error);
+        } finally {
+          setLoadingRoles(false);
+        }
+      };
+
+      fetchRoles();
+    }
+  }, [open]);
 
   const onSubmitForm = (data: EmailRuleFormData) => {
     const submissionData: Omit<EmailRule, 'id' | 'srNo' | 'createdOn' | 'createdBy' | 'active'> = {
@@ -153,15 +175,27 @@ export const CreateEmailRuleDialog: React.FC<CreateEmailRuleDialogProps> = ({
             name="role"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="Role"
-                variant="outlined"
-                fullWidth
-                error={!!errors.role}
-                helperText={errors.role?.message}
-                InputLabelProps={{ shrink: true }}
-              />
+              <MuiFormControl fullWidth variant="outlined" error={!!errors.role}>
+                <InputLabel shrink>Role</InputLabel>
+                <MuiSelect
+                  {...field}
+                  label="Role"
+                  notched
+                  disabled={loadingRoles}
+                >
+                  {roles.map((role) => (
+                    <MenuItem key={role.id} value={role.name}>
+                      {role.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+                {errors.role && (
+                  <FormHelperText>{errors.role.message}</FormHelperText>
+                )}
+                {loadingRoles && (
+                  <FormHelperText>Loading roles...</FormHelperText>
+                )}
+              </MuiFormControl>
             )}
           />
 
