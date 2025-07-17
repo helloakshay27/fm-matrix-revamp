@@ -6,7 +6,7 @@ export const ChecklistGroupsPage = () => {
     <GroupsPageTemplate
       title="CHECKLIST GROUPS"
       breadcrumb="Setup > Checklist Groups"
-      apiEndpoint="/pms/checklist_groups.json"
+      apiEndpoint="/pms/asset_groups.json"
       subGroupApiEndpoint="/pms/checklist_sub_groups.json"
       groupType="checklist"
     />
