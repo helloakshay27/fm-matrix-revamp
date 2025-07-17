@@ -3,6 +3,7 @@ export const API_CONFIG = {
   BASE_URL: 'https://fm-uat-api.lockated.com',
   TOKEN: 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
   ENDPOINTS: {
+    ASSETS: '/pms/assets.json',
     AMC: '/pms/asset_amcs.json',
     DEPARTMENTS: '/pms/departments.json',
     ROLES: '/lock_roles.json',
