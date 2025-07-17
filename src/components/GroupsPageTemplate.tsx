@@ -361,7 +361,7 @@ export const GroupsPageTemplate = ({
             maxWidth="md"
             fullWidth
           >
-            <div className="flex items-center justify-between p-6 border-b">
+             <div className="flex items-center justify-between p-4 border-b">
               <DialogTitle className="text-xl font-bold p-0">ADD Sub Group</DialogTitle>
               <IconButton onClick={() => setAddSubGroupOpen(false)}>
                 <X className="w-5 h-5" />
