@@ -7,6 +7,7 @@ import { functionReducer } from './slices/functionSlice'
 import fmUserReducer from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
 import occupantUsersReducer from './slices/occupantUsersSlice'
+import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     fmUsers: fmUserReducer,
     userCounts: userCountsReducer,
     occupantUsers: occupantUsersReducer,
+    occupantUserCounts: occupantUserCountsReducer,
   },
 })
 

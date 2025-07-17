@@ -4,6 +4,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
+import { fetchOccupantUserCounts } from '@/store/slices/occupantUserCountsSlice';
 import { StatsCard } from '@/components/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ export const OccupantUserMasterDashboard = () => {
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   
   const { users: occupantUsersData, loading, error } = useSelector((state: RootState) => state.occupantUsers);
+  const { total: totalUsers, approved: approvedUsers, pending: pendingUsers, rejected: rejectedUsers, appDownloaded } = useSelector((state: RootState) => state.occupantUserCounts);
 
   const filteredUsers = occupantUsersData.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -27,11 +29,6 @@ export const OccupantUserMasterDashboard = () => {
     user.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalUsers = occupantUsersData.length;
-  const approvedUsers = occupantUsersData.filter(user => user.status === 'approved').length;
-  const pendingUsers = occupantUsersData.filter(user => user.status === 'pending').length;
-  const rejectedUsers = occupantUsersData.filter(user => user.status === 'rejected').length;
-  const appDownloaded = 15; // Static value as shown in the image
 
   const handleViewUser = (id: number) => {
     navigate(`/master/user/occupant-users/view/${id}`);
@@ -51,6 +48,7 @@ export const OccupantUserMasterDashboard = () => {
   useEffect(() => {
     setCurrentSection('Master');
     dispatch(fetchOccupantUsers());
+    dispatch(fetchOccupantUserCounts());
   }, [setCurrentSection, dispatch]);
 
   return (
