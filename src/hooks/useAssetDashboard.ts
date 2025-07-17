@@ -22,7 +22,7 @@ export const useAssetDashboard = () => {
 
   // Calculate stats from assets
   useEffect(() => {
-    if (assets.length > 0) {
+    if (assets && assets.length > 0) {
       const newStats = assets.reduce((acc, asset) => {
         acc.total++;
         switch (asset.assetStatus) {

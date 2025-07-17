@@ -113,7 +113,7 @@ export const AssetDashboard = () => {
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
 
   // Get selected asset objects with id and name
-  const selectedAssetObjects = assets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
+  const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
     id: asset.id,
     name: asset.name
   }));
@@ -147,7 +147,7 @@ export const AssetDashboard = () => {
   // Selection panel handlers
   const handleMoveAsset = () => {
     console.log('Move asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = assets.filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/move', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     setSelectedAssets([]);
@@ -155,7 +155,7 @@ export const AssetDashboard = () => {
 
   const handleDisposeAsset = () => {
     console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = assets.filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/dispose', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     setSelectedAssets([]);
@@ -198,8 +198,8 @@ export const AssetDashboard = () => {
   ];
 
   const assetTypeData = [
-    { name: 'Comprehensive', value: assets.filter(a => a.assetType === 'Comprehensive').length, color: 'hsl(35, 35%, 75%)' },
-    { name: 'Non-Comprehensive', value: assets.filter(a => a.assetType === 'Non-Comprehensive').length, color: 'hsl(25, 45%, 55%)' }
+    { name: 'Comprehensive', value: (assets || []).filter(a => a.assetType === 'Comprehensive').length, color: 'hsl(35, 35%, 75%)' },
+    { name: 'Non-Comprehensive', value: (assets || []).filter(a => a.assetType === 'Non-Comprehensive').length, color: 'hsl(25, 45%, 55%)' }
   ];
 
   const categoryData = [
@@ -450,8 +450,8 @@ export const AssetDashboard = () => {
           <AssetStats stats={{
             total: stats.total,
             totalValue: 0, // Not available from API yet
-            nonItAssets: assets.filter(a => a.assetType === 'Non-Comprehensive').length,
-            itAssets: assets.filter(a => a.assetType === 'Comprehensive').length,
+            nonItAssets: (assets || []).filter(a => a.assetType === 'Non-Comprehensive').length,
+            itAssets: (assets || []).filter(a => a.assetType === 'Comprehensive').length,
             inUse: stats.inUse,
             breakdown: stats.breakdown,
             inStore: stats.inStore,

@@ -117,9 +117,17 @@ export const useAssets = (page = 1) => {
 
       const data: AssetResponse = await response.json();
       
-      const mappedAssets = data.pms_assets.map(mapAsset);
-      setAssets(mappedAssets);
-      setPagination(data.pagination);
+      // Handle case where pms_assets might be undefined
+      if (data.pms_assets && Array.isArray(data.pms_assets)) {
+        const mappedAssets = data.pms_assets.map(mapAsset);
+        setAssets(mappedAssets);
+        setPagination(data.pagination || { current_page: 1, total_pages: 1, total_count: 0 });
+      } else {
+        console.error('Invalid API response structure:', data);
+        setAssets([]);
+        setPagination({ current_page: 1, total_pages: 1, total_count: 0 });
+        setError('Invalid API response structure');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch assets');
       console.error('Error fetching assets:', err);
