@@ -357,43 +357,19 @@ export const FMUserMasterDashboard = () => {
           </div>
 
           <div className="flex justify-end gap-3 p-6 pt-0 border-t">
-            <MuiButton
+            <Button
               onClick={handleResetFilters}
-              variant="outlined"
-              sx={{
-                borderColor: '#7B2D8E',
-                color: '#7B2D8E',
-                borderRadius: '8px',
-                padding: '10px 24px',
-                fontSize: '14px',
-                fontWeight: 'medium',
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: '#5A1E6B',
-                  backgroundColor: 'transparent'
-                }
-              }}
+              variant="outline"
+              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030] px-6 py-2 text-sm font-medium rounded-lg"
             >
               Reset
-            </MuiButton>
-            <MuiButton
+            </Button>
+            <Button
               onClick={handleApplyFilters}
-              variant="contained"
-              sx={{
-                backgroundColor: '#7B2D8E',
-                color: 'white',
-                borderRadius: '8px',
-                padding: '10px 24px',
-                fontSize: '14px',
-                fontWeight: 'medium',
-                textTransform: 'none',
-                '&:hover': {
-                  backgroundColor: '#5A1E6B'
-                }
-              }}
+              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-6 py-2 text-sm font-medium rounded-lg"
             >
               Apply
-            </MuiButton>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
