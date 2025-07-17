@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Plus } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { CreateEmailRuleDialog } from '@/components/dialogs/CreateEmailRuleDialog';
+import { CreateEmailRuleDialogNew } from '@/components/dialogs/CreateEmailRuleDialogNew';
 import { EditEmailRuleDialog } from '@/components/dialogs/EditEmailRuleDialog';
 import { EmailRule } from '@/types/emailRule';
 import { emailRuleService } from '@/services/emailRuleService';
@@ -226,7 +226,7 @@ export const EmailRuleSetupPage: React.FC = () => {
         />
 
         {/* Dialogs */}
-        <CreateEmailRuleDialog
+        <CreateEmailRuleDialogNew
           open={createDialogOpen}
           onClose={() => setCreateDialogOpen(false)}
           onSubmit={handleCreateRule}
