@@ -5,6 +5,7 @@ import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -109,22 +110,28 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[500px] max-h-[95vh] md:max-h-[90vh] overflow-y-auto mx-auto">&
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>Create Email Rule</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      <DialogContent className="w-[95vw] max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Create Email Rule</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-6 w-6"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <DialogDescription>
+            Configure email notification rules for maintenance schedules.
+          </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 mt-4">
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-3 p-1">
           {/* Rule Name */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="ruleName">Rule Name</Label>
             <Controller
               name="ruleName"
@@ -144,7 +151,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           </div>
 
           {/* Trigger Type */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>Trigger Type</Label>
             <Controller
               name="triggerType"
@@ -170,7 +177,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           </div>
 
           {/* Trigger To */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>Trigger To</Label>
             <Controller
               name="triggerTo"
@@ -196,9 +203,9 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
           </div>
 
           {/* Roles */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>Roles (Select multiple)</Label>
-            <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+            <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
               {loadingRoles ? (
                 <p className="text-sm text-gray-500">Loading roles...</p>
               ) : (
@@ -226,7 +233,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
 
           {/* Period Value and Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="periodValue">Period Value</Label>
               <Controller
                 name="periodValue"
@@ -248,7 +255,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
               )}
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Period Type</Label>
               <Controller
                 name="periodType"
@@ -274,13 +281,14 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit">Create Rule</Button>
           </div>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
