@@ -227,13 +227,27 @@ export const ResolutionEscalationTab: React.FC = () => {
   const handleEdit = (rule: any) => {
     setEditingRule(rule);
     
+    // Helper function to safely parse escalate_to_users
+    const safeParseUsers = (escalateToUsers: any): number[] => {
+      if (!escalateToUsers) return [];
+      try {
+        if (typeof escalateToUsers === 'string') {
+          return JSON.parse(escalateToUsers);
+        } else if (Array.isArray(escalateToUsers)) {
+          return escalateToUsers;
+        }
+      } catch (error) {
+        console.error('Error parsing escalate_to_users in edit:', error);
+      }
+      return [];
+    };
+    
     // Pre-populate form with existing data
     const formData: ResolutionEscalationFormData = {
       categoryIds: [rule.category_id],
       escalationLevels: {
         e1: {
-          users: rule.escalations.find((e: any) => e.name === 'E1')?.escalate_to_users ? 
-            JSON.parse(rule.escalations.find((e: any) => e.name === 'E1').escalate_to_users) : [],
+          users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E1')?.escalate_to_users),
           priorities: {
             p1: rule.escalations.find((e: any) => e.name === 'E1')?.p1 || 0,
             p2: rule.escalations.find((e: any) => e.name === 'E1')?.p2 || 0,
@@ -243,8 +257,7 @@ export const ResolutionEscalationTab: React.FC = () => {
           }
         },
         e2: {
-          users: rule.escalations.find((e: any) => e.name === 'E2')?.escalate_to_users ? 
-            JSON.parse(rule.escalations.find((e: any) => e.name === 'E2').escalate_to_users) : [],
+          users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E2')?.escalate_to_users),
           priorities: {
             p1: rule.escalations.find((e: any) => e.name === 'E2')?.p1 || 0,
             p2: rule.escalations.find((e: any) => e.name === 'E2')?.p2 || 0,
@@ -254,8 +267,7 @@ export const ResolutionEscalationTab: React.FC = () => {
           }
         },
         e3: {
-          users: rule.escalations.find((e: any) => e.name === 'E3')?.escalate_to_users ? 
-            JSON.parse(rule.escalations.find((e: any) => e.name === 'E3').escalate_to_users) : [],
+          users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E3')?.escalate_to_users),
           priorities: {
             p1: rule.escalations.find((e: any) => e.name === 'E3')?.p1 || 0,
             p2: rule.escalations.find((e: any) => e.name === 'E3')?.p2 || 0,
@@ -265,8 +277,7 @@ export const ResolutionEscalationTab: React.FC = () => {
           }
         },
         e4: {
-          users: rule.escalations.find((e: any) => e.name === 'E4')?.escalate_to_users ? 
-            JSON.parse(rule.escalations.find((e: any) => e.name === 'E4').escalate_to_users) : [],
+          users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E4')?.escalate_to_users),
           priorities: {
             p1: rule.escalations.find((e: any) => e.name === 'E4')?.p1 || 0,
             p2: rule.escalations.find((e: any) => e.name === 'E4')?.p2 || 0,
@@ -276,8 +287,7 @@ export const ResolutionEscalationTab: React.FC = () => {
           }
         },
         e5: {
-          users: rule.escalations.find((e: any) => e.name === 'E5')?.escalate_to_users ? 
-            JSON.parse(rule.escalations.find((e: any) => e.name === 'E5').escalate_to_users) : [],
+          users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E5')?.escalate_to_users),
           priorities: {
             p1: rule.escalations.find((e: any) => e.name === 'E5')?.p1 || 0,
             p2: rule.escalations.find((e: any) => e.name === 'E5')?.p2 || 0,
@@ -608,12 +618,28 @@ export const ResolutionEscalationTab: React.FC = () => {
                             </TableHeader>
                             <TableBody>
                               {rule.escalations.map((escalation) => {
-                                const escalateToUsers = escalation.escalate_to_users ? 
-                                  JSON.parse(escalation.escalate_to_users as string) : [];
-                                const userNames = escalateToUsers.map((userId: number) => {
-                                  const user = fmUsers?.fm_users?.find(u => u.id === userId);
-                                  return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
-                                }).join(', ');
+                                // Safely parse escalate_to_users with error handling
+                                let escalateToUsers: number[] = [];
+                                if (escalation.escalate_to_users) {
+                                  try {
+                                    if (typeof escalation.escalate_to_users === 'string') {
+                                      escalateToUsers = JSON.parse(escalation.escalate_to_users);
+                                    } else if (Array.isArray(escalation.escalate_to_users)) {
+                                      escalateToUsers = escalation.escalate_to_users;
+                                    }
+                                  } catch (error) {
+                                    console.error('Error parsing escalate_to_users:', error);
+                                    escalateToUsers = [];
+                                  }
+                                }
+                                
+                                // Ensure escalateToUsers is an array before mapping
+                                const userNames = Array.isArray(escalateToUsers) 
+                                  ? escalateToUsers.map((userId: number) => {
+                                      const user = fmUsers?.fm_users?.find(u => u.id === userId);
+                                      return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
+                                    }).join(', ')
+                                  : '';
 
                                 return (
                                   <TableRow key={escalation.id} className="border-b">
