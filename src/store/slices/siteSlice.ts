@@ -37,10 +37,23 @@ export const fetchAllowedSites = createAsyncThunk(
 
 export const changeSite = createAsyncThunk(
   'site/changeSite',
-  async (siteId: number, { rejectWithValue }) => {
+  async (siteId: number, { rejectWithValue, dispatch }) => {
     try {
       const response = await apiClient.get(`${ENDPOINTS.CHANGE_SITE}?site_id=${siteId}`)
-      return response.data
+      
+      // Call allowed_sites API after changing site
+      const userId = 87989; // Mock user ID - in real app, this would come from auth state
+      const allowedSitesResponse = await apiClient.get(`${ENDPOINTS.ALLOWED_SITES}?user_id=${userId}`)
+      
+      // Store selected site ID in localStorage
+      if (allowedSitesResponse.data.selected_site?.id) {
+        localStorage.setItem('selectedSiteId', allowedSitesResponse.data.selected_site.id.toString())
+      }
+      
+      return {
+        ...response.data,
+        allowedSitesData: allowedSitesResponse.data
+      }
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to change site')
     }
@@ -73,6 +86,11 @@ const siteSlice = createSlice({
         state.loading = false
         state.sites = action.payload.sites || []
         state.selectedSite = action.payload.selected_site || null
+        
+        // Store selected site ID in localStorage
+        if (action.payload.selected_site?.id) {
+          localStorage.setItem('selectedSiteId', action.payload.selected_site.id.toString())
+        }
       })
       .addCase(fetchAllowedSites.rejected, (state, action) => {
         state.loading = false
@@ -85,10 +103,11 @@ const siteSlice = createSlice({
       })
       .addCase(changeSite.fulfilled, (state, action) => {
         state.loading = false
-        // Update selected site from the response
-        const siteData = action.payload
-        if (siteData.id && siteData.name) {
-          state.selectedSite = { id: siteData.id, name: siteData.name }
+        
+        // Update sites and selected site from allowed_sites response
+        if (action.payload.allowedSitesData) {
+          state.sites = action.payload.allowedSitesData.sites || []
+          state.selectedSite = action.payload.allowedSitesData.selected_site || null
         }
       })
       .addCase(changeSite.rejected, (state, action) => {
