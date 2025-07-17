@@ -360,13 +360,13 @@ export const FMUserMasterDashboard = () => {
             <Button
               onClick={handleResetFilters}
               variant="outline"
-              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030] px-6 py-2 text-sm font-medium rounded-lg"
+              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030] px-6 py-2 text-sm font-medium rounded-lg mt-4"
             >
               Reset
             </Button>
             <Button
               onClick={handleApplyFilters}
-              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-6 py-2 text-sm font-medium rounded-lg"
+              className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-6 py-2 text-sm font-medium rounded-lg mt-4"
             >
               Apply
             </Button>
