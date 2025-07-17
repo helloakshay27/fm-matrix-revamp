@@ -4,7 +4,7 @@ export interface EmailRule {
   srNo: number;
   ruleName: string;
   triggerType: 'PPM' | 'AMC';
-  triggerTo: 'Supplier' | 'Occupant Admin' | 'Other';
+  triggerTo: 'Site Admin' | 'Occupant Admin' | 'Supplier';
   role: string;
   periodValue: number;
   periodType: 'days' | 'weeks' | 'months';
@@ -14,5 +14,5 @@ export interface EmailRule {
 }
 
 export const TRIGGER_TYPES = ['PPM', 'AMC'] as const;
-export const TRIGGER_TO_OPTIONS = ['Supplier', 'Occupant Admin', 'Other'] as const;
+export const TRIGGER_TO_OPTIONS = ['Site Admin', 'Occupant Admin', 'Supplier'] as const;
 export const PERIOD_TYPES = ['days', 'weeks', 'months'] as const;

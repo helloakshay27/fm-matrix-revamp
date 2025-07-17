@@ -20,14 +20,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
-import { EmailRule, TRIGGER_TYPES, TRIGGER_TO_OPTIONS, PERIOD_TYPES } from '@/types/emailRule';
+import { EmailRule, TRIGGER_TYPES, PERIOD_TYPES } from '@/types/emailRule';
 import { roleService, ApiRole } from '@/services/roleService';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
   triggerType: z.enum(['PPM', 'AMC']),
-  triggerTo: z.enum(['Supplier', 'Occupant Admin', 'Other']),
+  triggerTo: z.enum(['Site Admin', 'Occupant Admin', 'Supplier']),
   role: z.array(z.string()).min(1, 'At least one role is required'),
   periodValue: z.number().min(1, 'Period value must be at least 1'),
   periodType: z.enum(['days', 'weeks', 'months']),
@@ -55,7 +55,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
     defaultValues: {
       ruleName: '',
       triggerType: 'PPM',
-      triggerTo: 'Supplier',
+      triggerTo: 'Site Admin',
       role: [],
       periodValue: 1,
       periodType: 'days',
@@ -188,9 +188,13 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
                     <SelectValue placeholder="Select trigger to" />
                   </SelectTrigger>
                   <SelectContent>
-                    {TRIGGER_TO_OPTIONS.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
+                    {[
+                      ['Site Admin', 'Site Admin'],
+                      ['Occupant Admin', 'Occupant Admin'], 
+                      ['Supplier', 'Supplier']
+                    ].map(([label, value]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
                       </SelectItem>
                     ))}
                   </SelectContent>

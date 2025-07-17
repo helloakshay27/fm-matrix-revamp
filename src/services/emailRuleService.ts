@@ -6,7 +6,7 @@ interface ApiEmailRule {
   id: number;
   rule_name: string;
   trigger_type: 'PPM' | 'AMC';
-  trigger_to: 'Supplier' | 'Occupant Admin' | 'Other';
+  trigger_to: 'Site Admin' | 'Occupant Admin' | 'Supplier';
   role_names: string;
   period_value: string;
   period_type: 'days' | 'weeks' | 'months';

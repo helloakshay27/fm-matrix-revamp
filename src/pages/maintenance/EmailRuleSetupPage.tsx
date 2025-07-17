@@ -44,7 +44,7 @@ const mockEmailRules: EmailRule[] = [
     srNo: 3,
     ruleName: 'Weekly PPM Check',
     triggerType: 'PPM',
-    triggerTo: 'Other',
+    triggerTo: 'Site Admin',
     role: 'Technician',
     periodValue: 1,
     periodType: 'weeks',

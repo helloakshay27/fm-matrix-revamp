@@ -24,7 +24,7 @@ import { roleService, ApiRole } from '@/services/roleService';
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
   triggerType: z.enum(['PPM', 'AMC']),
-  triggerTo: z.enum(['Supplier', 'Occupant Admin', 'Other']),
+  triggerTo: z.enum(['Site Admin', 'Occupant Admin', 'Supplier']),
   role: z.array(z.string()).min(1, 'At least one role is required'),
   periodValue: z.number().min(1, 'Period value must be at least 1'),
   periodType: z.enum(['days', 'weeks', 'months']),
@@ -53,7 +53,7 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
     defaultValues: {
       ruleName: '',
       triggerType: 'PPM',
-      triggerTo: 'Supplier',
+      triggerTo: 'Site Admin',
       role: [],
       periodValue: 1,
       periodType: 'days',
