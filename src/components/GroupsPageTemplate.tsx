@@ -461,6 +461,39 @@ export const GroupsPageTemplate = ({
                     }}
                   />
                 </div>
+
+                {/* File Preview Section */}
+                {selectedFile && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">File Preview</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">File Name:</span>
+                        <span className="text-gray-900 font-medium">{selectedFile.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">File Size:</span>
+                        <span className="text-gray-900">{(selectedFile.size / 1024).toFixed(2)} KB</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">File Type:</span>
+                        <span className="text-gray-900">{selectedFile.type || 'Unknown'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Last Modified:</span>
+                        <span className="text-gray-900">{new Date(selectedFile.lastModified).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setSelectedFile(null)}
+                      className="mt-3 text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                    >
+                      Remove File
+                    </Button>
+                  </div>
+                )}
                 
                 <div className="flex justify-end pt-4">
                   <Button 
