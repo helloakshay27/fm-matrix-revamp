@@ -7,13 +7,24 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { MoreVertical, Plus, Upload, Download, Filter, Eye, Search, Users } from 'lucide-react';
+import { MoreVertical, Plus, Upload, Download, Filter, Eye, Search, Users, X } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { 
+  TextField,
+  Button as MuiButton,
+  Box
+} from '@mui/material';
 
 // Sample FM Users data
 const fmUsersData = [
@@ -81,17 +92,27 @@ export const FMUserMasterDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    name: '',
+    email: ''
+  });
 
   useEffect(() => {
     setCurrentSection('Master');
   }, [setCurrentSection]);
 
-  const filteredUsers = fmUsersData.filter(user =>
-    user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.mobile.includes(searchTerm) ||
-    user.vendorCompany.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Apply filters to users
+  const filteredUsers = fmUsersData.filter(user => {
+    const matchesSearch = user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.mobile.includes(searchTerm) ||
+      user.vendorCompany.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesNameFilter = !filters.name || user.userName.toLowerCase().includes(filters.name.toLowerCase());
+    const matchesEmailFilter = !filters.email || user.email.toLowerCase().includes(filters.email.toLowerCase());
+    
+    return matchesSearch && matchesNameFilter && matchesEmailFilter;
+  });
 
   const activeUsers = fmUsersData.filter(user => user.active).length;
   const inactiveUsers = fmUsersData.filter(user => !user.active).length;
@@ -107,6 +128,24 @@ export const FMUserMasterDashboard = () => {
 
   const handleViewUser = (id: string) => {
     navigate(`/master/user/fm-users/view/${id}`);
+  };
+
+  const handleApplyFilters = () => {
+    setFilterDialogOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      name: '',
+      email: ''
+    });
+  };
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -274,6 +313,90 @@ export const FMUserMasterDashboard = () => {
           </Table>
         </div>
       </div>
+
+      {/* Filter Dialog */}
+      <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] p-0">
+          <DialogHeader className="p-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">Filter</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFilterDialogOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="p-6">
+            <Box className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <TextField
+                  fullWidth
+                  label="Name"
+                  variant="outlined"
+                  placeholder="Enter Name"
+                  value={filters.name}
+                  onChange={(e) => handleFilterChange('name', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  fullWidth
+                  label="Email"
+                  variant="outlined"
+                  placeholder="Enter Email"
+                  value={filters.email}
+                  onChange={(e) => handleFilterChange('email', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </div>
+            </Box>
+          </div>
+
+          <div className="flex justify-end gap-3 p-6 pt-0 border-t">
+            <MuiButton
+              onClick={handleResetFilters}
+              variant="outlined"
+              sx={{
+                borderColor: '#7B2D8E',
+                color: '#7B2D8E',
+                borderRadius: '8px',
+                padding: '10px 24px',
+                fontSize: '14px',
+                fontWeight: 'medium',
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#5A1E6B',
+                  backgroundColor: 'transparent'
+                }
+              }}
+            >
+              Reset
+            </MuiButton>
+            <MuiButton
+              onClick={handleApplyFilters}
+              variant="contained"
+              sx={{
+                backgroundColor: '#7B2D8E',
+                color: 'white',
+                borderRadius: '8px',
+                padding: '10px 24px',
+                fontSize: '14px',
+                fontWeight: 'medium',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: '#5A1E6B'
+                }
+              }}
+            >
+              Apply
+            </MuiButton>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
