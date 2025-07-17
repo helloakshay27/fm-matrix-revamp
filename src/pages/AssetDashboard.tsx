@@ -593,6 +593,11 @@ export const AssetDashboard = () => {
       <AssetFilterDialog 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={(filters) => {
+          console.log('Applying filters:', filters);
+          // Here you can handle the filter application logic
+          // For example, update the asset list with the filtered results
+        }}
       />
 
       {/* Removed MoveAssetDialog and DisposeAssetDialog - now using respective pages */}
