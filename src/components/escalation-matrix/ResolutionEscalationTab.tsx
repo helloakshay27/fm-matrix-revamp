@@ -32,51 +32,71 @@ const resolutionEscalationSchema = z.object({
     e1: z.object({
       users: z.array(z.number()),
       priorities: z.object({
-        p1: z.number().min(0),
-        p2: z.number().min(0),
-        p3: z.number().min(0),
-        p4: z.number().min(0),
-        p5: z.number().min(0),
+        p1: z.object({
+          days: z.number().min(0),
+          hours: z.number().min(0).max(23),
+          minutes: z.number().min(0).max(59),
+        }),
+        p2: z.object({
+          days: z.number().min(0),
+          hours: z.number().min(0).max(23),
+          minutes: z.number().min(0).max(59),
+        }),
+        p3: z.object({
+          days: z.number().min(0),
+          hours: z.number().min(0).max(23),
+          minutes: z.number().min(0).max(59),
+        }),
+        p4: z.object({
+          days: z.number().min(0),
+          hours: z.number().min(0).max(23),
+          minutes: z.number().min(0).max(59),
+        }),
+        p5: z.object({
+          days: z.number().min(0),
+          hours: z.number().min(0).max(23),
+          minutes: z.number().min(0).max(59),
+        }),
       })
     }),
     e2: z.object({
       users: z.array(z.number()),
       priorities: z.object({
-        p1: z.number().min(0),
-        p2: z.number().min(0),
-        p3: z.number().min(0),
-        p4: z.number().min(0),
-        p5: z.number().min(0),
+        p1: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p2: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p3: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p4: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p5: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
       })
     }),
     e3: z.object({
       users: z.array(z.number()),
       priorities: z.object({
-        p1: z.number().min(0),
-        p2: z.number().min(0),
-        p3: z.number().min(0),
-        p4: z.number().min(0),
-        p5: z.number().min(0),
+        p1: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p2: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p3: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p4: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p5: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
       })
     }),
     e4: z.object({
       users: z.array(z.number()),
       priorities: z.object({
-        p1: z.number().min(0),
-        p2: z.number().min(0),
-        p3: z.number().min(0),
-        p4: z.number().min(0),
-        p5: z.number().min(0),
+        p1: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p2: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p3: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p4: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p5: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
       })
     }),
     e5: z.object({
       users: z.array(z.number()),
       priorities: z.object({
-        p1: z.number().min(0),
-        p2: z.number().min(0),
-        p3: z.number().min(0),
-        p4: z.number().min(0),
-        p5: z.number().min(0),
+        p1: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p2: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p3: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p4: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
+        p5: z.object({ days: z.number().min(0), hours: z.number().min(0).max(23), minutes: z.number().min(0).max(59) }),
       })
     }),
   })
@@ -119,14 +139,57 @@ export const ResolutionEscalationTab: React.FC = () => {
     defaultValues: {
       categoryIds: [],
       escalationLevels: {
-        e1: { users: [], priorities: { p1: 0, p2: 0, p3: 0, p4: 0, p5: 0 } },
-        e2: { users: [], priorities: { p1: 0, p2: 0, p3: 0, p4: 0, p5: 0 } },
-        e3: { users: [], priorities: { p1: 0, p2: 0, p3: 0, p4: 0, p5: 0 } },
-        e4: { users: [], priorities: { p1: 0, p2: 0, p3: 0, p4: 0, p5: 0 } },
-        e5: { users: [], priorities: { p1: 0, p2: 0, p3: 0, p4: 0, p5: 0 } },
+        e1: { users: [], priorities: { 
+          p1: { days: 0, hours: 0, minutes: 0 }, 
+          p2: { days: 0, hours: 0, minutes: 0 }, 
+          p3: { days: 0, hours: 0, minutes: 0 }, 
+          p4: { days: 0, hours: 0, minutes: 0 }, 
+          p5: { days: 0, hours: 0, minutes: 0 } 
+        }},
+        e2: { users: [], priorities: { 
+          p1: { days: 0, hours: 0, minutes: 0 }, 
+          p2: { days: 0, hours: 0, minutes: 0 }, 
+          p3: { days: 0, hours: 0, minutes: 0 }, 
+          p4: { days: 0, hours: 0, minutes: 0 }, 
+          p5: { days: 0, hours: 0, minutes: 0 } 
+        }},
+        e3: { users: [], priorities: { 
+          p1: { days: 0, hours: 0, minutes: 0 }, 
+          p2: { days: 0, hours: 0, minutes: 0 }, 
+          p3: { days: 0, hours: 0, minutes: 0 }, 
+          p4: { days: 0, hours: 0, minutes: 0 }, 
+          p5: { days: 0, hours: 0, minutes: 0 } 
+        }},
+        e4: { users: [], priorities: { 
+          p1: { days: 0, hours: 0, minutes: 0 }, 
+          p2: { days: 0, hours: 0, minutes: 0 }, 
+          p3: { days: 0, hours: 0, minutes: 0 }, 
+          p4: { days: 0, hours: 0, minutes: 0 }, 
+          p5: { days: 0, hours: 0, minutes: 0 } 
+        }},
+        e5: { users: [], priorities: { 
+          p1: { days: 0, hours: 0, minutes: 0 }, 
+          p2: { days: 0, hours: 0, minutes: 0 }, 
+          p3: { days: 0, hours: 0, minutes: 0 }, 
+          p4: { days: 0, hours: 0, minutes: 0 }, 
+          p5: { days: 0, hours: 0, minutes: 0 } 
+        }},
       }
     }
   });
+
+  // Helper function to convert day/hour/minute to total minutes
+  const convertToMinutes = (days: number, hours: number, minutes: number): number => {
+    return (days * 24 * 60) + (hours * 60) + minutes;
+  };
+
+  // Helper function to convert total minutes to day/hour/minute
+  const convertFromMinutes = (totalMinutes: number) => {
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    return { days, hours, minutes };
+  };
 
   // Load initial data
   useEffect(() => {
@@ -173,47 +236,47 @@ export const ResolutionEscalationTab: React.FC = () => {
           e1: {
             name: 'E1',
             escalate_to_users: data.escalationLevels.e1.users,
-            p1: data.escalationLevels.e1.priorities.p1,
-            p2: data.escalationLevels.e1.priorities.p2,
-            p3: data.escalationLevels.e1.priorities.p3,
-            p4: data.escalationLevels.e1.priorities.p4,
-            p5: data.escalationLevels.e1.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e1.priorities.p1.days, data.escalationLevels.e1.priorities.p1.hours, data.escalationLevels.e1.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e1.priorities.p2.days, data.escalationLevels.e1.priorities.p2.hours, data.escalationLevels.e1.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e1.priorities.p3.days, data.escalationLevels.e1.priorities.p3.hours, data.escalationLevels.e1.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e1.priorities.p4.days, data.escalationLevels.e1.priorities.p4.hours, data.escalationLevels.e1.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e1.priorities.p5.days, data.escalationLevels.e1.priorities.p5.hours, data.escalationLevels.e1.priorities.p5.minutes),
           },
           e2: {
             name: 'E2',
             escalate_to_users: data.escalationLevels.e2.users,
-            p1: data.escalationLevels.e2.priorities.p1,
-            p2: data.escalationLevels.e2.priorities.p2,
-            p3: data.escalationLevels.e2.priorities.p3,
-            p4: data.escalationLevels.e2.priorities.p4,
-            p5: data.escalationLevels.e2.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e2.priorities.p1.days, data.escalationLevels.e2.priorities.p1.hours, data.escalationLevels.e2.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e2.priorities.p2.days, data.escalationLevels.e2.priorities.p2.hours, data.escalationLevels.e2.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e2.priorities.p3.days, data.escalationLevels.e2.priorities.p3.hours, data.escalationLevels.e2.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e2.priorities.p4.days, data.escalationLevels.e2.priorities.p4.hours, data.escalationLevels.e2.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e2.priorities.p5.days, data.escalationLevels.e2.priorities.p5.hours, data.escalationLevels.e2.priorities.p5.minutes),
           },
           e3: {
             name: 'E3',
             escalate_to_users: data.escalationLevels.e3.users,
-            p1: data.escalationLevels.e3.priorities.p1,
-            p2: data.escalationLevels.e3.priorities.p2,
-            p3: data.escalationLevels.e3.priorities.p3,
-            p4: data.escalationLevels.e3.priorities.p4,
-            p5: data.escalationLevels.e3.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e3.priorities.p1.days, data.escalationLevels.e3.priorities.p1.hours, data.escalationLevels.e3.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e3.priorities.p2.days, data.escalationLevels.e3.priorities.p2.hours, data.escalationLevels.e3.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e3.priorities.p3.days, data.escalationLevels.e3.priorities.p3.hours, data.escalationLevels.e3.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e3.priorities.p4.days, data.escalationLevels.e3.priorities.p4.hours, data.escalationLevels.e3.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e3.priorities.p5.days, data.escalationLevels.e3.priorities.p5.hours, data.escalationLevels.e3.priorities.p5.minutes),
           },
           e4: {
             name: 'E4',
             escalate_to_users: data.escalationLevels.e4.users,
-            p1: data.escalationLevels.e4.priorities.p1,
-            p2: data.escalationLevels.e4.priorities.p2,
-            p3: data.escalationLevels.e4.priorities.p3,
-            p4: data.escalationLevels.e4.priorities.p4,
-            p5: data.escalationLevels.e4.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e4.priorities.p1.days, data.escalationLevels.e4.priorities.p1.hours, data.escalationLevels.e4.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e4.priorities.p2.days, data.escalationLevels.e4.priorities.p2.hours, data.escalationLevels.e4.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e4.priorities.p3.days, data.escalationLevels.e4.priorities.p3.hours, data.escalationLevels.e4.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e4.priorities.p4.days, data.escalationLevels.e4.priorities.p4.hours, data.escalationLevels.e4.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e4.priorities.p5.days, data.escalationLevels.e4.priorities.p5.hours, data.escalationLevels.e4.priorities.p5.minutes),
           },
           e5: {
             name: 'E5',
             escalate_to_users: data.escalationLevels.e5.users,
-            p1: data.escalationLevels.e5.priorities.p1,
-            p2: data.escalationLevels.e5.priorities.p2,
-            p3: data.escalationLevels.e5.priorities.p3,
-            p4: data.escalationLevels.e5.priorities.p4,
-            p5: data.escalationLevels.e5.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e5.priorities.p1.days, data.escalationLevels.e5.priorities.p1.hours, data.escalationLevels.e5.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e5.priorities.p2.days, data.escalationLevels.e5.priorities.p2.hours, data.escalationLevels.e5.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e5.priorities.p3.days, data.escalationLevels.e5.priorities.p3.hours, data.escalationLevels.e5.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e5.priorities.p4.days, data.escalationLevels.e5.priorities.p4.hours, data.escalationLevels.e5.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e5.priorities.p5.days, data.escalationLevels.e5.priorities.p5.hours, data.escalationLevels.e5.priorities.p5.minutes),
           },
         }
       };
@@ -249,51 +312,51 @@ export const ResolutionEscalationTab: React.FC = () => {
         e1: {
           users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E1')?.escalate_to_users),
           priorities: {
-            p1: rule.escalations.find((e: any) => e.name === 'E1')?.p1 || 0,
-            p2: rule.escalations.find((e: any) => e.name === 'E1')?.p2 || 0,
-            p3: rule.escalations.find((e: any) => e.name === 'E1')?.p3 || 0,
-            p4: rule.escalations.find((e: any) => e.name === 'E1')?.p4 || 0,
-            p5: rule.escalations.find((e: any) => e.name === 'E1')?.p5 || 0,
+            p1: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E1')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E1')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E1')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E1')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E1')?.p5 || 0),
           }
         },
         e2: {
           users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E2')?.escalate_to_users),
           priorities: {
-            p1: rule.escalations.find((e: any) => e.name === 'E2')?.p1 || 0,
-            p2: rule.escalations.find((e: any) => e.name === 'E2')?.p2 || 0,
-            p3: rule.escalations.find((e: any) => e.name === 'E2')?.p3 || 0,
-            p4: rule.escalations.find((e: any) => e.name === 'E2')?.p4 || 0,
-            p5: rule.escalations.find((e: any) => e.name === 'E2')?.p5 || 0,
+            p1: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E2')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E2')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E2')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E2')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E2')?.p5 || 0),
           }
         },
         e3: {
           users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E3')?.escalate_to_users),
           priorities: {
-            p1: rule.escalations.find((e: any) => e.name === 'E3')?.p1 || 0,
-            p2: rule.escalations.find((e: any) => e.name === 'E3')?.p2 || 0,
-            p3: rule.escalations.find((e: any) => e.name === 'E3')?.p3 || 0,
-            p4: rule.escalations.find((e: any) => e.name === 'E3')?.p4 || 0,
-            p5: rule.escalations.find((e: any) => e.name === 'E3')?.p5 || 0,
+            p1: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E3')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E3')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E3')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E3')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E3')?.p5 || 0),
           }
         },
         e4: {
           users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E4')?.escalate_to_users),
           priorities: {
-            p1: rule.escalations.find((e: any) => e.name === 'E4')?.p1 || 0,
-            p2: rule.escalations.find((e: any) => e.name === 'E4')?.p2 || 0,
-            p3: rule.escalations.find((e: any) => e.name === 'E4')?.p3 || 0,
-            p4: rule.escalations.find((e: any) => e.name === 'E4')?.p4 || 0,
-            p5: rule.escalations.find((e: any) => e.name === 'E4')?.p5 || 0,
+            p1: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E4')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E4')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E4')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E4')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E4')?.p5 || 0),
           }
         },
         e5: {
           users: safeParseUsers(rule.escalations.find((e: any) => e.name === 'E5')?.escalate_to_users),
           priorities: {
-            p1: rule.escalations.find((e: any) => e.name === 'E5')?.p1 || 0,
-            p2: rule.escalations.find((e: any) => e.name === 'E5')?.p2 || 0,
-            p3: rule.escalations.find((e: any) => e.name === 'E5')?.p3 || 0,
-            p4: rule.escalations.find((e: any) => e.name === 'E5')?.p4 || 0,
-            p5: rule.escalations.find((e: any) => e.name === 'E5')?.p5 || 0,
+            p1: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E5')?.p1 || 0),
+            p2: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E5')?.p2 || 0),
+            p3: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E5')?.p3 || 0),
+            p4: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E5')?.p4 || 0),
+            p5: convertFromMinutes(rule.escalations.find((e: any) => e.name === 'E5')?.p5 || 0),
           }
         },
       }
@@ -316,47 +379,47 @@ export const ResolutionEscalationTab: React.FC = () => {
           e1: {
             name: 'E1',
             escalate_to_users: data.escalationLevels.e1.users,
-            p1: data.escalationLevels.e1.priorities.p1,
-            p2: data.escalationLevels.e1.priorities.p2,
-            p3: data.escalationLevels.e1.priorities.p3,
-            p4: data.escalationLevels.e1.priorities.p4,
-            p5: data.escalationLevels.e1.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e1.priorities.p1.days, data.escalationLevels.e1.priorities.p1.hours, data.escalationLevels.e1.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e1.priorities.p2.days, data.escalationLevels.e1.priorities.p2.hours, data.escalationLevels.e1.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e1.priorities.p3.days, data.escalationLevels.e1.priorities.p3.hours, data.escalationLevels.e1.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e1.priorities.p4.days, data.escalationLevels.e1.priorities.p4.hours, data.escalationLevels.e1.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e1.priorities.p5.days, data.escalationLevels.e1.priorities.p5.hours, data.escalationLevels.e1.priorities.p5.minutes),
           },
           e2: {
             name: 'E2',
             escalate_to_users: data.escalationLevels.e2.users,
-            p1: data.escalationLevels.e2.priorities.p1,
-            p2: data.escalationLevels.e2.priorities.p2,
-            p3: data.escalationLevels.e2.priorities.p3,
-            p4: data.escalationLevels.e2.priorities.p4,
-            p5: data.escalationLevels.e2.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e2.priorities.p1.days, data.escalationLevels.e2.priorities.p1.hours, data.escalationLevels.e2.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e2.priorities.p2.days, data.escalationLevels.e2.priorities.p2.hours, data.escalationLevels.e2.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e2.priorities.p3.days, data.escalationLevels.e2.priorities.p3.hours, data.escalationLevels.e2.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e2.priorities.p4.days, data.escalationLevels.e2.priorities.p4.hours, data.escalationLevels.e2.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e2.priorities.p5.days, data.escalationLevels.e2.priorities.p5.hours, data.escalationLevels.e2.priorities.p5.minutes),
           },
           e3: {
             name: 'E3',
             escalate_to_users: data.escalationLevels.e3.users,
-            p1: data.escalationLevels.e3.priorities.p1,
-            p2: data.escalationLevels.e3.priorities.p2,
-            p3: data.escalationLevels.e3.priorities.p3,
-            p4: data.escalationLevels.e3.priorities.p4,
-            p5: data.escalationLevels.e3.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e3.priorities.p1.days, data.escalationLevels.e3.priorities.p1.hours, data.escalationLevels.e3.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e3.priorities.p2.days, data.escalationLevels.e3.priorities.p2.hours, data.escalationLevels.e3.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e3.priorities.p3.days, data.escalationLevels.e3.priorities.p3.hours, data.escalationLevels.e3.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e3.priorities.p4.days, data.escalationLevels.e3.priorities.p4.hours, data.escalationLevels.e3.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e3.priorities.p5.days, data.escalationLevels.e3.priorities.p5.hours, data.escalationLevels.e3.priorities.p5.minutes),
           },
           e4: {
             name: 'E4',
             escalate_to_users: data.escalationLevels.e4.users,
-            p1: data.escalationLevels.e4.priorities.p1,
-            p2: data.escalationLevels.e4.priorities.p2,
-            p3: data.escalationLevels.e4.priorities.p3,
-            p4: data.escalationLevels.e4.priorities.p4,
-            p5: data.escalationLevels.e4.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e4.priorities.p1.days, data.escalationLevels.e4.priorities.p1.hours, data.escalationLevels.e4.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e4.priorities.p2.days, data.escalationLevels.e4.priorities.p2.hours, data.escalationLevels.e4.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e4.priorities.p3.days, data.escalationLevels.e4.priorities.p3.hours, data.escalationLevels.e4.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e4.priorities.p4.days, data.escalationLevels.e4.priorities.p4.hours, data.escalationLevels.e4.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e4.priorities.p5.days, data.escalationLevels.e4.priorities.p5.hours, data.escalationLevels.e4.priorities.p5.minutes),
           },
           e5: {
             name: 'E5',
             escalate_to_users: data.escalationLevels.e5.users,
-            p1: data.escalationLevels.e5.priorities.p1,
-            p2: data.escalationLevels.e5.priorities.p2,
-            p3: data.escalationLevels.e5.priorities.p3,
-            p4: data.escalationLevels.e5.priorities.p4,
-            p5: data.escalationLevels.e5.priorities.p5,
+            p1: convertToMinutes(data.escalationLevels.e5.priorities.p1.days, data.escalationLevels.e5.priorities.p1.hours, data.escalationLevels.e5.priorities.p1.minutes),
+            p2: convertToMinutes(data.escalationLevels.e5.priorities.p2.days, data.escalationLevels.e5.priorities.p2.hours, data.escalationLevels.e5.priorities.p2.minutes),
+            p3: convertToMinutes(data.escalationLevels.e5.priorities.p3.days, data.escalationLevels.e5.priorities.p3.hours, data.escalationLevels.e5.priorities.p3.minutes),
+            p4: convertToMinutes(data.escalationLevels.e5.priorities.p4.days, data.escalationLevels.e5.priorities.p4.hours, data.escalationLevels.e5.priorities.p4.minutes),
+            p5: convertToMinutes(data.escalationLevels.e5.priorities.p5.days, data.escalationLevels.e5.priorities.p5.hours, data.escalationLevels.e5.priorities.p5.minutes),
           },
         }
       };
@@ -437,11 +500,22 @@ export const ResolutionEscalationTab: React.FC = () => {
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-semibold text-center border-r">Levels</TableHead>
                     <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P4</TableHead>
-                    <TableHead className="font-semibold text-center">P5</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  </TableRow>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="border-r"></TableHead>
+                    <TableHead className="border-r"></TableHead>
+                    {priorities.map((priority) => (
+                      <React.Fragment key={priority}>
+                        <TableHead className="text-center text-xs border-r">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                      </React.Fragment>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -474,15 +548,37 @@ export const ResolutionEscalationTab: React.FC = () => {
                         />
                       </TableCell>
                       {priorities.map((priority) => (
-                        <TableCell key={priority} className="p-2 text-center border-r last:border-r-0">
-                          <Input
-                            type="number"
-                            min="0"
-                            {...register(`escalationLevels.${level}.priorities.${priority}`, { valueAsNumber: true })}
-                            className="w-16 h-8 text-center text-sm border-none focus-visible:ring-0"
-                            placeholder="0"
-                          />
-                        </TableCell>
+                        <React.Fragment key={priority}>
+                          <TableCell className="p-1 text-center border-r">
+                            <Input
+                              type="number"
+                              min="0"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 text-center border-r">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="23"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 text-center border-r last:border-r-0">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="59"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                        </React.Fragment>
                       ))}
                     </TableRow>
                   ))}
@@ -705,11 +801,22 @@ export const ResolutionEscalationTab: React.FC = () => {
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-semibold text-center border-r">Levels</TableHead>
                     <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r">P4</TableHead>
-                    <TableHead className="font-semibold text-center">P5</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  </TableRow>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="border-r"></TableHead>
+                    <TableHead className="border-r"></TableHead>
+                    {priorities.map((priority) => (
+                      <React.Fragment key={priority}>
+                        <TableHead className="text-center text-xs border-r">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                      </React.Fragment>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -743,15 +850,37 @@ export const ResolutionEscalationTab: React.FC = () => {
                         />
                       </TableCell>
                       {priorities.map((priority) => (
-                        <TableCell key={priority} className="p-2 text-center border-r last:border-r-0">
-                          <Input
-                            type="number"
-                            min="0"
-                            {...register(`escalationLevels.${level}.priorities.${priority}`, { valueAsNumber: true })}
-                            className="w-16 h-8 text-center text-sm border-none focus-visible:ring-0"
-                            placeholder="0"
-                          />
-                        </TableCell>
+                        <React.Fragment key={priority}>
+                          <TableCell className="p-1 text-center border-r">
+                            <Input
+                              type="number"
+                              min="0"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 text-center border-r">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="23"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 text-center border-r last:border-r-0">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="59"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                        </React.Fragment>
                       ))}
                     </TableRow>
                   ))}
