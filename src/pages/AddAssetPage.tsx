@@ -109,7 +109,7 @@ const AddAssetPage = () => {
   const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate('/maintenance/asset');
   };
 
   // Meter category options matching the images
