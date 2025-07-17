@@ -25,41 +25,35 @@ export const MoveAssetPage: React.FC = () => {
       return;
     }
 
-    const formData = new FormData();
-    
-    // Add asset IDs
-    selectedAssets.forEach((asset, index) => {
-      formData.append(`asset_ids[${index}]`, asset.id.toString());
-    });
-
-    // Add location data
-    if (siteId) formData.append('site_id', siteId.toString());
-    if (buildingId) formData.append('building_id', buildingId.toString());
-    if (wingId) formData.append('wing_id', wingId.toString());
-    if (areaId) formData.append('area_id', areaId.toString());
-    if (floorId) formData.append('floor_id', floorId.toString());
-    if (roomId) formData.append('room_id', roomId.toString());
-
-    // Add allocation data
-    formData.append('allocation_type', allocateTo);
-    if (allocatedToId) formData.append('allocated_to_id', allocatedToId.toString());
-
-    // Add attachment and comments
-    if (attachment) formData.append('attachment', attachment);
-    if (comments) formData.append('comments', comments);
+    const payload = {
+      assets: selectedAssets.map(asset => ({
+        id: asset.id,
+        site_id: siteId,
+        building_id: buildingId,
+        wing_id: wingId || null,
+        floor_id: floorId || null,
+        area_id: areaId || null,
+        room_id: roomId || null,
+        allocate_to_id: allocatedToId || null,
+        allocate_type: allocateTo, // "department" or "user"
+        attachment: attachment ? attachment.name : "",
+        comments: comments || ""
+      }))
+    };
 
     try {
       const response = await fetch('https://fm-uat-api.lockated.com/pms/asset_movement.json', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         alert('Assets moved successfully!');
-        navigate('/maintenance/asset'); // Redirect to asset list
+        navigate('/maintenance/asset');
       } else {
         alert('Failed to move assets. Please try again.');
       }
