@@ -17,6 +17,9 @@ export const API_CONFIG = {
     CREATE_COMPLAINT_WORKER: '/pms/admin/create_complaint_worker.json',
     COST_APPROVALS: '/pms/admin/cost_approvals.json',
     USER_ACCOUNT: '/api/users/account.json',
+    RESPONSE_ESCALATION: '/pms/admin/response_escalation',
+    RESOLUTION_ESCALATION: '/pms/admin/resolution_escalation',
+    UPDATE_COMPLAINT_WORKER: '/pms/admin/update_complaint_worker.json',
   },
 } as const
 

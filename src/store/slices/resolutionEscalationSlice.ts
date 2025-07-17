@@ -1,30 +1,31 @@
-import { createAsyncThunk } from '@reduxjs/toolkit'
-import createApiSlice from '../api/apiSlice'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
-import { ResolutionEscalationMatrixPayload } from '@/types/escalationMatrix'
+import { ResolutionEscalationMatrixPayload, ResolutionEscalationGetResponse, UpdateResolutionEscalationPayload } from '@/types/escalationMatrix'
 
-export interface ResolutionEscalationResponse {
-  id: number;
-  society_id: number;
-  issue_type_id: number | null;
-  category_id: number;
-  assign_to: number | null;
-  created_at: string;
-  updated_at: string;
-  assign: any | null;
-  esc_type: string;
-  of_phase: string;
-  of_atype: string;
-  cloned_by_id: number | null;
-  cloned_at: string | null;
-  site_id: number | null;
-  issue_related_to: string | null;
+interface ResolutionEscalationState {
+  loading: boolean
+  error: string | null
+  success: boolean
+  data: ResolutionEscalationGetResponse[]
+  fetchLoading: boolean
+  updateLoading: boolean
+  deleteLoading: boolean
+}
+
+const initialState: ResolutionEscalationState = {
+  loading: false,
+  error: null,
+  success: false,
+  data: [],
+  fetchLoading: false,
+  updateLoading: false,
+  deleteLoading: false,
 }
 
 // Async thunk for creating resolution escalation
 export const createResolutionEscalation = createAsyncThunk(
-  'resolutionEscalation/createResolutionEscalation',
+  'resolutionEscalation/create',
   async (payload: ResolutionEscalationMatrixPayload, { rejectWithValue }) => {
     try {
       const response = await apiClient.post(ENDPOINTS.CREATE_COMPLAINT_WORKER, payload)
@@ -35,7 +36,109 @@ export const createResolutionEscalation = createAsyncThunk(
   }
 )
 
-// Create the resolution escalation slice
-const resolutionEscalationSlice = createApiSlice<ResolutionEscalationResponse>('resolutionEscalation', createResolutionEscalation)
+// Async thunk for fetching resolution escalation rules
+export const fetchResolutionEscalations = createAsyncThunk(
+  'resolutionEscalation/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get(ENDPOINTS.RESOLUTION_ESCALATION)
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch resolution escalation rules')
+    }
+  }
+)
 
+// Async thunk for updating resolution escalation rule
+export const updateResolutionEscalation = createAsyncThunk(
+  'resolutionEscalation/update',
+  async (payload: UpdateResolutionEscalationPayload, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.patch(ENDPOINTS.UPDATE_COMPLAINT_WORKER, payload)
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update resolution escalation rule')
+    }
+  }
+)
+
+// Async thunk for deleting resolution escalation rule
+export const deleteResolutionEscalation = createAsyncThunk(
+  'resolutionEscalation/delete',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.delete(`${ENDPOINTS.CREATE_COMPLAINT_WORKER}/${id}`)
+      return { id, ...response.data }
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete resolution escalation rule')
+    }
+  }
+)
+
+// Create the resolution escalation slice
+const resolutionEscalationSlice = createSlice({
+  name: 'resolutionEscalation',
+  initialState,
+  reducers: {
+    clearState: (state) => {
+      state.loading = false
+      state.error = null
+      state.success = false
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(createResolutionEscalation.pending, (state) => {
+        state.loading = true
+        state.error = null
+        state.success = false
+      })
+      .addCase(createResolutionEscalation.fulfilled, (state) => {
+        state.loading = false
+        state.success = true
+      })
+      .addCase(createResolutionEscalation.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+      .addCase(fetchResolutionEscalations.pending, (state) => {
+        state.fetchLoading = true
+        state.error = null
+      })
+      .addCase(fetchResolutionEscalations.fulfilled, (state, action) => {
+        state.fetchLoading = false
+        state.data = action.payload
+      })
+      .addCase(fetchResolutionEscalations.rejected, (state, action) => {
+        state.fetchLoading = false
+        state.error = action.payload as string
+      })
+      .addCase(updateResolutionEscalation.pending, (state) => {
+        state.updateLoading = true
+        state.error = null
+      })
+      .addCase(updateResolutionEscalation.fulfilled, (state, action) => {
+        state.updateLoading = false
+        state.success = true
+      })
+      .addCase(updateResolutionEscalation.rejected, (state, action) => {
+        state.updateLoading = false
+        state.error = action.payload as string
+      })
+      .addCase(deleteResolutionEscalation.pending, (state) => {
+        state.deleteLoading = true
+        state.error = null
+      })
+      .addCase(deleteResolutionEscalation.fulfilled, (state, action) => {
+        state.deleteLoading = false
+        state.data = state.data.filter(item => item.id !== action.payload.id)
+      })
+      .addCase(deleteResolutionEscalation.rejected, (state, action) => {
+        state.deleteLoading = false
+        state.error = action.payload as string
+      })
+  },
+})
+
+export const { clearState } = resolutionEscalationSlice.actions
 export default resolutionEscalationSlice.reducer
