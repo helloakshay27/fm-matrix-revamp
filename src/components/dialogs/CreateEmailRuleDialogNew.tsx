@@ -41,12 +41,14 @@ interface CreateEmailRuleDialogNewProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: Omit<EmailRule, 'id' | 'srNo' | 'createdOn' | 'createdBy' | 'active'>) => void;
+  onSuccess?: () => void; // Add callback for successful API call
 }
 
 export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> = ({
   open,
   onClose,
   onSubmit,
+  onSuccess,
 }) => {
   const [roles, setRoles] = useState<ApiRole[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
@@ -115,6 +117,11 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
       reset();
       setSelectedRoles([]);
       onClose();
+      
+      // Call the success callback to refresh the table
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error('Failed to create email rule:', error);
       toast.error('Failed to create email rule. Please try again.');

@@ -62,21 +62,21 @@ export const EmailRuleSetupPage: React.FC = () => {
   const [editingRule, setEditingRule] = useState<EmailRule | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchEmailRules = async () => {
-      try {
-        setLoading(true);
-        const rules = await emailRuleService.getEmailRules();
-        setEmailRules(rules);
-      } catch (error) {
-        console.error('Failed to fetch email rules:', error);
-        // Fallback to mock data on error
-        setEmailRules(mockEmailRules);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchEmailRules = async () => {
+    try {
+      setLoading(true);
+      const rules = await emailRuleService.getEmailRules();
+      setEmailRules(rules);
+    } catch (error) {
+      console.error('Failed to fetch email rules:', error);
+      // Fallback to mock data on error
+      setEmailRules(mockEmailRules);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchEmailRules();
   }, []);
 
@@ -230,6 +230,7 @@ export const EmailRuleSetupPage: React.FC = () => {
           open={createDialogOpen}
           onClose={() => setCreateDialogOpen(false)}
           onSubmit={handleCreateRule}
+          onSuccess={fetchEmailRules} // Pass the refresh function
         />
 
         <EditEmailRuleDialog
