@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
-import { EscalationMatrixPayload, ResponseEscalationGetResponse, UpdateResponseEscalationPayload } from '@/types/escalationMatrix'
+import { EscalationMatrixPayload, ResponseEscalationGetResponse, UpdateResponseEscalationPayload, DeleteComplaintWorkerPayload } from '@/types/escalationMatrix'
 
 interface ResponseEscalationState {
   loading: boolean
@@ -62,8 +62,6 @@ export const updateResponseEscalation = createAsyncThunk(
   }
 )
 
-
-
 export const deleteResponseEscalation = createAsyncThunk(
   'responseEscalation/delete',
    async (id: number, { rejectWithValue }) => {
@@ -81,7 +79,6 @@ export const deleteResponseEscalation = createAsyncThunk(
     }
   }
 )
-
 
 const responseEscalationSlice = createSlice({
   name: 'responseEscalation',
