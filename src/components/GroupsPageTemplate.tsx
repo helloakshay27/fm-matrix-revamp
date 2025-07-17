@@ -127,13 +127,13 @@ export const GroupsPageTemplate = ({
       setGroupLoading(true);
       try {
         const payload = {
-          [groupType === 'asset' ? 'pms_asset_group' : 'pms_checklist_group']: {
+          pms_asset_group: {
             name: groupName.trim(),
             group_type: groupType
           }
         };
 
-        const response = await apiClient.post(apiEndpoint, payload);
+        const response = await apiClient.post('/pms/asset_groups.json', payload);
         
         if (response.data) {
           await fetchGroupsData();
@@ -155,11 +155,11 @@ export const GroupsPageTemplate = ({
       setSubGroupLoading(true);
       try {
         const params = new URLSearchParams({
-          [`${groupType === 'asset' ? 'pms_asset_sub_group' : 'pms_checklist_sub_group'}[name]`]: subGroupName.trim(),
-          [`${groupType === 'asset' ? 'pms_asset_sub_group' : 'pms_checklist_sub_group'}[group_id]`]: selectedGroupId.toString()
+          'pms_asset_sub_group[name]': subGroupName.trim(),
+          'pms_asset_sub_group[group_id]': selectedGroupId.toString()
         });
 
-        const response = await apiClient.post(`${subGroupApiEndpoint}?${params.toString()}`);
+        const response = await apiClient.post(`/pms/asset_sub_groups.json?${params.toString()}`);
         
         if (response.data) {
           await fetchGroupsData();
