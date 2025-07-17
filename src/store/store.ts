@@ -10,6 +10,8 @@ import occupantUsersReducer from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
 import projectReducer from './slices/projectSlice'
 import siteReducer from './slices/siteSlice'
+import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
+import responseEscalationReducer from './slices/responseEscalationSlice'
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +27,8 @@ export const store = configureStore({
     occupantUserCounts: occupantUserCountsReducer,
     project: projectReducer,
     site: siteReducer,
+    helpdeskCategories: helpdeskCategoriesReducer,
+    responseEscalation: responseEscalationReducer,
   },
 })
 

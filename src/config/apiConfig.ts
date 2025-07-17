@@ -13,6 +13,9 @@ export const API_CONFIG = {
     CHANGE_COMPANY: '/change_company.json',
     ALLOWED_SITES: '/pms/sites/allowed_sites.json',
     CHANGE_SITE: '/change_site.json',
+    HELPDESK_CATEGORIES: '/pms/admin/helpdesk_categories.json',
+    CREATE_COMPLAINT_WORKER: '/pms/admin/create_complaint_worker.json',
+    USER_ACCOUNT: '/api/users/account.json',
   },
 } as const
 

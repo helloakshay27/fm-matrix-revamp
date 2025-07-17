@@ -1,320 +1,332 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ChevronDown, Edit, Trash2 } from 'lucide-react';
-import { ESCALATION_LEVELS, PRIORITY_LEVELS, ESCALATION_TO_OPTIONS, ResponseEscalationRule, EscalationLevel, PriorityTiming } from '@/types/escalationMatrix';
+import React, { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useDispatch, useSelector } from 'react-redux'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { X, Plus, Loader2 } from 'lucide-react'
+import { AppDispatch, RootState } from '@/store/store'
+import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice'
+import { fetchFMUsers } from '@/store/slices/fmUserSlice'
+import { createResponseEscalation, clearState } from '@/store/slices/responseEscalationSlice'
+import { ResponseEscalationApiFormData, FMUserDropdown, EscalationMatrixPayload } from '@/types/escalationMatrix'
+import { toast } from '@/hooks/use-toast'
 
+// Schema for form validation
 const responseEscalationSchema = z.object({
-  categoryType: z.string().min(1, 'Category type is required'),
-  escalationLevels: z.array(z.object({
-    id: z.string(),
-    level: z.enum(['E1', 'E2', 'E3', 'E4', 'E5']),
-    escalationTo: z.string().min(1, 'Escalation to is required'),
-  })).length(5),
-  priorityTimings: z.array(z.object({
-    priority: z.enum(['P1', 'P2', 'P3', 'P4', 'P5']),
-    days: z.number().min(0),
-    hours: z.number().min(0).max(23),
-    minutes: z.number().min(0).max(59),
-  })).length(5),
-});
+  categoryIds: z.array(z.number()).min(1, 'At least one category must be selected').max(15, 'Maximum 15 categories allowed'),
+  escalationLevels: z.object({
+    e1: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
+    e2: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
+    e3: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
+    e4: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
+    e5: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
+  }),
+})
 
-type ResponseEscalationFormData = z.infer<typeof responseEscalationSchema>;
+type ResponseEscalationFormData = z.infer<typeof responseEscalationSchema>
 
 export const ResponseEscalationTab: React.FC = () => {
-  const [rules, setRules] = useState<ResponseEscalationRule[]>([]);
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
-  const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
+  const dispatch = useDispatch<AppDispatch>()
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<{
+    e1: number[]
+    e2: number[]
+    e3: number[]
+    e4: number[]
+    e5: number[]
+  }>({
+    e1: [],
+    e2: [],
+    e3: [],
+    e4: [],
+    e5: [],
+  })
 
-  const createDefaultEscalationLevels = (): EscalationLevel[] => {
-    return ESCALATION_LEVELS.map(level => ({
-      id: `${level}-${Date.now()}`,
-      level,
-      escalationTo: '',
-    }));
-  };
+  // Redux selectors
+  const { data: categoriesData, loading: categoriesLoading } = useSelector((state: RootState) => state.helpdeskCategories)
+  const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers)
+  const { loading: submissionLoading, success, error } = useSelector((state: RootState) => state.responseEscalation)
 
-  const createDefaultPriorityTimings = (): PriorityTiming[] => {
-    return PRIORITY_LEVELS.map(priority => ({
-      priority,
-      days: 0,
-      hours: 0,
-      minutes: 0,
-    }));
-  };
-
-  const form = useForm<ResponseEscalationFormData>({
+  // Form setup
+  const { handleSubmit, setValue, formState: { errors } } = useForm<ResponseEscalationFormData>({
     resolver: zodResolver(responseEscalationSchema),
     defaultValues: {
-      categoryType: '',
-      escalationLevels: createDefaultEscalationLevels(),
-      priorityTimings: createDefaultPriorityTimings(),
+      categoryIds: [],
+      escalationLevels: {
+        e1: [],
+        e2: [],
+        e3: [],
+        e4: [],
+        e5: [],
+      },
     },
-  });
+  })
 
-  const handleSubmit = (data: ResponseEscalationFormData) => {
-    const newRule: ResponseEscalationRule = {
-      id: Date.now().toString(),
-      categoryType: data.categoryType,
-      escalationLevels: data.escalationLevels as EscalationLevel[],
-      priorityTimings: data.priorityTimings as PriorityTiming[],
-      createdOn: new Date().toISOString(),
-      createdBy: 'Current User',
-      active: true,
-    };
+  // Process FM Users data for display
+  const fmUsers: FMUserDropdown[] = fmUsersData?.fm_users?.map(user => ({
+    ...user,
+    displayName: `${user.firstname} ${user.lastname}`,
+  })) || []
 
-    setRules(prev => [...prev, newRule]);
-    form.reset({
-      categoryType: '',
-      escalationLevels: createDefaultEscalationLevels(),
-      priorityTimings: createDefaultPriorityTimings(),
-    });
-  };
+  // Fetch data on component mount
+  useEffect(() => {
+    dispatch(fetchHelpdeskCategories())
+    dispatch(fetchFMUsers())
+  }, [dispatch])
 
-  const toggleRuleExpansion = (ruleId: string) => {
-    setExpandedRules(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ruleId)) {
-        newSet.delete(ruleId);
-      } else {
-        newSet.add(ruleId);
-      }
-      return newSet;
-    });
-  };
+  // Handle success/error states
+  useEffect(() => {
+    if (success) {
+      toast({
+        title: 'Success',
+        description: 'Response escalation rule created successfully',
+      })
+      // Reset form
+      setSelectedCategories([])
+      setSelectedUsers({ e1: [], e2: [], e3: [], e4: [], e5: [] })
+      setValue('categoryIds', [])
+      setValue('escalationLevels', { e1: [], e2: [], e3: [], e4: [], e5: [] })
+      dispatch(clearState())
+    }
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error,
+        variant: 'destructive',
+      })
+      dispatch(clearState())
+    }
+  }, [success, error, setValue, dispatch])
 
-  const filteredRules = selectedCategoryFilter && selectedCategoryFilter !== 'all'
-    ? rules.filter(rule => rule.categoryType === selectedCategoryFilter)
-    : rules;
+  // Category selection handlers
+  const handleCategorySelect = (categoryId: number) => {
+    if (selectedCategories.length >= 15) {
+      toast({
+        title: 'Limit Reached',
+        description: 'Maximum 15 categories allowed',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    const newCategories = [...selectedCategories, categoryId]
+    setSelectedCategories(newCategories)
+    setValue('categoryIds', newCategories)
+  }
+
+  const handleCategoryRemove = (categoryId: number) => {
+    const newCategories = selectedCategories.filter(id => id !== categoryId)
+    setSelectedCategories(newCategories)
+    setValue('categoryIds', newCategories)
+  }
+
+  // User selection handlers
+  const handleUserSelect = (level: keyof typeof selectedUsers, userId: number) => {
+    if (selectedUsers[level].length >= 15) {
+      toast({
+        title: 'Limit Reached',
+        description: 'Maximum 15 users allowed per escalation level',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const newUsers = { ...selectedUsers, [level]: [...selectedUsers[level], userId] }
+    setSelectedUsers(newUsers)
+    setValue('escalationLevels', newUsers)
+  }
+
+  const handleUserRemove = (level: keyof typeof selectedUsers, userId: number) => {
+    const newUsers = { ...selectedUsers, [level]: selectedUsers[level].filter(id => id !== userId) }
+    setSelectedUsers(newUsers)
+    setValue('escalationLevels', newUsers)
+  }
+
+  // Form submission
+  const onSubmit = (data: ResponseEscalationFormData) => {
+    // Get society_id from localStorage (set by siteSlice)
+    const societyId = localStorage.getItem('selectedSiteId')
+    if (!societyId) {
+      toast({
+        title: 'Error',
+        description: 'Site not selected. Please select a site first.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Transform form data to API payload
+    const payload: EscalationMatrixPayload = {
+      complaint_worker: {
+        society_id: parseInt(societyId),
+        esc_type: 'response',
+        of_phase: 'pms',
+        of_atype: 'Pms::Site',
+      },
+      category_ids: data.categoryIds,
+      escalation_matrix: {
+        e1: { name: 'E1', escalate_to_users: data.escalationLevels.e1 },
+        e2: { name: 'E2', escalate_to_users: data.escalationLevels.e2 },
+        e3: { name: 'E3', escalate_to_users: data.escalationLevels.e3 },
+        e4: { name: 'E4', escalate_to_users: data.escalationLevels.e4 },
+        e5: { name: 'E5', escalate_to_users: data.escalationLevels.e5 },
+      },
+    }
+
+    dispatch(createResponseEscalation(payload))
+  }
+
+  const getCategoryName = (id: number) => {
+    return categoriesData?.categories?.find(cat => cat.id === id)?.name || 'Unknown Category'
+  }
+
+  const getUserName = (id: number) => {
+    return fmUsers.find(user => user.id === id)?.displayName || 'Unknown User'
+  }
+
+  const availableCategories = categoriesData?.categories?.filter(
+    cat => !selectedCategories.includes(cat.id)
+  ) || []
+
+  const getAvailableUsers = (level: keyof typeof selectedUsers) => {
+    return fmUsers.filter(user => !selectedUsers[level].includes(user.id))
+  }
 
   return (
     <div className="space-y-6">
-      {/* Form Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Response Escalation Rule</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              {/* Category Type Selection */}
-              <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-3">
-                  <FormField
-                    control={form.control}
-                    name="categoryType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Category Type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Maintenance">Maintenance</SelectItem>
-                            <SelectItem value="Security">Security</SelectItem>
-                            <SelectItem value="Cleaning">Cleaning</SelectItem>
-                            <SelectItem value="IT Support">IT Support</SelectItem>
-                            <SelectItem value="Facilities">Facilities</SelectItem>
-                            <SelectItem value="Accounting">Accounting</SelectItem>
-                            <SelectItem value="ELECTRICAL WORK">ELECTRICAL WORK</SelectItem>
-                            <SelectItem value="HR">HR</SelectItem>
-                            <SelectItem value="HVAC">HVAC</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Escalation Levels Table */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Escalation Levels</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-muted">
-                        <th className="border-r px-4 py-3 text-left font-medium">Levels</th>
-                        <th className="px-4 py-3 text-center font-medium">Escalation To</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ESCALATION_LEVELS.map((level, index) => (
-                        <tr key={level} className="border-t">
-                          <td className="border-r px-4 py-3 font-medium">{level}</td>
-                          <td className="px-4 py-3">
-                            <FormField
-                              control={form.control}
-                              name={`escalationLevels.${index}.escalationTo`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select an Option" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {ESCALATION_TO_OPTIONS.map(option => (
-                                        <SelectItem key={option} value={option}>
-                                          {option}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
-                  Submit
-                </Button>
-                <Button type="button" variant="outline">
-                  Reset
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Filter Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Category Type</label>
-              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Category Type" />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Categories Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Category Selection</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Select
+                disabled={categoriesLoading || selectedCategories.length >= 15}
+                onValueChange={(value) => handleCategorySelect(parseInt(value))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={
+                    categoriesLoading ? "Loading categories..." : 
+                    selectedCategories.length >= 15 ? "Maximum categories selected" :
+                    "Select a category"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Security">Security</SelectItem>
-                  <SelectItem value="Cleaning">Cleaning</SelectItem>
-                  <SelectItem value="IT Support">IT Support</SelectItem>
-                  <SelectItem value="Facilities">Facilities</SelectItem>
-                  <SelectItem value="Accounting">Accounting</SelectItem>
-                  <SelectItem value="ELECTRICAL WORK">ELECTRICAL WORK</SelectItem>
-                  <SelectItem value="HR">HR</SelectItem>
-                  <SelectItem value="HVAC">HVAC</SelectItem>
+                  {availableCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end gap-2">
-              <Button variant="outline" size="sm">
-                Apply
-              </Button>
-              <Button variant="outline" size="sm">
-                Reset
-              </Button>
+
+            {/* Selected Categories */}
+            <div className="flex flex-wrap gap-2">
+              {selectedCategories.map((categoryId) => (
+                <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
+                  {getCategoryName(categoryId)}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => handleCategoryRemove(categoryId)}
+                  />
+                </Badge>
+              ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Existing Rules Table */}
-      <div className="space-y-4">
-        {filteredRules.length === 0 ? (
-          <p className="text-muted-foreground">No rules found. Create your first rule above.</p>
-        ) : (
-          filteredRules.map((rule, index) => (
-            <Card key={rule.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">Rule {index + 1}</span>
-                      <Button variant="ghost" size="sm" className="text-orange-500">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => toggleRuleExpansion(rule.id)}
+            <div className="text-sm text-muted-foreground">
+              {selectedCategories.length}/15 categories selected
+            </div>
+
+            {errors.categoryIds && (
+              <p className="text-sm text-destructive">{errors.categoryIds.message}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Escalation Levels */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Escalation Matrix</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {(['e1', 'e2', 'e3', 'e4', 'e5'] as const).map((level) => (
+              <div key={level} className="space-y-3">
+                <Label className="text-base font-semibold">
+                  {level.toUpperCase()} - Escalation Level {level.slice(1)}
+                </Label>
+                
+                <div className="flex items-center space-x-2">
+                  <Select
+                    disabled={fmUsersLoading || selectedUsers[level].length >= 15}
+                    onValueChange={(value) => handleUserSelect(level, parseInt(value))}
                   >
-                    <ChevronDown 
-                      className={`h-4 w-4 transition-transform ${
-                        expandedRules.has(rule.id) ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="border rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-muted">
-                        <th className="border-r px-4 py-3 text-left font-medium">Category Type</th>
-                        <th className="border-r px-4 py-3 text-center font-medium">Levels</th>
-                        <th className="px-4 py-3 text-center font-medium">Escalation To</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rule.escalationLevels.map((level, levelIndex) => (
-                        <tr key={level.level} className="border-t">
-                          {levelIndex === 0 && (
-                            <td className="border-r px-4 py-3 font-medium" rowSpan={rule.escalationLevels.length}>
-                              {rule.categoryType}
-                            </td>
-                          )}
-                          <td className="border-r px-4 py-3 text-center">{level.level}</td>
-                          <td className="px-4 py-3 text-center">{level.escalationTo}</td>
-                        </tr>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={
+                        fmUsersLoading ? "Loading users..." :
+                        selectedUsers[level].length >= 15 ? "Maximum users selected" :
+                        "Select a user"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableUsers(level).map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.displayName}
+                        </SelectItem>
                       ))}
-                    </tbody>
-                  </table>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {expandedRules.has(rule.id) && (
-                  <div className="mt-4 space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Priority Timings</h4>
-                      <div className="space-y-1">
-                        {rule.priorityTimings.map(timing => (
-                          <div key={timing.priority} className="text-sm">
-                            <strong>{timing.priority}:</strong> {timing.days}d {timing.hours}h {timing.minutes}m
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                {/* Selected Users */}
+                <div className="flex flex-wrap gap-2">
+                  {selectedUsers[level].map((userId) => (
+                    <Badge key={userId} variant="outline" className="flex items-center gap-1">
+                      {getUserName(userId)}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => handleUserRemove(level, userId)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  {selectedUsers[level].length}/15 users selected
+                </div>
+
+                {errors.escalationLevels?.[level] && (
+                  <p className="text-sm text-destructive">{errors.escalationLevels[level]?.message}</p>
                 )}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Submit Button */}
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={submissionLoading || categoriesLoading || fmUsersLoading}
+        >
+          {submissionLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Rule...
+            </>
+          ) : (
+            'Create Response Escalation Rule'
+          )}
+        </Button>
+      </form>
     </div>
-  );
-};
+  )
+}
