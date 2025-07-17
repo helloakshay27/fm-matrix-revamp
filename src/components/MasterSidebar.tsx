@@ -84,70 +84,79 @@ export const MasterSidebar = () => {
     const hasActiveChild = item.children?.some((child: any) => isActiveRoute(child.href));
     const isActive = item.href && isActiveRoute(item.href);
 
-    return (
-      <div key={item.name} className="w-full">
-        <button
-          onClick={() => {
-            if (item.hasChildren) {
-              toggleExpanded(item.name);
-            } else if (item.href) {
-              handleNavigation(item.href);
+    if (item.hasChildren) {
+      return (
+        <div key={item.name}>
+          <button
+            onClick={() => toggleExpanded(item.name)}
+            className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+          >
+            <div className="flex items-center gap-3">
+              {(isActive || hasActiveChild) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+              <item.icon className="w-5 h-5" />
+              {item.name}
+            </div>
+            {isExpanded ?
+              <ChevronDown className="w-4 h-4" /> :
+              <ChevronRight className="w-4 h-4" />
             }
-          }}
-          className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all duration-200 ${
-            isActive || hasActiveChild
-              ? 'bg-[#C72030] text-white'
-              : 'text-[#1a1a1a] hover:bg-gray-100'
-          } ${level > 0 ? 'pl-8' : ''}`}
-          style={{ marginLeft: level * 16 }}
-        >
-          <div className="flex items-center gap-3">
-            <item.icon className="w-5 h-5" />
-            <span className="text-sm font-medium">{item.name}</span>
-          </div>
-          {item.hasChildren && (
-            <div className="transition-transform duration-200">
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
+          </button>
+          {isExpanded && (
+            <div className="space-y-1">
+              {item.children.map((child: any) => (
+                <div key={child.name} className="ml-8">
+                  <button
+                    onClick={() => handleNavigation(child.href)}
+                    className="flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative text-[#1a1a1a]"
+                  >
+                    {isActiveRoute(child.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                    {child.name}
+                  </button>
+                </div>
+              ))}
             </div>
           )}
-        </button>
+        </div>
+      );
+    }
 
-        {item.hasChildren && isExpanded && (
-          <div className="border-l-2 border-gray-200 ml-6">
-            {item.children.map((child: any) => (
-              <button
-                key={child.name}
-                onClick={() => handleNavigation(child.href)}
-                className={`w-full flex items-center px-8 py-2 text-left transition-colors ${
-                  isActiveRoute(child.href)
-                    ? 'bg-[#C72030] text-white'
-                    : 'text-[#1a1a1a] hover:bg-gray-100'
-                }`}
-              >
-                <span className="text-sm">{child.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
+    return (
+      <div key={item.name}>
+        <button
+          onClick={() => item.href && handleNavigation(item.href)}
+          className="flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative text-[#1a1a1a]"
+        >
+          {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+          <item.icon className="w-5 h-5" />
+          {item.name}
+        </button>
       </div>
     );
   };
 
   return (
-    <div className="w-64 bg-white border-r border-[#D5DbDB] fixed left-0 top-16 bottom-0 z-20 flex flex-col">
-      <div className="p-4 border-b border-[#D5DbDB] flex-shrink-0">
-        <h2 className="text-lg font-semibold text-[#1a1a1a]">Master</h2>
-      </div>
-      
-      <ScrollArea className="flex-1">
-        <nav className="py-2">
+    <div
+      className="w-64 bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto"
+      style={{ top: '4rem', height: '91vh' }}
+    >
+      <div className="p-2">
+        <div className="flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">FM</span>
+          </div>
+          <span className="text-[#1a1a1a] font-semibold text-lg">Facility Management</span>
+        </div>
+
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-[#1a1a1a] opacity-70 uppercase tracking-wide">
+            Master
+          </h3>
+        </div>
+
+        <nav className="space-y-2">
           {masterItems.map((item) => renderMenuItem(item))}
         </nav>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
