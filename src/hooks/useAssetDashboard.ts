@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { useAssets } from './useAssets';
+import { useAssets, AssetFilters } from './useAssets';
 
 export const useAssetDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState<AssetFilters>({});
   
-  const { assets, pagination, statsData, loading, error, refetch, changePage } = useAssets(currentPage);
+  const { assets, pagination, statsData, loading, error, refetch, changePage } = useAssets(currentPage, 20, filters);
 
   // Use stats from API data
   const stats = useMemo(() => {
@@ -38,6 +39,15 @@ export const useAssetDashboard = () => {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
+    // Use combined search for API
+    const newFilters = { ...filters, assetNameOrNumber: value };
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleFilterChange = (newFilters: AssetFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -58,7 +68,11 @@ export const useAssetDashboard = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    changePage(page);
+    changePage(page, filters);
+  };
+
+  const handleRefetch = () => {
+    refetch(filters);
   };
 
   return {
@@ -66,15 +80,17 @@ export const useAssetDashboard = () => {
     allAssets: assets,
     selectedAssets,
     searchTerm,
+    filters,
     stats,
     pagination,
     loading,
     error,
     currentPage,
     handleSearch,
+    handleFilterChange,
     handleSelectAll,
     handleSelectAsset,
     handlePageChange,
-    refetch
+    refetch: handleRefetch
   };
 };
