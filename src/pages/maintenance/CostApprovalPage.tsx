@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { 
   APPROVAL_LEVELS, 
@@ -22,7 +22,7 @@ import {
   CostApprovalGetResponse
 } from '@/types/costApproval';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
-import { createCostApproval, fetchCostApprovals } from '@/store/slices/costApprovalSlice';
+import { createCostApproval, fetchCostApprovals, deleteCostApproval } from '@/store/slices/costApprovalSlice';
 import { AppDispatch, RootState } from '@/store/store';
 
 const createCostApprovalSchema = (existingRules: CostApprovalGetResponse[], activeTab: string) => 
@@ -82,7 +82,7 @@ export const CostApprovalPage: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<{ [key: string]: number[] }>({});
 
   const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers);
-  const { rules, createLoading, fetchLoading } = useSelector((state: RootState) => state.costApproval);
+  const { rules, createLoading, fetchLoading, deleteLoading } = useSelector((state: RootState) => state.costApproval);
 
   const fmUsers: FMUserDropdown[] = fmUsersData?.fm_users || [];
 
@@ -151,6 +151,26 @@ export const CostApprovalPage: React.FC = () => {
   const getUserDisplayName = (userId: number): string => {
     const user = fmUsers.find(u => u.id === userId);
     return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await dispatch(deleteCostApproval(id)).unwrap();
+      
+      toast({
+        title: 'Success',
+        description: 'Cost approval rule deleted successfully',
+      });
+
+      // Refresh the cost approvals list
+      dispatch(fetchCostApprovals());
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete cost approval rule',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSubmit = async (data: CostApprovalFormData) => {
@@ -384,41 +404,63 @@ export const CostApprovalPage: React.FC = () => {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-3 font-medium">Cost Range</th>
-                          <th className="text-left p-3 font-medium">Unit</th>
-                          <th className="text-left p-3 font-medium">Status</th>
-                          <th className="text-left p-3 font-medium">Created Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRules.map((rule) => (
-                          <tr key={rule.id} className="border-b hover:bg-muted/50">
-                            <td className="p-3">
-                              {rule.cost_unit === 'between' && rule.cost_from !== null
-                                ? `₹${rule.cost_from} - ₹${rule.cost_to}`
-                                : `> ₹${rule.cost_to}`
-                              }
-                            </td>
-                            <td className="p-3 capitalize">
-                              {rule.cost_unit.replace('_', ' ')}
-                            </td>
-                            <td className="p-3">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                rule.active 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {rule.active ? 'Active' : 'Inactive'}
-                              </span>
-                            </td>
-                            <td className="p-3 text-sm text-muted-foreground">
-                              {new Date(rule.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
+                       <thead>
+                         <tr className="border-b">
+                           <th className="text-left p-3 font-medium">Cost Range</th>
+                           <th className="text-left p-3 font-medium">Unit</th>
+                           <th className="text-left p-3 font-medium">Levels</th>
+                           <th className="text-left p-3 font-medium">Status</th>
+                           <th className="text-left p-3 font-medium">Created Date</th>
+                           <th className="text-left p-3 font-medium">Actions</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         {filteredRules.map((rule) => (
+                           <tr key={rule.id} className="border-b hover:bg-muted/50">
+                             <td className="p-3">
+                               {rule.cost_unit === 'between' && rule.cost_from !== null
+                                 ? `₹${rule.cost_from} - ₹${rule.cost_to}`
+                                 : `> ₹${rule.cost_to}`
+                               }
+                             </td>
+                             <td className="p-3 capitalize">
+                               {rule.cost_unit.replace('_', ' ')}
+                             </td>
+                             <td className="p-3">
+                               <div className="flex flex-wrap gap-1">
+                                 {['L1', 'L2', 'L3', 'L4', 'L5'].map(level => (
+                                   <span key={level} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                                     {level}
+                                   </span>
+                                 ))}
+                               </div>
+                             </td>
+                             <td className="p-3">
+                               <span className={`px-2 py-1 rounded-full text-xs ${
+                                 rule.active 
+                                   ? 'bg-green-100 text-green-800' 
+                                   : 'bg-gray-100 text-gray-800'
+                               }`}>
+                                 {rule.active ? 'Active' : 'Inactive'}
+                               </span>
+                             </td>
+                             <td className="p-3 text-sm text-muted-foreground">
+                               {new Date(rule.created_at).toLocaleDateString()}
+                             </td>
+                             <td className="p-3">
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => handleDelete(rule.id)}
+                                 disabled={deleteLoading}
+                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
                     </table>
                   </div>
                 )}
@@ -448,41 +490,63 @@ export const CostApprovalPage: React.FC = () => {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-3 font-medium">Cost Range</th>
-                          <th className="text-left p-3 font-medium">Unit</th>
-                          <th className="text-left p-3 font-medium">Status</th>
-                          <th className="text-left p-3 font-medium">Created Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRules.map((rule) => (
-                          <tr key={rule.id} className="border-b hover:bg-muted/50">
-                            <td className="p-3">
-                              {rule.cost_unit === 'between' && rule.cost_from !== null
-                                ? `₹${rule.cost_from} - ₹${rule.cost_to}`
-                                : `> ₹${rule.cost_to}`
-                              }
-                            </td>
-                            <td className="p-3 capitalize">
-                              {rule.cost_unit.replace('_', ' ')}
-                            </td>
-                            <td className="p-3">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                rule.active 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {rule.active ? 'Active' : 'Inactive'}
-                              </span>
-                            </td>
-                            <td className="p-3 text-sm text-muted-foreground">
-                              {new Date(rule.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
+                       <thead>
+                         <tr className="border-b">
+                           <th className="text-left p-3 font-medium">Cost Range</th>
+                           <th className="text-left p-3 font-medium">Unit</th>
+                           <th className="text-left p-3 font-medium">Levels</th>
+                           <th className="text-left p-3 font-medium">Status</th>
+                           <th className="text-left p-3 font-medium">Created Date</th>
+                           <th className="text-left p-3 font-medium">Actions</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         {filteredRules.map((rule) => (
+                           <tr key={rule.id} className="border-b hover:bg-muted/50">
+                             <td className="p-3">
+                               {rule.cost_unit === 'between' && rule.cost_from !== null
+                                 ? `₹${rule.cost_from} - ₹${rule.cost_to}`
+                                 : `> ₹${rule.cost_to}`
+                               }
+                             </td>
+                             <td className="p-3 capitalize">
+                               {rule.cost_unit.replace('_', ' ')}
+                             </td>
+                             <td className="p-3">
+                               <div className="flex flex-wrap gap-1">
+                                 {['L1', 'L2', 'L3', 'L4', 'L5'].map(level => (
+                                   <span key={level} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                                     {level}
+                                   </span>
+                                 ))}
+                               </div>
+                             </td>
+                             <td className="p-3">
+                               <span className={`px-2 py-1 rounded-full text-xs ${
+                                 rule.active 
+                                   ? 'bg-green-100 text-green-800' 
+                                   : 'bg-gray-100 text-gray-800'
+                               }`}>
+                                 {rule.active ? 'Active' : 'Inactive'}
+                               </span>
+                             </td>
+                             <td className="p-3 text-sm text-muted-foreground">
+                               {new Date(rule.created_at).toLocaleDateString()}
+                             </td>
+                             <td className="p-3">
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => handleDelete(rule.id)}
+                                 disabled={deleteLoading}
+                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
                     </table>
                   </div>
                 )}

@@ -47,10 +47,26 @@ export const createCostApproval = createAsyncThunk(
   }
 )
 
+// Async thunk for deleting cost approval (set active to false)
+export const deleteCostApproval = createAsyncThunk(
+  'costApproval/delete',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await apiClient.patch(`${ENDPOINTS.COST_APPROVALS}/${id}`, {
+        cost_approval: { active: false }
+      })
+      return id
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Failed to delete cost approval')
+    }
+  }
+)
+
 interface CostApprovalState {
   rules: CostApprovalGetResponse[];
   createLoading: boolean;
   fetchLoading: boolean;
+  deleteLoading: boolean;
   error: string | null;
 }
 
@@ -58,6 +74,7 @@ const initialState: CostApprovalState = {
   rules: [],
   createLoading: false,
   fetchLoading: false,
+  deleteLoading: false,
   error: null,
 }
 
@@ -93,6 +110,20 @@ const costApprovalSlice = createSlice({
       })
       .addCase(createCostApproval.rejected, (state, action) => {
         state.createLoading = false
+        state.error = action.payload as string
+      })
+      // Delete cost approval
+      .addCase(deleteCostApproval.pending, (state) => {
+        state.deleteLoading = true
+        state.error = null
+      })
+      .addCase(deleteCostApproval.fulfilled, (state, action) => {
+        state.deleteLoading = false
+        // Remove the deleted rule from the state
+        state.rules = state.rules.filter(rule => rule.id !== action.payload)
+      })
+      .addCase(deleteCostApproval.rejected, (state, action) => {
+        state.deleteLoading = false
         state.error = action.payload as string
       })
   },
