@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Bell, User, MapPin, ChevronDown, Home, Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Bell, User, MapPin, ChevronDown, Home } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +9,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SearchWithSuggestions } from './SearchWithSuggestions';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '@/store/store';
-import { fetchAllowedCompanies, changeCompany } from '@/store/slices/projectSlice';
-import { fetchAllowedSites, changeSite, clearSites } from '@/store/slices/siteSlice';
+import { useAppDispatch, useAppSelector } from '@/hooks/slice-hooks';
+import { changeCompany, changeSite, fetchCompanyList, fetchSiteList } from '@/redux/login/loginSlice';
+
+export interface Company {
+  id: number;
+  name: string;
+}
+
+export interface Site {
+  id: number;
+  name: string;
+}
 
 export const Header = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+
+  const { data: companies } = useAppSelector(state => state.fetchCompanyList)
+  const { data: sites } = useAppSelector(state => state.fetchSiteList)
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   
@@ -37,39 +52,6 @@ export const Header = () => {
     console.log('Search term:', searchTerm);
   };
 
-  // Load initial data
-  useEffect(() => {
-    dispatch(fetchAllowedCompanies());
-  }, [dispatch]);
-
-  // Load sites when company changes
-  useEffect(() => {
-    if (selectedCompany) {
-      dispatch(fetchAllowedSites(userId));
-    } else {
-      dispatch(clearSites());
-    }
-  }, [selectedCompany, userId, dispatch]);
-
-  // Handle company change
-  const handleCompanyChange = async (companyId: number) => {
-    try {
-      await dispatch(changeCompany(companyId)).unwrap();
-      // Sites will be loaded automatically via useEffect
-    } catch (error) {
-      console.error('Failed to change company:', error);
-    }
-  };
-
-  // Handle site change
-  const handleSiteChange = async (siteId: number) => {
-    try {
-      await dispatch(changeSite(siteId)).unwrap();
-    } catch (error) {
-      console.error('Failed to change site:', error);
-    }
-  };
-
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-full">
       <div className="flex items-center justify-between h-full px-6">
@@ -77,9 +59,8 @@ export const Header = () => {
           {/* Home Dashboard */}
           <a
             href="/"
-            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-              currentPath === '/' ? 'text-[#C72030]' : 'text-[#1a1a1a] hover:text-[#C72030]'
-            }`}
+            className={`flex items-center gap-2 text-sm font-medium transition-colors ${currentPath === '/' ? 'text-[#C72030]' : 'text-[#1a1a1a] hover:text-[#C72030]'
+              }`}
           >
             <Home className="w-4 h-4" />
             Home
@@ -88,25 +69,13 @@ export const Header = () => {
           {/* Project Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-              {projectLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <span className="text-sm font-medium">
-                  {selectedCompany?.name || 'Select Project'}
-                </span>
-              )}
+              <span className="text-sm font-medium">Project Change</span>
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-              {companies.map((company) => (
-                <DropdownMenuItem
-                  key={company.id}
-                  onClick={() => handleCompanyChange(company.id)}
-                  className={selectedCompany?.id === company.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
-                >
-                  {company.name}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuItem>Project Alpha</DropdownMenuItem>
+              <DropdownMenuItem>Project Beta</DropdownMenuItem>
+              <DropdownMenuItem>Project Gamma</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -114,31 +83,13 @@ export const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <MapPin className="w-4 h-4" />
-              {siteLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <span className="text-sm font-medium">
-                  {selectedSite?.name || 'Select Site'}
-                </span>
-              )}
+              <span className="text-sm font-medium">Lockastead Site 1</span>
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-              {sites.length > 0 ? (
-                sites.map((site) => (
-                  <DropdownMenuItem
-                    key={site.id}
-                    onClick={() => handleSiteChange(site.id)}
-                    className={selectedSite?.id === site.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
-                  >
-                    {site.name}
-                  </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>
-                  {selectedCompany ? 'No sites available' : 'Select a project first'}
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem>Lockastead Site 1</DropdownMenuItem>
+              <DropdownMenuItem>Lockastead Site 2</DropdownMenuItem>
+              <DropdownMenuItem>Downtown Office</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
