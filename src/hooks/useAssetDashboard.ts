@@ -6,31 +6,23 @@ export const useAssetDashboard = () => {
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   
-  const { assets, pagination, loading, error, refetch, changePage } = useAssets(currentPage);
+  const { assets, pagination, statsData, loading, error, refetch, changePage } = useAssets(currentPage);
 
-  // Calculate stats from API data
+  // Use stats from API data
   const stats = useMemo(() => {
-    const totalAssets = pagination.total_count || 0;
-    const inUseAssets = assets.filter(asset => asset.assetStatus === 'In Use').length;
-    const breakdownAssets = assets.filter(asset => asset.assetStatus === 'Breakdown').length;
-    const inStoreAssets = assets.filter(asset => asset.assetStatus === 'In Store').length;
-    const disposedAssets = assets.filter(asset => asset.assetStatus === 'Disposed').length;
-    const itAssets = assets.filter(asset => asset.assetType === 'Comprehensive').length;
-    const nonItAssets = assets.filter(asset => asset.assetType === 'Non-Comprehensive').length;
-    
     return {
-      total: totalAssets,
-      inUse: inUseAssets,
-      breakdown: breakdownAssets,
-      inStore: inStoreAssets,
-      dispose: disposedAssets,
-      totalValue: 125000, // This would come from API in real implementation
-      nonItAssets: nonItAssets,
-      itAssets: itAssets,
-      critical: breakdownAssets, // Assuming breakdown assets are critical
-      maintenance: 0 // Would need to be added to API response
+      total: pagination.total_count || 0,
+      inUse: statsData.in_use_count || 0,
+      breakdown: statsData.breakdown_count || 0,
+      inStore: statsData.in_store || 0,
+      dispose: statsData.dispose_assets || 0,
+      totalValue: statsData.total_value || 0,
+      nonItAssets: statsData.non_it_assets || 0,
+      itAssets: statsData.it_assets || 0,
+      critical: statsData.breakdown_count || 0,
+      maintenance: 0
     };
-  }, [assets, pagination.total_count]);
+  }, [statsData, pagination.total_count]);
 
   // Filter assets based on search term
   const filteredAssets = useMemo(() => {
