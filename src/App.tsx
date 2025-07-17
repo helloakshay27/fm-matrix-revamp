@@ -46,6 +46,7 @@ import { AssetDashboard } from './pages/AssetDashboard';
 import { AssetDetailsPage } from './pages/AssetDetailsPage';
 import AddAssetPage from './pages/AddAssetPage';
 import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
+import { MoveAssetPage } from './pages/MoveAssetPage';
 
 // Import Incident pages
 import { IncidentListDashboard } from './pages/IncidentListDashboard';
@@ -653,6 +654,7 @@ function App() {
               <Route path="/maintenance/asset/details/:id" element={<AssetDetailsPage />} />
               <Route path="/maintenance/asset/edit/:id" element={<EditAssetDetailsPage />} />
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
+              <Route path="/maintenance/asset/move" element={<MoveAssetPage />} />
               <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
 
               {/* AMC Routes */}

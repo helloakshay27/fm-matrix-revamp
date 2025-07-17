@@ -19,7 +19,7 @@ import { AssetStats } from '@/components/AssetStats';
 import { AssetActions } from '@/components/AssetActions';
 import { AssetDataTable } from '@/components/AssetDataTable';
 import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
-import { MoveAssetDialog } from '@/components/MoveAssetDialog';
+// Removed MoveAssetDialog import - now using MoveAssetPage
 import { DisposeAssetDialog } from '@/components/DisposeAssetDialog';
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
@@ -65,7 +65,7 @@ export const AssetDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isMoveAssetOpen, setIsMoveAssetOpen] = useState(false);
+  // Removed isMoveAssetOpen state - now navigating to page
   const [isDisposeAssetOpen, setIsDisposeAssetOpen] = useState(false);
   const [selectedAnalyticsItems, setSelectedAnalyticsItems] = useState<string[]>([
     'total-available', 'assets-in-use', 'asset-breakdown', 'critical-breakdown'
@@ -144,7 +144,8 @@ export const AssetDashboard = () => {
   // Selection panel handlers
   const handleMoveAsset = () => {
     console.log('Move asset clicked for', selectedAssets.length, 'assets');
-    setIsMoveAssetOpen(true);
+    const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id));
+    navigate('/maintenance/asset/move', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     handleSelectAll(false);
   };
@@ -552,11 +553,7 @@ export const AssetDashboard = () => {
         onClose={() => setIsFilterOpen(false)}
       />
 
-      <MoveAssetDialog
-        isOpen={isMoveAssetOpen}
-        onClose={() => setIsMoveAssetOpen(false)}
-        selectedAssets={selectedAssets}
-      />
+      {/* Removed MoveAssetDialog - now using MoveAssetPage */}
 
       <DisposeAssetDialog
         isOpen={isDisposeAssetOpen}
