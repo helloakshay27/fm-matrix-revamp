@@ -14,7 +14,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
-import { AssetSelectionPanel } from './AssetSelectionPanel';
+import { AssetSelectionDialog } from './AssetSelectionDialog';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAssets, MappedAsset } from '@/hooks/useAssets';
 
@@ -43,7 +43,7 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [showSelectionPanel, setShowSelectionPanel] = useState(false);
+  const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const { assets, pagination, loading, error, refetch, changePage } = useAssets(currentPage);
 
   const columns: ColumnConfig[] = useMemo(() => [
@@ -136,10 +136,10 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
     (checked: boolean) => {
       if (checked) {
         setSelectedItems(filteredData.map(asset => asset.id));
-        setShowSelectionPanel(true);
+        setShowSelectionDialog(true);
       } else {
         setSelectedItems([]);
-        setShowSelectionPanel(false);
+        setShowSelectionDialog(false);
       }
     },
     [filteredData, setSelectedItems]
@@ -149,11 +149,11 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
     (assetId: string, checked: boolean) => {
       if (checked) {
         setSelectedItems(prev => [...prev, assetId]);
-        setShowSelectionPanel(true);
+        setShowSelectionDialog(true);
       } else {
         setSelectedItems(prev => prev.filter(id => id !== assetId));
         if (selectedItems.length === 1) {
-          setShowSelectionPanel(false);
+          setShowSelectionDialog(false);
         }
       }
     },
@@ -190,28 +190,6 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
     );
   }
 
-  const bulkActions = [
-    {
-      label: 'Move Asset',
-      onClick: (selectedAssets) => {
-        alert(`Moving ${selectedAssets.length} assets`);
-      }
-    },
-    {
-      label: 'Dispose Asset',
-      onClick: (selectedAssets) => {
-        alert(`Disposing ${selectedAssets.length} assets`);
-      }
-    }
-  ];
-
-  const handleMoveAsset = () => {
-    alert(`Moving ${selectedItems.length} assets`);
-  };
-
-  const handleDisposeAsset = () => {
-    alert(`Disposing ${selectedItems.length} assets`);
-  };
 
   const handlePrintQRCode = () => {
     alert(`Printing QR codes for ${selectedItems.length} assets`);
@@ -223,7 +201,7 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
 
   const handleClearSelection = () => {
     setSelectedItems([]);
-    setShowSelectionPanel(false);
+    setShowSelectionDialog(false);
   };
 
   return (
@@ -239,8 +217,6 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
         onSelectAll={handleSelectAll}
         onSelectItem={handleSelectItem}
         getItemId={getItemId}
-        bulkActions={bulkActions}
-        showBulkActions={true}
         storageKey="energy-assets-table"
         hideTableExport={true}
         hideTableSearch={true}
@@ -279,17 +255,15 @@ export const AssetTable = ({ searchTerm, currentPage = 1, onPageChange }: AssetT
         </div>
       )}
 
-      {showSelectionPanel && selectedItems.length > 0 && (
-        <AssetSelectionPanel
-          selectedCount={selectedItems.length}
-          selectedAssets={selectedAssetObjects}
-          onMoveAsset={handleMoveAsset}
-          onDisposeAsset={handleDisposeAsset}
-          onPrintQRCode={handlePrintQRCode}
-          onCheckIn={handleCheckIn}
-          onClearSelection={handleClearSelection}
-        />
-      )}
+      <AssetSelectionDialog
+        open={showSelectionDialog && selectedItems.length > 0}
+        onOpenChange={setShowSelectionDialog}
+        selectedCount={selectedItems.length}
+        selectedAssets={selectedAssetObjects}
+        onPrintQRCode={handlePrintQRCode}
+        onCheckIn={handleCheckIn}
+        onClearSelection={handleClearSelection}
+      />
     </div>
   );
 };
