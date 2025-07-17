@@ -6,6 +6,7 @@ import roleReducer from './slices/roleSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
+import occupantUsersReducer from './slices/occupantUsersSlice'
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     function: functionReducer,
     fmUsers: fmUserReducer,
     userCounts: userCountsReducer,
+    occupantUsers: occupantUsersReducer,
   },
 })
 

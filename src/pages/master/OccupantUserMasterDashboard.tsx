@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { StatsCard } from '@/components/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,59 +11,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Users, Download, Filter, Eye, Search, RotateCcw } from 'lucide-react';
 
-// Sample Occupant Users data
-const occupantUsersData = [
-  {
-    id: 1,
-    srNo: 1,
-    company: 'Tech Corp Ltd',
-    name: 'Alex Johnson',
-    mobile: '+91 9876543210',
-    email: 'alex.johnson@techcorp.com',
-    status: 'Approved'
-  },
-  {
-    id: 2,
-    srNo: 2,
-    company: 'Innovation Hub',
-    name: 'Maria Garcia',
-    mobile: '+91 9876543211',
-    email: 'maria.garcia@innovation.com',
-    status: 'Pending'
-  },
-  {
-    id: 3,
-    srNo: 3,
-    company: 'Digital Solutions',
-    name: 'Robert Chen',
-    mobile: '+91 9876543212',
-    email: 'robert.chen@digital.com',
-    status: 'Approved'
-  },
-  {
-    id: 4,
-    srNo: 4,
-    company: 'Smart Systems',
-    name: 'Emily Davis',
-    mobile: '+91 9876543213',
-    email: 'emily.davis@smart.com',
-    status: 'Rejected'
-  },
-  {
-    id: 5,
-    srNo: 5,
-    company: 'Future Tech',
-    name: 'David Wilson',
-    mobile: '+91 9876543214',
-    email: 'david.wilson@future.com',
-    status: 'Pending'
-  }
-];
 
 export const OccupantUserMasterDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  
+  const { users: occupantUsersData, loading, error } = useSelector((state: RootState) => state.occupantUsers);
 
   const filteredUsers = occupantUsersData.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,9 +28,9 @@ export const OccupantUserMasterDashboard = () => {
   );
 
   const totalUsers = occupantUsersData.length;
-  const approvedUsers = occupantUsersData.filter(user => user.status === 'Approved').length;
-  const pendingUsers = occupantUsersData.filter(user => user.status === 'Pending').length;
-  const rejectedUsers = occupantUsersData.filter(user => user.status === 'Rejected').length;
+  const approvedUsers = occupantUsersData.filter(user => user.status === 'approved').length;
+  const pendingUsers = occupantUsersData.filter(user => user.status === 'pending').length;
+  const rejectedUsers = occupantUsersData.filter(user => user.status === 'rejected').length;
   const appDownloaded = 15; // Static value as shown in the image
 
   const handleViewUser = (id: number) => {
@@ -92,7 +50,8 @@ export const OccupantUserMasterDashboard = () => {
   
   useEffect(() => {
     setCurrentSection('Master');
-  }, [setCurrentSection]);
+    dispatch(fetchOccupantUsers());
+  }, [setCurrentSection, dispatch]);
 
   return (
       <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
@@ -214,13 +173,13 @@ export const OccupantUserMasterDashboard = () => {
                     <TableCell>
                       <Badge 
                         variant={
-                          user.status === 'Approved' ? 'default' : 
-                          user.status === 'Pending' ? 'secondary' : 
+                          user.status === 'approved' ? 'default' : 
+                          user.status === 'pending' ? 'secondary' : 
                           'destructive'
                         }
                         className={
-                          user.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                          user.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                          user.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-red-100 text-red-800'
                         }
                       >
