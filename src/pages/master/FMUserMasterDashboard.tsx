@@ -42,7 +42,7 @@ const transformFMUserData = (apiUser: FMUser) => ({
   role: apiUser.designation || 'N/A',
   employeeId: apiUser.employee_id || 'N/A',
   createdBy: `User ${apiUser.created_by_id}`,
-  accessLevel: apiUser.lock_user_permission.access_level,
+  accessLevel: apiUser.lock_user_permission?.access_level || 'N/A',
   type: apiUser.user_type === 'pms_admin' ? 'Internal' : 'External',
   status: apiUser.lock_user_permission_status === 'approved' ? 'Active' : 'Inactive',
   faceRecognition: apiUser.face_added,
