@@ -22,7 +22,9 @@ import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 import { EmailRule, TRIGGER_TYPES, PERIOD_TYPES } from '@/types/emailRule';
 import { roleService, ApiRole } from '@/services/roleService';
+import { emailRuleService } from '@/services/emailRuleService';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
@@ -49,6 +51,7 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
   const [roles, setRoles] = useState<ApiRole[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { control, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<EmailRuleFormData>({
     resolver: zodResolver(emailRuleSchema),
@@ -81,31 +84,43 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
     }
   }, [open]);
 
-  const handleRoleToggle = (roleName: string, checked: boolean) => {
+  const handleRoleToggle = (roleId: string, checked: boolean) => {
     let newSelectedRoles;
     if (checked) {
-      newSelectedRoles = [...selectedRoles, roleName];
+      newSelectedRoles = [...selectedRoles, roleId];
     } else {
-      newSelectedRoles = selectedRoles.filter(role => role !== roleName);
+      newSelectedRoles = selectedRoles.filter(id => id !== roleId);
     }
     setSelectedRoles(newSelectedRoles);
     setValue('role', newSelectedRoles);
   };
 
-  const onSubmitForm = (data: EmailRuleFormData) => {
-    const submissionData: Omit<EmailRule, 'id' | 'srNo' | 'createdOn' | 'createdBy' | 'active'> = {
-      ruleName: data.ruleName,
-      triggerType: data.triggerType,
-      triggerTo: data.triggerTo,
-      role: data.role.join(', '), // Convert array to comma-separated string
-      periodValue: data.periodValue,
-      periodType: data.periodType,
-    };
-    
-    onSubmit(submissionData);
-    reset();
-    setSelectedRoles([]);
-    onClose();
+  const onSubmitForm = async (data: EmailRuleFormData) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Map form data to API format
+      const apiData = {
+        ruleName: data.ruleName,
+        triggerType: data.triggerType,
+        triggerTo: data.triggerTo,
+        roleIds: data.role, // Already an array of role IDs from selected roles
+        periodValue: data.periodValue,
+        periodType: data.periodType,
+      };
+
+      await emailRuleService.createEmailRule(apiData);
+      
+      toast.success('Email rule created successfully!');
+      reset();
+      setSelectedRoles([]);
+      onClose();
+    } catch (error) {
+      console.error('Failed to create email rule:', error);
+      toast.error('Failed to create email rule. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -217,8 +232,8 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
                   <div key={role.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`role-${role.id}`}
-                      checked={selectedRoles.includes(role.name)}
-                      onCheckedChange={(checked) => handleRoleToggle(role.name, checked as boolean)}
+                      checked={selectedRoles.includes(role.id.toString())}
+                      onCheckedChange={(checked) => handleRoleToggle(role.id.toString(), checked as boolean)}
                     />
                     <Label htmlFor={`role-${role.id}`} className="text-sm">
                       {role.name}
@@ -228,7 +243,9 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
               )}
             </div>
             {selectedRoles.length > 0 && (
-              <p className="text-sm text-gray-600">Selected: {selectedRoles.join(', ')}</p>
+              <p className="text-sm text-gray-600">
+                Selected: {selectedRoles.map(id => roles.find(r => r.id.toString() === id)?.name).filter(Boolean).join(', ')}
+              </p>
             )}
             {errors.role && (
               <p className="text-sm text-red-500">{errors.role.message}</p>
@@ -289,7 +306,9 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Create Rule</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Rule'}
+            </Button>
           </div>
           </form>
         </div>

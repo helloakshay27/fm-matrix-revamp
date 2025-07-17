@@ -2,6 +2,18 @@ import { apiClient } from '@/utils/apiClient';
 import { ENDPOINTS } from '@/config/apiConfig';
 import { EmailRule } from '@/types/emailRule';
 
+interface CreateEmailRulePayload {
+  pms_email_rule_setup: {
+    trigger_to: string;
+    period_type: string;
+    period_value: string;
+    active: number;
+    rule_name: string;
+    trigger_type: string;
+    role_ids: string[];
+  };
+}
+
 interface ApiEmailRule {
   id: number;
   rule_name: string;
@@ -41,4 +53,34 @@ export const emailRuleService = {
       throw error;
     }
   },
+
+  // Create new email rule
+  async createEmailRule(data: {
+    ruleName: string;
+    triggerType: string;
+    triggerTo: string;
+    roleIds: string[];
+    periodValue: number;
+    periodType: string;
+  }): Promise<any> {
+    try {
+      const payload: CreateEmailRulePayload = {
+        pms_email_rule_setup: {
+          rule_name: data.ruleName,
+          trigger_type: data.triggerType,
+          trigger_to: data.triggerTo,
+          role_ids: data.roleIds,
+          period_value: data.periodValue.toString(),
+          period_type: data.periodType,
+          active: 1,
+        },
+      };
+
+      const response = await apiClient.post(ENDPOINTS.EMAIL_RULES, payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating email rule:', error);
+      throw error;
+    }
+  }
 };
