@@ -3209,6 +3209,27 @@ const AddAssetPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Critical - Moved from Meter Details */}
+              <div className="mb-4">
+                <div>
+                  <label className="text-sm font-medium text-[#C72030] mb-2 block">Critical</label>
+                  <div className="flex gap-6">
+                    <div className="flex items-center space-x-2">
+                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                      <label htmlFor="critical-yes" className="text-sm">Yes</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                      <label htmlFor="critical-no" className="text-sm">No</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>}
         </div>
 
@@ -3319,7 +3340,7 @@ const AddAssetPage = () => {
         )}
 
         {/* Meter Details */}
-        {selectedAssetCategory !== 'Tools & Instruments' && (
+        {selectedAssetCategory !== 'Tools & Instruments' && selectedAssetCategory !== 'IT Equipment' && (
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
@@ -3363,26 +3384,6 @@ const AddAssetPage = () => {
                 </div>
               </div>
 
-              {/* Critical */}
-              <div className="mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="text-[#C72030] font-medium text-sm sm:text-base">CRITICAL</span>
-                  <div className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                      <label htmlFor="critical-yes" className="text-sm">Yes</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                      <label htmlFor="critical-no" className="text-sm">No</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Meter Category Type */}
               <div className="mb-6">
