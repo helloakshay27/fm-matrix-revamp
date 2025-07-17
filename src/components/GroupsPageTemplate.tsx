@@ -51,10 +51,12 @@ export const GroupsPageTemplate = ({
   const [groupName, setGroupName] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [subGroupName, setSubGroupName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   // Loading states
   const [groupLoading, setGroupLoading] = useState(false);
   const [subGroupLoading, setSubGroupLoading] = useState(false);
+  const [bulkUploadLoading, setBulkUploadLoading] = useState(false);
   
   // MUI theme
   const theme = createTheme({
@@ -175,6 +177,37 @@ export const GroupsPageTemplate = ({
       } finally {
         setSubGroupLoading(false);
       }
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file to upload');
+      return;
+    }
+
+    setBulkUploadLoading(true);
+    try {
+      const uploadFile = new FormData();
+      uploadFile.append('asset_group_file', selectedFile);
+
+      const response = await apiClient.post('/pms/assets/subgroup_import.json', uploadFile, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data) {
+        await fetchGroupsData();
+        setSelectedFile(null);
+        setBulkUploadOpen(false);
+        toast.success('Bulk upload completed successfully');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Failed to upload file');
+    } finally {
+      setBulkUploadLoading(false);
     }
   };
 
@@ -403,21 +436,27 @@ export const GroupsPageTemplate = ({
             <DialogContent className="p-6">
               <div className="space-y-6">
                 {/* Drag & Drop File Upload Area */}
-                <div className="border-2 border-dashed border-red-400 rounded-lg p-8 text-center bg-gray-50">
+                <div 
+                  className="border-2 border-dashed border-red-400 rounded-lg p-8 text-center bg-gray-50 cursor-pointer"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <p className="text-lg text-gray-700">
                       Drag & Drop or <span className="text-red-500 font-medium cursor-pointer hover:underline">Choose file</span>
                     </p>
-                    <p className="text-gray-500">No file chosen</p>
+                    <p className="text-gray-500">
+                      {selectedFile ? selectedFile.name : 'No file chosen'}
+                    </p>
                   </div>
                   <input 
+                    id="file-upload"
                     type="file" 
                     className="hidden" 
                     accept=".csv,.xlsx,.xls"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        console.log('File selected:', file.name);
+                        setSelectedFile(file);
                       }
                     }}
                   />
@@ -425,14 +464,11 @@ export const GroupsPageTemplate = ({
                 
                 <div className="flex justify-end pt-4">
                   <Button 
-                    onClick={() => {
-                      console.log('Bulk upload submitted');
-                      setBulkUploadOpen(false);
-                      toast.success('Bulk upload initiated');
-                    }}
+                    onClick={handleBulkUpload}
+                    disabled={bulkUploadLoading || !selectedFile}
                     className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
                   >
-                    Submit
+                    {bulkUploadLoading ? 'Uploading...' : 'Submit'}
                   </Button>
                 </div>
               </div>
