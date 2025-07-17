@@ -17,13 +17,13 @@ import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 import { AssetStats } from '@/components/AssetStats';
 import { AssetActions } from '@/components/AssetActions';
-import { AssetDataTable } from '@/components/AssetDataTable';
+import { AssetTable } from '@/components/AssetTable';
 import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 // Removed MoveAssetDialog and DisposeAssetDialog imports - now using respective pages
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
-import { useAssetData } from '@/hooks/useAssetData';
+import { useAssetDashboard } from '@/hooks/useAssetDashboard';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -98,14 +98,20 @@ export const AssetDashboard = () => {
   );
 
   const {
-    filteredAssets,
+    assets: filteredAssets,
     selectedAssets,
     searchTerm,
     stats,
+    pagination,
+    loading,
+    error,
+    currentPage,
     handleSearch,
     handleSelectAll,
-    handleSelectAsset
-  } = useAssetData();
+    handleSelectAsset,
+    handlePageChange,
+    refetch
+  } = useAssetDashboard();
 
   // Get selected asset objects with id and name
   const selectedAssetObjects = filteredAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
@@ -132,7 +138,7 @@ export const AssetDashboard = () => {
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    refetch();
   };
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
@@ -455,13 +461,10 @@ export const AssetDashboard = () => {
           />
 
           <div className="relative">
-            <AssetDataTable
-              assets={filteredAssets}
-              selectedAssets={selectedAssets}
-              visibleColumns={visibleColumns}
-              onSelectAll={handleSelectAll}
-              onSelectAsset={handleSelectAsset}
-              onViewAsset={handleViewAsset}
+            <AssetTable 
+              searchTerm={searchTerm}
+              currentPage={currentPage}
+              onPageChange={handlePageChange}
             />
 
             {/* Selection Panel - positioned as overlay within table container */}
@@ -478,66 +481,6 @@ export const AssetDashboard = () => {
             )}
           </div>
 
-          <div className="mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious href="#" />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#" isActive>
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    2
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    3
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    4
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    5
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    6
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    7
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    8
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">
-                    Last
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
         </TabsContent>
       </Tabs>
 
