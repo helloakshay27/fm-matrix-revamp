@@ -68,13 +68,42 @@ export const EditAMCPage = () => {
   useEffect(() => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any; // Type assertion for unknown data
+      console.log('AMC Data loaded for editing:', data);
+      
+      // Determine the correct form values based on API response
+      const isAssetType = data.checklist_type === 'Asset' || data.checklist_type === 'asset';
+      const isIndividualType = data.resource_type === 'Pms::Asset';
+      
+      // Handle asset IDs - could be single ID, array, or JSON string
+      let assetIds = [];
+      if (data.asset_id) {
+        if (typeof data.asset_id === 'string') {
+          try {
+            // Try to parse as JSON first
+            assetIds = JSON.parse(data.asset_id);
+            if (!Array.isArray(assetIds)) {
+              assetIds = [data.asset_id];
+            }
+          } catch {
+            // If not JSON, treat as single ID
+            assetIds = [data.asset_id];
+          }
+        } else if (Array.isArray(data.asset_id)) {
+          assetIds = data.asset_id;
+        } else {
+          assetIds = [data.asset_id];
+        }
+        // Convert all to strings
+        assetIds = assetIds.map(id => id.toString());
+      }
+      
       setFormData({
-        details: data.checklist_type || 'Asset',
-        type: data.resource_type === 'Pms::Asset' ? 'Individual' : 'Group',
+        details: isAssetType ? 'Asset' : 'Service',
+        type: isIndividualType ? 'Individual' : 'Group',
         assetName: data.service_id?.toString() || '',
-        asset_ids: data.asset_id ? (Array.isArray(data.asset_id) ? data.asset_id.map(String) : [data.asset_id.toString()]) : [],
+        asset_ids: assetIds,
         vendor: data.supplier_id?.toString() || '',
-        group: data.resource_id?.toString() || '',
+        group: isIndividualType ? '' : (data.resource_id?.toString() || ''),
         subgroup: '',
         service: '',
         supplier: data.supplier_id?.toString() || '',
@@ -86,6 +115,11 @@ export const EditAMCPage = () => {
         noOfVisits: data.no_of_visits?.toString() || '',
         remarks: data.remarks || ''
       });
+      
+      // If it's a group type and we have a group ID, fetch subgroups
+      if (!isIndividualType && data.resource_id) {
+        handleGroupChange(data.resource_id.toString());
+      }
     }
   }, [amcData]);
 
