@@ -198,7 +198,7 @@ export const AddFacilityBookingPage = () => {
           user_society_type: 'User',
           resource_type: 'Pms::Site',
           resource_id: selectedSiteId,
-          book_by_id: userId,
+          book_by_id: selectedSlots[0], // Use first selected slot ID instead of user ID
           book_by: 'slot',
           facility_id: selectedFacility,
           startdate: selectedDate.replace(/-/g, '/'),
