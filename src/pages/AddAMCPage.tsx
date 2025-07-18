@@ -36,6 +36,7 @@ export const AddAMCPage = () => {
   const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
   const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
   const [suppliers, setSuppliers] = useState<Array<{id: number, company_name: string}>>([]);
+  const [assets, setAssets] = useState<Array<{id: number, name: string}>>([]);
   const [loading, setLoading] = useState(false);
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -135,8 +136,34 @@ export const AddAMCPage = () => {
       }
     };
 
+    const fetchAssets = async () => {
+      try {
+        const response = await apiClient.get('/pms/assets/get_assets.json');
+        console.log('Assets API Response:', response.data);
+        
+        // Handle different possible response structures for assets
+        if (Array.isArray(response.data)) {
+          setAssets(response.data);
+        } else if (response.data && Array.isArray(response.data.assets)) {
+          setAssets(response.data.assets);
+        } else {
+          console.warn('Assets API response is not an array:', response.data);
+          setAssets([]);
+        }
+      } catch (error) {
+        console.error('Error fetching assets:', error);
+        setAssets([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch assets.",
+          variant: "destructive"
+        });
+      }
+    };
+
     fetchAssetGroups();
     fetchSuppliers();
+    fetchAssets();
   }, [toast]);
 
   // Update sub-groups when group changes
@@ -287,12 +314,21 @@ export const AddAMCPage = () => {
                 {formData.details === 'Asset' ? (
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
-                    <MuiSelect labelId="asset-select-label" label="Assets" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
+                    <MuiSelect 
+                      labelId="asset-select-label" 
+                      label="Assets" 
+                      displayEmpty 
+                      value={formData.assetName} 
+                      onChange={e => handleInputChange('assetName', e.target.value)} 
+                      sx={fieldStyles}
+                      disabled={loading}
+                    >
                       <MenuItem value=""><em>Select an Option...</em></MenuItem>
-                      <MenuItem value="adani-electric-meter">Adani Electric Meter</MenuItem>
-                      <MenuItem value="laptop-dell">Laptop Dell Vostro</MenuItem>
-                      <MenuItem value="samsung">Samsung</MenuItem>
-                      <MenuItem value="vinayak-testing-1">Vinayak Testing 1</MenuItem>
+                      {Array.isArray(assets) && assets.map((asset) => (
+                        <MenuItem key={asset.id} value={asset.id.toString()}>
+                          {asset.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 ) : (
