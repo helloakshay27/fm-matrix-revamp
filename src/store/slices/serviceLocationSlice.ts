@@ -136,7 +136,9 @@ export const fetchGroups = createAsyncThunk<Group[]>(
     const response = await axios.get(`https://fm-uat-api.lockated.com/pms/assets/get_asset_group_sub_group.json`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
-    return response.data;
+    console.log('Groups API Response:', response.data);
+    // Ensure we return an array
+    return Array.isArray(response.data) ? response.data : [];
   }
 );
 
@@ -146,7 +148,9 @@ export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
     const response = await axios.get(`https://fm-uat-api.lockated.com/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
-    return response.data;
+    console.log('SubGroups API Response:', response.data);
+    // Ensure we return an array
+    return Array.isArray(response.data) ? response.data : [];
   }
 );
 

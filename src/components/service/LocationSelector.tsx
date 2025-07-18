@@ -154,7 +154,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Site</em>
               </MenuItem>
-              {sites.map((site) => (
+              {Array.isArray(sites) && sites.map((site) => (
                 <MenuItem key={site.id} value={site.id}>
                   {site.name}
                 </MenuItem>
@@ -184,7 +184,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Building</em>
               </MenuItem>
-              {buildings.map((building) => (
+              {Array.isArray(buildings) && buildings.map((building) => (
                 <MenuItem key={building.id} value={building.id}>
                   {building.name}
                 </MenuItem>
@@ -214,7 +214,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Wing</em>
               </MenuItem>
-              {wings.map((wing) => (
+              {Array.isArray(wings) && wings.map((wing) => (
                 <MenuItem key={wing.id} value={wing.id}>
                   {wing.name}
                 </MenuItem>
@@ -244,7 +244,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Area</em>
               </MenuItem>
-              {areas.map((area) => (
+              {Array.isArray(areas) && areas.map((area) => (
                 <MenuItem key={area.id} value={area.id}>
                   {area.name}
                 </MenuItem>
@@ -277,7 +277,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Floor</em>
               </MenuItem>
-              {floors.map((floor) => (
+              {Array.isArray(floors) && floors.map((floor) => (
                 <MenuItem key={floor.id} value={floor.id}>
                   {floor.name}
                 </MenuItem>
@@ -307,7 +307,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Room</em>
               </MenuItem>
-              {rooms.map((room) => (
+              {Array.isArray(rooms) && rooms.map((room) => (
                 <MenuItem key={room.id} value={room.id}>
                   {room.name}
                 </MenuItem>
@@ -337,7 +337,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Group</em>
               </MenuItem>
-              {groups.map((group) => (
+              {Array.isArray(groups) && groups.map((group) => (
                 <MenuItem key={group.id} value={group.id}>
                   {group.name}
                 </MenuItem>
@@ -367,7 +367,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               <MenuItem value="">
                 <em>Select Sub-Group</em>
               </MenuItem>
-              {subGroups.map((subGroup) => (
+              {Array.isArray(subGroups) && subGroups.map((subGroup) => (
                 <MenuItem key={subGroup.id} value={subGroup.id}>
                   {subGroup.name}
                 </MenuItem>
