@@ -163,9 +163,9 @@ export const SpaceManagementBookingDetailsPage = () => {
 
       {/* Booking Details Card */}
       <Card className="mb-6">
-        <CardHeader className="bg-[#C72030] text-white">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="w-6 h-6 bg-white text-[#C72030] rounded-full flex items-center justify-center text-sm font-bold">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg text-[#C72030]">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
               B
             </span>
             BOOKING DETAILS
@@ -248,9 +248,9 @@ export const SpaceManagementBookingDetailsPage = () => {
 
       {/* Logs Card */}
       <Card>
-        <CardHeader className="bg-[#C72030] text-white">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="w-6 h-6 bg-white text-[#C72030] rounded-full flex items-center justify-center text-sm font-bold">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg text-[#C72030]">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
               L
             </span>
             LOGS
