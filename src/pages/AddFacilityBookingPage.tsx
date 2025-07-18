@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { TextField, MenuItem } from '@mui/material';
 import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -114,34 +114,35 @@ export const AddFacilityBookingPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* User Selection */}
           <div className="space-y-2">
-            <Label htmlFor="user-select" className="text-sm font-medium">User</Label>
-            <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={fmUsersLoading ? "Loading users..." : "Select a user"} />
-              </SelectTrigger>
-              <SelectContent>
-                {fmUsersError && (
-                  <SelectItem value="error-state" disabled>
-                    Error loading users
-                  </SelectItem>
-                )}
-                {fmUsersLoading && (
-                  <SelectItem value="loading-state" disabled>
-                    Loading users...
-                  </SelectItem>
-                )}
-                {!fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
-                  <SelectItem value="no-users" disabled>
-                    No users available
-                  </SelectItem>
-                )}
-                {fmUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id.toString()}>
-                    {user.firstname} {user.lastname}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TextField
+              select
+              label="User"
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+              disabled={fmUsersLoading}
+              helperText={fmUsersError ? "Error loading users" : ""}
+              error={!!fmUsersError}
+            >
+              {fmUsersLoading && (
+                <MenuItem value="" disabled>
+                  Loading users...
+                </MenuItem>
+              )}
+              {!fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
+                <MenuItem value="" disabled>
+                  No users available
+                </MenuItem>
+              )}
+              {fmUsers.map((user) => (
+                <MenuItem key={user.id} value={user.id.toString()}>
+                  {user.firstname} {user.lastname}
+                </MenuItem>
+              ))}
+            </TextField>
           </div>
 
           {/* Facility Selection */}
