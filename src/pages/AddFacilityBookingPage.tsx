@@ -179,36 +179,6 @@ export const AddFacilityBookingPage = () => {
       
       console.log('Using values:', { selectedSiteId, userId });
 
-      // Create FormData with required fields
-      const submitForm = new FormData();
-      
-      submitForm.append('facility_booking[user_society_type]', 'User');
-      submitForm.append('facility_booking[resource_type]', 'Pms::Site');
-      submitForm.append('facility_booking[resource_id]', selectedSiteId);
-      submitForm.append('facility_booking[book_by_id]', userId);
-      submitForm.append('facility_booking[book_by]', 'slot');
-      submitForm.append('facility_booking[facility_id]', selectedFacility);
-      submitForm.append('facility_booking[startdate]', selectedDate.replace(/-/g, '/'));
-      submitForm.append('facility_booking[comment]', comment || '');
-      submitForm.append('facility_booking[payment_method]', paymentMethod);
-      
-      // Add selected slots
-      selectedSlots.forEach(slotId => {
-        submitForm.append('facility_booking[selected_slots][]', slotId.toString());
-      });
-      
-      // Set on_behalf_of and user IDs based on user type
-      if (userType === 'occupant') {
-        submitForm.append('on_behalf_of', 'occupant-user');
-        submitForm.append('occupant_user_id', selectedUser);
-        submitForm.append('fm_user_id', '');
-      } else {
-        submitForm.append('on_behalf_of', 'fm-user');
-        submitForm.append('occupant_user_id', '');
-        submitForm.append('fm_user_id', selectedUser);
-      }
-
-      // Log all the values before creating FormData
       console.log('=== FORM SUBMISSION DEBUG ===');
       console.log('selectedUser:', selectedUser);
       console.log('selectedFacility:', selectedFacility);
@@ -218,12 +188,35 @@ export const AddFacilityBookingPage = () => {
       console.log('userType:', userType);
       console.log('selectedSiteId:', selectedSiteId);
       console.log('userId:', userId);
-      console.log('=== END DEBUG ===');
 
+      // Try JSON payload instead of FormData
+      const payload = {
+        facility_booking: {
+          user_society_type: 'User',
+          resource_type: 'Pms::Site',
+          resource_id: selectedSiteId,
+          book_by_id: userId,
+          book_by: 'slot',
+          facility_id: selectedFacility,
+          startdate: selectedDate.replace(/-/g, '/'),
+          comment: comment || '',
+          payment_method: paymentMethod,
+          selected_slots: selectedSlots
+        },
+        on_behalf_of: userType === 'occupant' ? 'occupant-user' : 'fm-user',
+        occupant_user_id: userType === 'occupant' ? selectedUser : '',
+        fm_user_id: userType === 'fm' ? selectedUser : ''
+      };
+
+      console.log('Payload being sent:', JSON.stringify(payload, null, 2));
       console.log('About to submit to API...');
       
-      // Submit the booking - try without specifying content-type header
-      const response = await apiClient.post('/pms/admin/facility_bookings.json', submitForm);
+      // Submit the booking with JSON payload
+      const response = await apiClient.post('/pms/admin/facility_bookings.json', payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       console.log('Response received:', response.status, response.data);
 
