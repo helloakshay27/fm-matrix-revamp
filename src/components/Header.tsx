@@ -65,6 +65,8 @@ export const Header = () => {
   const handleSiteChange = async (siteId: number) => {
     try {
       await dispatch(changeSite(siteId)).unwrap();
+      // Reload page smoothly after successful site change
+      window.location.reload();
     } catch (error) {
       console.error('Failed to change site:', error);
     }
