@@ -1,30 +1,13 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { StatusBadge } from './StatusBadge';
+import type { Asset } from '@/hooks/useAssets';
 
-interface Asset {
-  id: string;
-  name: string;
-  code: string;
-  assetNo: string;
-  status: string;
-  equipmentId: string;
-  site: string;
-  building: string;
-  wing: string;
-  floor: string;
-  area: string;
-  room: string;
-  meterType: string;
-  assetType: string;
-  serialNumber?: string;
-  group?: string;
-  subGroup?: string;
-}
+// Asset interface now imported from useAssets hook
 
 interface AssetDataTableProps {
   assets: Asset[];
@@ -43,20 +26,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   onSelectAsset,
   onViewAsset
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'In Use':
-        return 'bg-green-500 text-white';
-      case 'Breakdown':
-        return 'bg-red-500 text-white';
-      case 'Maintenance':
-        return 'bg-yellow-500 text-white';
-      case 'Standby':
-        return 'bg-blue-500 text-white';
-      default:
-        return 'bg-gray-500 text-white';
-    }
-  };
+  // Status color logic moved to StatusBadge component
 
   const columns: ColumnConfig[] = [
     { key: 'serialNumber', label: 'Serial Number', sortable: true, hideable: true, defaultVisible: visibleColumns.serialNumber },
@@ -78,37 +48,35 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   const renderCell = (asset: Asset, columnKey: string) => {
     switch (columnKey) {
       case 'serialNumber':
-        return <span className="text-sm text-gray-600">{asset.serialNumber || asset.code}</span>;
+        return <span className="text-sm text-gray-600">{asset.serialNumber}</span>;
       case 'assetName':
         return <span className="text-sm font-medium text-gray-900">{asset.name}</span>;
       case 'assetId':
         return <span className="text-sm text-[#1a1a1a]">{asset.id}</span>;
       case 'assetNo':
-        return <span className="text-sm text-gray-600">{asset.assetNo}</span>;
+        return <span className="text-sm text-gray-600">{asset.assetNumber}</span>;
       case 'assetStatus':
-        return (
-          <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
-            {asset.status}
-          </Badge>
-        );
+        return <StatusBadge status={asset.status} />;
       case 'site':
-        return <span className="text-sm text-gray-600">{asset.site}</span>;
+        return <span className="text-sm text-gray-600">{asset.siteName}</span>;
       case 'building':
-        return <span className="text-sm text-gray-600">{asset.building}</span>;
+        return <span className="text-sm text-gray-600">{asset.building?.name || 'NA'}</span>;
       case 'wing':
-        return <span className="text-sm text-gray-600">{asset.wing}</span>;
+        return <span className="text-sm text-gray-600">{asset.wing?.name || 'NA'}</span>;
       case 'floor':
-        return <span className="text-sm text-gray-600">{asset.floor}</span>;
+        return <span className="text-sm text-gray-600">NA</span>; {/* Floor not in API response */}
       case 'area':
-        return <span className="text-sm text-gray-600">{asset.area}</span>;
+        return <span className="text-sm text-gray-600">{asset.area?.name || 'NA'}</span>;
       case 'room':
-        return <span className="text-sm text-gray-600">{asset.room}</span>;
+        return <span className="text-sm text-gray-600">{asset.pmsRoom?.name || 'NA'}</span>;
       case 'group':
-        return <span className="text-sm text-gray-600">{asset.group || 'N/A'}</span>;
+        return <span className="text-sm text-gray-600">{asset.assetGroup || 'N/A'}</span>;
       case 'subGroup':
-        return <span className="text-sm text-gray-600">{asset.subGroup || 'N/A'}</span>;
+        return <span className="text-sm text-gray-600">{asset.assetSubGroup || 'N/A'}</span>;
       case 'assetType':
-        return <span className="text-sm text-gray-600">{asset.assetType}</span>;
+        return <span className="text-sm text-gray-600">
+          {asset.assetType ? 'Comprehensive' : 'Non-Comprehensive'}
+        </span>;
       default:
         return null;
     }

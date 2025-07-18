@@ -19,13 +19,13 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
   selectedAssets
 }) => {
   const [allocateTo, setAllocateTo] = useState('department');
-  const [site, setSite] = useState('');
-  const [building, setBuilding] = useState('');
-  const [wing, setWing] = useState('');
-  const [area, setArea] = useState('');
-  const [floor, setFloor] = useState('');
-  const [room, setRoom] = useState('');
-  const [department, setDepartment] = useState('');
+  const [siteId, setSiteId] = useState<number | null>(null);
+  const [buildingId, setBuildingId] = useState<number | null>(null);
+  const [wingId, setWingId] = useState<number | null>(null);
+  const [areaId, setAreaId] = useState<number | null>(null);
+  const [floorId, setFloorId] = useState<number | null>(null);
+  const [roomId, setRoomId] = useState<number | null>(null);
+  const [allocatedToId, setAllocatedToId] = useState<number | null>(null);
 
   const handleSubmit = () => {
     console.log('Moving assets:', selectedAssets);
@@ -55,25 +55,25 @@ export const MoveAssetDialog: React.FC<MoveAssetDialogProps> = ({
           <AssetTableDisplay selectedAssets={selectedAssets} />
           
           <MovementToSection
-            site={site}
-            setSite={setSite}
-            building={building}
-            setBuilding={setBuilding}
-            wing={wing}
-            setWing={setWing}
-            area={area}
-            setArea={setArea}
-            floor={floor}
-            setFloor={setFloor}
-            room={room}
-            setRoom={setRoom}
+            siteId={siteId}
+            setSiteId={setSiteId}
+            buildingId={buildingId}
+            setBuildingId={setBuildingId}
+            wingId={wingId}
+            setWingId={setWingId}
+            areaId={areaId}
+            setAreaId={setAreaId}
+            floorId={floorId}
+            setFloorId={setFloorId}
+            roomId={roomId}
+            setRoomId={setRoomId}
           />
 
           <AllocateToSection
             allocateTo={allocateTo}
             setAllocateTo={setAllocateTo}
-            department={department}
-            setDepartment={setDepartment}
+            allocatedToId={allocatedToId}
+            setAllocatedToId={setAllocatedToId}
           />
 
           {/* Attachment Section */}

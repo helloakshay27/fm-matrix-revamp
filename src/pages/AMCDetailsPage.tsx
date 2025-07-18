@@ -1,40 +1,96 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddVisitModal } from '@/components/AddVisitModal';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
+
+interface AMCDetailsData {
+  id: number;
+  asset_id: number | null;
+  amc_vendor_name: string | null;
+  amc_vendor_mobile: string | null;
+  amc_vendor_email: string | null;
+  amc_contract: string | null;
+  amc_invoice: string | null;
+  amc_cost: number;
+  amc_start_date: string;
+  amc_end_date: string;
+  amc_first_service: string;
+  created_at: string;
+  updated_at: string;
+  active: boolean;
+  payment_term: string;
+  no_of_visits: number;
+  remarks: string;
+}
 
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const dispatch = useAppDispatch();
+  const { data: amcData, loading, error } = useAppSelector((state) => state.amcDetails);
   const [showAddVisitModal, setShowAddVisitModal] = useState(false);
 
-  // Mock data - in real app this would come from API
-  const amcDetails = {
-    id: '51015',
-    assetName: 'Adani Electric Meter',
-    code: 'cA51d3ec1b3a6c0a10',
-    underWarranty: 'No',
-    status: 'Breakdown',
-    cost: '₹12',
-    endDate: '10/05/2025',
-    paymentTerms: 'Half Yearly',
-    remarks: '232e',
-    startDate: '01/04/2025',
-    firstService: '09/04/2025',
-    noOfVisits: '2'
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchAMCDetails(id));
+    }
+  }, [dispatch, id]);
+
+  // Helper functions for formatting data
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return '—';
+    try {
+      return new Date(dateString).toLocaleDateString('en-GB');
+    } catch {
+      return '—';
+    }
   };
 
-  const supplierInfo = {
-    name: 'TBS ELECTRICAL',
-    email: 'TBS@GMAIL.COM',
-    mobile1: '+1234567890',
-    mobile2: '',
-    companyName: 'TBS ELECTRICAL'
+  const formatCurrency = (amount: number | null): string => {
+    if (amount === null || amount === undefined) return '—';
+    return `₹${amount}`;
   };
+
+  // If loading, show loading state
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">Loading AMC details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If error, show error state
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract data from API response
+  const amcDetails: AMCDetailsData | null = amcData as AMCDetailsData;
+
+  if (!amcDetails) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">No AMC details found</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -79,11 +135,11 @@ export const AMCDetailsPage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><strong>Name:</strong> {supplierInfo.name}</div>
-            <div><strong>Email:</strong> {supplierInfo.email}</div>
-            <div><strong>Mobile1:</strong> {supplierInfo.mobile1}</div>
-            <div><strong>Mobile2:</strong> {supplierInfo.mobile2}</div>
-            <div><strong>Company name:</strong> {supplierInfo.companyName}</div>
+            <div><strong>Name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
+            <div><strong>Email:</strong> {amcDetails.amc_vendor_email || '—'}</div>
+            <div><strong>Mobile1:</strong> {amcDetails.amc_vendor_mobile || '—'}</div>
+            <div><strong>Mobile2:</strong> —</div>
+            <div><strong>Company name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
           </div>
         </CardContent>
       </Card>
@@ -108,12 +164,16 @@ export const AMCDetailsPage = () => {
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell>{amcDetails.assetName}</TableCell>
-                <TableCell>{amcDetails.code}</TableCell>
-                <TableCell>{amcDetails.underWarranty}</TableCell>
+                <TableCell>{amcDetails.asset_id ? `Asset ${amcDetails.asset_id}` : '—'}</TableCell>
+                <TableCell>—</TableCell>
+                <TableCell>No</TableCell>
                 <TableCell>
-                  <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-800">
-                    {amcDetails.status}
+                  <span className={`px-2 py-1 text-xs rounded ${
+                    amcDetails.active 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {amcDetails.active ? 'Active' : 'Inactive'}
                   </span>
                 </TableCell>
               </TableRow>
@@ -133,14 +193,13 @@ export const AMCDetailsPage = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><strong>ID:</strong> {amcDetails.id}</div>
-            <div><strong>Status:</strong> Active</div>
-            <div><strong>Cost:</strong> {amcDetails.cost}</div>
-            <div><strong>Start Date:</strong> {amcDetails.startDate}</div>
-            <div><strong>End Date:</strong> {amcDetails.endDate}</div>
-            <div><strong>First Service:</strong> {amcDetails.firstService}</div>
-            <div><strong>Payment Terms:</strong> {amcDetails.paymentTerms}</div>
-            <div><strong>No. of Visits:</strong> {amcDetails.noOfVisits}</div>
-            <div className="md:col-span-2"><strong>Remarks:</strong> {amcDetails.remarks}</div>
+            <div><strong>Cost:</strong> {formatCurrency(amcDetails.amc_cost)}</div>
+            <div><strong>Start Date:</strong> {formatDate(amcDetails.amc_start_date)}</div>
+            <div><strong>End Date:</strong> {formatDate(amcDetails.amc_end_date)}</div>
+            <div><strong>First Service:</strong> {formatDate(amcDetails.amc_first_service)}</div>
+            <div><strong>No. of Visits:</strong> {amcDetails.no_of_visits || '—'}</div>
+            <div><strong>Payment Terms:</strong> {amcDetails.payment_term || '—'}</div>
+            <div className="md:col-span-2"><strong>Remarks:</strong> {amcDetails.remarks || '—'}</div>
           </div>
         </CardContent>
       </Card>
@@ -154,9 +213,29 @@ export const AMCDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div><strong>AMC Contracts:</strong> No attachments</div>
-            <div><strong>AMC Invoices:</strong> No attachments</div>
+          <div className="space-y-4">
+            <div>
+              <strong>AMC Contract:</strong>
+              {amcDetails.amc_contract ? (
+                <Button variant="link" className="ml-2 p-0 h-auto">
+                  <Download className="w-4 h-4 mr-1" />
+                  Download Contract
+                </Button>
+              ) : (
+                <span className="ml-2">No attachments</span>
+              )}
+            </div>
+            <div>
+              <strong>AMC Invoice:</strong>
+              {amcDetails.amc_invoice ? (
+                <Button variant="link" className="ml-2 p-0 h-auto">
+                  <Download className="w-4 h-4 mr-1" />
+                  Download Invoice
+                </Button>
+              ) : (
+                <span className="ml-2">No attachments</span>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -164,7 +243,7 @@ export const AMCDetailsPage = () => {
       <AddVisitModal 
         isOpen={showAddVisitModal}
         onClose={() => setShowAddVisitModal(false)}
-        amcId={amcDetails.id}
+        amcId={amcDetails?.id?.toString() || id || ''}
       />
     </div>
   );

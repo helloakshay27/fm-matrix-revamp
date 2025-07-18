@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { TextField } from "@mui/material";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Building2, Check } from "lucide-react";
-import { useAppDispatch } from "@/hooks/slice-hooks";
-import { login, oaganizationsByEmail } from "@/redux/login/loginSlice";
-import { useNavigate } from "react-router-dom";
+
+import React, { useState } from 'react';
+import { TextField } from '@mui/material';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Building2, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getOrganizationsByEmail, loginUser, saveUser, saveToken, saveBaseUrl, Organization } from '@/utils/auth';
+import { useToast } from '@/hooks/use-toast';
 
 const muiFieldStyles = {
   width: "100%",
@@ -41,26 +42,10 @@ const muiFieldStyles = {
   },
 };
 
-export interface Organization {
-  id: number;
-  name: string;
-  active: boolean;
-  created_by_id: number;
-  logo?: {
-    url: string;
-  } | null;
-  created_at: string; // ISO date string
-  updated_at: string; // ISO date string
-  domain: string;
-  sub_domain: string;
-  country_id: number | null;
-  description?: string;
-}
 
 export const LoginPage = () => {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,48 +53,75 @@ export const LoginPage = () => {
     useState<Organization | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const handleEmailSubmit = async () => {
     if (!email) return;
 
     setIsLoading(true);
-    // Simulate API call to fetch organizations
     try {
-      const response = await dispatch(oaganizationsByEmail({ email })).unwrap();
-      setOrganizations(response);
+      const orgs = await getOrganizationsByEmail(email);
+      setOrganizations(orgs);
       setCurrentStep(2);
-      setIsLoading(false);
+      if (orgs.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "No Organizations Found",
+          description: "No organizations found for this email address.",
+        });
+      }
     } catch (error) {
-      console.log(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch organizations. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOrganizationSelect = (org: Organization) => {
     localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     setSelectedOrganization(org);
+    // Save the base URL in the format: sub_domain.domain
+    const baseUrl = `${org.sub_domain}.${org.domain}`;
+    saveBaseUrl(baseUrl);
     setCurrentStep(3);
   };
 
   const handleLogin = async () => {
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (baseUrl) {
-      try {
-        setIsLoading(true);
-        const response = await dispatch(login({ baseUrl, email, password })).unwrap();
-        localStorage.setItem("token", response.access_token);
-        const user = {
-          id: response.id,
-          email: response.email,
-          firstname: response.firstname,
-          lastname: response.lastname,
-        };
-        localStorage.setItem("user", JSON.stringify(user));
-        navigate("/");
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!email || !password || !selectedOrganization) return;
+    
+    setLoginLoading(true);
+    try {
+      const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
+      const response = await loginUser(email, password, baseUrl);
+      
+      // Save user data and token to localStorage
+      saveUser({
+        id: response.id,
+        email: response.email,
+        firstname: response.firstname,
+        lastname: response.lastname
+      });
+      saveToken(response.access_token);
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      
+      // Redirect to dashboard
+      navigate('/');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+      });
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -196,18 +208,19 @@ export const LoginPage = () => {
           >
             <div className="flex items-center">
               <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mr-4">
-                <Building2 className="text-black" size={24} />
-                {/* <img
-                  src={`https://uat.lockated.com/${org.logo.url}`}
-                  className="w-full h-full"
-                  alt=""
-                /> */}
+                {org.logo?.url ? (
+                  <img 
+                    src={`https://uat.lockated.com${org.logo.url}`} 
+                    alt={`${org.name} logo`}
+                    className="w-8 h-8 object-contain"
+                  />
+                ) : (
+                  <Building2 className="text-black" size={24} />
+                )}
               </div>
               <div>
                 <h3 className="text-white font-medium">{org.name}</h3>
-                {org.description && (
-                  <p className="text-gray-300 text-sm">{org.description}</p>
-                )}
+                <p className="text-gray-300 text-sm">{org.domain}</p>
               </div>
             </div>
           </div>
@@ -237,22 +250,28 @@ export const LoginPage = () => {
           Enter Password
         </h2>
       </div>
-
-      {selectedOrganization && (
-        <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 mb-6">
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
-              <Building2 className="text-black" size={20} />
-            </div>
-            <div>
-              <h3 className="text-white font-medium">
-                {selectedOrganization.name}
-              </h3>
-              <p className="text-gray-300 text-sm">{email}</p>
+      
+        {selectedOrganization && (
+          <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 mb-6">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
+                {selectedOrganization.logo?.url ? (
+                  <img 
+                    src={`https://uat.lockated.com${selectedOrganization.logo.url}`} 
+                    alt={`${selectedOrganization.name} logo`}
+                    className="w-6 h-6 object-contain"
+                  />
+                ) : (
+                  <Building2 className="text-black" size={20} />
+                )}
+              </div>
+              <div>
+                <h3 className="text-white font-medium">{selectedOrganization.name}</h3>
+                <p className="text-gray-300 text-sm">{email}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       <TextField
         variant="outlined"
@@ -280,10 +299,10 @@ export const LoginPage = () => {
       {/* Login Button */}
       <Button
         onClick={handleLogin}
-        disabled={!password || isLoading}
+        disabled={!password || loginLoading}
         className="w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-full text-lg"
       >
-        LOGIN
+        {loginLoading ? 'Logging in...' : 'LOGIN'}
       </Button>
 
       {/* Forgot Password */}

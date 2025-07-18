@@ -24,9 +24,10 @@ const fieldStyles = {
 
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const [assetName, setAssetName] = useState('');
-  const [dateRange, setDateRange] = useState('');
+  const [assetId, setAssetId] = useState('');
   const [group, setGroup] = useState('');
   const [subgroup, setSubgroup] = useState('');
+  const [site, setSite] = useState('');
   const [building, setBuilding] = useState('');
   const [wing, setWing] = useState('');
   const [area, setArea] = useState('');
@@ -36,9 +37,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const handleSubmit = () => {
     const filters = {
       assetName,
-      dateRange,
+      assetId,
       group,
       subgroup,
+      site,
       building,
       wing,
       area,
@@ -56,9 +58,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
   const handleReset = () => {
     setAssetName('');
-    setDateRange('');
+    setAssetId('');
     setGroup('');
     setSubgroup('');
+    setSite('');
     setBuilding('');
     setWing('');
     setArea('');
@@ -97,10 +100,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label="Date Range*"
-                placeholder="Select Date Range"
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
+                label="Asset ID"
+                placeholder="Enter Asset ID"
+                value={assetId}
+                onChange={(e) => setAssetId(e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -144,7 +147,22 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           {/* Location Details Section */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 gap-6">
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="site-label" shrink>Site</InputLabel>
+                <MuiSelect
+                  labelId="site-label"
+                  label="Site"
+                  value={site}
+                  onChange={(e) => setSite(e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Site</em></MenuItem>
+                  <MenuItem value="site1">Site 1</MenuItem>
+                  <MenuItem value="site2">Site 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="building-label" shrink>Building</InputLabel>
                 <MuiSelect
@@ -160,6 +178,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   <MenuItem value="building2">Building 2</MenuItem>
                 </MuiSelect>
               </FormControl>
+            </div>
+            <div className="grid grid-cols-3 gap-6 mt-4">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="wing-label" shrink>Wing</InputLabel>
                 <MuiSelect
@@ -228,10 +248,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button variant="secondary" onClick={handleSubmit} className="flex-1 h-11">
-              Submit
-            </Button>
-            <Button variant="outline" onClick={handleExport} className="flex-1 h-11">
-              Export
+              Apply
             </Button>
             <Button variant="outline" onClick={handleReset} className="flex-1 h-11">
               Reset

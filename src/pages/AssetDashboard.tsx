@@ -23,8 +23,8 @@ import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
-import { useAssetDashboard } from '@/hooks/useAssetDashboard';
-import { AssetTable } from '@/components/AssetTable';
+import { useAssets } from '@/hooks/useAssets';
+import { useAssetSearch } from '@/hooks/useAssetSearch';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -62,10 +62,12 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  // Removed isMoveAssetOpen and isDisposeAssetOpen states - now navigating to pages
   const [selectedAnalyticsItems, setSelectedAnalyticsItems] = useState<string[]>([
     'total-available', 'assets-in-use', 'asset-breakdown', 'critical-breakdown'
   ]);
@@ -90,6 +92,12 @@ export const AssetDashboard = () => {
     'donutCharts', 'categoryChart', 'agingMatrix', 'performanceMetrics'
   ]);
 
+  // Use the API hook
+  const { assets, stats, pagination, loading, error, refetch } = useAssets(currentPage);
+  
+  // Use search hook
+  const { assets: searchAssets, loading: searchLoading, error: searchError, searchAssets: performSearch } = useAssetSearch();
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -98,25 +106,45 @@ export const AssetDashboard = () => {
     })
   );
 
-  const {
-    assets,
-    pagination,
-    loading,
-    error,
-    stats,
-    currentPage,
-    handlePageChange,
-    refetch
-  } = useAssetDashboard();
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  // Use search results if search term exists, otherwise use paginated assets
+  const displayAssets = searchTerm.trim() ? searchAssets : assets;
+  const isSearchMode = searchTerm.trim().length > 0;
+
+  // Handle search with API call
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (term.trim()) {
+      performSearch(term);
+    }
+  };
+
+  // Handle asset selection
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(displayAssets.map(asset => asset.id));
+    } else {
+      setSelectedAssets([]);
+    }
+  };
+
+  const handleSelectAsset = (assetId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(prev => [...prev, assetId]);
+    } else {
+      setSelectedAssets(prev => prev.filter(id => id !== assetId));
+    }
+  };
 
   // Get selected asset objects with id and name
-  const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
+  const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id)).map(asset => ({
     id: asset.id,
     name: asset.name
   }));
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
@@ -137,7 +165,7 @@ export const AssetDashboard = () => {
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    refetch();
   };
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
@@ -147,18 +175,18 @@ export const AssetDashboard = () => {
   // Selection panel handlers
   const handleMoveAsset = () => {
     console.log('Move asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/move', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
-    setSelectedAssets([]);
+    handleSelectAll(false);
   };
 
   const handleDisposeAsset = () => {
     console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
-    const selectedAssetObjects = (assets || []).filter(asset => selectedAssets.includes(asset.id));
+    const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/dispose', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
-    setSelectedAssets([]);
+    handleSelectAll(false);
   };
 
   const handlePrintQRCode = () => {
@@ -171,8 +199,8 @@ export const AssetDashboard = () => {
 
   const handleClearSelection = () => {
     console.log('Clear selection called, current selected assets:', selectedAssets.length);
-    setSelectedAssets([]);
-    console.log('Selection cleared');
+    handleSelectAll(false);
+    console.log('Selection cleared using handleSelectAll(false)');
   };
 
   // Handle drag end for chart reordering
@@ -192,14 +220,12 @@ export const AssetDashboard = () => {
   // Analytics data
   const statusData = [
     { name: 'In Use', value: stats.inUse, color: 'hsl(120, 70%, 50%)' },
-    { name: 'In Store', value: stats.inStore, color: 'hsl(210, 70%, 50%)' },
-    { name: 'Breakdown', value: stats.breakdown, color: 'hsl(0, 70%, 50%)' },
-    { name: 'Disposed', value: stats.disposed, color: 'hsl(0, 0%, 50%)' }
+    { name: 'Breakdown', value: stats.breakdown, color: 'hsl(0, 70%, 50%)' }
   ];
 
   const assetTypeData = [
-    { name: 'Comprehensive', value: (assets || []).filter(a => a.assetType === 'Comprehensive').length, color: 'hsl(35, 35%, 75%)' },
-    { name: 'Non-Comprehensive', value: (assets || []).filter(a => a.assetType === 'Non-Comprehensive').length, color: 'hsl(25, 45%, 55%)' }
+    { name: 'IT Equipment', value: stats.itAssets, color: 'hsl(35, 35%, 75%)' },
+    { name: 'Non-IT Equipment', value: stats.nonItAssets, color: 'hsl(25, 45%, 55%)' }
   ];
 
   const categoryData = [
@@ -447,34 +473,114 @@ export const AssetDashboard = () => {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-6 mt-6">
-          <AssetStats stats={{
-            total: stats.total,
-            totalValue: 0, // Not available from API yet
-            nonItAssets: (assets || []).filter(a => a.assetType === 'Non-Comprehensive').length,
-            itAssets: (assets || []).filter(a => a.assetType === 'Comprehensive').length,
-            inUse: stats.inUse,
-            breakdown: stats.breakdown,
-            inStore: stats.inStore,
-            dispose: stats.disposed
-          }} />
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="text-lg">Loading assets...</div>
+            </div>
+          ) : error ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="text-red-500">Error: {error}</div>
+            </div>
+          ) : (
+            <>
+              <AssetStats stats={stats} />
 
-          <AssetActions
-            searchTerm={searchTerm}
-            onSearch={setSearchTerm}
-            onAddAsset={handleAddAsset}
-            onImport={handleImport}
-            onUpdate={handleUpdate}
-            onFilterOpen={() => setIsFilterOpen(true)}
-            onRefresh={refetch}
-            visibleColumns={visibleColumns}
-            onColumnChange={handleColumnChange}
-          />
+              <AssetActions
+                searchTerm={searchTerm}
+                onSearch={handleSearch}
+                onAddAsset={handleAddAsset}
+                onImport={handleImport}
+                onUpdate={handleUpdate}
+                onFilterOpen={() => setIsFilterOpen(true)}
+                onRefresh={handleRefresh}
+                visibleColumns={visibleColumns}
+                onColumnChange={handleColumnChange}
+              />
 
-          <AssetTable 
-            searchTerm={searchTerm}
-            currentPage={currentPage}
-            onPageChange={handlePageChange}
-          />
+              <div className="relative">
+                <AssetDataTable
+                  assets={displayAssets}
+                  selectedAssets={selectedAssets}
+                  visibleColumns={visibleColumns}
+                  onSelectAll={handleSelectAll}
+                  onSelectAsset={handleSelectAsset}
+                  onViewAsset={handleViewAsset}
+                />
+
+                {/* Selection Panel - positioned as overlay within table container */}
+                {selectedAssets.length > 0 && (
+                  <AssetSelectionPanel
+                    selectedCount={selectedAssets.length}
+                    selectedAssets={selectedAssetObjects}
+                    onMoveAsset={handleMoveAsset}
+                    onDisposeAsset={handleDisposeAsset}
+                    onPrintQRCode={handlePrintQRCode}
+                    onCheckIn={handleCheckIn}
+                    onClearSelection={handleClearSelection}
+                  />
+                )}
+              </div>
+
+              {/* API-driven Pagination */}
+              <div className="mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (pagination.currentPage > 1) {
+                            handlePageChange(pagination.currentPage - 1);
+                          }
+                        }}
+                        className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: Math.min(pagination.totalPages, 10) }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink 
+                          href="#" 
+                          isActive={page === pagination.currentPage}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(page);
+                          }}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    {pagination.totalPages > 10 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (pagination.currentPage < pagination.totalPages) {
+                            handlePageChange(pagination.currentPage + 1);
+                          }
+                        }}
+                        className={pagination.currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+                
+                <div className="text-center mt-2 text-sm text-gray-600">
+                  Showing page {pagination.currentPage} of {pagination.totalPages} 
+                  ({pagination.totalCount} total assets)
+                </div>
+              </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 

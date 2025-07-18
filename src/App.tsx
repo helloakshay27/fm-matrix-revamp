@@ -6,6 +6,7 @@ import { store } from './store/store';
 import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Import existing pages
 import Index from './pages/Index';
@@ -474,7 +475,7 @@ function App() {
             {/* Login Route */}
             <Route path="/login" element={<LoginPage />} />
 
-            <Route path="/" element={<Layout><div /></Layout>}>
+            <Route path="/" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
               <Route index element={<Index />} />
 
               {/* Rule Engine Routes */}
@@ -823,7 +824,7 @@ function App() {
 
             {/* Settings Routes */}
 
-                       <Route path="/settings" element={<Layout><div /></Layout>}>
+                       <Route path="/settings" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
 
             <Route path="/settings/approval-matrix/setup" element={<ApprovalMatrixSetupPage />} />
             <Route path="/settings/approval-matrix/setup/add" element={<AddApprovalMatrixPage />} />
@@ -846,14 +847,14 @@ function App() {
             </Route>
 
             {/* Setup Routes - Outside of settings parent route */}
-            <Route path="/setup/permit" element={<PermitSetupDashboard />} />
-            <Route path="/setup/incident" element={<IncidentSetupDashboard />} />
+            <Route path="/setup/permit" element={<ProtectedRoute><PermitSetupDashboard /></ProtectedRoute>} />
+            <Route path="/setup/incident" element={<ProtectedRoute><IncidentSetupDashboard /></ProtectedRoute>} />
             
             {/* Setup User Management Routes */}
-            <Route path="/setup/fm-users" element={<FMUserDashboard />} />
-            <Route path="/setup/fm-users/add" element={<AddFMUserDashboard />} />
-            <Route path="/setup/occupant-users" element={<OccupantUsersDashboard />} />
-            <Route path="/setup/occupant-users/add" element={<AddOccupantUserDashboard />} />
+            <Route path="/setup/fm-users" element={<ProtectedRoute><FMUserDashboard /></ProtectedRoute>} />
+            <Route path="/setup/fm-users/add" element={<ProtectedRoute><AddFMUserDashboard /></ProtectedRoute>} />
+            <Route path="/setup/occupant-users" element={<ProtectedRoute><OccupantUsersDashboard /></ProtectedRoute>} />
+            <Route path="/setup/occupant-users/add" element={<ProtectedRoute><AddOccupantUserDashboard /></ProtectedRoute>} />
 
             </Routes>
             <Toaster />

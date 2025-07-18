@@ -1,12 +1,12 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-
 export const SpaceManagementBookingDetailsPage = () => {
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
   const navigate = useNavigate();
 
   // Mock booking database
@@ -140,13 +140,10 @@ export const SpaceManagementBookingDetailsPage = () => {
     sgst: '0.0',
     paymentMethod: 'N/A'
   };
-
   const handleBack = () => {
-    navigate(-1);
+    navigate('/vas/booking/list');
   };
-
-  return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+  return <div className="p-6 min-h-screen bg-transparent">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
         <span>Bookings</span>
@@ -156,12 +153,7 @@ export const SpaceManagementBookingDetailsPage = () => {
 
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Button
-          onClick={handleBack}
-          variant="ghost"
-          size="sm"
-          className="p-2"
-        >
+        <Button onClick={handleBack} variant="ghost" size="sm" className="p-2">
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">
@@ -171,9 +163,9 @@ export const SpaceManagementBookingDetailsPage = () => {
 
       {/* Booking Details Card */}
       <Card className="mb-6">
-        <CardHeader className="bg-[#C72030] text-white">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="w-6 h-6 bg-white text-[#C72030] rounded-full flex items-center justify-center text-sm font-bold">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg text-[#C72030]">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
               B
             </span>
             BOOKING DETAILS
@@ -219,11 +211,7 @@ export const SpaceManagementBookingDetailsPage = () => {
             <div className="space-y-4">
               <div className="flex">
                 <span className="text-gray-600 w-32">Status</span>
-                <span className={`font-medium px-2 py-1 rounded-none text-xs ${
-                  booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' : 
-                  booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 
-                  'bg-blue-100 text-blue-800'
-                }`}>: {booking.status}</span>
+                <span className={`font-medium px-2 py-1 rounded-none text-xs ${booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' : booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>: {booking.status}</span>
               </div>
               <div className="flex">
                 <span className="text-gray-600 w-32">Scheduled Date</span>
@@ -260,9 +248,9 @@ export const SpaceManagementBookingDetailsPage = () => {
 
       {/* Logs Card */}
       <Card>
-        <CardHeader className="bg-[#C72030] text-white">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <span className="w-6 h-6 bg-white text-[#C72030] rounded-full flex items-center justify-center text-sm font-bold">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg text-[#C72030]">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
               L
             </span>
             LOGS
@@ -274,6 +262,5 @@ export const SpaceManagementBookingDetailsPage = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };

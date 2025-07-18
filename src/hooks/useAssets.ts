@@ -1,155 +1,177 @@
 import { useState, useEffect } from 'react';
-import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
-export interface ApiAsset {
-  id: number;
-  name: string;
-  asset_number: string;
-  serial_number: string | null;
-  status: 'in_use' | 'in_storage' | 'breakdown' | 'disposed';
-  site_name: string;
-  asset_group: string;
-  asset_sub_group: string;
-  asset_type: boolean;
-  building: {
-    name: string;
-  } | null;
-  wing: {
-    name: string;
-  } | null;
-  floor: {
-    name: string;
-  } | null;
-  area: {
-    name: string;
-  } | null;
-  pms_room: {
-    name: string;
-  } | null;
-}
-
-export interface MappedAsset {
+export interface Asset {
   id: string;
-  serialNumber: string;
   name: string;
-  assetId: string;
-  assetNo: string;
-  assetStatus: string;
-  site: string;
-  building: string;
-  wing: string;
-  floor: string;
-  area: string;
-  room: string;
-  group: string;
-  subGroup: string;
-  assetType: string;
-}
-
-export interface PaginationInfo {
-  current_page: number;
-  total_pages: number;
-  total_count: number;
+  serialNumber: string;
+  assetNumber: string;
+  status: 'in_use' | 'in_storage' | 'breakdown' | 'disposed';
+  siteName: string;
+  building: { name: string } | null;
+  wing: { name: string } | null;
+  area: { name: string } | null;
+  pmsRoom: { name: string } | null;
+  assetGroup: string;
+  assetSubGroup: string;
+  assetType?: boolean;
 }
 
 export interface AssetResponse {
-  pms_assets: ApiAsset[];
-  pagination: PaginationInfo;
+  pagination: {
+    current_page: number;
+    total_count: number;
+    total_pages: number;
+  };
+  total_count: number;
+  total_value: string;
+  in_use_count: number;
+  breakdown_count: number;
+  it_assets: number;
+  non_it_assets: number;
+  in_store: number;
+  dispose_assets: number;
+  assets: Array<{
+    id: number;
+    name: string;
+    serial_number: string | null;
+    asset_number: string;
+    status: string;
+    site_name: string;
+    building: { name: string } | null;
+    wing: { name: string } | null;
+    area: { name: string } | null;
+    pms_room: { name: string } | null;
+    asset_group: string;
+    asset_sub_group: string;
+    asset_type?: boolean;
+  }>;
 }
 
-// Status mapping function
-const mapStatus = (status: string): string => {
-  const statusMap = {
-    'in_use': 'In Use',
-    'in_storage': 'In Store',
-    'breakdown': 'Breakdown',
-    'disposed': 'Disposed'
-  };
-  return statusMap[status as keyof typeof statusMap] || status;
-};
+export interface AssetStats {
+  total: number;
+  totalValue: string;
+  nonItAssets: number;
+  itAssets: number;
+  inUse: number;
+  breakdown: number;
+  inStore: number;
+  dispose: number;
+}
 
-// Asset mapping function
-const mapAsset = (asset: ApiAsset): MappedAsset => ({
-  id: asset.id.toString(),
-  serialNumber: asset.serial_number || 'NA',
-  name: asset.name,
-  assetId: asset.id.toString(),
-  assetNo: asset.asset_number,
-  assetStatus: mapStatus(asset.status),
-  site: asset.site_name,
-  building: asset.building?.name || 'NA',
-  wing: asset.wing?.name || 'NA',
-  floor: asset.floor?.name || 'NA',
-  area: asset.area?.name || 'NA',
-  room: asset.pms_room?.name || 'NA',
-  group: asset.asset_group,
-  subGroup: asset.asset_sub_group,
-  assetType: asset.asset_type ? 'Comprehensive' : 'Non-Comprehensive'
-});
-
-export const useAssets = (page = 1) => {
-  const [assets, setAssets] = useState<MappedAsset[]>([]);
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    current_page: 1,
-    total_pages: 1,
-    total_count: 0
+export const useAssets = (page: number = 1) => {
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [stats, setStats] = useState<AssetStats>({
+    total: 0,
+    totalValue: '₹0.00',
+    nonItAssets: 0,
+    itAssets: 0,
+    inUse: 0,
+    breakdown: 0,
+    inStore: 0,
+    dispose: 0,
+  });
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAssets = async (currentPage = 1) => {
+  const mapAssetData = (apiAsset: any): Asset => ({
+    id: apiAsset.id.toString(),
+    name: apiAsset.name,
+    serialNumber: apiAsset.serial_number || 'NA',
+    assetNumber: apiAsset.asset_number,
+    status: apiAsset.status,
+    siteName: apiAsset.site_name,
+    building: apiAsset.building,
+    wing: apiAsset.wing,
+    area: apiAsset.area,
+    pmsRoom: apiAsset.pms_room,
+    assetGroup: apiAsset.asset_group,
+    assetSubGroup: apiAsset.asset_sub_group,
+    assetType: apiAsset.asset_type,
+  });
+
+  const formatStatusLabel = (status: string): string => {
+    switch (status) {
+      case 'in_use':
+        return 'In Use';
+      case 'in_storage':
+        return 'In Store';
+      case 'breakdown':
+        return 'Breakdown';
+      case 'disposed':
+        return 'Disposed';
+      default:
+        return status;
+    }
+  };
+
+  const fetchAssets = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      const url = getFullUrl(`/pms/assets.json?page=${currentPage}`);
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
+      
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/pms/assets.json?page=${page}`,
+        {
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('Failed to fetch assets');
       }
 
       const data: AssetResponse = await response.json();
       
-      // Handle case where pms_assets might be undefined
-      if (data.pms_assets && Array.isArray(data.pms_assets)) {
-        const mappedAssets = data.pms_assets.map(mapAsset);
-        setAssets(mappedAssets);
-        setPagination(data.pagination || { current_page: 1, total_pages: 1, total_count: 0 });
-      } else {
-        console.error('Invalid API response structure:', data);
-        setAssets([]);
-        setPagination({ current_page: 1, total_pages: 1, total_count: 0 });
-        setError('Invalid API response structure');
-      }
+      // Map assets data
+      const mappedAssets = data.assets?.map(mapAssetData) || [];
+      setAssets(mappedAssets);
+
+      // Set pagination
+      setPagination({
+        currentPage: data.pagination?.current_page || 1,
+        totalPages: data.pagination?.total_pages || 1,
+        totalCount: data.pagination?.total_count || 0,
+      });
+
+      // Set stats
+      setStats({
+        total: data.total_count || 0,
+        totalValue: data.total_value || '₹0.00',
+        nonItAssets: data.non_it_assets || 0,
+        itAssets: data.it_assets || 0,
+        inUse: data.in_use_count || 0,
+        breakdown: data.breakdown_count || 0,
+        inStore: data.in_store || 0,
+        dispose: data.dispose_assets || 0,
+      });
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch assets');
-      console.error('Error fetching assets:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAssets(page);
+    fetchAssets();
   }, [page]);
-
-  const refetch = () => {
-    fetchAssets(pagination.current_page);
-  };
 
   return {
     assets,
+    stats,
     pagination,
     loading,
     error,
-    refetch,
-    fetchAssets
+    refetch: fetchAssets,
+    formatStatusLabel,
   };
 };

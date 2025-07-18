@@ -1,6 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { testReducer, loginReducer } from './slices/testSlice'
 import { amcReducer } from './slices/amcSlice'
+import { amcDetailsReducer } from './slices/amcDetailsSlice'
+import { servicesReducer } from './slices/servicesSlice'
+import { serviceDetailsReducer } from './slices/serviceDetailsSlice'
 import { departmentReducer } from './slices/departmentSlice'
 import roleReducer from './slices/roleSlice'
 import { functionReducer } from './slices/functionSlice'
@@ -14,12 +17,18 @@ import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
 import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
+import { facilityBookingsReducer } from './slices/facilityBookingsSlice'
+import entitiesReducer from './slices/entitiesSlice'
+import facilitySetupsReducer from './slices/facilitySetupsSlice'
 
 export const store = configureStore({
   reducer: {
     test: testReducer,
     login: loginReducer,
     amc: amcReducer,
+    amcDetails: amcDetailsReducer,
+    services: servicesReducer,
+    serviceDetails: serviceDetailsReducer,
     department: departmentReducer,
     role: roleReducer,
     function: functionReducer,
@@ -33,6 +42,9 @@ export const store = configureStore({
     responseEscalation: responseEscalationReducer,
     resolutionEscalation: resolutionEscalationReducer,
     costApproval: costApprovalReducer,
+    facilityBookings: facilityBookingsReducer,
+    entities: entitiesReducer,
+    facilitySetups: facilitySetupsReducer,
   },
 })
 
