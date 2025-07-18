@@ -48,6 +48,7 @@ const initialAmcData: AMCRecord[] = [];
 
 const columns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
+  { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
   { key: 'amc_vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
   { key: 'amc_cost', label: 'AMC Cost', sortable: true, defaultVisible: true },
   { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
@@ -127,6 +128,8 @@ export const AMCDashboard = () => {
     switch (columnKey) {
       case 'id':
         return <span className="font-medium">{item.id}</span>;
+      case 'asset_name':
+        return item.asset_id ? `Asset ${item.asset_id}` : '-';
       case 'amc_vendor_name':
         return item.amc_vendor_name || '-';
       case 'amc_cost':
