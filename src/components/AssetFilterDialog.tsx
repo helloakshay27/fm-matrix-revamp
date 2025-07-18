@@ -50,6 +50,21 @@ interface SubGroupItem {
   group_id: number;
 }
 
+interface SiteItem {
+  id: number;
+  name: string;
+}
+
+interface WingItem {
+  id: number;
+  name: string;
+}
+
+interface AreaItem {
+  id: number;
+  name: string;
+}
+
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const [assetName, setAssetName] = useState('');
   const [assetId, setAssetId] = useState('');
@@ -65,8 +80,16 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   // API data states
   const [groups, setGroups] = useState<GroupItem[]>([]);
   const [subgroups, setSubgroups] = useState<SubGroupItem[]>([]);
+  const [sites, setSites] = useState<SiteItem[]>([]);
+  const [wings, setWings] = useState<WingItem[]>([]);
+  const [areas, setAreas] = useState<AreaItem[]>([]);
+  
+  // Loading states
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [loadingSubgroups, setLoadingSubgroups] = useState(false);
+  const [loadingSites, setLoadingSites] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
 
   // Fetch groups on component mount
   useEffect(() => {
@@ -127,10 +150,105 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     fetchSubgroups();
   }, [group]);
 
+  // Fetch sites on component mount
+  useEffect(() => {
+    const fetchSites = async () => {
+      if (!isOpen) return;
+      
+      console.log('Fetching sites API call started...');
+      setLoadingSites(true);
+      try {
+        const response = await apiClient.get('/pms/sites.json');
+        console.log('Sites API response:', response.data);
+        
+        const sitesData = Array.isArray(response.data?.sites) ? response.data.sites : [];
+        console.log('Setting sites data:', sitesData);
+        setSites(sitesData);
+      } catch (error) {
+        console.error('Error fetching sites:', error);
+        setSites([]);
+      } finally {
+        setLoadingSites(false);
+      }
+    };
+
+    fetchSites();
+  }, [isOpen]);
+
+  // Fetch wings when building changes
+  useEffect(() => {
+    const fetchWings = async () => {
+      if (!building) {
+        setWings([]);
+        setArea(''); // Reset area when building changes
+        return;
+      }
+
+      console.log('Fetching wings for building:', building);
+      setLoadingWings(true);
+      try {
+        const response = await apiClient.get(`/pms/buildings/${building}/wings.json`);
+        console.log('Wings API response:', response.data);
+        
+        const wingsData = Array.isArray(response.data?.wings) ? response.data.wings : [];
+        console.log('Setting wings data:', wingsData);
+        setWings(wingsData);
+      } catch (error) {
+        console.error('Error fetching wings:', error);
+        setWings([]);
+      } finally {
+        setLoadingWings(false);
+      }
+    };
+
+    fetchWings();
+  }, [building]);
+
+  // Fetch areas when wing changes
+  useEffect(() => {
+    const fetchAreas = async () => {
+      if (!wing) {
+        setAreas([]);
+        return;
+      }
+
+      console.log('Fetching areas for wing:', wing);
+      setLoadingAreas(true);
+      try {
+        const response = await apiClient.get(`/pms/wings/${wing}/areas.json`);
+        console.log('Areas API response:', response.data);
+        
+        const areasData = Array.isArray(response.data?.areas) ? response.data.areas : [];
+        console.log('Setting areas data:', areasData);
+        setAreas(areasData);
+      } catch (error) {
+        console.error('Error fetching areas:', error);
+        setAreas([]);
+      } finally {
+        setLoadingAreas(false);
+      }
+    };
+
+    fetchAreas();
+  }, [wing]);
+
   // Handle group change and reset subgroup
   const handleGroupChange = (value: string) => {
     setGroup(value);
     setSubgroup(''); // Reset subgroup when group changes
+  };
+
+  // Handle building change and reset dependent dropdowns
+  const handleBuildingChange = (value: string) => {
+    setBuilding(value);
+    setWing(''); // Reset wing when building changes
+    setArea(''); // Reset area when building changes
+  };
+
+  // Handle wing change and reset area
+  const handleWingChange = (value: string) => {
+    setWing(value);
+    setArea(''); // Reset area when wing changes
   };
 
   const handleSubmit = () => {
@@ -269,11 +387,15 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setSite(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingSites}
                   MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Site</em></MenuItem>
-                  <MenuItem value="site1">Site 1</MenuItem>
-                  <MenuItem value="site2">Site 2</MenuItem>
+                  {sites.map((siteItem) => (
+                    <MenuItem key={siteItem.id} value={siteItem.id.toString()}>
+                      {siteItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -282,7 +404,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="building-label"
                   label="Building"
                   value={building}
-                  onChange={(e) => setBuilding(e.target.value)}
+                  onChange={(e) => handleBuildingChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
                   MenuProps={selectMenuProps}
@@ -300,14 +422,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="wing-label"
                   label="Wing"
                   value={wing}
-                  onChange={(e) => setWing(e.target.value)}
+                  onChange={(e) => handleWingChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingWings || !building}
                   MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Wing</em></MenuItem>
-                  <MenuItem value="wing1">Wing 1</MenuItem>
-                  <MenuItem value="wing2">Wing 2</MenuItem>
+                  {wings.map((wingItem) => (
+                    <MenuItem key={wingItem.id} value={wingItem.id.toString()}>
+                      {wingItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -319,11 +445,15 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setArea(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingAreas || !wing}
                   MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Area</em></MenuItem>
-                  <MenuItem value="area1">Area 1</MenuItem>
-                  <MenuItem value="area2">Area 2</MenuItem>
+                  {areas.map((areaItem) => (
+                    <MenuItem key={areaItem.id} value={areaItem.id.toString()}>
+                      {areaItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
