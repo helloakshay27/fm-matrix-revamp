@@ -1,20 +1,34 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TextField, MenuItem } from '@mui/material';
 import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
+  // Get FM users from Redux store
+  const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
+  const fmUsers = fmUsersResponse?.fm_users || [];
+  
   const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [comment, setComment] = useState('');
+
+  // Fetch FM users on component mount
+  useEffect(() => {
+    dispatch(fetchFMUsers());
+  }, [dispatch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,20 +114,34 @@ export const AddFacilityBookingPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* User Selection */}
           <div className="space-y-2">
-            <TextField
-              select
-              label="User"
-              value={selectedUser}
-              onChange={(e) => setSelectedUser(e.target.value)}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            >
-              <MenuItem value="user1">User 1</MenuItem>
-              <MenuItem value="user2">User 2</MenuItem>
-              <MenuItem value="user3">User 3</MenuItem>
-            </TextField>
+            <Label htmlFor="user-select" className="text-sm font-medium">User</Label>
+            <Select value={selectedUser} onValueChange={setSelectedUser}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={fmUsersLoading ? "Loading users..." : "Select a user"} />
+              </SelectTrigger>
+              <SelectContent>
+                {fmUsersError && (
+                  <SelectItem value="" disabled>
+                    Error loading users
+                  </SelectItem>
+                )}
+                {fmUsersLoading && (
+                  <SelectItem value="" disabled>
+                    Loading users...
+                  </SelectItem>
+                )}
+                {!fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
+                  <SelectItem value="" disabled>
+                    No users available
+                  </SelectItem>
+                )}
+                {fmUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id.toString()}>
+                    {user.firstname} {user.lastname}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Facility Selection */}
