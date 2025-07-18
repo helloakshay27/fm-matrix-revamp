@@ -208,12 +208,20 @@ export const AddFacilityBookingPage = () => {
         submitForm.append('fm_user_id', selectedUser);
       }
 
-      console.log('Submitting form with data:');
-      console.log('API URL:', '/pms/admin/facility_bookings.json');
-      for (let [key, value] of submitForm.entries()) {
-        console.log(`${key}: ${value}`);
-      }
+      // Log all the values before creating FormData
+      console.log('=== FORM SUBMISSION DEBUG ===');
+      console.log('selectedUser:', selectedUser);
+      console.log('selectedFacility:', selectedFacility);
+      console.log('selectedDate:', selectedDate);
+      console.log('paymentMethod:', paymentMethod);
+      console.log('selectedSlots:', selectedSlots);
+      console.log('userType:', userType);
+      console.log('selectedSiteId:', selectedSiteId);
+      console.log('userId:', userId);
+      console.log('=== END DEBUG ===');
 
+      console.log('About to submit to API...');
+      
       // Submit the booking - try without specifying content-type header
       const response = await apiClient.post('/pms/admin/facility_bookings.json', submitForm);
 
