@@ -163,16 +163,22 @@ export const AddFacilityBookingPage = () => {
 
       // Get required data from localStorage
       const selectedSiteId = localStorage.getItem('selectedSiteId');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userString = localStorage.getItem('user');
+      const user = userString ? JSON.parse(userString) : null;
       
-      console.log('localStorage data:', { selectedSiteId, user });
+      console.log('localStorage check:');
+      console.log('selectedSiteId:', selectedSiteId);
+      console.log('user from localStorage:', user);
+      console.log('All localStorage keys:', Object.keys(localStorage));
       
       if (!selectedSiteId) {
         console.error('selectedSiteId not found in localStorage');
+        alert('Error: Site ID not found. Please refresh the page and try again.');
         return;
       }
-      if (!user.id) {
+      if (!user || !user.id) {
         console.error('User ID not found in localStorage');
+        alert('Error: User information not found. Please login again.');
         return;
       }
 
