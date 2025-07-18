@@ -1,5 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchAssetsData, AssetFilters } from '@/store/slices/assetsSlice';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 interface AssetFilterDialogProps {
   isOpen: boolean;
@@ -31,6 +35,7 @@ const selectMenuProps = {
       border: '1px solid #e2e8f0',
       borderRadius: '8px',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999, // High z-index to ensure dropdown appears above other elements
     },
   },
   // Prevent focus conflicts with Dialog
@@ -81,6 +86,9 @@ interface RoomItem {
 }
 
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Form state
   const [assetName, setAssetName] = useState('');
   const [assetId, setAssetId] = useState('');
   const [group, setGroup] = useState('');
@@ -399,21 +407,37 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     setRoom(''); // Reset room when floor changes
   };
 
-  const handleSubmit = () => {
-    const filters = {
-      assetName,
-      assetId,
-      group,
-      subgroup,
-      site,
-      building,
-      wing,
-      area,
-      floor,
-      room,
-    };
-    console.log('Apply filters:', filters);
-    onClose();
+  const handleSubmit = async () => {
+    try {
+      const filters: AssetFilters = {
+        assetName: assetName || undefined,
+        assetId: assetId || undefined,
+        groupId: group || undefined,
+        subgroupId: subgroup || undefined,
+        siteId: site || undefined,
+        buildingId: building || undefined,
+        wingId: wing || undefined,
+        areaId: area || undefined,
+        floorId: floor || undefined,
+        roomId: room || undefined,
+      };
+
+      // Remove empty/undefined values
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== undefined && value !== '')
+      ) as AssetFilters;
+
+      console.log('Applying asset filters:', cleanFilters);
+      
+      // Dispatch Redux action to fetch filtered assets
+      await dispatch(fetchAssetsData({ page: 1, filters: cleanFilters })).unwrap();
+      
+      toast.success('Filters applied successfully');
+      onClose();
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      toast.error('Failed to apply filters');
+    }
   };
 
   const handleExport = () => {
