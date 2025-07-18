@@ -240,6 +240,13 @@ export const AddAMCPage = () => {
 
     console.log('Submitting AMC Data via Redux');
     console.log('Attachments:', attachments);
+    
+    // Log the complete payload structure
+    console.log('=== COMPLETE PAYLOAD ===');
+    for (let [key, value] of sendData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    console.log('========================');
 
     // Use Redux action to create AMC
     dispatch(createAMC(sendData));
@@ -285,6 +292,13 @@ export const AddAMCPage = () => {
 
     console.log('Save & Schedule AMC via Redux');
     console.log('Attachments:', attachments);
+    
+    // Log the complete payload structure
+    console.log('=== SAVE & SCHEDULE PAYLOAD ===');
+    for (let [key, value] of sendData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    console.log('===============================');
 
     // Use Redux action to create AMC
     dispatch(createAMC(sendData));
