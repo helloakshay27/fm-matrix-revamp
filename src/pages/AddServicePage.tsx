@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { LocationSelector } from '@/components/service/LocationSelector';
+import axios from 'axios';
+import { TOKEN } from '@/config/apiConfig';
 
 export const AddServicePage = () => {
   const navigate = useNavigate();
@@ -59,17 +61,61 @@ export const AddServicePage = () => {
     }
   };
 
-  const handleSubmit = (action: string) => {
-    console.log('Service Data:', formData);
-    console.log('Selected File:', selectedFile);
-    console.log('Action:', action);
-    
-    toast({
-      title: "Service Created",
-      description: `Service has been ${action} successfully.`,
-    });
-    
-    navigate('/maintenance/service');
+  const handleSubmit = async (action: string) => {
+    try {
+      const payload = {
+        pms_service: {
+          service_name: formData.serviceName,
+          site_id: formData.siteId,
+          building_id: formData.buildingId,
+          wing_id: formData.wingId,
+          area_id: formData.areaId,
+          floor_id: formData.floorId,
+          room_id: formData.roomId,
+          pms_asset_group_id: formData.groupId,
+          pms_asset_sub_group_id: formData.subGroupId,
+          active: true,
+          description: "",
+          service_category: "",
+          service_group: "",
+          service_code: "",
+          ext_code: "",
+          rate_contract_vendor_code: ""
+        },
+        subaction: "save"
+      };
+
+      console.log('Service Payload:', payload);
+
+      const response = await axios.post(
+        'https://fm-uat-api.lockated.com/pms/services.json',
+        payload,
+        {
+          headers: {
+            'Authorization': `Bearer ${TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Service Created Successfully:', response.data);
+      
+      toast({
+        title: "Service Created",
+        description: `Service has been ${action} successfully.`,
+      });
+      
+      // Navigate to service list page after success
+      navigate('/maintenance/service');
+      
+    } catch (error) {
+      console.error('Error creating service:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create service. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Responsive styles for TextField and Select
