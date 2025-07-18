@@ -52,7 +52,11 @@ export const saveBaseUrl = (baseUrl: string): void => {
 
 // Get base URL from localStorage
 export const getBaseUrl = (): string | null => {
-  return localStorage.getItem(AUTH_KEYS.BASE_URL);
+  const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
+  if (!savedUrl) return null;
+  
+  // Ensure the URL includes the protocol
+  return savedUrl.startsWith('http') ? savedUrl : `https://${savedUrl}`;
 };
 
 // Check if user is authenticated
