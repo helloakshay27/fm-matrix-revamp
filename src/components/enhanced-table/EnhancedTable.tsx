@@ -278,9 +278,6 @@ export function EnhancedTable<T extends Record<string, any>>({
           
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {selectedItems.length} selected
-              </span>
               {bulkActions.map((action, index) => (
                 <Button
                   key={index}
