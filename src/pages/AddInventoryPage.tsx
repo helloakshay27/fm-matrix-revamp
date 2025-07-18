@@ -12,7 +12,8 @@ import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { assets, loading } = useSelector((state: RootState) => state.inventoryAssets);
+  const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
+  const { assets = [], loading = false } = inventoryAssetsState || {};
   
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
@@ -22,8 +23,14 @@ export const AddInventoryPage = () => {
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
 
   useEffect(() => {
+    console.log('Dispatching fetchInventoryAssets...');
     dispatch(fetchInventoryAssets());
   }, [dispatch]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Assets state:', { assets, loading, inventoryAssetsState });
+  }, [assets, loading, inventoryAssetsState]);
 
   const [formData, setFormData] = useState({
     assetName: '',
