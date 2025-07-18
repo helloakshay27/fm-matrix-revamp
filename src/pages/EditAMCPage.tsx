@@ -519,6 +519,7 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('details', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
+                    disabled={true}
                   />
                   Asset
                 </label>
@@ -531,6 +532,7 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('details', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
+                    disabled={true}
                   />
                   Service
                 </label>
@@ -549,6 +551,7 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('type', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
+                    disabled={true}
                   />
                   Individual
                 </label>
@@ -561,6 +564,7 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('type', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
+                    disabled={true}
                   />
                   Group
                 </label>
@@ -587,7 +591,7 @@ export const EditAMCPage = () => {
                         }));
                       }} 
                       sx={fieldStyles}
-                      disabled={loading || assetsLoading || updateLoading}
+                      disabled={true}
                       renderValue={(selected) => {
                         if (selected.length === 0) {
                           return <em>Select Assets...</em>;
