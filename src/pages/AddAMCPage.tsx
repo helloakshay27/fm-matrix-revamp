@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { apiClient } from '@/utils/apiClient';
 export const AddAMCPage = () => {
   const navigate = useNavigate();
   const {
@@ -31,6 +32,10 @@ export const AddAMCPage = () => {
     contracts: [] as File[],
     invoices: [] as File[]
   });
+  
+  const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
+  const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
+  const [loading, setLoading] = useState(false);
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       // Clear the assetName when switching between Asset and Service
@@ -72,6 +77,37 @@ export const AddAMCPage = () => {
       ...prev,
       [type]: prev[type].filter((_, i) => i !== index)
     }));
+  };
+
+  // Fetch asset groups from API
+  useEffect(() => {
+    const fetchAssetGroups = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
+        setAssetGroups(response.data || []);
+      } catch (error) {
+        console.error('Error fetching asset groups:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch asset groups.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssetGroups();
+  }, [toast]);
+
+  // Update sub-groups when group changes
+  const handleGroupChange = (groupId: string) => {
+    handleInputChange('group', groupId);
+    handleInputChange('subgroup', ''); // Clear subgroup selection
+    
+    const selectedGroup = assetGroups.find(group => group.id.toString() === groupId);
+    setSubGroups(selectedGroup?.sub_groups || []);
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,12 +246,21 @@ export const AddAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                      <MuiSelect labelId="group-select-label" label="Group" displayEmpty value={formData.group} onChange={e => handleInputChange('group', e.target.value)} sx={fieldStyles}>
+                      <MuiSelect 
+                        labelId="group-select-label" 
+                        label="Group" 
+                        displayEmpty 
+                        value={formData.group} 
+                        onChange={e => handleGroupChange(e.target.value)} 
+                        sx={fieldStyles}
+                        disabled={loading}
+                      >
                         <MenuItem value=""><em>Select Group</em></MenuItem>
-                        <MenuItem value="electrical-group">Electrical Group</MenuItem>
-                        <MenuItem value="mechanical-group">Mechanical Group</MenuItem>
-                        <MenuItem value="it-group">IT Group</MenuItem>
-                        <MenuItem value="facilities-group">Facilities Group</MenuItem>
+                        {assetGroups.map((group) => (
+                          <MenuItem key={group.id} value={group.id.toString()}>
+                            {group.name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -223,12 +268,21 @@ export const AddAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="subgroup-select-label" shrink>SubGroup</InputLabel>
-                      <MuiSelect labelId="subgroup-select-label" label="SubGroup" displayEmpty value={formData.subgroup} onChange={e => handleInputChange('subgroup', e.target.value)} sx={fieldStyles}>
+                      <MuiSelect 
+                        labelId="subgroup-select-label" 
+                        label="SubGroup" 
+                        displayEmpty 
+                        value={formData.subgroup} 
+                        onChange={e => handleInputChange('subgroup', e.target.value)} 
+                        sx={fieldStyles}
+                        disabled={!formData.group || loading}
+                      >
                         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                        <MenuItem value="power-systems">Power Systems</MenuItem>
-                        <MenuItem value="lighting-systems">Lighting Systems</MenuItem>
-                        <MenuItem value="hvac-systems">HVAC Systems</MenuItem>
-                        <MenuItem value="security-systems">Security Systems</MenuItem>
+                        {subGroups.map((subGroup) => (
+                          <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                            {subGroup.name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                   </div>
