@@ -195,12 +195,12 @@ export const AssetDashboard = () => {
     // Ideally, the API should return aggregated stats for all filtered results
     return {
       total: totalCount || totalAssets, // Use total count from API if available
-      totalValue: "₹0.00", 
+      total_value: "₹0.00", 
       nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
       itAssets: Math.floor((totalCount || totalAssets) * 0.4),
       inUse: inUseAssets,
       breakdown: breakdownAssets,
-      inStore: inStoreAssets,
+      in_store: inStoreAssets,
       dispose: disposeAssets
     };
   };
