@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
+import { apiClient } from '@/utils/apiClient';
 
 interface AssetFilterDialogProps {
   isOpen: boolean;
@@ -22,6 +23,17 @@ const fieldStyles = {
   },
 };
 
+interface GroupItem {
+  id: number;
+  name: string;
+}
+
+interface SubGroupItem {
+  id: number;
+  name: string;
+  group_id: number;
+}
+
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const [assetName, setAssetName] = useState('');
   const [assetId, setAssetId] = useState('');
@@ -33,6 +45,61 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const [area, setArea] = useState('');
   const [floor, setFloor] = useState('');
   const [room, setRoom] = useState('');
+
+  // API data states
+  const [groups, setGroups] = useState<GroupItem[]>([]);
+  const [subgroups, setSubgroups] = useState<SubGroupItem[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [loadingSubgroups, setLoadingSubgroups] = useState(false);
+
+  // Fetch groups on component mount
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (!isOpen) return;
+      
+      setLoadingGroups(true);
+      try {
+        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
+        setGroups(response.data || []);
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+        setGroups([]);
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+
+    fetchGroups();
+  }, [isOpen]);
+
+  // Fetch subgroups when group changes
+  useEffect(() => {
+    const fetchSubgroups = async () => {
+      if (!group) {
+        setSubgroups([]);
+        return;
+      }
+
+      setLoadingSubgroups(true);
+      try {
+        const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${group}`);
+        setSubgroups(response.data || []);
+      } catch (error) {
+        console.error('Error fetching subgroups:', error);
+        setSubgroups([]);
+      } finally {
+        setLoadingSubgroups(false);
+      }
+    };
+
+    fetchSubgroups();
+  }, [group]);
+
+  // Handle group change and reset subgroup
+  const handleGroupChange = (value: string) => {
+    setGroup(value);
+    setSubgroup(''); // Reset subgroup when group changes
+  };
 
   const handleSubmit = () => {
     const filters = {
@@ -117,13 +184,17 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="group-label"
                   label="Group"
                   value={group}
-                  onChange={(e) => setGroup(e.target.value)}
+                  onChange={(e) => handleGroupChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingGroups}
                 >
                   <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="category1">Category 1</MenuItem>
-                  <MenuItem value="category2">Category 2</MenuItem>
+                  {groups.map((groupItem) => (
+                    <MenuItem key={groupItem.id} value={groupItem.id.toString()}>
+                      {groupItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -135,10 +206,14 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setSubgroup(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingSubgroups || !group}
                 >
                   <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                  <MenuItem value="subgroup1">Sub Group 1</MenuItem>
-                  <MenuItem value="subgroup2">Sub Group 2</MenuItem>
+                  {subgroups.map((subgroupItem) => (
+                    <MenuItem key={subgroupItem.id} value={subgroupItem.id.toString()}>
+                      {subgroupItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
