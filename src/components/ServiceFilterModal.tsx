@@ -66,10 +66,14 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       },
     },
+    // Prevent focus conflicts with Dialog
+    disablePortal: false,
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
   };
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent className="max-w-2xl" aria-describedby="filter-dialog-description">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">FILTER BY</DialogTitle>
@@ -81,6 +85,9 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             >
               <X className="h-4 w-4" />
             </Button>
+          </div>
+          <div id="filter-dialog-description" className="sr-only">
+            Filter services by name, building, and area
           </div>
         </DialogHeader>
         
