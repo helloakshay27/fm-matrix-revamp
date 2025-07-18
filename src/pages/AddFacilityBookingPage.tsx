@@ -135,17 +135,62 @@ export const AddFacilityBookingPage = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Booking submitted:', {
-      userType,
-      selectedUser,
-      selectedFacility,
-      selectedCompany,
-      selectedDate,
-      comment
-    });
-    navigate('/vas/booking/list');
+    
+    try {
+      // Get required data from localStorage
+      const selectedSiteId = localStorage.getItem('selectedSiteId');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      if (!selectedSiteId || !user.id) {
+        console.error('Missing required data from localStorage');
+        return;
+      }
+
+      // Create FormData with required fields
+      const submitForm = new FormData();
+      
+      submitForm.append('facility_booking[user_society_type]', 'User');
+      submitForm.append('facility_booking[resource_type]', 'Pms::Site');
+      submitForm.append('facility_booking[resource_id]', selectedSiteId);
+      submitForm.append('facility_booking[book_by_id]', user.id.toString());
+      submitForm.append('facility_booking[book_by]', 'slot');
+      submitForm.append('facility_booking[facility_id]', selectedFacility);
+      submitForm.append('facility_booking[startdate]', selectedDate.replace(/-/g, '/'));
+      submitForm.append('facility_booking[comment]', comment);
+      submitForm.append('facility_booking[payment_method]', paymentMethod);
+      
+      // Add selected slots
+      selectedSlots.forEach(slotId => {
+        submitForm.append('facility_booking[selected_slots][]', slotId.toString());
+      });
+      
+      // Set on_behalf_of and user IDs based on user type
+      if (userType === 'occupant') {
+        submitForm.append('on_behalf_of', 'occupant-user');
+        submitForm.append('occupant_user_id', selectedUser);
+        submitForm.append('fm_user_id', '');
+      } else {
+        submitForm.append('on_behalf_of', 'fm-user');
+        submitForm.append('occupant_user_id', '');
+        submitForm.append('fm_user_id', selectedUser);
+      }
+
+      // Submit the booking
+      const response = await apiClient.post('/pms/admin/facility_bookings.json', submitForm, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        console.log('Booking created successfully:', response.data);
+        navigate('/vas/booking/list');
+      }
+    } catch (error) {
+      console.error('Error creating facility booking:', error);
+    }
   };
 
   const handleBackToList = () => {
