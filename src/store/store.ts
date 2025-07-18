@@ -18,6 +18,7 @@ import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
 import { facilityBookingsReducer } from './slices/facilityBookingsSlice'
+import entitiesReducer from './slices/entitiesSlice'
 
 export const store = configureStore({
   reducer: {
@@ -41,6 +42,7 @@ export const store = configureStore({
     resolutionEscalation: resolutionEscalationReducer,
     costApproval: costApprovalReducer,
     facilityBookings: facilityBookingsReducer,
+    entities: entitiesReducer,
   },
 })
 

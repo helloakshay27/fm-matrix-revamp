@@ -9,6 +9,7 @@ import { TextField, MenuItem } from '@mui/material';
 import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
+import { fetchEntities } from '@/store/slices/entitiesSlice';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -18,6 +19,11 @@ export const AddFacilityBookingPage = () => {
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
   const fmUsers = fmUsersResponse?.fm_users || [];
   
+  // Get entities from Redux store
+  const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
+  const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities : 
+                   Array.isArray(entitiesResponse) ? entitiesResponse : [];
+  
   const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
@@ -25,9 +31,10 @@ export const AddFacilityBookingPage = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [comment, setComment] = useState('');
 
-  // Fetch FM users on component mount
+  // Fetch data on component mount
   useEffect(() => {
     dispatch(fetchFMUsers());
+    dispatch(fetchEntities());
   }, [dispatch]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -174,11 +181,25 @@ export const AddFacilityBookingPage = () => {
               fullWidth
               InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
+              disabled={entitiesLoading}
+              helperText={entitiesError ? "Error loading companies" : ""}
+              error={!!entitiesError}
             >
-              <MenuItem value="lockated-ho">Lockated HO</MenuItem>
-              <MenuItem value="company-a">Company A</MenuItem>
-              <MenuItem value="company-b">Company B</MenuItem>
-              <MenuItem value="company-c">Company C</MenuItem>
+              {entitiesLoading && (
+                <MenuItem value="" disabled>
+                  Loading companies...
+                </MenuItem>
+              )}
+              {!entitiesLoading && !entitiesError && entities.length === 0 && (
+                <MenuItem value="" disabled>
+                  No companies available
+                </MenuItem>
+              )}
+              {entities.map((entity) => (
+                <MenuItem key={entity.id} value={entity.id.toString()}>
+                  {entity.name}
+                </MenuItem>
+              ))}
             </TextField>
           </div>
 
