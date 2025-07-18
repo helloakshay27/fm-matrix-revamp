@@ -248,10 +248,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button variant="secondary" onClick={handleSubmit} className="flex-1 h-11">
-              Submit
-            </Button>
-            <Button variant="outline" onClick={handleExport} className="flex-1 h-11">
-              Export
+              Apply
             </Button>
             <Button variant="outline" onClick={handleReset} className="flex-1 h-11">
               Reset
