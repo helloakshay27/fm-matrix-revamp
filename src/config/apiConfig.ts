@@ -1,7 +1,23 @@
+import { getBaseUrl, getToken } from '@/utils/auth';
+
 // API Configuration - Central place for managing API endpoints and tokens
+const getApiConfig = () => {
+  const savedBaseUrl = getBaseUrl();
+  const savedToken = getToken();
+  
+  return {
+    BASE_URL: savedBaseUrl || 'https://fm-uat-api.lockated.com',
+    TOKEN: savedToken || 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
+  };
+};
+
 export const API_CONFIG = {
-  BASE_URL: 'https://fm-uat-api.lockated.com',
-  TOKEN: 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
+  get BASE_URL() {
+    return getApiConfig().BASE_URL;
+  },
+  get TOKEN() {
+    return getApiConfig().TOKEN;
+  },
   ENDPOINTS: {
     ASSETS: '/pms/assets.json',
     AMC: '/pms/asset_amcs.json',
@@ -32,14 +48,16 @@ export const API_CONFIG = {
 } as const
 
 // Export individual values for easy access
-export const { BASE_URL, TOKEN, ENDPOINTS } = API_CONFIG
+export const { ENDPOINTS } = API_CONFIG
+export const BASE_URL = API_CONFIG.BASE_URL;
+export const TOKEN = API_CONFIG.TOKEN;
 
 // Helper to get full URL
 export const getFullUrl = (endpoint: string): string => {
-  return `${BASE_URL}${endpoint}`
+  return `${API_CONFIG.BASE_URL}${endpoint}`
 }
 
 // Helper to get authorization header
 export const getAuthHeader = (): string => {
-  return `Bearer ${TOKEN}`
+  return `Bearer ${API_CONFIG.TOKEN}`
 }
