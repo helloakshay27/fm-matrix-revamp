@@ -37,10 +37,26 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   };
 
   // Responsive styles for TextField and Select
-    const fieldStyles = {
+  const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
+    backgroundColor: 'white',
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
+      backgroundColor: 'white',
+    },
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'white',
+    }
+  };
+
+  const menuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: 200,
+        backgroundColor: 'white',
+        zIndex: 9999,
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      },
     },
   };
   return (
@@ -91,14 +107,15 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel id="building-select-label" shrink>Building</InputLabel>
+                  <InputLabel id="building-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Building</InputLabel>
                   <MuiSelect
                     labelId="building-select-label"
                     label="Building"
                     displayEmpty
                     value={filters.building}
-                    onChange={(e) => handleInputChange('building', e.target.value)}
+                    onChange={(e) => handleInputChange('building', e.target.value as string)}
                     sx={fieldStyles}
+                    MenuProps={menuProps}
                   >
                     <MenuItem value=""><em>Building</em></MenuItem>
                     <MenuItem value="wing2">Wing2</MenuItem>
@@ -109,14 +126,15 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
               </div>
               <div>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                  <InputLabel id="area-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Area</InputLabel>
                   <MuiSelect
                     labelId="area-select-label"
                     label="Area"
                     displayEmpty
                     value={filters.area}
-                    onChange={(e) => handleInputChange('area', e.target.value)}
+                    onChange={(e) => handleInputChange('area', e.target.value as string)}
                     sx={fieldStyles}
+                    MenuProps={menuProps}
                   >
                     <MenuItem value=""><em>Area</em></MenuItem>
                     <MenuItem value="lobby">Lobby</MenuItem>
