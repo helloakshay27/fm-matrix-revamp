@@ -66,9 +66,13 @@ export const EditAMCPage = () => {
 
   // Update form data when AMC data is loaded
   useEffect(() => {
-    if (amcData && typeof amcData === 'object') {
+    if (amcData && typeof amcData === 'object' && 
+        assets.length > 0 && suppliers.length > 0 && services.length > 0) {
       const data = amcData as any; // Type assertion for unknown data
       console.log('AMC Data loaded for editing:', data);
+      console.log('Assets available:', assets);
+      console.log('Suppliers available:', suppliers);
+      console.log('Services available:', services);
       
       // Determine the correct form values based on API response
       const isAssetType = data.checklist_type === 'Asset' || data.checklist_type === 'asset';
@@ -80,10 +84,8 @@ export const EditAMCPage = () => {
         if (typeof data.asset_id === 'string') {
           try {
             // Try to parse as JSON first
-            assetIds = JSON.parse(data.asset_id);
-            if (!Array.isArray(assetIds)) {
-              assetIds = [data.asset_id];
-            }
+            const parsed = JSON.parse(data.asset_id);
+            assetIds = Array.isArray(parsed) ? parsed : [data.asset_id];
           } catch {
             // If not JSON, treat as single ID
             assetIds = [data.asset_id];
@@ -93,20 +95,36 @@ export const EditAMCPage = () => {
         } else {
           assetIds = [data.asset_id];
         }
-        // Convert all to strings
-        assetIds = assetIds.map(id => id.toString());
+        // Convert all to strings and validate they exist in assets
+        assetIds = assetIds.map(id => id.toString()).filter(id => 
+          assets.some(asset => asset.id.toString() === id)
+        );
+        console.log('Processed asset IDs:', assetIds);
       }
+      
+      // Validate supplier exists
+      const supplierExists = suppliers.some(supplier => 
+        supplier.id.toString() === data.supplier_id?.toString()
+      );
+      
+      // Validate service exists
+      const serviceExists = services.some(service => 
+        service.id.toString() === data.service_id?.toString()
+      );
+      
+      console.log('Supplier exists:', supplierExists, 'ID:', data.supplier_id);
+      console.log('Service exists:', serviceExists, 'ID:', data.service_id);
       
       setFormData({
         details: isAssetType ? 'Asset' : 'Service',
         type: isIndividualType ? 'Individual' : 'Group',
-        assetName: data.service_id?.toString() || '',
+        assetName: (serviceExists ? data.service_id?.toString() : '') || '',
         asset_ids: assetIds,
-        vendor: data.supplier_id?.toString() || '',
+        vendor: (supplierExists ? data.supplier_id?.toString() : '') || '',
         group: isIndividualType ? '' : (data.resource_id?.toString() || ''),
         subgroup: '',
         service: '',
-        supplier: data.supplier_id?.toString() || '',
+        supplier: (supplierExists ? data.supplier_id?.toString() : '') || '',
         startDate: data.amc_start_date || '',
         endDate: data.amc_end_date || '',
         cost: data.amc_cost?.toString() || '',
@@ -121,7 +139,7 @@ export const EditAMCPage = () => {
         handleGroupChange(data.resource_id.toString());
       }
     }
-  }, [amcData]);
+  }, [amcData, assets, suppliers, services]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
