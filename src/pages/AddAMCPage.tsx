@@ -15,6 +15,7 @@ export const AddAMCPage = () => {
     details: 'Asset',
     type: 'Individual',
     assetName: '',
+    asset_ids: [] as string[],
     vendor: '',
     group: '',
     subgroup: '',
@@ -46,7 +47,8 @@ export const AddAMCPage = () => {
         return {
           ...prev,
           [field]: value,
-          assetName: ''
+          assetName: '',
+          asset_ids: []
         };
       }
       // Clear group-related fields when switching between Individual and Group
@@ -354,13 +356,28 @@ export const AddAMCPage = () => {
                     <MuiSelect 
                       labelId="asset-select-label" 
                       label="Assets" 
+                      multiple
                       displayEmpty 
-                      value={formData.assetName} 
-                      onChange={e => handleInputChange('assetName', e.target.value)} 
+                      value={formData.asset_ids} 
+                      onChange={e => {
+                        const value = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          asset_ids: typeof value === 'string' ? value.split(',') : value
+                        }));
+                      }} 
                       sx={fieldStyles}
                       disabled={loading}
+                      renderValue={(selected) => {
+                        if (selected.length === 0) {
+                          return <em>Select Assets...</em>;
+                        }
+                        return selected.map(id => {
+                          const asset = assets.find(a => a.id.toString() === id);
+                          return asset?.name;
+                        }).join(', ');
+                      }}
                     >
-                      <MenuItem value=""><em>Select an Option...</em></MenuItem>
                       {Array.isArray(assets) && assets.map((asset) => (
                         <MenuItem key={asset.id} value={asset.id.toString()}>
                           {asset.name}
