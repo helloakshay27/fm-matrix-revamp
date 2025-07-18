@@ -29,6 +29,7 @@ export const fetchInventoryAssets = createAsyncThunk(
   'inventoryAssets/fetchInventoryAssets',
   async () => {
     const response = await apiClient.get('/pms/assets/get_assets.json')
+    console.log('API Response:', response.data)
     return response.data
   }
 )
@@ -49,7 +50,8 @@ const inventoryAssetsSlice = createSlice({
       })
       .addCase(fetchInventoryAssets.fulfilled, (state, action) => {
         state.loading = false
-        state.assets = action.payload.assets || []
+        // API returns array directly, not wrapped in assets property
+        state.assets = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchInventoryAssets.rejected, (state, action) => {
         state.loading = false
