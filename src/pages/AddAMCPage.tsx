@@ -380,6 +380,12 @@ export const AddAMCPage = () => {
                     >
                       {Array.isArray(assets) && assets.map((asset) => (
                         <MenuItem key={asset.id} value={asset.id.toString()}>
+                          <input
+                            type="checkbox"
+                            checked={formData.asset_ids.includes(asset.id.toString())}
+                            readOnly
+                            style={{ marginRight: '8px', accentColor: '#C72030' }}
+                          />
                           {asset.name}
                         </MenuItem>
                       ))}
