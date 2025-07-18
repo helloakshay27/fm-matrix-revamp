@@ -140,11 +140,42 @@ export const AssetDashboard = () => {
 
   // Create stats object based on current displayed assets (filtered or unfiltered)
   const calculateStats = (assetList: any[]) => {
+    console.log('Calculating stats for assets:', assetList);
+    console.log('Sample asset statuses:', assetList.slice(0, 3).map(a => ({ id: a.id, status: a.status })));
+    
     const totalAssets = assetList.length;
-    const inUseAssets = assetList.filter(asset => asset.status === 'in_use' || asset.status === 'in use').length;
-    const breakdownAssets = assetList.filter(asset => asset.status === 'breakdown').length;
-    const inStoreAssets = assetList.filter(asset => asset.status === 'in_storage' || asset.status === 'in_store' || asset.status === 'in store').length;
-    const disposeAssets = assetList.filter(asset => asset.status === 'disposed' || asset.status === 'dispose').length;
+    
+    // Check for various status formats from API
+    const inUseAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'in_use' || status === 'in use' || status === 'active' || status === 'in-use';
+    }).length;
+    
+    const breakdownAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'breakdown' || status === 'broken' || status === 'faulty';
+    }).length;
+    
+    const inStoreAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'in_storage' || status === 'in_store' || status === 'in store' || status === 'storage' || status === 'stored';
+    }).length;
+    
+    const disposeAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'disposed' || status === 'dispose' || status === 'discarded';
+    }).length;
+    
+    // Get unique status values for debugging
+    const uniqueStatuses = [...new Set(assetList.map(asset => asset.status))];
+    console.log('Unique status values found:', uniqueStatuses);
+    console.log('Stats calculated:', {
+      total: totalAssets,
+      inUse: inUseAssets,
+      breakdown: breakdownAssets, 
+      inStore: inStoreAssets,
+      dispose: disposeAssets
+    });
     
     return {
       total: totalAssets,
