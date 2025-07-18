@@ -20,6 +20,9 @@ import costApprovalReducer from './slices/costApprovalSlice'
 import { facilityBookingsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer from './slices/facilitySetupsSlice'
+import { assetsReducer } from './slices/assetsSlice'
+import { suppliersReducer } from './slices/suppliersSlice'
+import { amcCreateReducer } from './slices/amcCreateSlice'
 
 export const store = configureStore({
   reducer: {
@@ -45,6 +48,9 @@ export const store = configureStore({
     facilityBookings: facilityBookingsReducer,
     entities: entitiesReducer,
     facilitySetups: facilitySetupsReducer,
+    assets: assetsReducer,
+    suppliers: suppliersReducer,
+    amcCreate: amcCreateReducer,
   },
 })
 

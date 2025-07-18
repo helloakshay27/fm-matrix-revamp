@@ -1,19 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAssetsData } from '@/store/slices/assetsSlice';
+import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
+import { fetchServicesData } from '@/store/slices/servicesSlice';
+import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
+import { apiClient } from '@/utils/apiClient';
 export const AddAMCPage = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const dispatch = useAppDispatch();
+  
+  // Redux state
+  const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
+  const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
+  const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
+  const { loading: amcCreateLoading, success: amcCreateSuccess } = useAppSelector(state => state.amcCreate);
   const [formData, setFormData] = useState({
     details: 'Asset',
     type: 'Individual',
     assetName: '',
+    asset_ids: [] as string[],
     vendor: '',
     group: '',
     subgroup: '',
@@ -31,6 +43,15 @@ export const AddAMCPage = () => {
     contracts: [] as File[],
     invoices: [] as File[]
   });
+  
+  const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
+  const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Extract data from Redux state
+  const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
+  const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
+  const services = Array.isArray(servicesData) ? servicesData : [];
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       // Clear the assetName when switching between Asset and Service
@@ -38,7 +59,8 @@ export const AddAMCPage = () => {
         return {
           ...prev,
           [field]: value,
-          assetName: ''
+          assetName: '',
+          asset_ids: []
         };
       }
       // Clear group-related fields when switching between Individual and Group
@@ -73,24 +95,189 @@ export const AddAMCPage = () => {
       [type]: prev[type].filter((_, i) => i !== index)
     }));
   };
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('AMC Data:', formData);
-    console.log('Attachments:', attachments);
-    toast({
-      title: "AMC Created",
-      description: "AMC has been successfully created."
-    });
-    navigate('/maintenance/amc');
+
+  // Fetch data using Redux slices
+  useEffect(() => {
+    // Dispatch Redux actions
+    dispatch(fetchAssetsData({ page: 1 }));
+    dispatch(fetchSuppliersData());
+    dispatch(fetchServicesData());
+
+    // Fetch asset groups (keeping direct API call as it's not in Redux)
+    const fetchAssetGroups = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
+        console.log('API Response:', response.data);
+        
+        // Ensure we always set an array
+        if (Array.isArray(response.data)) {
+          setAssetGroups(response.data);
+        } else if (response.data && Array.isArray(response.data.asset_groups)) {
+          setAssetGroups(response.data.asset_groups);
+        } else {
+          console.warn('API response is not an array:', response.data);
+          setAssetGroups([]);
+        }
+      } catch (error) {
+        console.error('Error fetching asset groups:', error);
+        setAssetGroups([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch asset groups.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssetGroups();
+  }, [dispatch, toast]);
+
+  // Handle AMC creation success
+  useEffect(() => {
+    if (amcCreateSuccess) {
+      toast({
+        title: "AMC Created",
+        description: "AMC has been successfully created."
+      });
+      dispatch(resetAmcCreate());
+      navigate('/maintenance/amc');
+    }
+  }, [amcCreateSuccess, dispatch, navigate, toast]);
+
+  // Update sub-groups when group changes
+  const handleGroupChange = async (groupId: string) => {
+    console.log('=== GROUP CHANGED ===');
+    console.log('Selected Group ID:', groupId);
+    
+    handleInputChange('group', groupId);
+    handleInputChange('subgroup', ''); // Clear subgroup selection
+    
+    if (groupId) {
+      setLoading(true);
+      try {
+        console.log('Making API call for subgroups...');
+        const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
+        console.log('SubGroup API Response - Full response:', response);
+        console.log('SubGroup API Response - Data only:', response.data);
+        console.log('SubGroup API Response - Data type:', typeof response.data);
+        console.log('SubGroup API Response - Is Array?', Array.isArray(response.data));
+        
+        // Handle different possible response structures for subgroups
+        if (Array.isArray(response.data)) {
+          console.log('Setting subgroups - Direct array:', response.data);
+          setSubGroups(response.data);
+        } else if (response.data && Array.isArray(response.data.asset_groups)) {
+          console.log('Setting subgroups - asset_groups property:', response.data.asset_groups);
+          setSubGroups(response.data.asset_groups);
+        } else if (response.data && Array.isArray(response.data.sub_groups)) {
+          console.log('Setting subgroups - sub_groups property:', response.data.sub_groups);
+          setSubGroups(response.data.sub_groups);
+        } else if (response.data && Array.isArray(response.data.asset_sub_groups)) {
+          console.log('Setting subgroups - asset_sub_groups property:', response.data.asset_sub_groups);
+          setSubGroups(response.data.asset_sub_groups);
+        } else {
+          console.warn('SubGroup API response structure unknown:', response.data);
+          console.log('Available keys in response.data:', Object.keys(response.data || {}));
+          setSubGroups([]);
+        }
+      } catch (error) {
+        console.error('Error fetching subgroups:', error);
+        setSubGroups([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch subgroups.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      console.log('No group selected, clearing subgroups');
+      setSubGroups([]);
+    }
   };
-  const handleSaveAndSchedule = () => {
-    console.log('Save & Schedule AMC:', formData);
-    console.log('Attachments:', attachments);
-    toast({
-      title: "AMC Saved & Scheduled",
-      description: "AMC has been saved and scheduled successfully."
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Create FormData for sending
+    const sendData = new FormData();
+    
+    // Add all form fields directly to FormData
+    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+    sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+    sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+    sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+    sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+    sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+    sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+    sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+    sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+    sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+    sendData.append('pms_asset_amc[remarks]', formData.remarks);
+    sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+
+    // Add contract files
+    attachments.contracts.forEach((file, index) => {
+      sendData.append(`amc_contract_${index}`, file);
     });
-    navigate('/maintenance/amc');
+
+    // Add invoice files  
+    attachments.invoices.forEach((file, index) => {
+      sendData.append(`amc_invoice_${index}`, file);
+    });
+
+    console.log('Submitting AMC Data via Redux');
+    console.log('Attachments:', attachments);
+
+    // Use Redux action to create AMC
+    dispatch(createAMC(sendData));
+  };
+
+  const handleSaveAndSchedule = async () => {
+    // Create FormData for sending (same as handleSubmit)
+    const sendData = new FormData();
+    
+    // Add all form fields directly to FormData
+    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+    sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+    sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+    sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+    sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+    sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+    sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+    sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+    sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+    sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+    sendData.append('pms_asset_amc[remarks]', formData.remarks);
+    sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+    sendData.append('pms_asset_amc[schedule_immediately]', 'true'); // Flag for save & schedule
+
+    // Add contract files
+    attachments.contracts.forEach((file, index) => {
+      sendData.append(`amc_contract_${index}`, file);
+    });
+
+    // Add invoice files  
+    attachments.invoices.forEach((file, index) => {
+      sendData.append(`amc_invoice_${index}`, file);
+    });
+
+    console.log('Save & Schedule AMC via Redux');
+    console.log('Attachments:', attachments);
+
+    // Use Redux action to create AMC
+    dispatch(createAMC(sendData));
   };
 
   // Responsive styles for TextField and Select
@@ -169,24 +356,69 @@ export const AddAMCPage = () => {
                 {formData.details === 'Asset' ? (
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
-                    <MuiSelect labelId="asset-select-label" label="Assets" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
-                      <MenuItem value=""><em>Select an Option...</em></MenuItem>
-                      <MenuItem value="adani-electric-meter">Adani Electric Meter</MenuItem>
-                      <MenuItem value="laptop-dell">Laptop Dell Vostro</MenuItem>
-                      <MenuItem value="samsung">Samsung</MenuItem>
-                      <MenuItem value="vinayak-testing-1">Vinayak Testing 1</MenuItem>
+                    <MuiSelect 
+                      labelId="asset-select-label" 
+                      label="Assets" 
+                      multiple
+                      displayEmpty 
+                      value={formData.asset_ids} 
+                      onChange={e => {
+                        const value = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          asset_ids: typeof value === 'string' ? value.split(',') : value
+                        }));
+                      }} 
+                       sx={fieldStyles}
+                       disabled={loading || assetsLoading || amcCreateLoading}
+                      renderValue={(selected) => {
+                        if (selected.length === 0) {
+                          return <em>Select Assets...</em>;
+                        }
+                        return selected.map(id => {
+                          const asset = assets.find(a => a.id.toString() === id);
+                          return asset?.name;
+                        }).join(', ');
+                      }}
+                    >
+                      {Array.isArray(assets) && assets.map((asset) => (
+                        <MenuItem key={asset.id} value={asset.id.toString()}>
+                          <input
+                            type="checkbox"
+                            checked={formData.asset_ids.includes(asset.id.toString())}
+                            readOnly
+                            style={{ marginRight: '8px', accentColor: '#C72030' }}
+                          />
+                          {asset.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 ) : (
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="service-select-label" shrink>Service</InputLabel>
-                    <MuiSelect labelId="service-select-label" label="Service" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
+                    <MuiSelect 
+                      labelId="service-select-label" 
+                      label="Service" 
+                      displayEmpty 
+                      value={formData.assetName} 
+                      onChange={e => handleInputChange('assetName', e.target.value)} 
+                       sx={fieldStyles}
+                       disabled={loading || servicesLoading || amcCreateLoading}
+                    >
                       <MenuItem value=""><em>Select a Service...</em></MenuItem>
-                      <MenuItem value="maintenance-service">Maintenance Service</MenuItem>
-                      <MenuItem value="repair-service">Repair Service</MenuItem>
-                      <MenuItem value="cleaning-service">Cleaning Service</MenuItem>
-                      <MenuItem value="security-service">Security Service</MenuItem>
-                      <MenuItem value="hvac-service">HVAC Service</MenuItem>
+                      {(() => {
+                        console.log('Services dropdown rendering - services state:', services);
+                        console.log('Services array length:', services.length);
+                        return Array.isArray(services) && services.map((service) => {
+                          console.log('Rendering service:', service);
+                          return (
+                            <MenuItem key={service.id} value={service.id.toString()}>
+                              {service.service_name}
+                            </MenuItem>
+                          );
+                        });
+                      })()}
                     </MuiSelect>
                   </FormControl>
                 )}
@@ -194,11 +426,21 @@ export const AddAMCPage = () => {
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
-                    <MuiSelect labelId="vendor-select-label" label="Supplier" displayEmpty value={formData.vendor} onChange={e => handleInputChange('vendor', e.target.value)} sx={fieldStyles}>
+                    <MuiSelect 
+                      labelId="vendor-select-label" 
+                      label="Supplier" 
+                      displayEmpty 
+                      value={formData.vendor} 
+                      onChange={e => handleInputChange('vendor', e.target.value)} 
+                       sx={fieldStyles}
+                       disabled={loading || suppliersLoading || amcCreateLoading}
+                    >
                       <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                      <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
-                      <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
-                      <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
+                      {Array.isArray(suppliers) && suppliers.map((supplier) => (
+                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                          {supplier.company_name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -210,12 +452,21 @@ export const AddAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                      <MuiSelect labelId="group-select-label" label="Group" displayEmpty value={formData.group} onChange={e => handleInputChange('group', e.target.value)} sx={fieldStyles}>
+                      <MuiSelect 
+                        labelId="group-select-label" 
+                        label="Group" 
+                        displayEmpty 
+                        value={formData.group} 
+                        onChange={e => handleGroupChange(e.target.value)} 
+                         sx={fieldStyles}
+                         disabled={loading || amcCreateLoading}
+                      >
                         <MenuItem value=""><em>Select Group</em></MenuItem>
-                        <MenuItem value="electrical-group">Electrical Group</MenuItem>
-                        <MenuItem value="mechanical-group">Mechanical Group</MenuItem>
-                        <MenuItem value="it-group">IT Group</MenuItem>
-                        <MenuItem value="facilities-group">Facilities Group</MenuItem>
+                        {Array.isArray(assetGroups) && assetGroups.map((group) => (
+                          <MenuItem key={group.id} value={group.id.toString()}>
+                            {group.name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -223,12 +474,21 @@ export const AddAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="subgroup-select-label" shrink>SubGroup</InputLabel>
-                      <MuiSelect labelId="subgroup-select-label" label="SubGroup" displayEmpty value={formData.subgroup} onChange={e => handleInputChange('subgroup', e.target.value)} sx={fieldStyles}>
+                      <MuiSelect 
+                        labelId="subgroup-select-label" 
+                        label="SubGroup" 
+                        displayEmpty 
+                        value={formData.subgroup} 
+                        onChange={e => handleInputChange('subgroup', e.target.value)} 
+                         sx={fieldStyles}
+                         disabled={!formData.group || loading || amcCreateLoading}
+                      >
                         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                        <MenuItem value="power-systems">Power Systems</MenuItem>
-                        <MenuItem value="lighting-systems">Lighting Systems</MenuItem>
-                        <MenuItem value="hvac-systems">HVAC Systems</MenuItem>
-                        <MenuItem value="security-systems">Security Systems</MenuItem>
+                        {Array.isArray(subGroups) && subGroups.map((subGroup) => (
+                          <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                            {subGroup.name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -252,12 +512,21 @@ export const AddAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
-                      <MuiSelect labelId="group-supplier-select-label" label="Supplier" displayEmpty value={formData.supplier} onChange={e => handleInputChange('supplier', e.target.value)} sx={fieldStyles}>
+                      <MuiSelect 
+                        labelId="group-supplier-select-label" 
+                        label="Supplier" 
+                        displayEmpty 
+                        value={formData.supplier} 
+                        onChange={e => handleInputChange('supplier', e.target.value)} 
+                         sx={fieldStyles}
+                         disabled={loading || suppliersLoading || amcCreateLoading}
+                      >
                         <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                        <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
-                        <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
-                        <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
-                        <MenuItem value="l&t-services">L&T Services</MenuItem>
+                        {Array.isArray(suppliers) && suppliers.map((supplier) => (
+                          <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                            {supplier.company_name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -424,15 +693,22 @@ export const AddAMCPage = () => {
         </Card>
 
         <div className="flex gap-4">
-          <Button type="button" onClick={handleSaveAndSchedule} style={{
-          backgroundColor: '#C72030'
-        }} className="text-white hover:bg-[#C72030]/90">
-            Save & Show Details
+          <Button 
+            type="button" 
+            onClick={handleSaveAndSchedule} 
+            disabled={amcCreateLoading}
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white hover:bg-[#C72030]/90"
+          >
+            {amcCreateLoading ? 'Saving...' : 'Save & Show Details'}
           </Button>
-          <Button type="submit" style={{
-          backgroundColor: '#C72030'
-        }} className="text-white hover:bg-[#C72030]/90">
-            Save & Schedule AMC
+          <Button 
+            type="submit" 
+            disabled={amcCreateLoading}
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white hover:bg-[#C72030]/90"
+          >
+            {amcCreateLoading ? 'Saving...' : 'Save & Schedule AMC'}
           </Button>
         </div>
       </form>

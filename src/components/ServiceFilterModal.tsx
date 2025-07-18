@@ -17,8 +17,16 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     area: ''
   });
 
+  console.log('ServiceFilterModal rendered with filters:', filters);
+  console.log('Modal isOpen:', isOpen);
+
   const handleInputChange = (field: string, value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+    console.log(`Updating ${field} to:`, value);
+    setFilters(prev => {
+      const updated = { ...prev, [field]: value };
+      console.log('Updated filters:', updated);
+      return updated;
+    });
   };
 
   const handleApply = () => {
@@ -37,15 +45,35 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   };
 
   // Responsive styles for TextField and Select
-    const fieldStyles = {
+  const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
+    backgroundColor: 'white',
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
+      backgroundColor: 'white',
     },
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'white',
+    }
+  };
+
+  const menuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: 200,
+        backgroundColor: 'white',
+        zIndex: 9999,
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      },
+    },
+    // Prevent focus conflicts with Dialog
+    disablePortal: false,
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
   };
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent className="max-w-2xl" aria-describedby="filter-dialog-description">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">FILTER BY</DialogTitle>
@@ -57,6 +85,9 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             >
               <X className="h-4 w-4" />
             </Button>
+          </div>
+          <div id="filter-dialog-description" className="sr-only">
+            Filter services by name, building, and area
           </div>
         </DialogHeader>
         
@@ -91,14 +122,18 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel id="building-select-label" shrink>Building</InputLabel>
+                  <InputLabel id="building-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Building</InputLabel>
                   <MuiSelect
                     labelId="building-select-label"
                     label="Building"
                     displayEmpty
                     value={filters.building}
-                    onChange={(e) => handleInputChange('building', e.target.value)}
+                    onChange={(e) => {
+                      console.log('Building dropdown onChange triggered with value:', e.target.value);
+                      handleInputChange('building', e.target.value as string);
+                    }}
                     sx={fieldStyles}
+                    MenuProps={menuProps}
                   >
                     <MenuItem value=""><em>Building</em></MenuItem>
                     <MenuItem value="wing2">Wing2</MenuItem>
@@ -109,14 +144,18 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
               </div>
               <div>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                  <InputLabel id="area-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Area</InputLabel>
                   <MuiSelect
                     labelId="area-select-label"
                     label="Area"
                     displayEmpty
                     value={filters.area}
-                    onChange={(e) => handleInputChange('area', e.target.value)}
+                    onChange={(e) => {
+                      console.log('Area dropdown onChange triggered with value:', e.target.value);
+                      handleInputChange('area', e.target.value as string);
+                    }}
                     sx={fieldStyles}
+                    MenuProps={menuProps}
                   >
                     <MenuItem value=""><em>Area</em></MenuItem>
                     <MenuItem value="lobby">Lobby</MenuItem>
