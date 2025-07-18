@@ -207,7 +207,7 @@ export const AddServicePage = () => {
             <div>
               <TextField
                 label="Service Description"
-                placeholder=""
+                placeholder="Enter service description"
                 name="serviceDescription"
                 value={formData.serviceDescription}
                 onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
@@ -215,11 +215,18 @@ export const AddServicePage = () => {
                 variant="outlined"
                 multiline
                 rows={4}
+                minRows={4}
+                maxRows={8}
                 InputLabelProps={{
                   shrink: true,
                 }}
                 InputProps={{
-                  sx: fieldStyles
+                  sx: {
+                    ...fieldStyles,
+                    '& .MuiInputBase-input': {
+                      resize: 'vertical',
+                    }
+                  }
                 }}
               />
             </div>
