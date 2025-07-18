@@ -7,6 +7,7 @@ export const API_CONFIG = {
     AMC: '/pms/asset_amcs.json',
     AMC_DETAILS: '/pms/asset_amcs', // Base path, will append /:id.json
     SERVICES: '/pms/services.json',
+    SERVICE_DETAILS: '/pms/services', // Base path, will append /:id.json
     DEPARTMENTS: '/pms/departments.json',
     ROLES: '/lock_roles.json',
     FUNCTIONS: '/lock_functions.json',

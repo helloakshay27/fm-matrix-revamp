@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -6,57 +6,96 @@ import {
   FileText,
   QrCode,
   Box,
+  Download,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AssociateServiceModal } from '@/components/AssociateServiceModal';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchServiceDetails } from '@/store/slices/serviceDetailsSlice';
+
+interface ServiceDetailsData {
+  id: number;
+  service_name: string;
+  service_code: string;
+  site: string | null;
+  building: string | null;
+  wing: string | null;
+  area: string | null;
+  floor: string | null;
+  room: string | null;
+  created_at: string;
+  created_by: string | null;
+  documents?: Array<{ filename: string; url: string }>;
+  qr_code_url?: string | null;
+  associated_assets?: Array<{ name: string; tag: string }>;
+}
 
 export const ServiceDetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const dispatch = useAppDispatch();
+  const { data: serviceData, loading, error } = useAppSelector((state) => state.serviceDetails);
   const [showAssociateModal, setShowAssociateModal] = useState(false);
 
-  const serviceData = {
-    id: id,
-    serviceName: 'test',
-    serviceCode: '7308b0d91b8107aa7e1c',
-    site: '2189',
-    building: '651',
-    wing: '519',
-    area: '1789',
-    floor: '',
-    room: '',
-    createdOn: '2025-06-10 09:44:32 +0530',
-    createdBy: '2025-06-10 09:44:32 +0530',
-  };
-
-  const handleDownloadQR = () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 200;
-    canvas.height = 200;
-
-    if (ctx) {
-      ctx.fillStyle = '#000';
-      for (let i = 0; i < 20; i++) {
-        for (let j = 0; j < 20; j++) {
-          if (Math.random() > 0.5) {
-            ctx.fillRect(i * 10, j * 10, 10, 10);
-          }
-        }
-      }
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchServiceDetails(id));
     }
+  }, [dispatch, id]);
 
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `service_${id}_qr.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-      }
-    });
+  // Helper function for formatting date
+  const formatDateTime = (dateString: string | null): string => {
+    if (!dateString) return '—';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short'
+      }).replace(',', '');
+    } catch {
+      return '—';
+    }
   };
+
+  // If loading, show loading state
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">Loading service details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If error, show error state
+  if (error) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract data from API response
+  const details: ServiceDetailsData | null = serviceData as ServiceDetailsData;
+
+  if (!details) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">No service details found</div>
+        </div>
+      </div>
+    );
+  }
 
   const handleEditClick = () => navigate(`/maintenance/service/edit/${id}`);
   const handleAssociateServiceClick = () => setShowAssociateModal(true);
@@ -79,7 +118,7 @@ export const ServiceDetailsPage = () => {
               Service List &gt; Service Detail
             </p>
             <h1 className="text-2xl font-bold text-[#1a1a1a]">
-              {serviceData.serviceName} ({serviceData.serviceCode})
+              {details.service_name || '—'} ({details.service_code || '—'})
             </h1>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -114,37 +153,37 @@ export const ServiceDetailsPage = () => {
             <div className="space-y-3">
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Site</span>
-                <span>: {serviceData.site}</span>
+                <span>: {details.site || '—'}</span>
               </div>
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Wing</span>
-                <span>: {serviceData.wing}</span>
+                <span>: {details.wing || '—'}</span>
               </div>
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Area</span>
-                <span>: {serviceData.area}</span>
+                <span>: {details.area || '—'}</span>
               </div>
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Created On</span>
-                <span>: {serviceData.createdOn}</span>
+                <span>: {formatDateTime(details.created_at)}</span>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Building</span>
-                <span>: {serviceData.building}</span>
+                <span>: {details.building || '—'}</span>
               </div>
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Floor</span>
-                <span>: {serviceData.floor}</span>
+                <span>: {details.floor || '—'}</span>
               </div>
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Room</span>
-                <span>: {serviceData.room}</span>
+                <span>: {details.room || '—'}</span>
               </div>
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Created By</span>
-                <span>: {serviceData.createdBy}</span>
+                <span>: {details.created_by || '—'}</span>
               </div>
             </div>
           </div>
@@ -163,15 +202,23 @@ export const ServiceDetailsPage = () => {
               <h2 className="text-lg font-semibold text-[#C72030]">DOCUMENTS</h2>
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                <span className="text-sm truncate">Screenshot_2025-06-05_143144.png</span>
-                <Button 
-                  size="sm"
-                  className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                >
-                  Download
-                </Button>
-              </div>
+              {details.documents && details.documents.length > 0 ? (
+                details.documents.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <span className="text-sm truncate">{doc.filename}</span>
+                    <Button 
+                      size="sm"
+                      className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                      onClick={() => window.open(doc.url, '_blank')}
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-gray-600">No documents</div>
+              )}
             </div>
           </div>
         </div>
@@ -186,22 +233,31 @@ export const ServiceDetailsPage = () => {
               <h2 className="text-lg font-semibold text-[#C72030]">QR CODE</h2>
             </div>
             <div className="text-center">
-              <div className="w-48 h-48 bg-gray-200 mx-auto mb-4 flex items-center justify-center">
-                <div
-                  className="w-40 h-40 bg-black"
-                  style={{
-                    backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 5px, black 5px, black 10px),
-                                     repeating-linear-gradient(90deg, transparent, transparent 5px, black 5px, black 10px)`,
-                    backgroundSize: '10px 10px'
-                  }}
-                />
-              </div>
-              <Button 
-                onClick={handleDownloadQR}
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-              >
-                Download
-              </Button>
+              {details.qr_code_url ? (
+                <>
+                  <div className="w-48 h-48 bg-gray-200 mx-auto mb-4 flex items-center justify-center">
+                    <img 
+                      src={details.qr_code_url} 
+                      alt="QR Code" 
+                      className="w-40 h-40 object-contain"
+                    />
+                  </div>
+                  <Button 
+                    onClick={() => window.open(details.qr_code_url, '_blank')}
+                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    Download
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="w-48 h-48 bg-black mx-auto mb-4 flex items-center justify-center">
+                    <span className="text-white text-sm">—</span>
+                  </div>
+                  <div className="text-sm text-gray-600">No QR code available</div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -217,9 +273,15 @@ export const ServiceDetailsPage = () => {
             <h2 className="text-lg font-semibold text-[#C72030]">Associated Assets</h2>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button className="bg-[#C72030] text-white hover:bg-[#C72030]/90">
-              (service)
-            </Button>
+            {details.associated_assets && details.associated_assets.length > 0 ? (
+              details.associated_assets.map((asset, index) => (
+                <Button key={index} className="bg-[#C72030] text-white hover:bg-[#C72030]/90">
+                  {asset.name || asset.tag}
+                </Button>
+              ))
+            ) : (
+              <div className="text-sm text-gray-600">—</div>
+            )}
           </div>
         </div>
       </div>

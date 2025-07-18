@@ -3,6 +3,7 @@ import { testReducer, loginReducer } from './slices/testSlice'
 import { amcReducer } from './slices/amcSlice'
 import { amcDetailsReducer } from './slices/amcDetailsSlice'
 import { servicesReducer } from './slices/servicesSlice'
+import { serviceDetailsReducer } from './slices/serviceDetailsSlice'
 import { departmentReducer } from './slices/departmentSlice'
 import roleReducer from './slices/roleSlice'
 import { functionReducer } from './slices/functionSlice'
@@ -24,6 +25,7 @@ export const store = configureStore({
     amc: amcReducer,
     amcDetails: amcDetailsReducer,
     services: servicesReducer,
+    serviceDetails: serviceDetailsReducer,
     department: departmentReducer,
     role: roleReducer,
     function: functionReducer,
