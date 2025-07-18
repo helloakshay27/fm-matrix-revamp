@@ -41,7 +41,7 @@ export const ServiceDashboard = () => {
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 2;
+  const pageSize = 7;
 
   // Use API data if available, otherwise fallback to initial data
   const servicesData = apiData && Array.isArray(apiData) ? apiData : initialServiceData;
