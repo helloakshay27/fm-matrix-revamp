@@ -205,11 +205,43 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      {/* Files Upload */}
+      {/* Service Description */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+            SERVICE DESCRIPTION
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TextField
+            label="Service Description"
+            name="serviceDescription"
+            value={formData.serviceDescription}
+            onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={4}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiInputBase-input': {
+                  padding: '12px',
+                },
+              }
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Files Upload */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             FILES UPLOAD
           </CardTitle>
         </CardHeader>
@@ -236,38 +268,6 @@ export const AddServicePage = () => {
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Service Description */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg text-[#C72030] flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
-            SERVICE DESCRIPTION
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TextField
-            label="Service Description"
-            name="serviceDescription"
-            value={formData.serviceDescription}
-            onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
-            fullWidth
-            variant="outlined"
-            multiline
-            rows={4}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            InputProps={{
-              sx: {
-                '& .MuiInputBase-input': {
-                  padding: '12px',
-                },
-              }
-            }}
-          />
         </CardContent>
       </Card>
 
