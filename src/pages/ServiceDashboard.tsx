@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, FileText, Filter, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,8 @@ import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
 import { ServiceFilterModal } from '@/components/ServiceFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchServicesData } from '@/store/slices/servicesSlice';
 import {
   Pagination,
   PaginationContent,
@@ -16,131 +18,53 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const serviceData = [{
-  id: '16706',
-  serviceName: 'test',
-  referenceNumber: '',
-  category: '',
-  group: '',
-  serviceCode: '7308bcd91b8107aa7e1c',
-  uom: 'Loccated',
-  site: 'Tower 4',
-  building: 'Wing2',
-  wing: 'South',
-  area: '',
-  floor: '',
-  room: '',
-  status: true,
-  createdOn: '10/06/2025'
-}, {
-  id: '16694',
-  serviceName: 'u',
-  referenceNumber: '',
-  category: '',
-  group: '',
-  serviceCode: '94a1a94aada9b2f6259e',
-  uom: 'Loccated',
-  site: '',
-  building: '',
-  wing: '',
-  area: '',
-  floor: '',
-  room: '',
-  status: true,
-  createdOn: '05/06/2025'
-}, {
-  id: '16693',
-  serviceName: 'ews',
-  referenceNumber: '',
-  category: '',
-  group: '',
-  serviceCode: '6f136b262945d13570c6',
-  uom: 'Loccated',
-  site: 'sebc',
-  building: '',
-  wing: '',
-  area: '',
-  floor: '',
-  room: '',
-  status: true,
-  createdOn: '05/06/2025'
-}, {
-  id: '16692',
-  serviceName: 'ews',
-  referenceNumber: '',
-  category: '',
-  group: '',
-  serviceCode: 'feeba741171911667a82',
-  uom: 'Loccated',
-  site: 'sebc',
-  building: '',
-  wing: '',
-  area: '',
-  floor: '',
-  room: '',
-  status: true,
-  createdOn: '05/06/2025'
-}, {
-  id: '16691',
-  serviceName: 'ews',
-  referenceNumber: '',
-  category: '',
-  group: '',
-  serviceCode: '9265b6752ebde97ce115',
-  uom: 'Loccated',
-  site: '',
-  building: '',
-  wing: '',
-  area: '',
-  floor: '',
-  room: '',
-  status: true,
-  createdOn: '05/06/2025'
-}, {
-  id: '16690',
-  serviceName: 'sfdyfdy',
-  referenceNumber: '',
-  category: '',
-  group: '',
-  serviceCode: '08559192e3e2130b068b',
-  uom: 'Loccated',
-  site: 'Hay',
-  building: '',
-  wing: '',
-  area: '',
-  floor: '',
-  room: '',
-  status: true,
-  createdOn: '05/06/2025'
-}];
+interface ServiceRecord {
+  id: number;
+  service_name: string;
+  service_code: string;
+  site: string;
+  building: string;
+  wing: string;
+  area: string;
+  floor: string;
+  room: string;
+  created_at: string;
+}
+
+const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
-  const [services, setServices] = useState(serviceData);
+  const dispatch = useAppDispatch();
+  const { data: apiData, loading, error } = useAppSelector((state) => state.services);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 2;
 
-  const totalPages = Math.ceil(Math.max(services.length, 6) / pageSize);
+  // Use API data if available, otherwise fallback to initial data
+  const servicesData = apiData && Array.isArray(apiData) ? apiData : initialServiceData;
+
+  useEffect(() => {
+    dispatch(fetchServicesData());
+  }, [dispatch]);
+
+  const totalPages = Math.ceil(Math.max(servicesData.length, 6) / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedServices = services.slice(startIndex, startIndex + pageSize);
+  const paginatedServices = servicesData.slice(startIndex, startIndex + pageSize);
 
   console.log('Service Pagination Debug:', {
-    totalItems: services.length,
+    totalItems: servicesData.length,
     pageSize,
     totalPages,
     currentPage,
     paginatedDataLength: paginatedServices.length
   });
 
-  const handleStatusToggle = id => {
-    const updatedServices = services.map(service => service.id === id ? {
-      ...service,
-      status: !service.status
-    } : service);
-    setServices(updatedServices);
+  const handleStatusToggle = (id: number) => {
+    console.log('Status toggle for service ID:', id);
+    // In a real implementation, you would make an API call to update the status
   };
 
   const handleAddClick = () => navigate('/maintenance/service/add');
@@ -152,7 +76,7 @@ export const ServiceDashboard = () => {
     console.log('Applied filters:', filters);
   };
 
-  const handleViewService = id => navigate(`/maintenance/service/details/${id}`);
+  const handleViewService = (id: number) => navigate(`/services/view/${id}`);
 
   const columns = [
     { key: 'serviceName', label: 'Service Name', sortable: true },
@@ -160,7 +84,6 @@ export const ServiceDashboard = () => {
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
     { key: 'category', label: 'Category', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
-    { key: 'serviceCode', label: 'Service Code', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
     { key: 'site', label: 'Site', sortable: true },
     { key: 'building', label: 'Building', sortable: true },
@@ -225,33 +148,54 @@ export const ServiceDashboard = () => {
     </div>
   );
 
-  const renderRowActions = (service) => (
+  const renderRowActions = (service: ServiceRecord) => (
     <Button variant="ghost" size="sm" onClick={() => handleViewService(service.id)}>
       <Eye className="w-4 h-4" />
     </Button>
   );
 
-  const renderCell = (item, columnKey) => {
-    if (columnKey === 'status') {
-      return (
-        <div className="flex items-center">
-          <div 
-            onClick={() => handleStatusToggle(item.id)} 
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-              item.status ? 'bg-green-500' : 'bg-gray-300'
-            }`}
-          >
-            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-              item.status ? 'translate-x-6' : 'translate-x-1'
-            }`} />
+  const renderCell = (item: ServiceRecord, columnKey: string) => {
+    switch (columnKey) {
+      case 'serviceName':
+        return item.service_name || '-';
+      case 'id':
+        return <span className="font-medium">{item.id}</span>;
+      case 'referenceNumber':
+        return item.service_code || '-';
+      case 'category':
+        return '-'; // Not available in API
+      case 'group':
+        return '-'; // Not available in API
+      case 'uom':
+        return '-'; // Not available in API
+      case 'site':
+        return item.site || '-';
+      case 'building':
+        return item.building || '-';
+      case 'wing':
+        return item.wing || '-';
+      case 'area':
+        return item.area || '-';
+      case 'floor':
+        return item.floor || '-';
+      case 'room':
+        return item.room || '-';
+      case 'status':
+        return (
+          <div className="flex items-center">
+            <div 
+              onClick={() => handleStatusToggle(item.id)} 
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors bg-green-500`}
+            >
+              <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-6`} />
+            </div>
           </div>
-        </div>
-      );
+        );
+      case 'createdOn':
+        return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
+      default:
+        return '-';
     }
-    if (columnKey === 'serviceCode') {
-      return <span className="font-mono text-sm">{item[columnKey]}</span>;
-    }
-    return item[columnKey];
   };
 
   const renderPaginationItems = () => {
@@ -376,20 +320,38 @@ export const ServiceDashboard = () => {
         {renderCustomActions()}
       </div>
 
-      <EnhancedTable
-        data={paginatedServices}
-        columns={columns}
-        renderCell={renderCell}
-        renderActions={renderRowActions}
-        bulkActions={bulkActions}
-        showBulkActions={true}
-        selectable={true}
-        pagination={false}
-        enableExport={true}
-        exportFileName="services"
-        onRowClick={handleViewService}
-        storageKey="services-table"
-      />
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">Loading services data...</div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-600">Error: {error}</div>
+        </div>
+      )}
+
+      {/* Enhanced Table */}
+      {!loading && (
+        <EnhancedTable
+          data={paginatedServices}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderRowActions}
+          bulkActions={bulkActions}
+          showBulkActions={true}
+          selectable={true}
+          pagination={false}
+          enableExport={true}
+          exportFileName="services"
+          onRowClick={(service) => handleViewService(service.id)}
+          getItemId={(item) => item.id.toString()}
+          storageKey="services-table"
+        />
+      )}
 
       {/* Custom Pagination - Always show for debugging */}
       <div className="flex justify-center mt-6">
