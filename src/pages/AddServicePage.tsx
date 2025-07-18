@@ -188,6 +188,14 @@ export const AddServicePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-medium text-blue-900 mb-2">Upload Guidelines</h4>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• <strong>File Size:</strong> Maximum 10MB per file</li>
+              <li>• <strong>File Format:</strong> PDF, DOC, DOCX, JPG, JPEG, PNG</li>
+              <li>• Ensure files are clear and readable</li>
+            </ul>
+          </div>
           <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8">
             <div className="text-center">
               <input 
