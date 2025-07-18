@@ -114,24 +114,35 @@ export const AddAMCPage = () => {
 
   // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
+    console.log('=== GROUP CHANGED ===');
+    console.log('Selected Group ID:', groupId);
+    
     handleInputChange('group', groupId);
     handleInputChange('subgroup', ''); // Clear subgroup selection
     
     if (groupId) {
       setLoading(true);
       try {
+        console.log('Making API call for subgroups...');
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
-        console.log('SubGroup API Response:', response.data);
+        console.log('SubGroup API Response - Full response:', response);
+        console.log('SubGroup API Response - Data only:', response.data);
+        console.log('SubGroup API Response - Data type:', typeof response.data);
+        console.log('SubGroup API Response - Is Array?', Array.isArray(response.data));
         
         // Handle different possible response structures for subgroups
         if (Array.isArray(response.data)) {
+          console.log('Setting subgroups - Direct array:', response.data);
           setSubGroups(response.data);
         } else if (response.data && Array.isArray(response.data.sub_groups)) {
+          console.log('Setting subgroups - sub_groups property:', response.data.sub_groups);
           setSubGroups(response.data.sub_groups);
         } else if (response.data && Array.isArray(response.data.asset_sub_groups)) {
+          console.log('Setting subgroups - asset_sub_groups property:', response.data.asset_sub_groups);
           setSubGroups(response.data.asset_sub_groups);
         } else {
           console.warn('SubGroup API response structure unknown:', response.data);
+          console.log('Available keys in response.data:', Object.keys(response.data || {}));
           setSubGroups([]);
         }
       } catch (error) {
@@ -146,6 +157,7 @@ export const AddAMCPage = () => {
         setLoading(false);
       }
     } else {
+      console.log('No group selected, clearing subgroups');
       setSubGroups([]);
     }
   };
