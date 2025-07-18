@@ -206,8 +206,8 @@ export const AddAMCPage = () => {
     const sendData = new FormData();
     
     // Add all form fields directly to FormData
-    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
-      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? 
+      formData.asset_ids[0] : '');
     sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
     sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
@@ -257,8 +257,8 @@ export const AddAMCPage = () => {
     const sendData = new FormData();
     
     // Add all form fields directly to FormData
-    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
-      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? 
+      formData.asset_ids[0] : '');
     sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
     sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
