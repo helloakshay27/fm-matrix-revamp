@@ -37,7 +37,7 @@ export const AddAMCPage = () => {
   const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
   const [suppliers, setSuppliers] = useState<Array<{id: number, company_name: string}>>([]);
   const [assets, setAssets] = useState<Array<{id: number, name: string}>>([]);
-  const [services, setServices] = useState<Array<{id: number, name: string}>>([]);
+  const [services, setServices] = useState<Array<{id: number, service_name: string}>>([]);
   const [loading, setLoading] = useState(false);
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -388,7 +388,7 @@ export const AddAMCPage = () => {
                           console.log('Rendering service:', service);
                           return (
                             <MenuItem key={service.id} value={service.id.toString()}>
-                              {service.name}
+                              {service.service_name}
                             </MenuItem>
                           );
                         });
