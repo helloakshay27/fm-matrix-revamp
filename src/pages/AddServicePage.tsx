@@ -196,8 +196,14 @@ export const AddServicePage = () => {
               </FormControl>
             </div>
           </div>
+
+          {/* Dynamic Location Selector */}
+          <LocationSelector 
+            fieldStyles={fieldStyles} 
+            onLocationChange={handleLocationChange}
+          />
           
-          <div className="grid grid-cols-1 gap-4 mb-4">
+          <div className="grid grid-cols-1 gap-4 mt-4">
             <div>
               <TextField
                 label="Service Description"
@@ -208,7 +214,7 @@ export const AddServicePage = () => {
                 fullWidth
                 variant="outlined"
                 multiline
-                rows={3}
+                rows={4}
                 InputLabelProps={{
                   shrink: true,
                 }}
@@ -218,12 +224,6 @@ export const AddServicePage = () => {
               />
             </div>
           </div>
-
-          {/* Dynamic Location Selector */}
-          <LocationSelector 
-            fieldStyles={fieldStyles} 
-            onLocationChange={handleLocationChange}
-          />
         </CardContent>
       </Card>
 
