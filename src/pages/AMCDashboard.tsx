@@ -18,30 +18,14 @@ import {
 
 interface AMCRecord {
   id: number;
-  asset_id: number | null;
-  amc_vendor_name: string | null;
-  amc_vendor_mobile: string | null;
-  amc_vendor_email: string | null;
-  amc_contract: string | null;
-  amc_invoice: string | null;
-  amc_cost: number;
+  asset_name: string;
+  resource_type: string;
+  vendor_name: string;
   amc_start_date: string;
   amc_end_date: string;
   amc_first_service: string;
-  amc_frequency: string | null;
   created_at: string;
-  updated_at: string;
-  vendor_mobile_number: string | null;
-  vendor_email: string | null;
-  vendor_name: string | null;
-  supplier_id: number;
-  resource_id: number | null;
-  resource_type: string;
-  pms_site_id: number;
   active: boolean;
-  payment_term: string;
-  no_of_visits: number;
-  remarks: string;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -49,13 +33,13 @@ const initialAmcData: AMCRecord[] = [];
 const columns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
   { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
-  { key: 'amc_vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
-  { key: 'amc_cost', label: 'AMC Cost', sortable: true, defaultVisible: true },
+  { key: 'resource_type', label: 'Resource Type', sortable: true, defaultVisible: true },
+  { key: 'vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
   { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
   { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
   { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
-  { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
   { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
+  { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
 ];
 
 export const AMCDashboard = () => {
@@ -128,11 +112,11 @@ export const AMCDashboard = () => {
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
-        return item.asset_id ? `Asset ${item.asset_id}` : '-';
-      case 'amc_vendor_name':
-        return item.amc_vendor_name || '-';
-      case 'amc_cost':
-        return item.amc_cost ? `₹${item.amc_cost}` : '-';
+        return item.asset_name || '-';
+      case 'resource_type':
+        return item.resource_type || '-';
+      case 'vendor_name':
+        return item.vendor_name || '-';
       case 'amc_start_date':
         return item.amc_start_date ? new Date(item.amc_start_date).toLocaleDateString() : '-';
       case 'amc_end_date':
