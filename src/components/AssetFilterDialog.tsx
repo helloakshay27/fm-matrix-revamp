@@ -215,7 +215,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
         const response = await apiClient.get(`/pms/sites/${site}/buildings.json`);
         console.log('Buildings API response:', response.data);
         
-        const buildingsData = Array.isArray(response.data?.buildings) ? response.data.buildings : [];
+        // Extract buildings from nested structure: buildings[].building
+        const buildingsData = Array.isArray(response.data?.buildings) 
+          ? response.data.buildings.map((item: any) => item.building).filter(Boolean)
+          : [];
         console.log('Setting buildings data:', buildingsData);
         setBuildings(buildingsData);
       } catch (error) {
@@ -244,7 +247,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
         const response = await apiClient.get(`/pms/buildings/${building}/wings.json`);
         console.log('Wings API response:', response.data);
         
-        const wingsData = Array.isArray(response.data?.wings) ? response.data.wings : [];
+        // Extract wings from nested structure: [].wings
+        const wingsData = Array.isArray(response.data) 
+          ? response.data.map((item: any) => item.wings).filter(Boolean)
+          : [];
         console.log('Setting wings data:', wingsData);
         setWings(wingsData);
       } catch (error) {
@@ -330,7 +336,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
         const response = await apiClient.get(`/pms/floors/${floor}/rooms.json`);
         console.log('Rooms API response:', response.data);
         
-        const roomsData = Array.isArray(response.data?.rooms) ? response.data.rooms : [];
+        // Extract rooms from nested structure: [].rooms
+        const roomsData = Array.isArray(response.data) 
+          ? response.data.map((item: any) => item.rooms).filter(Boolean)
+          : [];
         console.log('Setting rooms data:', roomsData);
         setRooms(roomsData);
       } catch (error) {
