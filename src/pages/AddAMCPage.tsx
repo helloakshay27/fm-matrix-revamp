@@ -134,6 +134,9 @@ export const AddAMCPage = () => {
         if (Array.isArray(response.data)) {
           console.log('Setting subgroups - Direct array:', response.data);
           setSubGroups(response.data);
+        } else if (response.data && Array.isArray(response.data.asset_groups)) {
+          console.log('Setting subgroups - asset_groups property:', response.data.asset_groups);
+          setSubGroups(response.data.asset_groups);
         } else if (response.data && Array.isArray(response.data.sub_groups)) {
           console.log('Setting subgroups - sub_groups property:', response.data.sub_groups);
           setSubGroups(response.data.sub_groups);
