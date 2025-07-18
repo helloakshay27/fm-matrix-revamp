@@ -76,7 +76,7 @@ export const ServiceDashboard = () => {
     console.log('Applied filters:', filters);
   };
 
-  const handleViewService = (id: number) => navigate(`/services/view/${id}`);
+  const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
 
   const columns = [
     { key: 'serviceName', label: 'Service Name', sortable: true },
