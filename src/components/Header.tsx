@@ -55,7 +55,8 @@ export const Header = () => {
   const handleCompanyChange = async (companyId: number) => {
     try {
       await dispatch(changeCompany(companyId)).unwrap();
-      // Sites will be loaded automatically via useEffect
+      // Reload page smoothly after successful company change
+      window.location.reload();
     } catch (error) {
       console.error('Failed to change company:', error);
     }
