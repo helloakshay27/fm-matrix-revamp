@@ -75,7 +75,8 @@ export const EditAMCPage = () => {
       console.log('Services loaded:', services.length, services);
       
       // Determine the correct form values based on API response
-      const isAssetType = data.checklist_type === 'Asset' || data.checklist_type === 'asset';
+      const isAssetType = data.asset_id ? true : false;  // Show Asset radio if asset_id exists
+      const isServiceType = data.service_id ? true : false;  // Show Service radio if service_id exists
       const isIndividualType = data.resource_type === 'Pms::Asset';
       
       // Handle asset IDs - could be single ID, array, or JSON string
@@ -110,7 +111,7 @@ export const EditAMCPage = () => {
       console.log('Found service:', foundService);
       
       setFormData({
-        details: isAssetType ? 'Asset' : 'Service',
+        details: isAssetType ? 'Asset' : (isServiceType ? 'Service' : 'Asset'),
         type: isIndividualType ? 'Individual' : 'Group',
         assetName: foundService ? serviceId : '',
         asset_ids: assetIds,
