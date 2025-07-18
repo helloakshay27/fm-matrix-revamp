@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { BASE_URL } from '@/config/apiConfig';
+import { BASE_URL, TOKEN } from '@/config/apiConfig';
 
 // Types
 export interface Site {
@@ -67,7 +67,9 @@ interface ServiceLocationState {
 export const fetchSites = createAsyncThunk<Site[]>(
   'serviceLocation/fetchSites',
   async () => {
-    const response = await axios.get(`${BASE_URL}/pms/sites.json`);
+    const response = await axios.get(`${BASE_URL}/pms/sites.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
     return response.data.sites;
   }
 );
@@ -75,7 +77,9 @@ export const fetchSites = createAsyncThunk<Site[]>(
 export const fetchBuildings = createAsyncThunk<Building[], number>(
   'serviceLocation/fetchBuildings',
   async (siteId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/sites/${siteId}/buildings.json`);
+    const response = await axios.get(`${BASE_URL}/pms/sites/${siteId}/buildings.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
     return response.data.buildings.map((item: any) => item.building);
   }
 );
@@ -83,7 +87,9 @@ export const fetchBuildings = createAsyncThunk<Building[], number>(
 export const fetchWings = createAsyncThunk<Wing[], number>(
   'serviceLocation/fetchWings',
   async (buildingId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/buildings/${buildingId}/wings.json`);
+    const response = await axios.get(`${BASE_URL}/pms/buildings/${buildingId}/wings.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
     return response.data.map((item: any) => item.wings);
   }
 );
@@ -91,7 +97,9 @@ export const fetchWings = createAsyncThunk<Wing[], number>(
 export const fetchAreas = createAsyncThunk<Area[], number>(
   'serviceLocation/fetchAreas',
   async (wingId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/wings/${wingId}/areas.json`);
+    const response = await axios.get(`${BASE_URL}/pms/wings/${wingId}/areas.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
     return response.data.areas;
   }
 );
@@ -99,7 +107,9 @@ export const fetchAreas = createAsyncThunk<Area[], number>(
 export const fetchFloors = createAsyncThunk<Floor[], number>(
   'serviceLocation/fetchFloors',
   async (areaId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/areas/${areaId}/floors.json`);
+    const response = await axios.get(`${BASE_URL}/pms/areas/${areaId}/floors.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
     return response.data.floors;
   }
 );
@@ -107,7 +117,9 @@ export const fetchFloors = createAsyncThunk<Floor[], number>(
 export const fetchRooms = createAsyncThunk<Room[], number>(
   'serviceLocation/fetchRooms',
   async (floorId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/floors/${floorId}/rooms.json`);
+    const response = await axios.get(`${BASE_URL}/pms/floors/${floorId}/rooms.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
     return response.data.map((item: any) => item.rooms);
   }
 );
