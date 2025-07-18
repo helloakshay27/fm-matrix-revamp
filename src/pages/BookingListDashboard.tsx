@@ -253,6 +253,48 @@ const BookingListDashboard = () => {
         <h1 className="text-2xl font-bold">BOOKING LIST</h1>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Total Available Slots */}
+        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-red-600">3</div>
+              <div className="text-gray-600 text-sm">Total Available Slots</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Booked */}
+        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-red-600">5</div>
+              <div className="text-gray-600 text-sm">Total Booked</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Vacant */}
+        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <Circle className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-red-600">4</div>
+              <div className="text-gray-600 text-sm">Total Vacant</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4">
         <Button 
@@ -319,48 +361,6 @@ const BookingListDashboard = () => {
           <Download className="w-4 h-4 mr-2" />
           Export (By Centre)
         </Button>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Total Available Slots */}
-        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-red-600" />
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-red-600">3</div>
-              <div className="text-gray-600 text-sm">Total Available Slots</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Booked */}
-        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-red-600" />
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-red-600">5</div>
-              <div className="text-gray-600 text-sm">Total Booked</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Vacant */}
-        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <Circle className="w-6 h-6 text-red-600" />
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-red-600">4</div>
-              <div className="text-gray-600 text-sm">Total Vacant</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Enhanced Table with Drag and Drop */}
