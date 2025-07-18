@@ -82,7 +82,7 @@ export const getOrganizationsByEmail = async (email: string): Promise<Organizati
 };
 
 // Login with email and password
-export const loginUser = async (email: string, password: string, baseUrl: string): Promise<{ user: User; access_token: string }> => {
+export const loginUser = async (email: string, password: string, baseUrl: string): Promise<{ id: number; email: string; firstname: string; lastname: string; access_token: string }> => {
   const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
     method: 'POST',
     headers: {

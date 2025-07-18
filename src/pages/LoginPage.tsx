@@ -98,10 +98,10 @@ export const LoginPage = () => {
       
       // Save user data and token to localStorage
       saveUser({
-        id: response.user.id,
-        email: response.user.email,
-        firstname: response.user.firstname,
-        lastname: response.user.lastname
+        id: response.id,
+        email: response.email,
+        firstname: response.firstname,
+        lastname: response.lastname
       });
       saveToken(response.access_token);
       
