@@ -5,14 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -23,18 +15,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField, MenuItem } from '@mui/material';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 interface BookingData {
   id: number;
@@ -139,6 +124,21 @@ const exportColumns = [
   { id: 'comment', label: 'Comment' }
 ];
 
+// Define columns for EnhancedTable with drag and drop support
+const enhancedTableColumns: ColumnConfig[] = [
+  { key: 'id', label: 'ID', sortable: true, draggable: true },
+  { key: 'bookedBy', label: 'Booked By', sortable: true, draggable: true },
+  { key: 'bookedFor', label: 'Booked For', sortable: true, draggable: true },
+  { key: 'companyName', label: 'Company Name', sortable: true, draggable: true },
+  { key: 'facility', label: 'Facility', sortable: true, draggable: true },
+  { key: 'facilityType', label: 'Facility Type', sortable: true, draggable: true },
+  { key: 'scheduledDate', label: 'Scheduled Date', sortable: true, draggable: true },
+  { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, draggable: true },
+  { key: 'bookingStatus', label: 'Booking Status', sortable: true, draggable: true },
+  { key: 'createdOn', label: 'Created On', sortable: true, draggable: true },
+  { key: 'source', label: 'Source', sortable: true, draggable: true }
+];
+
 const tableColumns = [
   { id: 'id', label: 'ID' },
   { id: 'bookedBy', label: 'Booked By' },
@@ -156,7 +156,6 @@ const tableColumns = [
 const BookingListDashboard = () => {
   const navigate = useNavigate();
   const [bookings] = useState<BookingData[]>(mockBookingData);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
   const [isFilterColumnsPopoverOpen, setIsFilterColumnsPopoverOpen] = useState(false);
@@ -171,15 +170,35 @@ const BookingListDashboard = () => {
   });
   
   const itemsPerPage = 5;
-  
-  const totalPages = Math.ceil(bookings.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentBookings = bookings.slice(startIndex, endIndex);
 
   const handleAddBooking = () => {
     navigate('/vas/booking/add');
   };
+
+  // Cell renderer for custom content like badges and buttons
+  const renderCell = (item: BookingData, columnKey: string) => {
+    switch (columnKey) {
+      case 'bookingStatus':
+        return (
+          <Badge variant={getStatusBadgeVariant(item.bookingStatus)}>
+            {item.bookingStatus}
+          </Badge>
+        );
+      default:
+        return item[columnKey as keyof BookingData];
+    }
+  };
+
+  // Actions renderer for the eye button
+  const renderActions = (item: BookingData) => (
+    <Button 
+      variant="ghost" 
+      size="sm"
+      onClick={() => navigate(`/vas/space-management/bookings/details/${item.id}`)}
+    >
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -192,10 +211,6 @@ const BookingListDashboard = () => {
       default:
         return 'default';
     }
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   const handleFilterChange = (field: string, value: string) => {
@@ -376,92 +391,17 @@ const BookingListDashboard = () => {
         </Popover>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">View</TableHead>
-              {visibleTableColumns.includes('id') && <TableHead className="font-semibold">ID</TableHead>}
-              {visibleTableColumns.includes('bookedBy') && <TableHead className="font-semibold">Booked By</TableHead>}
-              {visibleTableColumns.includes('bookedFor') && <TableHead className="font-semibold">Booked For</TableHead>}
-              {visibleTableColumns.includes('companyName') && <TableHead className="font-semibold">Company Name</TableHead>}
-              {visibleTableColumns.includes('facility') && <TableHead className="font-semibold">Facility</TableHead>}
-              {visibleTableColumns.includes('facilityType') && <TableHead className="font-semibold">Facility Type</TableHead>}
-              {visibleTableColumns.includes('scheduledDate') && <TableHead className="font-semibold">Scheduled Date</TableHead>}
-              {visibleTableColumns.includes('scheduledTime') && <TableHead className="font-semibold">Scheduled Time</TableHead>}
-              {visibleTableColumns.includes('bookingStatus') && <TableHead className="font-semibold">Booking Status</TableHead>}
-              {visibleTableColumns.includes('createdOn') && <TableHead className="font-semibold">Created On</TableHead>}
-              {visibleTableColumns.includes('source') && <TableHead className="font-semibold">Source</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentBookings.map((booking) => (
-              <TableRow key={booking.id} className="hover:bg-gray-50">
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => navigate(`/vas/space-management/bookings/details/${booking.id}`)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                {visibleTableColumns.includes('id') && <TableCell className="font-medium">{booking.id}</TableCell>}
-                {visibleTableColumns.includes('bookedBy') && <TableCell>{booking.bookedBy}</TableCell>}
-                {visibleTableColumns.includes('bookedFor') && <TableCell>{booking.bookedFor}</TableCell>}
-                {visibleTableColumns.includes('companyName') && <TableCell>{booking.companyName}</TableCell>}
-                {visibleTableColumns.includes('facility') && <TableCell>{booking.facility}</TableCell>}
-                {visibleTableColumns.includes('facilityType') && <TableCell>{booking.facilityType}</TableCell>}
-                {visibleTableColumns.includes('scheduledDate') && <TableCell>{booking.scheduledDate}</TableCell>}
-                {visibleTableColumns.includes('scheduledTime') && <TableCell>{booking.scheduledTime}</TableCell>}
-                {visibleTableColumns.includes('bookingStatus') && (
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(booking.bookingStatus)}>
-                      {booking.bookingStatus}
-                    </Badge>
-                  </TableCell>
-                )}
-                {visibleTableColumns.includes('createdOn') && <TableCell>{booking.createdOn}</TableCell>}
-                {visibleTableColumns.includes('source') && <TableCell>{booking.source}</TableCell>}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
-            </PaginationItem>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <PaginationItem key={page}>
-                <PaginationLink
-                  onClick={() => handlePageChange(page)}
-                  isActive={currentPage === page}
-                  className="cursor-pointer"
-                >
-                  {page}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-
-            <PaginationItem>
-              <PaginationNext 
-                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      {/* Enhanced Table with Drag and Drop */}
+      <EnhancedTable
+        data={bookings}
+        columns={enhancedTableColumns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="booking-list-table"
+        pagination={true}
+        pageSize={itemsPerPage}
+        emptyMessage="No bookings found"
+      />
 
       {/* Filter Modal */}
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
