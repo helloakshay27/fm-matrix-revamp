@@ -257,24 +257,148 @@ export const AddAMCPage = () => {
       setSubGroups([]);
     }
   };
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('AMC Data:', formData);
-    console.log('Attachments:', attachments);
-    toast({
-      title: "AMC Created",
-      description: "AMC has been successfully created."
-    });
-    navigate('/maintenance/amc');
+    setLoading(true);
+
+    try {
+      // Prepare form data for file uploads
+      const formDataPayload = new FormData();
+      
+      // Prepare the main payload
+      const payload = {
+        pms_asset_amc: {
+          asset_id: formData.details === 'Asset' ? 
+            (formData.type === 'Individual' ? formData.asset_ids : null) : null,
+          service_id: formData.details === 'Service' ? formData.assetName : null,
+          pms_site_id: 1, // TODO: Get from context or site selector
+          supplier_id: formData.vendor || formData.supplier,
+          checklist_type: formData.details, // "Asset" or "Service"
+          amc_cost: formData.cost,
+          amc_start_date: formData.startDate,
+          amc_end_date: formData.endDate,
+          amc_first_service: formData.firstService,
+          payment_term: formData.paymentTerms,
+          no_of_visits: formData.noOfVisits,
+          remarks: formData.remarks,
+          resource_id: formData.details === 'Asset' ? 
+            (formData.type === 'Individual' ? formData.asset_ids : formData.group) : 1,
+          resource_type: formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site"
+        }
+      };
+
+      // Add the main payload as JSON
+      formDataPayload.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
+
+      // Add contract files
+      attachments.contracts.forEach((file, index) => {
+        formDataPayload.append(`amc_contract_${index}`, file);
+      });
+
+      // Add invoice files  
+      attachments.invoices.forEach((file, index) => {
+        formDataPayload.append(`amc_invoice_${index}`, file);
+      });
+
+      console.log('Submitting AMC Data:', payload);
+      console.log('Attachments:', attachments);
+
+      const response = await apiClient.post('/pms/asset_amcs.json', formDataPayload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+
+      console.log('API Response:', response.data);
+
+      toast({
+        title: "AMC Created",
+        description: "AMC has been successfully created."
+      });
+      
+      navigate('/maintenance/amc');
+    } catch (error) {
+      console.error('Error creating AMC:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create AMC. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-  const handleSaveAndSchedule = () => {
-    console.log('Save & Schedule AMC:', formData);
-    console.log('Attachments:', attachments);
-    toast({
-      title: "AMC Saved & Scheduled",
-      description: "AMC has been saved and scheduled successfully."
-    });
-    navigate('/maintenance/amc');
+
+  const handleSaveAndSchedule = async () => {
+    setLoading(true);
+
+    try {
+      // Prepare form data for file uploads
+      const formDataPayload = new FormData();
+      
+      // Prepare the main payload (same as handleSubmit)
+      const payload = {
+        pms_asset_amc: {
+          asset_id: formData.details === 'Asset' ? 
+            (formData.type === 'Individual' ? formData.asset_ids : null) : null,
+          service_id: formData.details === 'Service' ? formData.assetName : null,
+          pms_site_id: 1, // TODO: Get from context or site selector
+          supplier_id: formData.vendor || formData.supplier,
+          checklist_type: formData.details, // "Asset" or "Service"
+          amc_cost: formData.cost,
+          amc_start_date: formData.startDate,
+          amc_end_date: formData.endDate,
+          amc_first_service: formData.firstService,
+          payment_term: formData.paymentTerms,
+          no_of_visits: formData.noOfVisits,
+          remarks: formData.remarks,
+          resource_id: formData.details === 'Asset' ? 
+            (formData.type === 'Individual' ? formData.asset_ids : formData.group) : 1,
+          resource_type: formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site",
+          schedule_immediately: true // Flag for save & schedule
+        }
+      };
+
+      // Add the main payload as JSON
+      formDataPayload.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
+
+      // Add contract files
+      attachments.contracts.forEach((file, index) => {
+        formDataPayload.append(`amc_contract_${index}`, file);
+      });
+
+      // Add invoice files  
+      attachments.invoices.forEach((file, index) => {
+        formDataPayload.append(`amc_invoice_${index}`, file);
+      });
+
+      console.log('Save & Schedule AMC:', payload);
+      console.log('Attachments:', attachments);
+
+      const response = await apiClient.post('/pms/asset_amcs.json', formDataPayload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+
+      console.log('API Response:', response.data);
+
+      toast({
+        title: "AMC Saved & Scheduled",
+        description: "AMC has been saved and scheduled successfully."
+      });
+      
+      navigate('/maintenance/amc');
+    } catch (error) {
+      console.error('Error creating scheduled AMC:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save and schedule AMC. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Responsive styles for TextField and Select
