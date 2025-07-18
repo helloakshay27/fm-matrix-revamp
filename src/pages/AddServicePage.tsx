@@ -202,35 +202,6 @@ export const AddServicePage = () => {
             fieldStyles={fieldStyles} 
             onLocationChange={handleLocationChange}
           />
-          
-          <div className="grid grid-cols-1 gap-4 mt-4">
-            <div>
-              <TextField
-                label="Service Description"
-                placeholder="Enter service description"
-                name="serviceDescription"
-                value={formData.serviceDescription}
-                onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
-                fullWidth
-                variant="outlined"
-                multiline
-                rows={4}
-                minRows={4}
-                maxRows={8}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    '& .MuiInputBase-input': {
-                      resize: 'vertical',
-                    }
-                  }
-                }}
-              />
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -265,6 +236,38 @@ export const AddServicePage = () => {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Service Description */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+            SERVICE DESCRIPTION
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TextField
+            label="Service Description"
+            name="serviceDescription"
+            value={formData.serviceDescription}
+            onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={4}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiInputBase-input': {
+                  padding: '12px',
+                },
+              }
+            }}
+          />
         </CardContent>
       </Card>
 
