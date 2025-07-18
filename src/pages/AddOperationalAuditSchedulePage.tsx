@@ -7,13 +7,16 @@ import { useToast } from "@/hooks/use-toast";
 import { ScheduleFormStepper } from '@/components/schedule/ScheduleFormStepper';
 import { BasicConfigurationStep } from '@/components/schedule/BasicConfigurationStep';
 import { ScheduleSetupStep } from '@/components/schedule/ScheduleSetupStep';
+import { QuestionSetupStep } from '@/components/schedule/QuestionSetupStep';
+import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
+import { MappingStep } from '@/components/schedule/MappingStep';
 
 const steps = [
   { id: 1, title: 'Basic Configuration', completed: false, active: true },
   { id: 2, title: 'Schedule Setup', completed: false, active: false },
-  { id: 3, title: 'Auditor Assignment', completed: false, active: false },
-  { id: 4, title: 'Checklist Selection', completed: false, active: false },
-  { id: 5, title: 'Review & Submit', completed: false, active: false }
+  { id: 3, title: 'Question Setup', completed: false, active: false },
+  { id: 4, title: 'Time Setup', completed: false, active: false },
+  { id: 5, title: 'Asset Mapping', completed: false, active: false }
 ];
 
 export const AddOperationalAuditSchedulePage = () => {
@@ -26,17 +29,31 @@ export const AddOperationalAuditSchedulePage = () => {
   
   // Form data states
   const [basicConfig, setBasicConfig] = useState({
-    scheduleName: '',
+    activityType: '',
+    activityName: '',
     description: '',
-    frequency: 'Daily',
-    startDate: '',
-    endDate: '',
-    isRecurring: false
+    attachment: null
   });
 
   const [scheduleSetup, setScheduleSetup] = useState({
-    scheduleType: 'fixed',
-    timeSlots: [{ day: '', startTime: '', endTime: '' }]
+    checklistType: '',
+    assetType: '',
+    assetGroup: '',
+    branch: '',
+    department: '',
+    location: ''
+  });
+
+  const [questionSetup, setQuestionSetup] = useState({
+    sections: []
+  });
+
+  const [timeSetup, setTimeSetup] = useState({
+    timeSlots: { hours: [], minutes: [], days: [], months: [] }
+  });
+
+  const [mapping, setMapping] = useState({
+    mappings: []
   });
 
   const handleStepClick = (stepId: number) => {

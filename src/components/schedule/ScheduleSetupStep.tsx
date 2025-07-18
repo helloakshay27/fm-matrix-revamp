@@ -10,12 +10,12 @@ import { Input } from '@/components/ui/input';
 
 interface ScheduleSetupStepProps {
   data: {
-    scheduleType: string;
-    timeSlots: Array<{
-      day: string;
-      startTime: string;
-      endTime: string;
-    }>;
+    checklistType: string;
+    assetType?: string;
+    assetGroup?: string;
+    branch?: string;
+    department?: string;
+    location?: string;
   };
   onChange: (field: string, value: any) => void;
   isCompleted?: boolean;
@@ -30,21 +30,6 @@ export const ScheduleSetupStep = ({
   isCollapsed = false,
   onToggleCollapse 
 }: ScheduleSetupStepProps) => {
-  const addTimeSlot = () => {
-    const newSlots = [...data.timeSlots, { day: '', startTime: '', endTime: '' }];
-    onChange('timeSlots', newSlots);
-  };
-
-  const removeTimeSlot = (index: number) => {
-    const newSlots = data.timeSlots.filter((_, i) => i !== index);
-    onChange('timeSlots', newSlots);
-  };
-
-  const updateTimeSlot = (index: number, field: string, value: string) => {
-    const newSlots = [...data.timeSlots];
-    newSlots[index][field] = value;
-    onChange('timeSlots', newSlots);
-  };
 
   if (isCompleted && isCollapsed) {
     return (
@@ -87,86 +72,25 @@ export const ScheduleSetupStep = ({
       
       <CardContent className="space-y-6">
         <div>
-          <Label className="text-sm font-medium">Schedule Type</Label>
+          <Label className="text-sm font-medium">Checklist Type</Label>
           <RadioGroup 
-            value={data.scheduleType} 
-            onValueChange={(value) => onChange('scheduleType', value)}
+            value={data.checklistType} 
+            onValueChange={(value) => onChange('checklistType', value)}
             className="flex gap-4 mt-1"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="fixed" id="fixed" />
-              <Label htmlFor="fixed" className="text-sm">Fixed Schedule</Label>
+              <RadioGroupItem value="individual" id="individual" />
+              <Label htmlFor="individual" className="text-sm">Individual</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="flexible" id="flexible" />
-              <Label htmlFor="flexible" className="text-sm">Flexible Schedule</Label>
+              <RadioGroupItem value="assetGroup" id="assetGroup" />
+              <Label htmlFor="assetGroup" className="text-sm">Asset Group</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="branching" id="branching" />
+              <Label htmlFor="branching" className="text-sm">Branching</Label>
             </div>
           </RadioGroup>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Time Slots</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addTimeSlot}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Time Slot
-            </Button>
-          </div>
-
-          {data.timeSlots.map((slot, index) => (
-            <div key={index} className="flex gap-4 items-center p-4 border rounded-lg">
-              <div className="flex-1">
-                <Select value={slot.day} onValueChange={(value) => updateTimeSlot(index, 'day', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monday">Monday</SelectItem>
-                    <SelectItem value="tuesday">Tuesday</SelectItem>
-                    <SelectItem value="wednesday">Wednesday</SelectItem>
-                    <SelectItem value="thursday">Thursday</SelectItem>
-                    <SelectItem value="friday">Friday</SelectItem>
-                    <SelectItem value="saturday">Saturday</SelectItem>
-                    <SelectItem value="sunday">Sunday</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex-1">
-                <Input
-                  type="time"
-                  value={slot.startTime}
-                  onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
-                  placeholder="Start Time"
-                />
-              </div>
-              
-              <div className="flex-1">
-                <Input
-                  type="time"
-                  value={slot.endTime}
-                  onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
-                  placeholder="End Time"
-                />
-              </div>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => removeTimeSlot(index)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
         </div>
       </CardContent>
     </Card>
