@@ -1,65 +1,62 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface WingData {
-  site: string;
-  building: string;
-  wing: string;
-  status: boolean;
-}
-
-const sampleWings: WingData[] = [
-  { site: 'Lockated', building: 'kite', wing: 'Wing 1', status: true },
-  { site: 'Lockated', building: 'sebc', wing: 'TA Wing 2', status: true },
-  { site: 'Lockated', building: 'Hay', wing: 'TA Wing 1', status: false },
-  { site: 'Lockated', building: 'star', wing: 'East & West', status: true },
-  { site: 'Lockated', building: 'business bay', wing: 'Wing2', status: true },
-  { site: 'Lockated', building: 'RVG_New', wing: 'Wing1', status: false },
-  { site: 'Lockated', building: 'RVG_Old', wing: 'B', status: true },
-  { site: 'Lockated', building: 'Aurum Grande', wing: 'A', status: true },
-  { site: 'Lockated', building: 'jyoti tower', wing: 'A12', status: false },
-];
-
-const buildings = ['kite', 'sebc', 'Hay', 'star', 'business bay', 'RVG_New', 'RVG_Old', 'Aurum Grande', 'jyoti tower'];
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { fetchBuildings, fetchWings, createWing, setSelectedBuilding } from '@/store/slices/locationSlice';
+import { toast } from 'sonner';
 
 export function WingPage() {
-  const [wings, setWings] = useState<WingData[]>(sampleWings);
+  const dispatch = useAppDispatch();
+  const { buildings, wings, selectedBuilding } = useAppSelector((state) => state.location);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState('');
   const [newWingName, setNewWingName] = useState('');
 
-  const filteredWings = wings.filter(wing =>
-    wing.wing.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    wing.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    wing.site.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    dispatch(fetchBuildings());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedBuilding) {
+      dispatch(fetchWings(selectedBuilding));
+    }
+  }, [dispatch, selectedBuilding]);
+
+  const filteredWings = wings.data.filter(wing =>
+    wing.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddWing = () => {
+  const handleBuildingChange = (buildingId: string) => {
+    dispatch(setSelectedBuilding(parseInt(buildingId)));
+  };
+
+  const handleAddWing = async () => {
     if (selectedBuilding && newWingName.trim()) {
-      const newWing: WingData = {
-        site: 'Lockated',
-        building: selectedBuilding,
-        wing: newWingName,
-        status: true
-      };
-      setWings([...wings, newWing]);
-      setSelectedBuilding('');
-      setNewWingName('');
-      setShowAddDialog(false);
+      try {
+        await dispatch(createWing({
+          name: newWingName,
+          building_id: selectedBuilding
+        }));
+        toast.success('Wing created successfully');
+        setNewWingName('');
+        setShowAddDialog(false);
+        dispatch(fetchWings(selectedBuilding));
+      } catch (error) {
+        toast.error('Failed to create wing');
+      }
     }
   };
 
   const toggleStatus = (index: number) => {
-    const updatedWings = [...wings];
-    updatedWings[index].status = !updatedWings[index].status;
-    setWings(updatedWings);
+    // This would require an update API call - placeholder for now
+    console.log(`Toggle status for wing at index ${index}`);
   };
 
   return (
@@ -70,10 +67,33 @@ export function WingPage() {
         <h1 className="text-2xl font-bold">WING</h1>
       </div>
 
+      {/* Building Selection */}
+      <div className="space-y-4">
+        <div className="w-64">
+          <label className="text-sm font-medium">Select Building</label>
+          <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select building" />
+            </SelectTrigger>
+            <SelectContent>
+              {buildings.data.map((building) => (
+                <SelectItem key={building.id} value={building.id.toString()}>
+                  {building.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+          <Button 
+            onClick={() => setShowAddDialog(true)} 
+            className="gap-2"
+            disabled={!selectedBuilding}
+          >
             <Plus className="h-4 w-4" />
             Add Wing
           </Button>
@@ -112,34 +132,52 @@ export function WingPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Site</TableHead>
               <TableHead>Building</TableHead>
               <TableHead>Wing</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredWings.map((wing, index) => (
-              <TableRow key={index}>
-                <TableCell>{wing.site}</TableCell>
-                <TableCell>{wing.building}</TableCell>
-                <TableCell>{wing.wing}</TableCell>
-                <TableCell>
-                  <button
-                    onClick={() => toggleStatus(index)}
-                    className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                      wing.status ? 'bg-green-500' : 'bg-gray-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
-                        wing.status ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+            {!selectedBuilding ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
+                  Please select a building to view wings
                 </TableCell>
               </TableRow>
-            ))}
+            ) : wings.loading ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
+                  Loading wings...
+                </TableCell>
+              </TableRow>
+            ) : filteredWings.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
+                  No wings found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredWings.map((wing, index) => (
+                <TableRow key={wing.id}>
+                  <TableCell>{wing.building?.name || 'N/A'}</TableCell>
+                  <TableCell>{wing.name}</TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => toggleStatus(index)}
+                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                        wing.active ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
+                          wing.active ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -152,19 +190,12 @@ export function WingPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Select Building</label>
-              <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select building" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildings.map((building) => (
-                    <SelectItem key={building} value={building}>
-                      {building}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">Selected Building</label>
+              <Input
+                value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
+                disabled
+                className="bg-muted"
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Wing Name</label>
@@ -175,7 +206,9 @@ export function WingPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddWing}>Submit</Button>
+              <Button onClick={handleAddWing} disabled={!newWingName.trim()}>
+                Submit
+              </Button>
               <Button variant="outline">Sample Format</Button>
               <Button variant="outline">Import</Button>
             </div>
