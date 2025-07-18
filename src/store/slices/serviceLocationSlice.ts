@@ -137,8 +137,8 @@ export const fetchGroups = createAsyncThunk<Group[]>(
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     console.log('Groups API Response:', response.data);
-    // Ensure we return an array
-    return Array.isArray(response.data) ? response.data : [];
+    // Use asset_groups from response
+    return Array.isArray(response.data.asset_groups) ? response.data.asset_groups : [];
   }
 );
 
@@ -149,8 +149,8 @@ export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     console.log('SubGroups API Response:', response.data);
-    // Ensure we return an array
-    return Array.isArray(response.data) ? response.data : [];
+    // Use asset_groups from response (subgroups should be in the same structure)
+    return Array.isArray(response.data.asset_groups) ? response.data.asset_groups : [];
   }
 );
 
