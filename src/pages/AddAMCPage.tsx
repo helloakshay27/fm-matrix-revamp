@@ -262,48 +262,41 @@ export const AddAMCPage = () => {
     setLoading(true);
 
     try {
-      // Prepare form data for file uploads
-      const formDataPayload = new FormData();
+      // Create FormData for sending
+      const sendData = new FormData();
       
-      // Prepare the main payload
-      const payload = {
-        pms_asset_amc: {
-          asset_id: formData.details === 'Asset' ? 
-            (formData.type === 'Individual' ? formData.asset_ids : null) : null,
-          service_id: formData.details === 'Service' ? formData.assetName : null,
-          pms_site_id: 1, // TODO: Get from context or site selector
-          supplier_id: formData.vendor || formData.supplier,
-          checklist_type: formData.details, // "Asset" or "Service"
-          amc_cost: formData.cost,
-          amc_start_date: formData.startDate,
-          amc_end_date: formData.endDate,
-          amc_first_service: formData.firstService,
-          payment_term: formData.paymentTerms,
-          no_of_visits: formData.noOfVisits,
-          remarks: formData.remarks,
-          resource_id: formData.details === 'Asset' ? 
-            (formData.type === 'Individual' ? formData.asset_ids : formData.group) : 1,
-          resource_type: formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site"
-        }
-      };
-
-      // Add the main payload as JSON
-      formDataPayload.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
+      // Add all form fields directly to FormData
+      sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
+        (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+      sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+      sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+      sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+      sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+      sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+      sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+      sendData.append('pms_asset_amc[remarks]', formData.remarks);
+      sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
+        (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+      sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
 
       // Add contract files
       attachments.contracts.forEach((file, index) => {
-        formDataPayload.append(`amc_contract_${index}`, file);
+        sendData.append(`amc_contract_${index}`, file);
       });
 
       // Add invoice files  
       attachments.invoices.forEach((file, index) => {
-        formDataPayload.append(`amc_invoice_${index}`, file);
+        sendData.append(`amc_invoice_${index}`, file);
       });
 
-      console.log('Submitting AMC Data:', payload);
+      console.log('Submitting AMC Data as FormData');
       console.log('Attachments:', attachments);
 
-      const response = await apiClient.post('/pms/asset_amcs.json', formDataPayload, {
+      const response = await apiClient.post('/pms/asset_amcs.json', sendData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
@@ -333,49 +326,42 @@ export const AddAMCPage = () => {
     setLoading(true);
 
     try {
-      // Prepare form data for file uploads
-      const formDataPayload = new FormData();
+      // Create FormData for sending (same as handleSubmit)
+      const sendData = new FormData();
       
-      // Prepare the main payload (same as handleSubmit)
-      const payload = {
-        pms_asset_amc: {
-          asset_id: formData.details === 'Asset' ? 
-            (formData.type === 'Individual' ? formData.asset_ids : null) : null,
-          service_id: formData.details === 'Service' ? formData.assetName : null,
-          pms_site_id: 1, // TODO: Get from context or site selector
-          supplier_id: formData.vendor || formData.supplier,
-          checklist_type: formData.details, // "Asset" or "Service"
-          amc_cost: formData.cost,
-          amc_start_date: formData.startDate,
-          amc_end_date: formData.endDate,
-          amc_first_service: formData.firstService,
-          payment_term: formData.paymentTerms,
-          no_of_visits: formData.noOfVisits,
-          remarks: formData.remarks,
-          resource_id: formData.details === 'Asset' ? 
-            (formData.type === 'Individual' ? formData.asset_ids : formData.group) : 1,
-          resource_type: formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site",
-          schedule_immediately: true // Flag for save & schedule
-        }
-      };
-
-      // Add the main payload as JSON
-      formDataPayload.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
+      // Add all form fields directly to FormData
+      sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
+        (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+      sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+      sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+      sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+      sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+      sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+      sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+      sendData.append('pms_asset_amc[remarks]', formData.remarks);
+      sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
+        (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+      sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+      sendData.append('pms_asset_amc[schedule_immediately]', 'true'); // Flag for save & schedule
 
       // Add contract files
       attachments.contracts.forEach((file, index) => {
-        formDataPayload.append(`amc_contract_${index}`, file);
+        sendData.append(`amc_contract_${index}`, file);
       });
 
       // Add invoice files  
       attachments.invoices.forEach((file, index) => {
-        formDataPayload.append(`amc_invoice_${index}`, file);
+        sendData.append(`amc_invoice_${index}`, file);
       });
 
-      console.log('Save & Schedule AMC:', payload);
+      console.log('Save & Schedule AMC as FormData');
       console.log('Attachments:', attachments);
 
-      const response = await apiClient.post('/pms/asset_amcs.json', formDataPayload, {
+      const response = await apiClient.post('/pms/asset_amcs.json', sendData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
