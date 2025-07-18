@@ -46,20 +46,40 @@ export const useAssetSearch = () => {
     setError(null);
 
     try {
+      console.log('🔍 Starting asset search with term:', searchTerm);
+      console.log('📡 API Base URL:', apiClient.defaults.baseURL);
+      console.log('🔗 Search endpoint:', ENDPOINTS.ASSETS);
+      console.log('🔑 Auth header available:', !!apiClient.defaults.headers.Authorization);
+      
       const response = await apiClient.get<SearchResponse>(ENDPOINTS.ASSETS, {
         params: {
           'q[name_or_asset_number_cont]': searchTerm
         }
       });
 
+      console.log('✅ Search response received:', response.status);
+      console.log('📄 Response data structure:', {
+        hasData: !!response.data,
+        hasDataArray: !!(response.data && Array.isArray(response.data.data)),
+        dataCount: response.data?.data?.length || 0
+      });
+
       if (response.data && Array.isArray(response.data.data)) {
         const mappedAssets = response.data.data.map(mapAssetData);
+        console.log('🎯 Mapped assets count:', mappedAssets.length);
         setAssets(mappedAssets);
       } else {
+        console.log('⚠️ Invalid response structure - no data array found');
         setAssets([]);
       }
-    } catch (err) {
-      console.error('Asset search error:', err);
+    } catch (err: any) {
+      console.error('❌ Asset search error:', err);
+      console.error('📝 Error details:', {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        responseData: err.response?.data
+      });
       setError('Failed to search assets. Please try again.');
       setAssets([]);
     } finally {
