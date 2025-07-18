@@ -23,6 +23,7 @@ import facilitySetupsReducer from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
 import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
+import { inventoryReducer } from './slices/inventorySlice'
 
 export const store = configureStore({
   reducer: {
@@ -51,6 +52,7 @@ export const store = configureStore({
     assets: assetsReducer,
     suppliers: suppliersReducer,
     amcCreate: amcCreateReducer,
+    inventory: inventoryReducer,
   },
 })
 

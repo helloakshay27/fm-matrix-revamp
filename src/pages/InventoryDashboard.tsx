@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { fetchInventoryData } from '@/store/slices/inventorySlice';
 import { Button } from '@/components/ui/button';
 import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
@@ -30,155 +33,30 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const inventoryData = [
-  {
-    id: '97100',
-    name: 'test12',
-    referenceNumber: '123987',
-    code: '',
-    serialNumber: '',
-    type: '',
-    group: 'CCTV',
-    subGroup: 'CCTV Camera',
-    category: '',
-    manufacturer: '',
-    criticality: 'Critical',
-    quantity: '8.0',
-    active: 'Active',
-    unit: '',
-    cost: '',
-    sacHsnCode: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: '10'
-  },
-  {
-    id: '96857',
-    name: 'Test 1234',
-    referenceNumber: '123',
-    code: '',
-    serialNumber: '',
-    type: '',
-    group: 'Electronics',
-    subGroup: 'Computers',
-    category: '',
-    manufacturer: '',
-    criticality: 'Critical',
-    quantity: '0.0',
-    active: 'Active',
-    unit: '',
-    cost: '',
-    sacHsnCode: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: '10'
-  },
-  {
-    id: '96856',
-    name: 'Test Abhi',
-    referenceNumber: '123',
-    code: '',
-    serialNumber: '',
-    type: '',
-    group: 'Cleaning',
-    subGroup: 'Housekeeping',
-    category: '',
-    manufacturer: '',
-    criticality: 'Critical',
-    quantity: '10.0',
-    active: 'Active',
-    unit: '',
-    cost: '',
-    sacHsnCode: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: '10'
-  },
-  {
-    id: '96855',
-    name: 'Test Tap',
-    referenceNumber: '52666',
-    code: '5566',
-    serialNumber: '',
-    type: '',
-    group: 'Daikin',
-    subGroup: 'Daikin AC',
-    category: '',
-    manufacturer: '',
-    criticality: 'Non-Critical',
-    quantity: '',
-    active: 'Active',
-    unit: '100.0',
-    cost: '',
-    sacHsnCode: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: ''
-  },
-  {
-    id: '96834',
-    name: 'test',
-    referenceNumber: 'cp/01',
-    code: '',
-    serialNumber: '',
-    type: '',
-    group: 'HVAC',
-    subGroup: 'Plumbing',
-    category: '',
-    manufacturer: '',
-    criticality: 'Non-Critical',
-    quantity: '1.0',
-    active: 'Active',
-    unit: '',
-    cost: '1',
-    sacHsnCode: '',
-    maxStockLevel: '1',
-    minStockLevel: '',
-    minOrderLevel: '1'
-  },
-  {
-    id: '96067',
-    name: 'Laptop',
-    referenceNumber: '1234565454',
-    code: 'abc01',
-    serialNumber: '',
-    type: '',
-    group: 'Electronic Devices',
-    subGroup: 'Laptops',
-    category: '',
-    manufacturer: '',
-    criticality: 'Non-Critical',
-    quantity: '46.0',
-    active: 'Active',
-    unit: 'Piece',
-    cost: '20000.0',
-    sacHsnCode: '',
-    maxStockLevel: '50',
-    minStockLevel: '10',
-    minOrderLevel: ''
-  },
-  {
-    id: '69988',
-    name: 'Drainex Power',
-    referenceNumber: '1234565454',
-    code: '',
-    serialNumber: '',
-    type: 'Consumable',
-    group: 'Security',
-    subGroup: 'Housekeeping',
-    category: '',
-    manufacturer: '',
-    criticality: 'Non-Critical',
-    quantity: '64.0',
-    active: 'Active',
-    unit: 'Piece',
-    cost: '1800.0',
-    sacHsnCode: '',
-    maxStockLevel: '10',
-    minStockLevel: '5',
-    minOrderLevel: '3'
-  }
-];
+// Map API field names to display field names for backward compatibility
+const mapInventoryData = (apiData: any[]) => {
+  return apiData.map(item => ({
+    id: item.id?.toString() || '',
+    name: item.name || '',
+    referenceNumber: item.reference_number || '',
+    code: item.code || '',
+    serialNumber: item.serial_number || '',
+    type: item.inventory_type || '',
+    group: item.pms_asset_group || '',
+    subGroup: item.sub_group || '',
+    category: item.category || '',
+    manufacturer: item.manufacturer || '',
+    criticality: item.criticality || '',
+    quantity: item.quantity?.toString() || '0',
+    active: item.active ? 'Active' : 'Inactive',
+    unit: item.unit || '',
+    cost: item.cost?.toString() || '',
+    sacHsnCode: item.hsc_hsn_code || '',
+    maxStockLevel: item.max_stock_level?.toString() || '',
+    minStockLevel: item.min_stock_level?.toString() || '',
+    minOrderLevel: item.min_order_level?.toString() || ''
+  }))
+}
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -212,6 +90,12 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 
 export const InventoryDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Redux state
+  const { items: inventoryItems, loading, error, totalPages: reduxTotalPages } = useSelector((state: RootState) => state.inventory);
+  
+  // Local state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -219,7 +103,15 @@ export const InventoryDashboard = () => {
     'statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix'
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix']);
-  const pageSize = 5;
+  const pageSize = 15; // Use larger page size for API data
+
+  // Map API data to display format
+  const inventoryData = mapInventoryData(inventoryItems);
+
+  // Fetch inventory data on component mount
+  useEffect(() => {
+    dispatch(fetchInventoryData({ page: currentPage }));
+  }, [dispatch, currentPage]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -229,10 +121,10 @@ export const InventoryDashboard = () => {
     })
   );
 
-  // Calculate pagination
-  const totalPages = Math.ceil(inventoryData.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = inventoryData.slice(startIndex, startIndex + pageSize);
+  // Use Redux pagination data or calculate from current data
+  const totalPages = reduxTotalPages || Math.ceil(inventoryData.length / pageSize);
+  const startIndex = 0; // API handles pagination, so start from 0
+  const paginatedData = inventoryData.slice(startIndex, pageSize); // Show current page data
 
   // Analytics calculations
   const totalItems = inventoryData.length;
@@ -931,6 +823,13 @@ export const InventoryDashboard = () => {
             {renderCustomActions()}
           </div>
 
+          {/* Error handling */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              Error loading inventory data: {error}
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <EnhancedTable
               data={paginatedData}
@@ -945,6 +844,8 @@ export const InventoryDashboard = () => {
               exportFileName="inventory"
               onRowClick={handleViewItem}
               storageKey="inventory-table"
+              loading={loading}
+              emptyMessage={loading ? "Loading inventory data..." : "No inventory items found"}
             />
           </div>
 
