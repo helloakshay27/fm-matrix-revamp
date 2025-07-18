@@ -110,14 +110,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${group}`);
         console.log('Subgroups API response:', response.data);
         
-        // Extract subgroups from the correct property (likely asset_sub_groups or similar)
-        const subgroupsData = Array.isArray(response.data?.asset_sub_groups) 
-          ? response.data.asset_sub_groups 
-          : Array.isArray(response.data?.sub_groups)
-          ? response.data.sub_groups
-          : Array.isArray(response.data) 
-          ? response.data 
-          : [];
+        // Extract subgroups from the asset_groups property (same as groups API)
+        const subgroupsData = Array.isArray(response.data?.asset_groups) ? response.data.asset_groups : [];
         
         console.log('Setting subgroups data:', subgroupsData);
         console.log('Subgroups data length:', subgroupsData.length);
