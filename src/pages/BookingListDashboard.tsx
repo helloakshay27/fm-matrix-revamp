@@ -20,7 +20,9 @@ import { TextField, MenuItem } from '@mui/material';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { fetchFacilityBookings, type BookingData } from '@/services/bookingService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchFacilityBookingsData } from '@/store/slices/facilityBookingsSlice';
+import type { BookingData } from '@/services/bookingService';
 
 const exportColumns = [
   { id: 'selectAll', label: 'Select All' },
@@ -60,9 +62,11 @@ const enhancedTableColumns: ColumnConfig[] = [
 
 const BookingListDashboard = () => {
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState<BookingData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  
+  // Get data from Redux store
+  const { data: bookings = [], loading, error } = useAppSelector((state) => state.facilityBookings);
+  
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
@@ -76,24 +80,10 @@ const BookingListDashboard = () => {
   
   const itemsPerPage = 5;
 
-  // Fetch data from API on component mount
+  // Fetch data from API on component mount using Redux
   useEffect(() => {
-    const loadBookings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchFacilityBookings();
-        setBookings(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load bookings');
-        console.error('Failed to load bookings:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadBookings();
-  }, []);
+    dispatch(fetchFacilityBookingsData());
+  }, [dispatch]);
 
   const handleAddBooking = () => {
     navigate('/vas/booking/add');
@@ -301,12 +291,13 @@ const BookingListDashboard = () => {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <p>Error loading bookings: {error}</p>
           <Button 
-            onClick={() => window.location.reload()} 
+            onClick={() => dispatch(fetchFacilityBookingsData())} 
             variant="outline" 
             size="sm" 
             className="mt-2"
+            disabled={loading}
           >
-            Retry
+            {loading ? 'Retrying...' : 'Retry'}
           </Button>
         </div>
       )}
