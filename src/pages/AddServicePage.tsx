@@ -129,7 +129,7 @@ export const AddServicePage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6">{/* Service creation form */}
       <div className="mb-6">
         <Button 
           variant="ghost" 
