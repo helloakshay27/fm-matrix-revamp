@@ -2,7 +2,6 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +27,6 @@ export const AddServicePage = () => {
     subGroupId: null as number | null,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -106,11 +104,11 @@ export const AddServicePage = () => {
       
       toast({
         title: "Service Created",
-        description: `Service has been ${action} successfully.`,
+        description: `Service has been ${action} successfully. Do you want to schedule new checklist? Already one scheduled under this group.`,
       });
       
-      // Show suggestion dialog after successful service creation
-      setShowSuggestionDialog(true);
+      // Navigate to service list page after success
+      navigate('/maintenance/service');
       
     } catch (error) {
       console.error('Error creating service:', error);
@@ -120,44 +118,6 @@ export const AddServicePage = () => {
         variant: "destructive"
       });
     }
-  };
-
-  const handleScheduleChecklist = () => {
-    setShowSuggestionDialog(false);
-    // Add logic to schedule new checklist
-    toast({
-      title: "Checklist Scheduled",
-      description: "New checklist has been scheduled successfully.",
-    });
-    navigate('/maintenance/service');
-  };
-
-  const handleCreateNewService = () => {
-    setShowSuggestionDialog(false);
-    // Reset form for new service
-    setFormData({
-      serviceName: '',
-      executionType: '',
-      serviceDescription: '',
-      siteId: null,
-      buildingId: null,
-      wingId: null,
-      areaId: null,
-      floorId: null,
-      roomId: null,
-      groupId: null,
-      subGroupId: null,
-    });
-    setSelectedFile(null);
-    toast({
-      title: "Ready for New Service",
-      description: "Form has been cleared for new service creation.",
-    });
-  };
-
-  const handleCloseSuggestion = () => {
-    setShowSuggestionDialog(false);
-    navigate('/maintenance/service');
   };
 
   // Responsive styles for TextField and Select
@@ -328,42 +288,6 @@ export const AddServicePage = () => {
           Save & Create New Service
         </Button>
       </div>
-
-      {/* Suggestion Dialog */}
-      <Dialog open={showSuggestionDialog} onOpenChange={setShowSuggestionDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-[#C72030]">Service Created Successfully!</DialogTitle>
-            <DialogDescription className="space-y-4">
-              <p>Do you want to schedule new checklist?</p>
-              <p className="text-sm text-gray-600">Already one scheduled under this group. Do you want to create?</p>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 mt-4">
-            <Button 
-              onClick={handleScheduleChecklist}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
-            >
-              Schedule New Checklist
-            </Button>
-            <Button 
-              onClick={handleCreateNewService}
-              variant="outline"
-              className="text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
-            >
-              Create Another Service
-            </Button>
-            <Button 
-              onClick={handleCloseSuggestion}
-              variant="ghost"
-              className="text-gray-600"
-            >
-              Go to Service List
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
     </div>
   );
