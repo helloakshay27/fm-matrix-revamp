@@ -44,6 +44,21 @@ export const AddFacilityBookingPage = () => {
     complementary: number;
   } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [slots, setSlots] = useState<Array<{
+    id: number;
+    start_minute: number;
+    end_minute: number;
+    start_hour: number;
+    end_hour: number;
+    ampm: string;
+    wrap_time: number;
+    booked_by: string;
+    formated_start_hour: string;
+    formated_end_hour: string;
+    formated_start_minute: string;
+    formated_end_minute: string;
+  }>>([]);
+  const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -75,6 +90,49 @@ export const AddFacilityBookingPage = () => {
       setFacilityDetails(null);
       setPaymentMethod('');
     }
+  };
+
+  // Fetch available slots
+  const fetchSlots = async (facilityId: string, date: string, userId: string) => {
+    try {
+      // Convert date from YYYY-MM-DD to YYYY/MM/DD format
+      const formattedDate = date.replace(/-/g, '/');
+      const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
+        params: {
+          on_date: formattedDate,
+          user_id: userId
+        }
+      });
+      
+      if (response.data && response.data.slots) {
+        setSlots(response.data.slots);
+        setSelectedSlots([]); // Reset selected slots when new slots are fetched
+      }
+    } catch (error) {
+      console.error('Error fetching slots:', error);
+      setSlots([]);
+    }
+  };
+
+  // Effect to fetch slots when facility, date, and user are all selected
+  useEffect(() => {
+    if (selectedFacility && selectedDate && selectedUser) {
+      fetchSlots(selectedFacility, selectedDate, selectedUser);
+    } else {
+      setSlots([]);
+      setSelectedSlots([]);
+    }
+  }, [selectedFacility, selectedDate, selectedUser]);
+
+  // Handle slot selection
+  const handleSlotSelection = (slotId: number) => {
+    setSelectedSlots(prev => {
+      if (prev.includes(slotId)) {
+        return prev.filter(id => id !== slotId);
+      } else {
+        return [...prev, slotId];
+      }
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -297,7 +355,34 @@ export const AddFacilityBookingPage = () => {
         {/* Select Slot Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Select Slot</h2>
-          {/* Add slot selection logic here */}
+          {slots.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {slots.map((slot) => (
+                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                  <input
+                    type="checkbox"
+                    id={`slot-${slot.id}`}
+                    checked={selectedSlots.includes(slot.id)}
+                    onChange={() => handleSlotSelection(slot.id)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <Label 
+                    htmlFor={`slot-${slot.id}`} 
+                    className="cursor-pointer text-sm font-medium"
+                  >
+                    {slot.ampm}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">
+              {selectedFacility && selectedDate && selectedUser
+                ? "No slots available for the selected date"
+                : "Please select facility, date, and user to see available slots"
+              }
+            </p>
+          )}
         </div>
 
         {/* Payment Method Section */}
