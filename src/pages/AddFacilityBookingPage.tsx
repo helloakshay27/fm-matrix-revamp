@@ -209,12 +209,15 @@ export const AddFacilityBookingPage = () => {
       }
 
       console.log('Submitting form with data:');
+      console.log('API URL:', '/pms/admin/facility_bookings.json');
       for (let [key, value] of submitForm.entries()) {
         console.log(`${key}: ${value}`);
       }
 
-      // Submit the booking
+      // Submit the booking - try without specifying content-type header
       const response = await apiClient.post('/pms/admin/facility_bookings.json', submitForm);
+
+      console.log('Response received:', response.status, response.data);
 
       if (response.status === 200 || response.status === 201) {
         console.log('Booking created successfully:', response.data);
