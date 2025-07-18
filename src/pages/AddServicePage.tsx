@@ -201,7 +201,7 @@ export const AddServicePage = () => {
             <div>
               <TextField
                 label="Service Description"
-                placeholder="Enter Service Description"
+                placeholder=""
                 name="serviceDescription"
                 value={formData.serviceDescription}
                 onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
