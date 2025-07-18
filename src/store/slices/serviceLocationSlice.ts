@@ -39,6 +39,16 @@ export interface Room {
   name: string;
 }
 
+export interface Group {
+  id: number;
+  name: string;
+}
+
+export interface SubGroup {
+  id: number;
+  name: string;
+}
+
 interface ServiceLocationState {
   sites: Site[];
   buildings: Building[];
@@ -46,12 +56,16 @@ interface ServiceLocationState {
   areas: Area[];
   floors: Floor[];
   rooms: Room[];
+  groups: Group[];
+  subGroups: SubGroup[];
   selectedSiteId: number | null;
   selectedBuildingId: number | null;
   selectedWingId: number | null;
   selectedAreaId: number | null;
   selectedFloorId: number | null;
   selectedRoomId: number | null;
+  selectedGroupId: number | null;
+  selectedSubGroupId: number | null;
   loading: {
     sites: boolean;
     buildings: boolean;
@@ -59,6 +73,8 @@ interface ServiceLocationState {
     areas: boolean;
     floors: boolean;
     rooms: boolean;
+    groups: boolean;
+    subGroups: boolean;
   };
   error: string | null;
 }
@@ -114,6 +130,26 @@ export const fetchFloors = createAsyncThunk<Floor[], number>(
   }
 );
 
+export const fetchGroups = createAsyncThunk<Group[]>(
+  'serviceLocation/fetchGroups',
+  async () => {
+    const response = await axios.get(`https://fm-uat-api.lockated.com/pms/assets/get_asset_group_sub_group.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
+    return response.data;
+  }
+);
+
+export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
+  'serviceLocation/fetchSubGroups',
+  async (groupId: number) => {
+    const response = await axios.get(`https://fm-uat-api.lockated.com/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
+    return response.data;
+  }
+);
+
 export const fetchRooms = createAsyncThunk<Room[], number>(
   'serviceLocation/fetchRooms',
   async (floorId: number) => {
@@ -131,12 +167,16 @@ const initialState: ServiceLocationState = {
   areas: [],
   floors: [],
   rooms: [],
+  groups: [],
+  subGroups: [],
   selectedSiteId: null,
   selectedBuildingId: null,
   selectedWingId: null,
   selectedAreaId: null,
   selectedFloorId: null,
   selectedRoomId: null,
+  selectedGroupId: null,
+  selectedSubGroupId: null,
   loading: {
     sites: false,
     buildings: false,
@@ -144,6 +184,8 @@ const initialState: ServiceLocationState = {
     areas: false,
     floors: false,
     rooms: false,
+    groups: false,
+    subGroups: false,
   },
   error: null,
 };
@@ -205,6 +247,15 @@ const serviceLocationSlice = createSlice({
     setSelectedRoom: (state, action: PayloadAction<number | null>) => {
       state.selectedRoomId = action.payload;
     },
+    setSelectedGroup: (state, action: PayloadAction<number | null>) => {
+      state.selectedGroupId = action.payload;
+      // Reset dependent selections
+      state.selectedSubGroupId = null;
+      state.subGroups = [];
+    },
+    setSelectedSubGroup: (state, action: PayloadAction<number | null>) => {
+      state.selectedSubGroupId = action.payload;
+    },
     clearAllSelections: (state) => {
       state.selectedSiteId = null;
       state.selectedBuildingId = null;
@@ -212,11 +263,15 @@ const serviceLocationSlice = createSlice({
       state.selectedAreaId = null;
       state.selectedFloorId = null;
       state.selectedRoomId = null;
+      state.selectedGroupId = null;
+      state.selectedSubGroupId = null;
       state.buildings = [];
       state.wings = [];
       state.areas = [];
       state.floors = [];
       state.rooms = [];
+      state.groups = [];
+      state.subGroups = [];
     },
   },
   extraReducers: (builder) => {
@@ -298,6 +353,32 @@ const serviceLocationSlice = createSlice({
       .addCase(fetchRooms.rejected, (state, action) => {
         state.loading.rooms = false;
         state.error = action.error.message || 'Failed to fetch rooms';
+      })
+      // Groups
+      .addCase(fetchGroups.pending, (state) => {
+        state.loading.groups = true;
+        state.error = null;
+      })
+      .addCase(fetchGroups.fulfilled, (state, action) => {
+        state.loading.groups = false;
+        state.groups = action.payload;
+      })
+      .addCase(fetchGroups.rejected, (state, action) => {
+        state.loading.groups = false;
+        state.error = action.error.message || 'Failed to fetch groups';
+      })
+      // SubGroups
+      .addCase(fetchSubGroups.pending, (state) => {
+        state.loading.subGroups = true;
+        state.error = null;
+      })
+      .addCase(fetchSubGroups.fulfilled, (state, action) => {
+        state.loading.subGroups = false;
+        state.subGroups = action.payload;
+      })
+      .addCase(fetchSubGroups.rejected, (state, action) => {
+        state.loading.subGroups = false;
+        state.error = action.error.message || 'Failed to fetch subgroups';
       });
   },
 });
@@ -309,6 +390,8 @@ export const {
   setSelectedArea,
   setSelectedFloor,
   setSelectedRoom,
+  setSelectedGroup,
+  setSelectedSubGroup,
   clearAllSelections,
 } = serviceLocationSlice.actions;
 

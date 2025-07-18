@@ -19,8 +19,8 @@ export const AddServicePage = () => {
     areaId: null as number | null,
     floorId: null as number | null,
     roomId: null as number | null,
-    group: '',
-    subGroup: ''
+    groupId: null as number | null,
+    subGroupId: null as number | null,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -35,6 +35,8 @@ export const AddServicePage = () => {
     areaId: number | null;
     floorId: number | null;
     roomId: number | null;
+    groupId: number | null;
+    subGroupId: number | null;
   }) => {
     setFormData(prev => ({
       ...prev,
@@ -44,6 +46,8 @@ export const AddServicePage = () => {
       areaId: location.areaId,
       floorId: location.floorId,
       roomId: location.roomId,
+      groupId: location.groupId,
+      subGroupId: location.subGroupId,
     }));
   }, []);
 
@@ -126,46 +130,6 @@ export const AddServicePage = () => {
             fieldStyles={fieldStyles} 
             onLocationChange={handleLocationChange}
           />
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                <MuiSelect
-                  labelId="group-select-label"
-                  label="Group"
-                  displayEmpty
-                  value={formData.group}
-                  onChange={(e) => handleInputChange('group', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Group</em></MenuItem>
-                  <MenuItem value="maintenance">Maintenance</MenuItem>
-                  <MenuItem value="cleaning">Cleaning</MenuItem>
-                  <MenuItem value="security">Security</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
-                <MuiSelect
-                  labelId="subgroup-select-label"
-                  label="Sub-Group"
-                  displayEmpty
-                  value={formData.subGroup}
-                  onChange={(e) => handleInputChange('subGroup', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
-                  <MenuItem value="electrical">Electrical</MenuItem>
-                  <MenuItem value="plumbing">Plumbing</MenuItem>
-                  <MenuItem value="hvac">HVAC</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </div>
         </CardContent>
       </Card>
 

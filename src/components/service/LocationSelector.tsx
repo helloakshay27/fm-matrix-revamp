@@ -9,12 +9,16 @@ import {
   fetchAreas,
   fetchFloors,
   fetchRooms,
+  fetchGroups,
+  fetchSubGroups,
   setSelectedSite,
   setSelectedBuilding,
   setSelectedWing,
   setSelectedArea,
   setSelectedFloor,
   setSelectedRoom,
+  setSelectedGroup,
+  setSelectedSubGroup,
 } from '@/store/slices/serviceLocationSlice';
 
 interface LocationSelectorProps {
@@ -26,6 +30,8 @@ interface LocationSelectorProps {
     areaId: number | null;
     floorId: number | null;
     roomId: number | null;
+    groupId: number | null;
+    subGroupId: number | null;
   }) => void;
 }
 
@@ -38,18 +44,23 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
     areas,
     floors,
     rooms,
+    groups,
+    subGroups,
     selectedSiteId,
     selectedBuildingId,
     selectedWingId,
     selectedAreaId,
     selectedFloorId,
     selectedRoomId,
+    selectedGroupId,
+    selectedSubGroupId,
     loading,
   } = useSelector((state: RootState) => state.serviceLocation);
 
-  // Load sites on component mount
+  // Load sites and groups on component mount
   useEffect(() => {
     dispatch(fetchSites());
+    dispatch(fetchGroups());
   }, [dispatch]);
 
   // Trigger location change callback when selections change
@@ -62,9 +73,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
         areaId: selectedAreaId,
         floorId: selectedFloorId,
         roomId: selectedRoomId,
+        groupId: selectedGroupId,
+        subGroupId: selectedSubGroupId,
       });
     }
-  }, [selectedSiteId, selectedBuildingId, selectedWingId, selectedAreaId, selectedFloorId, selectedRoomId, onLocationChange]);
+  }, [selectedSiteId, selectedBuildingId, selectedWingId, selectedAreaId, selectedFloorId, selectedRoomId, selectedGroupId, selectedSubGroupId, onLocationChange]);
 
   const handleSiteChange = (siteId: number) => {
     dispatch(setSelectedSite(siteId));
@@ -106,6 +119,17 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
 
   const handleRoomChange = (roomId: number) => {
     dispatch(setSelectedRoom(roomId));
+  };
+
+  const handleGroupChange = (groupId: number) => {
+    dispatch(setSelectedGroup(groupId));
+    if (groupId) {
+      dispatch(fetchSubGroups(groupId));
+    }
+  };
+
+  const handleSubGroupChange = (subGroupId: number) => {
+    dispatch(setSelectedSubGroup(subGroupId));
   };
 
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
@@ -290,6 +314,66 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
               ))}
             </MuiSelect>
             {loading.rooms && (
+              <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                <CircularProgress size={16} />
+              </div>
+            )}
+          </FormControl>
+        </div>
+
+        {/* Group */}
+        <div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="group-select-label" shrink>Group</InputLabel>
+            <MuiSelect
+              labelId="group-select-label"
+              label="Group"
+              displayEmpty
+              value={selectedGroupId || ''}
+              onChange={(e) => handleGroupChange(Number(e.target.value))}
+              sx={fieldStyles}
+              disabled={loading.groups}
+            >
+              <MenuItem value="">
+                <em>Select Group</em>
+              </MenuItem>
+              {groups.map((group) => (
+                <MenuItem key={group.id} value={group.id}>
+                  {group.name}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+            {loading.groups && (
+              <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                <CircularProgress size={16} />
+              </div>
+            )}
+          </FormControl>
+        </div>
+
+        {/* SubGroup */}
+        <div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
+            <MuiSelect
+              labelId="subgroup-select-label"
+              label="Sub-Group"
+              displayEmpty
+              value={selectedSubGroupId || ''}
+              onChange={(e) => handleSubGroupChange(Number(e.target.value))}
+              sx={fieldStyles}
+              disabled={!selectedGroupId || loading.subGroups}
+            >
+              <MenuItem value="">
+                <em>Select Sub-Group</em>
+              </MenuItem>
+              {subGroups.map((subGroup) => (
+                <MenuItem key={subGroup.id} value={subGroup.id}>
+                  {subGroup.name}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+            {loading.subGroups && (
               <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
                 <CircularProgress size={16} />
               </div>
