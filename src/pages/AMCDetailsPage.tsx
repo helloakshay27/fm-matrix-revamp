@@ -243,7 +243,7 @@ export const AMCDetailsPage = () => {
       <AddVisitModal 
         isOpen={showAddVisitModal}
         onClose={() => setShowAddVisitModal(false)}
-        amcId={amcDetails.id.toString()}
+        amcId={amcDetails?.id?.toString() || id || ''}
       />
     </div>
   );
