@@ -15,6 +15,8 @@ export const AddServicePage = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     serviceName: '',
+    executionType: '',
+    serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
     wingId: null as number | null,
@@ -161,6 +163,52 @@ export const AddServicePage = () => {
                 onChange={(e) => handleInputChange('serviceName', e.target.value)}
                 fullWidth
                 variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
+              />
+            </div>
+            <div>
+              <FormControl 
+                fullWidth 
+                variant="outlined" 
+                required
+                sx={{
+                  '& .MuiInputBase-root': fieldStyles
+                }}
+              >
+                <InputLabel shrink>Execution Type</InputLabel>
+                <MuiSelect
+                  value={formData.executionType}
+                  onChange={(e) => handleInputChange('executionType', e.target.value)}
+                  label="Execution Type"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Execution Type</MenuItem>
+                  <MenuItem value="internal">Internal</MenuItem>
+                  <MenuItem value="external">External</MenuItem>
+                  <MenuItem value="both">Both</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4 mb-4">
+            <div>
+              <TextField
+                label="Service Description"
+                placeholder="Enter Service Description"
+                name="serviceDescription"
+                value={formData.serviceDescription}
+                onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
                 InputLabelProps={{
                   shrink: true,
                 }}
