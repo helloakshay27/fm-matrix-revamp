@@ -1,96 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { apiClient } from '@/utils/apiClient';
 interface AttendanceRecord {
   id: number;
   name: string;
   department: string;
 }
-const attendanceData: AttendanceRecord[] = [{
-  id: 1,
-  name: 'Mahendra Lungare',
-  department: 'Tech'
-}, {
-  id: 2,
-  name: 'Irfan Shaikh',
-  department: 'Operations'
-}, {
-  id: 3,
-  name: 'Atrayee Talapatra',
-  department: 'HR'
-}, {
-  id: 4,
-  name: 'Mukesh Dabhi',
-  department: 'Office boy'
-}, {
-  id: 5,
-  name: 'Sunny Vishwakarma',
-  department: ''
-}, {
-  id: 6,
-  name: 'Mr. Bhaushali',
-  department: ''
-}, {
-  id: 7,
-  name: 'Mr.Kailash Jadhav',
-  department: ''
-}, {
-  id: 8,
-  name: 'Deepak Gupta',
-  department: 'Function 2'
-}, {
-  id: 9,
-  name: 'Kalyanasundaram Jayaraman',
-  department: ''
-}, {
-  id: 10,
-  name: 'Nupura Warangkar',
-  department: ''
-}, {
-  id: 11,
-  name: 'Surinderpal Singh Chadha',
-  department: ''
-}, {
-  id: 12,
-  name: 'Chetan Bafna',
-  department: ''
-}, {
-  id: 13,
-  name: 'Aniket Parkar',
-  department: ''
-}, {
-  id: 14,
-  name: 'Security 12',
-  department: ''
-}, {
-  id: 15,
-  name: 'Devesh Jain',
-  department: ''
-}, {
-  id: 16,
-  name: 'Sumitra Patil',
-  department: 'Admin'
-}, {
-  id: 17,
-  name: 'HQ Occupant 1',
-  department: ''
-}, {
-  id: 18,
-  name: 'Sagar Singh',
-  department: ''
-}, {
-  id: 19,
-  name: 'Amit Dwivh',
-  department: 'Electrical dept'
-}, {
-  id: 20,
-  name: 'Anushree D',
-  department: ''
-}];
 const columns: ColumnConfig[] = [{
   key: 'name',
   label: 'Name',
@@ -104,10 +24,36 @@ const columns: ColumnConfig[] = [{
 }];
 export const AttendanceDashboard = () => {
   const navigate = useNavigate();
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>(attendanceData);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const pageSize = 10;
+
+  useEffect(() => {
+    const fetchAttendanceData = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('https://fm-uat-api.lockated.com/pms/attendances.json');
+        
+        // Map API response to our AttendanceRecord interface
+        const mappedData: AttendanceRecord[] = response.data.map((item: any, index: number) => ({
+          id: index + 1, // Using index as ID since API might not have ID
+          name: item.full_name || '-',
+          department: item.department_name || '-'
+        }));
+        
+        setAttendance(mappedData);
+      } catch (error) {
+        console.error('Failed to fetch attendance data:', error);
+        setAttendance([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttendanceData();
+  }, []);
 
   // Calculate pagination
   const totalPages = Math.ceil(attendance.length / pageSize);
@@ -236,7 +182,27 @@ export const AttendanceDashboard = () => {
       </div>
 
       {/* Enhanced Table */}
-      <EnhancedTable data={paginatedData} columns={columns} renderCell={renderCell} renderActions={renderActions} onRowClick={item => handleViewDetails(item.id)} selectable={true} selectedItems={selectedItems} onSelectAll={handleSelectAll} onSelectItem={handleSelectItem} getItemId={item => String(item.id)} storageKey="attendance-dashboard-table" emptyMessage="No attendance records found" searchPlaceholder="Search attendance records..." enableExport={true} exportFileName="attendance-records" bulkActions={bulkActions} showBulkActions={true} pagination={false} />
+      <EnhancedTable 
+        data={paginatedData} 
+        columns={columns} 
+        renderCell={renderCell} 
+        renderActions={renderActions} 
+        onRowClick={item => handleViewDetails(item.id)} 
+        selectable={true} 
+        selectedItems={selectedItems} 
+        onSelectAll={handleSelectAll} 
+        onSelectItem={handleSelectItem} 
+        getItemId={item => String(item.id)} 
+        storageKey="attendance-dashboard-table" 
+        emptyMessage="No attendance records found" 
+        searchPlaceholder="Search attendance records..." 
+        enableExport={true} 
+        exportFileName="attendance-records" 
+        bulkActions={bulkActions} 
+        showBulkActions={true} 
+        pagination={false}
+        loading={loading}
+      />
 
       {/* Custom Pagination */}
       {totalPages > 1 && <div className="flex justify-center mt-6">
