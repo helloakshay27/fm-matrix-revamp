@@ -135,7 +135,6 @@ export const ServiceDashboard = () => {
     { key: 'category', label: 'Category', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
-    { key: 'site', label: 'Site', sortable: true },
     { key: 'building', label: 'Building', sortable: true },
     { key: 'wing', label: 'Wing', sortable: true },
     { key: 'area', label: 'Area', sortable: true },
@@ -220,8 +219,6 @@ export const ServiceDashboard = () => {
         return '-'; // Not available in API
       case 'uom':
         return '-'; // Not available in API
-      case 'site':
-        return item.site || '-';
       case 'building':
         return item.building || '-';
       case 'wing':
