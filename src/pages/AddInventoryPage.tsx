@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
+import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
@@ -15,6 +16,10 @@ export const AddInventoryPage = () => {
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
   const { assets = [], loading = false } = inventoryAssetsState || {};
   
+  const suppliersState = useSelector((state: RootState) => state.suppliers);
+  const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
+  const suppliersLoading = suppliersState?.loading || false;
+  
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
   const [taxApplicable, setTaxApplicable] = useState(false);
@@ -25,12 +30,14 @@ export const AddInventoryPage = () => {
   useEffect(() => {
     console.log('Dispatching fetchInventoryAssets...');
     dispatch(fetchInventoryAssets());
+    dispatch(fetchSuppliersData());
   }, [dispatch]);
 
   // Debug logging
   useEffect(() => {
     console.log('Assets state:', { assets, loading, inventoryAssetsState });
-  }, [assets, loading, inventoryAssetsState]);
+    console.log('Suppliers state:', { suppliers, suppliersLoading, suppliersState });
+  }, [assets, loading, inventoryAssetsState, suppliers, suppliersLoading, suppliersState]);
 
   const [formData, setFormData] = useState({
     assetName: '',
@@ -369,10 +376,16 @@ export const AddInventoryPage = () => {
                       label="Vendor"
                       notched
                       displayEmpty
+                      disabled={suppliersLoading}
                     >
-                      <MenuItem value="">Select Vendor</MenuItem>
-                      <MenuItem value="vendor1">Vendor 1</MenuItem>
-                      <MenuItem value="vendor2">Vendor 2</MenuItem>
+                      <MenuItem value="">
+                        {suppliersLoading ? 'Loading...' : 'Select Vendor'}
+                      </MenuItem>
+                      {suppliers.map((supplier: any) => (
+                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                          {supplier.company_name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
