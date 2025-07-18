@@ -43,9 +43,6 @@ interface AssetsState {
   filters: AssetFilters
   // Backward compatibility for existing code
   data: Asset[]
-  // For inventory dropdown
-  inventoryAssets: Asset[]
-  inventoryAssetsLoading: boolean
 }
 
 const initialState: AssetsState = {
@@ -56,9 +53,7 @@ const initialState: AssetsState = {
   currentPage: 1,
   totalPages: 0,
   filters: {},
-  data: [], // Backward compatibility
-  inventoryAssets: [],
-  inventoryAssetsLoading: false
+  data: [] // Backward compatibility
 }
 
 // Async thunk for fetching assets data with filters
@@ -84,15 +79,6 @@ export const fetchAssetsData = createAsyncThunk(
 
     const response = await apiClient.get(`/pms/assets.json?${queryParams}`)
     return { ...response.data, appliedFilters: filters }
-  }
-)
-
-// New async thunk for fetching assets for inventory dropdown
-export const fetchInventoryAssets = createAsyncThunk(
-  'assets/fetchInventoryAssets',
-  async () => {
-    const response = await apiClient.get('/pms/assets/get_assets.json')
-    return response.data
   }
 )
 
@@ -133,17 +119,6 @@ const assetsSlice = createSlice({
       .addCase(fetchAssetsData.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Failed to fetch assets data'
-      })
-      .addCase(fetchInventoryAssets.pending, (state) => {
-        state.inventoryAssetsLoading = true
-      })
-      .addCase(fetchInventoryAssets.fulfilled, (state, action) => {
-        state.inventoryAssetsLoading = false
-        state.inventoryAssets = action.payload.assets || []
-      })
-      .addCase(fetchInventoryAssets.rejected, (state, action) => {
-        state.inventoryAssetsLoading = false
-        state.error = action.error.message || 'Failed to fetch inventory assets'
       })
   }
 })

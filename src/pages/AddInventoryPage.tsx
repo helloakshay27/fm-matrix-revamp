@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import { fetchInventoryAssets } from '@/store/slices/assetsSlice';
+import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
@@ -12,7 +12,7 @@ import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { inventoryAssets, inventoryAssetsLoading } = useSelector((state: RootState) => state.assets);
+  const { assets, loading } = useSelector((state: RootState) => state.inventoryAssets);
   
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
@@ -220,12 +220,12 @@ export const AddInventoryPage = () => {
                       label="Select Asset Name"
                       notched
                       displayEmpty
-                      disabled={inventoryAssetsLoading}
+                      disabled={loading}
                     >
                       <MenuItem value="" sx={{ color: '#C72030' }}>
-                        {inventoryAssetsLoading ? 'Loading...' : 'Select an Option...'}
+                        {loading ? 'Loading...' : 'Select an Option...'}
                       </MenuItem>
-                      {inventoryAssets.map((asset) => (
+                      {assets.map((asset) => (
                         <MenuItem key={asset.id} value={asset.id.toString()}>
                           {asset.name}
                         </MenuItem>

@@ -28,6 +28,7 @@ import { inventoryReducer } from './slices/inventorySlice'
 import { locationReducer } from './slices/locationSlice'
 import serviceLocationReducer from './slices/serviceLocationSlice'
 import { attendanceReducer } from './slices/attendanceSlice'
+import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -60,6 +61,7 @@ export const store = configureStore({
     location: locationReducer,
     serviceLocation: serviceLocationReducer,
     attendance: attendanceReducer,
+    inventoryAssets: inventoryAssetsReducer,
   },
 })
 
