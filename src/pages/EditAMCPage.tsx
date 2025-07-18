@@ -284,7 +284,7 @@ export const EditAMCPage = () => {
     setUpdateLoading(true);
 
     try {
-      // Create JSON payload based on the API documentation
+      // Create JSON payload with all AMC fields
       let payload: any = {
         pms_asset_amc: {
           amc_cost: parseFloat(formData.cost) || 0,
@@ -292,6 +292,17 @@ export const EditAMCPage = () => {
           amc_end_date: formData.endDate,
           amc_first_service: formData.firstService,
           amc_frequency: formData.paymentTerms || null,
+          amc_period: `${formData.startDate} - ${formData.endDate}`,
+          no_of_visits: parseInt(formData.noOfVisits) || 0,
+          payment_term: formData.paymentTerms,
+          remarks: formData.remarks,
+          pms_site_id: (amcData as any)?.pms_site_id,
+          site_name: (amcData as any)?.site_name,
+          resource_id: (amcData as any)?.resource_id,
+          resource_name: (amcData as any)?.resource_name,
+          resource_type: (amcData as any)?.resource_type,
+          supplier_id: formData.vendor || formData.supplier,
+          supplier_name: (amcData as any)?.supplier_name
         }
       };
 
@@ -351,7 +362,7 @@ export const EditAMCPage = () => {
     setUpdateLoading(true);
 
     try {
-      // Create JSON payload based on the API documentation (same as handleSubmit)
+      // Create JSON payload with all AMC fields (same as handleSubmit)
       let payload: any = {
         pms_asset_amc: {
           amc_cost: parseFloat(formData.cost) || 0,
@@ -359,6 +370,17 @@ export const EditAMCPage = () => {
           amc_end_date: formData.endDate,
           amc_first_service: formData.firstService,
           amc_frequency: formData.paymentTerms || null,
+          amc_period: `${formData.startDate} - ${formData.endDate}`,
+          no_of_visits: parseInt(formData.noOfVisits) || 0,
+          payment_term: formData.paymentTerms,
+          remarks: formData.remarks,
+          pms_site_id: (amcData as any)?.pms_site_id,
+          site_name: (amcData as any)?.site_name,
+          resource_id: (amcData as any)?.resource_id,
+          resource_name: (amcData as any)?.resource_name,
+          resource_type: (amcData as any)?.resource_type,
+          supplier_id: formData.vendor || formData.supplier,
+          supplier_name: (amcData as any)?.supplier_name
         }
       };
 
