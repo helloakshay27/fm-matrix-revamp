@@ -66,13 +66,13 @@ export const EditAMCPage = () => {
 
   // Update form data when AMC data is loaded
   useEffect(() => {
-    if (amcData && typeof amcData === 'object' && 
-        assets.length > 0 && suppliers.length > 0 && services.length > 0) {
-      const data = amcData as any; // Type assertion for unknown data
-      console.log('AMC Data loaded for editing:', data);
-      console.log('Assets available:', assets);
-      console.log('Suppliers available:', suppliers);
-      console.log('Services available:', services);
+    if (amcData && typeof amcData === 'object') {
+      const data = amcData as any;
+      console.log('=== AMC Data Debug ===');
+      console.log('Raw AMC Data:', data);
+      console.log('Assets loaded:', assets.length, assets);
+      console.log('Suppliers loaded:', suppliers.length, suppliers);
+      console.log('Services loaded:', services.length, services);
       
       // Determine the correct form values based on API response
       const isAssetType = data.checklist_type === 'Asset' || data.checklist_type === 'asset';
@@ -83,11 +83,9 @@ export const EditAMCPage = () => {
       if (data.asset_id) {
         if (typeof data.asset_id === 'string') {
           try {
-            // Try to parse as JSON first
             const parsed = JSON.parse(data.asset_id);
             assetIds = Array.isArray(parsed) ? parsed : [data.asset_id];
           } catch {
-            // If not JSON, treat as single ID
             assetIds = [data.asset_id];
           }
         } else if (Array.isArray(data.asset_id)) {
@@ -95,36 +93,32 @@ export const EditAMCPage = () => {
         } else {
           assetIds = [data.asset_id];
         }
-        // Convert all to strings and validate they exist in assets
-        assetIds = assetIds.map(id => id.toString()).filter(id => 
-          assets.some(asset => asset.id.toString() === id)
-        );
-        console.log('Processed asset IDs:', assetIds);
+        assetIds = assetIds.map(id => id.toString());
+        console.log('Asset IDs to select:', assetIds);
       }
       
-      // Validate supplier exists
-      const supplierExists = suppliers.some(supplier => 
-        supplier.id.toString() === data.supplier_id?.toString()
-      );
+      // Find supplier by ID
+      const supplierId = data.supplier_id?.toString();
+      const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
+      console.log('Looking for supplier ID:', supplierId);
+      console.log('Found supplier:', foundSupplier);
       
-      // Validate service exists
-      const serviceExists = services.some(service => 
-        service.id.toString() === data.service_id?.toString()
-      );
-      
-      console.log('Supplier exists:', supplierExists, 'ID:', data.supplier_id);
-      console.log('Service exists:', serviceExists, 'ID:', data.service_id);
+      // Find service by ID
+      const serviceId = data.service_id?.toString();
+      const foundService = services.find(service => service.id.toString() === serviceId);
+      console.log('Looking for service ID:', serviceId);
+      console.log('Found service:', foundService);
       
       setFormData({
         details: isAssetType ? 'Asset' : 'Service',
         type: isIndividualType ? 'Individual' : 'Group',
-        assetName: (serviceExists ? data.service_id?.toString() : '') || '',
+        assetName: foundService ? serviceId : '',
         asset_ids: assetIds,
-        vendor: (supplierExists ? data.supplier_id?.toString() : '') || '',
+        vendor: foundSupplier ? supplierId : '',
         group: isIndividualType ? '' : (data.resource_id?.toString() || ''),
         subgroup: '',
         service: '',
-        supplier: (supplierExists ? data.supplier_id?.toString() : '') || '',
+        supplier: foundSupplier ? supplierId : '',
         startDate: data.amc_start_date || '',
         endDate: data.amc_end_date || '',
         cost: data.amc_cost?.toString() || '',
@@ -132,6 +126,12 @@ export const EditAMCPage = () => {
         firstService: data.amc_first_service || '',
         noOfVisits: data.no_of_visits?.toString() || '',
         remarks: data.remarks || ''
+      });
+      
+      console.log('Form data set:', {
+        supplier: foundSupplier ? supplierId : '',
+        service: foundService ? serviceId : '',
+        assetIds: assetIds
       });
       
       // If it's a group type and we have a group ID, fetch subgroups
