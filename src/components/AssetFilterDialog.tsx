@@ -73,19 +73,29 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     const fetchGroups = async () => {
       if (!isOpen) return;
       
+      console.log('Fetching groups API call started...');
       setLoadingGroups(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
-        console.log('Groups API response:', response.data);
+        console.log('Groups API response status:', response.status);
+        console.log('Groups API response headers:', response.headers);
+        console.log('Groups API response data:', response.data);
+        console.log('Groups API response data type:', typeof response.data);
+        console.log('Groups API response data isArray:', Array.isArray(response.data));
         
         // Ensure we always set an array
         const groupsData = Array.isArray(response.data) ? response.data : [];
+        console.log('Setting groups data:', groupsData);
+        console.log('Groups data length:', groupsData.length);
         setGroups(groupsData);
       } catch (error) {
-        console.error('Error fetching groups:', error);
+        console.error('Error fetching groups - full error:', error);
+        console.error('Error response:', error.response);
+        console.error('Error message:', error.message);
         setGroups([]);
       } finally {
         setLoadingGroups(false);
+        console.log('Groups API call completed');
       }
     };
 
