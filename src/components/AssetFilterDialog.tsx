@@ -60,7 +60,11 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       setLoadingGroups(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
-        setGroups(response.data || []);
+        console.log('Groups API response:', response.data);
+        
+        // Ensure we always set an array
+        const groupsData = Array.isArray(response.data) ? response.data : [];
+        setGroups(groupsData);
       } catch (error) {
         console.error('Error fetching groups:', error);
         setGroups([]);
@@ -83,7 +87,11 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       setLoadingSubgroups(true);
       try {
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${group}`);
-        setSubgroups(response.data || []);
+        console.log('Subgroups API response:', response.data);
+        
+        // Ensure we always set an array
+        const subgroupsData = Array.isArray(response.data) ? response.data : [];
+        setSubgroups(subgroupsData);
       } catch (error) {
         console.error('Error fetching subgroups:', error);
         setSubgroups([]);
