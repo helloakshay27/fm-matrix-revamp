@@ -214,7 +214,7 @@ export const AddServicePage = () => {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap justify-center">
         <Button 
           onClick={() => handleSubmit('saved with details')}
           style={{ backgroundColor: '#C72030' }}
