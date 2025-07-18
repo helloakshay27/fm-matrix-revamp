@@ -354,13 +354,6 @@ const BookingListDashboard = () => {
           </PopoverContent>
         </Popover>
 
-        <Button 
-          className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
-          onClick={() => setIsExportByCentreModalOpen(true)}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export (By Centre)
-        </Button>
       </div>
 
       {/* Enhanced Table with Drag and Drop */}
