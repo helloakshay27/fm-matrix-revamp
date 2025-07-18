@@ -223,6 +223,11 @@ export const AddAMCPage = () => {
       (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
 
+    // Add asset_ids at top level
+    if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
+      sendData.append('asset_ids', JSON.stringify(formData.asset_ids));
+    }
+
     // Add contract files
     attachments.contracts.forEach((file, index) => {
       sendData.append(`amc_contract_${index}`, file);
@@ -262,6 +267,11 @@ export const AddAMCPage = () => {
       (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
     sendData.append('pms_asset_amc[schedule_immediately]', 'true'); // Flag for save & schedule
+
+    // Add asset_ids at top level
+    if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
+      sendData.append('asset_ids', JSON.stringify(formData.asset_ids));
+    }
 
     // Add contract files
     attachments.contracts.forEach((file, index) => {
