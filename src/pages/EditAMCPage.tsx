@@ -551,7 +551,6 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('type', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
-                    disabled={true}
                   />
                   Individual
                 </label>
@@ -564,7 +563,6 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('type', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
-                    disabled={true}
                   />
                   Group
                 </label>
