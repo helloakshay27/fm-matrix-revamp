@@ -55,12 +55,27 @@ interface SiteItem {
   name: string;
 }
 
+interface BuildingItem {
+  id: number;
+  name: string;
+}
+
 interface WingItem {
   id: number;
   name: string;
 }
 
 interface AreaItem {
+  id: number;
+  name: string;
+}
+
+interface FloorItem {
+  id: number;
+  name: string;
+}
+
+interface RoomItem {
   id: number;
   name: string;
 }
@@ -81,15 +96,21 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const [groups, setGroups] = useState<GroupItem[]>([]);
   const [subgroups, setSubgroups] = useState<SubGroupItem[]>([]);
   const [sites, setSites] = useState<SiteItem[]>([]);
+  const [buildings, setBuildings] = useState<BuildingItem[]>([]);
   const [wings, setWings] = useState<WingItem[]>([]);
   const [areas, setAreas] = useState<AreaItem[]>([]);
+  const [floors, setFloors] = useState<FloorItem[]>([]);
+  const [rooms, setRooms] = useState<RoomItem[]>([]);
   
   // Loading states
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [loadingSubgroups, setLoadingSubgroups] = useState(false);
   const [loadingSites, setLoadingSites] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   // Fetch groups on component mount
   useEffect(() => {
@@ -175,6 +196,39 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     fetchSites();
   }, [isOpen]);
 
+  // Fetch buildings when site changes
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      if (!site) {
+        setBuildings([]);
+        setBuilding(''); // Reset building when site changes
+        setWing(''); // Reset dependent dropdowns
+        setArea('');
+        setFloor('');
+        setRoom('');
+        return;
+      }
+
+      console.log('Fetching buildings for site:', site);
+      setLoadingBuildings(true);
+      try {
+        const response = await apiClient.get(`/pms/sites/${site}/buildings.json`);
+        console.log('Buildings API response:', response.data);
+        
+        const buildingsData = Array.isArray(response.data?.buildings) ? response.data.buildings : [];
+        console.log('Setting buildings data:', buildingsData);
+        setBuildings(buildingsData);
+      } catch (error) {
+        console.error('Error fetching buildings:', error);
+        setBuildings([]);
+      } finally {
+        setLoadingBuildings(false);
+      }
+    };
+
+    fetchBuildings();
+  }, [site]);
+
   // Fetch wings when building changes
   useEffect(() => {
     const fetchWings = async () => {
@@ -232,10 +286,78 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     fetchAreas();
   }, [wing]);
 
+  // Fetch floors when area changes
+  useEffect(() => {
+    const fetchFloors = async () => {
+      if (!area) {
+        setFloors([]);
+        setFloor(''); // Reset floor when area changes
+        setRoom(''); // Reset room when area changes
+        return;
+      }
+
+      console.log('Fetching floors for area:', area);
+      setLoadingFloors(true);
+      try {
+        const response = await apiClient.get(`/pms/areas/${area}/floors.json`);
+        console.log('Floors API response:', response.data);
+        
+        const floorsData = Array.isArray(response.data?.floors) ? response.data.floors : [];
+        console.log('Setting floors data:', floorsData);
+        setFloors(floorsData);
+      } catch (error) {
+        console.error('Error fetching floors:', error);
+        setFloors([]);
+      } finally {
+        setLoadingFloors(false);
+      }
+    };
+
+    fetchFloors();
+  }, [area]);
+
+  // Fetch rooms when floor changes
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (!floor) {
+        setRooms([]);
+        return;
+      }
+
+      console.log('Fetching rooms for floor:', floor);
+      setLoadingRooms(true);
+      try {
+        const response = await apiClient.get(`/pms/floors/${floor}/rooms.json`);
+        console.log('Rooms API response:', response.data);
+        
+        const roomsData = Array.isArray(response.data?.rooms) ? response.data.rooms : [];
+        console.log('Setting rooms data:', roomsData);
+        setRooms(roomsData);
+      } catch (error) {
+        console.error('Error fetching rooms:', error);
+        setRooms([]);
+      } finally {
+        setLoadingRooms(false);
+      }
+    };
+
+    fetchRooms();
+  }, [floor]);
+
   // Handle group change and reset subgroup
   const handleGroupChange = (value: string) => {
     setGroup(value);
     setSubgroup(''); // Reset subgroup when group changes
+  };
+
+  // Handle site change and reset all dependent dropdowns
+  const handleSiteChange = (value: string) => {
+    setSite(value);
+    setBuilding('');
+    setWing('');
+    setArea('');
+    setFloor('');
+    setRoom('');
   };
 
   // Handle building change and reset dependent dropdowns
@@ -243,12 +365,29 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     setBuilding(value);
     setWing(''); // Reset wing when building changes
     setArea(''); // Reset area when building changes
+    setFloor('');
+    setRoom('');
   };
 
-  // Handle wing change and reset area
+  // Handle wing change and reset dependent dropdowns
   const handleWingChange = (value: string) => {
     setWing(value);
     setArea(''); // Reset area when wing changes
+    setFloor('');
+    setRoom('');
+  };
+
+  // Handle area change and reset dependent dropdowns
+  const handleAreaChange = (value: string) => {
+    setArea(value);
+    setFloor(''); // Reset floor when area changes
+    setRoom(''); // Reset room when area changes
+  };
+
+  // Handle floor change and reset room
+  const handleFloorChange = (value: string) => {
+    setFloor(value);
+    setRoom(''); // Reset room when floor changes
   };
 
   const handleSubmit = () => {
@@ -384,7 +523,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="site-label"
                   label="Site"
                   value={site}
-                  onChange={(e) => setSite(e.target.value)}
+                  onChange={(e) => handleSiteChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
                   disabled={loadingSites}
@@ -407,11 +546,15 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => handleBuildingChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingBuildings || !site}
                   MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Building</em></MenuItem>
-                  <MenuItem value="building1">Building 1</MenuItem>
-                  <MenuItem value="building2">Building 2</MenuItem>
+                  {buildings.map((buildingItem) => (
+                    <MenuItem key={buildingItem.id} value={buildingItem.id.toString()}>
+                      {buildingItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
@@ -442,7 +585,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="area-label"
                   label="Area"
                   value={area}
-                  onChange={(e) => setArea(e.target.value)}
+                  onChange={(e) => handleAreaChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
                   disabled={loadingAreas || !wing}
@@ -464,14 +607,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="floor-label"
                   label="Floor"
                   value={floor}
-                  onChange={(e) => setFloor(e.target.value)}
+                  onChange={(e) => handleFloorChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingFloors || !area}
                   MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Floor</em></MenuItem>
-                  <MenuItem value="floor1">Floor 1</MenuItem>
-                  <MenuItem value="floor2">Floor 2</MenuItem>
+                  {floors.map((floorItem) => (
+                    <MenuItem key={floorItem.id} value={floorItem.id.toString()}>
+                      {floorItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -483,11 +630,15 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setRoom(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingRooms || !floor}
                   MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Room</em></MenuItem>
-                  <MenuItem value="room1">Room 1</MenuItem>
-                  <MenuItem value="room2">Room 2</MenuItem>
+                  {rooms.map((roomItem) => (
+                    <MenuItem key={roomItem.id} value={roomItem.id.toString()}>
+                      {roomItem.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
