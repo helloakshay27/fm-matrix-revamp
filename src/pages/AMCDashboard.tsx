@@ -56,7 +56,6 @@ const columns: ColumnConfig[] = [
   { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
   { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
   { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
-  { key: 'payment_term', label: 'Payment Term', sortable: true, defaultVisible: true },
 ];
 
 export const AMCDashboard = () => {
@@ -159,8 +158,6 @@ export const AMCDashboard = () => {
         );
       case 'created_at':
         return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
-      case 'payment_term':
-        return item.payment_term || '-';
       default:
         return '-';
     }
