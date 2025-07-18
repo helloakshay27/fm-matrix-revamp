@@ -131,11 +131,6 @@ export const AssetDashboard = () => {
   const displayAssets = searchTerm.trim() ? searchAssets : transformedAssets;
   const isSearchMode = searchTerm.trim().length > 0;
 
-  // For stats calculation, we need ALL filtered assets, not just current page
-  // If we have filters applied, we should use the total filtered count from API response
-  // For now, let's use displayAssets but note this limitation
-  const allFilteredAssets = displayAssets; // This represents all filtered results
-
   // Create pagination object for compatibility
   const pagination = {
     currentPage,
@@ -143,70 +138,17 @@ export const AssetDashboard = () => {
     totalCount: totalCount || 0
   };
 
-  // Create stats object based on current displayed assets (filtered or unfiltered)
-  const calculateStats = (assetList: any[]) => {
-    console.log('Calculating stats for assets:', assetList.length, 'assets');
-    console.log('Total count from API:', totalCount);
-    console.log('Sample asset statuses:', assetList.slice(0, 3).map(a => ({ id: a.id, status: a.status })));
-    
-    // IMPORTANT: The current implementation only calculates from visible page data
-    // This should ideally be calculated from ALL filtered assets, not just current page
-    const totalAssets = assetList.length;
-    
-    // Check for various status formats from API
-    const inUseAssets = assetList.filter(asset => {
-      const status = asset.status?.toLowerCase();
-      return status === 'in_use' || status === 'in use' || status === 'active' || status === 'in-use';
-    }).length;
-    
-    const breakdownAssets = assetList.filter(asset => {
-      const status = asset.status?.toLowerCase();
-      return status === 'breakdown' || status === 'broken' || status === 'faulty';
-    }).length;
-    
-    const inStoreAssets = assetList.filter(asset => {
-      const status = asset.status?.toLowerCase();
-      return status === 'in_storage' || status === 'in_store' || status === 'in store' || status === 'storage' || status === 'stored';
-    }).length;
-    
-    const disposeAssets = assetList.filter(asset => {
-      const status = asset.status?.toLowerCase();
-      return status === 'disposed' || status === 'dispose' || status === 'discarded';
-    }).length;
-    
-    const missingAssets = assetList.filter(asset => {
-      const status = asset.status?.toLowerCase();
-      return status === 'missing' || status === 'lost';
-    }).length;
-    
-    // Get unique status values for debugging
-    const uniqueStatuses = [...new Set(assetList.map(asset => asset.status))];
-    console.log('Unique status values found:', uniqueStatuses);
-    console.log('Stats calculated from current page:', {
-      total: totalAssets,
-      inUse: inUseAssets,
-      breakdown: breakdownAssets, 
-      inStore: inStoreAssets,
-      dispose: disposeAssets,
-      missing: missingAssets
-    });
-    
-    // Note: This is a limitation - we're showing stats for current page only
-    // Ideally, the API should return aggregated stats for all filtered results
-    return {
-      total: totalCount || totalAssets, // Use total count from API if available
-      totalValue: "₹0.00", 
-      nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
-      itAssets: Math.floor((totalCount || totalAssets) * 0.4),
-      inUse: inUseAssets,
-      breakdown: breakdownAssets,
-      inStore: inStoreAssets,
-      dispose: disposeAssets
-    };
+  // Create stats object for compatibility
+  const stats = {
+    total: totalCount || 0,
+    totalValue: "₹0.00", 
+    nonItAssets: 0,
+    itAssets: 0,
+    inUse: 0,
+    breakdown: 0,
+    inStore: 0,
+    dispose: 0
   };
-
-  // Calculate stats from currently displayed assets (this updates with filters)
-  const stats = calculateStats(displayAssets);
 
   // Drag and drop sensors
   const sensors = useSensors(
