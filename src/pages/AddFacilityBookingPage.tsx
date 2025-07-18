@@ -138,6 +138,9 @@ export const AddFacilityBookingPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    alert('Form submitted! Check console for details.');
+    console.log('=== FORM SUBMITTED - START ===');
+    
     try {
       // Validate required fields first
       if (!selectedUser) {
