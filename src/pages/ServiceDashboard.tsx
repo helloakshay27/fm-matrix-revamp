@@ -139,9 +139,6 @@ export const ServiceDashboard = () => {
       <Button onClick={handleImportClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Upload className="w-4 h-4 mr-2" /> Import
       </Button>
-      <Button onClick={handleImportLocationsClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Upload className="w-4 h-4 mr-2" /> Import Locations
-      </Button>
       <Button onClick={handleFiltersClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
