@@ -139,12 +139,40 @@ export const AddFacilityBookingPage = () => {
     e.preventDefault();
     
     try {
+      // Validate required fields
+      if (!selectedUser) {
+        console.error('Please select a user');
+        return;
+      }
+      if (!selectedFacility) {
+        console.error('Please select a facility');
+        return;
+      }
+      if (!selectedDate) {
+        console.error('Please select a date');
+        return;
+      }
+      if (!paymentMethod) {
+        console.error('Please select a payment method');
+        return;
+      }
+      if (selectedSlots.length === 0) {
+        console.error('Please select at least one slot');
+        return;
+      }
+
       // Get required data from localStorage
       const selectedSiteId = localStorage.getItem('selectedSiteId');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       
-      if (!selectedSiteId || !user.id) {
-        console.error('Missing required data from localStorage');
+      console.log('localStorage data:', { selectedSiteId, user });
+      
+      if (!selectedSiteId) {
+        console.error('selectedSiteId not found in localStorage');
+        return;
+      }
+      if (!user.id) {
+        console.error('User ID not found in localStorage');
         return;
       }
 
@@ -175,6 +203,11 @@ export const AddFacilityBookingPage = () => {
         submitForm.append('on_behalf_of', 'fm-user');
         submitForm.append('occupant_user_id', '');
         submitForm.append('fm_user_id', selectedUser);
+      }
+
+      console.log('Submitting FormData with values:');
+      for (let [key, value] of submitForm.entries()) {
+        console.log(`${key}: ${value}`);
       }
 
       // Submit the booking
