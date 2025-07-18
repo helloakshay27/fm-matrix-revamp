@@ -121,17 +121,17 @@ export const AddFacilityBookingPage = () => {
               </SelectTrigger>
               <SelectContent>
                 {fmUsersError && (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="error-state" disabled>
                     Error loading users
                   </SelectItem>
                 )}
                 {fmUsersLoading && (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="loading-state" disabled>
                     Loading users...
                   </SelectItem>
                 )}
                 {!fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no-users" disabled>
                     No users available
                   </SelectItem>
                 )}
