@@ -1,6 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { fetchInventoryAssets } from '@/store/slices/assetsSlice';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
@@ -8,12 +11,19 @@ import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { inventoryAssets, inventoryAssetsLoading } = useSelector((state: RootState) => state.assets);
+  
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
   const [taxApplicable, setTaxApplicable] = useState(false);
   const [ecoFriendly, setEcoFriendly] = useState(false);
   const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
+
+  useEffect(() => {
+    dispatch(fetchInventoryAssets());
+  }, [dispatch]);
 
   const [formData, setFormData] = useState({
     assetName: '',
@@ -210,12 +220,16 @@ export const AddInventoryPage = () => {
                       label="Select Asset Name"
                       notched
                       displayEmpty
+                      disabled={inventoryAssetsLoading}
                     >
                       <MenuItem value="" sx={{ color: '#C72030' }}>
-                        Select an Option...
+                        {inventoryAssetsLoading ? 'Loading...' : 'Select an Option...'}
                       </MenuItem>
-                      <MenuItem value="asset1">Asset 1</MenuItem>
-                      <MenuItem value="asset2">Asset 2</MenuItem>
+                      {inventoryAssets.map((asset) => (
+                        <MenuItem key={asset.id} value={asset.id.toString()}>
+                          {asset.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
