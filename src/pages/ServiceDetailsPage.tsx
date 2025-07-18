@@ -286,12 +286,6 @@ export const ServiceDetailsPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-8 text-center text-sm text-[#1a1a1a] opacity-70">
-        Powered by <span className="font-semibold">go</span>
-        <span className="text-[#C72030]">Phygital</span>
-        <span className="font-semibold">.work</span>
-      </div>
 
       {/* Modal */}
       <AssociateServiceModal 
