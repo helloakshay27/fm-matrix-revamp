@@ -1,27 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
 export const EditAMCPage = () => {
   const navigate = useNavigate();
-  const {
-    id
-  } = useParams();
+  const dispatch = useAppDispatch();
+  const { id } = useParams();
+  
+  const { data: amcData, loading, error } = useAppSelector(state => state.amcDetails);
 
-  // Mock data - in real app this would come from API
   const [formData, setFormData] = useState({
-    assetName: 'adani-electric-meter',
-    vendor: 'tbs-electrical',
-    startDate: '2025-04-01',
-    endDate: '2025-05-10',
-    cost: '12',
-    paymentTerms: 'half-yearly',
-    firstService: '2025-04-09',
-    remarks: '232e'
+    assetName: '',
+    vendor: '',
+    startDate: '',
+    endDate: '',
+    cost: '',
+    paymentTerms: '',
+    firstService: '',
+    remarks: ''
   });
   const [attachments, setAttachments] = useState<File[]>([]);
+
+  // Fetch AMC data when component mounts
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchAMCDetails(id));
+    }
+  }, [dispatch, id]);
+
+  // Update form data when AMC data is loaded
+  useEffect(() => {
+    if (amcData && typeof amcData === 'object') {
+      const data = amcData as any; // Type assertion for unknown data
+      setFormData({
+        assetName: data.asset_name || data.assetName || '',
+        vendor: data.vendor || '',
+        startDate: data.start_date || data.startDate || '',
+        endDate: data.end_date || data.endDate || '',
+        cost: data.cost?.toString() || '',
+        paymentTerms: data.payment_terms || data.paymentTerms || '',
+        firstService: data.first_service_date || data.firstService || '',
+        remarks: data.remarks || ''
+      });
+    }
+  }, [amcData]);
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -62,6 +88,40 @@ export const EditAMCPage = () => {
       }
     }
   };
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to AMC Details
+          </Button>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT AMC - {id}</h1>
+        </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="text-lg">Loading AMC data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to AMC Details
+          </Button>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT AMC - {id}</h1>
+        </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="text-lg text-red-600">Error loading AMC data: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
   return <div className="p-6">
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
