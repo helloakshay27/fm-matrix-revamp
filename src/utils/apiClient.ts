@@ -1,17 +1,19 @@
 import axios from 'axios'
-import { BASE_URL, getAuthHeader } from '@/config/apiConfig'
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
 
 // Create configured axios instance
 export const apiClient = axios.create({
-  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// Request interceptor to automatically add auth header
+// Request interceptor to dynamically set baseURL and auth header
 apiClient.interceptors.request.use(
   (config) => {
+    // Dynamically set baseURL from localStorage
+    config.baseURL = API_CONFIG.BASE_URL
+    // Dynamically set auth header from localStorage
     config.headers.Authorization = getAuthHeader()
     return config
   },
