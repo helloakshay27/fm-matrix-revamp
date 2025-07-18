@@ -49,11 +49,13 @@ export const AddOperationalAuditSchedulePage = () => {
 
   const [timeSetup, setTimeSetup] = useState({
     timeSlots: {
-      hours: { mode: 'specific', specific: [], range: { start: 0, end: 23 } },
-      minutes: { mode: 'specific', specific: [], range: { start: 0, end: 59 } },
-      days: { mode: 'weekdays', weekdays: [], dates: [] },
-      months: { mode: 'specific', specific: [], range: { start: 0, end: 11 } }
-    }
+      hours: { mode: 'specific' as 'specific' | 'range', specific: [] as number[], range: { start: 0, end: 23 } },
+      minutes: { mode: 'specific' as 'specific' | 'range', specific: [] as number[], range: { start: 0, end: 59 } },
+      days: { mode: 'weekdays' as 'weekdays' | 'dates', weekdays: [] as string[], dates: [] as number[] },
+      months: { mode: 'specific' as 'specific' | 'range', specific: [] as number[], range: { start: 0, end: 11 } }
+    },
+    selectedDays: [] as number[],
+    selectedMonths: [] as number[]
   });
 
   const [mapping, setMapping] = useState({
