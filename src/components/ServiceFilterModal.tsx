@@ -18,7 +18,12 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+    console.log(`Updating ${field} to:`, value);
+    setFilters(prev => {
+      const updated = { ...prev, [field]: value };
+      console.log('Updated filters:', updated);
+      return updated;
+    });
   };
 
   const handleApply = () => {
