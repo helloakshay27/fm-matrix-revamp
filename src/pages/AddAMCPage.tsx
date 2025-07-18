@@ -85,9 +85,20 @@ export const AddAMCPage = () => {
       setLoading(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
-        setAssetGroups(response.data || []);
+        console.log('API Response:', response.data);
+        
+        // Ensure we always set an array
+        if (Array.isArray(response.data)) {
+          setAssetGroups(response.data);
+        } else if (response.data && Array.isArray(response.data.asset_groups)) {
+          setAssetGroups(response.data.asset_groups);
+        } else {
+          console.warn('API response is not an array:', response.data);
+          setAssetGroups([]);
+        }
       } catch (error) {
         console.error('Error fetching asset groups:', error);
+        setAssetGroups([]); // Ensure it stays as an array
         toast({
           title: "Error",
           description: "Failed to fetch asset groups.",
@@ -256,7 +267,7 @@ export const AddAMCPage = () => {
                         disabled={loading}
                       >
                         <MenuItem value=""><em>Select Group</em></MenuItem>
-                        {assetGroups.map((group) => (
+                        {Array.isArray(assetGroups) && assetGroups.map((group) => (
                           <MenuItem key={group.id} value={group.id.toString()}>
                             {group.name}
                           </MenuItem>
@@ -278,7 +289,7 @@ export const AddAMCPage = () => {
                         disabled={!formData.group || loading}
                       >
                         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                        {subGroups.map((subGroup) => (
+                        {Array.isArray(subGroups) && subGroups.map((subGroup) => (
                           <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
                             {subGroup.name}
                           </MenuItem>
