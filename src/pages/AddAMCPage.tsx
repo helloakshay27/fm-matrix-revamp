@@ -37,6 +37,7 @@ export const AddAMCPage = () => {
   const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
   const [suppliers, setSuppliers] = useState<Array<{id: number, company_name: string}>>([]);
   const [assets, setAssets] = useState<Array<{id: number, name: string}>>([]);
+  const [services, setServices] = useState<Array<{id: number, name: string}>>([]);
   const [loading, setLoading] = useState(false);
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -161,9 +162,35 @@ export const AddAMCPage = () => {
       }
     };
 
+    const fetchServices = async () => {
+      try {
+        const response = await apiClient.get('/pms/services/get_services.json');
+        console.log('Services API Response:', response.data);
+        
+        // Handle different possible response structures for services
+        if (Array.isArray(response.data)) {
+          setServices(response.data);
+        } else if (response.data && Array.isArray(response.data.services)) {
+          setServices(response.data.services);
+        } else {
+          console.warn('Services API response is not an array:', response.data);
+          setServices([]);
+        }
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        setServices([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch services.",
+          variant: "destructive"
+        });
+      }
+    };
+
     fetchAssetGroups();
     fetchSuppliers();
     fetchAssets();
+    fetchServices();
   }, [toast]);
 
   // Update sub-groups when group changes
@@ -334,13 +361,21 @@ export const AddAMCPage = () => {
                 ) : (
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="service-select-label" shrink>Service</InputLabel>
-                    <MuiSelect labelId="service-select-label" label="Service" displayEmpty value={formData.assetName} onChange={e => handleInputChange('assetName', e.target.value)} sx={fieldStyles}>
+                    <MuiSelect 
+                      labelId="service-select-label" 
+                      label="Service" 
+                      displayEmpty 
+                      value={formData.assetName} 
+                      onChange={e => handleInputChange('assetName', e.target.value)} 
+                      sx={fieldStyles}
+                      disabled={loading}
+                    >
                       <MenuItem value=""><em>Select a Service...</em></MenuItem>
-                      <MenuItem value="maintenance-service">Maintenance Service</MenuItem>
-                      <MenuItem value="repair-service">Repair Service</MenuItem>
-                      <MenuItem value="cleaning-service">Cleaning Service</MenuItem>
-                      <MenuItem value="security-service">Security Service</MenuItem>
-                      <MenuItem value="hvac-service">HVAC Service</MenuItem>
+                      {Array.isArray(services) && services.map((service) => (
+                        <MenuItem key={service.id} value={service.id.toString()}>
+                          {service.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 )}
