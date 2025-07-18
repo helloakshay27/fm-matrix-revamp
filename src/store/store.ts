@@ -26,6 +26,7 @@ import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
 import { inventoryReducer } from './slices/inventorySlice'
 import { locationReducer } from './slices/locationSlice'
+import serviceLocationReducer from './slices/serviceLocationSlice'
 
 export const store = configureStore({
   reducer: {
@@ -56,6 +57,7 @@ export const store = configureStore({
     amcCreate: amcCreateReducer,
     inventory: inventoryReducer,
     location: locationReducer,
+    serviceLocation: serviceLocationReducer,
   },
 })
 

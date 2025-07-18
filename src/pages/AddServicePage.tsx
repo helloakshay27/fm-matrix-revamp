@@ -6,18 +6,19 @@ import { ArrowLeft, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { LocationSelector } from '@/components/service/LocationSelector';
 
 export const AddServicePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     serviceName: '',
-    site: '',
-    building: '',
-    wing: '',
-    area: '',
-    floor: '',
-    room: '',
+    siteId: null as number | null,
+    buildingId: null as number | null,
+    wingId: null as number | null,
+    areaId: null as number | null,
+    floorId: null as number | null,
+    roomId: null as number | null,
     group: '',
     subGroup: ''
   });
@@ -25,6 +26,25 @@ export const AddServicePage = () => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLocationChange = (location: {
+    siteId: number | null;
+    buildingId: number | null;
+    wingId: number | null;
+    areaId: number | null;
+    floorId: number | null;
+    roomId: number | null;
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      siteId: location.siteId,
+      buildingId: location.buildingId,
+      wingId: location.wingId,
+      areaId: location.areaId,
+      floorId: location.floorId,
+      roomId: location.roomId,
+    }));
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,124 +119,15 @@ export const AddServicePage = () => {
                 }}
               />
             </div>
-
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="site-select-label" shrink>Site</InputLabel>
-                <MuiSelect
-                  labelId="site-select-label"
-                  label="Site"
-                  displayEmpty
-                  value={formData.site}
-                  onChange={(e) => handleInputChange('site', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select</em></MenuItem>
-                  <MenuItem value="tower-4">Tower 4</MenuItem>
-                  <MenuItem value="sebc">SEBC</MenuItem>
-                  <MenuItem value="hay">Hay</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="building-select-label" shrink>Building</InputLabel>
-                <MuiSelect
-                  labelId="building-select-label"
-                  label="Building"
-                  displayEmpty
-                  value={formData.building}
-                  onChange={(e) => handleInputChange('building', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Building</em></MenuItem>
-                  <MenuItem value="wing2">Wing2</MenuItem>
-                  <MenuItem value="main-building">Main Building</MenuItem>
-                  <MenuItem value="annexe">Annexe</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
-                <MuiSelect
-                  labelId="wing-select-label"
-                  label="Wing"
-                  displayEmpty
-                  value={formData.wing}
-                  onChange={(e) => handleInputChange('wing', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Wing</em></MenuItem>
-                  <MenuItem value="south">South</MenuItem>
-                  <MenuItem value="north">North</MenuItem>
-                  <MenuItem value="east">East</MenuItem>
-                  <MenuItem value="west">West</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="area-select-label" shrink>Area</InputLabel>
-                <MuiSelect
-                  labelId="area-select-label"
-                  label="Area"
-                  displayEmpty
-                  value={formData.area}
-                  onChange={(e) => handleInputChange('area', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Area</em></MenuItem>
-                  <MenuItem value="lobby">Lobby</MenuItem>
-                  <MenuItem value="office">Office</MenuItem>
-                  <MenuItem value="cafeteria">Cafeteria</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+          {/* Dynamic Location Selector */}
+          <LocationSelector 
+            fieldStyles={fieldStyles} 
+            onLocationChange={handleLocationChange}
+          />
 
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
-                <MuiSelect
-                  labelId="floor-select-label"
-                  label="Floor"
-                  displayEmpty
-                  value={formData.floor}
-                  onChange={(e) => handleInputChange('floor', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Floor</em></MenuItem>
-                  <MenuItem value="ground">Ground Floor</MenuItem>
-                  <MenuItem value="first">First Floor</MenuItem>
-                  <MenuItem value="second">Second Floor</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="room-select-label" shrink>Room</InputLabel>
-                <MuiSelect
-                  labelId="room-select-label"
-                  label="Room"
-                  displayEmpty
-                  value={formData.room}
-                  onChange={(e) => handleInputChange('room', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Room</em></MenuItem>
-                  <MenuItem value="101">Room 101</MenuItem>
-                  <MenuItem value="102">Room 102</MenuItem>
-                  <MenuItem value="conference">Conference Room</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
             <div>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="group-select-label" shrink>Group</InputLabel>
@@ -235,9 +146,7 @@ export const AddServicePage = () => {
                 </MuiSelect>
               </FormControl>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
             <div>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
