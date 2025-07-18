@@ -141,7 +141,7 @@ export const SpaceManagementBookingDetailsPage = () => {
     paymentMethod: 'N/A'
   };
   const handleBack = () => {
-    navigate(-1);
+    navigate('/vas/booking/list');
   };
   return <div className="p-6 min-h-screen bg-transparent">
       {/* Breadcrumb */}
