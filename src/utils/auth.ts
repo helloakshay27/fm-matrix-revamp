@@ -89,10 +89,8 @@ export const loginUser = async (email: string, password: string, baseUrl: string
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      user: {
-        email,
-        password
-      }
+      email,
+      password
     }),
   });
 
