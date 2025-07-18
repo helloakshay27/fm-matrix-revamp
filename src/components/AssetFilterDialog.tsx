@@ -1,5 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchAssetsData, AssetFilters } from '@/store/slices/assetsSlice';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
+import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 interface AssetFilterDialogProps {
   isOpen: boolean;
@@ -22,7 +27,68 @@ const fieldStyles = {
   },
 };
 
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999, // High z-index to ensure dropdown appears above other elements
+    },
+  },
+  // Prevent focus conflicts with Dialog
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+interface GroupItem {
+  id: number;
+  name: string;
+}
+
+interface SubGroupItem {
+  id: number;
+  name: string;
+  group_id: number;
+}
+
+interface SiteItem {
+  id: number;
+  name: string;
+}
+
+interface BuildingItem {
+  id: number;
+  name: string;
+}
+
+interface WingItem {
+  id: number;
+  name: string;
+}
+
+interface AreaItem {
+  id: number;
+  name: string;
+}
+
+interface FloorItem {
+  id: number;
+  name: string;
+}
+
+interface RoomItem {
+  id: number;
+  name: string;
+}
+
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Form state
   const [assetName, setAssetName] = useState('');
   const [assetId, setAssetId] = useState('');
   const [group, setGroup] = useState('');
@@ -34,34 +100,276 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const [floor, setFloor] = useState('');
   const [room, setRoom] = useState('');
 
-  const handleSubmit = () => {
-    const filters = {
-      assetName,
-      assetId,
-      group,
-      subgroup,
-      site,
-      building,
-      wing,
-      area,
-      floor,
-      room,
+  // API data states
+  const [groups, setGroups] = useState<GroupItem[]>([]);
+  const [subgroups, setSubgroups] = useState<SubGroupItem[]>([]);
+  const [sites, setSites] = useState<SiteItem[]>([]);
+  const [buildings, setBuildings] = useState<BuildingItem[]>([]);
+  const [wings, setWings] = useState<WingItem[]>([]);
+  const [areas, setAreas] = useState<AreaItem[]>([]);
+  const [floors, setFloors] = useState<FloorItem[]>([]);
+  const [rooms, setRooms] = useState<RoomItem[]>([]);
+  
+  // Loading states
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [loadingSubgroups, setLoadingSubgroups] = useState(false);
+  const [loadingSites, setLoadingSites] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  // Fetch groups on component mount
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (!isOpen) return;
+      
+      console.log('Fetching groups API call started...');
+      setLoadingGroups(true);
+      try {
+        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
+        console.log('Groups API response:', response.data);
+        
+        // Extract groups from the asset_groups property
+        const groupsData = Array.isArray(response.data?.asset_groups) ? response.data.asset_groups : [];
+        console.log('Setting groups data:', groupsData);
+        console.log('Groups data length:', groupsData.length);
+        setGroups(groupsData);
+      } catch (error) {
+        console.error('Error fetching groups - full error:', error);
+        setGroups([]);
+      } finally {
+        setLoadingGroups(false);
+        console.log('Groups API call completed');
+      }
     };
-    console.log('Apply filters:', filters);
-    onClose();
+
+    fetchGroups();
+  }, [isOpen]);
+
+  // Fetch subgroups when group changes
+  useEffect(() => {
+    const fetchSubgroups = async () => {
+      if (!group) {
+        setSubgroups([]);
+        return;
+      }
+
+      console.log('Fetching subgroups for group:', group);
+      setLoadingSubgroups(true);
+      try {
+        const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${group}`);
+        console.log('Subgroups API response:', response.data);
+        
+        // Extract subgroups from the asset_groups property (same as groups API)
+        const subgroupsData = Array.isArray(response.data?.asset_groups) ? response.data.asset_groups : [];
+        
+        console.log('Setting subgroups data:', subgroupsData);
+        console.log('Subgroups data length:', subgroupsData.length);
+        setSubgroups(subgroupsData);
+      } catch (error) {
+        console.error('Error fetching subgroups:', error);
+        setSubgroups([]);
+      } finally {
+        setLoadingSubgroups(false);
+      }
+    };
+
+    fetchSubgroups();
+  }, [group]);
+
+  // Fetch sites on component mount
+  useEffect(() => {
+    const fetchSites = async () => {
+      if (!isOpen) return;
+      
+      console.log('Fetching sites API call started...');
+      setLoadingSites(true);
+      try {
+        const response = await apiClient.get('/pms/sites.json');
+        console.log('Sites API response:', response.data);
+        
+        const sitesData = Array.isArray(response.data?.sites) ? response.data.sites : [];
+        console.log('Setting sites data:', sitesData);
+        setSites(sitesData);
+      } catch (error) {
+        console.error('Error fetching sites:', error);
+        setSites([]);
+      } finally {
+        setLoadingSites(false);
+      }
+    };
+
+    fetchSites();
+  }, [isOpen]);
+
+  // Fetch buildings when site changes
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      if (!site) {
+        setBuildings([]);
+        setBuilding(''); // Reset building when site changes
+        setWing(''); // Reset dependent dropdowns
+        setArea('');
+        setFloor('');
+        setRoom('');
+        return;
+      }
+
+      console.log('Fetching buildings for site:', site);
+      setLoadingBuildings(true);
+      try {
+        const response = await apiClient.get(`/pms/sites/${site}/buildings.json`);
+        console.log('Buildings API response:', response.data);
+        
+        // Extract buildings from nested structure: buildings[].building
+        const buildingsData = Array.isArray(response.data?.buildings) 
+          ? response.data.buildings.map((item: any) => item.building).filter(Boolean)
+          : [];
+        console.log('Setting buildings data:', buildingsData);
+        setBuildings(buildingsData);
+      } catch (error) {
+        console.error('Error fetching buildings:', error);
+        setBuildings([]);
+      } finally {
+        setLoadingBuildings(false);
+      }
+    };
+
+    fetchBuildings();
+  }, [site]);
+
+  // Fetch wings when building changes
+  useEffect(() => {
+    const fetchWings = async () => {
+      if (!building) {
+        setWings([]);
+        setArea(''); // Reset area when building changes
+        return;
+      }
+
+      console.log('Fetching wings for building:', building);
+      setLoadingWings(true);
+      try {
+        const response = await apiClient.get(`/pms/buildings/${building}/wings.json`);
+        console.log('Wings API response:', response.data);
+        
+        // Extract wings from nested structure: [].wings
+        const wingsData = Array.isArray(response.data) 
+          ? response.data.map((item: any) => item.wings).filter(Boolean)
+          : [];
+        console.log('Setting wings data:', wingsData);
+        setWings(wingsData);
+      } catch (error) {
+        console.error('Error fetching wings:', error);
+        setWings([]);
+      } finally {
+        setLoadingWings(false);
+      }
+    };
+
+    fetchWings();
+  }, [building]);
+
+  // Fetch areas when wing changes
+  useEffect(() => {
+    const fetchAreas = async () => {
+      if (!wing) {
+        setAreas([]);
+        return;
+      }
+
+      console.log('Fetching areas for wing:', wing);
+      setLoadingAreas(true);
+      try {
+        const response = await apiClient.get(`/pms/wings/${wing}/areas.json`);
+        console.log('Areas API response:', response.data);
+        
+        const areasData = Array.isArray(response.data?.areas) ? response.data.areas : [];
+        console.log('Setting areas data:', areasData);
+        setAreas(areasData);
+      } catch (error) {
+        console.error('Error fetching areas:', error);
+        setAreas([]);
+      } finally {
+        setLoadingAreas(false);
+      }
+    };
+
+    fetchAreas();
+  }, [wing]);
+
+  // Fetch floors when area changes
+  useEffect(() => {
+    const fetchFloors = async () => {
+      if (!area) {
+        setFloors([]);
+        setFloor(''); // Reset floor when area changes
+        setRoom(''); // Reset room when area changes
+        return;
+      }
+
+      console.log('Fetching floors for area:', area);
+      setLoadingFloors(true);
+      try {
+        const response = await apiClient.get(`/pms/areas/${area}/floors.json`);
+        console.log('Floors API response:', response.data);
+        
+        const floorsData = Array.isArray(response.data?.floors) ? response.data.floors : [];
+        console.log('Setting floors data:', floorsData);
+        setFloors(floorsData);
+      } catch (error) {
+        console.error('Error fetching floors:', error);
+        setFloors([]);
+      } finally {
+        setLoadingFloors(false);
+      }
+    };
+
+    fetchFloors();
+  }, [area]);
+
+  // Fetch rooms when floor changes
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (!floor) {
+        setRooms([]);
+        return;
+      }
+
+      console.log('Fetching rooms for floor:', floor);
+      setLoadingRooms(true);
+      try {
+        const response = await apiClient.get(`/pms/floors/${floor}/rooms.json`);
+        console.log('Rooms API response:', response.data);
+        
+        // Extract rooms from nested structure: [].rooms
+        const roomsData = Array.isArray(response.data) 
+          ? response.data.map((item: any) => item.rooms).filter(Boolean)
+          : [];
+        console.log('Setting rooms data:', roomsData);
+        setRooms(roomsData);
+      } catch (error) {
+        console.error('Error fetching rooms:', error);
+        setRooms([]);
+      } finally {
+        setLoadingRooms(false);
+      }
+    };
+
+    fetchRooms();
+  }, [floor]);
+
+  // Handle group change and reset subgroup
+  const handleGroupChange = (value: string) => {
+    setGroup(value);
+    setSubgroup(''); // Reset subgroup when group changes
   };
 
-  const handleExport = () => {
-    console.log('Export filtered data');
-    onClose();
-  };
-
-  const handleReset = () => {
-    setAssetName('');
-    setAssetId('');
-    setGroup('');
-    setSubgroup('');
-    setSite('');
+  // Handle site change and reset all dependent dropdowns
+  const handleSiteChange = (value: string) => {
+    setSite(value);
     setBuilding('');
     setWing('');
     setArea('');
@@ -69,9 +377,110 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     setRoom('');
   };
 
+  // Handle building change and reset dependent dropdowns
+  const handleBuildingChange = (value: string) => {
+    setBuilding(value);
+    setWing(''); // Reset wing when building changes
+    setArea(''); // Reset area when building changes
+    setFloor('');
+    setRoom('');
+  };
+
+  // Handle wing change and reset dependent dropdowns
+  const handleWingChange = (value: string) => {
+    setWing(value);
+    setArea(''); // Reset area when wing changes
+    setFloor('');
+    setRoom('');
+  };
+
+  // Handle area change and reset dependent dropdowns
+  const handleAreaChange = (value: string) => {
+    setArea(value);
+    setFloor(''); // Reset floor when area changes
+    setRoom(''); // Reset room when area changes
+  };
+
+  // Handle floor change and reset room
+  const handleFloorChange = (value: string) => {
+    setFloor(value);
+    setRoom(''); // Reset room when floor changes
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const filters: AssetFilters = {
+        assetName: assetName || undefined,
+        assetId: assetId || undefined,
+        groupId: group || undefined,
+        subgroupId: subgroup || undefined,
+        siteId: site || undefined,
+        buildingId: building || undefined,
+        wingId: wing || undefined,
+        areaId: area || undefined,
+        floorId: floor || undefined,
+        roomId: room || undefined,
+      };
+
+      // Remove empty/undefined values
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== undefined && value !== '')
+      ) as AssetFilters;
+
+      console.log('Applying asset filters:', cleanFilters);
+      
+      // Dispatch Redux action to fetch filtered assets
+      await dispatch(fetchAssetsData({ page: 1, filters: cleanFilters })).unwrap();
+      
+      toast.success('Filters applied successfully');
+      onClose();
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      toast.error('Failed to apply filters');
+    }
+  };
+
+  const handleExport = () => {
+    console.log('Export filtered data');
+    onClose();
+  };
+
+  const handleReset = async () => {
+    try {
+      // Clear all form fields
+      setAssetName('');
+      setAssetId('');
+      setGroup('');
+      setSubgroup('');
+      setSite('');
+      setBuilding('');
+      setWing('');
+      setArea('');
+      setFloor('');
+      setRoom('');
+
+      // Clear dependent data arrays
+      setSubgroups([]);
+      setBuildings([]);
+      setWings([]);
+      setAreas([]);
+      setFloors([]);
+      setRooms([]);
+
+      // Dispatch Redux action to fetch all unfiltered assets
+      await dispatch(fetchAssetsData({ page: 1, filters: {} })).unwrap();
+      
+      toast.success('Filters reset successfully');
+      onClose();
+    } catch (error) {
+      console.error('Error resetting filters:', error);
+      toast.error('Failed to reset filters');
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="asset-filter-dialog-description">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
           <Button
@@ -82,6 +491,9 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           >
             <X className="h-4 w-4" />
           </Button>
+          <div id="asset-filter-dialog-description" className="sr-only">
+            Filter assets by name, ID, group, subgroup, site, building, wing, area, floor, and room
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -117,13 +529,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="group-label"
                   label="Group"
                   value={group}
-                  onChange={(e) => setGroup(e.target.value)}
+                  onChange={(e) => handleGroupChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingGroups}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="category1">Category 1</MenuItem>
-                  <MenuItem value="category2">Category 2</MenuItem>
+                  {groups.map((groupItem) => (
+                    <MenuItem key={groupItem.id} value={groupItem.id?.toString() || ''}>
+                      {groupItem.name || 'Unknown Group'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -135,10 +552,15 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setSubgroup(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingSubgroups || !group}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                  <MenuItem value="subgroup1">Sub Group 1</MenuItem>
-                  <MenuItem value="subgroup2">Sub Group 2</MenuItem>
+                  {subgroups.map((subgroupItem) => (
+                    <MenuItem key={subgroupItem.id} value={subgroupItem.id?.toString() || ''}>
+                      {subgroupItem.name || 'Unknown Subgroup'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
@@ -154,13 +576,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="site-label"
                   label="Site"
                   value={site}
-                  onChange={(e) => setSite(e.target.value)}
+                  onChange={(e) => handleSiteChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingSites}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Site</em></MenuItem>
-                  <MenuItem value="site1">Site 1</MenuItem>
-                  <MenuItem value="site2">Site 2</MenuItem>
+                  {sites.map((siteItem) => (
+                    <MenuItem key={siteItem.id} value={siteItem.id?.toString() || ''}>
+                      {siteItem.name || 'Unknown Site'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -169,13 +596,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="building-label"
                   label="Building"
                   value={building}
-                  onChange={(e) => setBuilding(e.target.value)}
+                  onChange={(e) => handleBuildingChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingBuildings || !site}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Building</em></MenuItem>
-                  <MenuItem value="building1">Building 1</MenuItem>
-                  <MenuItem value="building2">Building 2</MenuItem>
+                  {buildings.map((buildingItem) => (
+                    <MenuItem key={buildingItem.id} value={buildingItem.id?.toString() || ''}>
+                      {buildingItem.name || 'Unknown Building'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
@@ -186,13 +618,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="wing-label"
                   label="Wing"
                   value={wing}
-                  onChange={(e) => setWing(e.target.value)}
+                  onChange={(e) => handleWingChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingWings || !building}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Wing</em></MenuItem>
-                  <MenuItem value="wing1">Wing 1</MenuItem>
-                  <MenuItem value="wing2">Wing 2</MenuItem>
+                  {wings.map((wingItem) => (
+                    <MenuItem key={wingItem.id} value={wingItem.id?.toString() || ''}>
+                      {wingItem.name || 'Unknown Wing'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -201,13 +638,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="area-label"
                   label="Area"
                   value={area}
-                  onChange={(e) => setArea(e.target.value)}
+                  onChange={(e) => handleAreaChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingAreas || !wing}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Area</em></MenuItem>
-                  <MenuItem value="area1">Area 1</MenuItem>
-                  <MenuItem value="area2">Area 2</MenuItem>
+                  {areas.map((areaItem) => (
+                    <MenuItem key={areaItem.id} value={areaItem.id?.toString() || ''}>
+                      {areaItem.name || 'Unknown Area'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
@@ -218,13 +660,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   labelId="floor-label"
                   label="Floor"
                   value={floor}
-                  onChange={(e) => setFloor(e.target.value)}
+                  onChange={(e) => handleFloorChange(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingFloors || !area}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Floor</em></MenuItem>
-                  <MenuItem value="floor1">Floor 1</MenuItem>
-                  <MenuItem value="floor2">Floor 2</MenuItem>
+                  {floors.map((floorItem) => (
+                    <MenuItem key={floorItem.id} value={floorItem.id?.toString() || ''}>
+                      {floorItem.name || 'Unknown Floor'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               <FormControl fullWidth variant="outlined">
@@ -236,10 +683,15 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setRoom(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  disabled={loadingRooms || !floor}
+                  MenuProps={selectMenuProps}
                 >
                   <MenuItem value=""><em>Select Room</em></MenuItem>
-                  <MenuItem value="room1">Room 1</MenuItem>
-                  <MenuItem value="room2">Room 2</MenuItem>
+                  {rooms.map((roomItem) => (
+                    <MenuItem key={roomItem.id} value={roomItem.id?.toString() || ''}>
+                      {roomItem.name || 'Unknown Room'}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>

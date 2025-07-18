@@ -1,3 +1,4 @@
+
 import { configureStore } from '@reduxjs/toolkit'
 import { testReducer, loginReducer } from './slices/testSlice'
 import { amcReducer } from './slices/amcSlice'
@@ -23,6 +24,9 @@ import facilitySetupsReducer from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
 import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
+import { inventoryReducer } from './slices/inventorySlice'
+import { locationReducer } from './slices/locationSlice'
+import serviceLocationReducer from './slices/serviceLocationSlice'
 
 export const store = configureStore({
   reducer: {
@@ -51,6 +55,9 @@ export const store = configureStore({
     assets: assetsReducer,
     suppliers: suppliersReducer,
     amcCreate: amcCreateReducer,
+    inventory: inventoryReducer,
+    location: locationReducer,
+    serviceLocation: serviceLocationReducer,
   },
 })
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,82 +7,129 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Plus, FileDown } from 'lucide-react';
-
-interface UnitData {
-  id: number;
-  active: boolean;
-  site: string;
-  building: string;
-  wing: string;
-  area: string;
-  floor: string;
-  unit: string;
-  entity: string;
-}
-
-const initialUnits: UnitData[] = [
-  { id: 1, active: true, site: 'Lockated', building: 'kite', wing: 'Wing 1', area: 'Common Area', floor: 'Basement', unit: '111', entity: '278' },
-  { id: 2, active: true, site: 'Lockated', building: 'sebc', wing: 'TA Wing 2', area: 'Reading Zone', floor: '12', unit: '278', entity: '278' },
-  { id: 3, active: false, site: 'Lockated', building: 'Hay', wing: 'TA Wing 1', area: 'Audio Zone', floor: '6', unit: '278', entity: 'Noid 62' },
-  { id: 4, active: true, site: 'Lockated', building: 'star', wing: 'East & West', area: 'Multi purpose Hall', floor: '7', unit: 'HELP DESK', entity: 'TCS' },
-  { id: 5, active: true, site: 'Lockated', building: 'business bay', wing: 'Wing2', area: 'Library', floor: '10', unit: 'Reception', entity: 'GoPhygital' },
-  { id: 6, active: false, site: 'Lockated', building: 'RVG_New', wing: 'Wing1', area: 'Banquet hall', floor: 'Basement', unit: '101 TCS', entity: 'TCS' },
-  { id: 7, active: true, site: 'Lockated', building: 'RVG_Old', wing: 'B', area: 'Fitnesh Zone', floor: '12', unit: '512', entity: '278' },
-  { id: 8, active: true, site: 'Lockated', building: 'Aurum Grande', wing: 'A', area: 'GR Floor', floor: '6', unit: '1110', entity: 'GoPhygital' },
-];
+import { Edit, Square, Plus } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { 
+  fetchBuildings, 
+  fetchWings, 
+  fetchAreas, 
+  fetchFloors,
+  fetchUnits,
+  createUnit, 
+  setSelectedBuilding, 
+  setSelectedWing,
+  setSelectedArea,
+  setSelectedFloor
+} from '@/store/slices/locationSlice';
+import { toast } from 'sonner';
 
 export const UnitPage = () => {
-  const [units, setUnits] = useState<UnitData[]>(initialUnits);
+  const dispatch = useAppDispatch();
+  const { 
+    buildings, 
+    wings, 
+    areas, 
+    floors,
+    units, 
+    selectedBuilding, 
+    selectedWing, 
+    selectedArea,
+    selectedFloor 
+  } = useAppSelector((state) => state.location);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newUnit, setNewUnit] = useState({
-    building: '',
-    wing: '',
-    area: '',
-    floor: '',
-    entity: '',
     unitName: '',
-    areaSize: ''
+    area: ''
   });
 
-  const filteredUnits = units.filter(unit =>
-    Object.values(unit).some(value =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  useEffect(() => {
+    dispatch(fetchBuildings());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedBuilding) {
+      dispatch(fetchWings(selectedBuilding));
+    }
+  }, [dispatch, selectedBuilding]);
+
+  useEffect(() => {
+    if (selectedBuilding && selectedWing) {
+      dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
+    }
+  }, [dispatch, selectedBuilding, selectedWing]);
+
+  useEffect(() => {
+    if (selectedBuilding && selectedWing && selectedArea) {
+      dispatch(fetchFloors({ 
+        buildingId: selectedBuilding, 
+        wingId: selectedWing, 
+        areaId: selectedArea 
+      }));
+    }
+  }, [dispatch, selectedBuilding, selectedWing, selectedArea]);
+
+  useEffect(() => {
+    if (selectedBuilding && selectedWing && selectedArea && selectedFloor) {
+      dispatch(fetchUnits({ 
+        buildingId: selectedBuilding, 
+        wingId: selectedWing, 
+        areaId: selectedArea,
+        floorId: selectedFloor
+      }));
+    }
+  }, [dispatch, selectedBuilding, selectedWing, selectedArea, selectedFloor]);
+
+  const filteredUnits = units.data.filter(unit =>
+    unit.unit_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const toggleActiveStatus = (id: number) => {
-    setUnits(prev => prev.map(unit =>
-      unit.id === id ? { ...unit, active: !unit.active } : unit
-    ));
+  const handleBuildingChange = (buildingId: string) => {
+    dispatch(setSelectedBuilding(parseInt(buildingId)));
   };
 
-  const handleAddUnit = () => {
-    const newUnitData: UnitData = {
-      id: units.length + 1,
-      active: true,
-      site: 'Lockated',
-      building: newUnit.building,
-      wing: newUnit.wing,
-      area: newUnit.area,
-      floor: newUnit.floor,
-      unit: newUnit.unitName,
-      entity: newUnit.entity
-    };
-    
-    setUnits(prev => [...prev, newUnitData]);
-    setNewUnit({
-      building: '',
-      wing: '',
-      area: '',
-      floor: '',
-      entity: '',
-      unitName: '',
-      areaSize: ''
-    });
-    setIsAddDialogOpen(false);
+  const handleWingChange = (wingId: string) => {
+    dispatch(setSelectedWing(parseInt(wingId)));
+  };
+
+  const handleAreaChange = (areaId: string) => {
+    dispatch(setSelectedArea(parseInt(areaId)));
+  };
+
+  const handleFloorChange = (floorId: string) => {
+    dispatch(setSelectedFloor(parseInt(floorId)));
+  };
+
+  const handleAddUnit = async () => {
+    if (selectedBuilding && selectedWing && selectedArea && selectedFloor && newUnit.unitName.trim()) {
+      try {
+        await dispatch(createUnit({
+          unit_name: newUnit.unitName,
+          building_id: selectedBuilding,
+          wing_id: selectedWing,
+          area_id: selectedArea,
+          floor_id: selectedFloor,
+          area: parseInt(newUnit.area) || 0
+        }));
+        toast.success('Unit created successfully');
+        setNewUnit({ unitName: '', area: '' });
+        setIsAddDialogOpen(false);
+        dispatch(fetchUnits({ 
+          buildingId: selectedBuilding, 
+          wingId: selectedWing, 
+          areaId: selectedArea,
+          floorId: selectedFloor
+        }));
+      } catch (error) {
+        toast.error('Failed to create unit');
+      }
+    }
+  };
+
+  const toggleActiveStatus = (id: number) => {
+    console.log(`Toggle active status for unit ${id}`);
   };
 
   return (
@@ -99,7 +147,10 @@ export const UnitPage = () => {
             
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
+                <Button 
+                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                  disabled={!selectedBuilding || !selectedWing || !selectedArea || !selectedFloor}
+                >
                   <Square className="w-4 h-4" />
                   Add Unit
                 </Button>
@@ -113,78 +164,39 @@ export const UnitPage = () => {
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="building">Select Building</Label>
-                    <Select value={newUnit.building} onValueChange={(value) => setNewUnit(prev => ({ ...prev, building: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Building" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kite">Kite</SelectItem>
-                        <SelectItem value="sebc">SEBC</SelectItem>
-                        <SelectItem value="hay">Hay</SelectItem>
-                        <SelectItem value="star">Star</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Selected Building</Label>
+                    <Input
+                      value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
+                      disabled
+                      className="bg-muted"
+                    />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="wing">Select Wing</Label>
-                    <Select value={newUnit.wing} onValueChange={(value) => setNewUnit(prev => ({ ...prev, wing: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Wing" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="wing1">Wing 1</SelectItem>
-                        <SelectItem value="wing2">Wing 2</SelectItem>
-                        <SelectItem value="east-west">East & West</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Selected Wing</Label>
+                    <Input
+                      value={wings.data.find(w => w.id === selectedWing)?.name || ''}
+                      disabled
+                      className="bg-muted"
+                    />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="area">Select Area</Label>
-                    <Select value={newUnit.area} onValueChange={(value) => setNewUnit(prev => ({ ...prev, area: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Area" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="common">Common Area</SelectItem>
-                        <SelectItem value="reading">Reading Zone</SelectItem>
-                        <SelectItem value="audio">Audio Zone</SelectItem>
-                        <SelectItem value="library">Library</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Selected Area</Label>
+                    <Input
+                      value={areas.data.find(a => a.id === selectedArea)?.name || ''}
+                      disabled
+                      className="bg-muted"
+                    />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="floor">Select Floor</Label>
-                    <Select value={newUnit.floor} onValueChange={(value) => setNewUnit(prev => ({ ...prev, floor: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Floor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="basement">Basement</SelectItem>
-                        <SelectItem value="6">6</SelectItem>
-                        <SelectItem value="7">7</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="12">12</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="entity">Select Entity</Label>
-                    <Select value={newUnit.entity} onValueChange={(value) => setNewUnit(prev => ({ ...prev, entity: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Entity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="278">278</SelectItem>
-                        <SelectItem value="tcs">TCS</SelectItem>
-                        <SelectItem value="gophygital">GoPhygital</SelectItem>
-                        <SelectItem value="noid62">Noid 62</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Selected Floor</Label>
+                    <Input
+                      value={floors.data.find(f => f.id === selectedFloor)?.name || ''}
+                      disabled
+                      className="bg-muted"
+                    />
                   </div>
                   
                   <div className="space-y-2">
@@ -197,13 +209,13 @@ export const UnitPage = () => {
                     />
                   </div>
                   
-                  <div className="space-y-2 col-span-2">
-                    <Label htmlFor="areaSize">Area</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="areaSize">Area (Sq.Mtr)</Label>
                     <Input
                       id="areaSize"
-                      value={newUnit.areaSize}
-                      onChange={(e) => setNewUnit(prev => ({ ...prev, areaSize: e.target.value }))}
-                      placeholder="Enter Area (Sq.Mtr)"
+                      value={newUnit.area}
+                      onChange={(e) => setNewUnit(prev => ({ ...prev, area: e.target.value }))}
+                      placeholder="Enter Area"
                     />
                   </div>
                 </div>
@@ -222,6 +234,82 @@ export const UnitPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
+          </div>
+
+          {/* Selection Controls */}
+          <div className="grid grid-cols-4 gap-4 mb-6 max-w-5xl">
+            <div>
+              <label className="text-sm font-medium">Select Building</label>
+              <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select building" />
+                </SelectTrigger>
+                <SelectContent>
+                  {buildings.data.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Select Wing</label>
+              <Select 
+                value={selectedWing?.toString() || ''} 
+                onValueChange={handleWingChange}
+                disabled={!selectedBuilding}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select wing" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wings.data.map((wing) => (
+                    <SelectItem key={wing.id} value={wing.id.toString()}>
+                      {wing.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Select Area</label>
+              <Select 
+                value={selectedArea?.toString() || ''} 
+                onValueChange={handleAreaChange}
+                disabled={!selectedWing}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {areas.data.map((area) => (
+                    <SelectItem key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Select Floor</label>
+              <Select 
+                value={selectedFloor?.toString() || ''} 
+                onValueChange={handleFloorChange}
+                disabled={!selectedArea}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select floor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {floors.data.map((floor) => (
+                    <SelectItem key={floor.id} value={floor.id.toString()}>
+                      {floor.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Controls */}
@@ -262,38 +350,54 @@ export const UnitPage = () => {
                 <TableRow>
                   <TableHead>Actions</TableHead>
                   <TableHead>Active/Inactive</TableHead>
-                  <TableHead>Site</TableHead>
                   <TableHead>Building</TableHead>
                   <TableHead>Wing</TableHead>
                   <TableHead>Area</TableHead>
                   <TableHead>Floor</TableHead>
                   <TableHead>Unit</TableHead>
-                  <TableHead>Entity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUnits.map((unit) => (
-                  <TableRow key={unit.id}>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4 text-[#C72030]" />
-                      </Button>
+                {!selectedBuilding || !selectedWing || !selectedArea || !selectedFloor ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      Please select building, wing, area, and floor to view units
                     </TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={unit.active}
-                        onCheckedChange={() => toggleActiveStatus(unit.id)}
-                      />
-                    </TableCell>
-                    <TableCell>{unit.site}</TableCell>
-                    <TableCell>{unit.building}</TableCell>
-                    <TableCell>{unit.wing}</TableCell>
-                    <TableCell>{unit.area}</TableCell>
-                    <TableCell>{unit.floor}</TableCell>
-                    <TableCell>{unit.unit}</TableCell>
-                    <TableCell>{unit.entity}</TableCell>
                   </TableRow>
-                ))}
+                ) : units.loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      Loading units...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUnits.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      No units found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUnits.map((unit) => (
+                    <TableRow key={unit.id}>
+                      <TableCell>
+                        <Button variant="ghost" size="sm">
+                          <Edit className="w-4 h-4 text-[#C72030]" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Checkbox
+                          checked={unit.active}
+                          onCheckedChange={() => toggleActiveStatus(unit.id)}
+                        />
+                      </TableCell>
+                      <TableCell>{unit.building?.name || 'N/A'}</TableCell>
+                      <TableCell>{unit.wing?.name || 'N/A'}</TableCell>
+                      <TableCell>{unit.area_obj?.name || 'N/A'}</TableCell>
+                      <TableCell>{unit.floor?.name || 'N/A'}</TableCell>
+                      <TableCell>{unit.unit_name}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

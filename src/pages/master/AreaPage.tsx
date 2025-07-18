@@ -1,71 +1,79 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface AreaData {
-  site: string;
-  building: string;
-  wing: string;
-  area: string;
-  status: boolean;
-}
-
-const sampleAreas: AreaData[] = [
-  { site: 'Lockated', building: 'kite', wing: 'Wing 1', area: 'tested', status: true },
-  { site: 'Lockated', building: 'sebc', wing: 'TA Wing 2', area: 'Common Area Edited', status: true },
-  { site: 'Lockated', building: 'Hay', wing: 'TA Wing 1', area: 'Reading Zone', status: false },
-  { site: 'Lockated', building: 'star', wing: 'East & West', area: 'Audio Zone', status: true },
-  { site: 'Lockated', building: 'business bay', wing: 'Wing2', area: 'Multi purpose Hall', status: true },
-  { site: 'Lockated', building: 'RVG_New', wing: 'Wing1', area: 'Library', status: false },
-  { site: 'Lockated', building: 'RVG_Old', wing: 'B', area: 'Banquet hall', status: true },
-  { site: 'Lockated', building: 'Aurum Grande', wing: 'A', area: 'Fitnesh Zone', status: true },
-  { site: 'Lockated', building: 'jyoti tower', wing: 'A12', area: 'GR Floor', status: false },
-];
-
-const buildings = ['kite', 'sebc', 'Hay', 'star', 'business bay', 'RVG_New', 'RVG_Old', 'Aurum Grande', 'jyoti tower'];
-const wings = ['Wing 1', 'TA Wing 2', 'TA Wing 1', 'East & West', 'Wing2', 'Wing1', 'B', 'A', 'A12'];
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { 
+  fetchBuildings, 
+  fetchWings, 
+  fetchAreas, 
+  createArea, 
+  setSelectedBuilding, 
+  setSelectedWing 
+} from '@/store/slices/locationSlice';
+import { toast } from 'sonner';
 
 export function AreaPage() {
-  const [areas, setAreas] = useState<AreaData[]>(sampleAreas);
+  const dispatch = useAppDispatch();
+  const { buildings, wings, areas, selectedBuilding, selectedWing } = useAppSelector((state) => state.location);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState('');
-  const [selectedWing, setSelectedWing] = useState('');
   const [newAreaName, setNewAreaName] = useState('');
 
-  const filteredAreas = areas.filter(area =>
-    area.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.wing.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.site.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    dispatch(fetchBuildings());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedBuilding) {
+      dispatch(fetchWings(selectedBuilding));
+    }
+  }, [dispatch, selectedBuilding]);
+
+  useEffect(() => {
+    if (selectedBuilding && selectedWing) {
+      dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
+    }
+  }, [dispatch, selectedBuilding, selectedWing]);
+
+  const filteredAreas = areas.data.filter(area =>
+    area.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddArea = () => {
+  const handleBuildingChange = (buildingId: string) => {
+    dispatch(setSelectedBuilding(parseInt(buildingId)));
+  };
+
+  const handleWingChange = (wingId: string) => {
+    dispatch(setSelectedWing(parseInt(wingId)));
+  };
+
+  const handleAddArea = async () => {
     if (selectedBuilding && selectedWing && newAreaName.trim()) {
-      const newArea: AreaData = {
-        site: 'Lockated',
-        building: selectedBuilding,
-        wing: selectedWing,
-        area: newAreaName,
-        status: true
-      };
-      setAreas([...areas, newArea]);
-      setSelectedBuilding('');
-      setSelectedWing('');
-      setNewAreaName('');
-      setShowAddDialog(false);
+      try {
+        await dispatch(createArea({
+          name: newAreaName,
+          building_id: selectedBuilding,
+          wing_id: selectedWing
+        }));
+        toast.success('Area created successfully');
+        setNewAreaName('');
+        setShowAddDialog(false);
+        dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
+      } catch (error) {
+        toast.error('Failed to create area');
+      }
     }
   };
 
   const toggleStatus = (index: number) => {
-    const updatedAreas = [...areas];
-    updatedAreas[index].status = !updatedAreas[index].status;
-    setAreas(updatedAreas);
+    console.log(`Toggle status for area at index ${index}`);
   };
 
   return (
@@ -76,10 +84,52 @@ export function AreaPage() {
         <h1 className="text-2xl font-bold">AREA</h1>
       </div>
 
+      {/* Selection Controls */}
+      <div className="grid grid-cols-2 gap-4 max-w-2xl">
+        <div>
+          <label className="text-sm font-medium">Select Building</label>
+          <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select building" />
+            </SelectTrigger>
+            <SelectContent>
+              {buildings.data.map((building) => (
+                <SelectItem key={building.id} value={building.id.toString()}>
+                  {building.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Select Wing</label>
+          <Select 
+            value={selectedWing?.toString() || ''} 
+            onValueChange={handleWingChange}
+            disabled={!selectedBuilding}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select wing" />
+            </SelectTrigger>
+            <SelectContent>
+              {wings.data.map((wing) => (
+                <SelectItem key={wing.id} value={wing.id.toString()}>
+                  {wing.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+          <Button 
+            onClick={() => setShowAddDialog(true)} 
+            className="gap-2"
+            disabled={!selectedBuilding || !selectedWing}
+          >
             <Plus className="h-4 w-4" />
             Add Area
           </Button>
@@ -118,7 +168,6 @@ export function AreaPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Site</TableHead>
               <TableHead>Building</TableHead>
               <TableHead>Wing</TableHead>
               <TableHead>Area</TableHead>
@@ -127,33 +176,52 @@ export function AreaPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAreas.map((area, index) => (
-              <TableRow key={index}>
-                <TableCell>{area.site}</TableCell>
-                <TableCell>{area.building}</TableCell>
-                <TableCell>{area.wing}</TableCell>
-                <TableCell>{area.area}</TableCell>
-                <TableCell>
-                  <button
-                    onClick={() => toggleStatus(index)}
-                    className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                      area.status ? 'bg-green-500' : 'bg-gray-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
-                        area.status ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+            {!selectedBuilding || !selectedWing ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  Please select building and wing to view areas
                 </TableCell>
               </TableRow>
-            ))}
+            ) : areas.loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  Loading areas...
+                </TableCell>
+              </TableRow>
+            ) : filteredAreas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  No areas found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredAreas.map((area, index) => (
+                <TableRow key={area.id}>
+                  <TableCell>{area.building?.name || 'N/A'}</TableCell>
+                  <TableCell>{area.wing?.name || 'N/A'}</TableCell>
+                  <TableCell>{area.name}</TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => toggleStatus(index)}
+                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                        area.active ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
+                          area.active ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -166,34 +234,20 @@ export function AreaPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Select Building</label>
-              <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select building" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildings.map((building) => (
-                    <SelectItem key={building} value={building}>
-                      {building}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">Selected Building</label>
+              <Input
+                value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
+                disabled
+                className="bg-muted"
+              />
             </div>
             <div>
-              <label className="text-sm font-medium">Select Wing</label>
-              <Select value={selectedWing} onValueChange={setSelectedWing}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select wing" />
-                </SelectTrigger>
-                <SelectContent>
-                  {wings.map((wing) => (
-                    <SelectItem key={wing} value={wing}>
-                      {wing}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">Selected Wing</label>
+              <Input
+                value={wings.data.find(w => w.id === selectedWing)?.name || ''}
+                disabled
+                className="bg-muted"
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Area Name</label>
@@ -204,7 +258,9 @@ export function AreaPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddArea}>Submit</Button>
+              <Button onClick={handleAddArea} disabled={!newAreaName.trim()}>
+                Submit
+              </Button>
               <Button variant="outline">Sample Format</Button>
               <Button variant="outline">Import</Button>
             </div>

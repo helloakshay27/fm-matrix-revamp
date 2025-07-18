@@ -1,95 +1,56 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Copy, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface BuildingData {
-  site: string;
-  region: string;
-  country: string;
-  building: string;
-  wing: boolean;
-  floor: boolean;
-  area: boolean;
-  room: boolean;
-  status: boolean;
-}
-
-const sampleBuildings: BuildingData[] = [
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'kite', wing: true, floor: true, area: true, room: false, status: true },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'sebc', wing: true, floor: true, area: true, room: true, status: true },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'Hay', wing: false, floor: true, area: true, room: false, status: false },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'star', wing: true, floor: false, area: true, room: true, status: true },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'business bay', wing: true, floor: true, area: false, room: false, status: true },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'RVG_New', wing: false, floor: true, area: true, room: true, status: false },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'RVG_Old', wing: true, floor: false, area: false, room: true, status: true },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'Aurum Grande', wing: true, floor: true, area: true, room: false, status: true },
-  { site: 'Lockated', region: 'Region 1', country: 'UAE', building: 'jyoti tower', wing: false, floor: true, area: false, room: true, status: false },
-];
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { fetchBuildings, createBuilding } from '@/store/slices/locationSlice';
+import { toast } from 'sonner';
 
 export function BuildingPage() {
-  const [buildings, setBuildings] = useState<BuildingData[]>(sampleBuildings);
+  const dispatch = useAppDispatch();
+  const { buildings } = useAppSelector((state) => state.location);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [newBuilding, setNewBuilding] = useState('');
-  const [cloneFrom, setCloneFrom] = useState({ site: '', building: '' });
-  const [cloneTo, setCloneTo] = useState('');
 
-  const filteredBuildings = buildings.filter(building =>
-    building.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    building.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    building.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    building.country.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    dispatch(fetchBuildings());
+  }, [dispatch]);
+
+  const filteredBuildings = buildings.data.filter(building =>
+    building.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddBuilding = () => {
+  const handleAddBuilding = async () => {
     if (newBuilding.trim()) {
-      const building: BuildingData = {
-        site: 'Lockated',
-        region: 'Region 1',
-        country: 'UAE',
-        building: newBuilding,
-        wing: false,
-        floor: false,
-        area: false,
-        room: false,
-        status: true
-      };
-      setBuildings([...buildings, building]);
-      setNewBuilding('');
-      setShowAddDialog(false);
-    }
-  };
-
-  const handleCloneBuilding = () => {
-    if (cloneFrom.site && cloneFrom.building && cloneTo.trim()) {
-      const sourceBuilding = buildings.find(b => 
-        b.site === cloneFrom.site && b.building === cloneFrom.building
-      );
-      if (sourceBuilding) {
-        const clonedBuilding: BuildingData = {
-          ...sourceBuilding,
-          site: cloneTo
-        };
-        setBuildings([...buildings, clonedBuilding]);
-        setCloneFrom({ site: '', building: '' });
-        setCloneTo('');
-        setShowCloneDialog(false);
+      try {
+        await dispatch(createBuilding({
+          name: newBuilding,
+          has_wing: false,
+          has_floor: false,
+          has_area: false,
+          has_room: false,
+          active: true
+        }));
+        toast.success('Building created successfully');
+        setNewBuilding('');
+        setShowAddDialog(false);
+        dispatch(fetchBuildings());
+      } catch (error) {
+        toast.error('Failed to create building');
       }
     }
   };
 
-  const toggleStatus = (index: number, field: keyof BuildingData) => {
-    const updatedBuildings = [...buildings];
-    if (typeof updatedBuildings[index][field] === 'boolean') {
-      (updatedBuildings[index] as any)[field] = !updatedBuildings[index][field];
-      setBuildings(updatedBuildings);
-    }
+  const toggleStatus = (index: number, field: 'active' | 'has_wing' | 'has_floor' | 'has_area' | 'has_room') => {
+    // This would require an update API call - placeholder for now
+    console.log(`Toggle ${field} for building at index ${index}`);
   };
 
   return (
@@ -106,10 +67,6 @@ export function BuildingPage() {
           <Button onClick={() => setShowAddDialog(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Building
-          </Button>
-          <Button variant="outline" onClick={() => setShowCloneDialog(true)} className="gap-2">
-            <Copy className="h-4 w-4" />
-            Clone
           </Button>
         </div>
 
@@ -146,10 +103,8 @@ export function BuildingPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Site</TableHead>
-              <TableHead>Region</TableHead>
-              <TableHead>Country</TableHead>
-              <TableHead>Building</TableHead>
+              <TableHead>Building Name</TableHead>
+              <TableHead>Site ID</TableHead>
               <TableHead>Wing</TableHead>
               <TableHead>Floor</TableHead>
               <TableHead>Area</TableHead>
@@ -158,64 +113,76 @@ export function BuildingPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredBuildings.map((building, index) => (
-              <TableRow key={index}>
-                <TableCell>{building.site}</TableCell>
-                <TableCell>{building.region}</TableCell>
-                <TableCell>{building.country}</TableCell>
-                <TableCell>{building.building}</TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center">
-                    {building.wing ? (
-                      <span className="text-green-600">✓</span>
-                    ) : (
-                      <span className="text-red-600">✗</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center">
-                    {building.floor ? (
-                      <span className="text-green-600">✓</span>
-                    ) : (
-                      <span className="text-red-600">✗</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center">
-                    {building.area ? (
-                      <span className="text-green-600">✓</span>
-                    ) : (
-                      <span className="text-red-600">✗</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center">
-                    {building.room ? (
-                      <span className="text-green-600">✓</span>
-                    ) : (
-                      <span className="text-red-600">✗</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <button
-                    onClick={() => toggleStatus(index, 'status')}
-                    className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                      building.status ? 'bg-green-500' : 'bg-gray-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
-                        building.status ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+            {buildings.loading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-4">
+                  Loading buildings...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : filteredBuildings.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-4">
+                  No buildings found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredBuildings.map((building, index) => (
+                <TableRow key={building.id}>
+                  <TableCell>{building.name}</TableCell>
+                  <TableCell>{building.site_id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center">
+                      {building.has_wing ? (
+                        <span className="text-green-600">✓</span>
+                      ) : (
+                        <span className="text-red-600">✗</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center">
+                      {building.has_floor ? (
+                        <span className="text-green-600">✓</span>
+                      ) : (
+                        <span className="text-red-600">✗</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center">
+                      {building.has_area ? (
+                        <span className="text-green-600">✓</span>
+                      ) : (
+                        <span className="text-red-600">✗</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center">
+                      {building.has_room ? (
+                        <span className="text-green-600">✓</span>
+                      ) : (
+                        <span className="text-red-600">✗</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => toggleStatus(index, 'active')}
+                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                        building.active ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
+                          building.active ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -236,56 +203,12 @@ export function BuildingPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddBuilding}>Submit</Button>
+              <Button onClick={handleAddBuilding} disabled={!newBuilding.trim()}>
+                Submit
+              </Button>
               <Button variant="outline">Sample Format</Button>
               <Button variant="outline">Import</Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Clone Dialog */}
-      <Dialog open={showCloneDialog} onOpenChange={setShowCloneDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Clone Data</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Clone From Site</label>
-              <Select value={cloneFrom.site} onValueChange={(value) => setCloneFrom({...cloneFrom, site: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select site" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Lockated">Lockated</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Clone From Building</label>
-              <Select value={cloneFrom.building} onValueChange={(value) => setCloneFrom({...cloneFrom, building: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select building" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildings.map((building, index) => (
-                    <SelectItem key={index} value={building.building}>
-                      {building.building}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Clone To Site</label>
-              <Input
-                value={cloneTo}
-                onChange={(e) => setCloneTo(e.target.value)}
-                placeholder="Enter destination site"
-              />
-            </div>
-            <Button onClick={handleCloneBuilding}>Clone</Button>
           </div>
         </DialogContent>
       </Dialog>

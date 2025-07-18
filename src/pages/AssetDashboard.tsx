@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Filter, Package, BarChart3, TrendingUp, Download, Zap, Wrench, AlertTriangle, Activity } from 'lucide-react';
@@ -23,7 +26,6 @@ import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
-import { useAssets } from '@/hooks/useAssets';
 import { useAssetSearch } from '@/hooks/useAssetSearch';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -62,6 +64,12 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Redux state
+  const { items: assets, loading, error, totalCount, totalPages, filters } = useSelector((state: RootState) => state.assets);
+  
+  // Local state
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,11 +100,113 @@ export const AssetDashboard = () => {
     'donutCharts', 'categoryChart', 'agingMatrix', 'performanceMetrics'
   ]);
 
-  // Use the API hook
-  const { assets, stats, pagination, loading, error, refetch } = useAssets(currentPage);
-  
-  // Use search hook
+  // Use search hook for search functionality  
   const { assets: searchAssets, loading: searchLoading, error: searchError, searchAssets: performSearch } = useAssetSearch();
+
+  // Fetch initial assets data
+  useEffect(() => {
+    if (assets.length === 0) {
+      dispatch(fetchAssetsData({ page: currentPage }));
+    }
+  }, [dispatch, currentPage, assets.length]);
+
+  // Transform Redux assets to match the expected Asset interface
+  const transformedAssets = assets.map(asset => ({
+    id: asset.id?.toString() || '',
+    name: asset.name || '',
+    serialNumber: asset.serial_number || '',
+    assetNumber: asset.asset_number || '',
+    status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
+    siteName: asset.site_name || '',
+    building: asset.building || null,
+    wing: asset.wing || null,
+    area: asset.area || null,
+    pmsRoom: asset.pms_room || null,
+    assetGroup: asset.pms_asset_group || '',
+    assetSubGroup: asset.sub_group || '',
+    assetType: asset.asset_type
+  }));
+
+  // Use search results if search term exists, otherwise use Redux assets
+  const displayAssets = searchTerm.trim() ? searchAssets : transformedAssets;
+  const isSearchMode = searchTerm.trim().length > 0;
+
+  // For stats calculation, we need ALL filtered assets, not just current page
+  // If we have filters applied, we should use the total filtered count from API response
+  // For now, let's use displayAssets but note this limitation
+  const allFilteredAssets = displayAssets; // This represents all filtered results
+
+  // Create pagination object for compatibility
+  const pagination = {
+    currentPage,
+    totalPages: totalPages || 1,
+    totalCount: totalCount || 0
+  };
+
+  // Create stats object based on current displayed assets (filtered or unfiltered)
+  const calculateStats = (assetList: any[]) => {
+    console.log('Calculating stats for assets:', assetList.length, 'assets');
+    console.log('Total count from API:', totalCount);
+    console.log('Sample asset statuses:', assetList.slice(0, 3).map(a => ({ id: a.id, status: a.status })));
+    
+    // IMPORTANT: The current implementation only calculates from visible page data
+    // This should ideally be calculated from ALL filtered assets, not just current page
+    const totalAssets = assetList.length;
+    
+    // Check for various status formats from API
+    const inUseAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'in_use' || status === 'in use' || status === 'active' || status === 'in-use';
+    }).length;
+    
+    const breakdownAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'breakdown' || status === 'broken' || status === 'faulty';
+    }).length;
+    
+    const inStoreAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'in_storage' || status === 'in_store' || status === 'in store' || status === 'storage' || status === 'stored';
+    }).length;
+    
+    const disposeAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'disposed' || status === 'dispose' || status === 'discarded';
+    }).length;
+    
+    const missingAssets = assetList.filter(asset => {
+      const status = asset.status?.toLowerCase();
+      return status === 'missing' || status === 'lost';
+    }).length;
+    
+    // Get unique status values for debugging
+    const uniqueStatuses = [...new Set(assetList.map(asset => asset.status))];
+    console.log('Unique status values found:', uniqueStatuses);
+    console.log('Stats calculated from current page:', {
+      total: totalAssets,
+      inUse: inUseAssets,
+      breakdown: breakdownAssets, 
+      inStore: inStoreAssets,
+      dispose: disposeAssets,
+      missing: missingAssets
+    });
+    
+    // Note: This is a limitation - we're showing stats for current page only
+    // Ideally, the API should return aggregated stats for all filtered results
+    return {
+      total: totalCount || totalAssets, // Use total count from API if available
+      total_value: "₹0.00", 
+      nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
+      itAssets: Math.floor((totalCount || totalAssets) * 0.4),
+      inUse: inUseAssets,
+      breakdown: breakdownAssets,
+      in_store: inStoreAssets,
+      dispose: disposeAssets
+    };
+  };
+
+  // Calculate stats from currently displayed assets (this updates with filters)
+  const stats = calculateStats(displayAssets);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -106,16 +216,23 @@ export const AssetDashboard = () => {
     })
   );
 
-  // Use search results if search term exists, otherwise use paginated assets
-  const displayAssets = searchTerm.trim() ? searchAssets : assets;
-  const isSearchMode = searchTerm.trim().length > 0;
-
   // Handle search with API call
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim()) {
       performSearch(term);
     }
+  };
+
+  // Handle refresh - fetch assets from Redux
+  const handleRefresh = () => {
+    dispatch(fetchAssetsData({ page: currentPage, filters }));
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    dispatch(fetchAssetsData({ page, filters }));
   };
 
   // Handle asset selection
@@ -141,11 +258,6 @@ export const AssetDashboard = () => {
     name: asset.name
   }));
 
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
   };
@@ -162,10 +274,6 @@ export const AssetDashboard = () => {
 
   const handleViewAsset = (assetId: string) => {
     navigate(`/maintenance/asset/details/${assetId}`);
-  };
-
-  const handleRefresh = () => {
-    refetch();
   };
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
@@ -507,6 +615,14 @@ export const AssetDashboard = () => {
                   onViewAsset={handleViewAsset}
                 />
 
+                {/* Empty state when no data and filters are applied */}
+                {!loading && displayAssets.length === 0 && Object.keys(filters).length > 0 && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500 text-lg mb-2">No assets found</div>
+                    <div className="text-gray-400 text-sm">Try adjusting your filters to see more results</div>
+                  </div>
+                )}
+
                 {/* Selection Panel - positioned as overlay within table container */}
                 {selectedAssets.length > 0 && (
                   <AssetSelectionPanel
@@ -527,9 +643,7 @@ export const AssetDashboard = () => {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
+                        onClick={() => {
                           if (pagination.currentPage > 1) {
                             handlePageChange(pagination.currentPage - 1);
                           }
@@ -541,12 +655,8 @@ export const AssetDashboard = () => {
                     {Array.from({ length: Math.min(pagination.totalPages, 10) }, (_, i) => i + 1).map((page) => (
                       <PaginationItem key={page}>
                         <PaginationLink 
-                          href="#" 
-                          isActive={page === pagination.currentPage}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handlePageChange(page);
-                          }}
+                          onClick={() => handlePageChange(page)}
+                          isActive={pagination.currentPage === page}
                         >
                           {page}
                         </PaginationLink>
@@ -561,9 +671,7 @@ export const AssetDashboard = () => {
                     
                     <PaginationItem>
                       <PaginationNext 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
+                        onClick={() => {
                           if (pagination.currentPage < pagination.totalPages) {
                             handlePageChange(pagination.currentPage + 1);
                           }
