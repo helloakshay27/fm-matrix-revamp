@@ -600,11 +600,19 @@ export const EditAMCPage = () => {
                       onChange={e => handleInputChange('assetName', e.target.value)} 
                       sx={fieldStyles}
                       disabled={loading || servicesLoading || updateLoading}
+                      renderValue={(selected) => {
+                        if (!selected) {
+                          return <em>Select a Service...</em>;
+                        }
+                        const service = services.find(s => s.id.toString() === selected);
+                        return service ? service.service_name : selected;
+                      }}
                     >
                       <MenuItem value=""><em>Select a Service...</em></MenuItem>
                       {(() => {
                         console.log('Services dropdown rendering - services state:', services);
                         console.log('Services array length:', services.length);
+                        console.log('Current selected service ID:', formData.assetName);
                         return Array.isArray(services) && services.map((service) => {
                           console.log('Rendering service:', service);
                           return (
@@ -629,6 +637,13 @@ export const EditAMCPage = () => {
                       onChange={e => handleInputChange('vendor', e.target.value)} 
                       sx={fieldStyles}
                       disabled={loading || suppliersLoading || updateLoading}
+                      renderValue={(selected) => {
+                        if (!selected) {
+                          return <em>Select Supplier</em>;
+                        }
+                        const supplier = suppliers.find(s => s.id.toString() === selected);
+                        return supplier ? supplier.company_name : selected;
+                      }}
                     >
                       <MenuItem value=""><em>Select Supplier</em></MenuItem>
                       {Array.isArray(suppliers) && suppliers.map((supplier) => (
