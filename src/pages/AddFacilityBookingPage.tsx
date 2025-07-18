@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchFacilitySetups } from '@/store/slices/facilitySetupsSlice';
+import { apiClient } from '@/utils/apiClient';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -36,6 +37,13 @@ export const AddFacilityBookingPage = () => {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [comment, setComment] = useState('');
+  const [facilityDetails, setFacilityDetails] = useState<{
+    postpaid: number;
+    prepaid: number;
+    pay_on_facility: number;
+    complementary: number;
+  } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   // Fetch data on component mount
   useEffect(() => {
@@ -43,6 +51,31 @@ export const AddFacilityBookingPage = () => {
     dispatch(fetchEntities());
     dispatch(fetchFacilitySetups());
   }, [dispatch]);
+
+  // Fetch facility details when facility is selected
+  const fetchFacilityDetails = async (facilityId: string) => {
+    try {
+      const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}.json`);
+      if (response.data && response.data.facility_setup) {
+        setFacilityDetails(response.data.facility_setup);
+        setPaymentMethod(''); // Reset payment method when facility changes
+      }
+    } catch (error) {
+      console.error('Error fetching facility details:', error);
+      setFacilityDetails(null);
+    }
+  };
+
+  // Handle facility selection change
+  const handleFacilityChange = (facilityId: string) => {
+    setSelectedFacility(facilityId);
+    if (facilityId) {
+      fetchFacilityDetails(facilityId);
+    } else {
+      setFacilityDetails(null);
+      setPaymentMethod('');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,7 +198,7 @@ export const AddFacilityBookingPage = () => {
               select
               label="Facility"
               value={selectedFacility}
-              onChange={(e) => setSelectedFacility(e.target.value)}
+              onChange={(e) => handleFacilityChange(e.target.value)}
               variant="outlined"
               fullWidth
               InputLabelProps={{ shrink: true }}
@@ -270,7 +303,37 @@ export const AddFacilityBookingPage = () => {
         {/* Payment Method Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
-          {/* Add payment method selection here */}
+          {facilityDetails && (
+            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+              {facilityDetails.postpaid === 1 && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="postpaid" id="postpaid" />
+                  <Label htmlFor="postpaid">Postpaid</Label>
+                </div>
+              )}
+              {facilityDetails.prepaid === 1 && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="prepaid" id="prepaid" />
+                  <Label htmlFor="prepaid">Prepaid</Label>
+                </div>
+              )}
+              {facilityDetails.pay_on_facility === 1 && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pay_on_facility" id="pay_on_facility" />
+                  <Label htmlFor="pay_on_facility">Pay on Facility</Label>
+                </div>
+              )}
+              {facilityDetails.complementary === 1 && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="complementary" id="complementary" />
+                  <Label htmlFor="complementary">Complementary</Label>
+                </div>
+              )}
+            </RadioGroup>
+          )}
+          {!facilityDetails && selectedFacility && (
+            <p className="text-gray-500">Please select a facility to see available payment methods</p>
+          )}
         </div>
 
         {/* Submit Button */}
