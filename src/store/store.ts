@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { testReducer, loginReducer } from './slices/testSlice'
 import { amcReducer } from './slices/amcSlice'
+import { amcDetailsReducer } from './slices/amcDetailsSlice'
 import { servicesReducer } from './slices/servicesSlice'
 import { departmentReducer } from './slices/departmentSlice'
 import roleReducer from './slices/roleSlice'
@@ -21,6 +22,7 @@ export const store = configureStore({
     test: testReducer,
     login: loginReducer,
     amc: amcReducer,
+    amcDetails: amcDetailsReducer,
     services: servicesReducer,
     department: departmentReducer,
     role: roleReducer,
