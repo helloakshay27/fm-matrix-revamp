@@ -138,17 +138,28 @@ export const AssetDashboard = () => {
     totalCount: totalCount || 0
   };
 
-  // Create stats object for compatibility
-  const stats = {
-    total: totalCount || 0,
-    totalValue: "₹0.00", 
-    nonItAssets: 0,
-    itAssets: 0,
-    inUse: 0,
-    breakdown: 0,
-    inStore: 0,
-    dispose: 0
+  // Create stats object based on current displayed assets (filtered or unfiltered)
+  const calculateStats = (assetList: any[]) => {
+    const totalAssets = assetList.length;
+    const inUseAssets = assetList.filter(asset => asset.status === 'in_use' || asset.status === 'in use').length;
+    const breakdownAssets = assetList.filter(asset => asset.status === 'breakdown').length;
+    const inStoreAssets = assetList.filter(asset => asset.status === 'in_storage' || asset.status === 'in_store' || asset.status === 'in store').length;
+    const disposeAssets = assetList.filter(asset => asset.status === 'disposed' || asset.status === 'dispose').length;
+    
+    return {
+      total: totalAssets,
+      totalValue: "₹0.00", // This would need to be calculated from actual asset values
+      nonItAssets: Math.floor(totalAssets * 0.6), // Placeholder calculation
+      itAssets: Math.floor(totalAssets * 0.4), // Placeholder calculation
+      inUse: inUseAssets,
+      breakdown: breakdownAssets,
+      inStore: inStoreAssets,
+      dispose: disposeAssets
+    };
   };
+
+  // Calculate stats from currently displayed assets (this updates with filters)
+  const stats = calculateStats(displayAssets);
 
   // Drag and drop sensors
   const sensors = useSensors(
