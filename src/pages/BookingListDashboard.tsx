@@ -139,29 +139,13 @@ const enhancedTableColumns: ColumnConfig[] = [
   { key: 'source', label: 'Source', sortable: true, draggable: true }
 ];
 
-const tableColumns = [
-  { id: 'id', label: 'ID' },
-  { id: 'bookedBy', label: 'Booked By' },
-  { id: 'bookedFor', label: 'Booked For' },
-  { id: 'companyName', label: 'Company Name' },
-  { id: 'facility', label: 'Facility' },
-  { id: 'facilityType', label: 'Facility Type' },
-  { id: 'scheduledDate', label: 'Scheduled Date' },
-  { id: 'scheduledTime', label: 'Scheduled Time' },
-  { id: 'bookingStatus', label: 'Booking Status' },
-  { id: 'createdOn', label: 'Created On' },
-  { id: 'source', label: 'Source' }
-];
-
 const BookingListDashboard = () => {
   const navigate = useNavigate();
   const [bookings] = useState<BookingData[]>(mockBookingData);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
-  const [isFilterColumnsPopoverOpen, setIsFilterColumnsPopoverOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'bookedBy']);
-  const [visibleTableColumns, setVisibleTableColumns] = useState<string[]>(['id', 'bookedBy', 'bookedFor', 'companyName', 'facility', 'facilityType', 'scheduledDate', 'scheduledTime', 'bookingStatus', 'createdOn', 'source']);
   const [filters, setFilters] = useState({
     facilityName: '',
     status: '',
@@ -250,22 +234,9 @@ const BookingListDashboard = () => {
     }
   };
 
-  const handleTableColumnToggle = (columnId: string) => {
-    setVisibleTableColumns(prev => 
-      prev.includes(columnId) 
-        ? prev.filter(id => id !== columnId)
-        : [...prev, columnId]
-    );
-  };
-
   const handleDownload = () => {
     console.log('Downloading selected columns:', selectedColumns);
     setIsExportPopoverOpen(false);
-  };
-
-  const handleApplyColumnFilter = () => {
-    console.log('Applying column filter:', visibleTableColumns);
-    setIsFilterColumnsPopoverOpen(false);
   };
 
   const isAllSelected = selectedColumns.length === exportColumns.length - 1;
@@ -348,47 +319,6 @@ const BookingListDashboard = () => {
           <Download className="w-4 h-4 mr-2" />
           Export (By Centre)
         </Button>
-      </div>
-
-      {/* Filter Columns Button */}
-      <div>
-        <Popover open={isFilterColumnsPopoverOpen} onOpenChange={setIsFilterColumnsPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white">
-              Filter Columns
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-4 bg-white border border-gray-200 shadow-lg z-50" align="start">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Select columns to display:</h3>
-              
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {tableColumns.map((column) => (
-                  <div key={column.id} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={`table-${column.id}`}
-                      checked={visibleTableColumns.includes(column.id)}
-                      onCheckedChange={() => handleTableColumnToggle(column.id)}
-                    />
-                    <label 
-                      htmlFor={`table-${column.id}`} 
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {column.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-              
-              <Button 
-                onClick={handleApplyColumnFilter}
-                className="w-full bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
-              >
-                Apply Column Filter
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
       </div>
 
       {/* Enhanced Table with Drag and Drop */}
