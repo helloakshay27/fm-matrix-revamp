@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TextField, MenuItem } from '@mui/material';
-import { CheckCircle, FileText, Shield } from 'lucide-react';
+import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -26,6 +26,10 @@ export const AddFacilityBookingPage = () => {
       selectedDate,
       comment
     });
+    navigate('/vas/booking/list');
+  };
+
+  const handleBackToList = () => {
     navigate('/vas/booking/list');
   };
 
@@ -59,6 +63,12 @@ export const AddFacilityBookingPage = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+          <button 
+            onClick={handleBackToList}
+            className="flex items-center gap-1 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
           <span>Booking</span>
           <span>&gt;</span>
           <span>Add Facility Booking</span>
