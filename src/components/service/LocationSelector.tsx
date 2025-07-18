@@ -54,14 +54,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
 
   // Trigger location change callback when selections change
   useEffect(() => {
-    onLocationChange?.({
-      siteId: selectedSiteId,
-      buildingId: selectedBuildingId,
-      wingId: selectedWingId,
-      areaId: selectedAreaId,
-      floorId: selectedFloorId,
-      roomId: selectedRoomId,
-    });
+    if (onLocationChange) {
+      onLocationChange({
+        siteId: selectedSiteId,
+        buildingId: selectedBuildingId,
+        wingId: selectedWingId,
+        areaId: selectedAreaId,
+        floorId: selectedFloorId,
+        roomId: selectedRoomId,
+      });
+    }
   }, [selectedSiteId, selectedBuildingId, selectedWingId, selectedAreaId, selectedFloorId, selectedRoomId, onLocationChange]);
 
   const handleSiteChange = (siteId: number) => {

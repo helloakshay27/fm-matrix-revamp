@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Upload } from 'lucide-react';
@@ -28,7 +28,7 @@ export const AddServicePage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleLocationChange = (location: {
+  const handleLocationChange = useCallback((location: {
     siteId: number | null;
     buildingId: number | null;
     wingId: number | null;
@@ -45,7 +45,7 @@ export const AddServicePage = () => {
       floorId: location.floorId,
       roomId: location.roomId,
     }));
-  };
+  }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
