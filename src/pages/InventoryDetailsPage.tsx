@@ -1,13 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, QrCode, Edit } from 'lucide-react';
+import { ArrowLeft, QrCode, Edit, Loader2 } from 'lucide-react';
+import { apiClient } from '@/utils/apiClient';
 
 export const InventoryDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [inventoryData, setInventoryData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchInventoryDetails = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const response = await apiClient.get(`/pms/inventories/${id}.json`);
+        setInventoryData(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching inventory details:', err);
+        setError('Failed to load inventory details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventoryDetails();
+  }, [id]);
 
   const handleBack = () => {
     navigate('/maintenance/inventory');
@@ -20,6 +44,33 @@ export const InventoryDetailsPage = () => {
   const handleEdit = () => {
     navigate(`/maintenance/inventory/edit/${id}`);
   };
+
+  const getInventoryType = (type: number) => {
+    return type === 1 ? 'Consumable' : 'Non-Consumable';
+  };
+
+  const getCriticality = (criticality: number) => {
+    return criticality === 1 ? 'Critical' : 'Non-Critical';
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 min-h-screen bg-white">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 min-h-screen bg-white">
@@ -34,7 +85,7 @@ export const InventoryDetailsPage = () => {
           <span>Inventory Details</span>
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">test12</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">{inventoryData?.name || 'N/A'}</h1>
           <div className="flex items-center gap-3">
             <Button 
               onClick={handleEdit}
@@ -66,31 +117,33 @@ export const InventoryDetailsPage = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-gray-600">Name</label>
-                    <p className="font-medium">test12</p>
+                    <p className="font-medium">{inventoryData?.name || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Min Stock Level</label>
-                    <p className="font-medium">-</p>
+                    <p className="font-medium">{inventoryData?.min_stock_level || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Type</label>
-                    <Badge className="bg-blue-500 text-white">Consumable</Badge>
+                    <Badge className="bg-blue-500 text-white">
+                      {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '-'}
+                    </Badge>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Criticality</label>
-                    <p className="font-medium">Critical</p>
+                    <p className="font-medium">{inventoryData?.criticality ? getCriticality(inventoryData.criticality) : '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Code</label>
-                    <p className="font-medium">123987</p>
+                    <p className="font-medium">{inventoryData?.code || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Serial Number</label>
-                    <p className="font-medium">-</p>
+                    <p className="font-medium">{inventoryData?.serial_number || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Quantity</label>
-                    <p className="font-medium">8.0</p>
+                    <p className="font-medium">{inventoryData?.quantity || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">SGST Rate</label>
@@ -102,11 +155,11 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Site</label>
-                    <p className="font-medium">Loccated</p>
+                    <p className="font-medium">-</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Active</label>
-                    <p className="font-medium">Active</p>
+                    <p className="font-medium">{inventoryData?.active ? 'Active' : 'Inactive'}</p>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -116,19 +169,19 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Max Stock Level</label>
-                    <p className="font-medium">-</p>
+                    <p className="font-medium">{inventoryData?.max_stock_level || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Min. Order Level</label>
-                    <p className="font-medium">-</p>
+                    <p className="font-medium">{inventoryData?.min_order_level || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">SAC/HSN</label>
-                    <p className="font-medium">-</p>
+                    <p className="font-medium">{inventoryData?.hsc_hsn_code || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Cost</label>
-                    <p className="font-medium">NA</p>
+                    <p className="font-medium">{inventoryData?.cost || 'NA'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">CGST Rate</label>
@@ -136,15 +189,15 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Eco-friendly</label>
-                    <p className="font-medium">No</p>
+                    <p className="font-medium">-</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Unit</label>
-                    <p className="font-medium">-</p>
+                    <p className="font-medium">{inventoryData?.unit || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Category</label>
-                    <p className="font-medium">-</p>
+                    <p className="font-medium">{inventoryData?.category || '-'}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Expiry Date</label>
