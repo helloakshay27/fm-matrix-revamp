@@ -35,6 +35,7 @@ export const AddAMCPage = () => {
   
   const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
   const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
+  const [suppliers, setSuppliers] = useState<Array<{id: number, company_name: string}>>([]);
   const [loading, setLoading] = useState(false);
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -109,7 +110,33 @@ export const AddAMCPage = () => {
       }
     };
 
+    const fetchSuppliers = async () => {
+      try {
+        const response = await apiClient.get('/pms/suppliers.json');
+        console.log('Suppliers API Response:', response.data);
+        
+        // Handle different possible response structures for suppliers
+        if (Array.isArray(response.data)) {
+          setSuppliers(response.data);
+        } else if (response.data && Array.isArray(response.data.suppliers)) {
+          setSuppliers(response.data.suppliers);
+        } else {
+          console.warn('Suppliers API response is not an array:', response.data);
+          setSuppliers([]);
+        }
+      } catch (error) {
+        console.error('Error fetching suppliers:', error);
+        setSuppliers([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch suppliers.",
+          variant: "destructive"
+        });
+      }
+    };
+
     fetchAssetGroups();
+    fetchSuppliers();
   }, [toast]);
 
   // Update sub-groups when group changes
@@ -285,11 +312,21 @@ export const AddAMCPage = () => {
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
-                    <MuiSelect labelId="vendor-select-label" label="Supplier" displayEmpty value={formData.vendor} onChange={e => handleInputChange('vendor', e.target.value)} sx={fieldStyles}>
+                    <MuiSelect 
+                      labelId="vendor-select-label" 
+                      label="Supplier" 
+                      displayEmpty 
+                      value={formData.vendor} 
+                      onChange={e => handleInputChange('vendor', e.target.value)} 
+                      sx={fieldStyles}
+                      disabled={loading}
+                    >
                       <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                      <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
-                      <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
-                      <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
+                      {Array.isArray(suppliers) && suppliers.map((supplier) => (
+                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                          {supplier.company_name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -361,12 +398,21 @@ export const AddAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
-                      <MuiSelect labelId="group-supplier-select-label" label="Supplier" displayEmpty value={formData.supplier} onChange={e => handleInputChange('supplier', e.target.value)} sx={fieldStyles}>
+                      <MuiSelect 
+                        labelId="group-supplier-select-label" 
+                        label="Supplier" 
+                        displayEmpty 
+                        value={formData.supplier} 
+                        onChange={e => handleInputChange('supplier', e.target.value)} 
+                        sx={fieldStyles}
+                        disabled={loading}
+                      >
                         <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                        <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
-                        <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
-                        <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
-                        <MenuItem value="l&t-services">L&T Services</MenuItem>
+                        {Array.isArray(suppliers) && suppliers.map((supplier) => (
+                          <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                            {supplier.company_name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                   </div>
