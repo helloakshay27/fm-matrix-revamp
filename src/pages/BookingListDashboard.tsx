@@ -399,7 +399,11 @@ const BookingListDashboard = () => {
             {currentBookings.map((booking) => (
               <TableRow key={booking.id} className="hover:bg-gray-50">
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(`/vas/space-management/bookings/details/${booking.id}`)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
