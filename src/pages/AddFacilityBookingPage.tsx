@@ -12,6 +12,7 @@ export const AddFacilityBookingPage = () => {
   const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [comment, setComment] = useState('');
 
@@ -21,6 +22,7 @@ export const AddFacilityBookingPage = () => {
       userType,
       selectedUser,
       selectedFacility,
+      selectedCompany,
       selectedDate,
       comment
     });
@@ -85,7 +87,7 @@ export const AddFacilityBookingPage = () => {
         </div>
 
         {/* Form Fields Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* User Selection */}
           <div className="space-y-2">
             <TextField
@@ -119,6 +121,25 @@ export const AddFacilityBookingPage = () => {
               <MenuItem value="meeting-room">Meeting Room</MenuItem>
               <MenuItem value="conference-hall">Conference Hall</MenuItem>
               <MenuItem value="board-room">Board Room</MenuItem>
+            </TextField>
+          </div>
+
+          {/* Company Selection */}
+          <div className="space-y-2">
+            <TextField
+              select
+              label="Company"
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            >
+              <MenuItem value="lockated-ho">Lockated HO</MenuItem>
+              <MenuItem value="company-a">Company A</MenuItem>
+              <MenuItem value="company-b">Company B</MenuItem>
+              <MenuItem value="company-c">Company C</MenuItem>
             </TextField>
           </div>
 
