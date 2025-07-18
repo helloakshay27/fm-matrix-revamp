@@ -17,6 +17,9 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     area: ''
   });
 
+  console.log('ServiceFilterModal rendered with filters:', filters);
+  console.log('Modal isOpen:', isOpen);
+
   const handleInputChange = (field: string, value: string) => {
     console.log(`Updating ${field} to:`, value);
     setFilters(prev => {
@@ -118,7 +121,10 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     label="Building"
                     displayEmpty
                     value={filters.building}
-                    onChange={(e) => handleInputChange('building', e.target.value as string)}
+                    onChange={(e) => {
+                      console.log('Building dropdown onChange triggered with value:', e.target.value);
+                      handleInputChange('building', e.target.value as string);
+                    }}
                     sx={fieldStyles}
                     MenuProps={menuProps}
                   >
@@ -137,7 +143,10 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     label="Area"
                     displayEmpty
                     value={filters.area}
-                    onChange={(e) => handleInputChange('area', e.target.value as string)}
+                    onChange={(e) => {
+                      console.log('Area dropdown onChange triggered with value:', e.target.value);
+                      handleInputChange('area', e.target.value as string);
+                    }}
                     sx={fieldStyles}
                     MenuProps={menuProps}
                   >
