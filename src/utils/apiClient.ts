@@ -1,17 +1,17 @@
 import axios from 'axios'
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
+import { BASE_URL, getAuthHeader } from '@/config/apiConfig'
 
 // Create configured axios instance
 export const apiClient = axios.create({
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// Request interceptor to automatically add auth header and base URL
+// Request interceptor to automatically add auth header
 apiClient.interceptors.request.use(
   (config) => {
-    config.baseURL = API_CONFIG.BASE_URL
     config.headers.Authorization = getAuthHeader()
     return config
   },
