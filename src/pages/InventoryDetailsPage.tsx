@@ -19,7 +19,11 @@ export const InventoryDetailsPage = () => {
       
       try {
         setLoading(true);
+        console.log('Fetching inventory details for ID:', id);
         const response = await apiClient.get(`/pms/inventories/${id}.json`);
+        console.log('Full API response:', response);
+        console.log('Response data:', response.data);
+        console.log('Available fields:', Object.keys(response.data || {}));
         setInventoryData(response.data);
         setError(null);
       } catch (err) {
