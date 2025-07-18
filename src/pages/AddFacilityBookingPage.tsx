@@ -10,6 +10,7 @@ import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
+import { fetchFacilitySetups } from '@/store/slices/facilitySetupsSlice';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -24,6 +25,11 @@ export const AddFacilityBookingPage = () => {
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities : 
                    Array.isArray(entitiesResponse) ? entitiesResponse : [];
   
+  // Get facility setups from Redux store
+  const { data: facilitySetupsResponse, loading: facilitySetupsLoading, error: facilitySetupsError } = useAppSelector((state) => state.facilitySetups);
+  const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups : 
+                     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
+  
   const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
@@ -35,6 +41,7 @@ export const AddFacilityBookingPage = () => {
   useEffect(() => {
     dispatch(fetchFMUsers());
     dispatch(fetchEntities());
+    dispatch(fetchFacilitySetups());
   }, [dispatch]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -163,10 +170,25 @@ export const AddFacilityBookingPage = () => {
               fullWidth
               InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
+              disabled={facilitySetupsLoading}
+              helperText={facilitySetupsError ? "Error loading facilities" : ""}
+              error={!!facilitySetupsError}
             >
-              <MenuItem value="meeting-room">Meeting Room</MenuItem>
-              <MenuItem value="conference-hall">Conference Hall</MenuItem>
-              <MenuItem value="board-room">Board Room</MenuItem>
+              {facilitySetupsLoading && (
+                <MenuItem value="" disabled>
+                  Loading facilities...
+                </MenuItem>
+              )}
+              {!facilitySetupsLoading && !facilitySetupsError && facilities.length === 0 && (
+                <MenuItem value="" disabled>
+                  No facilities available
+                </MenuItem>
+              )}
+              {facilities.map((facility) => (
+                <MenuItem key={facility.id} value={facility.id.toString()}>
+                  {facility.fac_name}
+                </MenuItem>
+              ))}
             </TextField>
           </div>
 

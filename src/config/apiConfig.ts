@@ -27,6 +27,7 @@ export const API_CONFIG = {
     DELETE_COMPLAINT_WORKER: '/pms/admin/delete_complaint_worker',
     FACILITY_BOOKINGS: '/pms/admin/facility_bookings.json',
     ENTITIES: '/entities.json',
+    FACILITY_SETUPS: '/pms/admin/facility_setups.json',
   },
 } as const
 
