@@ -484,8 +484,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Category</em></MenuItem>
                   {groups.map((groupItem) => (
-                    <MenuItem key={groupItem.id} value={groupItem.id.toString()}>
-                      {groupItem.name}
+                    <MenuItem key={groupItem.id} value={groupItem.id?.toString() || ''}>
+                      {groupItem.name || 'Unknown Group'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -504,8 +504,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Sub Group</em></MenuItem>
                   {subgroups.map((subgroupItem) => (
-                    <MenuItem key={subgroupItem.id} value={subgroupItem.id.toString()}>
-                      {subgroupItem.name}
+                    <MenuItem key={subgroupItem.id} value={subgroupItem.id?.toString() || ''}>
+                      {subgroupItem.name || 'Unknown Subgroup'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -531,8 +531,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Site</em></MenuItem>
                   {sites.map((siteItem) => (
-                    <MenuItem key={siteItem.id} value={siteItem.id.toString()}>
-                      {siteItem.name}
+                    <MenuItem key={siteItem.id} value={siteItem.id?.toString() || ''}>
+                      {siteItem.name || 'Unknown Site'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -551,8 +551,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Building</em></MenuItem>
                   {buildings.map((buildingItem) => (
-                    <MenuItem key={buildingItem.id} value={buildingItem.id.toString()}>
-                      {buildingItem.name}
+                    <MenuItem key={buildingItem.id} value={buildingItem.id?.toString() || ''}>
+                      {buildingItem.name || 'Unknown Building'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -573,8 +573,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Wing</em></MenuItem>
                   {wings.map((wingItem) => (
-                    <MenuItem key={wingItem.id} value={wingItem.id.toString()}>
-                      {wingItem.name}
+                    <MenuItem key={wingItem.id} value={wingItem.id?.toString() || ''}>
+                      {wingItem.name || 'Unknown Wing'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -593,8 +593,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Area</em></MenuItem>
                   {areas.map((areaItem) => (
-                    <MenuItem key={areaItem.id} value={areaItem.id.toString()}>
-                      {areaItem.name}
+                    <MenuItem key={areaItem.id} value={areaItem.id?.toString() || ''}>
+                      {areaItem.name || 'Unknown Area'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -615,8 +615,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Floor</em></MenuItem>
                   {floors.map((floorItem) => (
-                    <MenuItem key={floorItem.id} value={floorItem.id.toString()}>
-                      {floorItem.name}
+                    <MenuItem key={floorItem.id} value={floorItem.id?.toString() || ''}>
+                      {floorItem.name || 'Unknown Floor'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -635,8 +635,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 >
                   <MenuItem value=""><em>Select Room</em></MenuItem>
                   {rooms.map((roomItem) => (
-                    <MenuItem key={roomItem.id} value={roomItem.id.toString()}>
-                      {roomItem.name}
+                    <MenuItem key={roomItem.id} value={roomItem.id?.toString() || ''}>
+                      {roomItem.name || 'Unknown Room'}
                     </MenuItem>
                   ))}
                 </MuiSelect>
