@@ -7,14 +7,16 @@ export interface Asset {
   name: string
   asset_number: string
   asset_code: string
+  serial_number?: string
   pms_asset_group: string
-  pms_asset_sub_group: string
+  sub_group: string
   status: string
   site_name: string
   building?: { id: number; name: string }
   wing?: { id: number; name: string }
   area?: { id: number; name: string }
   pms_room?: { id: number; name: string } | null
+  asset_type?: boolean
   // Add other asset properties as needed
 }
 

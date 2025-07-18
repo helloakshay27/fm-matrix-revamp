@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Filter, Package, BarChart3, TrendingUp, Download, Zap, Wrench, AlertTriangle, Activity } from 'lucide-react';
@@ -23,7 +26,6 @@ import { AssetSelectionPanel } from '@/components/AssetSelectionPanel';
 import { AssetSelector } from '@/components/AssetSelector';
 import { RecentAssetsSidebar } from '@/components/RecentAssetsSidebar';
 import { DonutChartGrid } from '@/components/DonutChartGrid';
-import { useAssets } from '@/hooks/useAssets';
 import { useAssetSearch } from '@/hooks/useAssetSearch';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -62,6 +64,12 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Redux state
+  const { items: assets, loading, error, totalCount, totalPages, filters } = useSelector((state: RootState) => state.assets);
+  
+  // Local state
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,11 +100,55 @@ export const AssetDashboard = () => {
     'donutCharts', 'categoryChart', 'agingMatrix', 'performanceMetrics'
   ]);
 
-  // Use the API hook
-  const { assets, stats, pagination, loading, error, refetch } = useAssets(currentPage);
-  
-  // Use search hook
+  // Use search hook for search functionality  
   const { assets: searchAssets, loading: searchLoading, error: searchError, searchAssets: performSearch } = useAssetSearch();
+
+  // Fetch initial assets data
+  useEffect(() => {
+    if (assets.length === 0) {
+      dispatch(fetchAssetsData({ page: currentPage }));
+    }
+  }, [dispatch, currentPage, assets.length]);
+
+  // Transform Redux assets to match the expected Asset interface
+  const transformedAssets = assets.map(asset => ({
+    id: asset.id?.toString() || '',
+    name: asset.name || '',
+    serialNumber: asset.serial_number || '',
+    assetNumber: asset.asset_number || '',
+    status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
+    siteName: asset.site_name || '',
+    building: asset.building || null,
+    wing: asset.wing || null,
+    area: asset.area || null,
+    pmsRoom: asset.pms_room || null,
+    assetGroup: asset.pms_asset_group || '',
+    assetSubGroup: asset.sub_group || '',
+    assetType: asset.asset_type
+  }));
+
+  // Use search results if search term exists, otherwise use Redux assets
+  const displayAssets = searchTerm.trim() ? searchAssets : transformedAssets;
+  const isSearchMode = searchTerm.trim().length > 0;
+
+  // Create pagination object for compatibility
+  const pagination = {
+    currentPage,
+    totalPages: totalPages || 1,
+    totalCount: totalCount || 0
+  };
+
+  // Create stats object for compatibility
+  const stats = {
+    total: totalCount || 0,
+    totalValue: "₹0.00", 
+    nonItAssets: 0,
+    itAssets: 0,
+    inUse: 0,
+    breakdown: 0,
+    inStore: 0,
+    dispose: 0
+  };
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -106,16 +158,23 @@ export const AssetDashboard = () => {
     })
   );
 
-  // Use search results if search term exists, otherwise use paginated assets
-  const displayAssets = searchTerm.trim() ? searchAssets : assets;
-  const isSearchMode = searchTerm.trim().length > 0;
-
   // Handle search with API call
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim()) {
       performSearch(term);
     }
+  };
+
+  // Handle refresh - fetch assets from Redux
+  const handleRefresh = () => {
+    dispatch(fetchAssetsData({ page: currentPage, filters }));
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    dispatch(fetchAssetsData({ page, filters }));
   };
 
   // Handle asset selection
@@ -141,11 +200,6 @@ export const AssetDashboard = () => {
     name: asset.name
   }));
 
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
   };
@@ -162,10 +216,6 @@ export const AssetDashboard = () => {
 
   const handleViewAsset = (assetId: string) => {
     navigate(`/maintenance/asset/details/${assetId}`);
-  };
-
-  const handleRefresh = () => {
-    refetch();
   };
 
   const handleColumnChange = (columns: typeof visibleColumns) => {
@@ -507,6 +557,14 @@ export const AssetDashboard = () => {
                   onViewAsset={handleViewAsset}
                 />
 
+                {/* Empty state when no data and filters are applied */}
+                {!loading && displayAssets.length === 0 && Object.keys(filters).length > 0 && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500 text-lg mb-2">No assets found</div>
+                    <div className="text-gray-400 text-sm">Try adjusting your filters to see more results</div>
+                  </div>
+                )}
+
                 {/* Selection Panel - positioned as overlay within table container */}
                 {selectedAssets.length > 0 && (
                   <AssetSelectionPanel
@@ -527,9 +585,7 @@ export const AssetDashboard = () => {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
+                        onClick={() => {
                           if (pagination.currentPage > 1) {
                             handlePageChange(pagination.currentPage - 1);
                           }
@@ -541,12 +597,8 @@ export const AssetDashboard = () => {
                     {Array.from({ length: Math.min(pagination.totalPages, 10) }, (_, i) => i + 1).map((page) => (
                       <PaginationItem key={page}>
                         <PaginationLink 
-                          href="#" 
-                          isActive={page === pagination.currentPage}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handlePageChange(page);
-                          }}
+                          onClick={() => handlePageChange(page)}
+                          isActive={pagination.currentPage === page}
                         >
                           {page}
                         </PaginationLink>
@@ -561,9 +613,7 @@ export const AssetDashboard = () => {
                     
                     <PaginationItem>
                       <PaginationNext 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
+                        onClick={() => {
                           if (pagination.currentPage < pagination.totalPages) {
                             handlePageChange(pagination.currentPage + 1);
                           }
