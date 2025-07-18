@@ -164,13 +164,21 @@ export const AddAMCPage = () => {
 
     const fetchServices = async () => {
       try {
+        console.log('Fetching services from API...');
         const response = await apiClient.get('/pms/services/get_services.json');
         console.log('Services API Response:', response.data);
+        console.log('Response structure:', {
+          isArray: Array.isArray(response.data),
+          hasServicesKey: response.data && 'services' in response.data,
+          keys: response.data ? Object.keys(response.data) : 'No data'
+        });
         
         // Handle different possible response structures for services
         if (Array.isArray(response.data)) {
+          console.log('Setting services from direct array:', response.data.length, 'items');
           setServices(response.data);
         } else if (response.data && Array.isArray(response.data.services)) {
+          console.log('Setting services from services key:', response.data.services.length, 'items');
           setServices(response.data.services);
         } else {
           console.warn('Services API response is not an array:', response.data);
@@ -371,11 +379,18 @@ export const AddAMCPage = () => {
                       disabled={loading}
                     >
                       <MenuItem value=""><em>Select a Service...</em></MenuItem>
-                      {Array.isArray(services) && services.map((service) => (
-                        <MenuItem key={service.id} value={service.id.toString()}>
-                          {service.name}
-                        </MenuItem>
-                      ))}
+                      {(() => {
+                        console.log('Services dropdown rendering - services state:', services);
+                        console.log('Services array length:', services.length);
+                        return Array.isArray(services) && services.map((service) => {
+                          console.log('Rendering service:', service);
+                          return (
+                            <MenuItem key={service.id} value={service.id.toString()}>
+                              {service.name}
+                            </MenuItem>
+                          );
+                        });
+                      })()}
                     </MuiSelect>
                   </FormControl>
                 )}
