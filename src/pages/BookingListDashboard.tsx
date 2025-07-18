@@ -324,7 +324,7 @@ const BookingListDashboard = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Available Slots */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <Calendar className="w-6 h-6 text-red-600" />
@@ -337,7 +337,7 @@ const BookingListDashboard = () => {
         </div>
 
         {/* Total Booked */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <CheckCircle className="w-6 h-6 text-red-600" />
@@ -350,7 +350,7 @@ const BookingListDashboard = () => {
         </div>
 
         {/* Total Vacant */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="bg-[#f6f4ee] rounded-lg border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <Circle className="w-6 h-6 text-red-600" />
