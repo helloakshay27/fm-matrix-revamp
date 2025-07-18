@@ -14,16 +14,26 @@ import { RootState, AppDispatch } from '@/store/store';
 import { fetchAllowedCompanies, changeCompany } from '@/store/slices/projectSlice';
 import { fetchAllowedSites, changeSite, clearSites } from '@/store/slices/siteSlice';
 
+export interface Company {
+  id: number;
+  name: string;
+}
+
+export interface Site {
+  id: number;
+  name: string;
+}
+
 export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
-  
+
   const currentPath = window.location.pathname;
-  
+
   // Redux state
   const { companies, selectedCompany, loading: projectLoading } = useSelector((state: RootState) => state.project);
   const { sites, selectedSite, loading: siteLoading } = useSelector((state: RootState) => state.site);
-  
+
   // Mock user ID - in real app, this would come from auth state
   const userId = 87989;
 
@@ -80,9 +90,8 @@ export const Header = () => {
           {/* Home Dashboard */}
           <a
             href="/"
-            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-              currentPath === '/' ? 'text-[#C72030]' : 'text-[#1a1a1a] hover:text-[#C72030]'
-            }`}
+            className={`flex items-center gap-2 text-sm font-medium transition-colors ${currentPath === '/' ? 'text-[#C72030]' : 'text-[#1a1a1a] hover:text-[#C72030]'
+              }`}
           >
             <Home className="w-4 h-4" />
             Home
