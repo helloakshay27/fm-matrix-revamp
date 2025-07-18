@@ -113,12 +113,41 @@ export const AddAMCPage = () => {
   }, [toast]);
 
   // Update sub-groups when group changes
-  const handleGroupChange = (groupId: string) => {
+  const handleGroupChange = async (groupId: string) => {
     handleInputChange('group', groupId);
     handleInputChange('subgroup', ''); // Clear subgroup selection
     
-    const selectedGroup = assetGroups.find(group => group.id.toString() === groupId);
-    setSubGroups(selectedGroup?.sub_groups || []);
+    if (groupId) {
+      setLoading(true);
+      try {
+        const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
+        console.log('SubGroup API Response:', response.data);
+        
+        // Handle different possible response structures for subgroups
+        if (Array.isArray(response.data)) {
+          setSubGroups(response.data);
+        } else if (response.data && Array.isArray(response.data.sub_groups)) {
+          setSubGroups(response.data.sub_groups);
+        } else if (response.data && Array.isArray(response.data.asset_sub_groups)) {
+          setSubGroups(response.data.asset_sub_groups);
+        } else {
+          console.warn('SubGroup API response structure unknown:', response.data);
+          setSubGroups([]);
+        }
+      } catch (error) {
+        console.error('Error fetching subgroups:', error);
+        setSubGroups([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch subgroups.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setSubGroups([]);
+    }
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
