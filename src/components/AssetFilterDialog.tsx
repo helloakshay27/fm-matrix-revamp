@@ -24,7 +24,7 @@ const fieldStyles = {
 
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const [assetName, setAssetName] = useState('');
-  const [dateRange, setDateRange] = useState('');
+  const [assetId, setAssetId] = useState('');
   const [group, setGroup] = useState('');
   const [subgroup, setSubgroup] = useState('');
   const [building, setBuilding] = useState('');
@@ -36,7 +36,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const handleSubmit = () => {
     const filters = {
       assetName,
-      dateRange,
+      assetId,
       group,
       subgroup,
       building,
@@ -56,7 +56,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
   const handleReset = () => {
     setAssetName('');
-    setDateRange('');
+    setAssetId('');
     setGroup('');
     setSubgroup('');
     setBuilding('');
@@ -97,10 +97,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label="Date Range*"
-                placeholder="Select Date Range"
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
+                label="Asset ID"
+                placeholder="Enter Asset ID"
+                value={assetId}
+                onChange={(e) => setAssetId(e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
