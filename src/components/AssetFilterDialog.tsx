@@ -445,17 +445,37 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
     onClose();
   };
 
-  const handleReset = () => {
-    setAssetName('');
-    setAssetId('');
-    setGroup('');
-    setSubgroup('');
-    setSite('');
-    setBuilding('');
-    setWing('');
-    setArea('');
-    setFloor('');
-    setRoom('');
+  const handleReset = async () => {
+    try {
+      // Clear all form fields
+      setAssetName('');
+      setAssetId('');
+      setGroup('');
+      setSubgroup('');
+      setSite('');
+      setBuilding('');
+      setWing('');
+      setArea('');
+      setFloor('');
+      setRoom('');
+
+      // Clear dependent data arrays
+      setSubgroups([]);
+      setBuildings([]);
+      setWings([]);
+      setAreas([]);
+      setFloors([]);
+      setRooms([]);
+
+      // Dispatch Redux action to fetch all unfiltered assets
+      await dispatch(fetchAssetsData({ page: 1, filters: {} })).unwrap();
+      
+      toast.success('Filters reset successfully');
+      onClose();
+    } catch (error) {
+      console.error('Error resetting filters:', error);
+      toast.error('Failed to reset filters');
+    }
   };
 
   return (
