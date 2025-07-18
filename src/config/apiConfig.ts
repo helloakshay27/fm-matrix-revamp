@@ -25,6 +25,7 @@ export const API_CONFIG = {
     RESOLUTION_ESCALATION: '/pms/admin/resolution_escalation',
     UPDATE_COMPLAINT_WORKER: '/pms/admin/update_complaint_worker.json',
     DELETE_COMPLAINT_WORKER: '/pms/admin/delete_complaint_worker',
+    FACILITY_BOOKINGS: '/pms/admin/facility_bookings.json',
   },
 } as const
 

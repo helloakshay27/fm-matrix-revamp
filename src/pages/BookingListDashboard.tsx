@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Plus, Filter, Download, ChevronDown, X, Calendar, CheckCircle, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,88 +20,7 @@ import { TextField, MenuItem } from '@mui/material';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
-
-interface BookingData {
-  id: number;
-  bookedBy: string;
-  bookedFor: string;
-  companyName: string;
-  facility: string;
-  facilityType: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  bookingStatus: 'Confirmed' | 'Pending' | 'Cancelled';
-  createdOn: string;
-  source: string;
-}
-
-const mockBookingData: BookingData[] = [
-  {
-    id: 334945,
-    bookedBy: 'Test 11 Bulk',
-    bookedFor: 'Test 11 Bulk',
-    companyName: 'Lockated HO',
-    facility: 'Admin Meeting Room',
-    facilityType: 'bookable',
-    scheduledDate: '9 June 2025',
-    scheduledTime: '02:00 PM to 02:15 PM',
-    bookingStatus: 'Confirmed',
-    createdOn: '9 June 2025',
-    source: 'GoPhygital'
-  },
-  {
-    id: 331666,
-    bookedBy: 'Test 999.0',
-    bookedFor: 'Test 999.0',
-    companyName: 'Lockated HO',
-    facility: 'Admin Meeting Room',
-    facilityType: 'bookable',
-    scheduledDate: '30 May 2025',
-    scheduledTime: '08:00 AM to 08:15 AM',
-    bookingStatus: 'Confirmed',
-    createdOn: '28 May 2025',
-    source: 'GoPhygital'
-  },
-  {
-    id: 313358,
-    bookedBy: 'Robert Day2',
-    bookedFor: 'Robert Day2',
-    companyName: 'Lockated HO',
-    facility: 'Admin Meeting Room',
-    facilityType: 'bookable',
-    scheduledDate: '14 March 2025',
-    scheduledTime: '08:15 AM to 08:30 AM',
-    bookingStatus: 'Confirmed',
-    createdOn: '13 March 2025',
-    source: 'GoPhygital'
-  },
-  {
-    id: 306844,
-    bookedBy: '',
-    bookedFor: '',
-    companyName: '',
-    facility: 'Admin Meeting Room',
-    facilityType: 'bookable',
-    scheduledDate: '17 February 2025',
-    scheduledTime: '10:00 AM to 10:15 AM',
-    bookingStatus: 'Confirmed',
-    createdOn: '13 February 2025',
-    source: 'GoPhygital'
-  },
-  {
-    id: 306838,
-    bookedBy: '',
-    bookedFor: '',
-    companyName: '',
-    facility: 'Admin Meeting Room',
-    facilityType: 'bookable',
-    scheduledDate: '14 February 2025',
-    scheduledTime: '08:00 AM to 08:15 AM',
-    bookingStatus: 'Confirmed',
-    createdOn: '13 February 2025',
-    source: 'GoPhygital'
-  }
-];
+import { fetchFacilityBookings, type BookingData } from '@/services/bookingService';
 
 const exportColumns = [
   { id: 'selectAll', label: 'Select All' },
@@ -141,7 +60,9 @@ const enhancedTableColumns: ColumnConfig[] = [
 
 const BookingListDashboard = () => {
   const navigate = useNavigate();
-  const [bookings] = useState<BookingData[]>(mockBookingData);
+  const [bookings, setBookings] = useState<BookingData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
@@ -154,6 +75,25 @@ const BookingListDashboard = () => {
   });
   
   const itemsPerPage = 5;
+
+  // Fetch data from API on component mount
+  useEffect(() => {
+    const loadBookings = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchFacilityBookings();
+        setBookings(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load bookings');
+        console.error('Failed to load bookings:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBookings();
+  }, []);
 
   const handleAddBooking = () => {
     navigate('/vas/booking/add');
@@ -356,6 +296,21 @@ const BookingListDashboard = () => {
 
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+          <p>Error loading bookings: {error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
       {/* Enhanced Table with Drag and Drop */}
       <EnhancedTable
         data={bookings}
@@ -365,7 +320,8 @@ const BookingListDashboard = () => {
         storageKey="booking-list-table"
         pagination={true}
         pageSize={itemsPerPage}
-        emptyMessage="No bookings found"
+        loading={loading}
+        emptyMessage={loading ? "Loading bookings..." : "No bookings found"}
       />
 
       {/* Filter Modal */}
