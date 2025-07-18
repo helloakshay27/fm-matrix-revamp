@@ -5,12 +5,22 @@ import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAssetsData } from '@/store/slices/assetsSlice';
+import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
+import { fetchServicesData } from '@/store/slices/servicesSlice';
+import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
 import { apiClient } from '@/utils/apiClient';
 export const AddAMCPage = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const dispatch = useAppDispatch();
+  
+  // Redux state
+  const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
+  const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
+  const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
+  const { loading: amcCreateLoading, success: amcCreateSuccess } = useAppSelector(state => state.amcCreate);
   const [formData, setFormData] = useState({
     details: 'Asset',
     type: 'Individual',
@@ -36,10 +46,12 @@ export const AddAMCPage = () => {
   
   const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
   const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
-  const [suppliers, setSuppliers] = useState<Array<{id: number, company_name: string}>>([]);
-  const [assets, setAssets] = useState<Array<{id: number, name: string}>>([]);
-  const [services, setServices] = useState<Array<{id: number, service_name: string}>>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Extract data from Redux state
+  const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
+  const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
+  const services = Array.isArray(servicesData) ? servicesData : [];
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       // Clear the assetName when switching between Asset and Service
@@ -84,8 +96,14 @@ export const AddAMCPage = () => {
     }));
   };
 
-  // Fetch asset groups from API
+  // Fetch data using Redux slices
   useEffect(() => {
+    // Dispatch Redux actions
+    dispatch(fetchAssetsData({ page: 1 }));
+    dispatch(fetchSuppliersData());
+    dispatch(fetchServicesData());
+
+    // Fetch asset groups (keeping direct API call as it's not in Redux)
     const fetchAssetGroups = async () => {
       setLoading(true);
       try {
@@ -103,7 +121,7 @@ export const AddAMCPage = () => {
         }
       } catch (error) {
         console.error('Error fetching asset groups:', error);
-        setAssetGroups([]); // Ensure it stays as an array
+        setAssetGroups([]);
         toast({
           title: "Error",
           description: "Failed to fetch asset groups.",
@@ -114,96 +132,20 @@ export const AddAMCPage = () => {
       }
     };
 
-    const fetchSuppliers = async () => {
-      try {
-        const response = await apiClient.get('/pms/suppliers.json');
-        console.log('Suppliers API Response:', response.data);
-        
-        // Handle different possible response structures for suppliers
-        if (Array.isArray(response.data)) {
-          setSuppliers(response.data);
-        } else if (response.data && Array.isArray(response.data.suppliers)) {
-          setSuppliers(response.data.suppliers);
-        } else {
-          console.warn('Suppliers API response is not an array:', response.data);
-          setSuppliers([]);
-        }
-      } catch (error) {
-        console.error('Error fetching suppliers:', error);
-        setSuppliers([]);
-        toast({
-          title: "Error",
-          description: "Failed to fetch suppliers.",
-          variant: "destructive"
-        });
-      }
-    };
-
-    const fetchAssets = async () => {
-      try {
-        const response = await apiClient.get('/pms/assets/get_assets.json');
-        console.log('Assets API Response:', response.data);
-        
-        // Handle different possible response structures for assets
-        if (Array.isArray(response.data)) {
-          setAssets(response.data);
-        } else if (response.data && Array.isArray(response.data.assets)) {
-          setAssets(response.data.assets);
-        } else {
-          console.warn('Assets API response is not an array:', response.data);
-          setAssets([]);
-        }
-      } catch (error) {
-        console.error('Error fetching assets:', error);
-        setAssets([]);
-        toast({
-          title: "Error",
-          description: "Failed to fetch assets.",
-          variant: "destructive"
-        });
-      }
-    };
-
-    const fetchServices = async () => {
-      try {
-        console.log('🚀 Starting services fetch...');
-        // Try the correct endpoint based on the pattern from other APIs
-        const response = await apiClient.get('/pms/services.json');
-        console.log('✅ Services API Response:', response.data);
-        console.log('📊 Response structure:', {
-          isArray: Array.isArray(response.data),
-          hasServicesKey: response.data && 'services' in response.data,
-          keys: response.data ? Object.keys(response.data) : 'No data',
-          dataType: typeof response.data
-        });
-        
-        // Handle different possible response structures for services
-        if (Array.isArray(response.data)) {
-          console.log('📋 Setting services from direct array:', response.data.length, 'items');
-          setServices(response.data);
-        } else if (response.data && Array.isArray(response.data.services)) {
-          console.log('📋 Setting services from services key:', response.data.services.length, 'items');
-          setServices(response.data.services);
-        } else {
-          console.warn('⚠️ Services API response is not an array:', response.data);
-          setServices([]);
-        }
-      } catch (error) {
-        console.error('❌ Error fetching services:', error);
-        setServices([]);
-        toast({
-          title: "Error",
-          description: "Failed to fetch services.",
-          variant: "destructive"
-        });
-      }
-    };
-
     fetchAssetGroups();
-    fetchSuppliers();
-    fetchAssets();
-    fetchServices();
-  }, [toast]);
+  }, [dispatch, toast]);
+
+  // Handle AMC creation success
+  useEffect(() => {
+    if (amcCreateSuccess) {
+      toast({
+        title: "AMC Created",
+        description: "AMC has been successfully created."
+      });
+      dispatch(resetAmcCreate());
+      navigate('/maintenance/amc');
+    }
+  }, [amcCreateSuccess, dispatch, navigate, toast]);
 
   // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
@@ -259,132 +201,83 @@ export const AddAMCPage = () => {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    try {
-      // Create FormData for sending
-      const sendData = new FormData();
-      
-      // Add all form fields directly to FormData
-      sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
-        (formData.type === 'Individual' ? formData.asset_ids : null) : null));
-      sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-      sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
-      sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
-      sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
-      sendData.append('pms_asset_amc[amc_cost]', formData.cost);
-      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
-      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
-      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
-      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
-      sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
-      sendData.append('pms_asset_amc[remarks]', formData.remarks);
-      sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
-        (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
-      sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+    // Create FormData for sending
+    const sendData = new FormData();
+    
+    // Add all form fields directly to FormData
+    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+    sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+    sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+    sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+    sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+    sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+    sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+    sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+    sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+    sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+    sendData.append('pms_asset_amc[remarks]', formData.remarks);
+    sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
 
-      // Add contract files
-      attachments.contracts.forEach((file, index) => {
-        sendData.append(`amc_contract_${index}`, file);
-      });
+    // Add contract files
+    attachments.contracts.forEach((file, index) => {
+      sendData.append(`amc_contract_${index}`, file);
+    });
 
-      // Add invoice files  
-      attachments.invoices.forEach((file, index) => {
-        sendData.append(`amc_invoice_${index}`, file);
-      });
+    // Add invoice files  
+    attachments.invoices.forEach((file, index) => {
+      sendData.append(`amc_invoice_${index}`, file);
+    });
 
-      console.log('Submitting AMC Data as FormData');
-      console.log('Attachments:', attachments);
+    console.log('Submitting AMC Data via Redux');
+    console.log('Attachments:', attachments);
 
-      const response = await apiClient.post('/pms/asset_amcs.json', sendData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-
-      console.log('API Response:', response.data);
-
-      toast({
-        title: "AMC Created",
-        description: "AMC has been successfully created."
-      });
-      
-      navigate('/maintenance/amc');
-    } catch (error) {
-      console.error('Error creating AMC:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create AMC. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Use Redux action to create AMC
+    dispatch(createAMC(sendData));
   };
 
   const handleSaveAndSchedule = async () => {
-    setLoading(true);
+    // Create FormData for sending (same as handleSubmit)
+    const sendData = new FormData();
+    
+    // Add all form fields directly to FormData
+    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+    sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+    sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+    sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+    sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+    sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+    sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+    sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+    sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+    sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+    sendData.append('pms_asset_amc[remarks]', formData.remarks);
+    sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
+      (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+    sendData.append('pms_asset_amc[schedule_immediately]', 'true'); // Flag for save & schedule
 
-    try {
-      // Create FormData for sending (same as handleSubmit)
-      const sendData = new FormData();
-      
-      // Add all form fields directly to FormData
-      sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
-        (formData.type === 'Individual' ? formData.asset_ids : null) : null));
-      sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-      sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
-      sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
-      sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
-      sendData.append('pms_asset_amc[amc_cost]', formData.cost);
-      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
-      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
-      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
-      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
-      sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
-      sendData.append('pms_asset_amc[remarks]', formData.remarks);
-      sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
-        (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
-      sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
-      sendData.append('pms_asset_amc[schedule_immediately]', 'true'); // Flag for save & schedule
+    // Add contract files
+    attachments.contracts.forEach((file, index) => {
+      sendData.append(`amc_contract_${index}`, file);
+    });
 
-      // Add contract files
-      attachments.contracts.forEach((file, index) => {
-        sendData.append(`amc_contract_${index}`, file);
-      });
+    // Add invoice files  
+    attachments.invoices.forEach((file, index) => {
+      sendData.append(`amc_invoice_${index}`, file);
+    });
 
-      // Add invoice files  
-      attachments.invoices.forEach((file, index) => {
-        sendData.append(`amc_invoice_${index}`, file);
-      });
+    console.log('Save & Schedule AMC via Redux');
+    console.log('Attachments:', attachments);
 
-      console.log('Save & Schedule AMC as FormData');
-      console.log('Attachments:', attachments);
-
-      const response = await apiClient.post('/pms/asset_amcs.json', sendData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-
-      console.log('API Response:', response.data);
-
-      toast({
-        title: "AMC Saved & Scheduled",
-        description: "AMC has been saved and scheduled successfully."
-      });
-      
-      navigate('/maintenance/amc');
-    } catch (error) {
-      console.error('Error creating scheduled AMC:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save and schedule AMC. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Use Redux action to create AMC
+    dispatch(createAMC(sendData));
   };
 
   // Responsive styles for TextField and Select
@@ -476,8 +369,8 @@ export const AddAMCPage = () => {
                           asset_ids: typeof value === 'string' ? value.split(',') : value
                         }));
                       }} 
-                      sx={fieldStyles}
-                      disabled={loading}
+                       sx={fieldStyles}
+                       disabled={loading || assetsLoading || amcCreateLoading}
                       renderValue={(selected) => {
                         if (selected.length === 0) {
                           return <em>Select Assets...</em>;
@@ -510,8 +403,8 @@ export const AddAMCPage = () => {
                       displayEmpty 
                       value={formData.assetName} 
                       onChange={e => handleInputChange('assetName', e.target.value)} 
-                      sx={fieldStyles}
-                      disabled={loading}
+                       sx={fieldStyles}
+                       disabled={loading || servicesLoading || amcCreateLoading}
                     >
                       <MenuItem value=""><em>Select a Service...</em></MenuItem>
                       {(() => {
@@ -539,8 +432,8 @@ export const AddAMCPage = () => {
                       displayEmpty 
                       value={formData.vendor} 
                       onChange={e => handleInputChange('vendor', e.target.value)} 
-                      sx={fieldStyles}
-                      disabled={loading}
+                       sx={fieldStyles}
+                       disabled={loading || suppliersLoading || amcCreateLoading}
                     >
                       <MenuItem value=""><em>Select Supplier</em></MenuItem>
                       {Array.isArray(suppliers) && suppliers.map((supplier) => (
@@ -565,8 +458,8 @@ export const AddAMCPage = () => {
                         displayEmpty 
                         value={formData.group} 
                         onChange={e => handleGroupChange(e.target.value)} 
-                        sx={fieldStyles}
-                        disabled={loading}
+                         sx={fieldStyles}
+                         disabled={loading || amcCreateLoading}
                       >
                         <MenuItem value=""><em>Select Group</em></MenuItem>
                         {Array.isArray(assetGroups) && assetGroups.map((group) => (
@@ -587,8 +480,8 @@ export const AddAMCPage = () => {
                         displayEmpty 
                         value={formData.subgroup} 
                         onChange={e => handleInputChange('subgroup', e.target.value)} 
-                        sx={fieldStyles}
-                        disabled={!formData.group || loading}
+                         sx={fieldStyles}
+                         disabled={!formData.group || loading || amcCreateLoading}
                       >
                         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
                         {Array.isArray(subGroups) && subGroups.map((subGroup) => (
@@ -625,8 +518,8 @@ export const AddAMCPage = () => {
                         displayEmpty 
                         value={formData.supplier} 
                         onChange={e => handleInputChange('supplier', e.target.value)} 
-                        sx={fieldStyles}
-                        disabled={loading}
+                         sx={fieldStyles}
+                         disabled={loading || suppliersLoading || amcCreateLoading}
                       >
                         <MenuItem value=""><em>Select Supplier</em></MenuItem>
                         {Array.isArray(suppliers) && suppliers.map((supplier) => (
@@ -800,15 +693,22 @@ export const AddAMCPage = () => {
         </Card>
 
         <div className="flex gap-4">
-          <Button type="button" onClick={handleSaveAndSchedule} style={{
-          backgroundColor: '#C72030'
-        }} className="text-white hover:bg-[#C72030]/90">
-            Save & Show Details
+          <Button 
+            type="button" 
+            onClick={handleSaveAndSchedule} 
+            disabled={amcCreateLoading}
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white hover:bg-[#C72030]/90"
+          >
+            {amcCreateLoading ? 'Saving...' : 'Save & Show Details'}
           </Button>
-          <Button type="submit" style={{
-          backgroundColor: '#C72030'
-        }} className="text-white hover:bg-[#C72030]/90">
-            Save & Schedule AMC
+          <Button 
+            type="submit" 
+            disabled={amcCreateLoading}
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white hover:bg-[#C72030]/90"
+          >
+            {amcCreateLoading ? 'Saving...' : 'Save & Schedule AMC'}
           </Button>
         </div>
       </form>
