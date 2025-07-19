@@ -14,6 +14,7 @@ import { useLocationData } from '@/hooks/useLocationData';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import apiClient from '@/utils/apiClient';
 import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
+import { DynamicAssetForm } from '@/components/forms/DynamicAssetForm';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -637,7 +638,14 @@ const AddAssetPage = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW ASSET</h1>
       </div>
 
-      <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-6">
+            <DynamicAssetForm 
+              assetType="default"
+              onSuccess={() => {
+                // Handle success - could navigate away or show success message
+                console.log('Asset created successfully');
+              }}
+            />
         {/* Asset Category Selection */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
