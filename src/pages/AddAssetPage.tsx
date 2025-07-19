@@ -9,9 +9,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLocationData } from '@/hooks/useLocationData';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
+  
+  // Location data hook
+  const {
+    sites,
+    buildings,
+    wings,
+    areas,
+    floors,
+    rooms,
+    loading,
+    fetchBuildings,
+    fetchWings,
+    fetchAreas,
+    fetchFloors,
+    fetchRooms
+  } = useLocationData();
+
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     asset: true,
@@ -24,6 +42,17 @@ const AddAssetPage = () => {
     amcDetails: true,
     attachments: true
   });
+
+  // Location state
+  const [selectedLocation, setSelectedLocation] = useState({
+    site: '',
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: ''
+  });
+
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
@@ -117,6 +146,43 @@ const AddAssetPage = () => {
 
   const handleGoBack = () => {
     navigate('/maintenance/asset');
+  };
+
+  // Location change handlers
+  const handleLocationChange = async (field, value) => {
+    setSelectedLocation(prev => {
+      const newLocation = { ...prev, [field]: value };
+      
+      // Reset dependent fields when parent changes
+      if (field === 'site') {
+        newLocation.building = '';
+        newLocation.wing = '';
+        newLocation.area = '';
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchBuildings(parseInt(value));
+      } else if (field === 'building') {
+        newLocation.wing = '';
+        newLocation.area = '';
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchWings(parseInt(value));
+      } else if (field === 'wing') {
+        newLocation.area = '';
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchAreas(parseInt(value));
+      } else if (field === 'area') {
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchFloors(parseInt(value));
+      } else if (field === 'floor') {
+        newLocation.room = '';
+        if (value) fetchRooms(parseInt(value));
+      }
+      
+      return newLocation;
+    });
   };
 
   // Meter category options matching the images
@@ -3080,26 +3146,130 @@ const AddAssetPage = () => {
               </div>
           {expandedSections.location && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                {['Site', 'Building', 'Wing', 'Area', 'Floor'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
-                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
-                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value="" sx={fieldStyles}>
-                      <MenuItem value=""><em>Select {label}</em></MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>)}
+                {/* Site Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="site-select-label" shrink>Site</InputLabel>
+                  <MuiSelect 
+                    labelId="site-select-label" 
+                    label="Site" 
+                    displayEmpty 
+                    value={selectedLocation.site} 
+                    onChange={(e) => handleLocationChange('site', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Site</em></MenuItem>
+                    {sites.map((site) => (
+                      <MenuItem key={site.id} value={site.id.toString()}>
+                        {site.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Building Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="building-select-label" shrink>Building</InputLabel>
+                  <MuiSelect 
+                    labelId="building-select-label" 
+                    label="Building" 
+                    displayEmpty 
+                    value={selectedLocation.building} 
+                    onChange={(e) => handleLocationChange('building', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.site || loading.buildings}
+                  >
+                    <MenuItem value=""><em>Select Building</em></MenuItem>
+                    {buildings.map((building) => (
+                      <MenuItem key={building.building.id} value={building.building.id.toString()}>
+                        {building.building.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Wing Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
+                  <MuiSelect 
+                    labelId="wing-select-label" 
+                    label="Wing" 
+                    displayEmpty 
+                    value={selectedLocation.wing} 
+                    onChange={(e) => handleLocationChange('wing', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.building || loading.wings}
+                  >
+                    <MenuItem value=""><em>Select Wing</em></MenuItem>
+                    {wings.map((wing) => (
+                      <MenuItem key={wing.wings.id} value={wing.wings.id.toString()}>
+                        {wing.wings.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Area Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                  <MuiSelect 
+                    labelId="area-select-label" 
+                    label="Area" 
+                    displayEmpty 
+                    value={selectedLocation.area} 
+                    onChange={(e) => handleLocationChange('area', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.wing || loading.areas}
+                  >
+                    <MenuItem value=""><em>Select Area</em></MenuItem>
+                    {areas.map((area) => (
+                      <MenuItem key={area.id} value={area.id.toString()}>
+                        {area.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Floor Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
+                  <MuiSelect 
+                    labelId="floor-select-label" 
+                    label="Floor" 
+                    displayEmpty 
+                    value={selectedLocation.floor} 
+                    onChange={(e) => handleLocationChange('floor', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.area || loading.floors}
+                  >
+                    <MenuItem value=""><em>Select Floor</em></MenuItem>
+                    {floors.map((floor) => (
+                      <MenuItem key={floor.id} value={floor.id.toString()}>
+                        {floor.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               </div>
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                {/* Room Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="room-select-label" shrink>Room</InputLabel>
-                  <MuiSelect labelId="room-select-label" label="Room" displayEmpty value="" sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="room-select-label" 
+                    label="Room" 
+                    displayEmpty 
+                    value={selectedLocation.room} 
+                    onChange={(e) => handleLocationChange('room', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.floor || loading.rooms}
+                  >
                     <MenuItem value=""><em>Select Room</em></MenuItem>
-                    <MenuItem value="room1">Room 1</MenuItem>
-                    <MenuItem value="room2">Room 2</MenuItem>
+                    {rooms.map((room) => (
+                      <MenuItem key={room.rooms.id} value={room.rooms.id.toString()}>
+                        {room.rooms.name}
+                      </MenuItem>
+                    ))}
                   </MuiSelect>
                 </FormControl>
               </div>
