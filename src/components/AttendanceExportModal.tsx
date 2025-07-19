@@ -26,7 +26,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
 }) => {
   const [site, setSite] = useState('');
   const [userType, setUserType] = useState('');
-  const [departments, setDepartments] = useState<string[]>([]);
+  const [department, setDepartment] = useState('');
   const [month, setMonth] = useState('');
 
   const sites = ['Site 1', 'Site 2', 'Site 3'];
@@ -34,15 +34,14 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
   const departmentOptions = ['Frontend', 'Backend', 'DevOps', 'Support', 'HR', 'Finance'];
 
   const handleDepartmentChange = (event: any) => {
-    const value = event.target.value;
-    setDepartments(typeof value === 'string' ? value.split(',') : value);
+    setDepartment(event.target.value);
   };
 
   const handleExport = () => {
     console.log('Exporting attendance with filters:', {
       site,
       userType,
-      departments,
+      department,
       month
     });
     // Here you would implement the actual export logic
@@ -53,7 +52,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     // Reset form
     setSite('');
     setUserType('');
-    setDepartments([]);
+    setDepartment('');
     setMonth('');
     onClose();
   };
@@ -131,32 +130,23 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             ))}
           </TextField>
 
-          {/* Department Multi-select */}
+          {/* Department Single-select */}
           <TextField
             select
             label="Department"
-            value={departments.length > 0 ? departments : []}
+            value={department}
             onChange={handleDepartmentChange}
             variant="outlined"
             fullWidth
-            SelectProps={{
-              multiple: true,
-              renderValue: (selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {(selected as string[]).map((value) => (
-                    <Chip key={value} label={value} size="small" />
-                  ))}
-                </Box>
-              ),
-            }}
-            sx={{ 
-              minHeight: '56px',
+            sx={{
               '& .MuiInputBase-root': {
-                height: { xs: '36px', md: '45px' },
-                minHeight: { xs: '36px', md: '45px' }
+                height: { xs: '36px', md: '45px' }
               }
             }}
           >
+            <MenuItem value="">
+              <em>Select Department</em>
+            </MenuItem>
             {departmentOptions.map((dept) => (
               <MenuItem key={dept} value={dept}>
                 {dept}
