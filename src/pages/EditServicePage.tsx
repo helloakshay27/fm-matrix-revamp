@@ -266,7 +266,7 @@ export const EditServicePage = () => {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 flex-wrap animate-enter">
+      <div className="flex gap-4 flex-wrap">
         <Button 
           onClick={() => handleSubmit('updated with details')}
           style={{ backgroundColor: '#C72030' }}
