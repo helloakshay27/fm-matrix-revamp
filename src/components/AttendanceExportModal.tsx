@@ -14,6 +14,7 @@ import { Close } from '@mui/icons-material';
 import { MonthPicker } from './MonthPicker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchDepartmentData } from '@/store/slices/departmentSlice';
+import { fetchSites } from '@/store/slices/siteSlice';
 
 interface AttendanceExportModalProps {
   open: boolean;
@@ -26,20 +27,25 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const { data: departments, loading: departmentsLoading } = useAppSelector((state) => state.department);
+  const { sites, loading: sitesLoading } = useAppSelector((state) => state.site);
   
   const [site, setSite] = useState('');
   const [userType, setUserType] = useState('');
   const [department, setDepartment] = useState('');
   const [month, setMonth] = useState('');
 
-  const sites = ['Site 1', 'Site 2', 'Site 3'];
   const userTypes = ['All', 'Occupants', 'Admin', 'Technician', 'Security'];
 
   useEffect(() => {
-    if (open && (!departments || (Array.isArray(departments) && departments.length === 0))) {
-      dispatch(fetchDepartmentData());
+    if (open) {
+      if (!departments || (Array.isArray(departments) && departments.length === 0)) {
+        dispatch(fetchDepartmentData());
+      }
+      if (!sites || sites.length === 0) {
+        dispatch(fetchSites());
+      }
     }
-  }, [open, dispatch, departments]);
+  }, [open, dispatch, departments, sites]);
 
   const handleDepartmentChange = (event: any) => {
     setDepartment(event.target.value);
@@ -98,6 +104,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             onChange={(e) => setSite(e.target.value)}
             variant="outlined"
             fullWidth
+            disabled={sitesLoading}
             sx={{
               '& .MuiInputBase-root': {
                 height: { xs: '36px', md: '45px' }
@@ -108,8 +115,8 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
               <em>Select Site</em>
             </MenuItem>
             {sites.map((siteOption) => (
-              <MenuItem key={siteOption} value={siteOption}>
-                {siteOption}
+              <MenuItem key={siteOption.id} value={siteOption.id}>
+                {siteOption.name}
               </MenuItem>
             ))}
           </TextField>

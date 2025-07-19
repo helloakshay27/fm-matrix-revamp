@@ -23,6 +23,18 @@ const initialState: SiteState = {
 }
 
 // Async thunks
+export const fetchSites = createAsyncThunk(
+  'site/fetchSites',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get(ENDPOINTS.SITES)
+      return response.data.sites || []
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch sites')
+    }
+  }
+)
+
 export const fetchAllowedSites = createAsyncThunk(
   'site/fetchAllowedSites',
   async (userId: number, { rejectWithValue }) => {
@@ -77,6 +89,19 @@ const siteSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Fetch sites
+      .addCase(fetchSites.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchSites.fulfilled, (state, action) => {
+        state.loading = false
+        state.sites = action.payload
+      })
+      .addCase(fetchSites.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
       // Fetch allowed sites
       .addCase(fetchAllowedSites.pending, (state) => {
         state.loading = true
