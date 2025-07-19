@@ -127,6 +127,14 @@ export const InventoryDashboard = () => {
     }
   }, [reduxCurrentPage]);
 
+  // Handle case where we navigate to a page with no data
+  useEffect(() => {
+    if (!loading && inventoryItems.length === 0 && currentPage > 1) {
+      // If we're on a page > 1 and there's no data, go back to the previous page
+      setCurrentPage(currentPage - 1);
+    }
+  }, [loading, inventoryItems.length, currentPage]);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),

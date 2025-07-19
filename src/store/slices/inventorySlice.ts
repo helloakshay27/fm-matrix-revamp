@@ -45,7 +45,7 @@ const initialState: InventoryState = {
 // Async thunk for fetching inventory data
 export const fetchInventoryData = createAsyncThunk(
   'inventory/fetchInventoryData',
-  async (params: { page?: number; filters?: Record<string, any> } = {}) => {
+  async (params: { page?: number; filters?: Record<string, any> } = {}, { getState }) => {
     const { page = 1, filters = {} } = params
     
     // Build query parameters
@@ -61,23 +61,33 @@ export const fetchInventoryData = createAsyncThunk(
 
     const response = await apiClient.get(`/pms/inventories.json?${queryParams}`)
     
-    // Since API doesn't provide pagination metadata, we'll estimate it
     const inventories = response.data.inventories || []
-    const pageSize = 15 // Typical page size based on the response
+    const pageSize = 15
     
-    // If we get a full page, assume there might be more pages
-    const hasMorePages = inventories.length >= pageSize
+    // Get current state to check if we know the total pages
+    const state = getState() as any
+    const currentTotalPages = state.inventory.totalPages
     
-    // Estimate total pages (we'll use a reasonable default)
-    const estimatedTotalPages = hasMorePages ? Math.max(page + 1, 10) : page
+    let totalPages = currentTotalPages
+    
+    if (inventories.length === 0 && page > 1) {
+      // If we get no data on a page > 1, the previous page was the last one
+      totalPages = page - 1
+    } else if (inventories.length < pageSize) {
+      // If we get less than a full page, this is the last page
+      totalPages = page
+    } else if (inventories.length === pageSize) {
+      // If we get a full page, there might be more pages
+      totalPages = Math.max(currentTotalPages, page + 1)
+    }
     
     return {
       ...response.data,
       pagination: {
-        total_count: hasMorePages ? pageSize * estimatedTotalPages : inventories.length,
-        total_pages: estimatedTotalPages,
+        total_count: totalPages * pageSize, // Estimate total count
+        total_pages: totalPages,
         current_page: page,
-        has_more: hasMorePages
+        has_data: inventories.length > 0
       }
     }
   }
