@@ -149,6 +149,14 @@ export const EditServicePage = () => {
       rate_contract_vendor_code: formData.rateContractVendorCode || ""
     };
 
+    console.log('=== SERVICE UPDATE PAYLOAD ===');
+    console.log('Action:', action);
+    console.log('Service ID:', id);
+    console.log('Form Data:', formData);
+    console.log('Service Data to be sent:', serviceData);
+    console.log('Full Payload:', { pms_service: serviceData, subaction: "save" });
+    console.log('================================');
+
     dispatch(updateService({ id, serviceData }));
   };
 
