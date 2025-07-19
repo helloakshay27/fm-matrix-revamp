@@ -16,7 +16,7 @@ export const AssetAnalyticsTab = () => {
       </div>
 
       {/* Asset Config Table */}
-      <div style={{ backgroundColor: '#f6f4ee' }} className="rounded-xl p-6 border shadow-lg">
+      <div className="rounded-xl p-6 border shadow-lg bg-white">
         <h3 className="text-lg font-semibold mb-4 text-red-600">Asset Config Table</h3>
         <div className="grid grid-cols-9 gap-4">
           <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
