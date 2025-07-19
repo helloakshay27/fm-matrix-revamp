@@ -8,6 +8,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocationData } from '@/hooks/useLocationData';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
@@ -62,6 +63,9 @@ const AddAssetPage = () => {
   const [selectedSubgroup, setSelectedSubgroup] = useState('');
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [subgroupsLoading, setSubgroupsLoading] = useState(false);
+  const [parentMeters, setParentMeters] = useState<{id: number, name: string}[]>([]);
+  const [parentMeterLoading, setParentMeterLoading] = useState(false);
+  const [selectedParentMeterId, setSelectedParentMeterId] = useState<string>('');
 
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
@@ -3697,6 +3701,30 @@ const AddAssetPage = () => {
                 </div>
               </div>
 
+              {/* Parent Meter Dropdown - Show only when Sub Meter is selected */}
+              {meterType === 'sub' && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Parent Meter <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    value={selectedParentMeterId}
+                    onValueChange={setSelectedParentMeterId}
+                    disabled={parentMeterLoading}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={parentMeterLoading ? "Loading..." : "Select Parent Meter"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parentMeters.map((meter) => (
+                        <SelectItem key={meter.id} value={meter.id.toString()}>
+                          {meter.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Meter Category Type */}
               <div className="mb-6">
