@@ -506,8 +506,10 @@ export const AddInventoryPage = () => {
                         displayEmpty
                       >
                         <MenuItem value="">Select SAC/HSN Code</MenuItem>
-                        <MenuItem value="sac001">SAC 001</MenuItem>
-                        <MenuItem value="hsn001">HSN 001</MenuItem>
+                        <MenuItem value="19">73021011</MenuItem>
+                        <MenuItem value="918">0</MenuItem>
+                        <MenuItem value="919">0</MenuItem>
+                        <MenuItem value="951">0</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
