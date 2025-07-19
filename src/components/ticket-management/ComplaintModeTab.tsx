@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,6 +17,14 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditComplaintModeModal } from './modals/EditComplaintModeModal';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  createComplaintMode,
+  fetchComplaintModes,
+  updateComplaintMode,
+  deleteComplaintMode,
+  fetchAccounts
+} from '@/store/slices/complaintModeSlice';
 
 const complaintModeSchema = z.object({
   complaintMode: z.string().min(1, 'Complaint mode is required'),
@@ -25,40 +32,13 @@ const complaintModeSchema = z.object({
 
 type ComplaintModeFormData = z.infer<typeof complaintModeSchema>;
 
-interface ComplaintModeType {
-  id: string;
-  srNo: number;
-  complaintMode: string;
-}
-
-const mockComplaintModes: ComplaintModeType[] = [
-  {
-    id: '1',
-    srNo: 1,
-    complaintMode: 'Phone Call',
-  },
-  {
-    id: '2',
-    srNo: 2,
-    complaintMode: 'Email',
-  },
-  {
-    id: '3',
-    srNo: 3,
-    complaintMode: 'Mobile App',
-  },
-  {
-    id: '4',
-    srNo: 4,
-    complaintMode: 'Walk-in',
-  },
-];
-
 export const ComplaintModeTab: React.FC = () => {
-  const [complaintModes, setComplaintModes] = useState<ComplaintModeType[]>(mockComplaintModes);
+  const dispatch = useDispatch<any>();
+ const complaintModesState = useSelector((state: any) => state.complaintModes) || {};
+const { data: complaintModes = [], loading, fetchLoading, error, accounts } = complaintModesState;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingComplaintMode, setEditingComplaintMode] = useState<ComplaintModeType | null>(null);
+  const [editingComplaintMode, setEditingComplaintMode] = useState<any>(null);
 
   const form = useForm<ComplaintModeFormData>({
     resolver: zodResolver(complaintModeSchema),
@@ -67,19 +47,39 @@ export const ComplaintModeTab: React.FC = () => {
     },
   });
 
-  const handleSubmit = async (data: ComplaintModeFormData) => {
+
+  // Fetch complaint modes on mount
+  useEffect(() => {
+    dispatch(fetchComplaintModes());
+    dispatch(fetchAccounts());
+  }, [dispatch]);
+
+  const currentSiteId =
+    accounts && accounts.length > 0
+      ? accounts[0].site_id || accounts[0].society_id || '111'
+      : '111';
+
+  // Handle create
+ const handleSubmit = async (data: ComplaintModeFormData) => {
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const newComplaintMode: ComplaintModeType = {
-        id: (complaintModes.length + 1).toString(),
-        srNo: complaintModes.length + 1,
-        complaintMode: data.complaintMode,
+      const payload = {
+        complaint_mode: {
+          of_phase: 'pms',
+          society_id: currentSiteId,
+          name: data.complaintMode,
+        },
       };
-      setComplaintModes([...complaintModes, newComplaintMode]);
-      console.log('Complaint Mode Data:', data);
-      toast.success('Complaint mode created successfully!');
-      form.reset();
+      const resultAction = await dispatch(createComplaintMode(payload));
+      if (createComplaintMode.fulfilled.match(resultAction)) {
+        toast.success('Complaint mode created successfully!');
+        form.reset();
+        dispatch(fetchComplaintModes());
+      } else {
+        toast.error(
+          (resultAction.payload as any)?.message || 'Failed to create complaint mode'
+        );
+      }
     } catch (error) {
       toast.error('Failed to create complaint mode');
     } finally {
@@ -87,32 +87,66 @@ export const ComplaintModeTab: React.FC = () => {
     }
   };
 
-  const handleEdit = (complaintMode: ComplaintModeType) => {
+  // Handle edit
+ const handleEdit = (complaintMode: any) => {
     setEditingComplaintMode(complaintMode);
     setEditModalOpen(true);
   };
 
-  const handleUpdate = (updatedComplaintMode: ComplaintModeType) => {
-    setComplaintModes(complaintModes.map(mode => 
-      mode.id === updatedComplaintMode.id ? updatedComplaintMode : mode
-    ));
+  // Handle update
+   const handleUpdate = async (updatedComplaintMode: any) => {
+    try {
+      const payload = {
+        id: updatedComplaintMode.id,
+        name: updatedComplaintMode.name,
+        of_phase: 'pms',
+        society_id: currentSiteId,
+      };
+      const resultAction = await dispatch(updateComplaintMode(payload));
+      if (updateComplaintMode.fulfilled.match(resultAction)) {
+        toast.success('Complaint mode updated successfully!');
+        dispatch(fetchComplaintModes());
+      } else {
+        toast.error(
+          (resultAction.payload as any)?.message || 'Failed to update complaint mode'
+        );
+      }
+    } catch {
+      toast.error('Failed to update complaint mode');
+    }
   };
 
-  const handleDelete = (complaintMode: ComplaintModeType) => {
-    setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
-    toast.success('Complaint mode deleted successfully!');
+  // Handle delete
+  const handleDelete = async (complaintMode: any) => {
+    try {
+      const resultAction = await dispatch(deleteComplaintMode(complaintMode.id));
+      if (deleteComplaintMode.fulfilled.match(resultAction)) {
+        toast.success('Complaint mode deleted successfully!');
+        dispatch(fetchComplaintModes());
+      } else {
+        toast.error(
+          (resultAction.payload as any)?.message || 'Failed to delete complaint mode'
+        );
+      }
+    } catch {
+      toast.error('Failed to delete complaint mode');
+    }
   };
+  const getComplaintModeName = (id: number) => {
+  return complaintModes?.find(mode => mode.id === id)?.name || 'Unknown Mode';
+};
 
-  const columns = [
-    { key: 'srNo', label: 'Sr.No', sortable: true },
-    { key: 'complaintMode', label: 'Complaint Mode', sortable: true },
-  ];
+ const columns = [
+  { key: 'srNo', label: 'Sr.No', sortable: true },
+  { key: 'name', label: 'Complaint Mode', sortable: true },
+];
 
-  const renderCell = (item: ComplaintModeType, columnKey: string) => {
-    return item[columnKey as keyof ComplaintModeType];
-  };
+ const renderCell = (item: any, columnKey: string) => {
+  if (columnKey === 'srNo') return item.srNo || '';
+  return item[columnKey];
+};
 
-  const renderActions = (item: ComplaintModeType) => (
+  const renderActions = (item: any) => (
     <div className="flex items-center gap-2">
       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
@@ -122,6 +156,8 @@ export const ComplaintModeTab: React.FC = () => {
       </Button>
     </div>
   );
+
+  console.log('complaintModes', complaintModes);
 
   return (
     <div className="space-y-6">
@@ -145,31 +181,32 @@ export const ComplaintModeTab: React.FC = () => {
                   </FormItem>
                 )}
               />
-
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving...' : 'Submit'}
+                <Button type="submit" disabled={isSubmitting || loading}>
+                  {isSubmitting || loading ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
             </form>
           </Form>
+          {error && <div className="text-red-500 mt-2">{error}</div>}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Complaint Modes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EnhancedTable
-            data={complaintModes}
-            columns={columns}
-            renderCell={renderCell}
-            renderActions={renderActions}
-            storageKey="complaint-modes-table"
-          />
-        </CardContent>
-      </Card>
+<Card>
+  <CardHeader>
+    <CardTitle>Complaint Modes</CardTitle>
+  </CardHeader>
+  <CardContent>
+   <EnhancedTable
+  data={complaintModes || []}
+  columns={columns}
+  renderCell={renderCell}
+  renderActions={renderActions}
+  storageKey="complaint-modes-table"
+  loading={fetchLoading}
+/>
+  </CardContent>
+</Card>
 
       <EditComplaintModeModal
         open={editModalOpen}

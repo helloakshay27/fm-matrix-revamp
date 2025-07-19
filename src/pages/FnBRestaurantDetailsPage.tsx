@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
+import { TextField } from '@mui/material';
 import { ArrowLeft, Save } from 'lucide-react';
 import { StatusSetupTable } from '../components/StatusSetupTable';
 import { CategoriesSetupTable } from '../components/CategoriesSetupTable';
@@ -15,14 +15,16 @@ import { RestaurantMenuTable } from '../components/RestaurantMenuTable';
 import { RestaurantBookingsTable } from '../components/RestaurantBookingsTable';
 import { RestaurantOrdersTable } from '../components/RestaurantOrdersTable';
 import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { editRestaurant, fetchRestaurantDetails } from '@/store/slices/f&bSlice';
 
 interface Restaurant {
   id: number;
   name: string;
   cuisines: string;
-  costForTwo: string;
+  cost_for_two: string;
   address: string;
-  deliveryTime: string;
+  delivery_time: string;
   phoneNumber: string;
   cancelBeforeSchedule: string;
   bookingAllowed: boolean;
@@ -32,8 +34,15 @@ interface Restaurant {
   active: boolean;
 }
 
-interface DaySchedule {
-  day: string;
+type DaySchedule = {
+  day:
+  | 'Monday'
+  | 'Tuesday'
+  | 'Wednesday'
+  | 'Thursday'
+  | 'Friday'
+  | 'Saturday'
+  | 'Sunday';
   enabled: boolean;
   startTime: string;
   endTime: string;
@@ -42,87 +51,146 @@ interface DaySchedule {
   bookingAllowed: boolean;
   orderAllowed: boolean;
   lastBookingTime: string;
-}
+};
+
+type BlockedDay = {
+  date: string;
+  orderBlocked: boolean;
+  bookingBlocked: boolean;
+};
 
 const mockRestaurants: Restaurant[] = [
-  { 
-    id: 1, 
-    name: 'Test restaurant', 
-    cuisines: 'Indian',
-    costForTwo: '₹499',
-    address: 'test 123',
-    deliveryTime: '45 Mins',
-    phoneNumber: '9534534634',
-    cancelBeforeSchedule: '30 min.',
-    bookingAllowed: false, 
-    closingMessage: '-',
-    openDays: 'M T W T F S S', 
-    orderAllowed: false, 
-    active: false 
-  },
-  { 
-    id: 2, 
-    name: 'Haven', 
-    cuisines: 'Indian',
-    costForTwo: '₹499',
-    address: 'test 123',
-    deliveryTime: '45 Mins',
-    phoneNumber: '9534534634',
-    cancelBeforeSchedule: '30 min.',
-    bookingAllowed: true, 
-    closingMessage: '-',
-    openDays: 'M T W T F S S', 
-    orderAllowed: false, 
-    active: false 
-  },
-  { 
-    id: 3, 
-    name: 'twjas', 
-    cuisines: 'Indian',
-    costForTwo: '₹499',
-    address: 'test 123',
-    deliveryTime: '45 Mins',
-    phoneNumber: '9534534634',
-    cancelBeforeSchedule: '30 min.',
-    bookingAllowed: true, 
-    closingMessage: '-',
-    openDays: 'M T W T F S S', 
-    orderAllowed: false, 
-    active: false 
-  },
-  { 
-    id: 4, 
-    name: 'Love & Latte', 
-    cuisines: 'Indian',
-    costForTwo: '₹499',
-    address: 'test 123',
-    deliveryTime: '45 Mins',
-    phoneNumber: '9534534634',
-    cancelBeforeSchedule: '30 min.',
-    bookingAllowed: true, 
-    closingMessage: '-',
-    openDays: 'M T W T F S S', 
-    orderAllowed: true, 
-    active: true 
+  {
+    id: 80,
+    name: '',
+    cuisines: '',
+    cost_for_two: '',
+    address: '',
+    delivery_time: '',
+    phoneNumber: '',
+    cancelBeforeSchedule: '',
+    bookingAllowed: true,
+    closingMessage: '',
+    openDays: 'M T W T F S S',
+    orderAllowed: false,
+    active: true,
   },
 ];
+
+const mapRestaurantData = (apiData: any): {
+  restaurant: Restaurant;
+  schedule: DaySchedule[];
+  coverImages: string[];
+  menuImages: string[];
+  mainImages: string[];
+  blockedDays: BlockedDay[];
+} => {
+  const restaurant: Restaurant = {
+    id: apiData.id,
+    name: apiData.name,
+    cuisines: apiData.cuisines,
+    cost_for_two: apiData.cost_for_two.toString(),
+    address: apiData.address,
+    delivery_time: apiData.delivery_time.toString(),
+    phoneNumber: apiData.contact1,
+    cancelBeforeSchedule: apiData.cancel_before.toString(),
+    bookingAllowed: !!apiData.booking_allowed,
+    closingMessage: apiData.booking_closed || apiData.disclaimer || '-',
+    openDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+      .filter((day) => apiData[day])
+      .map((day) => day.charAt(0).toUpperCase())
+      .join(' '),
+    orderAllowed: !!apiData.can_order,
+    active: !!apiData.status,
+  };
+
+  const schedule: DaySchedule[] = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ].map((day, index) => {
+    const op = apiData.restaurant_operations.find(
+      (o: any) => o.day_name === day
+    ) || {
+      day_name: day,
+      is_open: false,
+      start_time: '00:00',
+      end_time: '00:00',
+      break_start_time: '00:00',
+      break_end_time: '00:00',
+      booking_allowed: false,
+      order_allowed: false,
+      last_order_time: '00:00',
+    };
+    return {
+      day: op.day_name as DaySchedule['day'],
+      enabled: op.is_open,
+      startTime: op.start_time,
+      endTime: op.end_time,
+      breakStartTime: op.break_start_time,
+      breakEndTime: op.break_end_time,
+      bookingAllowed: op.booking_allowed,
+      orderAllowed: op.order_allowed,
+      lastBookingTime: op.last_order_time,
+    };
+  });
+
+  const coverImages = apiData.cover_images || [];
+  const menuImages = apiData.menu_images || [];
+  const mainImages = apiData.main_images || [];
+  const blockedDays = apiData.blocked_days || [];
+
+  return { restaurant, schedule, coverImages, menuImages, mainImages, blockedDays };
+};
 
 export const FnBRestaurantDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
-  const restaurant = mockRestaurants.find(r => r.id === parseInt(id || '1'));
-  const [formData, setFormData] = useState<Restaurant>(restaurant || mockRestaurants[0]);
+  const dispatch = useAppDispatch();
 
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
+  const restaurant = mockRestaurants.find(r => r.id === parseInt(id || '80'));
+  const [formData, setFormData] = useState<Restaurant>(restaurant || mockRestaurants[0]);
   const [scheduleData, setScheduleData] = useState<DaySchedule[]>([
-    { day: 'Monday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
-    { day: 'Tuesday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
-    { day: 'Wednesday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
-    { day: 'Thursday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
-    { day: 'Friday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
-    { day: 'Saturday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
-    { day: 'Sunday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+    { day: 'Monday', enabled: true, startTime: '00:00', endTime: '00:00', breakStartTime: '00:00', breakEndTime: '00:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '00:00' },
+    { day: 'Tuesday', enabled: true, startTime: '00:00', endTime: '00:00', breakStartTime: '00:00', breakEndTime: '00:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '00:00' },
+    { day: 'Wednesday', enabled: true, startTime: '00:00', endTime: '00:00', breakStartTime: '00:00', breakEndTime: '00:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '00:00' },
+    { day: 'Thursday', enabled: true, startTime: '00:00', endTime: '00:00', breakStartTime: '00:00', breakEndTime: '00:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '00:00' },
+    { day: 'Friday', enabled: true, startTime: '00:00', endTime: '00:00', breakStartTime: '00:00', breakEndTime: '00:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '00:00' },
+    { day: 'Saturday', enabled: true, startTime: '00:00', endTime: '00:00', breakStartTime: '00:00', breakEndTime: '00:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '00:00' },
+    { day: 'Sunday', enabled: true, startTime: '00:00', endTime: '00:00', breakStartTime: '00:00', breakEndTime: '00:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '00:00' },
   ]);
+  const [coverImages, setCoverImages] = useState<string[]>([]);
+  const [menuImages, setMenuImages] = useState<string[]>([]);
+  const [mainImages, setMainImages] = useState<string[]>([]);
+  const [blockedDays, setBlockedDays] = useState<BlockedDay[]>([]);
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        // Use API instead of Redux dispatch for simplicity
+        const response = await dispatch(fetchRestaurantDetails({ baseUrl, token, id })).unwrap();
+        const { restaurant, schedule, coverImages, menuImages, mainImages, blockedDays } = mapRestaurantData(response);
+        setFormData(restaurant);
+        setScheduleData(schedule);
+        setCoverImages(coverImages);
+        setMenuImages(menuImages);
+        setMainImages(mainImages);
+        setBlockedDays(blockedDays);
+      } catch (error) {
+        console.log(error);
+        toast.error('Failed to fetch restaurant details');
+      }
+    };
+
+    fetchDetails();
+  }, [dispatch, baseUrl, token, id]);
 
   const handleInputChange = (field: keyof Restaurant, value: any) => {
     setFormData(prev => ({
@@ -132,21 +200,92 @@ export const FnBRestaurantDetailsPage = () => {
   };
 
   const handleScheduleChange = (dayIndex: number, field: keyof DaySchedule, value: any) => {
-    setScheduleData(prev => prev.map((day, index) => 
+    setScheduleData(prev => prev.map((day, index) =>
       index === dayIndex ? { ...day, [field]: value } : day
     ));
   };
 
-  const handleSave = () => {
-    console.log('Saving restaurant data:', formData);
-    console.log('Saving schedule data:', scheduleData);
-    
-    // Update the mock data (in a real app, this would be an API call)
-    const updatedRestaurants = mockRestaurants.map(r => 
-      r.id === formData.id ? formData : r
-    );
-    
-    toast.success('Restaurant details saved successfully!');
+  const handleSave = async () => {
+    try {
+      const dataToSubmit = new FormData();
+
+      // Append restaurant details
+      dataToSubmit.append('restaurant[name]', formData.name);
+      dataToSubmit.append('restaurant[cost_for_two]', formData.cost_for_two);
+      dataToSubmit.append('restaurant[contact1]', formData.phoneNumber);
+      dataToSubmit.append('restaurant[contact2]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[contact3]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[delivery_time]', formData.delivery_time);
+      dataToSubmit.append('restaurant[cuisines]', formData.cuisines);
+      dataToSubmit.append('restaurant[alcohol]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[wheelchair]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[cod]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[pure_veg]', 'false'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[address]', formData.address);
+      dataToSubmit.append('restaurant[terms]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[disclaimer]', formData.closingMessage); // Map closingMessage to disclaimer
+      dataToSubmit.append('restaurant[booking_closed]', formData.closingMessage);
+      dataToSubmit.append('restaurant[min_people]', '0'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[max_people]', '0'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[cancel_before]', formData.cancelBeforeSchedule);
+      dataToSubmit.append('restaurant[booking_not_allowed]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[gst]', '0'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[delivery_charge]', '0'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[min_amount]', '0'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[order_not_allowed]', ''); // Not in UI, set as empty
+
+      // Attach files (empty since UI doesn't support uploads)
+      coverImages.forEach((file) => {
+        dataToSubmit.append('restaurant[cover_images][]', file);
+      });
+      menuImages.forEach((file) => {
+        dataToSubmit.append('restaurant[menu_images][]', file);
+      });
+      mainImages.forEach((file) => {
+        dataToSubmit.append('restaurant[main_images][]', file);
+      });
+
+      // Append only enabled schedules
+      scheduleData
+        .filter((item) => item.enabled)
+        .forEach((item, index) => {
+          const [startHour, startMin] = item.startTime.split(':');
+          const [endHour, endMin] = item.endTime.split(':');
+          const [breakStartHour, breakStartMin] = item.breakStartTime.split(':');
+          const [breakEndHour, breakEndMin] = item.breakEndTime.split(':');
+          const [lastHour, lastMin] = item.lastBookingTime.split(':');
+
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, '1');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][dayofweek]`, item.day.toLowerCase());
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_hour]`, startHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_min]`, startMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_hour]`, endHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_min]`, endMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_hour]`, breakStartHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_min]`, breakStartMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_hour]`, breakEndHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_min]`, breakEndMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][booking_allowed]`, item.bookingAllowed ? '1' : '0');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][order_allowed]`, item.orderAllowed ? '1' : '0');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_hour]`, lastHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_min]`, lastMin);
+        });
+
+      // Append blocked days
+      blockedDays.forEach((day, index) => {
+        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][date]`, day.date);
+        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][order_blocked]`, day.orderBlocked ? '1' : '0');
+        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][booking_blocked]`, day.bookingBlocked ? '1' : '0');
+      });
+
+      // Make API call to update restaurant
+      await dispatch(editRestaurant({ token, baseUrl, id, data: dataToSubmit })).unwrap();
+
+      toast.success('Restaurant details saved successfully!');
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to save restaurant details');
+    }
   };
 
   const fieldStyles = {
@@ -189,14 +328,12 @@ export const FnBRestaurantDetailsPage = () => {
 
   return (
     <div className="p-6">
-      {/* Breadcrumb */}
       <div className="flex items-center text-sm text-gray-600 mb-4">
         <span>F&B List</span>
         <span className="mx-2">{'>'}</span>
         <span>F&B Detail</span>
       </div>
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button
@@ -217,7 +354,6 @@ export const FnBRestaurantDetailsPage = () => {
         </Button>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="restaurant" className="w-full">
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 bg-gray-100 gap-1 sm:gap-2 p-1 h-auto">
           <TabsTrigger value="restaurant" className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
@@ -245,7 +381,6 @@ export const FnBRestaurantDetailsPage = () => {
 
         <TabsContent value="restaurant" className="mt-6">
           <div className="space-y-6">
-            {/* Basic Detail */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
@@ -294,8 +429,8 @@ export const FnBRestaurantDetailsPage = () => {
                   <TextField
                     label="Delivery Time"
                     placeholder="Delivery Time"
-                    value={formData.deliveryTime}
-                    onChange={(e) => handleInputChange('deliveryTime', e.target.value)}
+                    value={formData.delivery_time}
+                    onChange={(e) => handleInputChange('delivery_time', e.target.value)}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -306,8 +441,8 @@ export const FnBRestaurantDetailsPage = () => {
                   <TextField
                     label="Cost for Two"
                     placeholder="Cost for Two"
-                    value={formData.costForTwo}
-                    onChange={(e) => handleInputChange('costForTwo', e.target.value)}
+                    value={formData.cost_for_two}
+                    onChange={(e) => handleInputChange('cost_for_two', e.target.value)}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -317,7 +452,6 @@ export const FnBRestaurantDetailsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Restaurant Schedule */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
@@ -345,7 +479,7 @@ export const FnBRestaurantDetailsPage = () => {
                         <tr key={dayData.day} className="border-b">
                           <td className="p-3">
                             <div className="flex items-center gap-2">
-                              <Checkbox 
+                              <Checkbox
                                 checked={dayData.enabled}
                                 onCheckedChange={(checked) => handleScheduleChange(index, 'enabled', checked)}
                               />
@@ -353,8 +487,8 @@ export const FnBRestaurantDetailsPage = () => {
                             </div>
                           </td>
                           <td className="p-3">
-                            <Select 
-                              value={dayData.startTime} 
+                            <Select
+                              value={dayData.startTime}
                               onValueChange={(value) => handleScheduleChange(index, 'startTime', value)}
                             >
                               <SelectTrigger className="w-20">
@@ -368,7 +502,7 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Select 
+                            <Select
                               value={dayData.endTime}
                               onValueChange={(value) => handleScheduleChange(index, 'endTime', value)}
                             >
@@ -383,7 +517,7 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Select 
+                            <Select
                               value={dayData.breakStartTime}
                               onValueChange={(value) => handleScheduleChange(index, 'breakStartTime', value)}
                             >
@@ -398,7 +532,7 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Select 
+                            <Select
                               value={dayData.breakEndTime}
                               onValueChange={(value) => handleScheduleChange(index, 'breakEndTime', value)}
                             >
@@ -413,19 +547,19 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Checkbox 
-                              checked={dayData.bookingAllowed} 
+                            <Checkbox
+                              checked={dayData.bookingAllowed}
                               onCheckedChange={(checked) => handleScheduleChange(index, 'bookingAllowed', checked)}
                             />
                           </td>
                           <td className="p-3">
-                            <Checkbox 
+                            <Checkbox
                               checked={dayData.orderAllowed}
                               onCheckedChange={(checked) => handleScheduleChange(index, 'orderAllowed', checked)}
                             />
                           </td>
                           <td className="p-3">
-                            <Select 
+                            <Select
                               value={dayData.lastBookingTime}
                               onValueChange={(value) => handleScheduleChange(index, 'lastBookingTime', value)}
                             >
@@ -447,7 +581,6 @@ export const FnBRestaurantDetailsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Other Info */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
@@ -473,15 +606,13 @@ export const FnBRestaurantDetailsPage = () => {
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-sm">No</span>
                     <div
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                        formData.bookingAllowed ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${formData.bookingAllowed ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
                       onClick={() => handleInputChange('bookingAllowed', !formData.bookingAllowed)}
                     >
                       <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                          formData.bookingAllowed ? 'translate-x-6' : 'translate-x-1'
-                        }`}
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${formData.bookingAllowed ? 'translate-x-6' : 'translate-x-1'
+                          }`}
                       />
                     </div>
                     <span className="text-sm">Yes</span>
@@ -514,7 +645,6 @@ export const FnBRestaurantDetailsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Cover */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
@@ -532,7 +662,6 @@ export const FnBRestaurantDetailsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Menu */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
@@ -550,7 +679,6 @@ export const FnBRestaurantDetailsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Gallery */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
