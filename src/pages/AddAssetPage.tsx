@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocationData } from '@/hooks/useLocationData';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import axios from 'axios';
+import apiClient from '@/utils/apiClient';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -310,14 +310,8 @@ const AddAssetPage = () => {
   const fetchGroups = async () => {
     setGroupsLoading(true);
     try {
-      const response = await axios.get(
-        `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json`,
-        {
-          headers: {
-            Authorization: getAuthHeader(),
-            'Content-Type': 'application/json'
-          }
-        }
+      const response = await apiClient.get(
+        '/pms/assets/get_asset_group_sub_group.json'
       );
       setGroups(response.data.asset_groups || []);
     } catch (error) {
@@ -337,14 +331,8 @@ const AddAssetPage = () => {
     
     setSubgroupsLoading(true);
     try {
-      const response = await axios.get(
-        `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`,
-        {
-          headers: {
-            Authorization: getAuthHeader(),
-            'Content-Type': 'application/json'
-          }
-        }
+      const response = await apiClient.get(
+        `/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`
       );
       setSubgroups(response.data.asset_groups || []);
     } catch (error) {
@@ -366,6 +354,36 @@ const AddAssetPage = () => {
   useEffect(() => {
     fetchGroups();
   }, []);
+
+  // Fetch parent meters when Sub Meter is selected
+  useEffect(() => {
+    if (meterType === 'sub') {
+      fetchParentMeters();
+    } else {
+      setSelectedParentMeterId('');
+    }
+  }, [meterType]);
+
+  // Fetch parent meters function
+  const fetchParentMeters = async () => {
+    setParentMeterLoading(true);
+    try {
+      const response = await apiClient.get('/pms/assets/get_parent_asset.json');
+      
+      // Transform the nested array format to object format
+      const transformedData = response.data.assets.map((asset: [number, string]) => ({
+        id: asset[0],
+        name: asset[1]
+      }));
+      
+      setParentMeters(transformedData);
+    } catch (error) {
+      console.error('Error fetching parent meters:', error);
+      setParentMeters([]);
+    } finally {
+      setParentMeterLoading(false);
+    }
+  };
 
   // Custom field functions - Updated to handle sections
   const openCustomFieldModal = (section) => {
