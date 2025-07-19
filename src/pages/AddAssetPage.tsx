@@ -342,7 +342,7 @@ const AddAssetPage = () => {
           }
         }
       );
-      setSubgroups(response.data.asset_sub_groups || []);
+      setSubgroups(response.data.asset_groups || []);
     } catch (error) {
       console.error('Error fetching subgroups:', error);
       setSubgroups([]);
