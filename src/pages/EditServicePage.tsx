@@ -6,13 +6,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { LocationSelector } from '@/components/service/LocationSelector';
-import axios from 'axios';
-import { TOKEN } from '@/config/apiConfig';
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { fetchService, updateService, clearError, resetServiceState } from '@/store/slices/serviceSlice';
 
 export const EditServicePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
+  const dispatch = useAppDispatch();
+  const { loading, error, fetchedService, updatedService } = useAppSelector(state => state.serviceEdit);
+  
   const [formData, setFormData] = useState({
     serviceName: '',
     siteId: null as number | null,
@@ -23,57 +26,71 @@ export const EditServicePage = () => {
     roomId: null as number | null,
     groupId: null as number | null,
     subGroupId: null as number | null,
+    description: '',
+    serviceCategory: '',
+    serviceGroup: '',
+    serviceCode: '',
+    extCode: '',
+    rateContractVendorCode: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(true);
 
   // Fetch existing service data
   useEffect(() => {
-    const fetchServiceData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `https://fm-uat-api.lockated.com/pms/services/${id}.json`,
-          {
-            headers: {
-              'Authorization': `Bearer ${TOKEN}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        const serviceData = response.data;
-        console.log('Fetched service data:', serviceData);
-        
-        // Populate form with existing data
-        setFormData({
-          serviceName: serviceData.service_name || '',
-          siteId: serviceData.site_id || null,
-          buildingId: serviceData.building_id || null,
-          wingId: serviceData.wing_id || null,
-          areaId: serviceData.area_id || null,
-          floorId: serviceData.floor_id || null,
-          roomId: serviceData.room_id || null,
-          groupId: serviceData.pms_asset_group_id || null,
-          subGroupId: serviceData.pms_asset_sub_group_id || null,
-        });
-        
-      } catch (error) {
-        console.error('Error fetching service:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch service data. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
-      fetchServiceData();
+      dispatch(fetchService(id));
     }
-  }, [id, toast]);
+    
+    return () => {
+      dispatch(resetServiceState());
+    };
+  }, [id, dispatch]);
+
+  // Handle fetched service data
+  useEffect(() => {
+    if (fetchedService) {
+      setFormData({
+        serviceName: fetchedService.service_name || '',
+        siteId: fetchedService.site_id || null,
+        buildingId: fetchedService.building_id || null,
+        wingId: fetchedService.wing_id || null,
+        areaId: fetchedService.area_id || null,
+        floorId: fetchedService.floor_id || null,
+        roomId: fetchedService.room_id || null,
+        groupId: fetchedService.pms_asset_group_id || null,
+        subGroupId: fetchedService.pms_asset_sub_group_id || null,
+        description: fetchedService.description || '',
+        serviceCategory: fetchedService.service_category || '',
+        serviceGroup: fetchedService.service_group || '',
+        serviceCode: fetchedService.service_code || '',
+        extCode: fetchedService.ext_code || '',
+        rateContractVendorCode: fetchedService.rate_contract_vendor_code || '',
+      });
+    }
+  }, [fetchedService]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive"
+      });
+      dispatch(clearError());
+    }
+  }, [error, toast, dispatch]);
+
+  // Handle successful update
+  useEffect(() => {
+    if (updatedService) {
+      toast({
+        title: "Service Updated",
+        description: "Service has been updated successfully.",
+      });
+      navigate('/maintenance/service');
+    }
+  }, [updatedService, toast, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -111,60 +128,28 @@ export const EditServicePage = () => {
   };
 
   const handleSubmit = async (action: string) => {
-    try {
-      const payload = {
-        pms_service: {
-          service_name: formData.serviceName || "",
-          site_id: formData.siteId || "",
-          building_id: formData.buildingId || "",
-          wing_id: formData.wingId || "",
-          area_id: formData.areaId || "",
-          floor_id: formData.floorId || "",
-          room_id: formData.roomId || "",
-          pms_asset_group_id: formData.groupId || "",
-          pms_asset_sub_group_id: formData.subGroupId || "",
-          active: true,
-          description: "",
-          service_category: "",
-          service_group: "",
-          service_code: "",
-          ext_code: "",
-          rate_contract_vendor_code: ""
-        },
-        subaction: "update"
-      };
+    if (!id) return;
 
-      console.log('Service Update Payload:', payload);
+    const serviceData = {
+      service_name: formData.serviceName || "",
+      site_id: formData.siteId,
+      building_id: formData.buildingId,
+      wing_id: formData.wingId,
+      area_id: formData.areaId,
+      floor_id: formData.floorId,
+      room_id: formData.roomId,
+      pms_asset_group_id: formData.groupId,
+      pms_asset_sub_group_id: formData.subGroupId,
+      active: true,
+      description: formData.description || "",
+      service_category: formData.serviceCategory || "",
+      service_group: formData.serviceGroup || "",
+      service_code: formData.serviceCode || "",
+      ext_code: formData.extCode || "",
+      rate_contract_vendor_code: formData.rateContractVendorCode || ""
+    };
 
-      const response = await axios.put(
-        `https://fm-uat-api.lockated.com/pms/services/${id}.json`,
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${TOKEN}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('Service Updated Successfully:', response.data);
-      
-      toast({
-        title: "Service Updated",
-        description: `Service has been ${action} successfully.`,
-      });
-      
-      // Navigate to service list page after success
-      navigate('/maintenance/service');
-      
-    } catch (error) {
-      console.error('Error updating service:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update service. Please try again.",
-        variant: "destructive"
-      });
-    }
+    dispatch(updateService({ id, serviceData }));
   };
 
   // Responsive styles for TextField and Select
