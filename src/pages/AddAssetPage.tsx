@@ -10,6 +10,8 @@ import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocationData } from '@/hooks/useLocationData';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import axios from 'axios';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -52,6 +54,14 @@ const AddAssetPage = () => {
     floor: '',
     room: ''
   });
+
+  // Group and Subgroup state
+  const [groups, setGroups] = useState([]);
+  const [subgroups, setSubgroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedSubgroup, setSelectedSubgroup] = useState('');
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [subgroupsLoading, setSubgroupsLoading] = useState(false);
 
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
@@ -291,6 +301,67 @@ const AddAssetPage = () => {
       nonConsumption: checked
     }));
   };
+
+  // Fetch groups
+  const fetchGroups = async () => {
+    setGroupsLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json`,
+        {
+          headers: {
+            Authorization: getAuthHeader(),
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      setGroups(response.data.groups || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      setGroups([]);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
+  // Fetch subgroups based on selected group
+  const fetchSubgroups = async (groupId) => {
+    if (!groupId) {
+      setSubgroups([]);
+      return;
+    }
+    
+    setSubgroupsLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`,
+        {
+          headers: {
+            Authorization: getAuthHeader(),
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      setSubgroups(response.data.subgroups || []);
+    } catch (error) {
+      console.error('Error fetching subgroups:', error);
+      setSubgroups([]);
+    } finally {
+      setSubgroupsLoading(false);
+    }
+  };
+
+  // Handle group change
+  const handleGroupChange = (groupId) => {
+    setSelectedGroup(groupId);
+    setSelectedSubgroup(''); // Reset subgroup when group changes
+    fetchSubgroups(groupId);
+  };
+
+  // Fetch groups on component mount
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   // Custom field functions - Updated to handle sections
   const openCustomFieldModal = (section) => {
@@ -3346,20 +3417,40 @@ const AddAssetPage = () => {
               minWidth: 120
             }}>
                   <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                  <MuiSelect labelId="group-select-label" label="Group" displayEmpty value="" sx={fieldStyles} required>
-                    <MenuItem value=""><em>Select Group</em></MenuItem>
-                    <MenuItem value="group1">Group 1</MenuItem>
-                    <MenuItem value="group2">Group 2</MenuItem>
+                  <MuiSelect 
+                    labelId="group-select-label" 
+                    label="Group" 
+                    displayEmpty 
+                    value={selectedGroup} 
+                    onChange={(e) => handleGroupChange(e.target.value)}
+                    sx={fieldStyles} 
+                    required
+                    disabled={groupsLoading}
+                  >
+                    <MenuItem value=""><em>{groupsLoading ? 'Loading...' : 'Select Group'}</em></MenuItem>
+                    {groups.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                    ))}
                   </MuiSelect>
                 </FormControl>
                 <FormControl fullWidth variant="outlined" sx={{
               minWidth: 120
             }}>
                   <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
-                  <MuiSelect labelId="subgroup-select-label" label="Subgroup" displayEmpty value="" sx={fieldStyles} required>
-                    <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
-                    <MenuItem value="subgroup1">Subgroup 1</MenuItem>
-                    <MenuItem value="subgroup2">Subgroup 2</MenuItem>
+                  <MuiSelect 
+                    labelId="subgroup-select-label" 
+                    label="Subgroup" 
+                    displayEmpty 
+                    value={selectedSubgroup} 
+                    onChange={(e) => setSelectedSubgroup(e.target.value)}
+                    sx={fieldStyles} 
+                    required
+                    disabled={subgroupsLoading || !selectedGroup}
+                  >
+                    <MenuItem value=""><em>{subgroupsLoading ? 'Loading...' : 'Select Sub-Group'}</em></MenuItem>
+                    {subgroups.map((subgroup) => (
+                      <MenuItem key={subgroup.id} value={subgroup.id}>{subgroup.name}</MenuItem>
+                    ))}
                   </MuiSelect>
                 </FormControl>
               </div>
