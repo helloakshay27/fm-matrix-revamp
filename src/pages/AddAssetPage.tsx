@@ -14,6 +14,9 @@ import { useLocationData } from '@/hooks/useLocationData';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import apiClient from '@/utils/apiClient';
 import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
+import { assetAPI, CreateAssetPayload } from '@/services/assetAPI';
+import { mapFormDataToAPIPayload, validateAssetData } from '@/utils/assetDataMapper';
+import { toast } from 'sonner';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -189,6 +192,27 @@ const AddAssetPage = () => {
     amc: []
   });
   const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Asset form data state to capture all form fields
+  const [assetFormData, setAssetFormData] = useState({
+    name: '',
+    asset_number: '',
+    model_number: '',
+    serial_number: '',
+    manufacturer: '',
+    purchase_cost: '',
+    purchased_on: '',
+    warranty: 'No',
+    warranty_expiry: '',
+    commissioning_date: '',
+    status: 'in_use',
+    useful_life: '',
+    salvage_value: '',
+    depreciation_rate: '',
+    depreciation_method: 'Straight Line',
+    // Add other fields as needed
+  });
 
   const handleGoBack = () => {
     navigate('/maintenance/asset');
@@ -598,12 +622,246 @@ const AddAssetPage = () => {
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
-  const handleSaveAndShow = () => {
-    console.log('Save and show details');
-    navigate('/maintenance/asset');
+  // Handle asset form data changes
+  const handleAssetFormChange = (field: string, value: string | boolean) => {
+    setAssetFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
+
+  // Build extra fields attributes from custom fields
+  const buildExtraFieldsAttributes = () => {
+    const extraFields: any[] = [];
+    
+    Object.entries(customFields).forEach(([sectionKey, fields]) => {
+      fields.forEach((field: any) => {
+        if (field.value && field.value.trim() !== '') {
+          extraFields.push({
+            field_name: field.name.toLowerCase().replace(/\s+/g, '_'),
+            field_value: field.value,
+            group_name: sectionKey.toLowerCase().replace(/([A-Z])/g, '_$1').toLowerCase(),
+            field_description: field.name,
+            _destroy: false
+          });
+        }
+      });
+    });
+
+    return extraFields;
+  };
+
+  // Build consumption measures attributes
+  const buildConsumptionMeasuresAttributes = () => {
+    return consumptionMeasures
+      .filter(measure => measure.name && measure.name.trim() !== '')
+      .map(measure => ({
+        name: measure.name,
+        meter_unit_id: parseInt(measure.unitType) || 1,
+        min_value: parseFloat(measure.min) || 0,
+        max_value: parseFloat(measure.max) || 0,
+        alert_below: parseFloat(measure.alertBelowVal) || 0,
+        alert_above: parseFloat(measure.alertAboveVal) || 0,
+        multiplier_factor: parseFloat(measure.multiplierFactor) || 1,
+        active: true,
+        meter_tag: `CM-${Date.now()}`,
+        check_previous_reading: measure.checkPreviousReading || false,
+        _destroy: false
+      }));
+  };
+
+  // Build non-consumption measures attributes
+  const buildNonConsumptionMeasuresAttributes = () => {
+    return nonConsumptionMeasures
+      .filter(measure => measure.name && measure.name.trim() !== '')
+      .map(measure => ({
+        name: measure.name,
+        meter_unit_id: parseInt(measure.unitType) || 1,
+        min_value: parseFloat(measure.min) || 0,
+        max_value: parseFloat(measure.max) || 0,
+        alert_below: parseFloat(measure.alertBelowVal) || 0,
+        alert_above: parseFloat(measure.alertAboveVal) || 0,
+        active: true,
+        meter_tag: `NCM-${Date.now()}`,
+        check_previous_reading: measure.checkPreviousReading || false,
+        _destroy: false
+      }));
+  };
+
+  // Submit asset function
+  const submitAsset = async (showDetails = false) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Build the complete payload
+      const payload: CreateAssetPayload = {
+        pms_asset: {
+          name: assetFormData.name,
+          pms_site_id: selectedLocation.site,
+          pms_building_id: selectedLocation.building,
+          pms_wing_id: selectedLocation.wing,
+          pms_area_id: selectedLocation.area,
+          pms_floor_id: selectedLocation.floor,
+          pms_room_id: selectedLocation.room,
+          loaned_from_vendor_id: selectedLoanedVendorId,
+          status: assetFormData.status,
+          warranty_period: "12 months", // Default or from form
+          asset_number: assetFormData.asset_number,
+          model_number: assetFormData.model_number,
+          serial_number: assetFormData.serial_number,
+          manufacturer: assetFormData.manufacturer,
+          commisioning_date: assetFormData.commissioning_date,
+          pms_asset_sub_group_id: selectedSubgroup,
+          pms_asset_group_id: selectedGroup,
+          pms_supplier_id: selectedVendorId,
+          salvage_value: assetFormData.salvage_value,
+          depreciation_rate: assetFormData.depreciation_rate,
+          depreciation_method: assetFormData.depreciation_method,
+          it_asset: itAssetsToggle,
+          it_meter: false,
+          meter_tag_type: meterCategoryType,
+          parent_meter_id: selectedParentMeterId,
+          breakdown: false,
+          critical: criticalStatus === 'yes',
+          is_meter: meterDetailsToggle,
+          asset_loaned: assetLoanedToggle,
+          depreciation_applicable: depreciationToggle,
+          useful_life: assetFormData.useful_life,
+          purchase_cost: assetFormData.purchase_cost,
+          purchased_on: assetFormData.purchased_on,
+          warranty: assetFormData.warranty,
+          depreciation_applicable_for: selectedAssetCategory,
+          indiv_group: "individual",
+          warranty_expiry: assetFormData.warranty_expiry,
+          allocation_type: allocationBasedOn,
+          asset_ids: [],
+          group_id: selectedGroup,
+          sub_group_id: selectedSubgroup,
+          consumption_pms_asset_measures_attributes: buildConsumptionMeasuresAttributes(),
+          non_consumption_pms_asset_measures_attributes: buildNonConsumptionMeasuresAttributes()
+        },
+        allocation_ids: allocationBasedOn === 'department' ? [selectedDepartmentId] : [selectedUserId],
+        amc_detail: selectedAmcVendorId ? {
+          supplier_id: selectedAmcVendorId,
+          amc_start_date: "",
+          amc_end_date: "",
+          amc_first_service: "",
+          payment_term: "",
+          no_of_visits: ""
+        } : undefined,
+        asset_manuals: attachments.manualsUpload?.map(file => ({
+          file_name: file.name,
+          url: file.url || ""
+        })) || [],
+        asset_insurances: attachments.insuranceDetails?.map(insurance => ({
+          insurance_provider: insurance.provider || "",
+          policy_number: insurance.policyNumber || "",
+          valid_till: insurance.validTill || ""
+        })) || [],
+        asset_purchases: attachments.purchaseInvoice?.map(purchase => ({
+          invoice_number: purchase.invoiceNumber || "",
+          purchase_date: purchase.date || "",
+          amount: purchase.amount || ""
+        })) || [],
+        asset_other_uploads: attachments.amc?.map(file => ({
+          file_name: file.name,
+          url: file.url || ""
+        })) || [],
+        extra_fields_attributes: buildExtraFieldsAttributes()
+      };
+
+      console.log('Submitting asset payload:', payload);
+
+      // Submit to API
+      const response = await assetAPI.createAsset(payload);
+      
+      toast.success('Asset created successfully!');
+      console.log('Asset created:', response);
+
+      if (showDetails) {
+        // Navigate to asset details or show success message
+        navigate('/maintenance/asset');
+      } else {
+        // Reset form for new asset
+        setAssetFormData({
+          name: '',
+          asset_number: '',
+          model_number: '',
+          serial_number: '',
+          manufacturer: '',
+          purchase_cost: '',
+          purchased_on: '',
+          warranty: 'No',
+          warranty_expiry: '',
+          commissioning_date: '',
+          status: 'in_use',
+          useful_life: '',
+          salvage_value: '',
+          depreciation_rate: '',
+          depreciation_method: 'Straight Line',
+        });
+        
+        // Reset other form states
+        setSelectedLocation({
+          site: '',
+          building: '',
+          wing: '',
+          area: '',
+          floor: '',
+          room: ''
+        });
+        setSelectedAssetCategory('');
+        setSelectedGroup('');
+        setSelectedSubgroup('');
+        setCustomFields({
+          basicIdentification: [],
+          locationOwnership: [],
+          landSizeValue: [],
+          landUsageDevelopment: [],
+          miscellaneous: [],
+          leaseholdBasicId: [],
+          leaseholdLocationAssoc: [],
+          improvementDetails: [],
+          leaseholdFinancial: [],
+          leaseholdLease: [],
+          leaseholdOversight: [],
+          vehicleBasicId: [],
+          vehicleTechnicalSpecs: [],
+          vehicleOwnership: [],
+          vehicleFinancial: [],
+          vehiclePerformance: [],
+          vehicleLegal: [],
+          vehicleMiscellaneous: [],
+          buildingBasicId: [],
+          buildingLocation: [],
+          buildingConstruction: [],
+          buildingAcquisition: [],
+          buildingUsage: [],
+          buildingMaintenance: [],
+          buildingMiscellaneous: [],
+          locationDetails: [],
+          purchaseDetails: [],
+          depreciationRule: []
+        });
+        
+        toast.success('Form reset for new asset');
+      }
+
+    } catch (error: any) {
+      console.error('Error creating asset:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create asset';
+      toast.error(`Failed to create asset: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveAndShow = () => {
+    submitAsset(true);
+  };
+
   const handleSaveAndCreate = () => {
-    console.log('Save and create new asset');
+    submitAsset(false);
   };
   const fieldStyles = {
     height: {
@@ -3499,21 +3757,89 @@ const AddAssetPage = () => {
           {expandedSections.asset && <div className="p-4 sm:p-6">
               {/* First row: Asset Name, Model No., Manufacturer */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <TextField required label="Asset Name" placeholder="Enter Asset Name" name="assetName" fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
-                <TextField required label="Model No." placeholder="Enter Model No" name="modelNo" fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
-                <TextField required label="Manufacturer" placeholder="Enter Manufacturer" name="manufacturer" fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField 
+                  required 
+                  label="Asset Name" 
+                  placeholder="Enter Asset Name" 
+                  name="assetName" 
+                  value={assetFormData.name}
+                  onChange={(e) => handleAssetFormChange('name', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <TextField 
+                  required 
+                  label="Model No." 
+                  placeholder="Enter Model No" 
+                  name="modelNo" 
+                  value={assetFormData.model_number}
+                  onChange={(e) => handleAssetFormChange('model_number', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <TextField 
+                  required 
+                  label="Manufacturer" 
+                  placeholder="Enter Manufacturer" 
+                  name="manufacturer" 
+                  value={assetFormData.manufacturer}
+                  onChange={(e) => handleAssetFormChange('manufacturer', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+              </div>
+
+              {/* Additional row: Asset Number, Serial Number */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <TextField 
+                  required 
+                  label="Asset Number" 
+                  placeholder="Enter Asset Number" 
+                  name="assetNumber" 
+                  value={assetFormData.asset_number}
+                  onChange={(e) => handleAssetFormChange('asset_number', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <TextField 
+                  label="Serial Number" 
+                  placeholder="Enter Serial Number" 
+                  name="serialNumber" 
+                  value={assetFormData.serial_number}
+                  onChange={(e) => handleAssetFormChange('serial_number', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
               </div>
 
               {/* Second row: Group, Subgroup */}
@@ -3947,21 +4273,56 @@ const AddAssetPage = () => {
           </div>
           {expandedSections.consumption && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <TextField required label="Purchase Cost" placeholder="Enter cost" name="purchaseCost" fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
-                <TextField required label="Purchase Date" placeholder="dd/mm/yyyy" name="purchaseDate" type="date" fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
-                <TextField required label="Warranty Expires On" placeholder="dd/mm/yyyy" name="warrantyExpiresOn" type="date" fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField 
+                  required 
+                  label="Purchase Cost" 
+                  placeholder="Enter cost" 
+                  name="purchaseCost" 
+                  value={assetFormData.purchase_cost}
+                  onChange={(e) => handleAssetFormChange('purchase_cost', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <TextField 
+                  required 
+                  label="Purchase Date" 
+                  placeholder="dd/mm/yyyy" 
+                  name="purchaseDate" 
+                  type="date" 
+                  value={assetFormData.purchased_on}
+                  onChange={(e) => handleAssetFormChange('purchased_on', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <TextField 
+                  required 
+                  label="Warranty Expires On" 
+                  placeholder="dd/mm/yyyy" 
+                  name="warrantyExpiresOn" 
+                  type="date" 
+                  value={assetFormData.warranty_expiry}
+                  onChange={(e) => handleAssetFormChange('warranty_expiry', e.target.value)}
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">Under Warranty</label>
                   <div className="flex gap-6">
@@ -4425,11 +4786,19 @@ const AddAssetPage = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
-          <button onClick={handleSaveAndShow} className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base">
-            Save & Show Details
+          <button 
+            onClick={handleSaveAndShow} 
+            disabled={isSubmitting}
+            className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Saving...' : 'Save & Show Details'}
           </button>
-          <button onClick={handleSaveAndCreate} className="px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base bg-[#f6f4ee] text-red-700">
-            Save & Create New Asset
+          <button 
+            onClick={handleSaveAndCreate} 
+            disabled={isSubmitting}
+            className="px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base bg-[#f6f4ee] text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Saving...' : 'Save & Create New Asset'}
           </button>
         </div>
       </div>
