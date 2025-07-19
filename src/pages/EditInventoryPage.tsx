@@ -145,38 +145,46 @@ export const EditInventoryPage = () => {
   const handleSubmit = () => {
     if (!id) return;
 
-    const inventoryData = {
-      name: formData.inventoryName,
-      code: formData.inventoryCode,
-      serial_number: formData.serialNumber,
-      quantity: parseFloat(formData.quantity) || 0,
-      cost: parseFloat(formData.cost) || 0,
-      unit: formData.unit,
-      expiry_date: formData.expiryDate,
-      category: formData.category,
-      max_stock_level: parseFloat(formData.maxStockLevel) || 0,
-      min_stock_level: parseFloat(formData.minStockLevel) || 0,
-      min_order_level: parseFloat(formData.minOrderLevel) || 0,
-      inventory_type: inventoryType,
-      criticality: criticality,
-      tax_applicable: taxApplicable,
-      eco_friendly: ecoFriendly,
-      hsc_hsn_code: formData.sacHsnCode,
-      sgst_rate: parseFloat(formData.sgstRate) || 0,
-      cgst_rate: parseFloat(formData.cgstRate) || 0,
-      igst_rate: parseFloat(formData.igstRate) || 0,
-      asset_id: formData.assetName ? parseInt(formData.assetName) : null,
-      vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
-      active: true
+    // Format expiry date to match required format: "YYYY-MM-DDT00:00:00.000+05:30"
+    const formatExpiryDate = (dateString: string) => {
+      if (!dateString) return null;
+      const date = new Date(dateString);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T00:00:00.000+05:30`;
     };
 
-    console.log('Updating inventory:', {
-      ...formData,
-      inventoryType,
-      criticality,
-      taxApplicable,
-      ecoFriendly
-    });
+    // Map criticality: 0 for Non-Critical, 1 for Critical
+    const criticalityValue = criticality === 'critical' ? 1 : 0;
+
+    const inventoryData = {
+      asset_id: formData.assetName ? parseInt(formData.assetName) : null,
+      name: formData.inventoryName || "",
+      code: formData.inventoryCode || "",
+      serial_number: formData.serialNumber || "",
+      quantity: parseFloat(formData.quantity) || 0,
+      active: true,
+      max_stock_level: parseInt(formData.maxStockLevel) || 0,
+      min_stock_level: formData.minStockLevel || "0",
+      min_order_level: formData.minOrderLevel || "0",
+      rate_contract_vendor_code: formData.vendor || "",
+      criticality: criticalityValue,
+      expiry_date: formatExpiryDate(formData.expiryDate),
+      unit: formData.unit || "",
+      hsn_id: formData.sacHsnCode ? parseInt(formData.sacHsnCode) : 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    console.log('=== INVENTORY UPDATE PAYLOAD ===');
+    console.log('Inventory ID:', id);
+    console.log('Form Data:', formData);
+    console.log('Inventory Type:', inventoryType);
+    console.log('Criticality:', criticality, '→', criticalityValue);
+    console.log('Tax Applicable:', taxApplicable);
+    console.log('Eco Friendly:', ecoFriendly);
+    console.log('Payload Data:', inventoryData);
+    console.log('Full Payload:', { pms_inventory: inventoryData });
+    console.log('API Endpoint:', `https://fm-uat-api.lockated.com/pms/inventories/${id}.json`);
+    console.log('================================');
 
     dispatch(updateInventory({ id, inventoryData }));
   };
