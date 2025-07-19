@@ -75,6 +75,14 @@ const AddAssetPage = () => {
   const [selectedAmcVendorId, setSelectedAmcVendorId] = useState<string>('');
   const [selectedLoanedVendorId, setSelectedLoanedVendorId] = useState<string>('');
 
+  // Departments and Users state
+  const [departments, setDepartments] = useState<{id: number, department_name: string}[]>([]);
+  const [users, setUsers] = useState<{id: number, full_name: string}[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
@@ -378,6 +386,8 @@ const AddAssetPage = () => {
   useEffect(() => {
     fetchGroups();
     fetchVendors();
+    fetchDepartments();
+    fetchUsers();
   }, []);
 
   // Fetch parent meters when Sub Meter is selected
@@ -421,6 +431,34 @@ const AddAssetPage = () => {
       setVendors([]);
     } finally {
       setVendorsLoading(false);
+    }
+  };
+
+  // Fetch departments function
+  const fetchDepartments = async () => {
+    setDepartmentsLoading(true);
+    try {
+      const response = await apiClient.get('/pms/departments.json');
+      setDepartments(response.data?.departments || []);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      setDepartments([]);
+    } finally {
+      setDepartmentsLoading(false);
+    }
+  };
+
+  // Fetch users function
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const response = await apiClient.get('/pms/users/get_escalate_to_users.json');
+      setUsers(response.data?.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setUsers([]);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -4128,17 +4166,36 @@ const AddAssetPage = () => {
                     <InputLabel id="allocation-select-label" shrink>
                       {allocationBasedOn === 'department' ? 'Department' : 'Users'}*
                     </InputLabel>
-                    <MuiSelect labelId="allocation-select-label" label={allocationBasedOn === 'department' ? 'Department' : 'Users'} displayEmpty value="" sx={fieldStyles} required>
-                      <MenuItem value=""><em>Select...</em></MenuItem>
-                      {allocationBasedOn === 'department' ? <>
-                          <MenuItem value="hr">HR Department</MenuItem>
-                          <MenuItem value="it">IT Department</MenuItem>
-                          <MenuItem value="finance">Finance Department</MenuItem>
-                        </> : <>
-                          <MenuItem value="user1">User 1</MenuItem>
-                          <MenuItem value="user2">User 2</MenuItem>
-                          <MenuItem value="user3">User 3</MenuItem>
-                        </>}
+                    <MuiSelect 
+                      labelId="allocation-select-label" 
+                      label={allocationBasedOn === 'department' ? 'Department' : 'Users'} 
+                      displayEmpty 
+                      value={allocationBasedOn === 'department' ? selectedDepartmentId : selectedUserId}
+                      onChange={(e) => allocationBasedOn === 'department' ? setSelectedDepartmentId(e.target.value) : setSelectedUserId(e.target.value)}
+                      sx={fieldStyles} 
+                      required
+                      disabled={allocationBasedOn === 'department' ? departmentsLoading : usersLoading}
+                    >
+                      <MenuItem value="">
+                        <em>
+                          {allocationBasedOn === 'department' 
+                            ? (departmentsLoading ? 'Loading departments...' : 'Select Department')
+                            : (usersLoading ? 'Loading users...' : 'Select User')
+                          }
+                        </em>
+                      </MenuItem>
+                      {allocationBasedOn === 'department' 
+                        ? departments.map((department) => (
+                            <MenuItem key={department.id} value={department.id}>
+                              {department.department_name}
+                            </MenuItem>
+                          ))
+                        : users.map((user) => (
+                            <MenuItem key={user.id} value={user.id}>
+                              {user.full_name}
+                            </MenuItem>
+                          ))
+                      }
                     </MuiSelect>
                   </FormControl>
                 </div>
