@@ -84,29 +84,29 @@ export const AssetAnalyticsTab = () => {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* PPM Comp. Rate */}
-        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
+        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow bg-white">
           <h3 className="text-lg font-semibold mb-4 text-red-600">PPM Comp. Rate</h3>
           <div className="flex justify-between items-center">
             <span className="text-2xl font-bold text-red-600">₹ 40,000</span>
-            <span className="text-lg font-bold text-red-600 border border-red-200 px-3 py-1 rounded-full" style={{ backgroundColor: '#f6f4ee' }}>55%</span>
+            <span className="text-lg font-bold text-red-600 border border-red-200 px-3 py-1 rounded-full bg-white">55%</span>
           </div>
         </div>
 
         {/* Last PPM */}
-        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
+        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow bg-white">
           <h3 className="text-lg font-semibold mb-4 text-red-600">Last PPM</h3>
           <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-red-600 border border-red-200 px-3 py-2 rounded-lg" style={{ backgroundColor: '#f6f4ee' }}>DD.MM.YY</span>
-            <div className="p-2 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer" style={{ backgroundColor: '#f6f4ee' }}>
+            <span className="text-lg font-medium text-red-600 border border-red-200 px-3 py-2 rounded-lg bg-white">DD.MM.YY</span>
+            <div className="p-2 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer bg-white">
               <Download className="w-5 h-5 text-red-600" />
             </div>
           </div>
         </div>
 
         {/* Next PPM Due */}
-        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
+        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow bg-white">
           <h3 className="text-lg font-semibold mb-4 text-red-600">Next PPM Due</h3>
-          <div className="text-2xl font-bold text-red-600 border border-red-200 px-3 py-2 rounded-lg inline-block" style={{ backgroundColor: '#f6f4ee' }}>₹ 40,000</div>
+          <div className="text-2xl font-bold text-red-600 border border-red-200 px-3 py-2 rounded-lg inline-block bg-white">₹ 40,000</div>
         </div>
       </div>
     </div>
