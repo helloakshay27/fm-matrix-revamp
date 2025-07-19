@@ -61,20 +61,23 @@ export const fetchInventoryData = createAsyncThunk(
 
     const response = await apiClient.get(`/pms/inventories.json?${queryParams}`)
     
-    // Extract pagination from headers (common API pattern)
-    const totalCount = parseInt(response.headers['x-total-count'] || response.headers['total-count'] || '0')
-    const totalPages = parseInt(response.headers['x-total-pages'] || response.headers['total-pages'] || '0')
-    const currentPage = parseInt(response.headers['x-current-page'] || response.headers['current-page'] || page.toString())
+    // Since API doesn't provide pagination metadata, we'll estimate it
+    const inventories = response.data.inventories || []
+    const pageSize = 15 // Typical page size based on the response
     
-    console.log('Response headers:', response.headers)
-    console.log('Extracted from headers:', { totalCount, totalPages, currentPage })
+    // If we get a full page, assume there might be more pages
+    const hasMorePages = inventories.length >= pageSize
+    
+    // Estimate total pages (we'll use a reasonable default)
+    const estimatedTotalPages = hasMorePages ? Math.max(page + 1, 10) : page
     
     return {
       ...response.data,
       pagination: {
-        total_count: totalCount,
-        total_pages: totalPages,
-        current_page: currentPage
+        total_count: hasMorePages ? pageSize * estimatedTotalPages : inventories.length,
+        total_pages: estimatedTotalPages,
+        current_page: page,
+        has_more: hasMorePages
       }
     }
   }
@@ -104,31 +107,19 @@ const inventorySlice = createSlice({
         // Extract inventory data
         state.items = action.payload.inventories || []
         
-        // Try different possible pagination structures
-        const pagination = action.payload.pagination || action.payload.meta || action.payload
+        // Use the pagination data we generated in the thunk
+        const pagination = action.payload.pagination
         
-        state.totalCount = action.payload.total_count || 
-                          action.payload.total || 
-                          pagination?.total_count || 
-                          pagination?.total || 0
-                          
-        state.currentPage = action.payload.current_page || 
-                           action.payload.page || 
-                           pagination?.current_page || 
-                           pagination?.page || 1
+        state.totalCount = pagination?.total_count || 0
+        state.currentPage = pagination?.current_page || 1
+        state.totalPages = pagination?.total_pages || 0
                            
-        state.totalPages = action.payload.total_pages || 
-                          action.payload.last_page || 
-                          pagination?.total_pages || 
-                          pagination?.last_page || 
-                          Math.ceil(state.totalCount / 10) || 0 // fallback calculation
-                          
         console.log('Pagination extracted:', {
           totalCount: state.totalCount,
           currentPage: state.currentPage,
           totalPages: state.totalPages,
           itemsLength: state.items.length,
-          rawPagination: pagination
+          hasMore: pagination?.has_more
         })
       })
       .addCase(fetchInventoryData.rejected, (state, action) => {
