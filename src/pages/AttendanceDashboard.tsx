@@ -7,6 +7,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAttendanceData, AttendanceRecord } from '@/store/slices/attendanceSlice';
+import { AttendanceExportModal } from '@/components/AttendanceExportModal';
 const columns: ColumnConfig[] = [{
   key: 'name',
   label: 'Name',
@@ -28,6 +29,7 @@ export const AttendanceDashboard = () => {
   // Local state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const pageSize = 10;
 
   useEffect(() => {
@@ -60,6 +62,11 @@ export const AttendanceDashboard = () => {
     // For now, we'll just clear the selection since we can't modify Redux state directly
     console.log('Bulk delete action would be implemented here:', selectedItems);
     setSelectedItems([]);
+  };
+
+  // Custom export handler for attendance page
+  const handleExport = () => {
+    setExportModalOpen(true);
   };
   const renderCell = (item: AttendanceRecord, columnKey: string) => {
     switch (columnKey) {
@@ -182,6 +189,7 @@ export const AttendanceDashboard = () => {
         showBulkActions={true} 
         pagination={false}
         loading={loading}
+        onExport={handleExport}
       />
 
       {/* Custom Pagination */}
@@ -205,5 +213,11 @@ export const AttendanceDashboard = () => {
       <div className="mt-8 text-center">
         
       </div>
+
+      {/* Custom Export Modal */}
+      <AttendanceExportModal 
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+      />
     </div>;
 };
