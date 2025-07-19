@@ -218,7 +218,10 @@ export const InventoryDashboard = () => {
     }
   };
 
-  const handleViewItem = (itemId: string) => {
+  const handleViewItem = (item: any) => {
+    // Handle both direct ID and item object
+    const itemId = typeof item === 'string' ? item : item?.id;
+    console.log('Navigating to inventory details with ID:', itemId);
     navigate(`/maintenance/inventory/details/${itemId}`);
   };
 
