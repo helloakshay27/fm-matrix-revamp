@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
@@ -99,11 +100,11 @@ export const AddInventoryPage = () => {
     console.log('Submitting inventory payload:', payload);
     
     try {
-      const response = await fetch('https://fm-uat-api.lockated.com/pms/inventories', {
+      const response = await fetch(getFullUrl('/pms/inventories'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTI0MzcsImNvbXBhbnlfaWQiOjE1LCJzaXRlX2lkcyI6WzddLCJpYXQiOjE3MzY4MTgwNzAsImV4cCI6MTczNzA3NzI3MH0.FLOi5gqv3qj2rL8fDTrxFt9Pnk6NVvIKAaG2DCIBgHI',
+          'Authorization': getAuthHeader(),
         },
         body: JSON.stringify(payload),
       });
