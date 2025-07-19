@@ -46,6 +46,12 @@ export const API_CONFIG = {
     FACILITY_BOOKINGS: '/pms/admin/facility_bookings.json',
     ENTITIES: '/entities.json',
     FACILITY_SETUPS: '/pms/admin/facility_setups.json',
+    COMPLAINT_MODES: '/pms/admin/create_complaint_modes.json',
+    COMPLAINT_MODE_LIST: '/pms/admin/complaint_modes.json',
+    ACCOUNTS: '/api/users/account.json',
+    STATUSES: '/pms/admin/create_complaint_statuses.json',
+    STATUSES_LIST: '/pms/admin/complaint_statuses.json',
+    STATUSES_UPDATE:'/pms/admin/modify_complaint_status.json'
   },
 } as const
 

@@ -24,7 +24,7 @@ export const TicketManagementSetupPage: React.FC = () => {
           <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="operational-days">Operational Days</TabsTrigger>
           <TabsTrigger value="complaint-mode">Complaint Mode</TabsTrigger>
-          <TabsTrigger value="aging-rule">Aging Rule</TabsTrigger>
+          {/* <TabsTrigger value="aging-rule">Aging Rule</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="category-type" className="mt-6">

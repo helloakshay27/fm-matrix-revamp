@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,117 +24,110 @@ import {
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchStatuses, createStatus, updateStatus, deleteStatus, fetchAccounts } from '@/store/slices/statusesSlice';
 
 const statusSchema = z.object({
-  status: z.string().min(1, 'Status is required'),
-  fixedState: z.string().min(1, 'Fixed state is required'),
+  name: z.string().min(1, 'Status is required'),
+  fixedState: z.enum(['closed', 'reopen', 'complete'], { errorMap: () => ({ message: 'Fixed state is required' }) }),
   colorCode: z.string().min(1, 'Color code is required'),
-  order: z.number().min(1, 'Order must be positive'),
-  allowReopen: z.boolean(),
+  position: z.number().min(1, 'Order must be positive'),
 });
 
 type StatusFormData = z.infer<typeof statusSchema>;
 
-interface StatusType {
-  id: string;
-  order: number;
-  status: string;
-  fixedState: string;
-  color: string;
-  email: boolean;
-}
 
-const mockStatuses: StatusType[] = [
-  {
-    id: '1',
-    order: 1,
-    status: 'Open',
-    fixedState: 'No',
-    color: '#FF0000',
-    email: true,
-  },
-  {
-    id: '2',
-    order: 2,
-    status: 'In Progress',
-    fixedState: 'No',
-    color: '#FFA500',
-    email: false,
-  },
-  {
-    id: '3',
-    order: 3,
-    status: 'Resolved',
-    fixedState: 'Yes',
-    color: '#008000',
-    email: true,
-  },
+const fixedStates = [
+  { value: 'closed', label: 'Closed' },
+  { value: 'reopen', label: 'Reopen' },
+  { value: 'complete', label: 'Complete' },
 ];
 
-const fixedStates = ['Yes', 'No'];
-
 export const StatusTab: React.FC = () => {
-  const [statuses, setStatuses] = useState<StatusType[]>(mockStatuses);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const dispatch = useDispatch<any>();
+  const { data: statuses = [], loading, fetchLoading, error } = useSelector((state: any) => state.statuses) || {};
+  const { accounts = [] } = useSelector((state: any) => state.complaintModes) || {}; // adjust if you have a separate accounts slice
   const [allowReopen, setAllowReopen] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+const currentSiteId =
+  accounts && accounts.length > 0
+    ? accounts[0].site_id || accounts[0].society_id || '15'
+    : '15';
 
   const form = useForm<StatusFormData>({
     resolver: zodResolver(statusSchema),
     defaultValues: {
-      status: '',
-      fixedState: '',
+      name: '',
+      fixedState: '' as any,
       colorCode: '#000000',
-      order: 1,
-      allowReopen: false,
+      position: 1,
     },
   });
+
+  useEffect(() => {
+    dispatch(fetchStatuses());
+    dispatch(fetchAccounts());
+  }, [dispatch]);
 
   const handleSubmit = async (data: StatusFormData) => {
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Status Data:', data);
-      toast.success('Status created successfully!');
-      form.reset();
+      const payload = {
+        complaint_status: {
+          of_phase: 'pms',
+          society_id: currentSiteId, // Use dynamic value here
+          name: data.name,
+          fixed_state: data.fixedState,
+          color_code: data.colorCode,
+          position: data.position.toString(),
+        },
+      };
+      const resultAction = await dispatch(createStatus(payload));
+      if (createStatus.fulfilled.match(resultAction)) {
+        toast.success('Status created successfully!');
+        form.reset();
+        dispatch(fetchStatuses());
+      } else {
+        toast.error(
+          (resultAction.payload as any)?.message || 'Failed to create status'
+        );
+      }
     } catch (error) {
       toast.error('Failed to create status');
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const handleAllowReopenChange = (checked: boolean | "indeterminate") => {
     setAllowReopen(checked === true);
   };
 
   const columns = [
-    { key: 'order', label: 'Order', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'fixedState', label: 'Fixed State', sortable: true },
-    { key: 'color', label: 'Color', sortable: false },
-    { key: 'email', label: 'Email', sortable: true },
+    { key: 'position', label: 'Order', sortable: true },
+    { key: 'name', label: 'Status', sortable: true },
+    { key: 'fixed_state', label: 'Fixed State', sortable: true },
+    { key: 'color_code', label: 'Color', sortable: false },
   ];
 
-  const renderCell = (item: StatusType, columnKey: string) => {
+  const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case 'color':
+      case 'color_code':
         return (
           <div className="flex items-center gap-2">
             <div
               className="w-6 h-6 rounded border"
-              style={{ backgroundColor: item.color }}
+              style={{ backgroundColor: item.color_code }}
             />
-            <span>{item.color}</span>
+            <span>{item.color_code}</span>
           </div>
         );
-      case 'email':
-        return item.email ? 'Yes' : 'No';
       default:
-        return item[columnKey as keyof StatusType];
+        return item[columnKey];
     }
   };
 
-  const renderActions = (item: StatusType) => (
+  const renderActions = (item: any) => (
     <div className="flex items-center gap-2">
       <Button variant="ghost" size="sm">
         <Edit className="h-4 w-4" />
@@ -157,7 +150,7 @@ export const StatusTab: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="status"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
@@ -183,8 +176,8 @@ export const StatusTab: React.FC = () => {
                         </FormControl>
                         <SelectContent>
                           {fixedStates.map((state) => (
-                            <SelectItem key={state} value={state}>
-                              {state}
+                            <SelectItem key={state.value} value={state.value}>
+                              {state.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -220,7 +213,7 @@ export const StatusTab: React.FC = () => {
 
                 <FormField
                   control={form.control}
-                  name="order"
+                  name="position"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Order</FormLabel>
@@ -239,8 +232,8 @@ export const StatusTab: React.FC = () => {
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving...' : 'Submit'}
+                <Button type="submit" disabled={isSubmitting || loading}>
+                  {isSubmitting || loading ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
             </form>
@@ -272,6 +265,7 @@ export const StatusTab: React.FC = () => {
             renderCell={renderCell}
             renderActions={renderActions}
             storageKey="status-table"
+            loading={fetchLoading}
           />
         </CardContent>
       </Card>
