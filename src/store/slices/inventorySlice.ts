@@ -60,26 +60,7 @@ export const fetchInventoryData = createAsyncThunk(
     })
 
     const response = await apiClient.get(`/pms/inventories.json?${queryParams}`)
-    
-    // Since API doesn't provide pagination metadata, we'll estimate it
-    const inventories = response.data.inventories || []
-    const pageSize = 15 // Typical page size based on the response
-    
-    // If we get a full page, assume there might be more pages
-    const hasMorePages = inventories.length >= pageSize
-    
-    // Estimate total pages (we'll use a reasonable default)
-    const estimatedTotalPages = hasMorePages ? Math.max(page + 1, 10) : page
-    
-    return {
-      ...response.data,
-      pagination: {
-        total_count: hasMorePages ? pageSize * estimatedTotalPages : inventories.length,
-        total_pages: estimatedTotalPages,
-        current_page: page,
-        has_more: hasMorePages
-      }
-    }
+    return response.data
   }
 )
 
@@ -102,25 +83,10 @@ const inventorySlice = createSlice({
       })
       .addCase(fetchInventoryData.fulfilled, (state, action) => {
         state.loading = false
-        console.log('API Response:', action.payload)
-        
-        // Extract inventory data
         state.items = action.payload.inventories || []
-        
-        // Use the pagination data we generated in the thunk
-        const pagination = action.payload.pagination
-        
-        state.totalCount = pagination?.total_count || 0
-        state.currentPage = pagination?.current_page || 1
-        state.totalPages = pagination?.total_pages || 0
-                           
-        console.log('Pagination extracted:', {
-          totalCount: state.totalCount,
-          currentPage: state.currentPage,
-          totalPages: state.totalPages,
-          itemsLength: state.items.length,
-          hasMore: pagination?.has_more
-        })
+        state.totalCount = action.payload.total_count || 0
+        state.currentPage = action.payload.pagination?.current_page || 1
+        state.totalPages = action.payload.pagination?.total_pages || 0
       })
       .addCase(fetchInventoryData.rejected, (state, action) => {
         state.loading = false
