@@ -66,6 +66,11 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange, label
           readOnly: true,
           style: { cursor: 'pointer' }
         }}
+        sx={{
+          '& .MuiInputBase-root': {
+            height: { xs: '36px', md: '45px' }
+          }
+        }}
       />
       
       <Popover

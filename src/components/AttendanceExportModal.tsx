@@ -92,6 +92,11 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             onChange={(e) => setSite(e.target.value)}
             variant="outlined"
             fullWidth
+            sx={{
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', md: '45px' }
+              }
+            }}
           >
             <MenuItem value="">
               <em>Select Site</em>
@@ -111,6 +116,11 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             onChange={(e) => setUserType(e.target.value)}
             variant="outlined"
             fullWidth
+            sx={{
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', md: '45px' }
+              }
+            }}
           >
             <MenuItem value="">
               <em>Select User Type</em>
@@ -140,7 +150,13 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
                 </Box>
               ),
             }}
-            sx={{ minHeight: '56px' }}
+            sx={{ 
+              minHeight: '56px',
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', md: '45px' },
+                minHeight: { xs: '36px', md: '45px' }
+              }
+            }}
           >
             {departmentOptions.map((dept) => (
               <MenuItem key={dept} value={dept}>
