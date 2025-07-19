@@ -67,7 +67,7 @@ export const AddInventoryPage = () => {
     setFormData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const payload = {
       pms_inventory: {
         user_id: 12437, // You may want to get this from user context/state
@@ -97,7 +97,29 @@ export const AddInventoryPage = () => {
     };
     
     console.log('Submitting inventory payload:', payload);
-    navigate(-1);
+    
+    try {
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/inventories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTI0MzcsImNvbXBhbnlfaWQiOjE1LCJzaXRlX2lkcyI6WzddLCJpYXQiOjE3MzY4MTgwNzAsImV4cCI6MTczNzA3NzI3MH0.FLOi5gqv3qj2rL8fDTrxFt9Pnk6NVvIKAaG2DCIBgHI',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Inventory created successfully:', result);
+        navigate(-1);
+      } else {
+        console.error('Failed to create inventory:', response.status, response.statusText);
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+      }
+    } catch (error) {
+      console.error('Error creating inventory:', error);
+    }
   };
 
   const handleBack = () => {
