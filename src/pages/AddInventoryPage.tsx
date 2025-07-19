@@ -88,10 +88,10 @@ export const AddInventoryPage = () => {
         max_stock_level: parseInt(formData.maxStockLevel) || 0,
         min_stock_level: formData.minStockLevel,
         min_order_level: formData.minOrderLevel,
-        hsn_id: parseInt(formData.sacHsnCode) || null,
-        sgst_rate: parseFloat(formData.sgstRate) || 0,
-        cgst_rate: parseFloat(formData.cgstRate) || 0,
-        igst_rate: parseFloat(formData.igstRate) || 0
+        hsn_id: taxApplicable ? parseInt(formData.sacHsnCode) || null : null,
+        sgst_rate: taxApplicable ? parseFloat(formData.sgstRate) || 0 : 0,
+        cgst_rate: taxApplicable ? parseFloat(formData.cgstRate) || 0 : 0,
+        igst_rate: taxApplicable ? parseFloat(formData.igstRate) || 0 : 0
       },
       tax_applicable: taxApplicable ? 1 : 0
     };
