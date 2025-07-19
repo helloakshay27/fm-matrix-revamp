@@ -1,6 +1,6 @@
-
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Box, Stepper, Step, StepLabel, Typography } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
 interface Step {
   id: number;
@@ -15,39 +15,93 @@ interface ScheduleFormStepperProps {
   onStepClick: (step: number) => void;
 }
 
+const CustomStepper = styled(Stepper)(({ theme }) => ({
+  '& .MuiStepConnector-root': {
+    top: 22,
+    left: 'calc(-50% + 16px)',
+    right: 'calc(50% + 16px)',
+  },
+  '& .MuiStepConnector-line': {
+    height: 2,
+    backgroundColor: '#E5E7EB',
+    border: 0,
+  },
+  '& .MuiStepConnector-root.Mui-active .MuiStepConnector-line': {
+    backgroundColor: '#C72030',
+  },
+  '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
+    backgroundColor: '#C72030',
+  },
+}));
+
+const StepIconRoot = styled('div')<{ ownerState: { completed: boolean; active: boolean } }>(
+  ({ theme, ownerState }) => ({
+    backgroundColor: ownerState.completed || ownerState.active ? '#C72030' : '#E5E7EB',
+    zIndex: 1,
+    color: ownerState.completed || ownerState.active ? '#fff' : '#6B7280',
+    width: 40,
+    height: 40,
+    display: 'flex',
+    borderRadius: '50%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: '14px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      transform: 'scale(1.1)',
+    },
+  }),
+);
+
+function CustomStepIcon(props: any) {
+  const { active, completed, className, icon } = props;
+
+  return (
+    <StepIconRoot ownerState={{ completed, active }} className={className}>
+      {icon}
+    </StepIconRoot>
+  );
+}
+
 export const ScheduleFormStepper = ({ steps, currentStep, onStepClick }: ScheduleFormStepperProps) => {
   return (
-    <div className="flex items-center justify-between mb-8">
-      {steps.map((step, index) => (
-        <React.Fragment key={step.id}>
-          <div 
-            className={`flex items-center cursor-pointer ${
-              step.active ? 'text-[#C72030]' : step.completed ? 'text-green-600' : 'text-gray-400'
-            }`}
-            onClick={() => onStepClick(step.id)}
-          >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 mr-3 ${
-              step.active 
-                ? 'border-[#C72030] bg-[#C72030] text-white' 
-                : step.completed 
-                  ? 'border-green-600 bg-green-600 text-white'
-                  : 'border-gray-300 bg-white text-gray-400'
-            }`}>
-              {step.completed ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <span className="text-sm font-medium">{step.id}</span>
-              )}
-            </div>
-            <span className="text-sm font-medium hidden sm:block">{step.title}</span>
-          </div>
-          {index < steps.length - 1 && (
-            <div className={`flex-1 h-0.5 mx-4 ${
-              steps[index + 1].completed || steps[index + 1].active ? 'bg-[#C72030]' : 'bg-gray-300'
-            }`} />
-          )}
-        </React.Fragment>
-      ))}
-    </div>
+    <Box sx={{ width: '100%', mb: 4 }}>
+      <CustomStepper 
+        activeStep={currentStep - 1} 
+        alternativeLabel
+        connector={<div />}
+      >
+        {steps.map((step, index) => (
+          <Step key={step.id} completed={step.completed}>
+            <StepLabel 
+              StepIconComponent={CustomStepIcon}
+              onClick={() => onStepClick(step.id)}
+              sx={{ cursor: 'pointer' }}
+            >
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: step.active ? '#C72030' : step.completed ? '#059669' : '#6B7280',
+                  fontWeight: step.active ? 600 : 500,
+                  fontSize: '12px',
+                  mt: 1
+                }}
+              >
+                {step.title}
+              </Typography>
+            </StepLabel>
+          </Step>
+        ))}
+      </CustomStepper>
+      
+      {/* Progress indicator */}
+      <Box sx={{ textAlign: 'center', mt: 2 }}>
+        <Typography variant="body2" color="textSecondary">
+          You've completed {steps.filter(s => s.completed).length} out of {steps.length} steps
+        </Typography>
+      </Box>
+    </Box>
   );
 };

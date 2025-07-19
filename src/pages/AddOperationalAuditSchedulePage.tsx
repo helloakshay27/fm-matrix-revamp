@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -7,13 +6,16 @@ import { useToast } from "@/hooks/use-toast";
 import { ScheduleFormStepper } from '@/components/schedule/ScheduleFormStepper';
 import { BasicConfigurationStep } from '@/components/schedule/BasicConfigurationStep';
 import { ScheduleSetupStep } from '@/components/schedule/ScheduleSetupStep';
+import { QuestionSetupStep } from '@/components/schedule/QuestionSetupStep';
+import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
+import { MappingStep } from '@/components/schedule/MappingStep';
 
 const steps = [
   { id: 1, title: 'Basic Configuration', completed: false, active: true },
   { id: 2, title: 'Schedule Setup', completed: false, active: false },
-  { id: 3, title: 'Auditor Assignment', completed: false, active: false },
-  { id: 4, title: 'Checklist Selection', completed: false, active: false },
-  { id: 5, title: 'Review & Submit', completed: false, active: false }
+  { id: 3, title: 'Question Setup', completed: false, active: false },
+  { id: 4, title: 'Time Setup', completed: false, active: false },
+  { id: 5, title: 'Asset Mapping', completed: false, active: false }
 ];
 
 export const AddOperationalAuditSchedulePage = () => {
@@ -26,17 +28,38 @@ export const AddOperationalAuditSchedulePage = () => {
   
   // Form data states
   const [basicConfig, setBasicConfig] = useState({
-    scheduleName: '',
+    activityType: '',
+    activityName: '',
     description: '',
-    frequency: 'Daily',
-    startDate: '',
-    endDate: '',
-    isRecurring: false
+    attachment: null
   });
 
   const [scheduleSetup, setScheduleSetup] = useState({
-    scheduleType: 'fixed',
-    timeSlots: [{ day: '', startTime: '', endTime: '' }]
+    checklistType: '',
+    assetType: '',
+    assetGroup: '',
+    branch: '',
+    department: '',
+    location: ''
+  });
+
+  const [questionSetup, setQuestionSetup] = useState({
+    sections: []
+  });
+
+  const [timeSetup, setTimeSetup] = useState({
+    timeSlots: {
+      hours: { mode: 'specific' as 'specific' | 'range', specific: [] as number[], range: { start: 0, end: 23 } },
+      minutes: { mode: 'specific' as 'specific' | 'range', specific: [] as number[], range: { start: 0, end: 59 } },
+      days: { mode: 'weekdays' as 'weekdays' | 'dates', weekdays: [] as string[], dates: [] as number[] },
+      months: { mode: 'specific' as 'specific' | 'range', specific: [] as number[], range: { start: 0, end: 11 } }
+    },
+    selectedDays: [] as number[],
+    selectedMonths: [] as number[]
+  });
+
+  const [mapping, setMapping] = useState({
+    mappings: []
   });
 
   const handleStepClick = (stepId: number) => {
@@ -59,6 +82,10 @@ export const AddOperationalAuditSchedulePage = () => {
 
   const handleScheduleSetupChange = (field: string, value: any) => {
     setScheduleSetup(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleTimeSetupChange = (field: string, value: any) => {
+    setTimeSetup(prev => ({ ...prev, [field]: value }));
   };
 
   const toggleSectionCollapse = (sectionId: number) => {
@@ -143,11 +170,36 @@ export const AddOperationalAuditSchedulePage = () => {
             />
           )}
 
-          {/* Placeholder for remaining steps */}
+          {/* Question Setup */}
           {currentStep >= 3 && (
-            <div className="text-center py-8 text-gray-500">
-              Steps 3-5 will be implemented based on your requirements
-            </div>
+            <QuestionSetupStep
+              data={questionSetup}
+              onChange={(field, value) => setQuestionSetup(prev => ({ ...prev, [field]: value }))}
+              isCompleted={currentStep > 3}
+              isCollapsed={currentStep > 3 && collapsedSections[3]}
+              onToggleCollapse={currentStep > 3 ? () => toggleSectionCollapse(3) : undefined}
+            />
+          )}
+
+          {/* Time Setup */}
+          {currentStep >= 4 && (
+            <TimeSetupStep
+              data={timeSetup}
+              onChange={handleTimeSetupChange}
+              isCompleted={currentStep > 4}
+              isCollapsed={currentStep > 4 && collapsedSections[4]}
+              onToggleCollapse={currentStep > 4 ? () => toggleSectionCollapse(4) : undefined}
+            />
+          )}
+
+          {/* Asset Mapping */}
+          {currentStep >= 5 && (
+            <MappingStep
+              data={mapping}
+              onChange={(field, value) => setMapping(prev => ({ ...prev, [field]: value }))}
+              isCompleted={false}
+              isCollapsed={false}
+            />
           )}
         </div>
 

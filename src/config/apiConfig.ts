@@ -26,6 +26,7 @@ export const API_CONFIG = {
     SERVICE_DETAILS: '/pms/services', // Base path, will append /:id.json
     SUPPLIERS: '/pms/suppliers.json',
     DEPARTMENTS: '/pms/departments.json',
+    SITES: '/pms/sites.json',
     ROLES: '/lock_roles.json',
     FUNCTIONS: '/lock_functions.json',
     EMAIL_RULES: '/pms/email_rule_setups.json',

@@ -1,19 +1,44 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
+import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
+  const { assets = [], loading = false } = inventoryAssetsState || {};
+  
+  const suppliersState = useSelector((state: RootState) => state.suppliers);
+  const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
+  const suppliersLoading = suppliersState?.loading || false;
+  
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
   const [taxApplicable, setTaxApplicable] = useState(false);
   const [ecoFriendly, setEcoFriendly] = useState(false);
   const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
+
+  useEffect(() => {
+    console.log('Dispatching fetchInventoryAssets...');
+    dispatch(fetchInventoryAssets());
+    dispatch(fetchSuppliersData());
+  }, [dispatch]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Assets state:', { assets, loading, inventoryAssetsState });
+    console.log('Suppliers state:', { suppliers, suppliersLoading, suppliersState });
+  }, [assets, loading, inventoryAssetsState, suppliers, suppliersLoading, suppliersState]);
 
   const [formData, setFormData] = useState({
     assetName: '',
@@ -43,15 +68,59 @@ export const AddInventoryPage = () => {
     setFormData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleSubmit = () => {
-    console.log('Submitting inventory:', {
-      ...formData,
-      inventoryType,
-      criticality,
-      taxApplicable,
-      ecoFriendly
-    });
-    navigate(-1);
+  const handleSubmit = async () => {
+    const payload = {
+      pms_inventory: {
+        user_id: 12437, // You may want to get this from user context/state
+        company_id: 15, // You may want to get this from user context/state
+        pms_site_id: 7, // You may want to get this from user context/state
+        inventory_type: inventoryType === 'spares' ? 1 : 2,
+        criticality: criticality === 'critical' ? 1 : 2,
+        asset_id: parseInt(formData.assetName) || null,
+        name: formData.inventoryName,
+        code: formData.inventoryCode,
+        serial_number: formData.serialNumber,
+        quantity: parseInt(formData.quantity) || 0,
+        cost: parseFloat(formData.cost) || 0,
+        unit: formData.unit,
+        expiry_date: formData.expiryDate ? `${formData.expiryDate}T00:00:00Z` : null,
+        category: formData.category,
+        rate_contract_vendor_code: formData.vendor,
+        max_stock_level: parseInt(formData.maxStockLevel) || 0,
+        min_stock_level: formData.minStockLevel,
+        min_order_level: formData.minOrderLevel,
+        hsn_id: taxApplicable ? parseInt(formData.sacHsnCode) || null : null,
+        sgst_rate: taxApplicable ? parseFloat(formData.sgstRate) || 0 : 0,
+        cgst_rate: taxApplicable ? parseFloat(formData.cgstRate) || 0 : 0,
+        igst_rate: taxApplicable ? parseFloat(formData.igstRate) || 0 : 0
+      },
+      tax_applicable: taxApplicable ? 1 : 0
+    };
+    
+    console.log('Submitting inventory payload:', payload);
+    
+    try {
+      const response = await fetch(getFullUrl('/pms/inventories'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Inventory created successfully:', result);
+        navigate(-1);
+      } else {
+        console.error('Failed to create inventory:', response.status, response.statusText);
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+      }
+    } catch (error) {
+      console.error('Error creating inventory:', error);
+    }
   };
 
   const handleBack = () => {
@@ -189,15 +258,6 @@ export const AddInventoryPage = () => {
                 </RadioGroup>
               </div>
 
-              {/* Eco-friendly Inventory */}
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="eco-friendly" 
-                  checked={ecoFriendly}
-                  onCheckedChange={(checked) => setEcoFriendly(checked === true)}
-                />
-                <label htmlFor="eco-friendly" className="text-sm font-medium text-black">Eco-friendly Inventory</label>
-              </div>
 
               {/* Form Grid - First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -210,12 +270,16 @@ export const AddInventoryPage = () => {
                       label="Select Asset Name"
                       notched
                       displayEmpty
+                      disabled={loading}
                     >
                       <MenuItem value="" sx={{ color: '#C72030' }}>
-                        Select an Option...
+                        {loading ? 'Loading...' : 'Select an Option...'}
                       </MenuItem>
-                      <MenuItem value="asset1">Asset 1</MenuItem>
-                      <MenuItem value="asset2">Asset 2</MenuItem>
+                      {assets.map((asset) => (
+                        <MenuItem key={asset.id} value={asset.id.toString()}>
+                          {asset.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -299,9 +363,36 @@ export const AddInventoryPage = () => {
                       displayEmpty
                     >
                       <MenuItem value="">Select Unit</MenuItem>
-                      <MenuItem value="pcs">Pieces</MenuItem>
-                      <MenuItem value="kg">Kilograms</MenuItem>
-                      <MenuItem value="liters">Liters</MenuItem>
+                      <MenuItem value="Ea">Each</MenuItem>
+                      <MenuItem value="Piece">Piece</MenuItem>
+                      <MenuItem value="Kg">Kilogram</MenuItem>
+                      <MenuItem value="Litre">Litre</MenuItem>
+                      <MenuItem value="Box">Box</MenuItem>
+                      <MenuItem value="Bottle">Bottle</MenuItem>
+                      <MenuItem value="Packet">Packet</MenuItem>
+                      <MenuItem value="Bag">Bag</MenuItem>
+                      <MenuItem value="Qty">Quantity</MenuItem>
+                      <MenuItem value="Meter">Meter</MenuItem>
+                      <MenuItem value="Sq.Mtr">Square Meter</MenuItem>
+                      <MenuItem value="Cu.Mtr">Cubic Meter</MenuItem>
+                      <MenuItem value="Feet">Feet</MenuItem>
+                      <MenuItem value="Sq.Ft">Square Feet</MenuItem>
+                      <MenuItem value="Cu.Ft">Cubic Feet</MenuItem>
+                      <MenuItem value="Inches">Inches</MenuItem>
+                      <MenuItem value="Sq.Inches">Square Inches</MenuItem>
+                      <MenuItem value="Nos">Numbers</MenuItem>
+                      <MenuItem value="Pcs">Pieces</MenuItem>
+                      <MenuItem value="Mm">Millimeter</MenuItem>
+                      <MenuItem value="Size">Size</MenuItem>
+                      <MenuItem value="Yards">Yards</MenuItem>
+                      <MenuItem value="Sq.Yards">Square Yards</MenuItem>
+                      <MenuItem value="Rs">Rupees</MenuItem>
+                      <MenuItem value="Acre">Acre</MenuItem>
+                      <MenuItem value="Kilometer">Kilometer</MenuItem>
+                      <MenuItem value="Miles">Miles</MenuItem>
+                      <MenuItem value="Grams">Grams</MenuItem>
+                      <MenuItem value="Brass">Brass</MenuItem>
+                      <MenuItem value="Tonnes">Tonnes</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -333,8 +424,11 @@ export const AddInventoryPage = () => {
                       <MenuItem value="" sx={{ color: '#C72030' }}>
                         Select an Option...
                       </MenuItem>
-                      <MenuItem value="category1">Category 1</MenuItem>
-                      <MenuItem value="category2">Category 2</MenuItem>
+                      <MenuItem value="Non Technical">Non Technical</MenuItem>
+                      <MenuItem value="Technical">Technical</MenuItem>
+                      <MenuItem value="Houskeeping">Houskeeping</MenuItem>
+                      <MenuItem value="Stationary">Stationary</MenuItem>
+                      <MenuItem value="Pantry">Pantry</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -348,10 +442,16 @@ export const AddInventoryPage = () => {
                       label="Vendor"
                       notched
                       displayEmpty
+                      disabled={suppliersLoading}
                     >
-                      <MenuItem value="">Select Vendor</MenuItem>
-                      <MenuItem value="vendor1">Vendor 1</MenuItem>
-                      <MenuItem value="vendor2">Vendor 2</MenuItem>
+                      <MenuItem value="">
+                        {suppliersLoading ? 'Loading...' : 'Select Vendor'}
+                      </MenuItem>
+                      {suppliers.map((supplier: any) => (
+                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                          {supplier.company_name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -442,8 +542,10 @@ export const AddInventoryPage = () => {
                         displayEmpty
                       >
                         <MenuItem value="">Select SAC/HSN Code</MenuItem>
-                        <MenuItem value="sac001">SAC 001</MenuItem>
-                        <MenuItem value="hsn001">HSN 001</MenuItem>
+                        <MenuItem value="19">73021011</MenuItem>
+                        <MenuItem value="918">0</MenuItem>
+                        <MenuItem value="919">0</MenuItem>
+                        <MenuItem value="951">0</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>

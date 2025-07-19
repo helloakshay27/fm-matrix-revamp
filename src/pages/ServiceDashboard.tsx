@@ -40,6 +40,7 @@ export const ServiceDashboard = () => {
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 7;
 
@@ -76,6 +77,55 @@ export const ServiceDashboard = () => {
     console.log('Applied filters:', filters);
   };
 
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(paginatedServices.map(item => item.id.toString()));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleQRDownload = () => {
+    const selectedServices = paginatedServices.filter(service => 
+      selectedItems.includes(service.id.toString())
+    );
+    
+    selectedServices.forEach((service, index) => {
+      setTimeout(() => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200;
+        canvas.height = 200;
+        if (ctx) {
+          ctx.fillStyle = '#000';
+          for (let i = 0; i < 20; i++) {
+            for (let j = 0; j < 20; j++) {
+              if (Math.random() > 0.5) ctx.fillRect(i * 10, j * 10, 10, 10);
+            }
+          }
+        }
+        canvas.toBlob(blob => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `service_${service.id}_qr.png`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }
+        });
+      }, index * 100);
+    });
+  };
+
   const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
 
   const columns = [
@@ -85,7 +135,6 @@ export const ServiceDashboard = () => {
     { key: 'category', label: 'Category', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
-    { key: 'site', label: 'Site', sortable: true },
     { key: 'building', label: 'Building', sortable: true },
     { key: 'wing', label: 'Wing', sortable: true },
     { key: 'area', label: 'Area', sortable: true },
@@ -139,12 +188,14 @@ export const ServiceDashboard = () => {
       <Button onClick={handleImportClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Upload className="w-4 h-4 mr-2" /> Import
       </Button>
-      <Button onClick={handleImportLocationsClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Upload className="w-4 h-4 mr-2" /> Import Locations
-      </Button>
       <Button onClick={handleFiltersClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
+      {selectedItems.length > 0 && (
+        <Button onClick={handleQRDownload} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <FileText className="w-4 h-4 mr-2" /> QR Download
+        </Button>
+      )}
     </div>
   );
 
@@ -168,8 +219,6 @@ export const ServiceDashboard = () => {
         return '-'; // Not available in API
       case 'uom':
         return '-'; // Not available in API
-      case 'site':
-        return item.site || '-';
       case 'building':
         return item.building || '-';
       case 'wing':
@@ -344,6 +393,9 @@ export const ServiceDashboard = () => {
           bulkActions={bulkActions}
           showBulkActions={true}
           selectable={true}
+          selectedItems={selectedItems}
+          onSelectItem={handleSelectItem}
+          onSelectAll={handleSelectAll}
           pagination={false}
           enableExport={true}
           exportFileName="services"

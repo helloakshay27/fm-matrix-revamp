@@ -10,12 +10,10 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface BasicConfigurationStepProps {
   data: {
-    scheduleName: string;
+    activityType: string;
+    activityName: string;
     description: string;
-    frequency: string;
-    startDate: string;
-    endDate: string;
-    isRecurring: boolean;
+    attachment: File | null;
   };
   onChange: (field: string, value: any) => void;
   isCompleted?: boolean;
@@ -70,33 +68,31 @@ export const BasicConfigurationStep = ({
       </CardHeader>
       
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="scheduleName" className="text-sm font-medium">Schedule Name</Label>
-            <Input
-              id="scheduleName"
-              value={data.scheduleName}
-              onChange={(e) => onChange('scheduleName', e.target.value)}
-              placeholder="Enter schedule name"
-              className="mt-1"
-            />
-          </div>
+        <div>
+          <Label className="text-sm font-medium">Activity Type</Label>
+          <RadioGroup 
+            value={data.activityType} 
+            onValueChange={(value) => onChange('activityType', value)}
+            className="flex gap-4 mt-1"
+          >
+            {['Safety', 'Quality', 'Environment', 'Compliance'].map((type) => (
+              <div key={type} className="flex items-center space-x-2">
+                <RadioGroupItem value={type.toLowerCase()} id={type.toLowerCase()} />
+                <Label htmlFor={type.toLowerCase()} className="text-sm">{type}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
 
-          <div>
-            <Label className="text-sm font-medium">Frequency</Label>
-            <RadioGroup 
-              value={data.frequency} 
-              onValueChange={(value) => onChange('frequency', value)}
-              className="flex gap-4 mt-1"
-            >
-              {['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annually'].map((freq) => (
-                <div key={freq} className="flex items-center space-x-2">
-                  <RadioGroupItem value={freq} id={freq.toLowerCase()} />
-                  <Label htmlFor={freq.toLowerCase()} className="text-sm">{freq}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+        <div>
+          <Label htmlFor="activityName" className="text-sm font-medium">Activity Name</Label>
+          <Input
+            id="activityName"
+            value={data.activityName}
+            onChange={(e) => onChange('activityName', e.target.value)}
+            placeholder="Enter activity name"
+            className="mt-1"
+          />
         </div>
 
         <div>
@@ -110,28 +106,14 @@ export const BasicConfigurationStep = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="startDate" className="text-sm font-medium">Start Date</Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={data.startDate}
-              onChange={(e) => onChange('startDate', e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="endDate" className="text-sm font-medium">End Date</Label>
-            <Input
-              id="endDate"
-              type="date"
-              value={data.endDate}
-              onChange={(e) => onChange('endDate', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+        <div>
+          <Label htmlFor="attachment" className="text-sm font-medium">Add Attachment</Label>
+          <Input
+            id="attachment"
+            type="file"
+            onChange={(e) => onChange('attachment', e.target.files?.[0] || null)}
+            className="mt-1"
+          />
         </div>
       </CardContent>
     </Card>

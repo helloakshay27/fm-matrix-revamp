@@ -206,8 +206,8 @@ export const AddAMCPage = () => {
     const sendData = new FormData();
     
     // Add all form fields directly to FormData
-    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
-      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? 
+      formData.asset_ids[0] : '');
     sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
     sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
@@ -223,6 +223,11 @@ export const AddAMCPage = () => {
       (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
 
+    // Add asset_ids at top level as array
+    if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
+      formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
+    }
+
     // Add contract files
     attachments.contracts.forEach((file, index) => {
       sendData.append(`amc_contract_${index}`, file);
@@ -235,6 +240,13 @@ export const AddAMCPage = () => {
 
     console.log('Submitting AMC Data via Redux');
     console.log('Attachments:', attachments);
+    
+    // Log the complete payload structure
+    console.log('=== COMPLETE PAYLOAD ===');
+    for (let [key, value] of sendData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    console.log('========================');
 
     // Use Redux action to create AMC
     dispatch(createAMC(sendData));
@@ -245,8 +257,8 @@ export const AddAMCPage = () => {
     const sendData = new FormData();
     
     // Add all form fields directly to FormData
-    sendData.append('pms_asset_amc[asset_id]', JSON.stringify(formData.details === 'Asset' ? 
-      (formData.type === 'Individual' ? formData.asset_ids : null) : null));
+    sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? 
+      formData.asset_ids[0] : '');
     sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
     sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
@@ -263,6 +275,11 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
     sendData.append('pms_asset_amc[schedule_immediately]', 'true'); // Flag for save & schedule
 
+    // Add asset_ids at top level as array
+    if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
+      formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
+    }
+
     // Add contract files
     attachments.contracts.forEach((file, index) => {
       sendData.append(`amc_contract_${index}`, file);
@@ -275,6 +292,13 @@ export const AddAMCPage = () => {
 
     console.log('Save & Schedule AMC via Redux');
     console.log('Attachments:', attachments);
+    
+    // Log the complete payload structure
+    console.log('=== SAVE & SCHEDULE PAYLOAD ===');
+    for (let [key, value] of sendData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    console.log('===============================');
 
     // Use Redux action to create AMC
     dispatch(createAMC(sendData));

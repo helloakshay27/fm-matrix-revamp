@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { DynamicFormField } from '@/components/DynamicFormField';
+import { useDynamicAssetForm } from '@/hooks/useDynamicAssetForm';
+import { FormDataPreview } from '@/components/FormDataPreview';
 
 export const AddAssetDashboard = () => {
   const navigate = useNavigate();
@@ -20,14 +23,61 @@ export const AddAssetDashboard = () => {
   const [nonConsumptionExpanded, setNonConsumptionExpanded] = useState(false);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(false);
 
+  // Basic asset form data
+  const [assetData, setAssetData] = useState({
+    name: '',
+    category: '',
+    asset_type: 'Fixed',
+    asset_no: '',
+    model_no: '',
+    serial_no: '',
+    purchase_cost: '',
+    // ... other basic fields
+  });
+
+  // Dynamic form hook for category-specific fields
+  const {
+    selectedCategory,
+    extraFieldsData,
+    expandedSections,
+    handleCategoryChange,
+    toggleSection,
+    handleFieldChange,
+    generateExtraFieldsAttributes,
+    getCategoryConfig,
+    hasCustomFields
+  } = useDynamicAssetForm();
+
+  const handleAssetDataChange = (field: string, value: string) => {
+    setAssetData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Handle category change for dynamic fields
+    if (field === 'category') {
+      handleCategoryChange(value);
+    }
+  };
+
   const handleSaveAndShow = () => {
-    // Handle save and show details
-    console.log('Save and show details');
+    const payload = {
+      asset: {
+        ...assetData,
+        extra_fields_attributes: generateExtraFieldsAttributes()
+      }
+    };
+    console.log('Save and show details - Payload:', payload);
   };
 
   const handleSaveAndCreate = () => {
-    // Handle save and create new asset
-    console.log('Save and create new asset');
+    const payload = {
+      asset: {
+        ...assetData,
+        extra_fields_attributes: generateExtraFieldsAttributes()
+      }
+    };
+    console.log('Save and create new asset - Payload:', payload);
   };
 
   return (
@@ -157,15 +207,27 @@ export const AddAssetDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <Label htmlFor="assetName">Asset Name*</Label>
-                  <Input placeholder="Enter Text" />
+                  <Input 
+                    placeholder="Enter Text" 
+                    value={assetData.name}
+                    onChange={(e) => handleAssetDataChange('name', e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="assetNo">Asset No.*</Label>
-                  <Input placeholder="Enter Number" />
+                  <Input 
+                    placeholder="Enter Number" 
+                    value={assetData.asset_no}
+                    onChange={(e) => handleAssetDataChange('asset_no', e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="modelNo">Model No.</Label>
-                  <Input placeholder="Enter Number" />
+                  <Input 
+                    placeholder="Enter Number" 
+                    value={assetData.model_no}
+                    onChange={(e) => handleAssetDataChange('model_no', e.target.value)}
+                  />
                 </div>
               </div>
               
@@ -187,7 +249,11 @@ export const AddAssetDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <Label htmlFor="purchaseCost">Purchase Cost*</Label>
-                  <Input placeholder="Enter Numeric value" />
+                  <Input 
+                    placeholder="Enter Numeric value" 
+                    value={assetData.purchase_cost}
+                    onChange={(e) => handleAssetDataChange('purchase_cost', e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="capacity">Capacity</Label>
@@ -241,14 +307,20 @@ export const AddAssetDashboard = () => {
                   </RadioGroup>
                 </div>
                 <div>
-                  <Label htmlFor="group">Group*</Label>
-                  <Select>
+                  <Label htmlFor="category">Category*</Label>
+                  <Select value={assetData.category} onValueChange={(value) => handleAssetDataChange('category', value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Group" />
+                      <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="group1">Group 1</SelectItem>
-                      <SelectItem value="group2">Group 2</SelectItem>
+                      <SelectItem value="Land">Land</SelectItem>
+                      <SelectItem value="Building">Building</SelectItem>
+                      <SelectItem value="Leasehold Improvement">Leasehold Improvement</SelectItem>
+                      <SelectItem value="Vehicle">Vehicle</SelectItem>
+                      <SelectItem value="Machinery">Machinery</SelectItem>
+                      <SelectItem value="IT Assets">IT Assets</SelectItem>
+                      <SelectItem value="Furniture">Furniture</SelectItem>
+                      <SelectItem value="Others">Others</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -462,6 +534,43 @@ export const AddAssetDashboard = () => {
           </CardHeader>
         </Card>
 
+        {/* Dynamic Category-Specific Fields */}
+        {hasCustomFields() && getCategoryConfig().map((section, sectionIndex) => {
+          const sectionKey = `${selectedCategory}-${sectionIndex}`;
+          return (
+            <Card key={sectionKey}>
+              <CardHeader 
+                className="cursor-pointer bg-blue-50 border-l-4 border-l-blue-500"
+                onClick={() => toggleSection(sectionKey)}
+              >
+                <CardTitle className="flex items-center justify-between text-blue-600">
+                  <span className="flex items-center gap-2">
+                    <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                      {sectionIndex + 8}
+                    </span>
+                    {section.title.toUpperCase()}
+                  </span>
+                  {expandedSections[sectionKey] ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+              {expandedSections[sectionKey] && (
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {section.fields.map((field) => (
+                      <DynamicFormField
+                        key={field.name}
+                        field={field}
+                        value={extraFieldsData[field.name] || ''}
+                        onChange={(value) => handleFieldChange(field.name, value)}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
+
         {/* Attachments */}
         <Card>
           <CardHeader 
@@ -477,6 +586,12 @@ export const AddAssetDashboard = () => {
             </CardTitle>
           </CardHeader>
         </Card>
+
+        {/* Development Preview */}
+        <FormDataPreview 
+          assetData={assetData}
+          extraFieldsAttributes={generateExtraFieldsAttributes()}
+        />
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 pt-6">
