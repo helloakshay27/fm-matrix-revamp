@@ -388,8 +388,11 @@ export const AddInventoryPage = () => {
                       <MenuItem value="" sx={{ color: '#C72030' }}>
                         Select an Option...
                       </MenuItem>
-                      <MenuItem value="category1">Category 1</MenuItem>
-                      <MenuItem value="category2">Category 2</MenuItem>
+                      <MenuItem value="Non Technical">Non Technical</MenuItem>
+                      <MenuItem value="Technical">Technical</MenuItem>
+                      <MenuItem value="Houskeeping">Houskeeping</MenuItem>
+                      <MenuItem value="Stationary">Stationary</MenuItem>
+                      <MenuItem value="Pantry">Pantry</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
