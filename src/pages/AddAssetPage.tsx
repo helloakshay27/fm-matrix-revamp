@@ -315,7 +315,7 @@ const AddAssetPage = () => {
           }
         }
       );
-      setGroups(response.data.groups || []);
+      setGroups(response.data.asset_groups || []);
     } catch (error) {
       console.error('Error fetching groups:', error);
       setGroups([]);
@@ -342,7 +342,7 @@ const AddAssetPage = () => {
           }
         }
       );
-      setSubgroups(response.data.subgroups || []);
+      setSubgroups(response.data.asset_sub_groups || []);
     } catch (error) {
       console.error('Error fetching subgroups:', error);
       setSubgroups([]);
