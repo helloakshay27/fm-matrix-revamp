@@ -95,9 +95,6 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             onChange={(e) => setSite(e.target.value)}
             variant="outlined"
             fullWidth
-            SelectProps={{
-              displayEmpty: true,
-            }}
           >
             <MenuItem value="">
               <em>Select Site</em>
@@ -117,9 +114,6 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             onChange={(e) => setUserType(e.target.value)}
             variant="outlined"
             fullWidth
-            SelectProps={{
-              displayEmpty: true,
-            }}
           >
             <MenuItem value="">
               <em>Select User Type</em>
@@ -135,13 +129,12 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
           <TextField
             select
             label="Department"
-            value={departments}
+            value={departments.length > 0 ? departments : []}
             onChange={handleDepartmentChange}
             variant="outlined"
             fullWidth
             SelectProps={{
               multiple: true,
-              displayEmpty: true,
               renderValue: (selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {(selected as string[]).map((value) => (
@@ -167,9 +160,6 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             onChange={(e) => setMonth(e.target.value)}
             variant="outlined"
             fullWidth
-            SelectProps={{
-              displayEmpty: true,
-            }}
           >
             <MenuItem value="">
               <em>Select Month</em>
