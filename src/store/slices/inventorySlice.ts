@@ -83,10 +83,17 @@ const inventorySlice = createSlice({
       })
       .addCase(fetchInventoryData.fulfilled, (state, action) => {
         state.loading = false
+        console.log('API Response:', action.payload)
         state.items = action.payload.inventories || []
         state.totalCount = action.payload.total_count || 0
         state.currentPage = action.payload.pagination?.current_page || 1
         state.totalPages = action.payload.pagination?.total_pages || 0
+        console.log('Pagination extracted:', {
+          totalCount: state.totalCount,
+          currentPage: state.currentPage,
+          totalPages: state.totalPages,
+          itemsLength: state.items.length
+        })
       })
       .addCase(fetchInventoryData.rejected, (state, action) => {
         state.loading = false

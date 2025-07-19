@@ -138,6 +138,16 @@ export const InventoryDashboard = () => {
   // Use Redux pagination data (API handles pagination server-side)
   const totalPages = reduxTotalPages || 1;
   const paginatedData = inventoryData; // API already returns paginated data
+  
+  // Debug pagination values
+  console.log('Pagination Debug:', {
+    reduxCurrentPage,
+    reduxTotalPages,
+    totalCount,
+    currentPage,
+    totalPages,
+    inventoryItemsLength: inventoryItems.length
+  });
 
   // Analytics calculations
   const totalItems = inventoryData.length;
