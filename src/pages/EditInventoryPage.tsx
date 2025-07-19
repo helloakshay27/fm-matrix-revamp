@@ -18,13 +18,13 @@ export const EditInventoryPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
-  const { assets = [], loading: assetsLoading = false } = inventoryAssetsState || {};
+  const { assets = [], loading = false } = inventoryAssetsState || {};
   
   const suppliersState = useSelector((state: RootState) => state.suppliers);
   const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
   const suppliersLoading = suppliersState?.loading || false;
   
-  const { loading, error, fetchedInventory, updatedInventory } = useSelector((state: RootState) => state.inventoryEdit);
+  const { loading: editLoading, error, fetchedInventory, updatedInventory } = useSelector((state: RootState) => state.inventoryEdit);
   
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
@@ -53,8 +53,8 @@ export const EditInventoryPage = () => {
     igstRate: ''
   });
 
-  // Fetch initial data
   useEffect(() => {
+    console.log('Dispatching fetchInventoryAssets...');
     if (id) {
       dispatch(fetchInventory(id));
     }
@@ -65,6 +65,12 @@ export const EditInventoryPage = () => {
       dispatch(resetInventoryState());
     };
   }, [id, dispatch]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Assets state:', { assets, loading, inventoryAssetsState });
+    console.log('Suppliers state:', { suppliers, suppliersLoading, suppliersState });
+  }, [assets, loading, inventoryAssetsState, suppliers, suppliersLoading, suppliersState]);
 
   // Populate form with fetched inventory data
   useEffect(() => {
@@ -155,18 +161,19 @@ export const EditInventoryPage = () => {
       active: true
     };
 
-    console.log('=== INVENTORY UPDATE PAYLOAD ===');
-    console.log('Inventory ID:', id);
-    console.log('Form Data:', formData);
-    console.log('Inventory Data to be sent:', inventoryData);
-    console.log('Full Payload:', { pms_inventory: inventoryData });
-    console.log('================================');
+    console.log('Updating inventory:', {
+      ...formData,
+      inventoryType,
+      criticality,
+      taxApplicable,
+      ecoFriendly
+    });
 
     dispatch(updateInventory({ id, inventoryData }));
   };
 
   const handleBack = () => {
-    navigate(`/maintenance/inventory/details/${id}`);
+    navigate(-1);
   };
 
   // Consistent field styling for MUI components with rounded corners and larger labels
@@ -213,7 +220,7 @@ export const EditInventoryPage = () => {
     },
   };
 
-  if (loading && !fetchedInventory) {
+  if (editLoading && !fetchedInventory) {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
@@ -230,7 +237,7 @@ export const EditInventoryPage = () => {
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4" />
-            Inventory Details
+            Inventory List
           </button>
           <span>&gt;</span>
           <span>Edit Inventory</span>
@@ -310,6 +317,7 @@ export const EditInventoryPage = () => {
                 </RadioGroup>
               </div>
 
+
               {/* Form Grid - First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
@@ -321,10 +329,10 @@ export const EditInventoryPage = () => {
                       label="Select Asset Name"
                       notched
                       displayEmpty
-                      disabled={assetsLoading}
+                      disabled={loading}
                     >
                       <MenuItem value="" sx={{ color: '#C72030' }}>
-                        {assetsLoading ? 'Loading...' : 'Select an Option...'}
+                        {loading ? 'Loading...' : 'Select an Option...'}
                       </MenuItem>
                       {assets.map((asset) => (
                         <MenuItem key={asset.id} value={asset.id.toString()}>
@@ -659,10 +667,10 @@ export const EditInventoryPage = () => {
         <div className="p-6">
           <Button 
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={editLoading}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
           >
-            {loading ? 'Updating...' : 'Update Inventory'}
+            {editLoading ? 'Updating...' : 'Update Inventory'}
           </Button>
         </div>
       </div>
