@@ -213,15 +213,6 @@ export const AddInventoryPage = () => {
                 </RadioGroup>
               </div>
 
-              {/* Eco-friendly Inventory */}
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="eco-friendly" 
-                  checked={ecoFriendly}
-                  onCheckedChange={(checked) => setEcoFriendly(checked === true)}
-                />
-                <label htmlFor="eco-friendly" className="text-sm font-medium text-black">Eco-friendly Inventory</label>
-              </div>
 
               {/* Form Grid - First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
