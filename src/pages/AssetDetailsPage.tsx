@@ -155,13 +155,13 @@ export const AssetDetailsPage = () => {
                   value="analytics" 
                   className="rounded-none py-3 px-6 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 font-medium"
                 >
-                  📊 Analytics
+                  Analytics
                 </TabsTrigger>
                 <TabsTrigger 
                   value="info" 
                   className="rounded-none py-3 px-6 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 font-medium"
                 >
-                  🎯 Asset List
+                  Asset List
                 </TabsTrigger>
               </TabsList>
               
