@@ -12,9 +12,6 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { DynamicFormField } from '@/components/DynamicFormField';
 import { useDynamicAssetForm } from '@/hooks/useDynamicAssetForm';
 import { FormDataPreview } from '@/components/FormDataPreview';
-import { assetAPI } from '@/services/assetAPI';
-import { mapFormDataToAPIPayload, validateAssetData } from '@/utils/assetDataMapper';
-import { toast } from 'sonner';
 
 export const AddAssetDashboard = () => {
   const navigate = useNavigate();
@@ -25,17 +22,6 @@ export const AddAssetDashboard = () => {
   const [consumptionExpanded, setConsumptionExpanded] = useState(false);
   const [nonConsumptionExpanded, setNonConsumptionExpanded] = useState(false);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Location data
-  const [locationData, setLocationData] = useState({
-    site: '',
-    building: '',
-    wing: '',
-    area: '',
-    floor: '',
-    room: ''
-  });
 
   // Basic asset form data
   const [assetData, setAssetData] = useState({
@@ -46,12 +32,7 @@ export const AddAssetDashboard = () => {
     model_no: '',
     serial_no: '',
     purchase_cost: '',
-    purchased_on: '',
-    manufacturer: '',
-    status: 'in_use',
-    critical: false,
-    warranty: 'No',
-    warranty_expiry: ''
+    // ... other basic fields
   });
 
   // Dynamic form hook for category-specific fields
@@ -67,7 +48,7 @@ export const AddAssetDashboard = () => {
     hasCustomFields
   } = useDynamicAssetForm();
 
-  const handleAssetDataChange = (field: string, value: string | boolean) => {
+  const handleAssetDataChange = (field: string, value: string) => {
     setAssetData(prev => ({
       ...prev,
       [field]: value
@@ -75,89 +56,28 @@ export const AddAssetDashboard = () => {
     
     // Handle category change for dynamic fields
     if (field === 'category') {
-      handleCategoryChange(value as string);
-    }
-  };
-
-  const handleLocationChange = (field: string, value: string) => {
-    setLocationData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const submitAsset = async (showDetails = false) => {
-    setIsSubmitting(true);
-    
-    try {
-      // Validate basic data
-      const validationErrors = validateAssetData(assetData);
-      if (validationErrors.length > 0) {
-        toast.error(`Validation Error: ${validationErrors.join(', ')}`);
-        return;
-      }
-
-      // Map form data to API payload
-      const payload = mapFormDataToAPIPayload(
-        assetData,
-        locationData,
-        generateExtraFieldsAttributes()
-      );
-
-      console.log('Submitting payload:', payload);
-
-      // Submit to API
-      const response = await assetAPI.createAsset(payload);
-      
-      toast.success('Asset created successfully!');
-      console.log('Asset created:', response);
-
-      if (showDetails) {
-        // Navigate to asset details page or show details
-        console.log('Showing asset details...');
-      } else {
-        // Reset form for new asset
-        setAssetData({
-          name: '',
-          category: '',
-          asset_type: 'Fixed',
-          asset_no: '',
-          model_no: '',
-          serial_no: '',
-          purchase_cost: '',
-          purchased_on: '',
-          manufacturer: '',
-          status: 'in_use',
-          critical: false,
-          warranty: 'No',
-          warranty_expiry: ''
-        });
-        setLocationData({
-          site: '',
-          building: '',
-          wing: '',
-          area: '',
-          floor: '',
-          room: ''
-        });
-        handleCategoryChange('');
-        toast.success('Form reset for new asset');
-      }
-
-    } catch (error: any) {
-      console.error('Error creating asset:', error);
-      toast.error(`Failed to create asset: ${error.response?.data?.message || error.message}`);
-    } finally {
-      setIsSubmitting(false);
+      handleCategoryChange(value);
     }
   };
 
   const handleSaveAndShow = () => {
-    submitAsset(true);
+    const payload = {
+      asset: {
+        ...assetData,
+        extra_fields_attributes: generateExtraFieldsAttributes()
+      }
+    };
+    console.log('Save and show details - Payload:', payload);
   };
 
   const handleSaveAndCreate = () => {
-    submitAsset(false);
+    const payload = {
+      asset: {
+        ...assetData,
+        extra_fields_attributes: generateExtraFieldsAttributes()
+      }
+    };
+    console.log('Save and create new asset - Payload:', payload);
   };
 
   return (
@@ -191,14 +111,13 @@ export const AddAssetDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <Label htmlFor="site">Site*</Label>
-                  <Select value={locationData.site} onValueChange={(value) => handleLocationChange('site', value)}>
+                  <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Site" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Site 1</SelectItem>
-                      <SelectItem value="2">Site 2</SelectItem>
-                      <SelectItem value="3">Site 3</SelectItem>
+                      <SelectItem value="site1">Site 1</SelectItem>
+                      <SelectItem value="site2">Site 2</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -679,17 +598,15 @@ export const AddAssetDashboard = () => {
           <Button 
             variant="outline" 
             onClick={handleSaveAndShow}
-            disabled={isSubmitting}
             className="px-8"
           >
-            {isSubmitting ? 'Saving...' : 'Save & Show Details'}
+            Save & Show Details
           </Button>
           <Button 
             onClick={handleSaveAndCreate}
-            disabled={isSubmitting}
             className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white px-8"
           >
-            {isSubmitting ? 'Saving...' : 'Save & Create New Asset'}
+            Save & Create New Asset
           </Button>
         </div>
       </div>
