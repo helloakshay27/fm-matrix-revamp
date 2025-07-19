@@ -4,6 +4,7 @@ import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
 
 export interface Department {
+  id: number;
   department_name: string;
   active: boolean;
 }

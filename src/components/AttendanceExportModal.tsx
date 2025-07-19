@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { MonthPicker } from './MonthPicker';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 
 interface AttendanceExportModalProps {
   open: boolean;
@@ -22,6 +24,9 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
   open,
   onClose
 }) => {
+  const dispatch = useAppDispatch();
+  const { data: departments, loading: departmentsLoading } = useAppSelector((state) => state.department);
+  
   const [site, setSite] = useState('');
   const [userType, setUserType] = useState('');
   const [department, setDepartment] = useState('');
@@ -29,7 +34,12 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
 
   const sites = ['Site 1', 'Site 2', 'Site 3'];
   const userTypes = ['All', 'Occupants', 'Admin', 'Technician', 'Security'];
-  const departmentOptions = ['Frontend', 'Backend', 'DevOps', 'Support', 'HR', 'Finance'];
+
+  useEffect(() => {
+    if (open && (!departments || (Array.isArray(departments) && departments.length === 0))) {
+      dispatch(fetchDepartmentData());
+    }
+  }, [open, dispatch, departments]);
 
   const handleDepartmentChange = (event: any) => {
     setDepartment(event.target.value);
@@ -136,6 +146,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             onChange={handleDepartmentChange}
             variant="outlined"
             fullWidth
+            disabled={departmentsLoading}
             sx={{
               '& .MuiInputBase-root': {
                 height: { xs: '36px', md: '45px' }
@@ -145,9 +156,9 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             <MenuItem value="">
               <em>Select Department</em>
             </MenuItem>
-            {departmentOptions.map((dept) => (
-              <MenuItem key={dept} value={dept}>
-                {dept}
+            {Array.isArray(departments) && departments.filter(dept => dept.active).map((dept) => (
+              <MenuItem key={dept.id} value={dept.id}>
+                {dept.department_name}
               </MenuItem>
             ))}
           </TextField>
