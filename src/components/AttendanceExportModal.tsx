@@ -104,6 +104,14 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
       window.URL.revokeObjectURL(downloadUrl);
       
       console.log('Export completed successfully');
+      
+      // Clear all fields after successful export
+      setSite('');
+      setUserType('');
+      setDepartment('');
+      setMonth('');
+      
+      // Close modal
       onClose();
     } catch (error) {
       console.error('Export failed:', error);
