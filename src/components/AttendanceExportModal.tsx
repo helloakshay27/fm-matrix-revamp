@@ -30,7 +30,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
   const [month, setMonth] = useState('');
 
   const sites = ['Site 1', 'Site 2', 'Site 3'];
-  const userTypes = ['Occupants', 'Employees', 'Visitors'];
+  const userTypes = ['All', 'Occupants', 'Admin', 'Technician', 'Security'];
   const departmentOptions = ['Frontend', 'Backend', 'DevOps', 'Support', 'HR', 'Finance'];
 
   const handleDepartmentChange = (event: any) => {
