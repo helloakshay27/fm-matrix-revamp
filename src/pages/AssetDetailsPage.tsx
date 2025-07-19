@@ -150,16 +150,16 @@ export const AssetDetailsPage = () => {
 
           <TabsContent value="asset-info" className="p-0">
             <Tabs defaultValue="analytics" className="w-full">
-              <TabsList className="grid grid-cols-2 bg-white border-b h-auto p-0 rounded-none">
+              <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
                 <TabsTrigger 
                   value="analytics" 
-                  className="rounded-none py-3 px-6 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 font-medium"
+                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
                 >
                   Analytics
                 </TabsTrigger>
                 <TabsTrigger 
                   value="info" 
-                  className="rounded-none py-3 px-6 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 font-medium"
+                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
                 >
                   Asset List
                 </TabsTrigger>
