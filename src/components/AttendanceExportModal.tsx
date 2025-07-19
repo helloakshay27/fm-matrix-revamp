@@ -174,6 +174,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
               color: '#BF213E',
               px: 4,
               py: 1.5,
+              height: '36px',
               borderRadius: 2,
               textTransform: 'none',
               fontSize: '16px',
