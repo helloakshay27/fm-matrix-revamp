@@ -13,6 +13,7 @@ import {
   SelectChangeEvent
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
+import { MonthPicker } from './MonthPicker';
 
 interface AttendanceExportModalProps {
   open: boolean;
@@ -31,10 +32,6 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
   const sites = ['Site 1', 'Site 2', 'Site 3'];
   const userTypes = ['Occupants', 'Employees', 'Visitors'];
   const departmentOptions = ['Frontend', 'Backend', 'DevOps', 'Support', 'HR', 'Finance'];
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
 
   const handleDepartmentChange = (event: any) => {
     const value = event.target.value;
@@ -152,24 +149,12 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             ))}
           </TextField>
 
-          {/* Month Dropdown */}
-          <TextField
-            select
-            label="Month"
+          {/* Month Picker */}
+          <MonthPicker
             value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            variant="outlined"
-            fullWidth
-          >
-            <MenuItem value="">
-              <em>Select Month</em>
-            </MenuItem>
-            {months.map((monthOption) => (
-              <MenuItem key={monthOption} value={monthOption}>
-                {monthOption}
-              </MenuItem>
-            ))}
-          </TextField>
+            onChange={setMonth}
+            label="Month"
+          />
         </Box>
 
         {/* Export Button */}
