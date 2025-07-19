@@ -48,15 +48,11 @@ export const ServiceDetailsPage = () => {
     if (!dateString) return '—';
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('en-GB', {
+      return date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZoneName: 'short'
-      }).replace(',', '');
+        year: 'numeric'
+      });
     } catch {
       return '—';
     }
@@ -286,12 +282,6 @@ export const ServiceDetailsPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-8 text-center text-sm text-[#1a1a1a] opacity-70">
-        Powered by <span className="font-semibold">go</span>
-        <span className="text-[#C72030]">Phygital</span>
-        <span className="font-semibold">.work</span>
-      </div>
 
       {/* Modal */}
       <AssociateServiceModal 

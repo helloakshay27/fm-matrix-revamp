@@ -8,10 +8,32 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLocationData } from '@/hooks/useLocationData';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import apiClient from '@/utils/apiClient';
+import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
+  
+  // Location data hook
+  const {
+    sites,
+    buildings,
+    wings,
+    areas,
+    floors,
+    rooms,
+    loading,
+    fetchBuildings,
+    fetchWings,
+    fetchAreas,
+    fetchFloors,
+    fetchRooms
+  } = useLocationData();
+
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     asset: true,
@@ -24,6 +46,35 @@ const AddAssetPage = () => {
     amcDetails: true,
     attachments: true
   });
+
+  // Location state
+  const [selectedLocation, setSelectedLocation] = useState({
+    site: '',
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: ''
+  });
+
+  // Group and Subgroup state
+  const [groups, setGroups] = useState([]);
+  const [subgroups, setSubgroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedSubgroup, setSelectedSubgroup] = useState('');
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [subgroupsLoading, setSubgroupsLoading] = useState(false);
+  const [parentMeters, setParentMeters] = useState<{id: number, name: string}[]>([]);
+  const [parentMeterLoading, setParentMeterLoading] = useState(false);
+  const [selectedParentMeterId, setSelectedParentMeterId] = useState<string>('');
+
+  // Vendors state
+  const [vendors, setVendors] = useState<{id: number, name: string}[]>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+  const [selectedAmcVendorId, setSelectedAmcVendorId] = useState<string>('');
+  const [selectedLoanedVendorId, setSelectedLoanedVendorId] = useState<string>('');
+
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
@@ -46,6 +97,22 @@ const AddAssetPage = () => {
   const [editingHardDiskHeadingText, setEditingHardDiskHeadingText] = useState(() => {
     return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
   });
+
+  // Meter measure fields state
+  interface MeterMeasureField {
+    id: string;
+    name: string;
+    unitType: string;
+    min: string;
+    max: string;
+    alertBelowVal: string;
+    alertAboveVal: string;
+    multiplierFactor: string;
+    checkPreviousReading?: boolean;
+  }
+
+  const [consumptionMeasureFields, setConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
+  const [nonConsumptionMeasureFields, setNonConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
   const [customFields, setCustomFields] = useState({
     // Land sections
     basicIdentification: [],
@@ -117,6 +184,43 @@ const AddAssetPage = () => {
 
   const handleGoBack = () => {
     navigate('/maintenance/asset');
+  };
+
+  // Location change handlers
+  const handleLocationChange = async (field, value) => {
+    setSelectedLocation(prev => {
+      const newLocation = { ...prev, [field]: value };
+      
+      // Reset dependent fields when parent changes
+      if (field === 'site') {
+        newLocation.building = '';
+        newLocation.wing = '';
+        newLocation.area = '';
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchBuildings(parseInt(value));
+      } else if (field === 'building') {
+        newLocation.wing = '';
+        newLocation.area = '';
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchWings(parseInt(value));
+      } else if (field === 'wing') {
+        newLocation.area = '';
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchAreas(parseInt(value));
+      } else if (field === 'area') {
+        newLocation.floor = '';
+        newLocation.room = '';
+        if (value) fetchFloors(parseInt(value));
+      } else if (field === 'floor') {
+        newLocation.room = '';
+        if (value) fetchRooms(parseInt(value));
+      }
+      
+      return newLocation;
+    });
   };
 
   // Meter category options matching the images
@@ -226,6 +330,100 @@ const AddAssetPage = () => {
     }));
   };
 
+  // Fetch groups
+  const fetchGroups = async () => {
+    setGroupsLoading(true);
+    try {
+      const response = await apiClient.get(
+        '/pms/assets/get_asset_group_sub_group.json'
+      );
+      setGroups(response.data.asset_groups || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      setGroups([]);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
+  // Fetch subgroups based on selected group
+  const fetchSubgroups = async (groupId) => {
+    if (!groupId) {
+      setSubgroups([]);
+      return;
+    }
+    
+    setSubgroupsLoading(true);
+    try {
+      const response = await apiClient.get(
+        `/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`
+      );
+      setSubgroups(response.data.asset_groups || []);
+    } catch (error) {
+      console.error('Error fetching subgroups:', error);
+      setSubgroups([]);
+    } finally {
+      setSubgroupsLoading(false);
+    }
+  };
+
+  // Handle group change
+  const handleGroupChange = (groupId) => {
+    setSelectedGroup(groupId);
+    setSelectedSubgroup(''); // Reset subgroup when group changes
+    fetchSubgroups(groupId);
+  };
+
+  // Fetch groups on component mount
+  useEffect(() => {
+    fetchGroups();
+    fetchVendors();
+  }, []);
+
+  // Fetch parent meters when Sub Meter is selected
+  useEffect(() => {
+    if (meterType === 'sub') {
+      fetchParentMeters();
+    } else {
+      setSelectedParentMeterId('');
+    }
+  }, [meterType]);
+
+  // Fetch parent meters function
+  const fetchParentMeters = async () => {
+    setParentMeterLoading(true);
+    try {
+      const response = await apiClient.get('/pms/assets/get_parent_asset.json');
+      
+      // Transform the nested array format to object format
+      const transformedData = response.data.assets.map((asset: [number, string]) => ({
+        id: asset[0],
+        name: asset[1]
+      }));
+      
+      setParentMeters(transformedData);
+    } catch (error) {
+      console.error('Error fetching parent meters:', error);
+      setParentMeters([]);
+    } finally {
+      setParentMeterLoading(false);
+    }
+  };
+
+  // Fetch vendors function
+  const fetchVendors = async () => {
+    setVendorsLoading(true);
+    try {
+      const response = await apiClient.get('/pms/suppliers/get_suppliers.json');
+      setVendors(response.data || []);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+      setVendors([]);
+    } finally {
+      setVendorsLoading(false);
+    }
+  };
+
   // Custom field functions - Updated to handle sections
   const openCustomFieldModal = (section) => {
     setCurrentSection(section);
@@ -292,42 +490,31 @@ const AddAssetPage = () => {
     }));
   };
 
-  // Consumption measure functions
-  const updateConsumptionMeasure = (id, field, value) => {
-    setConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
-      ...measure,
-      [field]: value
-    } : measure));
-  };
-  const addConsumptionMeasure = () => {
-    const newId = Math.max(...consumptionMeasures.map(m => m.id)) + 1;
-    setConsumptionMeasures(prev => [...prev, {
-      id: newId,
-      name: '',
-      unitType: '',
-      min: '',
-      max: '',
-      alertBelowVal: '',
-      alertAboveVal: '',
-      multiplierFactor: '',
-      checkPreviousReading: false
-    }]);
-  };
-  const removeConsumptionMeasure = id => {
-    setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  // Meter measure field functions
+  const handleMeterMeasureFieldChange = (
+    type: 'consumption' | 'nonConsumption', 
+    id: string, 
+    field: keyof MeterMeasureField, 
+    value: string | boolean
+  ) => {
+    if (type === 'consumption') {
+      setConsumptionMeasureFields(prev => 
+        prev.map(measure => 
+          measure.id === id ? { ...measure, [field]: value } : measure
+        )
+      );
+    } else {
+      setNonConsumptionMeasureFields(prev => 
+        prev.map(measure => 
+          measure.id === id ? { ...measure, [field]: value } : measure
+        )
+      );
+    }
   };
 
-  // Non-consumption measure functions
-  const updateNonConsumptionMeasure = (id, field, value) => {
-    setNonConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
-      ...measure,
-      [field]: value
-    } : measure));
-  };
-  const addNonConsumptionMeasure = () => {
-    const newId = Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1;
-    setNonConsumptionMeasures(prev => [...prev, {
-      id: newId,
+  const addMeterMeasureField = (type: 'consumption' | 'nonConsumption') => {
+    const newField: MeterMeasureField = {
+      id: Date.now().toString(),
       name: '',
       unitType: '',
       min: '',
@@ -336,10 +523,21 @@ const AddAssetPage = () => {
       alertAboveVal: '',
       multiplierFactor: '',
       checkPreviousReading: false
-    }]);
+    };
+
+    if (type === 'consumption') {
+      setConsumptionMeasureFields(prev => [...prev, newField]);
+    } else {
+      setNonConsumptionMeasureFields(prev => [...prev, newField]);
+    }
   };
-  const removeNonConsumptionMeasure = id => {
-    setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+
+  const removeMeterMeasureField = (type: 'consumption' | 'nonConsumption', id: string) => {
+    if (type === 'consumption') {
+      setConsumptionMeasureFields(prev => prev.filter(field => field.id !== id));
+    } else {
+      setNonConsumptionMeasureFields(prev => prev.filter(field => field.id !== id));
+    }
   };
   const toggleSection = section => {
     setExpandedSections(prev => ({
@@ -1171,12 +1369,18 @@ const AddAssetPage = () => {
                       <InputLabel>Vendor / Contractor Name</InputLabel>
                       <MuiSelect
                         label="Vendor / Contractor Name"
-                        defaultValue=""
+                        value={selectedVendorId}
+                        onChange={(e) => setSelectedVendorId(e.target.value)}
+                        disabled={vendorsLoading}
                       >
-                        <MenuItem value="">Select Vendor</MenuItem>
-                        <MenuItem value="vendor1">ABC Construction</MenuItem>
-                        <MenuItem value="vendor2">XYZ Contractors</MenuItem>
-                        <MenuItem value="vendor3">PQR Services</MenuItem>
+                        <MenuItem value="">
+                          {vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}
+                        </MenuItem>
+                        {vendors.map((vendor) => (
+                          <MenuItem key={vendor.id} value={vendor.id}>
+                            {vendor.name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -3080,26 +3284,130 @@ const AddAssetPage = () => {
               </div>
           {expandedSections.location && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                {['Site', 'Building', 'Wing', 'Area', 'Floor'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
-                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
-                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value="" sx={fieldStyles}>
-                      <MenuItem value=""><em>Select {label}</em></MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>)}
+                {/* Site Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="site-select-label" shrink>Site</InputLabel>
+                  <MuiSelect 
+                    labelId="site-select-label" 
+                    label="Site" 
+                    displayEmpty 
+                    value={selectedLocation.site} 
+                    onChange={(e) => handleLocationChange('site', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Site</em></MenuItem>
+                    {sites.map((site) => (
+                      <MenuItem key={site.id} value={site.id.toString()}>
+                        {site.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Building Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="building-select-label" shrink>Building</InputLabel>
+                  <MuiSelect 
+                    labelId="building-select-label" 
+                    label="Building" 
+                    displayEmpty 
+                    value={selectedLocation.building} 
+                    onChange={(e) => handleLocationChange('building', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.site || loading.buildings}
+                  >
+                    <MenuItem value=""><em>Select Building</em></MenuItem>
+                    {buildings.map((building) => (
+                      <MenuItem key={building.building.id} value={building.building.id.toString()}>
+                        {building.building.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Wing Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
+                  <MuiSelect 
+                    labelId="wing-select-label" 
+                    label="Wing" 
+                    displayEmpty 
+                    value={selectedLocation.wing} 
+                    onChange={(e) => handleLocationChange('wing', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.building || loading.wings}
+                  >
+                    <MenuItem value=""><em>Select Wing</em></MenuItem>
+                    {wings.map((wing) => (
+                      <MenuItem key={wing.wings.id} value={wing.wings.id.toString()}>
+                        {wing.wings.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Area Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                  <MuiSelect 
+                    labelId="area-select-label" 
+                    label="Area" 
+                    displayEmpty 
+                    value={selectedLocation.area} 
+                    onChange={(e) => handleLocationChange('area', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.wing || loading.areas}
+                  >
+                    <MenuItem value=""><em>Select Area</em></MenuItem>
+                    {areas.map((area) => (
+                      <MenuItem key={area.id} value={area.id.toString()}>
+                        {area.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Floor Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
+                  <MuiSelect 
+                    labelId="floor-select-label" 
+                    label="Floor" 
+                    displayEmpty 
+                    value={selectedLocation.floor} 
+                    onChange={(e) => handleLocationChange('floor', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.area || loading.floors}
+                  >
+                    <MenuItem value=""><em>Select Floor</em></MenuItem>
+                    {floors.map((floor) => (
+                      <MenuItem key={floor.id} value={floor.id.toString()}>
+                        {floor.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               </div>
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                {/* Room Dropdown */}
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="room-select-label" shrink>Room</InputLabel>
-                  <MuiSelect labelId="room-select-label" label="Room" displayEmpty value="" sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="room-select-label" 
+                    label="Room" 
+                    displayEmpty 
+                    value={selectedLocation.room} 
+                    onChange={(e) => handleLocationChange('room', e.target.value)}
+                    sx={fieldStyles}
+                    disabled={!selectedLocation.floor || loading.rooms}
+                  >
                     <MenuItem value=""><em>Select Room</em></MenuItem>
-                    <MenuItem value="room1">Room 1</MenuItem>
-                    <MenuItem value="room2">Room 2</MenuItem>
+                    {rooms.map((room) => (
+                      <MenuItem key={room.rooms.id} value={room.rooms.id.toString()}>
+                        {room.rooms.name}
+                      </MenuItem>
+                    ))}
                   </MuiSelect>
                 </FormControl>
               </div>
@@ -3176,20 +3484,40 @@ const AddAssetPage = () => {
               minWidth: 120
             }}>
                   <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                  <MuiSelect labelId="group-select-label" label="Group" displayEmpty value="" sx={fieldStyles} required>
-                    <MenuItem value=""><em>Select Group</em></MenuItem>
-                    <MenuItem value="group1">Group 1</MenuItem>
-                    <MenuItem value="group2">Group 2</MenuItem>
+                  <MuiSelect 
+                    labelId="group-select-label" 
+                    label="Group" 
+                    displayEmpty 
+                    value={selectedGroup} 
+                    onChange={(e) => handleGroupChange(e.target.value)}
+                    sx={fieldStyles} 
+                    required
+                    disabled={groupsLoading}
+                  >
+                    <MenuItem value=""><em>{groupsLoading ? 'Loading...' : 'Select Group'}</em></MenuItem>
+                    {groups.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                    ))}
                   </MuiSelect>
                 </FormControl>
                 <FormControl fullWidth variant="outlined" sx={{
               minWidth: 120
             }}>
                   <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
-                  <MuiSelect labelId="subgroup-select-label" label="Subgroup" displayEmpty value="" sx={fieldStyles} required>
-                    <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
-                    <MenuItem value="subgroup1">Subgroup 1</MenuItem>
-                    <MenuItem value="subgroup2">Subgroup 2</MenuItem>
+                  <MuiSelect 
+                    labelId="subgroup-select-label" 
+                    label="Subgroup" 
+                    displayEmpty 
+                    value={selectedSubgroup} 
+                    onChange={(e) => setSelectedSubgroup(e.target.value)}
+                    sx={fieldStyles} 
+                    required
+                    disabled={subgroupsLoading || !selectedGroup}
+                  >
+                    <MenuItem value=""><em>{subgroupsLoading ? 'Loading...' : 'Select Sub-Group'}</em></MenuItem>
+                    {subgroups.map((subgroup) => (
+                      <MenuItem key={subgroup.id} value={subgroup.id}>{subgroup.name}</MenuItem>
+                    ))}
                   </MuiSelect>
                 </FormControl>
               </div>
@@ -3436,6 +3764,30 @@ const AddAssetPage = () => {
                 </div>
               </div>
 
+              {/* Parent Meter Dropdown - Show only when Sub Meter is selected */}
+              {meterType === 'sub' && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Parent Meter <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    value={selectedParentMeterId}
+                    onValueChange={setSelectedParentMeterId}
+                    disabled={parentMeterLoading}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={parentMeterLoading ? "Loading..." : "Select Parent Meter"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parentMeters.map((meter) => (
+                        <SelectItem key={meter.id} value={meter.id.toString()}>
+                          {meter.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Meter Category Type */}
               <div className="mb-6">
@@ -3489,6 +3841,45 @@ const AddAssetPage = () => {
                     </div>}
                 </div>
               </div>
+
+              {/* Meter Measure Fields - Show based on meter type selection */}
+              {meterType === 'parent' && (
+                <>
+                  <MeterMeasureFields
+                    title="CONSUMPTION METER MEASURE"
+                    fields={consumptionMeasureFields}
+                    showCheckPreviousReading={true}
+                    onFieldChange={(id, field, value) => 
+                      handleMeterMeasureFieldChange('consumption', id, field, value)
+                    }
+                    onAddField={() => addMeterMeasureField('consumption')}
+                    onRemoveField={(id) => removeMeterMeasureField('consumption', id)}
+                  />
+                  <MeterMeasureFields
+                    title="NON CONSUMPTION METER MEASURE"
+                    fields={nonConsumptionMeasureFields}
+                    showCheckPreviousReading={false}
+                    onFieldChange={(id, field, value) => 
+                      handleMeterMeasureFieldChange('nonConsumption', id, field, value)
+                    }
+                    onAddField={() => addMeterMeasureField('nonConsumption')}
+                    onRemoveField={(id) => removeMeterMeasureField('nonConsumption', id)}
+                  />
+                </>
+              )}
+
+              {meterType === 'sub' && (
+                <MeterMeasureFields
+                  title="NON CONSUMPTION METER MEASURE"
+                  fields={nonConsumptionMeasureFields}
+                  showCheckPreviousReading={false}
+                  onFieldChange={(id, field, value) => 
+                    handleMeterMeasureFieldChange('nonConsumption', id, field, value)
+                  }
+                  onAddField={() => addMeterMeasureField('nonConsumption')}
+                  onRemoveField={(id) => removeMeterMeasureField('nonConsumption', id)}
+                />
+              )}
             </div>}
         </div>
         )}
@@ -3780,17 +4171,30 @@ const AddAssetPage = () => {
           </div>
           {expandedSections.assetLoaned && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <FormControl fullWidth variant="outlined" sx={{
+                  <FormControl fullWidth variant="outlined" sx={{
               minWidth: 120
             }}>
-                  <InputLabel id="vendor-select-label" shrink>Vendor Name*</InputLabel>
-                  <MuiSelect labelId="vendor-select-label" label="Vendor Name" displayEmpty value="" sx={fieldStyles} required>
-                    <MenuItem value=""><em>Select Vendor</em></MenuItem>
-                    <MenuItem value="vendor1">Vendor 1</MenuItem>
-                    <MenuItem value="vendor2">Vendor 2</MenuItem>
-                    <MenuItem value="vendor3">Vendor 3</MenuItem>
-                  </MuiSelect>
-                </FormControl>
+                    <InputLabel id="vendor-select-label" shrink>Vendor Name*</InputLabel>
+                    <MuiSelect 
+                      labelId="vendor-select-label" 
+                      label="Vendor Name" 
+                      displayEmpty 
+                      value={selectedLoanedVendorId} 
+                      onChange={(e) => setSelectedLoanedVendorId(e.target.value)}
+                      sx={fieldStyles} 
+                      required
+                      disabled={vendorsLoading}
+                    >
+                      <MenuItem value="">
+                        <em>{vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}</em>
+                      </MenuItem>
+                      {vendors.map((vendor) => (
+                        <MenuItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
                 <TextField required label="Agreement Start Date*" placeholder="dd/mm/yyyy" name="agreementStartDate" type="date" fullWidth variant="outlined" InputLabelProps={{
               shrink: true
             }} InputProps={{
@@ -3824,11 +4228,23 @@ const AddAssetPage = () => {
                 minWidth: 120
               }}>
                     <InputLabel id="amc-vendor-select-label" shrink>Vendor</InputLabel>
-                    <MuiSelect labelId="amc-vendor-select-label" label="Vendor" displayEmpty value="" sx={fieldStyles}>
-                      <MenuItem value=""><em>Select Vendor</em></MenuItem>
-                      <MenuItem value="vendor1">Vendor 1</MenuItem>
-                      <MenuItem value="vendor2">Vendor 2</MenuItem>
-                      <MenuItem value="vendor3">Vendor 3</MenuItem>
+                    <MuiSelect 
+                      labelId="amc-vendor-select-label" 
+                      label="Vendor" 
+                      displayEmpty 
+                      value={selectedAmcVendorId} 
+                      onChange={(e) => setSelectedAmcVendorId(e.target.value)}
+                      sx={fieldStyles}
+                      disabled={vendorsLoading}
+                    >
+                      <MenuItem value="">
+                        <em>{vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}</em>
+                      </MenuItem>
+                      {vendors.map((vendor) => (
+                        <MenuItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                   

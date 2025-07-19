@@ -99,6 +99,7 @@ export const InventoryDashboard = () => {
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix'
   ]);
@@ -187,6 +188,22 @@ export const InventoryDashboard = () => {
 
   const handleSelectionChange = (visibleSections: string[]) => {
     setVisibleSections(visibleSections);
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(paginatedData.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
   };
 
   const handleViewItem = (itemId: string) => {
@@ -839,6 +856,9 @@ export const InventoryDashboard = () => {
               bulkActions={bulkActions}
               showBulkActions={true}
               selectable={true}
+              selectedItems={selectedItems}
+              onSelectItem={handleSelectItem}
+              onSelectAll={handleSelectAll}
               pagination={false}
               enableExport={true}
               exportFileName="inventory"

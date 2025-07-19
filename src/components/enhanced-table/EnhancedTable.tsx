@@ -63,6 +63,7 @@ interface EnhancedTableProps<T> {
   searchPlaceholder?: string;
   enableExport?: boolean;
   exportFileName?: string;
+  onExport?: () => void;
   bulkActions?: BulkAction<T>[];
   showBulkActions?: boolean;
   pagination?: boolean;
@@ -97,6 +98,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   searchPlaceholder = 'Search...',
   enableExport = false,
   exportFileName = 'table-export',
+  onExport,
   bulkActions = [],
   showBulkActions = false,
   pagination = false,
@@ -278,21 +280,6 @@ export function EnhancedTable<T extends Record<string, any>>({
           
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {selectedItems.length} selected
-              </span>
-              {bulkActions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant={action.variant || 'outline'}
-                  size="sm"
-                  onClick={() => action.onClick(selectedItemObjects)}
-                  className="flex items-center gap-2"
-                >
-                  {action.icon && <action.icon className="w-4 h-4" />}
-                  {action.label}
-                </Button>
-              ))}
             </div>
           )}
         </div>
@@ -302,7 +289,7 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport}
+              onClick={onExport || handleExport}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />

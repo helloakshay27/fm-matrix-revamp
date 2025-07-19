@@ -15,6 +15,8 @@ export const AddServicePage = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     serviceName: '',
+    executionType: '',
+    serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
     wingId: null as number | null,
@@ -102,7 +104,7 @@ export const AddServicePage = () => {
       
       toast({
         title: "Service Created",
-        description: `Service has been ${action} successfully.`,
+        description: `Service has been ${action} successfully. Do you want to schedule new checklist? Already one scheduled under this group.`,
       });
       
       // Navigate to service list page after success
@@ -127,7 +129,7 @@ export const AddServicePage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6">{/* Service creation form */}
       <div className="mb-6">
         <Button 
           variant="ghost" 
@@ -169,6 +171,30 @@ export const AddServicePage = () => {
                 }}
               />
             </div>
+            <div>
+              <FormControl 
+                fullWidth 
+                variant="outlined" 
+                required
+                sx={{
+                  '& .MuiInputBase-root': fieldStyles
+                }}
+              >
+                <InputLabel shrink>Execution Type</InputLabel>
+                <MuiSelect
+                  value={formData.executionType}
+                  onChange={(e) => handleInputChange('executionType', e.target.value)}
+                  label="Execution Type"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Execution Type</MenuItem>
+                  <MenuItem value="internal">Internal</MenuItem>
+                  <MenuItem value="external">External</MenuItem>
+                  <MenuItem value="both">Both</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
           </div>
 
           {/* Dynamic Location Selector */}
@@ -179,11 +205,43 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      {/* Files Upload */}
+      {/* Service Description */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+            SERVICE DESCRIPTION
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TextField
+            label="Service Description"
+            name="serviceDescription"
+            value={formData.serviceDescription}
+            onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={4}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiInputBase-input': {
+                  padding: '12px',
+                },
+              }
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Files Upload */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             FILES UPLOAD
           </CardTitle>
         </CardHeader>
@@ -214,27 +272,13 @@ export const AddServicePage = () => {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap justify-center">
         <Button 
           onClick={() => handleSubmit('saved with details')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
         >
           Save & show details
-        </Button>
-        <Button 
-          onClick={() => handleSubmit('saved with AMC')}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
-        >
-          Save & Add AMC
-        </Button>
-        <Button 
-          onClick={() => handleSubmit('saved with PPM')}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
-        >
-          Save & Add PPM
         </Button>
         <Button 
           onClick={() => handleSubmit('created new service')}
@@ -245,12 +289,6 @@ export const AddServicePage = () => {
         </Button>
       </div>
 
-      {/* Footer */}
-      <div className="mt-8 text-center">
-        <div className="text-sm text-[#1a1a1a] opacity-70">
-          Powered by <span className="font-semibold">go</span><span className="text-[#C72030]">Phygital</span><span className="font-semibold">.work</span>
-        </div>
-      </div>
     </div>
   );
 };

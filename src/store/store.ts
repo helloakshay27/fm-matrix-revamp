@@ -27,6 +27,10 @@ import { amcCreateReducer } from './slices/amcCreateSlice'
 import { inventoryReducer } from './slices/inventorySlice'
 import { locationReducer } from './slices/locationSlice'
 import serviceLocationReducer from './slices/serviceLocationSlice'
+import { attendanceReducer } from './slices/attendanceSlice'
+import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
+import inventoryEditReducer from './slices/inventoryEditSlice'
+import serviceEditReducer from './slices/serviceSlice'
 
 export const store = configureStore({
   reducer: {
@@ -58,6 +62,10 @@ export const store = configureStore({
     inventory: inventoryReducer,
     location: locationReducer,
     serviceLocation: serviceLocationReducer,
+    attendance: attendanceReducer,
+    inventoryAssets: inventoryAssetsReducer,
+    inventoryEdit: inventoryEditReducer,
+    serviceEdit: serviceEditReducer,
   },
 })
 

@@ -1,96 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-interface AttendanceRecord {
-  id: number;
-  name: string;
-  department: string;
-}
-const attendanceData: AttendanceRecord[] = [{
-  id: 1,
-  name: 'Mahendra Lungare',
-  department: 'Tech'
-}, {
-  id: 2,
-  name: 'Irfan Shaikh',
-  department: 'Operations'
-}, {
-  id: 3,
-  name: 'Atrayee Talapatra',
-  department: 'HR'
-}, {
-  id: 4,
-  name: 'Mukesh Dabhi',
-  department: 'Office boy'
-}, {
-  id: 5,
-  name: 'Sunny Vishwakarma',
-  department: ''
-}, {
-  id: 6,
-  name: 'Mr. Bhaushali',
-  department: ''
-}, {
-  id: 7,
-  name: 'Mr.Kailash Jadhav',
-  department: ''
-}, {
-  id: 8,
-  name: 'Deepak Gupta',
-  department: 'Function 2'
-}, {
-  id: 9,
-  name: 'Kalyanasundaram Jayaraman',
-  department: ''
-}, {
-  id: 10,
-  name: 'Nupura Warangkar',
-  department: ''
-}, {
-  id: 11,
-  name: 'Surinderpal Singh Chadha',
-  department: ''
-}, {
-  id: 12,
-  name: 'Chetan Bafna',
-  department: ''
-}, {
-  id: 13,
-  name: 'Aniket Parkar',
-  department: ''
-}, {
-  id: 14,
-  name: 'Security 12',
-  department: ''
-}, {
-  id: 15,
-  name: 'Devesh Jain',
-  department: ''
-}, {
-  id: 16,
-  name: 'Sumitra Patil',
-  department: 'Admin'
-}, {
-  id: 17,
-  name: 'HQ Occupant 1',
-  department: ''
-}, {
-  id: 18,
-  name: 'Sagar Singh',
-  department: ''
-}, {
-  id: 19,
-  name: 'Amit Dwivh',
-  department: 'Electrical dept'
-}, {
-  id: 20,
-  name: 'Anushree D',
-  department: ''
-}];
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAttendanceData, AttendanceRecord } from '@/store/slices/attendanceSlice';
+import { AttendanceExportModal } from '@/components/AttendanceExportModal';
 const columns: ColumnConfig[] = [{
   key: 'name',
   label: 'Name',
@@ -104,10 +21,20 @@ const columns: ColumnConfig[] = [{
 }];
 export const AttendanceDashboard = () => {
   const navigate = useNavigate();
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>(attendanceData);
+  const dispatch = useAppDispatch();
+  
+  // Redux state
+  const { data: attendance, loading, error } = useAppSelector(state => state.attendance);
+  
+  // Local state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const pageSize = 10;
+
+  useEffect(() => {
+    dispatch(fetchAttendanceData());
+  }, [dispatch]);
 
   // Calculate pagination
   const totalPages = Math.ceil(attendance.length / pageSize);
@@ -131,9 +58,15 @@ export const AttendanceDashboard = () => {
     }
   };
   const handleBulkDelete = (selectedItems: AttendanceRecord[]) => {
-    const selectedIds = selectedItems.map(item => item.id);
-    setAttendance(prev => prev.filter(item => !selectedIds.includes(item.id)));
+    // Note: This would need to be implemented as a Redux action
+    // For now, we'll just clear the selection since we can't modify Redux state directly
+    console.log('Bulk delete action would be implemented here:', selectedItems);
     setSelectedItems([]);
+  };
+
+  // Custom export handler for attendance page
+  const handleExport = () => {
+    setExportModalOpen(true);
   };
   const renderCell = (item: AttendanceRecord, columnKey: string) => {
     switch (columnKey) {
@@ -236,7 +169,28 @@ export const AttendanceDashboard = () => {
       </div>
 
       {/* Enhanced Table */}
-      <EnhancedTable data={paginatedData} columns={columns} renderCell={renderCell} renderActions={renderActions} onRowClick={item => handleViewDetails(item.id)} selectable={true} selectedItems={selectedItems} onSelectAll={handleSelectAll} onSelectItem={handleSelectItem} getItemId={item => String(item.id)} storageKey="attendance-dashboard-table" emptyMessage="No attendance records found" searchPlaceholder="Search attendance records..." enableExport={true} exportFileName="attendance-records" bulkActions={bulkActions} showBulkActions={true} pagination={false} />
+      <EnhancedTable 
+        data={paginatedData} 
+        columns={columns} 
+        renderCell={renderCell} 
+        renderActions={renderActions} 
+        onRowClick={item => handleViewDetails(item.id)} 
+        selectable={true} 
+        selectedItems={selectedItems} 
+        onSelectAll={handleSelectAll} 
+        onSelectItem={handleSelectItem} 
+        getItemId={item => String(item.id)} 
+        storageKey="attendance-dashboard-table" 
+        emptyMessage="No attendance records found" 
+        searchPlaceholder="Search attendance records..." 
+        enableExport={true} 
+        exportFileName="attendance-records" 
+        bulkActions={bulkActions} 
+        showBulkActions={true} 
+        pagination={false}
+        loading={loading}
+        onExport={handleExport}
+      />
 
       {/* Custom Pagination */}
       {totalPages > 1 && <div className="flex justify-center mt-6">
@@ -259,5 +213,11 @@ export const AttendanceDashboard = () => {
       <div className="mt-8 text-center">
         
       </div>
+
+      {/* Custom Export Modal */}
+      <AttendanceExportModal 
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+      />
     </div>;
 };

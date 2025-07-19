@@ -75,7 +75,8 @@ export const EditAMCPage = () => {
       console.log('Services loaded:', services.length, services);
       
       // Determine the correct form values based on API response
-      const isAssetType = data.checklist_type === 'Asset' || data.checklist_type === 'asset';
+      const isAssetType = data.asset_id ? true : false;  // Show Asset radio if asset_id exists
+      const isServiceType = data.service_id ? true : false;  // Show Service radio if service_id exists
       const isIndividualType = data.resource_type === 'Pms::Asset';
       
       // Handle asset IDs - could be single ID, array, or JSON string
@@ -110,7 +111,7 @@ export const EditAMCPage = () => {
       console.log('Found service:', foundService);
       
       setFormData({
-        details: isAssetType ? 'Asset' : 'Service',
+        details: isAssetType ? 'Asset' : (isServiceType ? 'Service' : 'Asset'),
         type: isIndividualType ? 'Individual' : 'Group',
         assetName: foundService ? serviceId : '',
         asset_ids: assetIds,
@@ -284,7 +285,7 @@ export const EditAMCPage = () => {
     setUpdateLoading(true);
 
     try {
-      // Create JSON payload based on the API documentation
+      // Create JSON payload with all AMC fields
       let payload: any = {
         pms_asset_amc: {
           amc_cost: parseFloat(formData.cost) || 0,
@@ -292,6 +293,17 @@ export const EditAMCPage = () => {
           amc_end_date: formData.endDate,
           amc_first_service: formData.firstService,
           amc_frequency: formData.paymentTerms || null,
+          amc_period: `${formData.startDate} - ${formData.endDate}`,
+          no_of_visits: parseInt(formData.noOfVisits) || 0,
+          payment_term: formData.paymentTerms,
+          remarks: formData.remarks,
+          pms_site_id: (amcData as any)?.pms_site_id,
+          site_name: (amcData as any)?.site_name,
+          resource_id: (amcData as any)?.resource_id,
+          resource_name: (amcData as any)?.resource_name,
+          resource_type: (amcData as any)?.resource_type,
+          supplier_id: formData.vendor || formData.supplier,
+          supplier_name: (amcData as any)?.supplier_name
         }
       };
 
@@ -351,7 +363,7 @@ export const EditAMCPage = () => {
     setUpdateLoading(true);
 
     try {
-      // Create JSON payload based on the API documentation (same as handleSubmit)
+      // Create JSON payload with all AMC fields (same as handleSubmit)
       let payload: any = {
         pms_asset_amc: {
           amc_cost: parseFloat(formData.cost) || 0,
@@ -359,6 +371,17 @@ export const EditAMCPage = () => {
           amc_end_date: formData.endDate,
           amc_first_service: formData.firstService,
           amc_frequency: formData.paymentTerms || null,
+          amc_period: `${formData.startDate} - ${formData.endDate}`,
+          no_of_visits: parseInt(formData.noOfVisits) || 0,
+          payment_term: formData.paymentTerms,
+          remarks: formData.remarks,
+          pms_site_id: (amcData as any)?.pms_site_id,
+          site_name: (amcData as any)?.site_name,
+          resource_id: (amcData as any)?.resource_id,
+          resource_name: (amcData as any)?.resource_name,
+          resource_type: (amcData as any)?.resource_type,
+          supplier_id: formData.vendor || formData.supplier,
+          supplier_name: (amcData as any)?.supplier_name
         }
       };
 
@@ -496,6 +519,7 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('details', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
+                    disabled={true}
                   />
                   Asset
                 </label>
@@ -508,6 +532,7 @@ export const EditAMCPage = () => {
                     onChange={e => handleInputChange('details', e.target.value)} 
                     className="mr-2" 
                     style={{ accentColor: '#C72030' }} 
+                    disabled={true}
                   />
                   Service
                 </label>
@@ -564,7 +589,7 @@ export const EditAMCPage = () => {
                         }));
                       }} 
                       sx={fieldStyles}
-                      disabled={loading || assetsLoading || updateLoading}
+                      disabled={true}
                       renderValue={(selected) => {
                         if (selected.length === 0) {
                           return <em>Select Assets...</em>;
