@@ -60,7 +60,23 @@ export const fetchInventoryData = createAsyncThunk(
     })
 
     const response = await apiClient.get(`/pms/inventories.json?${queryParams}`)
-    return response.data
+    
+    // Extract pagination from headers (common API pattern)
+    const totalCount = parseInt(response.headers['x-total-count'] || response.headers['total-count'] || '0')
+    const totalPages = parseInt(response.headers['x-total-pages'] || response.headers['total-pages'] || '0')
+    const currentPage = parseInt(response.headers['x-current-page'] || response.headers['current-page'] || page.toString())
+    
+    console.log('Response headers:', response.headers)
+    console.log('Extracted from headers:', { totalCount, totalPages, currentPage })
+    
+    return {
+      ...response.data,
+      pagination: {
+        total_count: totalCount,
+        total_pages: totalPages,
+        current_page: currentPage
+      }
+    }
   }
 )
 
