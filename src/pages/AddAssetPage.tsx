@@ -67,6 +67,13 @@ const AddAssetPage = () => {
   const [parentMeterLoading, setParentMeterLoading] = useState(false);
   const [selectedParentMeterId, setSelectedParentMeterId] = useState<string>('');
 
+  // Vendors state
+  const [vendors, setVendors] = useState<{id: number, name: string}[]>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+  const [selectedAmcVendorId, setSelectedAmcVendorId] = useState<string>('');
+  const [selectedLoanedVendorId, setSelectedLoanedVendorId] = useState<string>('');
+
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
@@ -353,6 +360,7 @@ const AddAssetPage = () => {
   // Fetch groups on component mount
   useEffect(() => {
     fetchGroups();
+    fetchVendors();
   }, []);
 
   // Fetch parent meters when Sub Meter is selected
@@ -382,6 +390,20 @@ const AddAssetPage = () => {
       setParentMeters([]);
     } finally {
       setParentMeterLoading(false);
+    }
+  };
+
+  // Fetch vendors function
+  const fetchVendors = async () => {
+    setVendorsLoading(true);
+    try {
+      const response = await apiClient.get('/pms/suppliers/get_suppliers.json');
+      setVendors(response.data || []);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+      setVendors([]);
+    } finally {
+      setVendorsLoading(false);
     }
   };
 
@@ -1330,12 +1352,18 @@ const AddAssetPage = () => {
                       <InputLabel>Vendor / Contractor Name</InputLabel>
                       <MuiSelect
                         label="Vendor / Contractor Name"
-                        defaultValue=""
+                        value={selectedVendorId}
+                        onChange={(e) => setSelectedVendorId(e.target.value)}
+                        disabled={vendorsLoading}
                       >
-                        <MenuItem value="">Select Vendor</MenuItem>
-                        <MenuItem value="vendor1">ABC Construction</MenuItem>
-                        <MenuItem value="vendor2">XYZ Contractors</MenuItem>
-                        <MenuItem value="vendor3">PQR Services</MenuItem>
+                        <MenuItem value="">
+                          {vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}
+                        </MenuItem>
+                        {vendors.map((vendor) => (
+                          <MenuItem key={vendor.id} value={vendor.id}>
+                            {vendor.name}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -4087,17 +4115,30 @@ const AddAssetPage = () => {
           </div>
           {expandedSections.assetLoaned && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <FormControl fullWidth variant="outlined" sx={{
+                  <FormControl fullWidth variant="outlined" sx={{
               minWidth: 120
             }}>
-                  <InputLabel id="vendor-select-label" shrink>Vendor Name*</InputLabel>
-                  <MuiSelect labelId="vendor-select-label" label="Vendor Name" displayEmpty value="" sx={fieldStyles} required>
-                    <MenuItem value=""><em>Select Vendor</em></MenuItem>
-                    <MenuItem value="vendor1">Vendor 1</MenuItem>
-                    <MenuItem value="vendor2">Vendor 2</MenuItem>
-                    <MenuItem value="vendor3">Vendor 3</MenuItem>
-                  </MuiSelect>
-                </FormControl>
+                    <InputLabel id="vendor-select-label" shrink>Vendor Name*</InputLabel>
+                    <MuiSelect 
+                      labelId="vendor-select-label" 
+                      label="Vendor Name" 
+                      displayEmpty 
+                      value={selectedLoanedVendorId} 
+                      onChange={(e) => setSelectedLoanedVendorId(e.target.value)}
+                      sx={fieldStyles} 
+                      required
+                      disabled={vendorsLoading}
+                    >
+                      <MenuItem value="">
+                        <em>{vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}</em>
+                      </MenuItem>
+                      {vendors.map((vendor) => (
+                        <MenuItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
                 <TextField required label="Agreement Start Date*" placeholder="dd/mm/yyyy" name="agreementStartDate" type="date" fullWidth variant="outlined" InputLabelProps={{
               shrink: true
             }} InputProps={{
@@ -4131,11 +4172,23 @@ const AddAssetPage = () => {
                 minWidth: 120
               }}>
                     <InputLabel id="amc-vendor-select-label" shrink>Vendor</InputLabel>
-                    <MuiSelect labelId="amc-vendor-select-label" label="Vendor" displayEmpty value="" sx={fieldStyles}>
-                      <MenuItem value=""><em>Select Vendor</em></MenuItem>
-                      <MenuItem value="vendor1">Vendor 1</MenuItem>
-                      <MenuItem value="vendor2">Vendor 2</MenuItem>
-                      <MenuItem value="vendor3">Vendor 3</MenuItem>
+                    <MuiSelect 
+                      labelId="amc-vendor-select-label" 
+                      label="Vendor" 
+                      displayEmpty 
+                      value={selectedAmcVendorId} 
+                      onChange={(e) => setSelectedAmcVendorId(e.target.value)}
+                      sx={fieldStyles}
+                      disabled={vendorsLoading}
+                    >
+                      <MenuItem value="">
+                        <em>{vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}</em>
+                      </MenuItem>
+                      {vendors.map((vendor) => (
+                        <MenuItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                   
