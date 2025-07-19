@@ -327,9 +327,36 @@ export const AddInventoryPage = () => {
                       displayEmpty
                     >
                       <MenuItem value="">Select Unit</MenuItem>
-                      <MenuItem value="pcs">Pieces</MenuItem>
-                      <MenuItem value="kg">Kilograms</MenuItem>
-                      <MenuItem value="liters">Liters</MenuItem>
+                      <MenuItem value="Ea">Each</MenuItem>
+                      <MenuItem value="Piece">Piece</MenuItem>
+                      <MenuItem value="Kg">Kilogram</MenuItem>
+                      <MenuItem value="Litre">Litre</MenuItem>
+                      <MenuItem value="Box">Box</MenuItem>
+                      <MenuItem value="Bottle">Bottle</MenuItem>
+                      <MenuItem value="Packet">Packet</MenuItem>
+                      <MenuItem value="Bag">Bag</MenuItem>
+                      <MenuItem value="Qty">Quantity</MenuItem>
+                      <MenuItem value="Meter">Meter</MenuItem>
+                      <MenuItem value="Sq.Mtr">Square Meter</MenuItem>
+                      <MenuItem value="Cu.Mtr">Cubic Meter</MenuItem>
+                      <MenuItem value="Feet">Feet</MenuItem>
+                      <MenuItem value="Sq.Ft">Square Feet</MenuItem>
+                      <MenuItem value="Cu.Ft">Cubic Feet</MenuItem>
+                      <MenuItem value="Inches">Inches</MenuItem>
+                      <MenuItem value="Sq.Inches">Square Inches</MenuItem>
+                      <MenuItem value="Nos">Numbers</MenuItem>
+                      <MenuItem value="Pcs">Pieces</MenuItem>
+                      <MenuItem value="Mm">Millimeter</MenuItem>
+                      <MenuItem value="Size">Size</MenuItem>
+                      <MenuItem value="Yards">Yards</MenuItem>
+                      <MenuItem value="Sq.Yards">Square Yards</MenuItem>
+                      <MenuItem value="Rs">Rupees</MenuItem>
+                      <MenuItem value="Acre">Acre</MenuItem>
+                      <MenuItem value="Kilometer">Kilometer</MenuItem>
+                      <MenuItem value="Miles">Miles</MenuItem>
+                      <MenuItem value="Grams">Grams</MenuItem>
+                      <MenuItem value="Brass">Brass</MenuItem>
+                      <MenuItem value="Tonnes">Tonnes</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
