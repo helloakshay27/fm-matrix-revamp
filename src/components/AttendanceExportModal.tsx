@@ -8,9 +8,7 @@ import {
   Button,
   Box,
   Typography,
-  IconButton,
-  Chip,
-  SelectChangeEvent
+  IconButton
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { MonthPicker } from './MonthPicker';
