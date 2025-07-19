@@ -20,18 +20,18 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange, label
   const [selectedYear, setSelectedYear] = useState(2025);
   
   const months = [
-    { short: 'Jan', full: 'January' },
-    { short: 'Feb', full: 'February' },
-    { short: 'Mar', full: 'March' },
-    { short: 'Apr', full: 'April' },
-    { short: 'May', full: 'May' },
-    { short: 'Jun', full: 'June' },
-    { short: 'Jul', full: 'July' },
-    { short: 'Aug', full: 'August' },
-    { short: 'Sep', full: 'September' },
-    { short: 'Oct', full: 'October' },
-    { short: 'Nov', full: 'November' },
-    { short: 'Dec', full: 'December' }
+    { short: 'Jan', full: 'January', number: '01' },
+    { short: 'Feb', full: 'February', number: '02' },
+    { short: 'Mar', full: 'March', number: '03' },
+    { short: 'Apr', full: 'April', number: '04' },
+    { short: 'May', full: 'May', number: '05' },
+    { short: 'Jun', full: 'June', number: '06' },
+    { short: 'Jul', full: 'July', number: '07' },
+    { short: 'Aug', full: 'August', number: '08' },
+    { short: 'Sep', full: 'September', number: '09' },
+    { short: 'Oct', full: 'October', number: '10' },
+    { short: 'Nov', full: 'November', number: '11' },
+    { short: 'Dec', full: 'December', number: '12' }
   ];
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -42,13 +42,25 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange, label
     setAnchorEl(null);
   };
 
-  const handleMonthSelect = (month: string) => {
-    onChange(month);
+  const handleMonthSelect = (monthNumber: string) => {
+    const monthValue = `${selectedYear}-${monthNumber}`;
+    onChange(monthValue);
     handleClose();
   };
 
   const handleYearChange = (direction: 'prev' | 'next') => {
     setSelectedYear(prev => direction === 'next' ? prev + 1 : prev - 1);
+  };
+
+  // Get display value from YYYY-MM format
+  const getDisplayValue = () => {
+    if (!value) return '';
+    if (value.includes('-')) {
+      const [year, monthNum] = value.split('-');
+      const monthObj = months.find(m => m.number === monthNum);
+      return monthObj ? `${monthObj.full} ${year}` : value;
+    }
+    return value;
   };
 
   const open = Boolean(anchorEl);
@@ -57,7 +69,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange, label
     <>
       <TextField
         label={label}
-        value={value}
+        value={getDisplayValue()}
         onClick={handleClick}
         variant="outlined"
         fullWidth
@@ -132,28 +144,31 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ value, onChange, label
             gap: 1,
             maxWidth: '280px'
           }}>
-            {months.map((month) => (
-              <Button
-                key={month.short}
-                variant={value === month.full ? "contained" : "text"}
-                onClick={() => handleMonthSelect(month.full)}
-                sx={{
-                  minWidth: '60px',
-                  height: '48px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  borderRadius: 2,
-                  backgroundColor: value === month.full ? '#1976d2' : 'transparent',
-                  color: value === month.full ? 'white' : '#333',
-                  '&:hover': {
-                    backgroundColor: value === month.full ? '#1565c0' : 'rgba(0,0,0,0.04)',
-                  },
-                  textTransform: 'none'
-                }}
-              >
-                {month.short}
-              </Button>
-            ))}
+            {months.map((month) => {
+              const isSelected = value === `${selectedYear}-${month.number}`;
+              return (
+                <Button
+                  key={month.short}
+                  variant={isSelected ? "contained" : "text"}
+                  onClick={() => handleMonthSelect(month.number)}
+                  sx={{
+                    minWidth: '60px',
+                    height: '48px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    borderRadius: 2,
+                    backgroundColor: isSelected ? '#1976d2' : 'transparent',
+                    color: isSelected ? 'white' : '#333',
+                    '&:hover': {
+                      backgroundColor: isSelected ? '#1565c0' : 'rgba(0,0,0,0.04)',
+                    },
+                    textTransform: 'none'
+                  }}
+                >
+                  {month.short}
+                </Button>
+              );
+            })}
           </Box>
         </Box>
       </Popover>
