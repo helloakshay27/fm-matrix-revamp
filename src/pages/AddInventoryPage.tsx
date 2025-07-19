@@ -68,13 +68,35 @@ export const AddInventoryPage = () => {
   };
 
   const handleSubmit = () => {
-    console.log('Submitting inventory:', {
-      ...formData,
-      inventoryType,
-      criticality,
-      taxApplicable,
-      ecoFriendly
-    });
+    const payload = {
+      pms_inventory: {
+        user_id: 12437, // You may want to get this from user context/state
+        company_id: 15, // You may want to get this from user context/state
+        pms_site_id: 7, // You may want to get this from user context/state
+        inventory_type: inventoryType === 'spares' ? 1 : 2,
+        criticality: criticality === 'critical' ? 1 : 2,
+        asset_id: parseInt(formData.assetName) || null,
+        name: formData.inventoryName,
+        code: formData.inventoryCode,
+        serial_number: formData.serialNumber,
+        quantity: parseInt(formData.quantity) || 0,
+        cost: parseFloat(formData.cost) || 0,
+        unit: formData.unit,
+        expiry_date: formData.expiryDate ? `${formData.expiryDate}T00:00:00Z` : null,
+        category: formData.category,
+        rate_contract_vendor_code: formData.vendor,
+        max_stock_level: parseInt(formData.maxStockLevel) || 0,
+        min_stock_level: formData.minStockLevel,
+        min_order_level: formData.minOrderLevel,
+        hsn_id: parseInt(formData.sacHsnCode) || null,
+        sgst_rate: parseFloat(formData.sgstRate) || 0,
+        cgst_rate: parseFloat(formData.cgstRate) || 0,
+        igst_rate: parseFloat(formData.igstRate) || 0
+      },
+      tax_applicable: taxApplicable ? 1 : 0
+    };
+    
+    console.log('Submitting inventory payload:', payload);
     navigate(-1);
   };
 
