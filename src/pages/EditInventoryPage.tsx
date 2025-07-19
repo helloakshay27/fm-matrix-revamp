@@ -558,15 +558,6 @@ export const EditInventoryPage = () => {
                 </div>
               </div>
 
-              {/* Eco-friendly Checkbox */}
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="eco-friendly" 
-                  checked={ecoFriendly}
-                  onCheckedChange={(checked) => setEcoFriendly(checked === true)}
-                />
-                <label htmlFor="eco-friendly" className="text-sm font-medium text-black">Eco-friendly</label>
-              </div>
             </div>
           )}
         </div>
