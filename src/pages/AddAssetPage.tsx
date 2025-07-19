@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocationData } from '@/hooks/useLocationData';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import apiClient from '@/utils/apiClient';
+import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -96,6 +97,22 @@ const AddAssetPage = () => {
   const [editingHardDiskHeadingText, setEditingHardDiskHeadingText] = useState(() => {
     return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
   });
+
+  // Meter measure fields state
+  interface MeterMeasureField {
+    id: string;
+    name: string;
+    unitType: string;
+    min: string;
+    max: string;
+    alertBelowVal: string;
+    alertAboveVal: string;
+    multiplierFactor: string;
+    checkPreviousReading?: boolean;
+  }
+
+  const [consumptionMeasureFields, setConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
+  const [nonConsumptionMeasureFields, setNonConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
   const [customFields, setCustomFields] = useState({
     // Land sections
     basicIdentification: [],
@@ -473,42 +490,31 @@ const AddAssetPage = () => {
     }));
   };
 
-  // Consumption measure functions
-  const updateConsumptionMeasure = (id, field, value) => {
-    setConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
-      ...measure,
-      [field]: value
-    } : measure));
-  };
-  const addConsumptionMeasure = () => {
-    const newId = Math.max(...consumptionMeasures.map(m => m.id)) + 1;
-    setConsumptionMeasures(prev => [...prev, {
-      id: newId,
-      name: '',
-      unitType: '',
-      min: '',
-      max: '',
-      alertBelowVal: '',
-      alertAboveVal: '',
-      multiplierFactor: '',
-      checkPreviousReading: false
-    }]);
-  };
-  const removeConsumptionMeasure = id => {
-    setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  // Meter measure field functions
+  const handleMeterMeasureFieldChange = (
+    type: 'consumption' | 'nonConsumption', 
+    id: string, 
+    field: keyof MeterMeasureField, 
+    value: string | boolean
+  ) => {
+    if (type === 'consumption') {
+      setConsumptionMeasureFields(prev => 
+        prev.map(measure => 
+          measure.id === id ? { ...measure, [field]: value } : measure
+        )
+      );
+    } else {
+      setNonConsumptionMeasureFields(prev => 
+        prev.map(measure => 
+          measure.id === id ? { ...measure, [field]: value } : measure
+        )
+      );
+    }
   };
 
-  // Non-consumption measure functions
-  const updateNonConsumptionMeasure = (id, field, value) => {
-    setNonConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
-      ...measure,
-      [field]: value
-    } : measure));
-  };
-  const addNonConsumptionMeasure = () => {
-    const newId = Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1;
-    setNonConsumptionMeasures(prev => [...prev, {
-      id: newId,
+  const addMeterMeasureField = (type: 'consumption' | 'nonConsumption') => {
+    const newField: MeterMeasureField = {
+      id: Date.now().toString(),
       name: '',
       unitType: '',
       min: '',
@@ -517,10 +523,21 @@ const AddAssetPage = () => {
       alertAboveVal: '',
       multiplierFactor: '',
       checkPreviousReading: false
-    }]);
+    };
+
+    if (type === 'consumption') {
+      setConsumptionMeasureFields(prev => [...prev, newField]);
+    } else {
+      setNonConsumptionMeasureFields(prev => [...prev, newField]);
+    }
   };
-  const removeNonConsumptionMeasure = id => {
-    setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+
+  const removeMeterMeasureField = (type: 'consumption' | 'nonConsumption', id: string) => {
+    if (type === 'consumption') {
+      setConsumptionMeasureFields(prev => prev.filter(field => field.id !== id));
+    } else {
+      setNonConsumptionMeasureFields(prev => prev.filter(field => field.id !== id));
+    }
   };
   const toggleSection = section => {
     setExpandedSections(prev => ({
@@ -3824,6 +3841,45 @@ const AddAssetPage = () => {
                     </div>}
                 </div>
               </div>
+
+              {/* Meter Measure Fields - Show based on meter type selection */}
+              {meterType === 'parent' && (
+                <>
+                  <MeterMeasureFields
+                    title="CONSUMPTION METER MEASURE"
+                    fields={consumptionMeasureFields}
+                    showCheckPreviousReading={true}
+                    onFieldChange={(id, field, value) => 
+                      handleMeterMeasureFieldChange('consumption', id, field, value)
+                    }
+                    onAddField={() => addMeterMeasureField('consumption')}
+                    onRemoveField={(id) => removeMeterMeasureField('consumption', id)}
+                  />
+                  <MeterMeasureFields
+                    title="NON CONSUMPTION METER MEASURE"
+                    fields={nonConsumptionMeasureFields}
+                    showCheckPreviousReading={false}
+                    onFieldChange={(id, field, value) => 
+                      handleMeterMeasureFieldChange('nonConsumption', id, field, value)
+                    }
+                    onAddField={() => addMeterMeasureField('nonConsumption')}
+                    onRemoveField={(id) => removeMeterMeasureField('nonConsumption', id)}
+                  />
+                </>
+              )}
+
+              {meterType === 'sub' && (
+                <MeterMeasureFields
+                  title="NON CONSUMPTION METER MEASURE"
+                  fields={nonConsumptionMeasureFields}
+                  showCheckPreviousReading={false}
+                  onFieldChange={(id, field, value) => 
+                    handleMeterMeasureFieldChange('nonConsumption', id, field, value)
+                  }
+                  onAddField={() => addMeterMeasureField('nonConsumption')}
+                  onRemoveField={(id) => removeMeterMeasureField('nonConsumption', id)}
+                />
+              )}
             </div>}
         </div>
         )}
