@@ -93,7 +93,14 @@ export const InventoryDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   
   // Redux state
-  const { items: inventoryItems, loading, error, totalPages: reduxTotalPages } = useSelector((state: RootState) => state.inventory);
+  const { 
+    items: inventoryItems, 
+    loading, 
+    error, 
+    totalPages: reduxTotalPages,
+    currentPage: reduxCurrentPage,
+    totalCount 
+  } = useSelector((state: RootState) => state.inventory);
   
   // Local state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -104,15 +111,21 @@ export const InventoryDashboard = () => {
     'statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix'
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix']);
-  const pageSize = 15; // Use larger page size for API data
 
   // Map API data to display format
   const inventoryData = mapInventoryData(inventoryItems);
 
-  // Fetch inventory data on component mount
+  // Fetch inventory data when page changes
   useEffect(() => {
     dispatch(fetchInventoryData({ page: currentPage }));
   }, [dispatch, currentPage]);
+
+  // Sync local page state with Redux page state
+  useEffect(() => {
+    if (reduxCurrentPage && reduxCurrentPage !== currentPage) {
+      setCurrentPage(reduxCurrentPage);
+    }
+  }, [reduxCurrentPage]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -122,10 +135,9 @@ export const InventoryDashboard = () => {
     })
   );
 
-  // Use Redux pagination data or calculate from current data
-  const totalPages = reduxTotalPages || Math.ceil(inventoryData.length / pageSize);
-  const startIndex = 0; // API handles pagination, so start from 0
-  const paginatedData = inventoryData.slice(startIndex, pageSize); // Show current page data
+  // Use Redux pagination data (API handles pagination server-side)
+  const totalPages = reduxTotalPages || 1;
+  const paginatedData = inventoryData; // API already returns paginated data
 
   // Analytics calculations
   const totalItems = inventoryData.length;
