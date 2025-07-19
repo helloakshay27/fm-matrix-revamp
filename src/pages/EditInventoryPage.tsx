@@ -95,8 +95,17 @@ export const EditInventoryPage = () => {
         igstRate: fetchedInventory.igst_rate?.toString() || ''
       });
       
-      setInventoryType(fetchedInventory.inventory_type || 'spares');
-      setCriticality(fetchedInventory.criticality || 'critical');
+      // Handle numeric values for radio buttons
+      const inventoryTypeValue = (typeof fetchedInventory.inventory_type === 'number' && fetchedInventory.inventory_type === 2) ? 'consumable' : 
+                                 (typeof fetchedInventory.inventory_type === 'number' && fetchedInventory.inventory_type === 1) ? 'spares' : 
+                                 (typeof fetchedInventory.inventory_type === 'string') ? fetchedInventory.inventory_type : 'spares';
+      
+      const criticalityValue = (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 2) ? 'non-critical' : 
+                              (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 1) ? 'critical' : 
+                              (typeof fetchedInventory.criticality === 'string') ? fetchedInventory.criticality : 'critical';
+      
+      setInventoryType(inventoryTypeValue);
+      setCriticality(criticalityValue);
       setTaxApplicable(fetchedInventory.tax_applicable || false);
       setEcoFriendly(fetchedInventory.eco_friendly || false);
     }
