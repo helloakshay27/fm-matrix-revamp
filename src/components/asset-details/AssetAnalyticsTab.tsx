@@ -61,12 +61,12 @@ export const AssetAnalyticsTab = () => {
       {/* Middle Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Open Tickets */}
-        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
+        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow bg-white">
           <h3 className="text-lg font-semibold mb-4 text-red-600">Open 2 T</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-red-500">Open 2 Tickets</span>
-              <span className="text-sm font-bold text-red-600 border border-red-200 px-2 py-1 rounded-full" style={{ backgroundColor: '#f6f4ee' }}>55%</span>
+              <span className="text-sm font-bold text-red-600 border border-red-200 px-2 py-1 rounded-full bg-white">55%</span>
             </div>
             <div className="w-full bg-red-200 rounded-full h-3 shadow-inner">
               <div className="bg-red-600 h-3 rounded-full shadow-sm" style={{ width: '55%' }}></div>
@@ -75,9 +75,9 @@ export const AssetAnalyticsTab = () => {
         </div>
 
         {/* Upcoming AMC */}
-        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
+        <div className="rounded-xl p-6 border shadow-lg hover:shadow-xl transition-shadow bg-white">
           <h3 className="text-lg font-semibold mb-4 text-red-600">Upcoming AMC</h3>
-          <div className="text-2xl font-bold text-red-600 border border-red-200 px-3 py-2 rounded-lg inline-block" style={{ backgroundColor: '#f6f4ee' }}>14/07/2025</div>
+          <div className="text-2xl font-bold text-red-600 border border-red-200 px-3 py-2 rounded-lg inline-block bg-white">14/07/2025</div>
         </div>
       </div>
 
