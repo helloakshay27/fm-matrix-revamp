@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Edit, Plus, ChevronDown } from 'lucide-react';
 import { AssetInfoTab } from '@/components/asset-details/AssetInfoTab';
+import { AssetAnalyticsTab } from '@/components/asset-details/AssetAnalyticsTab';
 import { AMCDetailsTab } from '@/components/asset-details/AMCDetailsTab';
 import { PPMTab } from '@/components/asset-details/PPMTab';
 import { EBOMTab } from '@/components/asset-details/EBOMTab';
@@ -147,8 +148,31 @@ export const AssetDetailsPage = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="asset-info" className="p-4 sm:p-6">
-            <AssetInfoTab assetId={asset.id} />
+          <TabsContent value="asset-info" className="p-0">
+            <Tabs defaultValue="analytics" className="w-full">
+              <TabsList className="grid grid-cols-2 bg-white border-b h-auto p-0 rounded-none">
+                <TabsTrigger 
+                  value="analytics" 
+                  className="rounded-none py-3 px-6 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 font-medium"
+                >
+                  📊 Analytics
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="info" 
+                  className="rounded-none py-3 px-6 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 font-medium"
+                >
+                  🎯 Asset List
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="analytics" className="p-4 sm:p-6 mt-0">
+                <AssetAnalyticsTab />
+              </TabsContent>
+              
+              <TabsContent value="info" className="p-4 sm:p-6 mt-0">
+                <AssetInfoTab assetId={asset.id} />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab />
