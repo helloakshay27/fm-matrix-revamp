@@ -95,6 +95,9 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             sx={{
               '& .MuiInputBase-root': {
                 height: { xs: '36px', md: '45px' }
+              },
+              '& .MuiSelect-select': {
+                textAlign: 'center'
               }
             }}
           >
@@ -119,6 +122,9 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             sx={{
               '& .MuiInputBase-root': {
                 height: { xs: '36px', md: '45px' }
+              },
+              '& .MuiSelect-select': {
+                textAlign: 'center'
               }
             }}
           >
@@ -143,7 +149,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
             SelectProps={{
               multiple: true,
               renderValue: (selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'center' }}>
                   {(selected as string[]).map((value) => (
                     <Chip key={value} label={value} size="small" />
                   ))}
@@ -155,6 +161,9 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
               '& .MuiInputBase-root': {
                 height: { xs: '36px', md: '45px' },
                 minHeight: { xs: '36px', md: '45px' }
+              },
+              '& .MuiSelect-select': {
+                textAlign: 'center'
               }
             }}
           >
