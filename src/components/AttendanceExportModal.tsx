@@ -66,8 +66,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
       fullWidth
       sx={{
         '& .MuiDialog-paper': {
-          borderRadius: 2,
-          minHeight: '400px'
+          borderRadius: 2
         }
       }}
     >
