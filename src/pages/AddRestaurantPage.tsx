@@ -6,6 +6,8 @@ import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Papercl
 import { useToast } from '@/hooks/use-toast';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Checkbox as MuiCheckbox, FormControlLabel } from '@mui/material';
 import { FileUploadSection } from '@/components/FileUploadSection';
+import { useAppDispatch } from '@/store/hooks';
+import { createRestaurant } from '@/store/slices/f&bSlice';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -72,7 +74,11 @@ const initialSchedule: Schedule[] = [
 export const AddRestaurantPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+  const dispatch = useAppDispatch();
+
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const [formData, setFormData] = useState({
     restaurantName: '',
     costForTwo: '',
@@ -128,7 +134,7 @@ export const AddRestaurantPage = () => {
   };
 
   const updateSchedule = (index: number, field: keyof Schedule, value: any) => {
-    setSchedule(prev => prev.map((item, i) => 
+    setSchedule(prev => prev.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     ));
   };
@@ -141,24 +147,88 @@ export const AddRestaurantPage = () => {
     setBlockedDays(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    const data = {
-      ...formData,
-      schedule,
-      blockedDays,
-      tableBooking,
-      orderConfig,
-      coverImages,
-      menuFiles,
-      galleryImages
-    };
-    
-    console.log('Restaurant data:', data);
-    toast({
-      title: "Success",
-      description: "Restaurant saved successfully!",
-    });
-    navigate('/vas/fnb');
+  const handleSubmit = async () => {
+    try {
+      const dataToSubmit = new FormData();
+
+      // Append restaurant details
+      dataToSubmit.append('restaurant[name]', formData.restaurantName);
+      dataToSubmit.append('restaurant[cost_for_two]', formData.costForTwo);
+      dataToSubmit.append('restaurant[contact1]', formData.mobileNumber);
+      dataToSubmit.append('restaurant[contact2]', formData.anotherMobileNumber);
+      dataToSubmit.append('restaurant[contact3]', formData.landlineNumber);
+      dataToSubmit.append('restaurant[delivery_time]', formData.deliveryTime);
+      dataToSubmit.append('restaurant[cuisines]', formData.cuisines);
+      dataToSubmit.append('restaurant[alcohol]', formData.servesAlcohol);
+      dataToSubmit.append('restaurant[wheelchair]', formData.wheelchairAccessible);
+      dataToSubmit.append('restaurant[cod]', formData.cashOnDelivery);
+      dataToSubmit.append('restaurant[pure_veg]', formData.pureVeg);
+      dataToSubmit.append('restaurant[address]', formData.address);
+      dataToSubmit.append('restaurant[terms]', formData.tAndC);
+      dataToSubmit.append('restaurant[disclaimer]', formData.disclaimer);
+      dataToSubmit.append('restaurant[booking_closed]', formData.closingMessage);
+      dataToSubmit.append('restaurant[min_people]', tableBooking.minPerson);
+      dataToSubmit.append('restaurant[max_people]', tableBooking.maxPerson);
+      dataToSubmit.append('restaurant[cancel_before]', tableBooking.canCancelBefore);
+      dataToSubmit.append('restaurant[booking_not_allowed]', tableBooking.bookingNotAvailableText);
+      dataToSubmit.append('restaurant[gst]', orderConfig.gst);
+      dataToSubmit.append('restaurant[delivery_charge]', orderConfig.deliveryCharge);
+      dataToSubmit.append('restaurant[min_amount]', orderConfig.minimumOrder);
+      dataToSubmit.append('restaurant[order_not_allowed]', orderConfig.orderNotAllowedText);
+
+      // Attach files
+      coverImages.forEach((file) => {
+        dataToSubmit.append('restaurant[cover_images][]', file);
+      });
+      menuFiles.forEach((file) => {
+        dataToSubmit.append('restaurant[menu_images][]', file);
+      });
+      galleryImages.forEach((file) => {
+        dataToSubmit.append('restaurant[main_images][]', file);
+      });
+
+      // Append only enabled schedules
+      schedule
+        .filter((item) => item.enabled) // Only include enabled days
+        .forEach((item, index) => {
+          const [startHour, startMin] = item.startTime.split(':');
+          const [endHour, endMin] = item.endTime.split(':');
+          const [breakStartHour, breakStartMin] = item.breakStartTime.split(':');
+          const [breakEndHour, breakEndMin] = item.breakEndTime.split(':');
+          const [lastHour, lastMin] = item.lastBookingTime.split(':');
+
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, '1');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][dayofweek]`, item.day.toLowerCase());
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_hour]`, startHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_min]`, startMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_hour]`, endHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_min]`, endMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_hour]`, breakStartHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_min]`, breakStartMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_hour]`, breakEndHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_min]`, breakEndMin);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][booking_allowed]`, item.bookingAllowed ? '1' : '0');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][order_allowed]`, item.orderAllowed ? '1' : '0');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_hour]`, lastHour);
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_min]`, lastMin);
+        });
+
+      // Append blocked days
+      blockedDays.forEach((day, index) => {
+        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][date]`, day.date);
+        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][order_blocked]`, day.orderBlocked ? '1' : '0');
+        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][booking_blocked]`, day.bookingBlocked ? '1' : '0');
+      });
+
+      await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();
+      toast({
+        title: "Success",
+        description: "Restaurant saved successfully!",
+      });
+      navigate('/vas/fnb');
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleBack = () => {
@@ -187,7 +257,7 @@ export const AddRestaurantPage = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <button 
+          <button
             onClick={handleGoBack}
             className="text-gray-600 hover:text-gray-800 transition-colors"
             aria-label="Go back"
@@ -605,7 +675,7 @@ export const AddRestaurantPage = () => {
                   <TextField
                     type="date"
                     value={day.date}
-                    onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
+                    onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
                       i === index ? { ...item, date: e.target.value } : item
                     ))}
                     sx={fieldStyles}
@@ -615,7 +685,7 @@ export const AddRestaurantPage = () => {
                     control={
                       <MuiCheckbox
                         checked={day.orderBlocked}
-                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
+                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
                           i === index ? { ...item, orderBlocked: e.target.checked } : item
                         ))}
                         sx={checkboxStyles}
@@ -627,7 +697,7 @@ export const AddRestaurantPage = () => {
                     control={
                       <MuiCheckbox
                         checked={day.bookingBlocked}
-                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
+                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
                           i === index ? { ...item, bookingBlocked: e.target.checked } : item
                         ))}
                         sx={checkboxStyles}
@@ -808,13 +878,13 @@ export const AddRestaurantPage = () => {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 mt-6">
-        <Button 
+        <Button
           onClick={handleSubmit}
           className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
         >
           Save
         </Button>
-        <Button 
+        <Button
           onClick={handleBack}
           variant="outline"
           className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8"

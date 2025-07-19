@@ -18,7 +18,7 @@ import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
 import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
-import { facilityBookingsReducer } from './slices/facilityBookingsSlice'
+import { exportReportReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
@@ -31,6 +31,7 @@ import { attendanceReducer } from './slices/attendanceSlice'
 import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 import inventoryEditReducer from './slices/inventoryEditSlice'
 import serviceEditReducer from './slices/serviceSlice'
+import { createRestaurantReducer, createRestaurantStatusReducer, editRestaurantReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer } from './slices/f&bSlice'
 
 export const store = configureStore({
   reducer: {
@@ -66,6 +67,15 @@ export const store = configureStore({
     inventoryAssets: inventoryAssetsReducer,
     inventoryEdit: inventoryEditReducer,
     serviceEdit: serviceEditReducer,
+
+    fetchBookingDetails: fetchBookingDetailsReducer,
+    exportReport: exportReportReducer,
+    fetchRestaurants: fetchRestaurantsReducer,
+    createRestaurant: createRestaurantReducer,
+    fetchRestaurantDetails: fetchRestaurantDetailsReducer,
+    editRestaurant: editRestaurantReducer,
+    createRestaurantStatus: createRestaurantStatusReducer,
+
   },
 })
 

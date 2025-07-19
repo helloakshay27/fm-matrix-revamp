@@ -1,6 +1,31 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import createApiSlice from '../api/apiSlice'
 import { fetchFacilityBookings, type BookingData } from '@/services/bookingService'
+import axios from 'axios';
+
+interface FetchBookingDetails {
+  baseUrl: string;
+  token: string;
+  id: string;
+}
+
+export interface FacilityBookingDetails {
+  id: number;
+  current_status: string;
+  booked_by_name: string;
+  startdate: string;
+  show_schedule_24_hour: string;
+  created_at: string;
+  comment: string;
+  sgst: number;
+  gst: number;
+  payment_method: string;
+  facility_name: string;
+}
+
+export interface FacilityBookingResponse {
+  facility_booking: FacilityBookingDetails;
+}
 
 // Create async thunk for fetching facility bookings
 export const fetchFacilityBookingsData = createAsyncThunk(
@@ -15,8 +40,41 @@ export const fetchFacilityBookingsData = createAsyncThunk(
   }
 )
 
+export const fetchBookingDetails = createAsyncThunk('fetchBookingDetails', async ({ baseUrl, token, id }: FetchBookingDetails, { rejectWithValue }) => {
+  try {
+    const response = await axios.get<FacilityBookingResponse>(`https://${baseUrl}/pms/admin/facility_bookings/${id}.json`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.facility_booking;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch booking details';
+    return rejectWithValue(message);
+  }
+})
+
+export const exportReport = createAsyncThunk('exportReport', async ({ baseUrl, token }: { baseUrl: string; token: string }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_bookings.xlsx`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch booking details';
+    return rejectWithValue(message);
+  }
+})
+
 // Create slice using the createApiSlice utility
 export const facilityBookingsSlice = createApiSlice<BookingData[]>('facilityBookings', fetchFacilityBookingsData)
+export const fetchBookingDetailsSlice = createApiSlice('fetchBookingDetails', fetchBookingDetails)
+export const exportReportSlice = createApiSlice('exportReport', exportReport)
 
 // Export reducer
 export const facilityBookingsReducer = facilityBookingsSlice.reducer
+export const fetchBookingDetailsReducer = fetchBookingDetailsSlice.reducer
+export const exportReportReducer = exportReportSlice.reducer

@@ -21,8 +21,9 @@ import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchFacilityBookingsData } from '@/store/slices/facilityBookingsSlice';
+import { exportReport, fetchFacilityBookingsData } from '@/store/slices/facilityBookingsSlice';
 import type { BookingData } from '@/services/bookingService';
+import { toast } from 'sonner';
 
 const exportColumns = [
   { id: 'selectAll', label: 'Select All' },
@@ -63,10 +64,12 @@ const enhancedTableColumns: ColumnConfig[] = [
 const BookingListDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   // Get data from Redux store
   const { data: bookings = [], loading, error } = useAppSelector((state) => state.facilityBookings);
-  
+
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportPopoverOpen, setIsExportPopoverOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
@@ -77,7 +80,7 @@ const BookingListDashboard = () => {
     scheduledDate: '',
     createdOn: ''
   });
-  
+
   const itemsPerPage = 5;
 
   // Fetch data from API on component mount using Redux
@@ -105,10 +108,10 @@ const BookingListDashboard = () => {
 
   // Actions renderer for the eye button
   const renderActions = (item: BookingData) => (
-    <Button 
-      variant="ghost" 
+    <Button
+      variant="ghost"
       size="sm"
-      onClick={() => navigate(`/vas/space-management/bookings/details/${item.id}`)}
+      onClick={() => navigate(`/vas/bookings/details/${item.id}`)}
     >
       <Eye className="w-4 h-4" />
     </Button>
@@ -156,17 +159,30 @@ const BookingListDashboard = () => {
         setSelectedColumns(exportColumns.slice(1).map(col => col.id));
       }
     } else {
-      setSelectedColumns(prev => 
-        prev.includes(columnId) 
+      setSelectedColumns(prev =>
+        prev.includes(columnId)
           ? prev.filter(id => id !== columnId)
           : [...prev, columnId]
       );
     }
   };
 
-  const handleDownload = () => {
-    console.log('Downloading selected columns:', selectedColumns);
-    setIsExportPopoverOpen(false);
+  const handleDownload = async () => {
+    try {
+      const response = await dispatch(exportReport({ baseUrl, token })).unwrap();
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "facility_bookings.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.log(error)
+      toast.error('Error downloading file');
+    } finally {
+      setIsExportPopoverOpen(false);
+    }
   };
 
   const isAllSelected = selectedColumns.length === exportColumns.length - 1;
@@ -227,16 +243,16 @@ const BookingListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4">
-        <Button 
+        <Button
           className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
           onClick={handleAddBooking}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        
-        <Button 
-          variant="outline" 
+
+        <Button
+          variant="outline"
           className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white"
           onClick={() => setIsFilterModalOpen(true)}
         >
@@ -255,7 +271,7 @@ const BookingListDashboard = () => {
           <PopoverContent className="w-80 p-4 bg-white border border-gray-200 shadow-lg z-50" align="start">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Select columns to export:</h3>
-              
+
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {exportColumns.map((column) => (
                   <div key={column.id} className="flex items-center space-x-3">
@@ -264,8 +280,8 @@ const BookingListDashboard = () => {
                       checked={column.id === 'selectAll' ? isAllSelected : selectedColumns.includes(column.id)}
                       onCheckedChange={() => handleColumnToggle(column.id)}
                     />
-                    <label 
-                      htmlFor={column.id} 
+                    <label
+                      htmlFor={column.id}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
                       {column.label}
@@ -273,8 +289,8 @@ const BookingListDashboard = () => {
                   </div>
                 ))}
               </div>
-              
-              <Button 
+
+              <Button
                 onClick={handleDownload}
                 className="w-full bg-[#5D2A4B] hover:bg-[#4A2139] text-white"
               >
@@ -290,10 +306,10 @@ const BookingListDashboard = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <p>Error loading bookings: {error}</p>
-          <Button 
-            onClick={() => dispatch(fetchFacilityBookingsData())} 
-            variant="outline" 
-            size="sm" 
+          <Button
+            onClick={() => dispatch(fetchFacilityBookingsData())}
+            variant="outline"
+            size="sm"
             className="mt-2"
             disabled={loading}
           >
@@ -329,10 +345,10 @@ const BookingListDashboard = () => {
               <X className="h-4 w-4" />
             </Button>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="text-sm font-medium text-red-500 mb-4">Facility Bookings</div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <TextField
                 select
@@ -360,7 +376,7 @@ const BookingListDashboard = () => {
                 <MenuItem value="conference-hall">Conference Hall</MenuItem>
                 <MenuItem value="board-room">Board Room</MenuItem>
               </TextField>
-              
+
               <TextField
                 select
                 label="Status"
@@ -406,7 +422,7 @@ const BookingListDashboard = () => {
                   }
                 }}
               />
-              
+
               <TextField
                 type="date"
                 label="Created On"
@@ -427,13 +443,13 @@ const BookingListDashboard = () => {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button 
+            <Button
               onClick={handleApplyFilters}
               className="flex-1 bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
             >
               Apply
             </Button>
-            <Button 
+            <Button
               onClick={handleResetFilters}
               variant="outline"
               className="flex-1"
