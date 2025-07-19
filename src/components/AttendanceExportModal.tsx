@@ -15,6 +15,7 @@ import { MonthPicker } from './MonthPicker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 import { fetchSites } from '@/store/slices/siteSlice';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 interface AttendanceExportModalProps {
   open: boolean;
@@ -33,6 +34,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
   const [userType, setUserType] = useState('');
   const [department, setDepartment] = useState('');
   const [month, setMonth] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const userTypes = ['All', 'Occupants', 'Admin', 'Technician', 'Security'];
 
@@ -51,15 +53,64 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     setDepartment(event.target.value);
   };
 
-  const handleExport = () => {
-    console.log('Exporting attendance with filters:', {
-      site,
-      userType,
-      department,
-      month
-    });
-    // Here you would implement the actual export logic
-    onClose();
+  const handleExport = async () => {
+    if (!site || !userType || !department || !month) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setIsExporting(true);
+    
+    try {
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('site_id[]', site);
+      params.append('department_id[]', department);
+      params.append('user_type', userType);
+      params.append('month', month);
+
+      const url = `${getFullUrl('/pms/attendances/attendances_report.xlsx')}?${params.toString()}`;
+      
+      // Make the API call to download the Excel file
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Generate filename with current timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      link.download = `attendance_report_${timestamp}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('Export completed successfully');
+      onClose();
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export attendance report. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleClose = () => {
@@ -68,6 +119,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
     setUserType('');
     setDepartment('');
     setMonth('');
+    setIsExporting(false);
     onClose();
   };
 
@@ -183,6 +235,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
           <Button
             variant="contained"
             onClick={handleExport}
+            disabled={isExporting || !site || !userType || !department || !month}
             startIcon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -208,7 +261,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
               }
             }}
           >
-            Export
+            {isExporting ? 'Exporting...' : 'Export'}
           </Button>
         </Box>
       </Box>
