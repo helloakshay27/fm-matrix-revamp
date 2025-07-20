@@ -201,20 +201,25 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
     }
   ];
 
-  const handleMoveAsset = () => {
-    alert(`Moving ${selectedItems.length} assets`);
+  const handleGoldenTicket = () => {
+    toast({
+      title: "Golden Ticket",
+      description: `Creating golden ticket for ${selectedItems.length} asset(s)`,
+    });
   };
 
-  const handleDisposeAsset = () => {
-    alert(`Disposing ${selectedItems.length} assets`);
+  const handleSlack = () => {
+    toast({
+      title: "Slack",
+      description: `Sending to Slack for ${selectedItems.length} asset(s)`,
+    });
   };
 
-  const handlePrintQRCode = () => {
-    alert(`Printing QR codes for ${selectedItems.length} assets`);
-  };
-
-  const handleCheckIn = () => {
-    alert(`Checking in ${selectedItems.length} assets`);
+  const handleExport = () => {
+    toast({
+      title: "Export",
+      description: `Exporting ${selectedItems.length} asset(s)`,
+    });
   };
 
   const handleClearSelection = () => {
@@ -245,10 +250,9 @@ export const AssetTable = ({ searchTerm }: AssetTableProps) => {
         <AssetSelectionPanel
           selectedCount={selectedItems.length}
           selectedAssets={selectedAssetObjects}
-          onMoveAsset={handleMoveAsset}
-          onDisposeAsset={handleDisposeAsset}
-          onPrintQRCode={handlePrintQRCode}
-          onCheckIn={handleCheckIn}
+          onGoldenTicket={handleGoldenTicket}
+          onSlack={handleSlack}
+          onExport={handleExport}
           onClearSelection={handleClearSelection}
         />
       )}
