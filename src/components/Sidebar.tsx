@@ -401,10 +401,7 @@ const modulesByPackage = {
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
   'Settings': [
-    ...navigationStructure.Settings.items,
-    ...navigationStructure.Maintenance.items,
-    ...navigationStructure.Finance.items,
-    ...navigationStructure.Security.items
+    ...navigationStructure.Settings.items
   ]
 };
 
