@@ -5,7 +5,8 @@ import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText } from 'lucide-react';
+import { Checkbox } from '../components/ui/checkbox';
+import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText, Star, Flag } from 'lucide-react';
 import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
 import { TicketPagination } from '../components/TicketPagination';
 import { ticketManagementAPI, TicketResponse, TicketListResponse } from '../services/ticketManagementAPI';
@@ -51,6 +52,7 @@ export const TicketListDashboard = () => {
   const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
   const fetchTickets = useCallback(async (page: number, itemsPerPage: number) => {
@@ -112,9 +114,74 @@ export const TicketListDashboard = () => {
     navigate(`/maintenance/ticket/${ticketNumber}`);
   };
 
+  const handleSelectTicket = (ticketNumber: string, checked: boolean) => {
+    const newSelection = new Set(selectedTickets);
+    if (checked) {
+      newSelection.add(ticketNumber);
+    } else {
+      newSelection.delete(ticketNumber);
+    }
+    setSelectedTickets(newSelection);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTickets(new Set(tickets.map(ticket => ticket.ticket_number)));
+    } else {
+      setSelectedTickets(new Set());
+    }
+  };
+
+  const handleGoldenTicket = async () => {
+    if (selectedTickets.size === 0) {
+      toast.error('Please select tickets to mark as Golden Ticket');
+      return;
+    }
+
+    try {
+      const promises = Array.from(selectedTickets).map(ticketNumber => {
+        const ticketId = parseInt(ticketNumber.replace(/\D/g, '')); // Extract numeric ID
+        return ticketManagementAPI.markAsGoldenTicket(ticketId);
+      });
+      
+      await Promise.all(promises);
+      toast.success(`${selectedTickets.size} ticket(s) marked as Golden Ticket`);
+      setSelectedTickets(new Set());
+      fetchTickets(currentPage, perPage); // Refresh the list
+    } catch (error) {
+      toast.error('Failed to mark tickets as Golden Ticket');
+      console.error('Error marking as golden ticket:', error);
+    }
+  };
+
+  const handleFlag = async () => {
+    if (selectedTickets.size === 0) {
+      toast.error('Please select tickets to flag');
+      return;
+    }
+
+    try {
+      const promises = Array.from(selectedTickets).map(ticketNumber => {
+        const ticketId = parseInt(ticketNumber.replace(/\D/g, '')); // Extract numeric ID
+        return ticketManagementAPI.markAsFlagged(ticketId);
+      });
+      
+      await Promise.all(promises);
+      toast.success(`${selectedTickets.size} ticket(s) flagged successfully`);
+      setSelectedTickets(new Set());
+      fetchTickets(currentPage, perPage); // Refresh the list
+    } catch (error) {
+      toast.error('Failed to flag tickets');
+      console.error('Error flagging tickets:', error);
+    }
+  };
+
   const handleExport = () => {
-    console.log('Exporting tickets...');
-    if (tickets.length === 0) {
+    const ticketsToExport = selectedTickets.size > 0 
+      ? tickets.filter(ticket => selectedTickets.has(ticket.ticket_number))
+      : tickets;
+
+    if (ticketsToExport.length === 0) {
       toast.error('No tickets to export');
       return;
     }
@@ -122,7 +189,7 @@ export const TicketListDashboard = () => {
     // Create CSV content with real data
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
-      + tickets.map(ticket => 
+      + ticketsToExport.map(ticket => 
           `"${ticket.ticket_number}","${ticket.heading}","${ticket.category_type}","${ticket.sub_category_type || ''}","${ticket.posted_by}","${ticket.assigned_to || ''}","${ticket.issue_status}","${ticket.priority}","${ticket.site_name}","${formatDate(ticket.created_at)}","${ticket.issue_type}","${ticket.complaint_mode || ''}","${ticket.assigned_to || ''}","${ticket.service_or_asset || ''}","${ticket.asset_task_occurrence_id || ''}","${ticket.proactive_reactive || ''}","${ticket.review_tracking_date || ''}","${ticket.response_escalation}","${ticket.response_tat}","${ticket.response_time || ''}","${ticket.escalation_response_name || ''}","${ticket.resolution_escalation}","${ticket.resolution_tat || ''}","${ticket.resolution_time || ''}","${ticket.escalation_resolution_name || ''}"`
         ).join("\n");
     
@@ -131,6 +198,10 @@ export const TicketListDashboard = () => {
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "ticket_list.csv");
     link.click();
+    
+    if (selectedTickets.size > 0) {
+      toast.success(`Exported ${selectedTickets.size} selected ticket(s)`);
+    }
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -194,6 +265,29 @@ export const TicketListDashboard = () => {
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
+        
+        {/* Selected Actions */}
+        {selectedTickets.size > 0 && (
+          <>
+            <Button 
+              onClick={handleGoldenTicket}
+              style={{ backgroundColor: '#FFD700' }}
+              className="text-black hover:bg-[#FFD700]/90"
+            >
+              <Star className="w-4 h-4 mr-2" />
+              Golden Ticket ({selectedTickets.size})
+            </Button>
+            <Button 
+              onClick={handleFlag}
+              style={{ backgroundColor: '#FF6B35' }}
+              className="text-white hover:bg-[#FF6B35]/90"
+            >
+              <Flag className="w-4 h-4 mr-2" />
+              Flag ({selectedTickets.size})
+            </Button>
+          </>
+        )}
+        
         <Button 
           onClick={handleExport}
           style={{ backgroundColor: '#C72030' }}
@@ -201,7 +295,7 @@ export const TicketListDashboard = () => {
           disabled={tickets.length === 0}
         >
           <Upload className="w-4 h-4 mr-2" />
-          Export
+          Export {selectedTickets.size > 0 ? `(${selectedTickets.size})` : ''}
         </Button>
         <div className="ml-auto flex gap-2">
           <Input 
@@ -232,6 +326,12 @@ export const TicketListDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
+                  <TableHead>
+                    <Checkbox
+                      checked={selectedTickets.size === tickets.length && tickets.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>View</TableHead>
                   <TableHead>Ticket ID</TableHead>
                   <TableHead className="w-48">Description</TableHead>
@@ -263,6 +363,12 @@ export const TicketListDashboard = () => {
               <TableBody>
                 {tickets.map((ticket) => (
                   <TableRow key={ticket.ticket_number}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedTickets.has(ticket.ticket_number)}
+                        onCheckedChange={(checked) => handleSelectTicket(ticket.ticket_number, checked as boolean)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Eye 
                         className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
@@ -304,7 +410,7 @@ export const TicketListDashboard = () => {
                 ))}
                 {tickets.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={26} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={27} className="text-center py-8 text-gray-500">
                       No tickets found
                     </TableCell>
                   </TableRow>

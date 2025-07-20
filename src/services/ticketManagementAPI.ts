@@ -447,5 +447,16 @@ export const ticketManagementAPI = {
   async getComplaintModes() {
     const response = await apiClient.get('/pms/admin/complaint_modes.json');
     return response.data;
+  },
+
+  // New methods for golden ticket and flag actions
+  async markAsGoldenTicket(ticketId: number) {
+    const response = await apiClient.post(`/pms/admin/complaints/${ticketId}/mark_as_golden_ticket`);
+    return response.data;
+  },
+
+  async markAsFlagged(ticketId: number) {
+    const response = await apiClient.post(`/pms/admin/complaints/${ticketId}/mark_as_flagged`);
+    return response.data;
   }
 };
