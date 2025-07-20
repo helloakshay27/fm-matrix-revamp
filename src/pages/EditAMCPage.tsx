@@ -869,7 +869,10 @@ export const EditAMCPage = () => {
                   fullWidth 
                   variant="outlined" 
                   InputLabelProps={{ shrink: true }} 
-                  InputProps={{ sx: fieldStyles }} 
+                  InputProps={{ 
+                    sx: fieldStyles,
+                    inputProps: { min: formData.startDate }
+                  }} 
                 />
               </div>
 
@@ -1022,7 +1025,7 @@ export const EditAMCPage = () => {
           </CardContent>
         </Card>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 justify-center">
           <Button 
             type="button" 
             onClick={handleSaveAndSchedule} 
