@@ -126,8 +126,10 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
-  async getSites(userId: string) {
-    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
+  async getSites(userId?: string) {
+    // Get user_id from localStorage or use provided/default
+    const defaultUserId = userId || localStorage.getItem('userId') || '12437';
+    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${defaultUserId}`);
     return response.data;
   },
 

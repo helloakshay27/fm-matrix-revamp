@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { EditCategoryModal } from './modals/EditCategoryModal';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
@@ -32,23 +30,23 @@ const categorySchema = z.object({
   categoryName: z.string().min(1, 'Category name is required'),
   responseTime: z.string().min(1, 'Response time is required'),
   customerEnabled: z.boolean(),
-  enableSites: z.boolean(),
-  vendorEmailEnabled: z.boolean(),
-  siteId: z.string().optional(),
+  siteId: z.string().min(1, 'Site selection is required'),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
 
-interface CategoryType {
+interface CategoryApiResponse {
   id: number;
   society_id: number;
   name: string;
+  tat?: string;
   position: number | null;
   created_at: string;
   updated_at: string;
   icon_url: string;
   doc_type: string | null;
   selected_icon_url: string;
+  vendor_emails?: string[];
 }
 
 interface Site {
@@ -56,16 +54,20 @@ interface Site {
   name: string;
 }
 
+interface FAQ {
+  question: string;
+  answer: string;
+}
+
 export const CategoryTypeTab: React.FC = () => {
-  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [categories, setCategories] = useState<CategoryApiResponse[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [faqItems, setFaqItems] = useState([{ question: '', answer: '' }]);
-  const [vendorEmails, setVendorEmails] = useState(['']);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
+  const [faqItems, setFaqItems] = useState<FAQ[]>([{ question: '', answer: '' }]);
+  const [vendorEmails, setVendorEmails] = useState<string[]>(['']);
   const [iconFile, setIconFile] = useState<File | null>(null);
+  const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -73,13 +75,9 @@ export const CategoryTypeTab: React.FC = () => {
       categoryName: '',
       responseTime: '',
       customerEnabled: false,
-      enableSites: false,
-      vendorEmailEnabled: false,
       siteId: '',
     },
   });
-
-  const vendorEmailEnabled = form.watch('vendorEmailEnabled');
 
   useEffect(() => {
     fetchCategories();
@@ -101,11 +99,11 @@ export const CategoryTypeTab: React.FC = () => {
 
   const fetchSites = async () => {
     try {
-      // Using a default user ID - this should be dynamic based on current user
-      const data = await ticketManagementAPI.getSites('12437');
+      const data = await ticketManagementAPI.getSites();
       setSites(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching sites:', error);
+      toast.error('Failed to fetch sites');
     }
   };
 
@@ -116,7 +114,7 @@ export const CategoryTypeTab: React.FC = () => {
         name: data.categoryName,
         tat: data.responseTime,
         customer_enabled: data.customerEnabled,
-        society_id: data.siteId || '15', // Default society ID
+        society_id: data.siteId,
         icon: iconFile,
         complaint_faqs_attributes: faqItems
           .filter(item => item.question.trim() && item.answer.trim())
@@ -133,10 +131,14 @@ export const CategoryTypeTab: React.FC = () => {
 
       await ticketManagementAPI.createCategory(categoryData, emailData);
       toast.success('Category created successfully!');
+      
+      // Reset form
       form.reset();
       setFaqItems([{ question: '', answer: '' }]);
       setVendorEmails(['']);
       setIconFile(null);
+      setVendorEmailEnabled(false);
+      
       fetchCategories();
     } catch (error) {
       toast.error('Failed to create category');
@@ -180,20 +182,19 @@ export const CategoryTypeTab: React.FC = () => {
     }
   };
 
-  const handleEdit = (category: CategoryType) => {
-    setEditingCategory(category);
-    setEditModalOpen(true);
+  const handleEdit = (category: CategoryApiResponse) => {
+    // TODO: Implement edit functionality
+    console.log('Edit category:', category);
   };
 
-  const handleUpdate = (updatedCategory: CategoryType) => {
-    setCategories(categories.map(cat => 
-      cat.id === updatedCategory.id ? updatedCategory : cat
-    ));
-  };
-
-  const handleDelete = (category: CategoryType) => {
-    setCategories(categories.filter(cat => cat.id !== category.id));
-    toast.success('Category deleted successfully!');
+  const handleDelete = async (category: CategoryApiResponse) => {
+    try {
+      // TODO: Implement delete API call
+      setCategories(categories.filter(cat => cat.id !== category.id));
+      toast.success('Category deleted successfully!');
+    } catch (error) {
+      toast.error('Failed to delete category');
+    }
   };
 
   const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,38 +205,57 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const columns = [
-    { key: 'id', label: 'S.No', sortable: true },
+    { key: 'srno', label: 'S.No.', sortable: false },
     { key: 'name', label: 'Category Type', sortable: true },
-    { key: 'position', label: 'Response Time (hrs)', sortable: true },
-    { key: 'vendorEmail', label: 'Vendor Email', sortable: false },
+    { key: 'tat', label: 'Response Time (Min)', sortable: false },
+    { key: 'vendor_emails', label: 'Vendor Email', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
     { key: 'selected_icon_url', label: 'Selected Icon', sortable: false },
   ];
 
-  const renderCell = (item: CategoryType, columnKey: string) => {
+  const renderCell = (item: CategoryApiResponse, columnKey: string) => {
+    const index = categories.findIndex(cat => cat.id === item.id);
     switch (columnKey) {
-      case 'vendorEmail':
-        return '--'; // Not available in API response
+      case 'srno':
+        return index + 1;
+      case 'name':
+        return item.name;
+      case 'tat':
+        return item.tat || '--';
+      case 'vendor_emails':
+        return item.vendor_emails?.join(', ') || '--';
       case 'icon_url':
         return item.icon_url ? (
-          <img src={item.icon_url} alt="Icon" className="w-8 h-8 object-cover rounded" />
+          <img 
+            src={item.icon_url} 
+            alt="Icon" 
+            className="w-8 h-8 object-cover rounded" 
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
         ) : (
           <span className="text-gray-400">No icon</span>
         );
       case 'selected_icon_url':
         return item.selected_icon_url ? (
-          <img src={item.selected_icon_url} alt="Selected Icon" className="w-8 h-8 object-cover rounded" />
+          <img 
+            src={item.selected_icon_url} 
+            alt="Selected Icon" 
+            className="w-8 h-8 object-cover rounded"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
         ) : (
           <span className="text-gray-400">No icon</span>
         );
-      case 'position':
-        return item.position || '--';
       default:
-        return item[columnKey as keyof CategoryType];
+        return '--';
     }
   };
 
-  const renderActions = (item: CategoryType) => (
+  const renderActions = (item: CategoryApiResponse) => (
     <div className="flex items-center gap-2">
       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
@@ -254,7 +274,7 @@ export const CategoryTypeTab: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -277,55 +297,12 @@ export const CategoryTypeTab: React.FC = () => {
                     <FormItem>
                       <FormLabel>Response Time (hours)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter response time" {...field} />
+                        <Input type="number" placeholder="Enter response time" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="enableSites"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel>Enable Sites</FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch('enableSites') && (
-                  <FormField
-                    control={form.control}
-                    name="siteId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select Site</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select site" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {sites.map((site) => (
-                              <SelectItem key={site.id} value={site.id.toString()}>
-                                {site.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
 
                 <div className="flex items-center gap-2">
                   <label htmlFor="icon-upload" className="cursor-pointer">
@@ -347,14 +324,12 @@ export const CategoryTypeTab: React.FC = () => {
                     <span className="text-sm text-gray-600">{iconFile.name}</span>
                   )}
                 </div>
-              </div>
 
-              <div className="flex flex-wrap gap-4">
                 <FormField
                   control={form.control}
                   name="customerEnabled"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -368,57 +343,79 @@ export const CategoryTypeTab: React.FC = () => {
 
                 <FormField
                   control={form.control}
-                  name="vendorEmailEnabled"
+                  name="siteId"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel>Enable Vendor Email</FormLabel>
+                    <FormItem>
+                      <FormLabel>Enable Sites</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select site" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {sites.map((site) => (
+                            <SelectItem key={site.id} value={site.id.toString()}>
+                              {site.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              {vendorEmailEnabled && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Vendor Emails</h3>
-                    <Button type="button" onClick={addVendorEmail} variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Email
-                    </Button>
-                  </div>
+              {/* PMS Phase - Hidden field, always "pms" */}
+              <input type="hidden" value="pms" />
 
-                  {vendorEmails.map((email, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        type="email"
-                        placeholder="Enter vendor email"
-                        value={email}
-                        onChange={(e) => updateVendorEmail(index, e.target.value)}
-                      />
-                      {vendorEmails.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeVendorEmail(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={vendorEmailEnabled}
+                    onCheckedChange={(checked) => setVendorEmailEnabled(!!checked)}
+                  />
+                  <label className="text-sm font-medium">Enable Vendor Email</label>
                 </div>
-              )}
+
+                {vendorEmailEnabled && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Vendor Emails</h3>
+                      <Button type="button" onClick={addVendorEmail} variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Email
+                      </Button>
+                    </div>
+
+                    {vendorEmails.map((email, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="Enter vendor email"
+                          value={email}
+                          onChange={(e) => updateVendorEmail(index, e.target.value)}
+                        />
+                        {vendorEmails.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeVendorEmail(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">FAQ</h3>
+                  <h3 className="text-lg font-semibold">FAQ Section</h3>
                   <Button type="button" onClick={addFaqItem} variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add FAQ
@@ -489,30 +486,6 @@ export const CategoryTypeTab: React.FC = () => {
           )}
         </CardContent>
       </Card>
-
-      <EditCategoryModal
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        category={editingCategory ? {
-          id: editingCategory.id.toString(),
-          srNo: editingCategory.id,
-          categoryType: editingCategory.name,
-          assignee: '',
-          responseTime: 24,
-          vendorEmail: false,
-          icon: editingCategory.icon_url,
-          selectedIcon: editingCategory.selected_icon_url
-        } : null}
-        onUpdate={(updatedCategory) => {
-          if (editingCategory) {
-            const updated = {
-              ...editingCategory,
-              name: updatedCategory.categoryType
-            };
-            handleUpdate(updated);
-          }
-        }}
-      />
     </div>
   );
 };
