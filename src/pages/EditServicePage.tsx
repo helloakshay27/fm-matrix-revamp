@@ -18,6 +18,8 @@ export const EditServicePage = () => {
   
   const [formData, setFormData] = useState({
     serviceName: '',
+    executionType: '',
+    serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
     wingId: null as number | null,
@@ -51,6 +53,8 @@ export const EditServicePage = () => {
     if (fetchedService) {
       setFormData({
         serviceName: fetchedService.service_name || '',
+        executionType: fetchedService.execution_type || '',
+        serviceDescription: fetchedService.description || '',
         siteId: fetchedService.site_id || null,
         buildingId: fetchedService.building_id || null,
         wingId: fetchedService.wing_id || null,
@@ -132,6 +136,7 @@ export const EditServicePage = () => {
 
     const serviceData = {
       service_name: formData.serviceName || "",
+      execution_type: formData.executionType || "",
       site_id: formData.siteId,
       building_id: formData.buildingId,
       wing_id: formData.wingId,
@@ -141,7 +146,7 @@ export const EditServicePage = () => {
       pms_asset_group_id: formData.groupId,
       pms_asset_sub_group_id: formData.subGroupId,
       active: true,
-      description: formData.description || "",
+      description: formData.serviceDescription || "",
       service_category: formData.serviceCategory || "",
       service_group: formData.serviceGroup || "",
       service_code: formData.serviceCode || "",
@@ -226,6 +231,30 @@ export const EditServicePage = () => {
                 }}
               />
             </div>
+            <div>
+              <FormControl 
+                fullWidth 
+                variant="outlined" 
+                required
+                sx={{
+                  '& .MuiInputBase-root': fieldStyles
+                }}
+              >
+                <InputLabel shrink>Execution Type</InputLabel>
+                <MuiSelect
+                  value={formData.executionType}
+                  onChange={(e) => handleInputChange('executionType', e.target.value)}
+                  label="Execution Type"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Execution Type</MenuItem>
+                  <MenuItem value="internal">Internal</MenuItem>
+                  <MenuItem value="external">External</MenuItem>
+                  <MenuItem value="both">Both</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
           </div>
 
           {/* Dynamic Location Selector */}
@@ -236,11 +265,43 @@ export const EditServicePage = () => {
         </CardContent>
       </Card>
 
-      {/* Files Upload */}
+      {/* Service Description */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+            SERVICE DESCRIPTION
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TextField
+            label="Service Description"
+            name="serviceDescription"
+            value={formData.serviceDescription}
+            onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={4}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiInputBase-input': {
+                  padding: '12px',
+                },
+              }
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Files Upload */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             FILES UPLOAD
           </CardTitle>
         </CardHeader>
