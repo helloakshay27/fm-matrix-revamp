@@ -266,9 +266,9 @@ export const TicketDashboard = () => {
     try {
       const response = await ticketManagementAPI.getTickets(page, perPage);
       setTickets(response.complaints);
-      if (response.meta) {
-        setTotalPages(response.meta.total_pages);
-        setTotalTickets(response.meta.total);
+      if (response.pagination) {
+        setTotalPages(response.pagination.total_pages);
+        setTotalTickets(response.pagination.total_count);
       } else {
         setTotalTickets(response.complaints.length);
       }
