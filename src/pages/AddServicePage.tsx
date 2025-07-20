@@ -131,14 +131,10 @@ export const AddServicePage = () => {
   return (
     <div className="p-6">{/* Service creation form */}
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/maintenance/service')}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Services &gt; Service List &gt; Add Page</p>
+        <p className="text-[#1a1a1a] opacity-70 mb-2 flex items-center cursor-pointer" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Services &gt; Service List &gt; Add Page
+        </p>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 
