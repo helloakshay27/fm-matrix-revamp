@@ -338,28 +338,14 @@ export const EditServicePage = () => {
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
         >
-          Update & show details
+          Update Save & show details
         </Button>
         <Button 
-          onClick={() => handleSubmit('updated with AMC')}
+          onClick={() => handleSubmit('updated new service')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
         >
-          Update & Add AMC
-        </Button>
-        <Button 
-          onClick={() => handleSubmit('updated with PPM')}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
-        >
-          Update & Add PPM
-        </Button>
-        <Button 
-          onClick={() => handleSubmit('updated service')}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
-        >
-          Update Service
+          Update Save & Create New Service
         </Button>
       </div>
     </div>
