@@ -13,10 +13,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchAllowedCompanies, changeCompany } from '@/store/slices/projectSlice';
 import { fetchAllowedSites, changeSite, clearSites } from '@/store/slices/siteSlice';
+import { clearAuth } from '@/utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   
   const currentPath = window.location.pathname;
   
@@ -71,6 +74,14 @@ export const Header = () => {
     } catch (error) {
       console.error('Failed to change site:', error);
     }
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    // Clear all auth data from localStorage
+    clearAuth();
+    // Navigate to login page
+    navigate('/login');
   };
 
   return (
@@ -171,7 +182,7 @@ export const Header = () => {
               <DropdownMenuItem>Account Details</DropdownMenuItem>
               <DropdownMenuItem>Preferences</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                 <User className="w-4 h-4 mr-2" />
                 Logout
               </DropdownMenuItem>
