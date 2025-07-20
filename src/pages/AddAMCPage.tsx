@@ -20,7 +20,7 @@ export const AddAMCPage = () => {
   const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
   const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
-  const { loading: amcCreateLoading, success: amcCreateSuccess } = useAppSelector(state => state.amcCreate);
+  const { loading: amcCreateLoading, success: amcCreateSuccess, error: amcCreateError } = useAppSelector(state => state.amcCreate);
   const [formData, setFormData] = useState({
     details: 'Asset',
     type: 'Individual',
@@ -146,6 +146,18 @@ export const AddAMCPage = () => {
       navigate('/maintenance/amc');
     }
   }, [amcCreateSuccess, dispatch, navigate, toast]);
+
+  // Handle AMC creation error
+  useEffect(() => {
+    if (amcCreateError) {
+      toast({
+        title: "Error",
+        description: amcCreateError,
+        variant: "destructive"
+      });
+      dispatch(resetAmcCreate());
+    }
+  }, [amcCreateError, dispatch, toast]);
 
   // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
