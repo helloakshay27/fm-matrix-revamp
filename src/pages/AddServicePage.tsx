@@ -135,7 +135,10 @@ export const AddServicePage = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              console.log('Back button clicked');
+              navigate('/maintenance/service');
+            }}
             className="p-1 hover:bg-gray-100 mr-2"
           >
             <ArrowLeft className="w-4 h-4" />
