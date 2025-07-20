@@ -24,36 +24,45 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   const [isFlagLoading, setIsFlagLoading] = useState(false);
 
   const handleGoldenTicket = async () => {
+    console.log('TicketSelectionPanel - Golden Ticket clicked for tickets:', selectedTickets);
     setIsGoldenLoading(true);
     try {
       await onGoldenTicket();
+    } catch (error) {
+      console.error('Golden Ticket action failed:', error);
     } finally {
       setIsGoldenLoading(false);
     }
   };
 
   const handleFlag = async () => {
+    console.log('TicketSelectionPanel - Flag clicked for tickets:', selectedTickets);
     setIsFlagLoading(true);
     try {
       await onFlag();
+    } catch (error) {
+      console.error('Flag action failed:', error);
     } finally {
       setIsFlagLoading(false);
     }
   };
 
-  const getDisplayText = () => {
-    const count = selectedTickets.length;
-    if (count === 0) return '';
-    
-    const firstThree = selectedTickets.slice(0, 3).join(', ');
-    if (count <= 3) {
-      return `${count} ticket${count > 1 ? 's' : ''} selected: ${firstThree}`;
-    }
-    
-    return `${count} tickets selected: ${firstThree} and ${count - 3} more`;
+  const handleExport = () => {
+    console.log('TicketSelectionPanel - Export clicked for tickets:', selectedTickets);
+    onExport();
   };
 
-  if (selectedTickets.length === 0) return null;
+  const handleClearSelection = () => {
+    console.log('TicketSelectionPanel - Clear selection clicked');
+    onClearSelection();
+  };
+
+  if (selectedTickets.length === 0) {
+    console.log('TicketSelectionPanel - No tickets selected, hiding panel');
+    return null;
+  }
+
+  console.log('TicketSelectionPanel - Rendering with selected tickets:', selectedTickets);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50">
@@ -65,6 +74,10 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             </div>
             <span className="text-sm text-muted-foreground font-medium">
               Tickets Selected
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {selectedTickets.slice(0, 3).join(', ')}
+              {selectedTickets.length > 3 && ` and ${selectedTickets.length - 3} more`}
             </span>
           </div>
           
@@ -100,7 +113,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             </Button>
             
             <Button
-              onClick={onExport}
+              onClick={handleExport}
               variant="outline"
               size="sm"
               className="h-10 px-4 gap-2"
@@ -110,7 +123,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             </Button>
             
             <Button
-              onClick={onClearSelection}
+              onClick={handleClearSelection}
               variant="outline"
               size="sm"
               className="h-10 px-4 gap-2"

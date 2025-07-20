@@ -86,7 +86,7 @@ export const TicketListDashboard = () => {
 
   const handlePerPageChange = (newPerPage: number) => {
     setPerPage(newPerPage);
-    setCurrentPage(1); // Reset to first page when changing per page
+    setCurrentPage(1);
   };
 
   const formatDate = (dateString: string) => {
@@ -123,7 +123,6 @@ export const TicketListDashboard = () => {
       return;
     }
 
-    // Create CSV content with real data
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
       + tickets.map(ticket => 
@@ -138,12 +137,13 @@ export const TicketListDashboard = () => {
   };
 
   const handleSelectTicket = (ticketNumber: string, checked: boolean) => {
+    console.log('Selecting ticket:', ticketNumber, 'checked:', checked);
     setSelectedTickets(prev => {
       const newSelection = checked 
         ? [...prev, ticketNumber]
         : prev.filter(id => id !== ticketNumber);
       
-      // Update select all state
+      console.log('New selection:', newSelection);
       setSelectAll(newSelection.length === tickets.length && tickets.length > 0);
       
       return newSelection;
@@ -151,37 +151,58 @@ export const TicketListDashboard = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
+    console.log('Select all:', checked);
     setSelectAll(checked);
     if (checked) {
-      setSelectedTickets(tickets.map(ticket => ticket.ticket_number));
+      const allTicketNumbers = tickets.map(ticket => ticket.ticket_number);
+      console.log('Selecting all tickets:', allTicketNumbers);
+      setSelectedTickets(allTicketNumbers);
     } else {
       setSelectedTickets([]);
     }
   };
 
   const handleGoldenTicket = async () => {
+    if (selectedTickets.length === 0) {
+      toast.error('No tickets selected');
+      return;
+    }
+
+    console.log('Making Golden Ticket request with IDs:', selectedTickets);
+    
     try {
-      await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
+      const response = await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
+      console.log('Golden Ticket API response:', response);
+      
       toast.success(`${selectedTickets.length} ticket(s) marked as Golden Ticket successfully`);
       setSelectedTickets([]);
       setSelectAll(false);
       await fetchTickets(currentPage, perPage);
     } catch (error) {
-      toast.error('Failed to mark tickets as Golden Ticket');
       console.error('Error marking as golden ticket:', error);
+      toast.error('Failed to mark tickets as Golden Ticket');
     }
   };
 
   const handleFlag = async () => {
+    if (selectedTickets.length === 0) {
+      toast.error('No tickets selected');
+      return;
+    }
+
+    console.log('Making Flag request with IDs:', selectedTickets);
+    
     try {
-      await ticketManagementAPI.markAsFlagged(selectedTickets);
+      const response = await ticketManagementAPI.markAsFlagged(selectedTickets);
+      console.log('Flag API response:', response);
+      
       toast.success(`${selectedTickets.length} ticket(s) flagged successfully`);
       setSelectedTickets([]);
       setSelectAll(false);
       await fetchTickets(currentPage, perPage);
     } catch (error) {
-      toast.error('Failed to flag tickets');
       console.error('Error flagging tickets:', error);
+      toast.error('Failed to flag tickets');
     }
   };
 
@@ -191,11 +212,12 @@ export const TicketListDashboard = () => {
       return;
     }
 
+    console.log('Exporting selected tickets:', selectedTickets);
+
     const selectedTicketData = tickets.filter(ticket => 
       selectedTickets.includes(ticket.ticket_number)
     );
 
-    // Create CSV content with selected tickets
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
       + selectedTicketData.map(ticket => 
@@ -212,6 +234,7 @@ export const TicketListDashboard = () => {
   };
 
   const handleClearSelection = () => {
+    console.log('Clearing selection');
     setSelectedTickets([]);
     setSelectAll(false);
   };
@@ -234,6 +257,9 @@ export const TicketListDashboard = () => {
   const selectedTicketObjects = tickets.filter(ticket => 
     selectedTickets.includes(ticket.ticket_number)
   );
+
+  console.log('Current selected tickets:', selectedTickets);
+  console.log('Selected ticket objects:', selectedTicketObjects);
 
   return (
     <div className="p-6">
@@ -431,14 +457,17 @@ export const TicketListDashboard = () => {
         onApplyFilters={handleFilterApply}
       />
 
-      <TicketSelectionPanel
-        selectedTickets={selectedTickets}
-        selectedTicketObjects={selectedTicketObjects}
-        onGoldenTicket={handleGoldenTicket}
-        onFlag={handleFlag}
-        onExport={handleExportSelected}
-        onClearSelection={handleClearSelection}
-      />
+      {/* Enhanced TicketSelectionPanel */}
+      {selectedTickets.length > 0 && (
+        <TicketSelectionPanel
+          selectedTickets={selectedTickets}
+          selectedTicketObjects={selectedTicketObjects}
+          onGoldenTicket={handleGoldenTicket}
+          onFlag={handleFlag}
+          onExport={handleExportSelected}
+          onClearSelection={handleClearSelection}
+        />
+      )}
     </div>
   );
 };

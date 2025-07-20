@@ -449,16 +449,50 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
-  // New methods for ticket actions
+  // Enhanced methods for ticket actions with better error handling
   async markAsGoldenTicket(ticketIds: string[]) {
-    const idsParam = ticketIds.join(',');
-    const response = await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket?ids=[${idsParam}]`);
-    return response.data;
+    console.log('API call - markAsGoldenTicket with IDs:', ticketIds);
+    
+    if (!ticketIds || ticketIds.length === 0) {
+      throw new Error('No ticket IDs provided');
+    }
+
+    // Format the IDs as a comma-separated list within brackets
+    const idsParam = ticketIds.join(', ');
+    const url = `/pms/admin/complaints/mark_as_golden_ticket?ids=[${idsParam}]`;
+    
+    console.log('Making request to:', url);
+    
+    try {
+      const response = await apiClient.post(url);
+      console.log('Golden Ticket API response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Golden Ticket API error:', error);
+      throw error;
+    }
   },
 
   async markAsFlagged(ticketIds: string[]) {
-    const idsParam = ticketIds.join(',');
-    const response = await apiClient.post(`/pms/admin/complaints/mark_as_flagged?ids=[${idsParam}]`);
-    return response.data;
+    console.log('API call - markAsFlagged with IDs:', ticketIds);
+    
+    if (!ticketIds || ticketIds.length === 0) {
+      throw new Error('No ticket IDs provided');
+    }
+
+    // Format the IDs as a comma-separated list within brackets
+    const idsParam = ticketIds.join(', ');
+    const url = `/pms/admin/complaints/mark_as_flagged?ids=[${idsParam}]`;
+    
+    console.log('Making request to:', url);
+    
+    try {
+      const response = await apiClient.post(url);
+      console.log('Flag API response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Flag API error:', error);
+      throw error;
+    }
   },
 };
