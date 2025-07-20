@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { MappingStep } from '@/components/schedule/MappingStep';
 import {
   TextField,
   FormControl,
@@ -164,8 +165,7 @@ export const AddSchedulePage = () => {
     startFrom: '',
     
     // Mapping
-    assetName: '',
-    parameter: ''
+    mappings: []
   });
   
   // Question Setup
@@ -1403,117 +1403,12 @@ export const AddSchedulePage = () => {
         
       case 4: // Mapping
         return (
-          <Box sx={{ mt: 4 }}>
-            {/* Header Outside the Box */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 2,
-              mb: 3,
-              px: 1
-            }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Mapping
-              </Typography>
-            </Box>
-
-            {/* Main Content in White Box */}
-            <SectionCard>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Asset Mapping</Typography>
-                {stepIndex < activeStep && (
-                  <MuiButton
-                    variant="outlined"
-                    size="small"
-                    startIcon={<Edit />}
-                    onClick={() => handleStepClick(stepIndex)}
-                    sx={{
-                      color: '#C72030',
-                      borderColor: '#C72030',
-                      fontSize: '12px',
-                      padding: '4px 12px',
-                      minWidth: 'auto',
-                      '&:hover': {
-                        borderColor: '#C72030',
-                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                      }
-                    }}
-                  >
-                    Edit
-                  </MuiButton>
-                )}
-              </Box>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                <TextField
-                  label="Asset Name"
-                  placeholder="Energy Meter"
-                  fullWidth
-                  value={formData.assetName}
-                  onChange={(e) => setFormData({...formData, assetName: e.target.value})}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': {
-                        borderColor: '#C72030',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#C72030',
-                    },
-                  }}
-                />
-                
-                <FormControl 
-                  fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': {
-                        borderColor: '#C72030',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#C72030',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#C72030',
-                    },
-                  }}
-                >
-                  <InputLabel>Parameter</InputLabel>
-                  <Select 
-                    value={formData.parameter} 
-                    onChange={(e) => setFormData({...formData, parameter: e.target.value})}
-                    label="Parameter"
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      <em>Select Parameter</em>
-                    </MenuItem>
-                    <MenuItem value="temperature">Temperature</MenuItem>
-                    <MenuItem value="pressure">Pressure</MenuItem>
-                    <MenuItem value="voltage">Voltage</MenuItem>
-                    <MenuItem value="current">Current</MenuItem>
-                    <MenuItem value="power">Power</MenuItem>
-                    <MenuItem value="frequency">Frequency</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-            </SectionCard>
-          </Box>
+          <MappingStep
+            data={{ mappings: formData.mappings || [] }}
+            onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+            isCompleted={false}
+            isCollapsed={false}
+          />
         );
         
       default:
