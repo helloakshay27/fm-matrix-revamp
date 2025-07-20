@@ -77,7 +77,7 @@ export const AddServicePage = () => {
           pms_asset_group_id: formData.groupId || "",
           pms_asset_sub_group_id: formData.subGroupId || "",
           active: true,
-          description: "",
+          description: formData.serviceDescription || "",
           service_category: "",
           service_group: "",
           service_code: "",
