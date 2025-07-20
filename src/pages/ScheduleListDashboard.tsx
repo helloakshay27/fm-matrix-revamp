@@ -37,7 +37,7 @@ export const ScheduleListDashboard = () => {
   
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
-  const handleViewSchedule = (id: string) => navigate(`/maintenance/schedule/view/${id}`);
+  const handleViewSchedule = (item: TransformedScheduleData) => navigate(`/maintenance/schedule/view/${item.id}`);
 
   const columns = [
     { key: 'id', label: 'ID', sortable: true },
@@ -77,7 +77,7 @@ export const ScheduleListDashboard = () => {
       <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(schedule.id)}>
         <Copy className="w-4 h-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(schedule.id)}>
+      <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(schedule)}>
         <Eye className="w-4 h-4" />
       </Button>
     </div>
