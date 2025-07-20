@@ -99,7 +99,20 @@ export const CategoryTypeTab: React.FC = () => {
 
   const fetchSites = async () => {
     try {
-      const data = await ticketManagementAPI.getSites();
+      // Get userId from localStorage
+      const userData = localStorage.getItem('user');
+      let userId = '12437'; // default fallback
+      
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          userId = parsedUser.id || parsedUser.user_id || '12437';
+        } catch (e) {
+          console.warn('Could not parse user data from localStorage');
+        }
+      }
+
+      const data = await ticketManagementAPI.getSites(userId);
       setSites(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching sites:', error);

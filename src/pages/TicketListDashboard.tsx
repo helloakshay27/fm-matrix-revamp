@@ -1,13 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText } from 'lucide-react';
+import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
+import { ticketManagementAPI, TicketResponse, TicketListResponse } from '../services/ticketManagementAPI';
+import { toast } from 'sonner';
 
 const statusCards = [
   { title: 'Closed Tickets', count: 301, color: 'bg-[#8B4513]', icon: CheckCircle },
@@ -17,64 +19,56 @@ const statusCards = [
   { title: 'Request', count: 308, color: 'bg-[#C72030]', icon: Users }
 ];
 
-const mockTicketData = [
-  {
-    ticketNumber: '2189-11105',
-    description: 'not working',
-    category: 'FIRE SYSTEM',
-    subCategory: 'fire',
-    createdBy: 'Ankit Gupta',
-    assignedTo: 'Deepak Gupta',
-    status: 'Closed',
-    site: 'Lockated',
-    unit: '',
-    department: '',
-    adminPriority: 'P1',
-    createdOn: '11/06/2025',
-    ticketType: 'Complaint',
-    referenceNum: ''
-  },
-  {
-    ticketNumber: '2189-11104',
-    description: 'Feedback: Tap Faulty, ...',
-    category: 'Air Conditioner',
-    subCategory: '',
-    createdBy: '',
-    assignedTo: 'Vinayak Mane',
-    status: 'Pending',
-    site: 'Lockated',
-    unit: '',
-    department: '',
-    adminPriority: 'P1',
-    createdOn: '06/06/2025',
-    ticketType: 'Complaint',
-    referenceNum: ''
-  },
-  {
-    ticketNumber: '2189-11103',
-    description: 'Select Icon: Tap Fault...',
-    category: 'Cleaning',
-    subCategory: '',
-    createdBy: '',
-    assignedTo: '',
-    status: 'Pending',
-    site: 'Lockated',
-    unit: '',
-    department: '',
-    adminPriority: 'P1',
-    createdOn: '05/06/2025',
-    ticketType: 'Complaint',
-    referenceNum: ''
-  }
-];
-
 export const TicketListDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [tickets, setTickets] = useState<TicketResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchTickets();
+  }, [currentPage]);
+
+  const fetchTickets = async () => {
+    setIsLoading(true);
+    try {
+      const response: TicketListResponse = await ticketManagementAPI.getTickets(currentPage, perPage);
+      setTickets(response.data || []);
+      
+      if (response.meta) {
+        setTotalPages(response.meta.total_pages || 1);
+        setTotalRecords(response.meta.total || 0);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch tickets');
+      console.error('Error fetching tickets:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '--';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-GB');
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatTimeValue = (value: string | null) => {
+    return value || '--';
+  };
 
   const handleFilterApply = (filters: any) => {
     console.log('Applied filters:', filters);
+    // TODO: Implement filter functionality with API
   };
 
   const handleAddTicket = () => {
@@ -87,11 +81,16 @@ export const TicketListDashboard = () => {
 
   const handleExport = () => {
     console.log('Exporting tickets...');
-    // Create CSV content
+    if (tickets.length === 0) {
+      toast.error('No tickets to export');
+      return;
+    }
+
+    // Create CSV content with real data
     const csvContent = "data:text/csv;charset=utf-8," 
-      + "Ticket Number,Description,Category,Sub Category,Created By,Assigned To,Status,Site,Admin Priority,Created On,Ticket Type\n"
-      + mockTicketData.map(ticket => 
-          `${ticket.ticketNumber},"${ticket.description}",${ticket.category},${ticket.subCategory},${ticket.createdBy},${ticket.assignedTo},${ticket.status},${ticket.site},${ticket.adminPriority},${ticket.createdOn},${ticket.ticketType}`
+      + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
+      + tickets.map(ticket => 
+          `"${ticket.ticket_number}","${ticket.heading}","${ticket.category_type}","${ticket.sub_category_type || ''}","${ticket.posted_by}","${ticket.assigned_to || ''}","${ticket.issue_status}","${ticket.priority}","${ticket.site_name}","${formatDate(ticket.created_at)}","${ticket.issue_type}","${ticket.complaint_mode || ''}","${ticket.assigned_to || ''}","${ticket.service_or_asset || ''}","${ticket.asset_task_occurrence_id || ''}","${ticket.proactive_reactive || ''}","${ticket.review_tracking_date || ''}","${ticket.response_escalation}","${ticket.response_tat}","${ticket.response_time || ''}","${ticket.escalation_response_name || ''}","${ticket.resolution_escalation}","${ticket.resolution_tat || ''}","${ticket.resolution_time || ''}","${ticket.escalation_resolution_name || ''}"`
         ).join("\n");
     
     const encodedUri = encodeURI(csvContent);
@@ -99,6 +98,27 @@ export const TicketListDashboard = () => {
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "ticket_list.csv");
     link.click();
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'closed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'open':
+        return 'bg-blue-100 text-blue-800';
+      case 'in progress':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
@@ -151,6 +171,7 @@ export const TicketListDashboard = () => {
           onClick={handleExport}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
+          disabled={tickets.length === 0}
         >
           <Upload className="w-4 h-4 mr-2" />
           Export
@@ -172,68 +193,147 @@ export const TicketListDashboard = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>View</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Ticket Number</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Sub Category</TableHead>
-              <TableHead>Created By</TableHead>
-              <TableHead>Assigned To</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Site</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Admin Priority</TableHead>
-              <TableHead>Created On</TableHead>
-              <TableHead>Ticket Type</TableHead>
-              <TableHead>Reference Num</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockTicketData.map((ticket) => (
-              <TableRow key={ticket.ticketNumber}>
-                <TableCell>
-                  <Eye 
-                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                    onClick={() => handleViewTicket(ticket.ticketNumber)}
-                  />
-                </TableCell>
-                <TableCell></TableCell>
-                <TableCell className="font-medium">{ticket.ticketNumber}</TableCell>
-                <TableCell>{ticket.description}</TableCell>
-                <TableCell>{ticket.category}</TableCell>
-                <TableCell>{ticket.subCategory}</TableCell>
-                <TableCell>{ticket.createdBy}</TableCell>
-                <TableCell>{ticket.assignedTo}</TableCell>
-                <TableCell>
-                  <Badge 
-                    className={
-                      ticket.status === 'Closed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }
-                  >
-                    {ticket.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{ticket.site}</TableCell>
-                <TableCell>{ticket.unit}</TableCell>
-                <TableCell>{ticket.department}</TableCell>
-                <TableCell>{ticket.adminPriority}</TableCell>
-                <TableCell>{ticket.createdOn}</TableCell>
-                <TableCell>{ticket.ticketType}</TableCell>
-                <TableCell>{ticket.referenceNum}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">Loading tickets...</div>
+        </div>
+      ) : (
+        <>
+          {/* Table */}
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead>View</TableHead>
+                  <TableHead>Ticket ID</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Sub Category</TableHead>
+                  <TableHead>Created By</TableHead>
+                  <TableHead>Assigned To</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Site</TableHead>
+                  <TableHead>Created On</TableHead>
+                  <TableHead>Ticket Type</TableHead>
+                  <TableHead>Complaint Mode</TableHead>
+                  <TableHead>Associated To</TableHead>
+                  <TableHead>Asset / Service Name</TableHead>
+                  <TableHead>Task ID</TableHead>
+                  <TableHead>Proactive / Reactive</TableHead>
+                  <TableHead>Review</TableHead>
+                  <TableHead>Response Escalation</TableHead>
+                  <TableHead>Response TAT (Min)</TableHead>
+                  <TableHead>Response Time (D:H:M)</TableHead>
+                  <TableHead>Response Escalation Level</TableHead>
+                  <TableHead>Resolution Escalation</TableHead>
+                  <TableHead>Resolution TAT (Min)</TableHead>
+                  <TableHead>Resolution Time (D:H:M)</TableHead>
+                  <TableHead>Resolution Escalation Level</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tickets.map((ticket) => (
+                  <TableRow key={ticket.ticket_number}>
+                    <TableCell>
+                      <Eye 
+                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                        onClick={() => handleViewTicket(ticket.ticket_number)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{ticket.ticket_number}</TableCell>
+                    <TableCell>{ticket.heading || '--'}</TableCell>
+                    <TableCell>{ticket.category_type || '--'}</TableCell>
+                    <TableCell>{ticket.sub_category_type || '--'}</TableCell>
+                    <TableCell>{ticket.posted_by || '--'}</TableCell>
+                    <TableCell>{ticket.assigned_to || '--'}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusBadgeColor(ticket.issue_status)}>
+                        {ticket.issue_status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{ticket.priority || '--'}</TableCell>
+                    <TableCell>{ticket.site_name || '--'}</TableCell>
+                    <TableCell>{formatDate(ticket.created_at)}</TableCell>
+                    <TableCell>{ticket.issue_type || '--'}</TableCell>
+                    <TableCell>{ticket.complaint_mode || '--'}</TableCell>
+                    <TableCell>{ticket.assigned_to || '--'}</TableCell>
+                    <TableCell>{ticket.service_or_asset || '--'}</TableCell>
+                    <TableCell>{ticket.asset_task_occurrence_id || '--'}</TableCell>
+                    <TableCell>{ticket.proactive_reactive || '--'}</TableCell>
+                    <TableCell>{formatTimeValue(ticket.review_tracking_date)}</TableCell>
+                    <TableCell>{ticket.response_escalation || '--'}</TableCell>
+                    <TableCell>{ticket.response_tat || '--'}</TableCell>
+                    <TableCell>{formatTimeValue(ticket.response_time)}</TableCell>
+                    <TableCell>{ticket.escalation_response_name || '--'}</TableCell>
+                    <TableCell>{ticket.resolution_escalation || '--'}</TableCell>
+                    <TableCell>{ticket.resolution_tat || '--'}</TableCell>
+                    <TableCell>{formatTimeValue(ticket.resolution_time)}</TableCell>
+                    <TableCell>{ticket.escalation_resolution_name || '--'}</TableCell>
+                  </TableRow>
+                ))}
+                {tickets.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={26} className="text-center py-8 text-gray-500">
+                      No tickets found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-600">
+                Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, totalRecords)} of {totalRecords} results
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+                
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(currentPage - 2, totalPages - 4)) + i;
+                  if (pageNum <= totalPages) {
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        style={currentPage === pageNum ? { backgroundColor: '#C72030' } : {}}
+                        className={currentPage === pageNum ? "text-white" : ""}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                  return null;
+                })}
+
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       <TicketsFilterDialog 
         isOpen={isFilterOpen}

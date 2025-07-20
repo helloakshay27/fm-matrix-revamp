@@ -86,6 +86,44 @@ export interface ComplaintModeFormData {
   society_id: string;
 }
 
+// Ticket Types
+export interface TicketResponse {
+  ticket_number: string;
+  heading: string;
+  category_type: string;
+  sub_category_type: string;
+  posted_by: string;
+  assigned_to: string | null;
+  issue_status: string;
+  priority: string;
+  site_name: string;
+  created_at: string;
+  issue_type: string;
+  complaint_mode: string;
+  service_or_asset: string | null;
+  asset_task_occurrence_id: string | null;
+  proactive_reactive: string | null;
+  review_tracking_date: string | null;
+  response_escalation: string;
+  response_tat: number;
+  response_time: string | null;
+  escalation_response_name: string | null;
+  resolution_escalation: string;
+  resolution_tat: number | null;
+  resolution_time: string | null;
+  escalation_resolution_name: string | null;
+}
+
+export interface TicketListResponse {
+  data: TicketResponse[];
+  meta?: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
 // API Services
 export const ticketManagementAPI = {
   // Categories
@@ -128,6 +166,12 @@ export const ticketManagementAPI = {
 
   async getSites(userId: string) {
     const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
+    return response.data;
+  },
+
+  // Tickets
+  async getTickets(page: number = 1, perPage: number = 20): Promise<TicketListResponse> {
+    const response = await apiClient.get(`/pms/admin/complaints.json?per_page=${perPage}&page=${page}`);
     return response.data;
   },
 
