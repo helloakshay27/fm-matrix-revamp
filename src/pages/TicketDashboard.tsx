@@ -251,7 +251,7 @@ export const TicketDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
-  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
+  const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
   const perPage = 20;
 
   // Drag and drop sensors
@@ -337,7 +337,8 @@ export const TicketDashboard = () => {
   };
 
   // Selection handlers
-  const handleTicketSelection = (ticketId: string, isSelected: boolean) => {
+  const handleTicketSelection = (ticketIdString: string, isSelected: boolean) => {
+    const ticketId = parseInt(ticketIdString);
     console.log('TicketDashboard - Ticket selection changed:', ticketId, isSelected);
     setSelectedTickets(prev => {
       if (isSelected) {
@@ -351,7 +352,7 @@ export const TicketDashboard = () => {
   const handleSelectAll = (isSelected: boolean) => {
     console.log('TicketDashboard - Select all changed:', isSelected);
     if (isSelected) {
-      const allTicketIds = tickets.map(ticket => ticket.ticket_number);
+      const allTicketIds = tickets.map(ticket => ticket.id);
       setSelectedTickets(allTicketIds);
     } else {
       setSelectedTickets([]);
@@ -406,7 +407,7 @@ export const TicketDashboard = () => {
   const handleExport = () => {
     console.log('TicketDashboard - Export action for tickets:', selectedTickets);
     const selectedTicketObjects = tickets.filter(ticket => 
-      selectedTickets.includes(ticket.ticket_number)
+      selectedTickets.includes(ticket.id)
     );
     
     const csvContent = [
@@ -982,10 +983,10 @@ export const TicketDashboard = () => {
                   onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)} 
                   storageKey="tickets-table"
                   enableSelection={true}
-                  selectedItems={selectedTickets}
+                  selectedItems={selectedTickets.map(id => id.toString())}
                   onSelectItem={handleTicketSelection}
                   onSelectAll={handleSelectAll}
-                  getItemId={(ticket) => ticket.ticket_number}
+                  getItemId={(ticket) => ticket.id.toString()}
                 />
                 
                 {/* Custom Pagination */}
@@ -1058,7 +1059,7 @@ export const TicketDashboard = () => {
       <TicketSelectionPanel
         selectedTickets={selectedTickets}
         selectedTicketObjects={tickets.filter(ticket => 
-          selectedTickets.includes(ticket.ticket_number)
+          selectedTickets.includes(ticket.id)
         )}
         onGoldenTicket={handleGoldenTicket}
         onFlag={handleFlag}

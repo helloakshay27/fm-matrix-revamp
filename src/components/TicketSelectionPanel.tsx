@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { X, Star, Flag, Download, Loader2 } from 'lucide-react';
 
 interface TicketSelectionPanelProps {
-  selectedTickets: string[];
+  selectedTickets: number[];
   selectedTicketObjects: any[];
   onGoldenTicket: () => Promise<void>;
   onFlag: () => Promise<void>;

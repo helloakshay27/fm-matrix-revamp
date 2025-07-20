@@ -451,7 +451,7 @@ export const ticketManagementAPI = {
   },
 
   // Enhanced methods for ticket actions with better error handling
-  async markAsGoldenTicket(ticketIds: string[]) {
+  async markAsGoldenTicket(ticketIds: number[]) {
     console.log('API call - markAsGoldenTicket with IDs:', ticketIds);
     
     if (!ticketIds || ticketIds.length === 0) {
@@ -474,7 +474,7 @@ export const ticketManagementAPI = {
     }
   },
 
-  async markAsFlagged(ticketIds: string[]) {
+  async markAsFlagged(ticketIds: number[]) {
     console.log('API call - markAsFlagged with IDs:', ticketIds);
     
     if (!ticketIds || ticketIds.length === 0) {

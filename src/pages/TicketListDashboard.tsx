@@ -53,7 +53,7 @@ export const TicketListDashboard = () => {
   const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
+  const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
 
@@ -137,11 +137,11 @@ export const TicketListDashboard = () => {
     link.click();
   };
 
-  const handleSelectTicket = (ticketNumber: string, checked: boolean) => {
+  const handleSelectTicket = (ticketId: number, checked: boolean) => {
     setSelectedTickets(prev => {
       const newSelection = checked 
-        ? [...prev, ticketNumber]
-        : prev.filter(id => id !== ticketNumber);
+        ? [...prev, ticketId]
+        : prev.filter(id => id !== ticketId);
       
       // Update select all state
       setSelectAll(newSelection.length === tickets.length && tickets.length > 0);
