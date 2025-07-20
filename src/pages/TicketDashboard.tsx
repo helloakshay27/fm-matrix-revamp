@@ -288,11 +288,12 @@ export const TicketDashboard = () => {
     fetchTickets(currentPage);
   }, [currentPage]);
 
-  // Calculate stats from API data
-  const openTickets = tickets.filter(t => t.issue_status === 'Open').length;
-  const inProgressTickets = tickets.filter(t => t.issue_status === 'In Progress').length;
-  const pendingTickets = tickets.filter(t => t.issue_status === 'Pending').length;
-  const closedTickets = tickets.filter(t => t.issue_status === 'Closed').length;
+  // Calculate stats from API data (with safe fallbacks)
+  const safeTickets = tickets || [];
+  const openTickets = safeTickets.filter(t => t.issue_status === 'Open').length;
+  const inProgressTickets = safeTickets.filter(t => t.issue_status === 'In Progress').length;
+  const pendingTickets = safeTickets.filter(t => t.issue_status === 'Pending').length;
+  const closedTickets = safeTickets.filter(t => t.issue_status === 'Closed').length;
 
   // Analytics data with updated colors matching design
   const statusData = [
@@ -300,9 +301,11 @@ export const TicketDashboard = () => {
     { name: 'Closed', value: closedTickets, color: '#d8dcdd' }
   ];
 
-  const categoryData = tickets.reduce((acc, ticket) => {
+  const categoryData = safeTickets.reduce((acc, ticket) => {
     const category = ticket.category_type;
-    acc[category] = (acc[category] || 0) + 1;
+    if (category) {
+      acc[category] = (acc[category] || 0) + 1;
+    }
     return acc;
   }, {});
 
@@ -315,8 +318,8 @@ export const TicketDashboard = () => {
     { priority: 'P4', '0-10': 1, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 5 }
   ];
 
-  const reactiveTickets = Math.floor(totalTickets * 0.7);
-  const proactiveTickets = totalTickets - reactiveTickets;
+  const reactiveTickets = Math.floor(safeTickets.length * 0.7);
+  const proactiveTickets = safeTickets.length - reactiveTickets;
 
   const typeData = [
     { name: 'Open', value: reactiveTickets, color: '#c6b692' },
@@ -840,7 +843,7 @@ export const TicketDashboard = () => {
               </div>
             ) : (
               <EnhancedTable 
-                data={tickets} 
+                data={safeTickets} 
                 columns={columns} 
                 renderCell={renderCell} 
                 renderActions={renderRowActions} 
