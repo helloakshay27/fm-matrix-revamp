@@ -1,3 +1,4 @@
+
 import { getBaseUrl, getToken } from '@/utils/auth';
 
 // API Configuration - Central place for managing API endpoints and tokens
@@ -46,6 +47,11 @@ export const API_CONFIG = {
     FACILITY_BOOKINGS: '/pms/admin/facility_bookings.json',
     ENTITIES: '/entities.json',
     FACILITY_SETUPS: '/pms/admin/facility_setups.json',
+    // New endpoints for ticket creation
+    CREATE_TICKET: '/pms/admin/complaints.json',
+    GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
+    ACCOUNT_DETAILS: '/account.json',
+    OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
   },
 } as const
 

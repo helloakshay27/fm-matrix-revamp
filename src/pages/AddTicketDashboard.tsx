@@ -1,47 +1,55 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { ArrowLeft, Upload, Paperclip, FileText } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Upload, Paperclip, FileText, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 
-const mockUsers = [{
-  id: '1',
-  name: 'Ankit Gupta',
-  type: 'occupant'
-}, {
-  id: '2',
-  name: 'Deepak Gupta',
-  type: 'fm'
-}, {
-  id: '3',
-  name: 'Vinayak Mane',
-  type: 'fm'
-}, {
-  id: '4',
-  name: 'John Doe',
-  type: 'occupant'
-}, {
-  id: '5',
-  name: 'Jane Smith',
-  type: 'fm'
-}];
+const PRIORITY_OPTIONS = [
+  { value: 'P1', label: 'P1 - Critical' },
+  { value: 'P2', label: 'P2 - Very High' },
+  { value: 'P3', label: 'P3 - High' },
+  { value: 'P4', label: 'P4 - Medium' },
+  { value: 'P5', label: 'P5 - Low' }
+];
+
+const PROACTIVE_REACTIVE_OPTIONS = [
+  { value: 'proactive', label: 'Proactive' },
+  { value: 'reactive', label: 'Reactive' }
+];
 
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
+  // Form state
   const [onBehalfOf, setOnBehalfOf] = useState('self');
   const [ticketType, setTicketType] = useState('');
-  const [createFor, setCreateFor] = useState('selected-site');
   const [selectedUser, setSelectedUser] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Dropdown data states
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [subcategories, setSubcategories] = useState<SubCategoryResponse[]>([]);
+  const [fmUsers, setFmUsers] = useState<any[]>([]);
+  const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
+  
+  // Loading states
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingSubcategories, setLoadingSubcategories] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingAccount, setLoadingAccount] = useState(false);
+
   const [formData, setFormData] = useState({
-    name: 'Ankit Gupta',
-    contactNumber: '7388997281',
+    name: '',
+    contactNumber: '',
     site: 'Lockated',
     department: '',
     unit: '',
@@ -55,81 +63,194 @@ export const AddTicketDashboard = () => {
     mode: ''
   });
 
+  // Load initial data
+  useEffect(() => {
+    loadCategories();
+    loadFMUsers();
+    loadOccupantUsers();
+    if (onBehalfOf === 'self') {
+      loadUserAccount();
+    }
+  }, [onBehalfOf]);
+
+  // Load categories
+  const loadCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const response = await ticketManagementAPI.getCategories();
+      setCategories(response.helpdesk_categories || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load categories",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  // Load subcategories when category changes
+  const loadSubcategories = async (categoryId: number) => {
+    setLoadingSubcategories(true);
+    try {
+      const subcats = await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
+      setSubcategories(subcats);
+    } catch (error) {
+      console.error('Error loading subcategories:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to load subcategories",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingSubcategories(false);
+    }
+  };
+
+  // Load FM users
+  const loadFMUsers = async () => {
+    try {
+      const response = await ticketManagementAPI.getEngineers();
+      setFmUsers(response.fm_users || []);
+    } catch (error) {
+      console.error('Error loading FM users:', error);
+    }
+  };
+
+  // Load occupant users
+  const loadOccupantUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const users = await ticketManagementAPI.getOccupantUsers();
+      setOccupantUsers(users);
+    } catch (error) {
+      console.error('Error loading occupant users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Load user account details
+  const loadUserAccount = async () => {
+    setLoadingAccount(true);
+    try {
+      const account = await ticketManagementAPI.getUserAccount();
+      setUserAccount(account);
+      setFormData(prev => ({
+        ...prev,
+        name: `${account.firstname} ${account.lastname}`,
+        department: account.department_name || '',
+        contactNumber: account.mobile || ''
+      }));
+    } catch (error) {
+      console.error('Error loading user account:', error);
+    } finally {
+      setLoadingAccount(false);
+    }
+  };
+
+  // Handle category change
+  const handleCategoryChange = (categoryId: string) => {
+    setFormData(prev => ({ ...prev, categoryType: categoryId, subCategoryType: '' }));
+    setSubcategories([]);
+    if (categoryId) {
+      loadSubcategories(parseInt(categoryId));
+    }
+  };
+
+  // Handle file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      setAttachedFiles(Array.from(files));
+      setAttachedFiles(prev => [...prev, ...Array.from(files)]);
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Submitting ticket:', {
-      onBehalfOf,
-      ticketType,
-      createFor,
-      selectedUser,
-      formData,
-      attachedFiles
-    });
-    toast({
-      title: "Success",
-      description: "Ticket submitted successfully!"
-    });
-    navigate('/maintenance/ticket');
+  // Remove file from attachments
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const filteredUsers = onBehalfOf === 'occupant-user' ? mockUsers.filter(user => user.type === 'occupant') : onBehalfOf === 'fm-user' ? mockUsers.filter(user => user.type === 'fm') : [];
+  // Handle form submission
+  const handleSubmit = async () => {
+    // Validation
+    if (!ticketType || !formData.categoryType || !formData.description) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  // Responsive styles for TextField and Select
-  const fieldStyles = {
-    height: {
-      xs: 28,
-      sm: 36,
-      md: 45
-    },
-    '& .MuiInputBase-root': {
-      borderWidth: 0,
-      // Explicitly remove border
-      '& .MuiSelect-select': {
-        fontSize: {
-          xs: '11px',
-          sm: '12px',
-          md: '13px'
-        },
-        // Smaller for dropdowns
-        padding: {
-          xs: '8px',
-          sm: '10px',
-          md: '12px'
-        }
-      },
-      '& .MuiMenuItem-root': {
-        fontSize: {
-          xs: '11px',
-          sm: '12px',
-          md: '13px'
-        } // Smaller for dropdown menu items
-      }
-    },
-    '& .MuiInputBase-input': {
-      padding: {
-        xs: '8px',
-        sm: '10px',
-        md: '12px'
-      },
-      '&::placeholder': {
-        fontSize: {
-          xs: '12px',
-          sm: '13px',
-          md: '14px'
-        },
-        // Default for text fields
-        opacity: 1
-      }
+    setIsSubmitting(true);
+    try {
+      const siteId = localStorage.getItem('siteId') || '2189';
+      
+      const ticketData = {
+        of_phase: 'pms',
+        site_id: parseInt(siteId),
+        on_behalf_of: onBehalfOf === 'self' ? 'admin' : onBehalfOf,
+        complaint_type: ticketType,
+        category_type_id: parseInt(formData.categoryType),
+        priority: formData.adminPriority,
+        society_staff_type: 'User',
+        proactive_reactive: formData.proactiveReactive,
+        heading: formData.description,
+        complaint_mode_id: 75,
+        room_id: 1,
+        wing_id: 1,
+        area_id: 1,
+        floor_id: 1,
+        // Optional fields
+        ...(selectedUser && { id_user: parseInt(selectedUser) }),
+        ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
+        ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
+        ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) })
+      };
+
+      await ticketManagementAPI.createTicket(ticketData, attachedFiles);
+      
+      toast({
+        title: "Success",
+        description: "Ticket created successfully!"
+      });
+      
+      navigate('/maintenance/ticket');
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create ticket. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return <div className="p-4 sm:p-6 bg-white min-h-screen">
+  // Get users for dropdown based on behalf selection
+  const getUsersForDropdown = () => {
+    if (onBehalfOf === 'occupant-user') {
+      return occupantUsers.map(user => ({
+        id: user.id.toString(),
+        name: `${user.firstname} ${user.lastname}`,
+        type: 'occupant'
+      }));
+    } else if (onBehalfOf === 'fm-user') {
+      return fmUsers.map(user => ({
+        id: user.id.toString(),
+        name: `${user.firstname} ${user.lastname}`,
+        type: 'fm'
+      }));
+    }
+    return [];
+  };
+
+  return (
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -142,21 +263,24 @@ export const AddTicketDashboard = () => {
             <span>&gt;</span>
             <span>New Ticket</span>
           </div>
-          <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">NEW TICKET</h1>
+          <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">
+            NEW TICKET
+          </h1>
         </div>
 
         {/* Ticket Details Section */}
         <div className="p-4 rounded-lg mb-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-6 h-6 rounded-full flex items-center justify-center">
-             <FileText className="w-4 h-4 text-[#C72030]" />
+              <FileText className="w-4 h-4 text-[#C72030]" />
             </div>
             <h2 className="text-lg font-semibold text-orange-800">TICKET DETAILS</h2>
           </div>
 
           {/* On Behalf Of */}
           <div className="mb-4">
-            <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex flex-wrap gap-4 mt-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket On Behalf Of</label>
+            <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="self" id="self" />
                 <label htmlFor="self">Self</label>
@@ -173,90 +297,67 @@ export const AddTicketDashboard = () => {
           </div>
 
           {/* User Selection Dropdown */}
-          {onBehalfOf !== 'self' && <div className="mb-4">
-              <FormControl fullWidth variant="outlined" sx={{
-            mt: 1
-          }}>
-                <InputLabel id="user-select-label" shrink>Select User</InputLabel>
-                <MuiSelect labelId="user-select-label" label="Select User" displayEmpty value={selectedUser} onChange={e => setSelectedUser(e.target.value)} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select User</em></MenuItem>
-                  {filteredUsers.map(user => <MenuItem key={user.id} value={user.id}>
+          {onBehalfOf !== 'self' && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select User</label>
+              <Select value={selectedUser} onValueChange={setSelectedUser} disabled={loadingUsers}>
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {getUsersForDropdown().map(user => (
+                    <SelectItem key={user.id} value={user.id}>
                       {user.name}
-                    </MenuItem>)}
-                </MuiSelect>
-              </FormControl>
-            </div>}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Requestor Details */}
           <h3 className="font-medium mb-3">Requestor Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div>
-              <TextField label="Name" placeholder="Enter Name" value={formData.name} onChange={e => setFormData({
-              ...formData,
-              name: e.target.value
-            })} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} sx={{
-              mt: 1
-            }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <Input
+                placeholder="Enter Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                disabled={onBehalfOf === 'self' && loadingAccount}
+              />
             </div>
             <div>
-              <TextField label="Contact Number" placeholder="Enter Contact Number" value={formData.contactNumber} onChange={e => setFormData({
-              ...formData,
-              contactNumber: e.target.value
-            })} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} sx={{
-              mt: 1
-            }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+              <Input
+                placeholder="Enter Contact Number"
+                value={formData.contactNumber}
+                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+              />
             </div>
             <div>
-              <TextField label="Site" placeholder="Enter Site" value={formData.site} onChange={e => setFormData({
-              ...formData,
-              site: e.target.value
-            })} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} sx={{
-              mt: 1
-            }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
+              <Input
+                placeholder="Enter Site"
+                value={formData.site}
+                onChange={(e) => setFormData({ ...formData, site: e.target.value })}
+              />
             </div>
             <div>
-              <TextField label="Department" placeholder="Enter Department" value={formData.department} onChange={e => setFormData({
-              ...formData,
-              department: e.target.value
-            })} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} sx={{
-              mt: 1
-            }} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <TextField label="Unit" placeholder="Enter Unit" value={formData.unit} onChange={e => setFormData({
-              ...formData,
-              unit: e.target.value
-            })} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} sx={{
-              mt: 1
-            }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <Input
+                placeholder="Enter Department"
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                disabled={onBehalfOf === 'self' && loadingAccount}
+              />
             </div>
           </div>
 
           {/* Ticket Type */}
           <div className="mb-4">
-            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-4 mt-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ticket Type *</label>
+            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="request" id="request" />
                 <label htmlFor="request">Request</label>
@@ -275,131 +376,106 @@ export const AddTicketDashboard = () => {
           {/* Category and Other Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
-                <InputLabel id="category-type-select-label" shrink>Category Type</InputLabel>
-                <MuiSelect labelId="category-type-select-label" label="Category Type" displayEmpty value={formData.categoryType} onChange={e => setFormData({
-                ...formData,
-                categoryType: e.target.value
-              })} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="fire-system">FIRE SYSTEM</MenuItem>
-                  <MenuItem value="air-conditioner">Air Conditioner</MenuItem>
-                  <MenuItem value="cleaning">Cleaning</MenuItem>
-                  <MenuItem value="electrical">Electrical</MenuItem>
-                  <MenuItem value="printer">Printer</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category Type *</label>
+              <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingCategories ? "Loading..." : "Select Category"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
-                <InputLabel id="sub-category-type-select-label" shrink>Sub Category Type</InputLabel>
-                <MuiSelect labelId="sub-category-type-select-label" label="Sub Category Type" displayEmpty value={formData.subCategoryType} onChange={e => setFormData({
-                ...formData,
-                subCategoryType: e.target.value
-              })} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select SubCategory</em></MenuItem>
-                  <MenuItem value="fire">fire</MenuItem>
-                  <MenuItem value="dentry">dentry</MenuItem>
-                  <MenuItem value="test">test</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category Type</label>
+              <Select 
+                value={formData.subCategoryType} 
+                onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
+                disabled={!formData.categoryType || loadingSubcategories}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Select SubCategory"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {subcategories.map((subcat) => (
+                    <SelectItem key={subcat.id} value={subcat.id.toString()}>
+                      {subcat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
-                <InputLabel id="admin-priority-select-label" shrink>Admin Priority</InputLabel>
-                <MuiSelect labelId="admin-priority-select-label" label="Admin Priority" displayEmpty value={formData.adminPriority} onChange={e => setFormData({
-                ...formData,
-                adminPriority: e.target.value
-              })} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select Priority</em></MenuItem>
-                  <MenuItem value="p1">P1</MenuItem>
-                  <MenuItem value="p2">P2</MenuItem>
-                  <MenuItem value="p3">P3</MenuItem>
-                  <MenuItem value="p4">P4</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+              <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
-                <InputLabel id="assigned-to-select-label" shrink>Assigned To</InputLabel>
-                <MuiSelect labelId="assigned-to-select-label" label="Assigned To" displayEmpty value={formData.assignedTo} onChange={e => setFormData({
-                ...formData,
-                assignedTo: e.target.value
-              })} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select Assignee</em></MenuItem>
-                  <MenuItem value="deepak-gupta">Deepak Gupta</MenuItem>
-                  <MenuItem value="vinayak-mane">Vinayak Mane</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+              <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Assignee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fmUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.firstname} {user.lastname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
-                <InputLabel id="proactive-reactive-select-label" shrink>Proactive/Reactive</InputLabel>
-                <MuiSelect labelId="proactive-reactive-select-label" label="Proactive/Reactive" displayEmpty value={formData.proactiveReactive} onChange={e => setFormData({
-                ...formData,
-                proactiveReactive: e.target.value
-              })} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select Proactive/Reactive</em></MenuItem>
-                  <MenuItem value="proactive">Proactive</MenuItem>
-                  <MenuItem value="reactive">Reactive</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Proactive/Reactive</label>
+              <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <TextField label="Reference Number" placeholder="Enter Reference Number" value={formData.referenceNumber} onChange={e => setFormData({
-              ...formData,
-              referenceNumber: e.target.value
-            })} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} sx={{
-              mt: 1
-            }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+              <Input
+                placeholder="Enter Reference Number"
+                value={formData.referenceNumber}
+                onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 items-start">
-            <div>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  description: e.target.value
-                })}
-                placeholder="Enter description"
-                className="min-h-[120px]"
-              />
-            </div>
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="mode-select-label" shrink>Mode</InputLabel>
-                <MuiSelect labelId="mode-select-label" label="Mode" displayEmpty value={formData.mode} onChange={e => setFormData({
-                ...formData,
-                mode: e.target.value
-              })} sx={fieldStyles}>
-                  <MenuItem value=""><em>Select Complaint Mode</em></MenuItem>
-                  <MenuItem value="call">Call</MenuItem>
-                  <MenuItem value="email">Email</MenuItem>
-                  <MenuItem value="web">Web</MenuItem>
-                  <MenuItem value="app">App</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+          {/* Description */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Enter description"
+              className="min-h-[120px]"
+            />
           </div>
         </div>
 
@@ -409,34 +485,82 @@ export const AddTicketDashboard = () => {
             <div className="w-6 h-6 rounded-full flex items-center justify-center">
               <Paperclip className="w-4 h-4 text-[#C72030]" />
             </div>
-            <h2 className="text-lg font-semibold text-orange-800">ATTACHMENT</h2>
+            <h2 className="text-lg font-semibold text-orange-800">ATTACHMENTS</h2>
           </div>
 
           <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
-            <input type="file" multiple onChange={handleFileUpload} className="hidden" id="file-upload" />
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+              id="file-upload"
+              accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+            />
             <label htmlFor="file-upload" className="cursor-pointer">
-              <p className="text-gray-600">
+              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-2">
                 Drag & Drop or{' '}
                 <span className="text-[#C72030] underline">Choose Files</span>
               </p>
+              <p className="text-sm text-gray-500">
+                PNG, JPG, PDF up to 10MB
+              </p>
             </label>
-            <p className="text-sm text-gray-500 mt-1">
-              {attachedFiles.length > 0 ? `${attachedFiles.length} file(s) selected` : 'No file chosen'}
-            </p>
           </div>
+
+          {/* Selected Files */}
+          {attachedFiles.length > 0 && (
+            <div className="mt-4">
+              <h4 className="font-medium text-gray-700 mb-2">Selected Files:</h4>
+              <div className="space-y-2">
+                {attachedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Submit Button */}
+        {/* Submit Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-3">
-          <Button onClick={handleSubmit} style={{
-          backgroundColor: '#C72030'
-        }} className="text-white hover:bg-[#C72030]/90 px-8 py-2">
-            Submit
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90 px-8 py-2"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
-          <Button variant="outline" onClick={() => navigate('/maintenance/ticket')} className="px-8 py-2">
-            Reset
+          <Button
+            variant="outline"
+            onClick={() => navigate('/maintenance/ticket')}
+            className="px-8 py-2"
+            disabled={isSubmitting}
+          >
+            Cancel
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };

@@ -56,6 +56,14 @@ export interface SubCategoryFormData {
   };
 }
 
+export interface SubCategoryResponse {
+  id: number;
+  name: string;
+  helpdesk_category_id: number;
+  customer_enabled: boolean;
+  icon_url?: string;
+}
+
 // Status Types
 export interface StatusFormData {
   name: string;
@@ -122,6 +130,46 @@ export interface TicketListResponse {
   };
 }
 
+// New types for ticket creation
+export interface CreateTicketFormData {
+  of_phase: string;
+  site_id: number;
+  id_user?: number;
+  on_behalf_of: string;
+  complaint_type: string;
+  category_type_id: number;
+  priority: string;
+  society_staff_type: string;
+  assigned_to?: number;
+  proactive_reactive: string;
+  reference_number?: string;
+  heading: string;
+  complaint_mode_id: number;
+  sub_category_id?: number;
+  room_id: number;
+  wing_id: number;
+  area_id: number;
+  floor_id: number;
+  tower_id?: number;
+}
+
+export interface UserAccountResponse {
+  firstname: string;
+  lastname: string;
+  department_name: string;
+  email: string;
+  mobile: string;
+}
+
+export interface OccupantUserResponse {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+  mobile: string;
+  company: string;
+}
+
 // API Services
 export const ticketManagementAPI = {
   // Categories
@@ -174,6 +222,72 @@ export const ticketManagementAPI = {
       complaints: response.data.complaints || [],
       pagination: response.data.pagination
     };
+  },
+
+  // New ticket creation method
+  async createTicket(ticketData: CreateTicketFormData, attachments: File[] = []) {
+    const formData = new FormData();
+    
+    // Add all ticket data with complaint[] prefix
+    formData.append('complaint[of_phase]', ticketData.of_phase);
+    formData.append('complaint[site_id]', ticketData.site_id.toString());
+    formData.append('complaint[on_behalf_of]', ticketData.on_behalf_of);
+    formData.append('complaint[complaint_type]', ticketData.complaint_type);
+    formData.append('complaint[category_type_id]', ticketData.category_type_id.toString());
+    formData.append('complaint[priority]', ticketData.priority);
+    formData.append('complaint[society_staff_type]', ticketData.society_staff_type);
+    formData.append('complaint[proactive_reactive]', ticketData.proactive_reactive);
+    formData.append('complaint[heading]', ticketData.heading);
+    formData.append('complaint[complaint_mode_id]', ticketData.complaint_mode_id.toString());
+    formData.append('complaint[room_id]', ticketData.room_id.toString());
+    formData.append('complaint[wing_id]', ticketData.wing_id.toString());
+    formData.append('complaint[area_id]', ticketData.area_id.toString());
+    formData.append('complaint[floor_id]', ticketData.floor_id.toString());
+
+    // Optional fields
+    if (ticketData.id_user) {
+      formData.append('complaint[id_user]', ticketData.id_user.toString());
+    }
+    if (ticketData.assigned_to) {
+      formData.append('complaint[assigned_to]', ticketData.assigned_to.toString());
+    }
+    if (ticketData.reference_number) {
+      formData.append('complaint[reference_number]', ticketData.reference_number);
+    }
+    if (ticketData.sub_category_id) {
+      formData.append('complaint[sub_category_id]', ticketData.sub_category_id.toString());
+    }
+    if (ticketData.tower_id) {
+      formData.append('complaint[tower_id]', ticketData.tower_id.toString());
+    }
+
+    // Add attachments
+    attachments.forEach((file) => {
+      formData.append('attachments[]', file);
+    });
+
+    const response = await apiClient.post(ENDPOINTS.CREATE_TICKET, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  // Get subcategories by category ID
+  async getSubCategoriesByCategory(categoryId: number): Promise<SubCategoryResponse[]> {
+    const response = await apiClient.get(`${ENDPOINTS.GET_SUBCATEGORIES}?category_type_id=${categoryId}`);
+    return response.data.sub_categories || [];
+  },
+
+  // Get current user account details
+  async getUserAccount(): Promise<UserAccountResponse> {
+    const response = await apiClient.get(ENDPOINTS.ACCOUNT_DETAILS);
+    return response.data;
+  },
+
+  // Get occupant users
+  async getOccupantUsers(): Promise<OccupantUserResponse[]> {
+    const response = await apiClient.get(ENDPOINTS.OCCUPANT_USERS);
+    return response.data.occupant_users || [];
   },
 
   // Subcategories
