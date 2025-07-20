@@ -273,7 +273,6 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
               px: 4,
               py: 1.5,
               height: '36px',
-              borderRadius: 2,
               textTransform: 'none',
               fontSize: '16px',
               fontWeight: 500,
