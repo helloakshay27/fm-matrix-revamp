@@ -614,7 +614,8 @@ export const AddAMCPage = () => {
         <TextField required label="End Date" placeholder="Select Date" name="endDate" type="date" value={formData.endDate} onChange={e => handleInputChange('endDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
                 shrink: true
               }} InputProps={{
-                sx: fieldStyles
+                sx: fieldStyles,
+                inputProps: { min: formData.startDate }
               }} />
       </div>
 
