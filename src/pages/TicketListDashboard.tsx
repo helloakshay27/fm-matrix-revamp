@@ -86,7 +86,7 @@ export const TicketListDashboard = () => {
 
   const handlePerPageChange = (newPerPage: number) => {
     setPerPage(newPerPage);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page when changing per page
   };
 
   const formatDate = (dateString: string) => {
@@ -123,6 +123,7 @@ export const TicketListDashboard = () => {
       return;
     }
 
+    // Create CSV content with real data
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
       + tickets.map(ticket => 
@@ -137,20 +138,12 @@ export const TicketListDashboard = () => {
   };
 
   const handleSelectTicket = (ticketNumber: string, checked: boolean) => {
-    console.log('Selecting ticket:', ticketNumber, 'checked:', checked);
-    
-    // Find the ticket to get its ID
-    const ticket = tickets.find(t => t.ticket_number === ticketNumber);
-    if (!ticket) return;
-    
-    const ticketId = ticket.id.toString();
-    
     setSelectedTickets(prev => {
       const newSelection = checked 
-        ? [...prev, ticketId]
-        : prev.filter(id => id !== ticketId);
+        ? [...prev, ticketNumber]
+        : prev.filter(id => id !== ticketNumber);
       
-      console.log('New selection (ticket IDs):', newSelection);
+      // Update select all state
       setSelectAll(newSelection.length === tickets.length && tickets.length > 0);
       
       return newSelection;
@@ -158,58 +151,37 @@ export const TicketListDashboard = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    console.log('Select all:', checked);
     setSelectAll(checked);
     if (checked) {
-      const allTicketIds = tickets.map(ticket => ticket.id.toString());
-      console.log('Selecting all tickets (IDs):', allTicketIds);
-      setSelectedTickets(allTicketIds);
+      setSelectedTickets(tickets.map(ticket => ticket.id));
     } else {
       setSelectedTickets([]);
     }
   };
 
   const handleGoldenTicket = async () => {
-    if (selectedTickets.length === 0) {
-      toast.error('No tickets selected');
-      return;
-    }
-
-    console.log('Making Golden Ticket request with IDs:', selectedTickets);
-    
     try {
-      const response = await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
-      console.log('Golden Ticket API response:', response);
-      
+      await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
       toast.success(`${selectedTickets.length} ticket(s) marked as Golden Ticket successfully`);
       setSelectedTickets([]);
       setSelectAll(false);
       await fetchTickets(currentPage, perPage);
     } catch (error) {
-      console.error('Error marking as golden ticket:', error);
       toast.error('Failed to mark tickets as Golden Ticket');
+      console.error('Error marking as golden ticket:', error);
     }
   };
 
   const handleFlag = async () => {
-    if (selectedTickets.length === 0) {
-      toast.error('No tickets selected');
-      return;
-    }
-
-    console.log('Making Flag request with IDs:', selectedTickets);
-    
     try {
-      const response = await ticketManagementAPI.markAsFlagged(selectedTickets);
-      console.log('Flag API response:', response);
-      
+      await ticketManagementAPI.markAsFlagged(selectedTickets);
       toast.success(`${selectedTickets.length} ticket(s) flagged successfully`);
       setSelectedTickets([]);
       setSelectAll(false);
       await fetchTickets(currentPage, perPage);
     } catch (error) {
-      console.error('Error flagging tickets:', error);
       toast.error('Failed to flag tickets');
+      console.error('Error flagging tickets:', error);
     }
   };
 
@@ -219,12 +191,11 @@ export const TicketListDashboard = () => {
       return;
     }
 
-    console.log('Exporting selected tickets:', selectedTickets);
-
     const selectedTicketData = tickets.filter(ticket => 
-      selectedTickets.includes(ticket.id.toString())
+      selectedTickets.includes(ticket.id)
     );
 
+    // Create CSV content with selected tickets
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
       + selectedTicketData.map(ticket => 
@@ -241,7 +212,6 @@ export const TicketListDashboard = () => {
   };
 
   const handleClearSelection = () => {
-    console.log('Clearing selection');
     setSelectedTickets([]);
     setSelectAll(false);
   };
@@ -262,11 +232,8 @@ export const TicketListDashboard = () => {
   };
 
   const selectedTicketObjects = tickets.filter(ticket => 
-    selectedTickets.includes(ticket.id.toString())
+    selectedTickets.includes(ticket.id)
   );
-
-  console.log('Current selected tickets:', selectedTickets);
-  console.log('Selected ticket objects:', selectedTicketObjects);
 
   return (
     <div className="p-6">
@@ -388,11 +355,11 @@ export const TicketListDashboard = () => {
               </TableHeader>
               <TableBody>
                 {tickets.map((ticket) => (
-                  <TableRow key={ticket.ticket_number}>
+                  <TableRow key={ticket.id}>
                     <TableCell>
                       <Checkbox
-                        checked={selectedTickets.includes(ticket.id.toString())}
-                        onCheckedChange={(checked) => handleSelectTicket(ticket.ticket_number, checked as boolean)}
+                        checked={selectedTickets.includes(ticket.id)}
+                        onCheckedChange={(checked) => handleSelectTicket(ticket.id, checked as boolean)}
                       />
                     </TableCell>
                     <TableCell>
@@ -464,17 +431,14 @@ export const TicketListDashboard = () => {
         onApplyFilters={handleFilterApply}
       />
 
-      {/* Enhanced TicketSelectionPanel */}
-      {selectedTickets.length > 0 && (
-        <TicketSelectionPanel
-          selectedTickets={selectedTickets}
-          selectedTicketObjects={selectedTicketObjects}
-          onGoldenTicket={handleGoldenTicket}
-          onFlag={handleFlag}
-          onExport={handleExportSelected}
-          onClearSelection={handleClearSelection}
-        />
-      )}
+      <TicketSelectionPanel
+        selectedTickets={selectedTickets}
+        selectedTicketObjects={selectedTicketObjects}
+        onGoldenTicket={handleGoldenTicket}
+        onFlag={handleFlag}
+        onExport={handleExportSelected}
+        onClearSelection={handleClearSelection}
+      />
     </div>
   );
 };
