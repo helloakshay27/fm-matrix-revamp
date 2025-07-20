@@ -95,6 +95,7 @@ export interface ComplaintModeFormData {
 
 // Ticket Types
 export interface TicketResponse {
+  id: number;
   ticket_number: string;
   heading: string;
   category_type: string;

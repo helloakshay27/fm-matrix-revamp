@@ -76,8 +76,8 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               Tickets Selected
             </span>
             <span className="text-xs text-muted-foreground">
-              {selectedTickets.slice(0, 3).join(', ')}
-              {selectedTickets.length > 3 && ` and ${selectedTickets.length - 3} more`}
+              {selectedTicketObjects.slice(0, 3).map(ticket => ticket.ticket_number).join(', ')}
+              {selectedTicketObjects.length > 3 && ` and ${selectedTicketObjects.length - 3} more`}
             </span>
           </div>
           

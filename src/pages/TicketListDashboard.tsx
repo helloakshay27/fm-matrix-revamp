@@ -138,12 +138,19 @@ export const TicketListDashboard = () => {
 
   const handleSelectTicket = (ticketNumber: string, checked: boolean) => {
     console.log('Selecting ticket:', ticketNumber, 'checked:', checked);
+    
+    // Find the ticket to get its ID
+    const ticket = tickets.find(t => t.ticket_number === ticketNumber);
+    if (!ticket) return;
+    
+    const ticketId = ticket.id.toString();
+    
     setSelectedTickets(prev => {
       const newSelection = checked 
-        ? [...prev, ticketNumber]
-        : prev.filter(id => id !== ticketNumber);
+        ? [...prev, ticketId]
+        : prev.filter(id => id !== ticketId);
       
-      console.log('New selection:', newSelection);
+      console.log('New selection (ticket IDs):', newSelection);
       setSelectAll(newSelection.length === tickets.length && tickets.length > 0);
       
       return newSelection;
@@ -154,9 +161,9 @@ export const TicketListDashboard = () => {
     console.log('Select all:', checked);
     setSelectAll(checked);
     if (checked) {
-      const allTicketNumbers = tickets.map(ticket => ticket.ticket_number);
-      console.log('Selecting all tickets:', allTicketNumbers);
-      setSelectedTickets(allTicketNumbers);
+      const allTicketIds = tickets.map(ticket => ticket.id.toString());
+      console.log('Selecting all tickets (IDs):', allTicketIds);
+      setSelectedTickets(allTicketIds);
     } else {
       setSelectedTickets([]);
     }
@@ -215,7 +222,7 @@ export const TicketListDashboard = () => {
     console.log('Exporting selected tickets:', selectedTickets);
 
     const selectedTicketData = tickets.filter(ticket => 
-      selectedTickets.includes(ticket.ticket_number)
+      selectedTickets.includes(ticket.id.toString())
     );
 
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -255,7 +262,7 @@ export const TicketListDashboard = () => {
   };
 
   const selectedTicketObjects = tickets.filter(ticket => 
-    selectedTickets.includes(ticket.ticket_number)
+    selectedTickets.includes(ticket.id.toString())
   );
 
   console.log('Current selected tickets:', selectedTickets);
@@ -384,7 +391,7 @@ export const TicketListDashboard = () => {
                   <TableRow key={ticket.ticket_number}>
                     <TableCell>
                       <Checkbox
-                        checked={selectedTickets.includes(ticket.ticket_number)}
+                        checked={selectedTickets.includes(ticket.id.toString())}
                         onCheckedChange={(checked) => handleSelectTicket(ticket.ticket_number, checked as boolean)}
                       />
                     </TableCell>
