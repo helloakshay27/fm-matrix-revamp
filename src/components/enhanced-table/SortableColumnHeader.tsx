@@ -68,7 +68,7 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
         )}
         
         <div 
-          className="flex items-center gap-1 flex-1 select-none"
+          className="flex items-center justify-center gap-1 flex-1 select-none"
           onClick={handleClick}
         >
           <span>{children}</span>
