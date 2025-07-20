@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Upload, Filter, Download, Eye, Edit, Copy, Calendar, BarChart3, Clock, Settings, Wrench, Shield } from 'lucide-react';
@@ -9,202 +9,30 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ScheduleSelector } from '@/components/ScheduleSelector';
 import { RecentSchedulesSidebar } from '@/components/RecentSchedulesSidebar';
 import { Cell, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const scheduleData = [{
-  id: '11878',
-  activityName: 'meter reading',
-  amcId: '',
-  type: 'PPM',
-  scheduleType: 'Asset',
-  noOfAssociation: '2',
-  validFrom: '01/05/2025, 12:00 AM',
-  validTill: '31/05/2025, 11:59 PM',
-  category: 'Technical',
-  active: true,
-  createdOn: '21/05/2025, 01:51 PM'
-}, {
-  id: '11372',
-  activityName: 'All task types 123',
-  amcId: '',
-  type: 'Routine',
-  scheduleType: 'Service',
-  noOfAssociation: '1',
-  validFrom: '14/08/2024, 05:30 AM',
-  validTill: '31/08/2025, 05:30 AM',
-  category: 'Non Technical',
-  active: true,
-  createdOn: '14/08/2024, 04:17 PM'
-}, {
-  id: '11877',
-  activityName: 'HVAC System Maintenance',
-  amcId: 'AMC001',
-  type: 'PPM',
-  scheduleType: 'Asset',
-  noOfAssociation: '5',
-  validFrom: '01/06/2025, 08:00 AM',
-  validTill: '30/06/2025, 08:00 PM',
-  category: 'Technical',
-  active: true,
-  createdOn: '20/05/2025, 10:30 AM'
-}, {
-  id: '11876',
-  activityName: 'Fire Safety Inspection',
-  amcId: 'AMC002',
-  type: 'Safety',
-  scheduleType: 'Service',
-  noOfAssociation: '3',
-  validFrom: '15/05/2025, 09:00 AM',
-  validTill: '15/08/2025, 05:00 PM',
-  category: 'Technical',
-  active: false,
-  createdOn: '19/05/2025, 02:15 PM'
-}, {
-  id: '11875',
-  activityName: 'Elevator Maintenance Check',
-  amcId: 'AMC003',
-  type: 'PPM',
-  scheduleType: 'Asset',
-  noOfAssociation: '2',
-  validFrom: '10/05/2025, 07:00 AM',
-  validTill: '10/05/2026, 07:00 AM',
-  category: 'Technical',
-  active: true,
-  createdOn: '18/05/2025, 11:45 AM'
-}, {
-  id: '11874',
-  activityName: 'Cleaning Service - Washrooms',
-  amcId: '',
-  type: 'Routine',
-  scheduleType: 'Service',
-  noOfAssociation: '4',
-  validFrom: '01/05/2025, 06:00 AM',
-  validTill: '30/04/2026, 11:59 PM',
-  category: 'Non Technical',
-  active: true,
-  createdOn: '17/05/2025, 03:20 PM'
-}, {
-  id: '11873',
-  activityName: 'Security System Check',
-  amcId: 'AMC004',
-  type: 'PPM',
-  scheduleType: 'Asset',
-  noOfAssociation: '6',
-  validFrom: '05/05/2025, 10:00 AM',
-  validTill: '05/11/2025, 10:00 PM',
-  category: 'Technical',
-  active: true,
-  createdOn: '16/05/2025, 09:10 AM'
-}, {
-  id: '11872',
-  activityName: 'Garden Maintenance',
-  amcId: '',
-  type: 'Routine',
-  scheduleType: 'Service',
-  noOfAssociation: '2',
-  validFrom: '20/04/2025, 07:30 AM',
-  validTill: '20/10/2025, 06:30 PM',
-  category: 'Non Technical',
-  active: false,
-  createdOn: '15/05/2025, 04:45 PM'
-}, {
-  id: '11871',
-  activityName: 'Generator Testing',
-  amcId: 'AMC005',
-  type: 'PPM',
-  scheduleType: 'Asset',
-  noOfAssociation: '1',
-  validFrom: '25/04/2025, 08:00 AM',
-  validTill: '25/04/2026, 08:00 AM',
-  category: 'Technical',
-  active: true,
-  createdOn: '14/05/2025, 01:30 PM'
-}, {
-  id: '11870',
-  activityName: 'Water Tank Cleaning',
-  amcId: '',
-  type: 'Routine',
-  scheduleType: 'Service',
-  noOfAssociation: '3',
-  validFrom: '15/04/2025, 09:00 AM',
-  validTill: '15/07/2025, 09:00 AM',
-  category: 'Non Technical',
-  active: true,
-  createdOn: '13/05/2025, 11:15 AM'
-}, {
-  id: '11869',
-  activityName: 'Electrical Panel Inspection',
-  amcId: 'AMC006',
-  type: 'Safety',
-  scheduleType: 'Asset',
-  noOfAssociation: '4',
-  validFrom: '10/04/2025, 10:00 AM',
-  validTill: '10/01/2026, 10:00 AM',
-  category: 'Technical',
-  active: true,
-  createdOn: '12/05/2025, 02:50 PM'
-}, {
-  id: '11868',
-  activityName: 'Pest Control Service',
-  amcId: '',
-  type: 'Routine',
-  scheduleType: 'Service',
-  noOfAssociation: '2',
-  validFrom: '01/04/2025, 06:00 AM',
-  validTill: '31/03/2026, 11:59 PM',
-  category: 'Non Technical',
-  active: false,
-  createdOn: '11/05/2025, 10:25 AM'
-}, {
-  id: '11867',
-  activityName: 'Air Conditioning Filter Change',
-  amcId: 'AMC007',
-  type: 'PPM',
-  scheduleType: 'Asset',
-  noOfAssociation: '8',
-  validFrom: '20/03/2025, 09:30 AM',
-  validTill: '20/09/2025, 09:30 AM',
-  category: 'Technical',
-  active: true,
-  createdOn: '10/05/2025, 03:40 PM'
-}, {
-  id: '11866',
-  activityName: 'Floor Polishing Service',
-  amcId: '',
-  type: 'Routine',
-  scheduleType: 'Service',
-  noOfAssociation: '3',
-  validFrom: '15/03/2025, 07:00 AM',
-  validTill: '15/06/2025, 07:00 PM',
-  category: 'Non Technical',
-  active: true,
-  createdOn: '09/05/2025, 12:05 PM'
-}, {
-  id: '11865',
-  activityName: 'UPS Battery Check',
-  amcId: 'AMC008',
-  type: 'PPM',
-  scheduleType: 'Asset',
-  noOfAssociation: '2',
-  validFrom: '01/03/2025, 11:00 AM',
-  validTill: '01/09/2025, 11:00 AM',
-  category: 'Technical',
-  active: true,
-  createdOn: '08/05/2025, 04:20 PM'
-}];
+import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } from '@/services/customFormsAPI';
+import { useQuery } from '@tanstack/react-query';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
-  const [schedules, setSchedules] = useState(scheduleData);
   const [selectedItems, setSelectedItems] = useState<string[]>(['checklist', 'technical-checklist', 'non-technical-checklist']);
+
+  // Fetch custom forms data
+  const { data: customFormsData, isLoading, error } = useQuery({
+    queryKey: ['custom-forms'],
+    queryFn: fetchCustomForms,
+  });
+
+  // Transform the data
+  const schedules = customFormsData ? transformCustomFormsData(customFormsData.custom_forms) : [];
+
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   const handleExport = () => navigate('/maintenance/schedule/export');
   
   const handleToggleActive = (scheduleId: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId ? { ...schedule, active: !schedule.active } : schedule
-    ));
+    // This would typically make an API call to update the active status
+    console.log('Toggle active for schedule:', scheduleId);
   };
   
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
@@ -214,7 +42,6 @@ export const ScheduleListDashboard = () => {
   const columns = [
     { key: 'id', label: 'ID', sortable: true },
     { key: 'activityName', label: 'Activity Name', sortable: true },
-    { key: 'amcId', label: 'AMC ID', sortable: true },
     { key: 'type', label: 'Type', sortable: true },
     { key: 'scheduleType', label: 'Schedule Type', sortable: true },
     { key: 'noOfAssociation', label: 'No. Of Association', sortable: true },
@@ -242,7 +69,7 @@ export const ScheduleListDashboard = () => {
     </div>
   );
 
-  const renderRowActions = (schedule) => (
+  const renderRowActions = (schedule: TransformedScheduleData) => (
     <div className="flex gap-1">
       <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(schedule.id)}>
         <Edit className="w-4 h-4" />
@@ -256,7 +83,7 @@ export const ScheduleListDashboard = () => {
     </div>
   );
 
-  const renderCell = (item, columnKey) => {
+  const renderCell = (item: TransformedScheduleData, columnKey: string) => {
     if (columnKey === 'category') {
       return (
         <span className={`px-2 py-1 rounded text-xs ${
@@ -282,7 +109,7 @@ export const ScheduleListDashboard = () => {
         </div>
       );
     }
-    return item[columnKey];
+    return item[columnKey as keyof TransformedScheduleData];
   };
 
   // Analytics data calculations
@@ -320,10 +147,10 @@ export const ScheduleListDashboard = () => {
   ];
 
   const agingData = [
-    { category: 'Technical PPM', low: 5, medium: 3, high: 2 },
-    { category: 'Technical Routine', low: 2, medium: 1, high: 0 },
-    { category: 'Non-Technical Routine', low: 4, medium: 2, high: 0 },
-    { category: 'Safety', low: 1, medium: 1, high: 0 }
+    { category: 'Technical PPM', low: schedules.filter(s => s.category === 'Technical' && s.type === 'PPM').length, medium: 0, high: 0 },
+    { category: 'Technical Routine', low: schedules.filter(s => s.category === 'Technical' && s.type === 'Routine').length, medium: 0, high: 0 },
+    { category: 'Non-Technical Routine', low: schedules.filter(s => s.category === 'Non Technical' && s.type === 'Routine').length, medium: 0, high: 0 },
+    { category: 'Safety', low: schedules.filter(s => s.type === 'Safety').length, medium: 0, high: 0 }
   ];
 
   const renderAnalyticsTab = () => (
@@ -462,18 +289,33 @@ export const ScheduleListDashboard = () => {
         {renderCustomActions()}
       </div>
 
-      <EnhancedTable
-        data={schedules}
-        columns={columns}
-        renderCell={renderCell}
-        renderActions={renderRowActions}
-        selectable={true}
-        pagination={true}
-        enableExport={true}
-        exportFileName="schedules"
-        onRowClick={handleViewSchedule}
-        storageKey="schedules-table"
-      />
+      {isLoading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-32">
+          <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
+        </div>
+      ) : (
+        <EnhancedTable
+          data={schedules}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderRowActions}
+          selectable={true}
+          pagination={true}
+          enableExport={true}
+          exportFileName="schedules"
+          onRowClick={handleViewSchedule}
+          storageKey="schedules-table"
+          enableSearch={true}
+          searchPlaceholder="Search schedules..."
+        />
+      )}
     </div>
   );
 
