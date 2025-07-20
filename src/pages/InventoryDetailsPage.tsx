@@ -129,9 +129,9 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Type</label>
-                    <p className="font-medium">
-                      Type : {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '-'}
-                    </p>
+                    <Badge className="bg-blue-500 text-white">
+                      {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '-'}
+                    </Badge>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Criticality</label>
