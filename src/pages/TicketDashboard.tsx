@@ -265,12 +265,12 @@ export const TicketDashboard = () => {
     setLoading(true);
     try {
       const response = await ticketManagementAPI.getTickets(page, perPage);
-      setTickets(response.data);
+      setTickets(response.complaints);
       if (response.meta) {
         setTotalPages(response.meta.total_pages);
         setTotalTickets(response.meta.total);
       } else {
-        setTotalTickets(response.data.length);
+        setTotalTickets(response.complaints.length);
       }
     } catch (error) {
       console.error('Error fetching tickets:', error);

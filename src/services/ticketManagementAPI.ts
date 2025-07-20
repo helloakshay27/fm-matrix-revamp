@@ -115,7 +115,7 @@ export interface TicketResponse {
 }
 
 export interface TicketListResponse {
-  data: TicketResponse[];
+  complaints: TicketResponse[];
   meta?: {
     current_page: number;
     per_page: number;
@@ -172,7 +172,10 @@ export const ticketManagementAPI = {
   // Tickets
   async getTickets(page: number = 1, perPage: number = 20): Promise<TicketListResponse> {
     const response = await apiClient.get(`/pms/admin/complaints.json?per_page=${perPage}&page=${page}`);
-    return response.data;
+    return {
+      complaints: response.data.complaints || [],
+      meta: response.data.meta
+    };
   },
 
   // Subcategories

@@ -38,7 +38,7 @@ export const TicketListDashboard = () => {
     setIsLoading(true);
     try {
       const response: TicketListResponse = await ticketManagementAPI.getTickets(currentPage, perPage);
-      setTickets(response.data || []);
+      setTickets(response.complaints || []);
       
       if (response.meta) {
         setTotalPages(response.meta.total_pages || 1);
