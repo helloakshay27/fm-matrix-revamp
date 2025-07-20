@@ -1,4 +1,3 @@
-
 import { apiClient } from '@/utils/apiClient';
 import { ENDPOINTS } from '@/config/apiConfig';
 
@@ -116,10 +115,9 @@ export interface TicketResponse {
 
 export interface TicketListResponse {
   complaints: TicketResponse[];
-  meta?: {
+  pagination?: {
     current_page: number;
-    per_page: number;
-    total: number;
+    total_count: number;
     total_pages: number;
   };
 }
@@ -174,7 +172,7 @@ export const ticketManagementAPI = {
     const response = await apiClient.get(`/pms/admin/complaints.json?per_page=${perPage}&page=${page}`);
     return {
       complaints: response.data.complaints || [],
-      meta: response.data.meta
+      pagination: response.data.pagination
     };
   },
 

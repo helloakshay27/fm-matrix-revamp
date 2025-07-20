@@ -1,13 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText } from 'lucide-react';
 import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
+import { TicketPagination } from '../components/TicketPagination';
 import { ticketManagementAPI, TicketResponse, TicketListResponse } from '../services/ticketManagementAPI';
 import { toast } from 'sonner';
 
@@ -19,30 +19,50 @@ const statusCards = [
   { title: 'Request', count: 308, color: 'bg-[#C72030]', icon: Users }
 ];
 
+const TruncatedDescription = ({ text }: { text: string }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 50;
+  
+  if (!text || text.length <= maxLength) {
+    return <span>{text || '--'}</span>;
+  }
+  
+  return (
+    <div className="w-48">
+      <span className="block">
+        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+      </span>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-[#C72030] text-xs hover:underline mt-1"
+      >
+        {isExpanded ? 'Show less' : 'Show more'}
+      </button>
+    </div>
+  );
+};
+
 export const TicketListDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage] = useState(20);
+  const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchTickets();
-  }, [currentPage]);
-
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async (page: number, itemsPerPage: number) => {
     setIsLoading(true);
     try {
-      const response: TicketListResponse = await ticketManagementAPI.getTickets(currentPage, perPage);
+      const response: TicketListResponse = await ticketManagementAPI.getTickets(page, itemsPerPage);
       setTickets(response.complaints || []);
       
-      if (response.meta) {
-        setTotalPages(response.meta.total_pages || 1);
-        setTotalRecords(response.meta.total || 0);
+      if (response.pagination) {
+        setTotalPages(response.pagination.total_pages || 1);
+        setTotalRecords(response.pagination.total_count || 0);
+        setCurrentPage(response.pagination.current_page || 1);
       }
     } catch (error) {
       toast.error('Failed to fetch tickets');
@@ -50,6 +70,19 @@ export const TicketListDashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchTickets(currentPage, perPage);
+  }, [fetchTickets, currentPage, perPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing per page
   };
 
   const formatDate = (dateString: string) => {
@@ -98,12 +131,6 @@ export const TicketListDashboard = () => {
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "ticket_list.csv");
     link.click();
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -207,7 +234,7 @@ export const TicketListDashboard = () => {
                 <TableRow className="bg-gray-50">
                   <TableHead>View</TableHead>
                   <TableHead>Ticket ID</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead className="w-48">Description</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Sub Category</TableHead>
                   <TableHead>Created By</TableHead>
@@ -243,7 +270,9 @@ export const TicketListDashboard = () => {
                       />
                     </TableCell>
                     <TableCell className="font-medium">{ticket.ticket_number}</TableCell>
-                    <TableCell>{ticket.heading || '--'}</TableCell>
+                    <TableCell>
+                      <TruncatedDescription text={ticket.heading} />
+                    </TableCell>
                     <TableCell>{ticket.category_type || '--'}</TableCell>
                     <TableCell>{ticket.sub_category_type || '--'}</TableCell>
                     <TableCell>{ticket.posted_by || '--'}</TableCell>
@@ -284,54 +313,16 @@ export const TicketListDashboard = () => {
             </Table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-gray-600">
-                Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, totalRecords)} of {totalRecords} results
-              </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = Math.max(1, Math.min(currentPage - 2, totalPages - 4)) + i;
-                  if (pageNum <= totalPages) {
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        style={currentPage === pageNum ? { backgroundColor: '#C72030' } : {}}
-                        className={currentPage === pageNum ? "text-white" : ""}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  }
-                  return null;
-                })}
-
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Enhanced Pagination */}
+          <TicketPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            perPage={perPage}
+            isLoading={isLoading}
+            onPageChange={handlePageChange}
+            onPerPageChange={handlePerPageChange}
+          />
         </>
       )}
 
