@@ -493,8 +493,25 @@ export const CategoryTypeTab: React.FC = () => {
       <EditCategoryModal
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        category={editingCategory}
-        onUpdate={handleUpdate}
+        category={editingCategory ? {
+          id: editingCategory.id.toString(),
+          srNo: editingCategory.id,
+          categoryType: editingCategory.name,
+          assignee: '',
+          responseTime: 24,
+          vendorEmail: false,
+          icon: editingCategory.icon_url,
+          selectedIcon: editingCategory.selected_icon_url
+        } : null}
+        onUpdate={(updatedCategory) => {
+          if (editingCategory) {
+            const updated = {
+              ...editingCategory,
+              name: updatedCategory.categoryType
+            };
+            handleUpdate(updated);
+          }
+        }}
       />
     </div>
   );

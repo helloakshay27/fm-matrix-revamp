@@ -45,6 +45,7 @@ interface SubCategoryType {
   helpdesk_category_name: string;
   name: string;
   icon_url: string;
+  customer_enabled?: boolean;
   location_config: {
     building_enabled: boolean;
     wing_enabled: boolean;
@@ -245,8 +246,14 @@ export const SubCategoryTab: React.FC = () => {
         ) : (
           <span className="text-gray-400">No icon</span>
         );
+      case 'helpdesk_category_name':
+        return item.helpdesk_category_name || '--';
+      case 'name':
+        return item.name || '--';
+      case 'id':
+        return item.id || '--';
       default:
-        return item[columnKey as keyof SubCategoryType] || '--';
+        return '--';
     }
   };
 
@@ -551,7 +558,18 @@ export const SubCategoryTab: React.FC = () => {
       <EditSubCategoryModal
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        subCategory={editingSubCategory}
+        subCategory={editingSubCategory ? {
+          id: editingSubCategory.id.toString(),
+          srNo: parseInt(editingSubCategory.id),
+          category: editingSubCategory.helpdesk_category_name || '',
+          subCategory: editingSubCategory.name || '',
+          building: editingSubCategory.location_config?.building_enabled || false,
+          wing: editingSubCategory.location_config?.wing_enabled || false,
+          floor: editingSubCategory.location_config?.floor_enabled || false,
+          zone: editingSubCategory.location_config?.zone_enabled || false,
+          room: editingSubCategory.location_config?.room_enabled || false,
+          customerEnabled: editingSubCategory.customer_enabled || false
+        } : null}
         onUpdate={() => fetchData()}
       />
     </div>

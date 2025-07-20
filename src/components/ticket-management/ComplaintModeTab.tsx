@@ -178,8 +178,20 @@ export const ComplaintModeTab: React.FC = () => {
       <EditComplaintModeModal
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        complaintMode={editingComplaintMode}
-        onUpdate={handleUpdate}
+        complaintMode={editingComplaintMode ? {
+          id: editingComplaintMode.id.toString(),
+          srNo: editingComplaintMode.id,
+          complaintMode: editingComplaintMode.name
+        } : null}
+        onUpdate={(updatedMode) => {
+          if (editingComplaintMode) {
+            const updated = {
+              ...editingComplaintMode,
+              name: updatedMode.complaintMode
+            };
+            handleUpdate(updated);
+          }
+        }}
       />
     </div>
   );
