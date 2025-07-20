@@ -465,14 +465,44 @@ export const TicketDashboard = () => {
     return date.toLocaleDateString('en-GB');
   };
 
+  const TruncatedDescription = ({ text, maxLength = 50 }: { text: string; maxLength?: number }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    
+    if (!text) return <span>--</span>;
+    
+    if (text.length <= maxLength) {
+      return <span>{text}</span>;
+    }
+    
+    return (
+      <div className="w-48">
+        <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
+          {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+        </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in"
+        >
+          {isExpanded ? 'Show less' : 'Show more'}
+        </button>
+      </div>
+    );
+  };
+
   const renderCell = (item, columnKey) => {
+    if (columnKey === 'heading') {
+      return <TruncatedDescription text={item.heading} />;
+    }
     if (columnKey === 'issue_status') {
-      return <span className={`px-2 py-1 rounded text-xs ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+      return <span className={`px-2 py-1 rounded text-xs animate-scale-in ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
           {item.issue_status}
         </span>;
     }
     if (columnKey === 'priority') {
-      return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
+      return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 animate-scale-in">
           {item.priority}
         </span>;
     }
@@ -836,25 +866,78 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Tickets Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto animate-fade-in">
             {loading ? (
               <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
               </div>
             ) : (
-              <EnhancedTable 
-                data={safeTickets} 
-                columns={columns} 
-                renderCell={renderCell} 
-                renderActions={renderRowActions} 
-                selectable={true} 
-                pagination={true} 
-                pageSize={perPage}
-                enableExport={true} 
-                exportFileName="tickets" 
-                onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)} 
-                storageKey="tickets-table" 
-              />
+              <>
+                <EnhancedTable 
+                  data={safeTickets} 
+                  columns={columns} 
+                  renderCell={renderCell} 
+                  renderActions={renderRowActions} 
+                  selectable={true} 
+                  pagination={false}
+                  enableExport={true} 
+                  exportFileName="tickets" 
+                  onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)} 
+                  storageKey="tickets-table" 
+                />
+                
+                {/* Custom Pagination */}
+                <div className="flex items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span>
+                      Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, totalTickets)} of {totalTickets} results
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1 || loading}
+                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex space-x-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNum = currentPage <= 3 ? i + 1 : 
+                                       currentPage >= totalPages - 2 ? totalPages - 4 + i :
+                                       currentPage - 2 + i;
+                        
+                        if (pageNum < 1 || pageNum > totalPages) return null;
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            disabled={loading}
+                            className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${
+                              currentPage === pageNum
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-white border-gray-300 hover:bg-gray-50'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages || loading}
+                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </TabsContent>
