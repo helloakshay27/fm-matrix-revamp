@@ -126,10 +126,8 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
-  async getSites(userId?: string) {
-    // Get user_id from localStorage or use provided/default
-    const defaultUserId = userId || localStorage.getItem('userId') || '12437';
-    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${defaultUserId}`);
+  async getSites(userId: string) {
+    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
     return response.data;
   },
 
@@ -175,7 +173,7 @@ export const ticketManagementAPI = {
   },
 
   async getSubCategories() {
-    const response = await apiClient.get('/pms/admin/get_all_helpdesk_sub_categories');
+    const response = await apiClient.get('/pms/admin/get_all_helpdesk_sub_categories.json');
     return response.data;
   },
 
