@@ -95,6 +95,7 @@ export interface ComplaintModeFormData {
 
 // Ticket Types
 export interface TicketResponse {
+  id: number;
   ticket_number: string;
   heading: string;
   category_type: string;
@@ -450,13 +451,13 @@ export const ticketManagementAPI = {
   },
 
   // New methods for ticket actions
-  async markAsGoldenTicket(ticketIds: string[]) {
+  async markAsGoldenTicket(ticketIds: number[]) {
     const idsParam = ticketIds.join(',');
     const response = await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${idsParam}]`);
     return response.data;
   },
 
-  async markAsFlagged(ticketIds: string[]) {
+  async markAsFlagged(ticketIds: number[]) {
     const idsParam = ticketIds.join(',');
     const response = await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${idsParam}]`);
     return response.data;
