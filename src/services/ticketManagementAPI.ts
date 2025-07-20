@@ -95,7 +95,6 @@ export interface ComplaintModeFormData {
 
 // Ticket Types
 export interface TicketResponse {
-  id: number;
   ticket_number: string;
   heading: string;
   category_type: string;
@@ -450,50 +449,16 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
-  // Enhanced methods for ticket actions with better error handling
-  async markAsGoldenTicket(ticketIds: number[]) {
-    console.log('API call - markAsGoldenTicket with IDs:', ticketIds);
-    
-    if (!ticketIds || ticketIds.length === 0) {
-      throw new Error('No ticket IDs provided');
-    }
-
-    // Format the IDs as a comma-separated list within brackets
-    const idsParam = ticketIds.join(', ');
-    const url = `/pms/admin/complaints/mark_as_golden_ticket?ids=[${idsParam}]`;
-    
-    console.log('Making request to:', url);
-    
-    try {
-      const response = await apiClient.post(url);
-      console.log('Golden Ticket API response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Golden Ticket API error:', error);
-      throw error;
-    }
+  // New methods for ticket actions
+  async markAsGoldenTicket(ticketIds: string[]) {
+    const idsParam = ticketIds.join(',');
+    const response = await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${idsParam}]`);
+    return response.data;
   },
 
-  async markAsFlagged(ticketIds: number[]) {
-    console.log('API call - markAsFlagged with IDs:', ticketIds);
-    
-    if (!ticketIds || ticketIds.length === 0) {
-      throw new Error('No ticket IDs provided');
-    }
-
-    // Format the IDs as a comma-separated list within brackets
-    const idsParam = ticketIds.join(', ');
-    const url = `/pms/admin/complaints/mark_as_flagged?ids=[${idsParam}]`;
-    
-    console.log('Making request to:', url);
-    
-    try {
-      const response = await apiClient.post(url);
-      console.log('Flag API response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Flag API error:', error);
-      throw error;
-    }
+  async markAsFlagged(ticketIds: string[]) {
+    const idsParam = ticketIds.join(',');
+    const response = await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${idsParam}]`);
+    return response.data;
   },
 };
