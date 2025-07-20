@@ -53,16 +53,21 @@ export const AttendanceDetailsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/maintenance/attendance')}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Attendance List
-        </Button>
+        <div className="flex items-center mb-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              console.log('Back button clicked');
+              navigate('/maintenance/attendance');
+            }}
+            className="p-1 hover:bg-gray-100 mr-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <p className="text-[#1a1a1a] opacity-70">Attendance &gt; Attendance Details</p>
+        </div>
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Attendance &gt; Attendance Details</p>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE DETAILS</h1>
         </div>
       </div>
