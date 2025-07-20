@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Trash2, QrCode, LogIn, X, Users, Package, Download, Loader2, Ticket, MessageSquare } from 'lucide-react';
+import { RotateCcw, Trash2, QrCode, LogIn, X, Users, Package, Download, Loader2 } from 'lucide-react';
 import { BASE_URL, getAuthHeader } from '@/config/apiConfig';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,22 +13,25 @@ interface Asset {
 interface AssetSelectionPanelProps {
   selectedCount: number;
   selectedAssets: Asset[];
-  onGoldenTicket: () => void;
-  onSlack: () => void;
-  onExport: () => void;
+  onMoveAsset: () => void;
+  onDisposeAsset: () => void;
+  onPrintQRCode: () => void;
+  onCheckIn: () => void;
   onClearSelection: () => void;
 }
 
 export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   selectedCount,
   selectedAssets,
-  onGoldenTicket,
-  onSlack,
-  onExport,
+  onMoveAsset,
+  onDisposeAsset,
+  onPrintQRCode,
+  onCheckIn,
   onClearSelection
 }) => {
   const [showAll, setShowAll] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPrintingQR, setIsPrintingQR] = useState(false);
   const { toast } = useToast();
 
   const handleClearClick = () => {
@@ -103,6 +106,66 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     }
   };
 
+  const handlePrintQRCode = async () => {
+    if (selectedAssets.length === 0) {
+      toast({
+        title: "No assets selected",
+        description: "Please select at least one asset to print QR codes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPrintingQR(true);
+    
+    try {
+      const urlParams = new URLSearchParams();
+      selectedAssets.forEach(asset => {
+        urlParams.append('asset_ids[]', asset.id);
+      });
+      
+      const url = `${BASE_URL}/pms/assets/print_qr_codes?${urlParams.toString()}`;
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Accept': 'application/pdf',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`QR code generation failed: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      
+      // Create and trigger download
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'qr_codes.pdf';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      toast({
+        title: "QR codes generated successfully",
+        description: `Successfully generated QR codes for ${selectedAssets.length} asset(s).`,
+      });
+    } catch (error) {
+      console.error('QR code generation error:', error);
+      toast({
+        title: "QR code generation failed",
+        description: error instanceof Error ? error.message : "Failed to generate QR codes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPrintingQR(false);
+    }
+  };
 
   const getDisplayText = () => {
     if (selectedAssets.length === 0) return '';
@@ -143,25 +206,41 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={onGoldenTicket} className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto">
-            <Ticket className="w-4 h-4" />
-            <span className="text-xs font-medium">Golden Ticket</span>
+          <Button variant="ghost" size="sm" onClick={onMoveAsset} className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto">
+            <Users className="w-4 h-4" />
+            <span className="text-xs font-medium">Move Asset</span>
           </Button>
           
-          <Button variant="ghost" size="sm" onClick={onSlack} className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto">
-            <MessageSquare className="w-4 h-4" />
-            <span className="text-xs font-medium">Slack</span>
+          <Button variant="ghost" size="sm" onClick={onDisposeAsset} className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto">
+            <Package className="w-4 h-4" />
+            <span className="text-xs font-medium">Dispose Asset</span>
           </Button>
           
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={onExport} 
+            onClick={handleExport} 
             disabled={isExporting}
             className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto disabled:opacity-50"
           >
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             <span className="text-xs font-medium">Export</span>
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handlePrintQRCode} 
+            disabled={isPrintingQR}
+            className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 px-2 py-2 h-auto disabled:opacity-50"
+          >
+            {isPrintingQR ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+            <span className="text-xs font-medium">Print QR Code</span>
+          </Button>
+          
+          <Button size="sm" onClick={onCheckIn} className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 px-4 py-2 h-auto font-bold text-xs">
+            <LogIn className="w-4 h-4" />
+            <span>CHECK IN</span>
           </Button>
           
           <div className="w-px h-8 bg-gray-300 mx-1"></div>

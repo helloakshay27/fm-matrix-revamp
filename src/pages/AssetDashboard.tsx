@@ -281,22 +281,28 @@ export const AssetDashboard = () => {
   };
 
   // Selection panel handlers
-  const handleGoldenTicket = () => {
-    console.log('Golden ticket clicked for', selectedAssets.length, 'assets');
+  const handleMoveAsset = () => {
+    console.log('Move asset clicked for', selectedAssets.length, 'assets');
+    const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id));
+    navigate('/maintenance/asset/move', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     handleSelectAll(false);
   };
 
-  const handleSlack = () => {
-    console.log('Slack clicked for', selectedAssets.length, 'assets');
+  const handleDisposeAsset = () => {
+    console.log('Dispose asset clicked for', selectedAssets.length, 'assets');
+    const selectedAssetObjects = displayAssets.filter(asset => selectedAssets.includes(asset.id));
+    navigate('/maintenance/asset/dispose', { state: { selectedAssets: selectedAssetObjects } });
     // Clear selection to close the panel
     handleSelectAll(false);
   };
 
-  const handleExport = () => {
-    console.log('Export clicked for', selectedAssets.length, 'assets');
-    // Clear selection to close the panel
-    handleSelectAll(false);
+  const handlePrintQRCode = () => {
+    console.log('Print QR code clicked for', selectedAssets.length, 'assets');
+  };
+
+  const handleCheckIn = () => {
+    console.log('Check in clicked for', selectedAssets.length, 'assets');
   };
 
   const handleClearSelection = () => {
@@ -619,14 +625,15 @@ export const AssetDashboard = () => {
 
                 {/* Selection Panel - positioned as overlay within table container */}
                 {selectedAssets.length > 0 && (
-                   <AssetSelectionPanel
-                     selectedCount={selectedAssets.length}
-                     selectedAssets={selectedAssetObjects}
-                     onGoldenTicket={handleGoldenTicket}
-                     onSlack={handleSlack}
-                     onExport={handleExport}
-                     onClearSelection={handleClearSelection}
-                   />
+                  <AssetSelectionPanel
+                    selectedCount={selectedAssets.length}
+                    selectedAssets={selectedAssetObjects}
+                    onMoveAsset={handleMoveAsset}
+                    onDisposeAsset={handleDisposeAsset}
+                    onPrintQRCode={handlePrintQRCode}
+                    onCheckIn={handleCheckIn}
+                    onClearSelection={handleClearSelection}
+                  />
                 )}
               </div>
 
