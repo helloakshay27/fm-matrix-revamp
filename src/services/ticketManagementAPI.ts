@@ -169,6 +169,15 @@ export interface OccupantUserResponse {
   email: string;
   mobile: string;
   company: string;
+  unit_id: number;
+  department_id: number;
+  country_code: string;
+  designation?: string;
+  lock_user_permission: {
+    status: string;
+    department_id?: number;
+    designation?: string;
+  };
 }
 
 // API Services
