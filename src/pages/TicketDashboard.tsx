@@ -8,6 +8,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TicketSelector } from '@/components/TicketSelector';
 import { RecentTicketsSidebar } from '@/components/RecentTicketsSidebar';
+import { TicketSelectionPanel } from '@/components/TicketSelectionPanel';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -250,6 +251,7 @@ export const TicketDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
+  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const perPage = 20;
 
   // Drag and drop sensors
@@ -332,6 +334,101 @@ export const TicketDashboard = () => {
 
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
+  };
+
+  // Selection handlers
+  const handleTicketSelection = (ticketId: string, isSelected: boolean) => {
+    console.log('TicketDashboard - Ticket selection changed:', ticketId, isSelected);
+    setSelectedTickets(prev => {
+      if (isSelected) {
+        return [...prev, ticketId];
+      } else {
+        return prev.filter(id => id !== ticketId);
+      }
+    });
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    console.log('TicketDashboard - Select all changed:', isSelected);
+    if (isSelected) {
+      const allTicketIds = tickets.map(ticket => ticket.ticket_number);
+      setSelectedTickets(allTicketIds);
+    } else {
+      setSelectedTickets([]);
+    }
+  };
+
+  const handleClearSelection = () => {
+    console.log('TicketDashboard - Clearing selection');
+    setSelectedTickets([]);
+  };
+
+  const handleGoldenTicket = async () => {
+    console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
+    try {
+      await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
+      toast({
+        title: "Success",
+        description: "Tickets marked as Golden Ticket successfully",
+      });
+      await fetchTickets(currentPage);
+      setSelectedTickets([]);
+    } catch (error) {
+      console.error('Golden Ticket action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark tickets as Golden Ticket",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFlag = async () => {
+    console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
+    try {
+      await ticketManagementAPI.markAsFlagged(selectedTickets);
+      toast({
+        title: "Success",
+        description: "Tickets flagged successfully",
+      });
+      await fetchTickets(currentPage);
+      setSelectedTickets([]);
+    } catch (error) {
+      console.error('Flag action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to flag tickets",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleExport = () => {
+    console.log('TicketDashboard - Export action for tickets:', selectedTickets);
+    const selectedTicketObjects = tickets.filter(ticket => 
+      selectedTickets.includes(ticket.ticket_number)
+    );
+    
+    const csvContent = [
+      ['Ticket ID', 'Description', 'Category', 'Status', 'Priority', 'Created By', 'Assigned To'],
+      ...selectedTicketObjects.map(ticket => [
+        ticket.ticket_number,
+        ticket.heading,
+        ticket.category_type,
+        ticket.issue_status,
+        ticket.priority,
+        ticket.posted_by,
+        ticket.assigned_to
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tickets_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   // Handle drag end for chart reordering
@@ -883,7 +980,12 @@ export const TicketDashboard = () => {
                   enableExport={true} 
                   exportFileName="tickets" 
                   onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)} 
-                  storageKey="tickets-table" 
+                  storageKey="tickets-table"
+                  enableSelection={true}
+                  selectedItems={selectedTickets}
+                  onSelectItem={handleTicketSelection}
+                  onSelectAll={handleSelectAll}
+                  getItemId={(ticket) => ticket.ticket_number}
                 />
                 
                 {/* Custom Pagination */}
@@ -950,6 +1052,18 @@ export const TicketDashboard = () => {
           console.log('Applied filters:', filters);
           setIsFilterOpen(false);
         }} 
+      />
+
+      {/* Ticket Selection Panel */}
+      <TicketSelectionPanel
+        selectedTickets={selectedTickets}
+        selectedTicketObjects={tickets.filter(ticket => 
+          selectedTickets.includes(ticket.ticket_number)
+        )}
+        onGoldenTicket={handleGoldenTicket}
+        onFlag={handleFlag}
+        onExport={handleExport}
+        onClearSelection={handleClearSelection}
       />
     </div>
   );
