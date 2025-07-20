@@ -50,7 +50,7 @@ export const API_CONFIG = {
     // New endpoints for ticket creation
     CREATE_TICKET: '/pms/admin/complaints.json',
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
-    ACCOUNT_DETAILS: '/account.json',
+    ACCOUNT_DETAILS: '/api/users/account.json',
     OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
   },
 } as const
