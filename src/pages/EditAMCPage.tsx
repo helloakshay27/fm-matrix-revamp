@@ -1033,7 +1033,7 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }} 
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update & Show Details'}
+            {updateLoading ? 'Updating...' : 'Update & show details'}
           </Button>
           <Button 
             type="submit" 
@@ -1041,7 +1041,7 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }} 
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update & Schedule AMC'}
+            {updateLoading ? 'Updating...' : 'Update & Create New Service'}
           </Button>
         </div>
       </form>
