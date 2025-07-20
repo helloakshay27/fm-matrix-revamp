@@ -135,6 +135,7 @@ export interface CreateTicketFormData {
   of_phase: string;
   site_id: number;
   id_user?: number;
+  sel_id_user?: number;
   on_behalf_of: string;
   complaint_type: string;
   category_type_id: number;
@@ -247,6 +248,9 @@ export const ticketManagementAPI = {
     // Optional fields
     if (ticketData.id_user) {
       formData.append('complaint[id_user]', ticketData.id_user.toString());
+    }
+    if (ticketData.sel_id_user) {
+      formData.append('complaint[sel_id_user]', ticketData.sel_id_user.toString());
     }
     if (ticketData.assigned_to) {
       formData.append('complaint[assigned_to]', ticketData.assigned_to.toString());

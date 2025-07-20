@@ -31,8 +31,10 @@ export const AddTicketDashboard = () => {
   const [onBehalfOf, setOnBehalfOf] = useState('self');
   const [ticketType, setTicketType] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFieldsReadOnly, setIsFieldsReadOnly] = useState(false);
   
   // Dropdown data states
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
@@ -70,6 +72,26 @@ export const AddTicketDashboard = () => {
     loadOccupantUsers();
     if (onBehalfOf === 'self') {
       loadUserAccount();
+    }
+  }, [onBehalfOf]);
+
+  // Reset form when behalf selection changes
+  useEffect(() => {
+    setSelectedUser('');
+    setSelectedUserId(null);
+    setIsFieldsReadOnly(false);
+    
+    if (onBehalfOf === 'self') {
+      loadUserAccount();
+    } else {
+      // Clear form data when switching to behalf of others
+      setFormData(prev => ({
+        ...prev,
+        name: '',
+        contactNumber: '',
+        department: '',
+        unit: ''
+      }));
     }
   }, [onBehalfOf]);
 
@@ -144,10 +166,46 @@ export const AddTicketDashboard = () => {
         department: account.department_name || '',
         contactNumber: account.mobile || ''
       }));
+      setIsFieldsReadOnly(true);
     } catch (error) {
       console.error('Error loading user account:', error);
     } finally {
       setLoadingAccount(false);
+    }
+  };
+
+  // Handle user selection and populate details
+  const handleUserSelection = (userId: string) => {
+    setSelectedUser(userId);
+    const userIdNum = parseInt(userId);
+    setSelectedUserId(userIdNum);
+
+    if (onBehalfOf === 'fm-user') {
+      const selectedFmUser = fmUsers.find(user => user.id === userIdNum);
+      if (selectedFmUser) {
+        setFormData(prev => ({
+          ...prev,
+          name: `${selectedFmUser.firstname} ${selectedFmUser.lastname}`,
+          contactNumber: selectedFmUser.mobile || '',
+          department: selectedFmUser.lock_user_permission?.designation || selectedFmUser.designation || '',
+          unit: `Unit ${selectedFmUser.unit_id || ''}`,
+          site: selectedFmUser.company_name || 'Lockated'
+        }));
+        setIsFieldsReadOnly(true);
+      }
+    } else if (onBehalfOf === 'occupant-user') {
+      const selectedOccupantUser = occupantUsers.find(user => user.id === userIdNum);
+      if (selectedOccupantUser) {
+        setFormData(prev => ({
+          ...prev,
+          name: `${selectedOccupantUser.firstname} ${selectedOccupantUser.lastname}`,
+          contactNumber: selectedOccupantUser.mobile || '',
+          department: selectedOccupantUser.lock_user_permission?.designation || '',
+          unit: `Unit ${selectedOccupantUser.unit_id || ''}`,
+          site: selectedOccupantUser.company || 'Lockated'
+        }));
+        setIsFieldsReadOnly(true);
+      }
     }
   };
 
@@ -185,6 +243,16 @@ export const AddTicketDashboard = () => {
       return;
     }
 
+    // Validate user selection for behalf of others
+    if (onBehalfOf !== 'self' && !selectedUserId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a user when creating ticket on behalf of others",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const siteId = localStorage.getItem('siteId') || '2189';
@@ -204,12 +272,16 @@ export const AddTicketDashboard = () => {
         wing_id: 1,
         area_id: 1,
         floor_id: 1,
+        // Add sel_id_user for behalf of others
+        ...(onBehalfOf !== 'self' && selectedUserId && { sel_id_user: selectedUserId }),
         // Optional fields
         ...(selectedUser && { id_user: parseInt(selectedUser) }),
         ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
         ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
         ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) })
       };
+
+      console.log('Ticket payload:', ticketData);
 
       await ticketManagementAPI.createTicket(ticketData, attachedFiles);
       
@@ -299,8 +371,8 @@ export const AddTicketDashboard = () => {
           {/* User Selection Dropdown */}
           {onBehalfOf !== 'self' && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select User</label>
-              <Select value={selectedUser} onValueChange={setSelectedUser} disabled={loadingUsers}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
+              <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
                 <SelectTrigger>
                   <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
                 </SelectTrigger>
@@ -316,15 +388,23 @@ export const AddTicketDashboard = () => {
           )}
 
           {/* Requestor Details */}
-          <h3 className="font-medium mb-3">Requestor Details</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <h3 className="font-medium mb-3">
+            Requestor Details
+            {isFieldsReadOnly && (
+              <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                Auto-populated
+              </span>
+            )}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
               <Input
                 placeholder="Enter Name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                disabled={onBehalfOf === 'self' && loadingAccount}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
+                disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
+                className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
             <div>
@@ -332,7 +412,9 @@ export const AddTicketDashboard = () => {
               <Input
                 placeholder="Enter Contact Number"
                 value={formData.contactNumber}
-                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, contactNumber: e.target.value })}
+                disabled={isFieldsReadOnly}
+                className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
             <div>
@@ -340,7 +422,9 @@ export const AddTicketDashboard = () => {
               <Input
                 placeholder="Enter Site"
                 value={formData.site}
-                onChange={(e) => setFormData({ ...formData, site: e.target.value })}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, site: e.target.value })}
+                disabled={isFieldsReadOnly}
+                className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
             <div>
@@ -348,8 +432,19 @@ export const AddTicketDashboard = () => {
               <Input
                 placeholder="Enter Department"
                 value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                disabled={onBehalfOf === 'self' && loadingAccount}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
+                disabled={isFieldsReadOnly}
+                className={isFieldsReadOnly ? "bg-gray-50" : ""}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+              <Input
+                placeholder="Enter Unit"
+                value={formData.unit}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, unit: e.target.value })}
+                disabled={isFieldsReadOnly}
+                className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
           </div>
