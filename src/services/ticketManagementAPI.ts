@@ -274,7 +274,7 @@ export const ticketManagementAPI = {
 
   // Get subcategories by category ID
   async getSubCategoriesByCategory(categoryId: number): Promise<SubCategoryResponse[]> {
-    const response = await apiClient.get(`${ENDPOINTS.GET_SUBCATEGORIES}?category_type_id=${categoryId}`);
+    const response = await apiClient.get(`${ENDPOINTS.GET_SUBCATEGORIES}.json?category_type_id=${categoryId}`);
     return response.data.sub_categories || [];
   },
 
