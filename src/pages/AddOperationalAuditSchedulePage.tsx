@@ -18,6 +18,18 @@ const steps = [
   { id: 5, title: 'Asset Mapping', completed: false, active: false }
 ];
 
+interface MappingRow {
+  id: string;
+  asset: string;
+  readingEBKVAH: string;
+  readingDGKVAH: string;
+  voltage: string;
+  current: string;
+  kW: string;
+  pF: string;
+  thdI: string;
+}
+
 export const AddOperationalAuditSchedulePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -59,7 +71,7 @@ export const AddOperationalAuditSchedulePage = () => {
   });
 
   const [mapping, setMapping] = useState({
-    mappings: []
+    mappings: [] as MappingRow[]
   });
 
   const handleStepClick = (stepId: number) => {
@@ -112,7 +124,7 @@ export const AddOperationalAuditSchedulePage = () => {
   };
 
   const handleSubmit = () => {
-    console.log('Form submitted:', { basicConfig, scheduleSetup });
+    console.log('Form submitted:', { basicConfig, scheduleSetup, mapping });
     toast({
       title: "Schedule Added",
       description: "Your operational audit schedule has been successfully created.",
