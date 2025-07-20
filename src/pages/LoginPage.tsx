@@ -1,18 +1,10 @@
+
 import React, { useState } from 'react';
 import { TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building2, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getOrganizationsByEmail, 
-  loginUser, 
-  saveUser, 
-  saveToken, 
-  saveBaseUrl,
-  saveLoginResponse,
-  saveSelectedOrganization,
-  Organization 
-} from '@/utils/auth';
+import { getOrganizationsByEmail, loginUser, saveUser, saveToken, saveBaseUrl, Organization } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const muiFieldStyles = {
@@ -49,6 +41,7 @@ const muiFieldStyles = {
     }
   }
 };
+
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -92,8 +85,6 @@ export const LoginPage = () => {
     // Save the base URL in the format: sub_domain.domain
     const baseUrl = `${org.sub_domain}.${org.domain}`;
     saveBaseUrl(baseUrl);
-    // Save selected organization
-    saveSelectedOrganization(org);
     setCurrentStep(3);
   };
 
@@ -104,9 +95,6 @@ export const LoginPage = () => {
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const response = await loginUser(email, password, baseUrl);
-      
-      // Save complete login response
-      saveLoginResponse(response);
       
       // Save user data and token to localStorage
       saveUser({
@@ -296,6 +284,7 @@ export const LoginPage = () => {
         onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
       />
 
+      {/* Terms and Privacy */}
       <div className="text-center text-sm text-gray-300 mb-6">
         By clicking Log in you are accepting our{' '}
         <span className="text-blue-300 hover:underline cursor-pointer">
@@ -308,6 +297,7 @@ export const LoginPage = () => {
         .
       </div>
 
+      {/* Login Button */}
       <Button
         onClick={handleLogin}
         disabled={!password || loginLoading}
@@ -316,6 +306,7 @@ export const LoginPage = () => {
         {loginLoading ? 'Logging in...' : 'LOGIN'}
       </Button>
 
+      {/* Forgot Password */}
       <div className="text-center mt-4">
         <span className="text-gray-300 hover:text-white cursor-pointer text-sm">
           Forgot Password?
@@ -326,6 +317,7 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
@@ -333,9 +325,12 @@ export const LoginPage = () => {
         }}
       />
       
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-30" />
       
+      {/* Login Card */}
       <div className="relative z-10 bg-slate-700 bg-opacity-90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl">
+        {/* Logo */}
         <div className="text-center mb-8">
           <img 
             src="https://app.lockated.com/assets/logo-87235e425cea36e6c4c9386959ec756051a0331c3a77aa6826425c1d9fabf82e.png"
@@ -344,8 +339,10 @@ export const LoginPage = () => {
           />
         </div>
 
+        {/* Step Indicator */}
         {renderStepIndicator()}
 
+        {/* Form Content */}
         <div className="space-y-4">
           {currentStep === 1 && renderEmailStep()}
           {currentStep === 2 && renderOrganizationStep()}

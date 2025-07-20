@@ -1,8 +1,6 @@
-
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
-import { saveSelectedCompany, getSelectedCompany } from '@/utils/auth'
 
 export interface Company {
   id: number
@@ -18,7 +16,7 @@ export interface ProjectState {
 
 const initialState: ProjectState = {
   companies: [],
-  selectedCompany: getSelectedCompany(), // Load from localStorage on initialization
+  selectedCompany: null,
   loading: false,
   error: null,
 }
@@ -57,8 +55,6 @@ const projectSlice = createSlice({
     },
     setSelectedCompany: (state, action: PayloadAction<Company>) => {
       state.selectedCompany = action.payload
-      // Save to localStorage whenever company is selected
-      saveSelectedCompany(action.payload)
     },
   },
   extraReducers: (builder) => {
@@ -71,12 +67,7 @@ const projectSlice = createSlice({
       .addCase(fetchAllowedCompanies.fulfilled, (state, action) => {
         state.loading = false
         state.companies = action.payload.companies || []
-        const selectedCompany = action.payload.selected_company || null
-        state.selectedCompany = selectedCompany
-        // Save to localStorage
-        if (selectedCompany) {
-          saveSelectedCompany(selectedCompany)
-        }
+        state.selectedCompany = action.payload.selected_company || null
       })
       .addCase(fetchAllowedCompanies.rejected, (state, action) => {
         state.loading = false
@@ -95,8 +86,6 @@ const projectSlice = createSlice({
           const selectedCompany = state.companies.find(c => c.id === selectedId)
           if (selectedCompany) {
             state.selectedCompany = selectedCompany
-            // Save to localStorage
-            saveSelectedCompany(selectedCompany)
           }
         }
       })
