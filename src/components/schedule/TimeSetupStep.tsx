@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -218,316 +217,482 @@ export const TimeSetupStep = ({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <CardContent className="p-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           
           {/* Hours Column */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Hours</h3>
-            <RadioGroup 
-              value={timeSlots.hours.mode} 
-              onValueChange={handleHourModeChange}
-              className="space-y-3"
-            >
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="specific" id="hours-specific" />
-                <Label htmlFor="hours-specific" className="text-sm leading-relaxed">
-                  Choose one or more specific hours
-                </Label>
-              </div>
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="range" id="hours-range" />
-                <Label htmlFor="hours-range" className="text-sm leading-relaxed">
-                  Every hour between hour X and hour Y
-                </Label>
-              </div>
-            </RadioGroup>
+          <div className="border-r border-gray-200 p-6">
+            <div className="border-b border-gray-200 pb-4 mb-6">
+              <h3 className="font-semibold text-gray-900 text-base">Hours</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <RadioGroup 
+                value={timeSlots.hours.mode} 
+                onValueChange={(mode: 'specific' | 'range') => {
+                  onChange('timeSlots', {
+                    ...timeSlots,
+                    hours: { ...timeSlots.hours, mode }
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="specific" id="hours-specific" className="mt-0.5" />
+                  <Label htmlFor="hours-specific" className="text-sm leading-relaxed cursor-pointer">
+                    Choose one or more specific hours
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="range" id="hours-range" className="mt-0.5" />
+                  <Label htmlFor="hours-range" className="text-sm leading-relaxed cursor-pointer">
+                    Every hour between hour X and hour Y
+                  </Label>
+                </div>
+              </RadioGroup>
 
-            {timeSlots.hours.mode === 'specific' && (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="select-all-hours"
-                    checked={timeSlots.hours.specific?.length === 24}
-                    onCheckedChange={handleHourSelectAll}
-                  />
-                  <Label htmlFor="select-all-hours" className="text-sm">Select All</Label>
+              {timeSlots.hours.mode === 'specific' && (
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="select-all-hours"
+                      checked={timeSlots.hours.specific?.length === 24}
+                      onCheckedChange={(checked) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          hours: { ...timeSlots.hours, specific: checked ? hours : [] }
+                        });
+                      }}
+                    />
+                    <Label htmlFor="select-all-hours" className="text-sm cursor-pointer">Select All</Label>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {hours.map((hour) => (
+                      <div key={hour} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`hour-${hour}`}
+                          checked={timeSlots.hours.specific?.includes(hour) || false}
+                          onCheckedChange={() => {
+                            const currentSpecific = timeSlots.hours.specific || [];
+                            const newSpecific = currentSpecific.includes(hour)
+                              ? currentSpecific.filter(h => h !== hour)
+                              : [...currentSpecific, hour];
+                            
+                            onChange('timeSlots', {
+                              ...timeSlots,
+                              hours: { ...timeSlots.hours, specific: newSpecific }
+                            });
+                          }}
+                        />
+                        <Label htmlFor={`hour-${hour}`} className="text-xs cursor-pointer">
+                          {hour.toString().padStart(2, '0')}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {hours.map((hour) => (
-                    <div key={hour} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`hour-${hour}`}
-                        checked={timeSlots.hours.specific?.includes(hour) || false}
-                        onCheckedChange={() => handleSpecificHourToggle(hour)}
-                      />
-                      <Label htmlFor={`hour-${hour}`} className="text-xs">
-                        {hour.toString().padStart(2, '0')}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-            {timeSlots.hours.mode === 'range' && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <Select value={timeSlots.hours.range?.start?.toString() || '0'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="From" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hours.map(hour => (
-                        <SelectItem key={hour} value={hour.toString()}>
-                          {hour.toString().padStart(2, '0')}:00
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={timeSlots.hours.range?.end?.toString() || '23'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="To" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hours.map(hour => (
-                        <SelectItem key={hour} value={hour.toString()}>
-                          {hour.toString().padStart(2, '0')}:00
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {timeSlots.hours.mode === 'range' && (
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select 
+                      value={timeSlots.hours.range?.start?.toString() || '0'}
+                      onValueChange={(value) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          hours: { 
+                            ...timeSlots.hours, 
+                            range: { ...timeSlots.hours.range, start: parseInt(value) }
+                          }
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="From" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hours.map(hour => (
+                          <SelectItem key={hour} value={hour.toString()}>
+                            {hour.toString().padStart(2, '0')}:00
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select 
+                      value={timeSlots.hours.range?.end?.toString() || '23'}
+                      onValueChange={(value) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          hours: { 
+                            ...timeSlots.hours, 
+                            range: { ...timeSlots.hours.range, end: parseInt(value) }
+                          }
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="To" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hours.map(hour => (
+                          <SelectItem key={hour} value={hour.toString()}>
+                            {hour.toString().padStart(2, '0')}:00
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Minutes Column */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Minutes</h3>
-            <RadioGroup 
-              value={timeSlots.minutes.mode} 
-              onValueChange={handleMinuteModeChange}
-              className="space-y-3"
-            >
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="specific" id="minutes-specific" />
-                <Label htmlFor="minutes-specific" className="text-sm leading-relaxed">
-                  Specific minutes (choose one or many)
-                </Label>
-              </div>
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="range" id="minutes-range" />
-                <Label htmlFor="minutes-range" className="text-sm leading-relaxed">
-                  Every minute between minute X and minute Y
-                </Label>
-              </div>
-            </RadioGroup>
-
-            {timeSlots.minutes.mode === 'specific' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  {predefinedMinutes.map((minute) => (
-                    <div key={minute} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`minute-${minute}`}
-                        checked={timeSlots.minutes.specific?.includes(minute) || false}
-                        onCheckedChange={() => handleSpecificMinuteToggle(minute)}
-                      />
-                      <Label htmlFor={`minute-${minute}`} className="text-xs">
-                        {minute.toString().padStart(2, '0')} min
-                      </Label>
-                    </div>
-                  ))}
+          <div className="border-r border-gray-200 p-6">
+            <div className="border-b border-gray-200 pb-4 mb-6">
+              <h3 className="font-semibold text-gray-900 text-base">Minutes</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <RadioGroup 
+                value={timeSlots.minutes.mode} 
+                onValueChange={(mode: 'specific' | 'range') => {
+                  onChange('timeSlots', {
+                    ...timeSlots,
+                    minutes: { ...timeSlots.minutes, mode }
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="specific" id="minutes-specific" className="mt-0.5" />
+                  <Label htmlFor="minutes-specific" className="text-sm leading-relaxed cursor-pointer">
+                    Specific minutes (choose one or many)
+                  </Label>
                 </div>
-              </div>
-            )}
-
-            {timeSlots.minutes.mode === 'range' && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <Select value={timeSlots.minutes.range?.start?.toString() || '0'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="From" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {predefinedMinutes.map(minute => (
-                        <SelectItem key={minute} value={minute.toString()}>
-                          {minute.toString().padStart(2, '0')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={timeSlots.minutes.range?.end?.toString() || '55'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="To" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {predefinedMinutes.map(minute => (
-                        <SelectItem key={minute} value={minute.toString()}>
-                          {minute.toString().padStart(2, '0')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="range" id="minutes-range" className="mt-0.5" />
+                  <Label htmlFor="minutes-range" className="text-sm leading-relaxed cursor-pointer">
+                    Every minute between minute X and minute Y
+                  </Label>
                 </div>
-              </div>
-            )}
+              </RadioGroup>
+
+              {timeSlots.minutes.mode === 'specific' && (
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {predefinedMinutes.map((minute) => (
+                      <div key={minute} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`minute-${minute}`}
+                          checked={timeSlots.minutes.specific?.includes(minute) || false}
+                          onCheckedChange={() => {
+                            const currentSpecific = timeSlots.minutes.specific || [];
+                            const newSpecific = currentSpecific.includes(minute)
+                              ? currentSpecific.filter(m => m !== minute)
+                              : [...currentSpecific, minute];
+                            
+                            onChange('timeSlots', {
+                              ...timeSlots,
+                              minutes: { ...timeSlots.minutes, specific: newSpecific }
+                            });
+                          }}
+                        />
+                        <Label htmlFor={`minute-${minute}`} className="text-xs cursor-pointer">
+                          {minute.toString().padStart(2, '0')} min
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {timeSlots.minutes.mode === 'range' && (
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select 
+                      value={timeSlots.minutes.range?.start?.toString() || '0'}
+                      onValueChange={(value) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          minutes: { 
+                            ...timeSlots.minutes, 
+                            range: { ...timeSlots.minutes.range, start: parseInt(value) }
+                          }
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="From" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {predefinedMinutes.map(minute => (
+                          <SelectItem key={minute} value={minute.toString()}>
+                            {minute.toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select 
+                      value={timeSlots.minutes.range?.end?.toString() || '55'}
+                      onValueChange={(value) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          minutes: { 
+                            ...timeSlots.minutes, 
+                            range: { ...timeSlots.minutes.range, end: parseInt(value) }
+                          }
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="To" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {predefinedMinutes.map(minute => (
+                          <SelectItem key={minute} value={minute.toString()}>
+                            {minute.toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Day Column */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Day</h3>
-            <RadioGroup 
-              value={timeSlots.days.mode} 
-              onValueChange={handleDayModeChange}
-              className="space-y-3"
-            >
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="weekdays" id="days-weekdays" />
-                <Label htmlFor="days-weekdays" className="text-sm leading-relaxed">
-                  Placeholder
-                </Label>
-              </div>
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="dates" id="days-dates" />
-                <Label htmlFor="days-dates" className="text-sm leading-relaxed">
-                  Specific date of month (choose one or many)
-                </Label>
-              </div>
-            </RadioGroup>
+          <div className="border-r border-gray-200 p-6">
+            <div className="border-b border-gray-200 pb-4 mb-6">
+              <h3 className="font-semibold text-gray-900 text-base">Day</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <RadioGroup 
+                value={timeSlots.days.mode} 
+                onValueChange={(mode: 'weekdays' | 'dates') => {
+                  onChange('timeSlots', {
+                    ...timeSlots,
+                    days: { ...timeSlots.days, mode }
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="weekdays" id="days-weekdays" className="mt-0.5" />
+                  <Label htmlFor="days-weekdays" className="text-sm leading-relaxed cursor-pointer">
+                    Specific weekday (choose one or many)
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="dates" id="days-dates" className="mt-0.5" />
+                  <Label htmlFor="days-dates" className="text-sm leading-relaxed cursor-pointer">
+                    Specific date of month (choose one or many)
+                  </Label>
+                </div>
+              </RadioGroup>
 
-            {timeSlots.days.mode === 'weekdays' && (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="select-all-weekdays"
-                    checked={timeSlots.days.weekdays?.length === 7}
-                    onCheckedChange={(checked) => {
-                      onChange('timeSlots', {
-                        ...timeSlots,
-                        days: { ...timeSlots.days, weekdays: checked ? weekdays : [] }
-                      });
-                    }}
-                  />
-                  <Label htmlFor="select-all-weekdays" className="text-sm">Select All</Label>
+              {timeSlots.days.mode === 'weekdays' && (
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="select-all-weekdays"
+                      checked={timeSlots.days.weekdays?.length === 7}
+                      onCheckedChange={(checked) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          days: { ...timeSlots.days, weekdays: checked ? weekdays : [] }
+                        });
+                      }}
+                    />
+                    <Label htmlFor="select-all-weekdays" className="text-sm cursor-pointer">Select All</Label>
+                  </div>
+                  <div className="space-y-2">
+                    {weekdays.map((day) => (
+                      <div key={day} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`weekday-${day}`}
+                          checked={timeSlots.days.weekdays?.includes(day) || false}
+                          onCheckedChange={() => {
+                            const currentWeekdays = timeSlots.days.weekdays || [];
+                            const newWeekdays = currentWeekdays.includes(day)
+                              ? currentWeekdays.filter(w => w !== day)
+                              : [...currentWeekdays, day];
+                            
+                            onChange('timeSlots', {
+                              ...timeSlots,
+                              days: { ...timeSlots.days, weekdays: newWeekdays }
+                            });
+                          }}
+                        />
+                        <Label htmlFor={`weekday-${day}`} className="text-sm cursor-pointer">
+                          {day}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {weekdays.map((day) => (
-                    <div key={day} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`weekday-${day}`}
-                        checked={timeSlots.days.weekdays?.includes(day) || false}
-                        onCheckedChange={() => handleWeekdayToggle(day)}
-                      />
-                      <Label htmlFor={`weekday-${day}`} className="text-sm">
-                        {day}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-            {timeSlots.days.mode === 'dates' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
-                  {dates.map((date) => (
-                    <div key={date} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`date-${date}`}
-                        checked={timeSlots.days.dates?.includes(date) || false}
-                        onCheckedChange={() => handleDateToggle(date)}
-                      />
-                      <Label htmlFor={`date-${date}`} className="text-xs">
-                        {date.toString().padStart(2, '0')}
-                      </Label>
-                    </div>
-                  ))}
+              {timeSlots.days.mode === 'dates' && (
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                    {dates.map((date) => (
+                      <div key={date} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`date-${date}`}
+                          checked={timeSlots.days.dates?.includes(date) || false}
+                          onCheckedChange={() => {
+                            const currentDates = timeSlots.days.dates || [];
+                            const newDates = currentDates.includes(date)
+                              ? currentDates.filter(d => d !== date)
+                              : [...currentDates, date];
+                            
+                            onChange('timeSlots', {
+                              ...timeSlots,
+                              days: { ...timeSlots.days, dates: newDates }
+                            });
+                          }}
+                        />
+                        <Label htmlFor={`date-${date}`} className="text-xs cursor-pointer">
+                          {date.toString().padStart(2, '0')}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Month Column */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Month</h3>
-            <RadioGroup 
-              value={timeSlots.months.mode} 
-              onValueChange={handleMonthModeChange}
-              className="space-y-3"
-            >
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="specific" id="months-specific" />
-                <Label htmlFor="months-specific" className="text-sm leading-relaxed">
-                  Placeholder
-                </Label>
-              </div>
-              <div className="flex items-start space-x-2">
-                <RadioGroupItem value="range" id="months-range" />
-                <Label htmlFor="months-range" className="text-sm leading-relaxed">
-                  Every month between X and X
-                </Label>
-              </div>
-            </RadioGroup>
+          <div className="p-6">
+            <div className="border-b border-gray-200 pb-4 mb-6">
+              <h3 className="font-semibold text-gray-900 text-base">Month</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <RadioGroup 
+                value={timeSlots.months.mode} 
+                onValueChange={(mode: 'specific' | 'range') => {
+                  onChange('timeSlots', {
+                    ...timeSlots,
+                    months: { ...timeSlots.months, mode }
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="specific" id="months-specific" className="mt-0.5" />
+                  <Label htmlFor="months-specific" className="text-sm leading-relaxed cursor-pointer">
+                    Specific month (choose one or many)
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <RadioGroupItem value="range" id="months-range" className="mt-0.5" />
+                  <Label htmlFor="months-range" className="text-sm leading-relaxed cursor-pointer">
+                    Every month between X and X
+                  </Label>
+                </div>
+              </RadioGroup>
 
-            {timeSlots.months.mode === 'specific' && (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="select-all-months"
-                    checked={timeSlots.months.specific?.length === 12}
-                    onCheckedChange={handleMonthSelectAll}
-                  />
-                  <Label htmlFor="select-all-months" className="text-sm">Select All</Label>
+              {timeSlots.months.mode === 'specific' && (
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="select-all-months"
+                      checked={timeSlots.months.specific?.length === 12}
+                      onCheckedChange={(checked) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          months: { ...timeSlots.months, specific: checked ? months.map((_, i) => i) : [] }
+                        });
+                      }}
+                    />
+                    <Label htmlFor="select-all-months" className="text-sm cursor-pointer">Select All</Label>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {months.map((month, index) => (
+                      <div key={month} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`month-${index}`}
+                          checked={timeSlots.months.specific?.includes(index) || false}
+                          onCheckedChange={() => {
+                            const currentSpecific = timeSlots.months.specific || [];
+                            const newSpecific = currentSpecific.includes(index)
+                              ? currentSpecific.filter(m => m !== index)
+                              : [...currentSpecific, index];
+                            
+                            onChange('timeSlots', {
+                              ...timeSlots,
+                              months: { ...timeSlots.months, specific: newSpecific }
+                            });
+                          }}
+                        />
+                        <Label htmlFor={`month-${index}`} className="text-sm cursor-pointer">
+                          {month}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {months.map((month, index) => (
-                    <div key={month} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`month-${index}`}
-                        checked={timeSlots.months.specific?.includes(index) || false}
-                        onCheckedChange={() => handleSpecificMonthToggle(index)}
-                      />
-                      <Label htmlFor={`month-${index}`} className="text-sm">
-                        {month}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-            {timeSlots.months.mode === 'range' && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-1 gap-2">
-                  <Select value={timeSlots.months.range?.start?.toString() || '0'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="From" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map((month, index) => (
-                        <SelectItem key={index} value={index.toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={timeSlots.months.range?.end?.toString() || '11'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="To" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map((month, index) => (
-                        <SelectItem key={index} value={index.toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {timeSlots.months.mode === 'range' && (
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-1 gap-2">
+                    <Select 
+                      value={timeSlots.months.range?.start?.toString() || '0'}
+                      onValueChange={(value) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          months: { 
+                            ...timeSlots.months, 
+                            range: { ...timeSlots.months.range, start: parseInt(value) }
+                          }
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="From" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {months.map((month, index) => (
+                          <SelectItem key={index} value={index.toString()}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select 
+                      value={timeSlots.months.range?.end?.toString() || '11'}
+                      onValueChange={(value) => {
+                        onChange('timeSlots', {
+                          ...timeSlots,
+                          months: { 
+                            ...timeSlots.months, 
+                            range: { ...timeSlots.months.range, end: parseInt(value) }
+                          }
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="To" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {months.map((month, index) => (
+                          <SelectItem key={index} value={index.toString()}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
