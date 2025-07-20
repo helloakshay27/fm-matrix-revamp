@@ -5,9 +5,11 @@ import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { Checkbox } from '../components/ui/checkbox';
 import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText } from 'lucide-react';
 import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
 import { TicketPagination } from '../components/TicketPagination';
+import { TicketSelectionPanel } from '../components/TicketSelectionPanel';
 import { ticketManagementAPI, TicketResponse, TicketListResponse } from '../services/ticketManagementAPI';
 import { toast } from 'sonner';
 
@@ -51,6 +53,8 @@ export const TicketListDashboard = () => {
   const [perPage, setPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
 
   const fetchTickets = useCallback(async (page: number, itemsPerPage: number) => {
@@ -133,6 +137,85 @@ export const TicketListDashboard = () => {
     link.click();
   };
 
+  const handleSelectTicket = (ticketNumber: string, checked: boolean) => {
+    setSelectedTickets(prev => {
+      const newSelection = checked 
+        ? [...prev, ticketNumber]
+        : prev.filter(id => id !== ticketNumber);
+      
+      // Update select all state
+      setSelectAll(newSelection.length === tickets.length && tickets.length > 0);
+      
+      return newSelection;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedTickets(tickets.map(ticket => ticket.ticket_number));
+    } else {
+      setSelectedTickets([]);
+    }
+  };
+
+  const handleGoldenTicket = async () => {
+    try {
+      await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
+      toast.success(`${selectedTickets.length} ticket(s) marked as Golden Ticket successfully`);
+      setSelectedTickets([]);
+      setSelectAll(false);
+      await fetchTickets(currentPage, perPage);
+    } catch (error) {
+      toast.error('Failed to mark tickets as Golden Ticket');
+      console.error('Error marking as golden ticket:', error);
+    }
+  };
+
+  const handleFlag = async () => {
+    try {
+      await ticketManagementAPI.markAsFlagged(selectedTickets);
+      toast.success(`${selectedTickets.length} ticket(s) flagged successfully`);
+      setSelectedTickets([]);
+      setSelectAll(false);
+      await fetchTickets(currentPage, perPage);
+    } catch (error) {
+      toast.error('Failed to flag tickets');
+      console.error('Error flagging tickets:', error);
+    }
+  };
+
+  const handleExportSelected = () => {
+    if (selectedTickets.length === 0) {
+      toast.error('No tickets selected for export');
+      return;
+    }
+
+    const selectedTicketData = tickets.filter(ticket => 
+      selectedTickets.includes(ticket.ticket_number)
+    );
+
+    // Create CSV content with selected tickets
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
+      + selectedTicketData.map(ticket => 
+          `"${ticket.ticket_number}","${ticket.heading}","${ticket.category_type}","${ticket.sub_category_type || ''}","${ticket.posted_by}","${ticket.assigned_to || ''}","${ticket.issue_status}","${ticket.priority}","${ticket.site_name}","${formatDate(ticket.created_at)}","${ticket.issue_type}","${ticket.complaint_mode || ''}","${ticket.assigned_to || ''}","${ticket.service_or_asset || ''}","${ticket.asset_task_occurrence_id || ''}","${ticket.proactive_reactive || ''}","${ticket.review_tracking_date || ''}","${ticket.response_escalation}","${ticket.response_tat}","${ticket.response_time || ''}","${ticket.escalation_response_name || ''}","${ticket.resolution_escalation}","${ticket.resolution_tat || ''}","${ticket.resolution_time || ''}","${ticket.escalation_resolution_name || ''}"`
+        ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `selected_tickets_${selectedTickets.length}.csv`);
+    link.click();
+
+    toast.success(`Exported ${selectedTickets.length} selected tickets`);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedTickets([]);
+    setSelectAll(false);
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'closed':
@@ -147,6 +230,10 @@ export const TicketListDashboard = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const selectedTicketObjects = tickets.filter(ticket => 
+    selectedTickets.includes(ticket.ticket_number)
+  );
 
   return (
     <div className="p-6">
@@ -232,6 +319,12 @@ export const TicketListDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectAll}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>View</TableHead>
                   <TableHead>Ticket ID</TableHead>
                   <TableHead className="w-48">Description</TableHead>
@@ -263,6 +356,12 @@ export const TicketListDashboard = () => {
               <TableBody>
                 {tickets.map((ticket) => (
                   <TableRow key={ticket.ticket_number}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedTickets.includes(ticket.ticket_number)}
+                        onCheckedChange={(checked) => handleSelectTicket(ticket.ticket_number, checked as boolean)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Eye 
                         className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
@@ -304,7 +403,7 @@ export const TicketListDashboard = () => {
                 ))}
                 {tickets.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={26} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={27} className="text-center py-8 text-gray-500">
                       No tickets found
                     </TableCell>
                   </TableRow>
@@ -330,6 +429,15 @@ export const TicketListDashboard = () => {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApplyFilters={handleFilterApply}
+      />
+
+      <TicketSelectionPanel
+        selectedTickets={selectedTickets}
+        selectedTicketObjects={selectedTicketObjects}
+        onGoldenTicket={handleGoldenTicket}
+        onFlag={handleFlag}
+        onExport={handleExportSelected}
+        onClearSelection={handleClearSelection}
       />
     </div>
   );
