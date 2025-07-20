@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,85 +24,123 @@ import {
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditCategoryModal } from './modals/EditCategoryModal';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
-import { Edit, Trash2, Upload } from 'lucide-react';
+import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
 
 const categorySchema = z.object({
   categoryName: z.string().min(1, 'Category name is required'),
-  engineer: z.string().min(1, 'Engineer selection is required'),
-  responseTime: z.number().min(1, 'Response time must be positive'),
+  responseTime: z.string().min(1, 'Response time is required'),
   customerEnabled: z.boolean(),
-  vendorEmail: z.boolean(),
   enableSites: z.boolean(),
+  vendorEmailEnabled: z.boolean(),
+  siteId: z.string().optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
 
 interface CategoryType {
-  id: string;
-  srNo: number;
-  categoryType: string;
-  assignee: string;
-  responseTime: number;
-  vendorEmail: boolean;
-  icon: string;
-  selectedIcon: string;
+  id: number;
+  society_id: number;
+  name: string;
+  position: number | null;
+  created_at: string;
+  updated_at: string;
+  icon_url: string;
+  doc_type: string | null;
+  selected_icon_url: string;
 }
 
-const mockCategories: CategoryType[] = [
-  {
-    id: '1',
-    srNo: 1,
-    categoryType: 'Electrical',
-    assignee: 'John Doe',
-    responseTime: 24,
-    vendorEmail: true,
-    icon: 'electrical.png',
-    selectedIcon: 'electrical-selected.png',
-  },
-  {
-    id: '2',
-    srNo: 2,
-    categoryType: 'Plumbing',
-    assignee: 'Jane Smith',
-    responseTime: 12,
-    vendorEmail: false,
-    icon: 'plumbing.png',
-    selectedIcon: 'plumbing-selected.png',
-  },
-];
-
-const engineers = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson'];
+interface Site {
+  id: number;
+  name: string;
+}
 
 export const CategoryTypeTab: React.FC = () => {
-  const [categories, setCategories] = useState<CategoryType[]>(mockCategories);
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [faqItems, setFaqItems] = useState([{ question: '', answer: '' }]);
+  const [vendorEmails, setVendorEmails] = useState(['']);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
+  const [iconFile, setIconFile] = useState<File | null>(null);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       categoryName: '',
-      engineer: '',
-      responseTime: 1,
+      responseTime: '',
       customerEnabled: false,
-      vendorEmail: false,
       enableSites: false,
+      vendorEmailEnabled: false,
+      siteId: '',
     },
   });
+
+  const vendorEmailEnabled = form.watch('vendorEmailEnabled');
+
+  useEffect(() => {
+    fetchCategories();
+    fetchSites();
+  }, []);
+
+  const fetchCategories = async () => {
+    setIsLoading(true);
+    try {
+      const data = await ticketManagementAPI.getCategories();
+      setCategories(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Failed to fetch categories');
+      console.error('Error fetching categories:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchSites = async () => {
+    try {
+      // Using a default user ID - this should be dynamic based on current user
+      const data = await ticketManagementAPI.getSites('12437');
+      setSites(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+    }
+  };
 
   const handleSubmit = async (data: CategoryFormData) => {
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Category Data:', data);
-      console.log('FAQ Items:', faqItems);
+      const categoryData = {
+        name: data.categoryName,
+        tat: data.responseTime,
+        customer_enabled: data.customerEnabled,
+        society_id: data.siteId || '15', // Default society ID
+        icon: iconFile,
+        complaint_faqs_attributes: faqItems
+          .filter(item => item.question.trim() && item.answer.trim())
+          .map(item => ({
+            question: item.question,
+            answer: item.answer,
+            _destroy: false,
+          })),
+      };
+
+      const emailData = {
+        email: vendorEmailEnabled ? vendorEmails.filter(email => email.trim()) : [],
+      };
+
+      await ticketManagementAPI.createCategory(categoryData, emailData);
       toast.success('Category created successfully!');
       form.reset();
+      setFaqItems([{ question: '', answer: '' }]);
+      setVendorEmails(['']);
+      setIconFile(null);
+      fetchCategories();
     } catch (error) {
       toast.error('Failed to create category');
+      console.error('Error creating category:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -120,7 +158,26 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const removeFaqItem = (index: number) => {
-    setFaqItems(faqItems.filter((_, i) => i !== index));
+    if (faqItems.length > 1) {
+      setFaqItems(faqItems.filter((_, i) => i !== index));
+    }
+  };
+
+  const addVendorEmail = () => {
+    setVendorEmails([...vendorEmails, '']);
+  };
+
+  const updateVendorEmail = (index: number, value: string) => {
+    const updated = vendorEmails.map((email, i) => 
+      i === index ? value : email
+    );
+    setVendorEmails(updated);
+  };
+
+  const removeVendorEmail = (index: number) => {
+    if (vendorEmails.length > 1) {
+      setVendorEmails(vendorEmails.filter((_, i) => i !== index));
+    }
   };
 
   const handleEdit = (category: CategoryType) => {
@@ -139,23 +196,40 @@ export const CategoryTypeTab: React.FC = () => {
     toast.success('Category deleted successfully!');
   };
 
+  const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setIconFile(file);
+    }
+  };
+
   const columns = [
-    { key: 'srNo', label: 'S.No', sortable: true },
-    { key: 'categoryType', label: 'Category Type', sortable: true },
-    { key: 'assignee', label: 'Assignee', sortable: true },
-    { key: 'responseTime', label: 'Response Time (hrs)', sortable: true },
-    { key: 'vendorEmail', label: 'Vendor Email', sortable: true },
-    { key: 'icon', label: 'Icon', sortable: false },
-    { key: 'selectedIcon', label: 'Selected Icon', sortable: false },
+    { key: 'id', label: 'S.No', sortable: true },
+    { key: 'name', label: 'Category Type', sortable: true },
+    { key: 'position', label: 'Response Time (hrs)', sortable: true },
+    { key: 'vendorEmail', label: 'Vendor Email', sortable: false },
+    { key: 'icon_url', label: 'Icon', sortable: false },
+    { key: 'selected_icon_url', label: 'Selected Icon', sortable: false },
   ];
 
   const renderCell = (item: CategoryType, columnKey: string) => {
     switch (columnKey) {
       case 'vendorEmail':
-        return item.vendorEmail ? 'Yes' : 'No';
-      case 'icon':
-      case 'selectedIcon':
-        return <span className="text-blue-600">{item[columnKey as keyof CategoryType]}</span>;
+        return '--'; // Not available in API response
+      case 'icon_url':
+        return item.icon_url ? (
+          <img src={item.icon_url} alt="Icon" className="w-8 h-8 object-cover rounded" />
+        ) : (
+          <span className="text-gray-400">No icon</span>
+        );
+      case 'selected_icon_url':
+        return item.selected_icon_url ? (
+          <img src={item.selected_icon_url} alt="Selected Icon" className="w-8 h-8 object-cover rounded" />
+        ) : (
+          <span className="text-gray-400">No icon</span>
+        );
+      case 'position':
+        return item.position || '--';
       default:
         return item[columnKey as keyof CategoryType];
     }
@@ -198,57 +272,18 @@ export const CategoryTypeTab: React.FC = () => {
 
                 <FormField
                   control={form.control}
-                  name="engineer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Engineer</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select engineer" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {engineers.map((engineer) => (
-                            <SelectItem key={engineer} value={engineer}>
-                              {engineer}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="responseTime"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Response Time (hours)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Enter response time"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
+                        <Input placeholder="Enter response time" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Icon
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
                 <FormField
                   control={form.control}
                   name="enableSites"
@@ -265,6 +300,56 @@ export const CategoryTypeTab: React.FC = () => {
                   )}
                 />
 
+                {form.watch('enableSites') && (
+                  <FormField
+                    control={form.control}
+                    name="siteId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Site</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select site" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sites.map((site) => (
+                              <SelectItem key={site.id} value={site.id.toString()}>
+                                {site.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <div className="flex items-center gap-2">
+                  <label htmlFor="icon-upload" className="cursor-pointer">
+                    <Button type="button" variant="outline" size="sm" asChild>
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Icon
+                      </span>
+                    </Button>
+                  </label>
+                  <input
+                    id="icon-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleIconChange}
+                  />
+                  {iconFile && (
+                    <span className="text-sm text-gray-600">{iconFile.name}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
                 <FormField
                   control={form.control}
                   name="customerEnabled"
@@ -283,7 +368,7 @@ export const CategoryTypeTab: React.FC = () => {
 
                 <FormField
                   control={form.control}
-                  name="vendorEmail"
+                  name="vendorEmailEnabled"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
@@ -292,16 +377,50 @@ export const CategoryTypeTab: React.FC = () => {
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <FormLabel>Vendor Email</FormLabel>
+                      <FormLabel>Enable Vendor Email</FormLabel>
                     </FormItem>
                   )}
                 />
               </div>
 
+              {vendorEmailEnabled && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Vendor Emails</h3>
+                    <Button type="button" onClick={addVendorEmail} variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Email
+                    </Button>
+                  </div>
+
+                  {vendorEmails.map((email, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        type="email"
+                        placeholder="Enter vendor email"
+                        value={email}
+                        onChange={(e) => updateVendorEmail(index, e.target.value)}
+                      />
+                      {vendorEmails.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeVendorEmail(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">FAQ</h3>
                   <Button type="button" onClick={addFaqItem} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
                     Add FAQ
                   </Button>
                 </div>
@@ -331,7 +450,7 @@ export const CategoryTypeTab: React.FC = () => {
                             size="sm"
                             onClick={() => removeFaqItem(index)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <X className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
@@ -355,13 +474,19 @@ export const CategoryTypeTab: React.FC = () => {
           <CardTitle>Category Types</CardTitle>
         </CardHeader>
         <CardContent>
-          <EnhancedTable
-            data={categories}
-            columns={columns}
-            renderCell={renderCell}
-            renderActions={renderActions}
-            storageKey="category-types-table"
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500">Loading categories...</div>
+            </div>
+          ) : (
+            <EnhancedTable
+              data={categories}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderActions}
+              storageKey="category-types-table"
+            />
+          )}
         </CardContent>
       </Card>
 

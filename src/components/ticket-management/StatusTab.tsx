@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 
@@ -30,52 +32,29 @@ const statusSchema = z.object({
   fixedState: z.string().min(1, 'Fixed state is required'),
   colorCode: z.string().min(1, 'Color code is required'),
   order: z.number().min(1, 'Order must be positive'),
-  allowReopen: z.boolean(),
 });
 
 type StatusFormData = z.infer<typeof statusSchema>;
 
 interface StatusType {
-  id: string;
-  order: number;
-  status: string;
-  fixedState: string;
-  color: string;
+  id: number;
+  name: string;
+  fixed_state: string;
+  color_code: string;
+  position: number;
   email: boolean;
 }
 
-const mockStatuses: StatusType[] = [
-  {
-    id: '1',
-    order: 1,
-    status: 'Open',
-    fixedState: 'No',
-    color: '#FF0000',
-    email: true,
-  },
-  {
-    id: '2',
-    order: 2,
-    status: 'In Progress',
-    fixedState: 'No',
-    color: '#FFA500',
-    email: false,
-  },
-  {
-    id: '3',
-    order: 3,
-    status: 'Resolved',
-    fixedState: 'Yes',
-    color: '#008000',
-    email: true,
-  },
+const fixedStates = [
+  { value: 'closed', label: 'Closed' },
+  { value: 'reopen', label: 'Reopen' },
+  { value: 'complete', label: 'Complete' },
 ];
 
-const fixedStates = ['Yes', 'No'];
-
 export const StatusTab: React.FC = () => {
-  const [statuses, setStatuses] = useState<StatusType[]>(mockStatuses);
+  const [statuses, setStatuses] = useState<StatusType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [allowReopen, setAllowReopen] = useState(false);
 
   const form = useForm<StatusFormData>({
@@ -85,19 +64,45 @@ export const StatusTab: React.FC = () => {
       fixedState: '',
       colorCode: '#000000',
       order: 1,
-      allowReopen: false,
     },
   });
+
+  useEffect(() => {
+    fetchStatuses();
+  }, []);
+
+  const fetchStatuses = async () => {
+    setIsLoading(true);
+    try {
+      const data = await ticketManagementAPI.getStatuses();
+      setStatuses(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Failed to fetch statuses');
+      console.error('Error fetching statuses:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (data: StatusFormData) => {
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Status Data:', data);
+      const statusData = {
+        name: data.status,
+        fixed_state: data.fixedState,
+        color_code: data.colorCode,
+        position: data.order,
+        of_phase: 'pms',
+        society_id: '15', // Default society ID
+      };
+
+      await ticketManagementAPI.createStatus(statusData);
       toast.success('Status created successfully!');
       form.reset();
+      fetchStatuses();
     } catch (error) {
       toast.error('Failed to create status');
+      console.error('Error creating status:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,28 +112,35 @@ export const StatusTab: React.FC = () => {
     setAllowReopen(checked === true);
   };
 
+  const handleDelete = (status: StatusType) => {
+    setStatuses(statuses.filter(s => s.id !== status.id));
+    toast.success('Status deleted successfully!');
+  };
+
   const columns = [
-    { key: 'order', label: 'Order', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'fixedState', label: 'Fixed State', sortable: true },
-    { key: 'color', label: 'Color', sortable: false },
+    { key: 'position', label: 'Order', sortable: true },
+    { key: 'name', label: 'Status', sortable: true },
+    { key: 'fixed_state', label: 'Fixed State', sortable: true },
+    { key: 'color_code', label: 'Color', sortable: false },
     { key: 'email', label: 'Email', sortable: true },
   ];
 
   const renderCell = (item: StatusType, columnKey: string) => {
     switch (columnKey) {
-      case 'color':
+      case 'color_code':
         return (
           <div className="flex items-center gap-2">
             <div
               className="w-6 h-6 rounded border"
-              style={{ backgroundColor: item.color }}
+              style={{ backgroundColor: item.color_code }}
             />
-            <span>{item.color}</span>
+            <span>{item.color_code}</span>
           </div>
         );
       case 'email':
         return item.email ? 'Yes' : 'No';
+      case 'fixed_state':
+        return fixedStates.find(state => state.value === item.fixed_state)?.label || item.fixed_state;
       default:
         return item[columnKey as keyof StatusType];
     }
@@ -139,7 +151,7 @@ export const StatusTab: React.FC = () => {
       <Button variant="ghost" size="sm">
         <Edit className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -183,8 +195,8 @@ export const StatusTab: React.FC = () => {
                         </FormControl>
                         <SelectContent>
                           {fixedStates.map((state) => (
-                            <SelectItem key={state} value={state}>
-                              {state}
+                            <SelectItem key={state.value} value={state.value}>
+                              {state.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -266,13 +278,19 @@ export const StatusTab: React.FC = () => {
           <CardTitle>Status List</CardTitle>
         </CardHeader>
         <CardContent>
-          <EnhancedTable
-            data={statuses}
-            columns={columns}
-            renderCell={renderCell}
-            renderActions={renderActions}
-            storageKey="status-table"
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500">Loading statuses...</div>
+            </div>
+          ) : (
+            <EnhancedTable
+              data={statuses}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderActions}
+              storageKey="status-table"
+            />
+          )}
         </CardContent>
       </Card>
     </div>

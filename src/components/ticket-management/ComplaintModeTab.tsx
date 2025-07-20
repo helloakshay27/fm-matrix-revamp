@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/form';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditComplaintModeModal } from './modals/EditComplaintModeModal';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 
@@ -26,37 +27,16 @@ const complaintModeSchema = z.object({
 type ComplaintModeFormData = z.infer<typeof complaintModeSchema>;
 
 interface ComplaintModeType {
-  id: string;
-  srNo: number;
-  complaintMode: string;
+  id: number;
+  name: string;
+  of_phase: string;
+  society_id: number;
 }
 
-const mockComplaintModes: ComplaintModeType[] = [
-  {
-    id: '1',
-    srNo: 1,
-    complaintMode: 'Phone Call',
-  },
-  {
-    id: '2',
-    srNo: 2,
-    complaintMode: 'Email',
-  },
-  {
-    id: '3',
-    srNo: 3,
-    complaintMode: 'Mobile App',
-  },
-  {
-    id: '4',
-    srNo: 4,
-    complaintMode: 'Walk-in',
-  },
-];
-
 export const ComplaintModeTab: React.FC = () => {
-  const [complaintModes, setComplaintModes] = useState<ComplaintModeType[]>(mockComplaintModes);
+  const [complaintModes, setComplaintModes] = useState<ComplaintModeType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingComplaintMode, setEditingComplaintMode] = useState<ComplaintModeType | null>(null);
 
@@ -67,21 +47,39 @@ export const ComplaintModeTab: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    fetchComplaintModes();
+  }, []);
+
+  const fetchComplaintModes = async () => {
+    setIsLoading(true);
+    try {
+      const data = await ticketManagementAPI.getComplaintModes();
+      setComplaintModes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Failed to fetch complaint modes');
+      console.error('Error fetching complaint modes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (data: ComplaintModeFormData) => {
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const newComplaintMode: ComplaintModeType = {
-        id: (complaintModes.length + 1).toString(),
-        srNo: complaintModes.length + 1,
-        complaintMode: data.complaintMode,
+      const complaintModeData = {
+        name: data.complaintMode,
+        of_phase: 'pms',
+        society_id: '15', // Default society ID
       };
-      setComplaintModes([...complaintModes, newComplaintMode]);
-      console.log('Complaint Mode Data:', data);
+
+      await ticketManagementAPI.createComplaintMode(complaintModeData);
       toast.success('Complaint mode created successfully!');
       form.reset();
+      fetchComplaintModes();
     } catch (error) {
       toast.error('Failed to create complaint mode');
+      console.error('Error creating complaint mode:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -104,8 +102,8 @@ export const ComplaintModeTab: React.FC = () => {
   };
 
   const columns = [
-    { key: 'srNo', label: 'Sr.No', sortable: true },
-    { key: 'complaintMode', label: 'Complaint Mode', sortable: true },
+    { key: 'id', label: 'Sr.No', sortable: true },
+    { key: 'name', label: 'Complaint Mode', sortable: true },
   ];
 
   const renderCell = (item: ComplaintModeType, columnKey: string) => {
@@ -161,13 +159,19 @@ export const ComplaintModeTab: React.FC = () => {
           <CardTitle>Complaint Modes</CardTitle>
         </CardHeader>
         <CardContent>
-          <EnhancedTable
-            data={complaintModes}
-            columns={columns}
-            renderCell={renderCell}
-            renderActions={renderActions}
-            storageKey="complaint-modes-table"
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500">Loading complaint modes...</div>
+            </div>
+          ) : (
+            <EnhancedTable
+              data={complaintModes}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderActions}
+              storageKey="complaint-modes-table"
+            />
+          )}
         </CardContent>
       </Card>
 
