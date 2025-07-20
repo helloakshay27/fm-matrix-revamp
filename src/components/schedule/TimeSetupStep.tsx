@@ -7,10 +7,21 @@ import { Settings } from 'lucide-react';
 
 interface TimeSetupStepProps {
   data: any;
-  updateData: (data: any) => void;
+  updateData?: (data: any) => void;
+  onChange?: (field: string, value: any) => void;
+  isCompleted?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({ data, updateData }) => {
+export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({ 
+  data, 
+  updateData, 
+  onChange, 
+  isCompleted, 
+  isCollapsed, 
+  onToggleCollapse 
+}) => {
   const [selectedHours, setSelectedHours] = useState<string[]>(data.hours || []);
   const [selectedMinutes, setSelectedMinutes] = useState<string[]>(data.minutes || []);
   const [selectedDays, setSelectedDays] = useState<string[]>(data.days || []);
@@ -33,7 +44,8 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({ data, updateData }
       ? [...selectedHours, hour]
       : selectedHours.filter(h => h !== hour);
     setSelectedHours(newHours);
-    updateData({ ...data, hours: newHours });
+    updateData?.(({ ...data, hours: newHours }));
+    onChange?.('hours', newHours);
   };
 
   const handleMinuteChange = (minute: string, checked: boolean) => {
@@ -41,7 +53,8 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({ data, updateData }
       ? [...selectedMinutes, minute]
       : selectedMinutes.filter(m => m !== minute);
     setSelectedMinutes(newMinutes);
-    updateData({ ...data, minutes: newMinutes });
+    updateData?.({ ...data, minutes: newMinutes });
+    onChange?.('minutes', newMinutes);
   };
 
   const handleDayChange = (day: string, checked: boolean) => {
@@ -49,7 +62,8 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({ data, updateData }
       ? [...selectedDays, day]
       : selectedDays.filter(d => d !== day);
     setSelectedDays(newDays);
-    updateData({ ...data, days: newDays });
+    updateData?.({ ...data, days: newDays });
+    onChange?.('days', newDays);
   };
 
   const handleMonthChange = (month: string, checked: boolean) => {
@@ -57,35 +71,40 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({ data, updateData }
       ? [...selectedMonths, month]
       : selectedMonths.filter(m => m !== month);
     setSelectedMonths(newMonths);
-    updateData({ ...data, months: newMonths });
+    updateData?.({ ...data, months: newMonths });
+    onChange?.('months', newMonths);
   };
 
   const handleSelectAllHours = (checked: boolean) => {
     setHoursSelectAll(checked);
     const newHours = checked ? hours : [];
     setSelectedHours(newHours);
-    updateData({ ...data, hours: newHours });
+    updateData?.({ ...data, hours: newHours });
+    onChange?.('hours', newHours);
   };
 
   const handleSelectAllMinutes = (checked: boolean) => {
     setMinutesSelectAll(checked);
     const newMinutes = checked ? minutes : [];
     setSelectedMinutes(newMinutes);
-    updateData({ ...data, minutes: newMinutes });
+    updateData?.({ ...data, minutes: newMinutes });
+    onChange?.('minutes', newMinutes);
   };
 
   const handleSelectAllDays = (checked: boolean) => {
     setDaysSelectAll(checked);
     const newDays = checked ? days : [];
     setSelectedDays(newDays);
-    updateData({ ...data, days: newDays });
+    updateData?.({ ...data, days: newDays });
+    onChange?.('days', newDays);
   };
 
   const handleSelectAllMonths = (checked: boolean) => {
     setMonthsSelectAll(checked);
     const newMonths = checked ? months : [];
     setSelectedMonths(newMonths);
-    updateData({ ...data, months: newMonths });
+    updateData?.({ ...data, months: newMonths });
+    onChange?.('months', newMonths);
   };
 
   return (
