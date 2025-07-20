@@ -716,7 +716,7 @@ export const AddAMCPage = () => {
           </CardContent>
         </Card>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 justify-center">
           <Button 
             type="button" 
             onClick={handleSaveAndSchedule} 
