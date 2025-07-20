@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -13,7 +13,6 @@ import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
 import { apiClient } from '@/utils/apiClient';
 export const AddAMCPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const dispatch = useAppDispatch();
   
   // Redux state
@@ -122,42 +121,31 @@ export const AddAMCPage = () => {
       } catch (error) {
         console.error('Error fetching asset groups:', error);
         setAssetGroups([]);
-        toast({
-          title: "Error",
-          description: "Failed to fetch asset groups.",
-          variant: "destructive"
-        });
+        toast.error("Failed to fetch asset groups.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchAssetGroups();
-  }, [dispatch, toast]);
+  }, [dispatch]);
 
   // Handle AMC creation success
   useEffect(() => {
     if (amcCreateSuccess) {
-      toast({
-        title: "AMC Created",
-        description: "AMC has been successfully created."
-      });
+      toast.success("AMC has been successfully created.");
       dispatch(resetAmcCreate());
       navigate('/maintenance/amc');
     }
-  }, [amcCreateSuccess, dispatch, navigate, toast]);
+  }, [amcCreateSuccess, dispatch, navigate]);
 
   // Handle AMC creation error
   useEffect(() => {
     if (amcCreateError) {
-      toast({
-        title: "Error",
-        description: amcCreateError,
-        variant: "destructive"
-      });
+      toast.error(amcCreateError);
       dispatch(resetAmcCreate());
     }
-  }, [amcCreateError, dispatch, toast]);
+  }, [amcCreateError, dispatch]);
 
   // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
@@ -198,11 +186,7 @@ export const AddAMCPage = () => {
       } catch (error) {
         console.error('Error fetching subgroups:', error);
         setSubGroups([]);
-        toast({
-          title: "Error",
-          description: "Failed to fetch subgroups.",
-          variant: "destructive"
-        });
+        toast.error("Failed to fetch subgroups.");
       } finally {
         setLoading(false);
       }
