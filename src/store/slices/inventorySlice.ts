@@ -60,7 +60,23 @@ export const fetchInventoryData = createAsyncThunk(
     })
 
     const response = await apiClient.get(`/pms/inventories.json?${queryParams}`)
-    return response.data
+
+    const inventories = response.data.inventories || []
+    const pageSize = 15
+    const hasMorePages = inventories.length === pageSize
+    
+    // Maintain a dynamic minimum page assumption
+    const estimatedTotalPages = hasMorePages ? page + 1 : page
+    
+    return {
+      ...response.data,
+      pagination: {
+        total_count: hasMorePages ? pageSize * estimatedTotalPages : inventories.length,
+        total_pages: estimatedTotalPages,
+        current_page: page,
+        has_more: hasMorePages
+      }
+    }
   }
 )
 
@@ -83,10 +99,25 @@ const inventorySlice = createSlice({
       })
       .addCase(fetchInventoryData.fulfilled, (state, action) => {
         state.loading = false
+        console.log('API Response:', action.payload)
+        
+        // Extract inventory data
         state.items = action.payload.inventories || []
-        state.totalCount = action.payload.total_count || 0
-        state.currentPage = action.payload.pagination?.current_page || 1
-        state.totalPages = action.payload.pagination?.total_pages || 0
+        
+        // Use the pagination data we generated in the thunk
+        const pagination = action.payload.pagination
+        
+        state.totalCount = pagination?.total_count || 0
+        state.currentPage = pagination?.current_page || 1
+        state.totalPages = pagination?.total_pages || 0
+                           
+        console.log('Pagination extracted:', {
+          totalCount: state.totalCount,
+          currentPage: state.currentPage,
+          totalPages: state.totalPages,
+          itemsLength: state.items.length,
+          hasMore: pagination?.has_more
+        })
       })
       .addCase(fetchInventoryData.rejected, (state, action) => {
         state.loading = false

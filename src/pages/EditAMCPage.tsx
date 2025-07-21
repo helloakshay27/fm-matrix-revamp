@@ -17,7 +17,7 @@ export const EditAMCPage = () => {
   const { toast } = useToast();
   const dispatch = useAppDispatch();
   const { id } = useParams();
-  
+
   // Redux state
   const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
   const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
@@ -25,7 +25,7 @@ export const EditAMCPage = () => {
   const { data: amcData, loading: amcLoading, error: amcError } = useAppSelector(state => state.amcDetails);
 
   const [formData, setFormData] = useState({
-    details: 'Asset',
+    details: '',
     type: 'Individual',
     assetName: '',
     asset_ids: [] as string[],
@@ -46,12 +46,12 @@ export const EditAMCPage = () => {
     contracts: [] as File[],
     invoices: [] as File[]
   });
-  
-  const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
-  const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
+
+  const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
+  const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
-  
+
   // Extract data from Redux state
   const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
@@ -68,18 +68,11 @@ export const EditAMCPage = () => {
   useEffect(() => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
-      console.log('=== AMC Data Debug ===');
-      console.log('Raw AMC Data:', data);
-      console.log('Assets loaded:', assets.length, assets);
-      console.log('Suppliers loaded:', suppliers.length, suppliers);
-      console.log('Services loaded:', services.length, services);
-      
-      // Determine the correct form values based on API response
-      const isAssetType = data.asset_id ? true : false;  // Show Asset radio if asset_id exists
-      const isServiceType = data.service_id ? true : false;  // Show Service radio if service_id exists
-      const isIndividualType = data.resource_type === 'Pms::Asset';
-      
-      // Handle asset IDs - could be single ID, array, or JSON string
+      // Determine details and type based on resource_type and resource_id
+      const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
+      const isGroupType = data.resource_id && data.resource_type === 'Pms::Asset';
+
+      // Handle asset IDs
       let assetIds = [];
       if (data.asset_id) {
         if (typeof data.asset_id === 'string') {
@@ -95,29 +88,22 @@ export const EditAMCPage = () => {
           assetIds = [data.asset_id];
         }
         assetIds = assetIds.map(id => id.toString());
-        console.log('Asset IDs to select:', assetIds);
       }
-      
-      // Find supplier by ID
+
+      // Find supplier and service
       const supplierId = data.supplier_id?.toString();
       const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
-      console.log('Looking for supplier ID:', supplierId);
-      console.log('Found supplier:', foundSupplier);
-      
-      // Find service by ID
       const serviceId = data.service_id?.toString();
       const foundService = services.find(service => service.id.toString() === serviceId);
-      console.log('Looking for service ID:', serviceId);
-      console.log('Found service:', foundService);
-      
+
       setFormData({
-        details: isAssetType ? 'Asset' : (isServiceType ? 'Service' : 'Asset'),
-        type: isIndividualType ? 'Individual' : 'Group',
+        details: detailType,
+        type: isGroupType ? 'Group' : 'Individual',
         assetName: foundService ? serviceId : '',
         asset_ids: assetIds,
         vendor: foundSupplier ? supplierId : '',
-        group: isIndividualType ? '' : (data.resource_id?.toString() || ''),
-        subgroup: '',
+        group: isGroupType ? (data.resource_id?.toString() || '') : '',
+        subgroup: data.sub_group_id?.toString() || '',
         service: '',
         supplier: foundSupplier ? supplierId : '',
         startDate: data.amc_start_date || '',
@@ -128,15 +114,9 @@ export const EditAMCPage = () => {
         noOfVisits: data.no_of_visits?.toString() || '',
         remarks: data.remarks || ''
       });
-      
-      console.log('Form data set:', {
-        supplier: foundSupplier ? supplierId : '',
-        service: foundService ? serviceId : '',
-        assetIds: assetIds
-      });
-      
+
       // If it's a group type and we have a group ID, fetch subgroups
-      if (!isIndividualType && data.resource_id) {
+      if (isGroupType && data.resource_id) {
         handleGroupChange(data.resource_id.toString());
       }
     }
@@ -190,19 +170,16 @@ export const EditAMCPage = () => {
 
   // Fetch data using Redux slices
   useEffect(() => {
-    // Dispatch Redux actions
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchSuppliersData());
     dispatch(fetchServicesData());
 
-    // Fetch asset groups (keeping direct API call as it's not in Redux)
     const fetchAssetGroups = async () => {
       setLoading(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
         console.log('API Response:', response.data);
-        
-        // Ensure we always set an array
+
         if (Array.isArray(response.data)) {
           setAssetGroups(response.data);
         } else if (response.data && Array.isArray(response.data.asset_groups)) {
@@ -227,14 +204,13 @@ export const EditAMCPage = () => {
     fetchAssetGroups();
   }, [dispatch, toast]);
 
-  // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
     console.log('=== GROUP CHANGED ===');
     console.log('Selected Group ID:', groupId);
-    
+
     handleInputChange('group', groupId);
-    handleInputChange('subgroup', ''); // Clear subgroup selection
-    
+    handleInputChange('subgroup', '');
+
     if (groupId) {
       setLoading(true);
       try {
@@ -244,8 +220,7 @@ export const EditAMCPage = () => {
         console.log('SubGroup API Response - Data only:', response.data);
         console.log('SubGroup API Response - Data type:', typeof response.data);
         console.log('SubGroup API Response - Is Array?', Array.isArray(response.data));
-        
-        // Handle different possible response structures for subgroups
+
         if (Array.isArray(response.data)) {
           console.log('Setting subgroups - Direct array:', response.data);
           setSubGroups(response.data);
@@ -280,57 +255,68 @@ export const EditAMCPage = () => {
     }
   };
 
+  // Reusable function to create the payload
+  const createPayload = () => {
+    const payload: any = {
+      pms_asset_amc: {
+        amc_cost: parseFloat(formData.cost) || 0,
+        amc_start_date: formData.startDate,
+        amc_end_date: formData.endDate,
+        amc_first_service: formData.firstService,
+        amc_frequency: formData.paymentTerms || null,
+        amc_period: `${formData.startDate} - ${formData.endDate}`,
+        no_of_visits: parseInt(formData.noOfVisits) || 0,
+        payment_term: formData.paymentTerms,
+        remarks: formData.remarks,
+        supplier_id: formData.vendor || formData.supplier,
+        group_id: formData.group || null,
+        sub_group_id: formData.subgroup || null
+      }
+    };
+
+    // Add asset_ids, service_id, group_id, or sub_group_id based on details and type
+    if (formData.details === 'Asset') {
+      if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
+        console.log('Adding asset_ids to payload:', formData.asset_ids);
+        payload.pms_asset_amc.asset_ids = formData.asset_ids;
+      } else if (formData.type === 'Group' && formData.group) {
+        console.log('Adding group_id to payload:', formData.group);
+        // Use group ID (not name) from formData.group
+        payload.pms_asset_amc.group_id = formData.group;
+        // Use subgroup ID (not name) from formData.subgroup if selected
+        if (formData.subgroup) {
+          console.log('Adding sub_group_id to payload:', formData.subgroup);
+          payload.pms_asset_amc.sub_group_id = formData.subgroup;
+        }
+      }
+    } else if (formData.details === 'Service' && formData.assetName) {
+      console.log('Adding service_id to payload:', formData.assetName);
+      payload.pms_asset_amc.service_id = formData.assetName;
+    }
+
+    // Add vendor information if available
+    const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
+    if (selectedSupplier) {
+      payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
+      payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
+      payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
+    }
+
+    // Add file fields (currently null, would need separate file upload handling)
+    payload.pms_asset_amc.amc_contract = null;
+    payload.pms_asset_amc.amc_invoice = null;
+
+    return payload;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdateLoading(true);
 
     try {
-      // Create JSON payload with all AMC fields
-      let payload: any = {
-        pms_asset_amc: {
-          amc_cost: parseFloat(formData.cost) || 0,
-          amc_start_date: formData.startDate,
-          amc_end_date: formData.endDate,
-          amc_first_service: formData.firstService,
-          amc_frequency: formData.paymentTerms || null,
-          amc_period: `${formData.startDate} - ${formData.endDate}`,
-          no_of_visits: parseInt(formData.noOfVisits) || 0,
-          payment_term: formData.paymentTerms,
-          remarks: formData.remarks,
-          pms_site_id: (amcData as any)?.pms_site_id,
-          site_name: (amcData as any)?.site_name,
-          resource_id: (amcData as any)?.resource_id,
-          resource_name: (amcData as any)?.resource_name,
-          resource_type: (amcData as any)?.resource_type,
-          supplier_id: formData.vendor || formData.supplier,
-          supplier_name: (amcData as any)?.supplier_name
-        }
-      };
-
-      // Add asset_ids or service_id based on details type
-      if (formData.details === 'Asset') {
-        if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-          payload.pms_asset_amc.asset_ids = formData.asset_ids;
-        }
-      } else if (formData.details === 'Service' && formData.assetName) {
-        payload.pms_asset_amc.service_id = formData.assetName;
-      }
-
-      // Add vendor information if available
-      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-      if (selectedSupplier) {
-        payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
-        payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
-        payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
-      }
-
-      // Add file fields (currently null, would need separate file upload handling)
-      payload.pms_asset_amc.amc_contract = null;
-      payload.pms_asset_amc.amc_invoice = null;
-
+      const payload = createPayload();
       console.log('Updating AMC with payload:', payload);
 
-      // Use PUT request with JSON payload
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, payload, {
         headers: {
           'Content-Type': 'application/json',
@@ -338,15 +324,13 @@ export const EditAMCPage = () => {
       });
 
       console.log('AMC Updated Successfully:', response.data);
-      
+
       toast({
         title: "AMC Updated",
         description: "AMC has been successfully updated."
       });
-      
-      // Navigate to AMC details page after success
+
       navigate(`/maintenance/amc/details/${id}`);
-      
     } catch (error: any) {
       console.error('Error updating AMC:', error);
       toast({
@@ -363,52 +347,9 @@ export const EditAMCPage = () => {
     setUpdateLoading(true);
 
     try {
-      // Create JSON payload with all AMC fields (same as handleSubmit)
-      let payload: any = {
-        pms_asset_amc: {
-          amc_cost: parseFloat(formData.cost) || 0,
-          amc_start_date: formData.startDate,
-          amc_end_date: formData.endDate,
-          amc_first_service: formData.firstService,
-          amc_frequency: formData.paymentTerms || null,
-          amc_period: `${formData.startDate} - ${formData.endDate}`,
-          no_of_visits: parseInt(formData.noOfVisits) || 0,
-          payment_term: formData.paymentTerms,
-          remarks: formData.remarks,
-          pms_site_id: (amcData as any)?.pms_site_id,
-          site_name: (amcData as any)?.site_name,
-          resource_id: (amcData as any)?.resource_id,
-          resource_name: (amcData as any)?.resource_name,
-          resource_type: (amcData as any)?.resource_type,
-          supplier_id: formData.vendor || formData.supplier,
-          supplier_name: (amcData as any)?.supplier_name
-        }
-      };
-
-      // Add asset_ids or service_id based on details type
-      if (formData.details === 'Asset') {
-        if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-          payload.pms_asset_amc.asset_ids = formData.asset_ids;
-        }
-      } else if (formData.details === 'Service' && formData.assetName) {
-        payload.pms_asset_amc.service_id = formData.assetName;
-      }
-
-      // Add vendor information if available
-      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-      if (selectedSupplier) {
-        payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
-        payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
-        payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
-      }
-
-      // Add file fields (currently null, would need separate file upload handling)
-      payload.pms_asset_amc.amc_contract = null;
-      payload.pms_asset_amc.amc_invoice = null;
-
+      const payload = createPayload();
       console.log('Update & Schedule AMC with payload:', payload);
 
-      // Use PUT request with JSON payload
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, payload, {
         headers: {
           'Content-Type': 'application/json',
@@ -416,15 +357,13 @@ export const EditAMCPage = () => {
       });
 
       console.log('AMC Updated and Scheduled Successfully:', response.data);
-      
+
       toast({
         title: "AMC Updated",
         description: "AMC has been successfully updated and scheduled."
       });
-      
-      // Navigate to AMC details page after success
+
       navigate(`/maintenance/amc/details/${id}`);
-      
     } catch (error: any) {
       console.error('Error updating AMC:', error);
       toast({
@@ -511,27 +450,27 @@ export const EditAMCPage = () => {
               <label className="block text-sm font-medium mb-2">Details</label>
               <div className="flex gap-4">
                 <label className="flex items-center">
-                  <input 
-                    type="radio" 
-                    name="details" 
-                    value="Asset" 
-                    checked={formData.details === 'Asset'} 
-                    onChange={e => handleInputChange('details', e.target.value)} 
-                    className="mr-2" 
-                    style={{ accentColor: '#C72030' }} 
+                  <input
+                    type="radio"
+                    name="details"
+                    value="Asset"
+                    checked={formData.details === 'Asset'}
+                    onChange={e => handleInputChange('details', e.target.value)}
+                    className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                     disabled={true}
                   />
                   Asset
                 </label>
                 <label className="flex items-center">
-                  <input 
-                    type="radio" 
-                    name="details" 
-                    value="Service" 
-                    checked={formData.details === 'Service'} 
-                    onChange={e => handleInputChange('details', e.target.value)} 
-                    className="mr-2" 
-                    style={{ accentColor: '#C72030' }} 
+                  <input
+                    type="radio"
+                    name="details"
+                    value="Service"
+                    checked={formData.details === 'Service'}
+                    onChange={e => handleInputChange('details', e.target.value)}
+                    className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                     disabled={true}
                   />
                   Service
@@ -543,26 +482,26 @@ export const EditAMCPage = () => {
               <label className="block text-sm font-medium mb-2">Type</label>
               <div className="flex gap-4">
                 <label className="flex items-center">
-                  <input 
-                    type="radio" 
-                    name="type" 
-                    value="Individual" 
-                    checked={formData.type === 'Individual'} 
-                    onChange={e => handleInputChange('type', e.target.value)} 
-                    className="mr-2" 
-                    style={{ accentColor: '#C72030' }} 
+                  <input
+                    type="radio"
+                    name="type"
+                    value="Individual"
+                    checked={formData.type === 'Individual'}
+                    onChange={e => handleInputChange('type', e.target.value)}
+                    className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                   />
                   Individual
                 </label>
                 <label className="flex items-center">
-                  <input 
-                    type="radio" 
-                    name="type" 
-                    value="Group" 
-                    checked={formData.type === 'Group'} 
-                    onChange={e => handleInputChange('type', e.target.value)} 
-                    className="mr-2" 
-                    style={{ accentColor: '#C72030' }} 
+                  <input
+                    type="radio"
+                    name="type"
+                    value="Group"
+                    checked={formData.type === 'Group'}
+                    onChange={e => handleInputChange('type', e.target.value)}
+                    className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                   />
                   Group
                 </label>
@@ -575,19 +514,19 @@ export const EditAMCPage = () => {
                 {formData.details === 'Asset' ? (
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
-                    <MuiSelect 
-                      labelId="asset-select-label" 
-                      label="Assets" 
+                    <MuiSelect
+                      labelId="asset-select-label"
+                      label="Assets"
                       multiple
-                      displayEmpty 
-                      value={formData.asset_ids} 
+                      displayEmpty
+                      value={formData.asset_ids}
                       onChange={e => {
                         const value = e.target.value;
                         setFormData(prev => ({
                           ...prev,
                           asset_ids: typeof value === 'string' ? value.split(',') : value
                         }));
-                      }} 
+                      }}
                       sx={fieldStyles}
                       disabled={true}
                       renderValue={(selected) => {
@@ -616,12 +555,12 @@ export const EditAMCPage = () => {
                 ) : (
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="service-select-label" shrink>Service</InputLabel>
-                    <MuiSelect 
-                      labelId="service-select-label" 
-                      label="Service" 
-                      displayEmpty 
-                      value={formData.assetName} 
-                      onChange={e => handleInputChange('assetName', e.target.value)} 
+                    <MuiSelect
+                      labelId="service-select-label"
+                      label="Service"
+                      displayEmpty
+                      value={formData.assetName}
+                      onChange={e => handleInputChange('assetName', e.target.value)}
                       sx={fieldStyles}
                       disabled={loading || servicesLoading || updateLoading}
                       renderValue={(selected) => {
@@ -633,19 +572,14 @@ export const EditAMCPage = () => {
                       }}
                     >
                       <MenuItem value=""><em>Select a Service...</em></MenuItem>
-                      {(() => {
-                        console.log('Services dropdown rendering - services state:', services);
-                        console.log('Services array length:', services.length);
-                        console.log('Current selected service ID:', formData.assetName);
-                        return Array.isArray(services) && services.map((service) => {
-                          console.log('Rendering service:', service);
-                          return (
-                            <MenuItem key={service.id} value={service.id.toString()}>
-                              {service.service_name}
-                            </MenuItem>
-                          );
-                        });
-                      })()}
+                      {Array.isArray(services) && services.map((service) => {
+                        console.log('Rendering service:', service);
+                        return (
+                          <MenuItem key={service.id} value={service.id.toString()}>
+                            {service.service_name}
+                          </MenuItem>
+                        );
+                      })}
                     </MuiSelect>
                   </FormControl>
                 )}
@@ -653,12 +587,12 @@ export const EditAMCPage = () => {
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
-                    <MuiSelect 
-                      labelId="vendor-select-label" 
-                      label="Supplier" 
-                      displayEmpty 
-                      value={formData.vendor} 
-                      onChange={e => handleInputChange('vendor', e.target.value)} 
+                    <MuiSelect
+                      labelId="vendor-select-label"
+                      label="Supplier"
+                      displayEmpty
+                      value={formData.vendor}
+                      onChange={e => handleInputChange('vendor', e.target.value)}
                       sx={fieldStyles}
                       disabled={loading || suppliersLoading || updateLoading}
                       renderValue={(selected) => {
@@ -686,12 +620,12 @@ export const EditAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                      <MuiSelect 
-                        labelId="group-select-label" 
-                        label="Group" 
-                        displayEmpty 
-                        value={formData.group} 
-                        onChange={e => handleGroupChange(e.target.value)} 
+                      <MuiSelect
+                        labelId="group-select-label"
+                        label="Group"
+                        displayEmpty
+                        value={formData.group}
+                        onChange={e => handleGroupChange(e.target.value)}
                         sx={fieldStyles}
                         disabled={loading || updateLoading}
                       >
@@ -708,12 +642,12 @@ export const EditAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="subgroup-select-label" shrink>SubGroup</InputLabel>
-                      <MuiSelect 
-                        labelId="subgroup-select-label" 
-                        label="SubGroup" 
-                        displayEmpty 
-                        value={formData.subgroup} 
-                        onChange={e => handleInputChange('subgroup', e.target.value)} 
+                      <MuiSelect
+                        labelId="subgroup-select-label"
+                        label="SubGroup"
+                        displayEmpty
+                        value={formData.subgroup}
+                        onChange={e => handleInputChange('subgroup', e.target.value)}
                         sx={fieldStyles}
                         disabled={!formData.group || loading || updateLoading}
                       >
@@ -727,17 +661,16 @@ export const EditAMCPage = () => {
                     </FormControl>
                   </div>
 
-                  {/* Only show Service dropdown when Details is "Service" */}
                   {formData.details === 'Service' && (
                     <div>
                       <FormControl fullWidth variant="outlined">
                         <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
-                        <MuiSelect 
-                          labelId="group-service-select-label" 
-                          label="Service" 
-                          displayEmpty 
-                          value={formData.service} 
-                          onChange={e => handleInputChange('service', e.target.value)} 
+                        <MuiSelect
+                          labelId="group-service-select-label"
+                          label="Service"
+                          displayEmpty
+                          value={formData.service}
+                          onChange={e => handleInputChange('service', e.target.value)}
                           sx={fieldStyles}
                         >
                           <MenuItem value=""><em>Select Service</em></MenuItem>
@@ -753,12 +686,12 @@ export const EditAMCPage = () => {
                   <div>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
-                      <MuiSelect 
-                        labelId="group-supplier-select-label" 
-                        label="Supplier" 
-                        displayEmpty 
-                        value={formData.supplier} 
-                        onChange={e => handleInputChange('supplier', e.target.value)} 
+                      <MuiSelect
+                        labelId="group-supplier-select-label"
+                        label="Supplier"
+                        displayEmpty
+                        value={formData.supplier}
+                        onChange={e => handleInputChange('supplier', e.target.value)}
                         sx={fieldStyles}
                         disabled={loading || suppliersLoading || updateLoading}
                       >
@@ -789,49 +722,49 @@ export const EditAMCPage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <TextField 
-                  label="Cost" 
-                  placeholder="Enter Cost" 
-                  name="cost" 
-                  type="number" 
-                  value={formData.cost} 
-                  onChange={e => handleInputChange('cost', e.target.value)} 
-                  fullWidth 
-                  variant="outlined" 
-                  InputLabelProps={{ shrink: true }} 
-                  InputProps={{ sx: fieldStyles }} 
+                <TextField
+                  label="Cost"
+                  placeholder="Enter Cost"
+                  name="cost"
+                  type="number"
+                  value={formData.cost}
+                  onChange={e => handleInputChange('cost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
               </div>
 
               <div>
-                <TextField 
-                  required 
-                  label="Start Date" 
-                  placeholder="Select Date" 
-                  name="startDate" 
-                  type="date" 
-                  value={formData.startDate} 
-                  onChange={e => handleInputChange('startDate', e.target.value)} 
-                  fullWidth 
-                  variant="outlined" 
-                  InputLabelProps={{ shrink: true }} 
-                  InputProps={{ sx: fieldStyles }} 
+                <TextField
+                  required
+                  label="Start Date"
+                  placeholder="Select Date"
+                  name="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={e => handleInputChange('startDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
               </div>
 
               <div>
-                <TextField 
-                  required 
-                  label="First Service Date" 
-                  placeholder="Select Date" 
-                  name="firstService" 
-                  type="date" 
-                  value={formData.firstService} 
-                  onChange={e => handleInputChange('firstService', e.target.value)} 
-                  fullWidth 
-                  variant="outlined" 
-                  InputLabelProps={{ shrink: true }} 
-                  InputProps={{ sx: fieldStyles }} 
+                <TextField
+                  required
+                  label="First Service Date"
+                  placeholder="Select Date"
+                  name="firstService"
+                  type="date"
+                  value={formData.firstService}
+                  onChange={e => handleInputChange('firstService', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
               </div>
 
@@ -840,12 +773,12 @@ export const EditAMCPage = () => {
                   <InputLabel id="payment-terms-select-label" shrink>
                     Payment Terms
                   </InputLabel>
-                  <MuiSelect 
-                    labelId="payment-terms-select-label" 
-                    label="Payment Terms" 
-                    displayEmpty 
-                    value={formData.paymentTerms} 
-                    onChange={e => handleInputChange('paymentTerms', e.target.value)} 
+                  <MuiSelect
+                    labelId="payment-terms-select-label"
+                    label="Payment Terms"
+                    displayEmpty
+                    value={formData.paymentTerms}
+                    onChange={e => handleInputChange('paymentTerms', e.target.value)}
                     sx={fieldStyles}
                   >
                     <MenuItem value=""><em>Select Payment Term</em></MenuItem>
@@ -858,6 +791,7 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
+<<<<<<< Updated upstream
                 <TextField 
                   required 
                   label="End Date" 
@@ -873,37 +807,50 @@ export const EditAMCPage = () => {
                     sx: fieldStyles,
                     inputProps: { min: formData.startDate }
                   }} 
+=======
+                <TextField
+                  required
+                  label="End Date"
+                  placeholder="Select Date"
+                  name="endDate"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={e => handleInputChange('endDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+>>>>>>> Stashed changes
                 />
               </div>
 
               <div>
-                <TextField 
-                  label="No. of Visits" 
-                  placeholder="Enter No. of Visit" 
-                  name="noOfVisits" 
-                  type="number" 
-                  value={formData.noOfVisits} 
-                  onChange={e => handleInputChange('noOfVisits', e.target.value)} 
-                  fullWidth 
-                  variant="outlined" 
-                  InputLabelProps={{ shrink: true }} 
-                  InputProps={{ sx: fieldStyles }} 
+                <TextField
+                  label="No. of Visits"
+                  placeholder="Enter No. of Visit"
+                  name="noOfVisits"
+                  type="number"
+                  value={formData.noOfVisits}
+                  onChange={e => handleInputChange('noOfVisits', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
               </div>
 
-              {/* Remarks Field - full width in grid */}
               <div className="md:col-span-3">
                 <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
                   Remarks
                 </label>
-                <textarea 
-                  id="remarks" 
-                  name="remarks" 
-                  value={formData.remarks} 
-                  onChange={e => handleInputChange('remarks', e.target.value)} 
-                  placeholder="Enter Remarks" 
-                  rows={3} 
-                  className="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] resize-none" 
+                <textarea
+                  id="remarks"
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={e => handleInputChange('remarks', e.target.value)}
+                  placeholder="Enter Remarks"
+                  rows={3}
+                  className="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] resize-none"
                 />
               </div>
             </div>
@@ -920,21 +867,20 @@ export const EditAMCPage = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* AMC Contracts */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="contracts-upload" 
-                    onChange={e => handleFileUpload('contracts', e.target.files)} 
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    id="contracts-upload"
+                    onChange={e => handleFileUpload('contracts', e.target.files)}
                   />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span 
-                      className="text-[#C72030] font-medium cursor-pointer" 
-                      style={{ fontSize: '14px' }} 
+                    <span
+                      className="text-[#C72030] font-medium cursor-pointer"
+                      style={{ fontSize: '14px' }}
                       onClick={() => document.getElementById('contracts-upload')?.click()}
                     >
                       Choose File
@@ -943,9 +889,9 @@ export const EditAMCPage = () => {
                       {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button 
-                    type="button" 
-                    onClick={() => document.getElementById('contracts-upload')?.click()} 
+                  <Button
+                    type="button"
+                    onClick={() => document.getElementById('contracts-upload')?.click()}
                     className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -957,10 +903,10 @@ export const EditAMCPage = () => {
                     {attachments.contracts.map((file, index) => (
                       <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
                         <span>{file.name}</span>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => removeFile('contracts', index)}
                         >
                           <X className="w-3 h-3" />
@@ -971,21 +917,20 @@ export const EditAMCPage = () => {
                 )}
               </div>
 
-              {/* AMC Invoice */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Invoice</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="invoices-upload" 
-                    onChange={e => handleFileUpload('invoices', e.target.files)} 
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    id="invoices-upload"
+                    onChange={e => handleFileUpload('invoices', e.target.files)}
                   />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span 
-                      className="text-[#C72030] font-medium cursor-pointer" 
-                      style={{ fontSize: '14px' }} 
+                    <span
+                      className="text-[#C72030] font-medium cursor-pointer"
+                      style={{ fontSize: '14px' }}
                       onClick={() => document.getElementById('invoices-upload')?.click()}
                     >
                       Choose File
@@ -994,9 +939,9 @@ export const EditAMCPage = () => {
                       {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button 
-                    type="button" 
-                    onClick={() => document.getElementById('invoices-upload')?.click()} 
+                  <Button
+                    type="button"
+                    onClick={() => document.getElementById('invoices-upload')?.click()}
                     className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -1008,10 +953,10 @@ export const EditAMCPage = () => {
                     {attachments.invoices.map((file, index) => (
                       <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
                         <span>{file.name}</span>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => removeFile('invoices', index)}
                         >
                           <X className="w-3 h-3" />
@@ -1025,20 +970,27 @@ export const EditAMCPage = () => {
           </CardContent>
         </Card>
 
+<<<<<<< Updated upstream
         <div className="flex gap-4 justify-center">
           <Button 
             type="button" 
             onClick={handleSaveAndSchedule} 
+=======
+        <div className="flex gap-4">
+          <Button
+            type="button"
+            onClick={handleSaveAndSchedule}
+>>>>>>> Stashed changes
             disabled={updateLoading}
-            style={{ backgroundColor: '#C72030' }} 
+            style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
           >
             {updateLoading ? 'Updating...' : 'Update & show details'}
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={updateLoading}
-            style={{ backgroundColor: '#C72030' }} 
+            style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
           >
             {updateLoading ? 'Updating...' : 'Update & Create New Service'}
