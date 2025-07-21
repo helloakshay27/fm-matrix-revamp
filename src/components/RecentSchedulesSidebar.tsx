@@ -141,7 +141,7 @@ export function RecentSchedulesSidebar() {
         {/* Schedules List */}
         <div className="flex-1 overflow-y-auto space-y-4">
           {recentSchedules.map((schedule, index) => (
-            <div key={`${schedule.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
+            <div key={`${schedule.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-3 shadow-sm border border-[#C4B89D] border-opacity-60 min-w-0" style={{ borderWidth: '0.6px' }}>
               {/* Header with ID, Star, and Priority */}
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-800 text-sm">{schedule.scheduleId}</span>
@@ -163,47 +163,57 @@ export function RecentSchedulesSidebar() {
               </div>
               
               {/* Details */}
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center gap-3">
-                  <Building2 className="h-4 w-4 text-red-500" />
-                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Category</span>
-                  <span className="text-sm text-gray-700">:</span>
-                  <span className="text-sm text-gray-900">{schedule.category}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Building2 className="h-4 w-4 text-red-500" />
-                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Sub-Category</span>
-                  <span className="text-sm text-gray-700">:</span>
-                  <span className="text-sm text-gray-900">{schedule.subCategory}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <User className="h-4 w-4 text-red-500" />
-                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Assignee Name</span>
-                  <span className="text-sm text-gray-700">:</span>
-                  <span className="text-sm text-gray-900">{schedule.assigneeName}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Globe className="h-4 w-4 text-red-500" />
-                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Site</span>
-                  <span className="text-sm text-gray-700">:</span>
-                  <span className="text-sm text-gray-900">{schedule.site}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <RotateCcw className="h-4 w-4 text-red-500" />
-                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">Update</span>
-                  <span className="text-sm text-gray-700">:</span>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="italic text-gray-600">{schedule.status}</span>
-                    <ChevronRight className="h-3 w-3 text-gray-600" />
-                    <span className="italic text-gray-600">{schedule.nextStatus}</span>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-start gap-2 min-w-0">
+                  <Building2 className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-wrap items-center gap-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-700">Category</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900 break-words">{schedule.category}</span>
                   </div>
                 </div>
                 
-                <div className="text-sm text-gray-600 ml-7">
+                <div className="flex items-start gap-2 min-w-0">
+                  <Building2 className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-wrap items-center gap-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-700">Sub-Category</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900 break-words">{schedule.subCategory}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2 min-w-0">
+                  <User className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-wrap items-center gap-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-700">Assignee Name</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900 break-words">{schedule.assigneeName}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2 min-w-0">
+                  <Globe className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-wrap items-center gap-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-700">Site</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900 break-words">{schedule.site}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2 min-w-0">
+                  <RotateCcw className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-wrap items-start gap-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-700">Update</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <div className="flex items-center gap-1 text-sm flex-wrap">
+                      <span className="italic text-gray-600 break-words">{schedule.status}</span>
+                      <ChevronRight className="h-3 w-3 text-gray-600 flex-shrink-0" />
+                      <span className="italic text-gray-600 break-words">{schedule.nextStatus}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-600 ml-6 break-words">
                   (Handled By {schedule.handledBy})
                 </div>
               </div>
