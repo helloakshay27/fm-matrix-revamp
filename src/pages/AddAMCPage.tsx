@@ -583,7 +583,7 @@ export const AddAMCPage = () => {
             value={formData.startDate ? new Date(formData.startDate) : undefined}
             onChange={(date) => handleInputChange('startDate', date ? date.toISOString().split('T')[0] : '')}
             placeholder="Select Date"
-            className="w-full"
+            className="w-full h-[45px] border border-gray-300 rounded-md"
           />
         </div>
       </div>
@@ -595,7 +595,7 @@ export const AddAMCPage = () => {
             value={formData.firstService ? new Date(formData.firstService) : undefined}
             onChange={(date) => handleInputChange('firstService', date ? date.toISOString().split('T')[0] : '')}
             placeholder="Select Date"
-            className="w-full"
+            className="w-full h-[45px] border border-gray-300 rounded-md"
           />
         </div>
       </div>
@@ -622,7 +622,7 @@ export const AddAMCPage = () => {
             value={formData.endDate ? new Date(formData.endDate) : undefined}
             onChange={(date) => handleInputChange('endDate', date ? date.toISOString().split('T')[0] : '')}
             placeholder="Select Date"
-            className="w-full"
+            className="w-full h-[45px] border border-gray-300 rounded-md"
             minDate={formData.startDate ? new Date(formData.startDate) : undefined}
           />
         </div>
