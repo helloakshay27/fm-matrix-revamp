@@ -55,25 +55,200 @@ const mockOrderDetails: OrderDetail[] = [
       phone: "91 7388997281"
     },
     items: [
-      {
-        name: "Imperial Rolls",
-        quantity: 1,
-        price: 250.00
-      }
+      { name: "Imperial Rolls", quantity: 1, price: 250.00 }
     ],
     subTotal: 250.00,
     gst: 0.00,
     deliveryCharge: 0.00,
     total: 250.00,
     logs: [
-      {
-        date: "21/07/2025 2:38 PM",
-        status: "Received",
-        comments: "",
-        updatedBy: "Ankit Gupta"
-      }
+      { date: "21/07/2025 2:38 PM", status: "Received", comments: "", updatedBy: "Ankit Gupta" }
     ],
     currentStatus: "Received"
+  },
+  {
+    id: 2,
+    orderId: "1246",
+    restaurant: "Havan Havanna Cafe",
+    orderDate: "21/07/2025 12:38 PM",
+    paymentMode: "Card",
+    paymentStatus: "Pending",
+    transactionId: "TXN123456",
+    preferredTime: "1:00 PM",
+    deliveryAddress: {
+      customerName: "Ankit Gupta",
+      location: "Downtown Location",
+      phone: "91 9876543210"
+    },
+    items: [
+      { name: "Corn Fritters", quantity: 1, price: 250.00 }
+    ],
+    subTotal: 250.00,
+    gst: 12.50,
+    deliveryCharge: 30.00,
+    total: 292.50,
+    logs: [
+      { date: "21/07/2025 12:38 PM", status: "Pending", comments: "Order placed", updatedBy: "Ankit Gupta" }
+    ],
+    currentStatus: "Pending"
+  },
+  {
+    id: 3,
+    orderId: "1223",
+    restaurant: "Havan Havanna Cafe",
+    orderDate: "24/07/2024 1:07 PM",
+    paymentMode: "Cash",
+    paymentStatus: "Not Available",
+    transactionId: "",
+    preferredTime: "2:00 PM",
+    deliveryAddress: {
+      customerName: "Kshitij Rasal",
+      location: "Office Complex",
+      phone: "91 8765432109"
+    },
+    items: [
+      { name: "Spring Rolls", quantity: 1, price: 40.00 }
+    ],
+    subTotal: 40.00,
+    gst: 0.00,
+    deliveryCharge: 0.00,
+    total: 40.00,
+    logs: [
+      { date: "24/07/2024 1:07 PM", status: "Not Available", comments: "Item out of stock", updatedBy: "Kshitij Rasal" }
+    ],
+    currentStatus: "Not Available"
+  },
+  {
+    id: 4,
+    orderId: "1217",
+    restaurant: "Havan Havanna Cafe",
+    orderDate: "20/07/2024 12:18 PM",
+    paymentMode: "UPI",
+    paymentStatus: "Paid",
+    transactionId: "UPI789012",
+    preferredTime: "12:30 PM",
+    deliveryAddress: {
+      customerName: "Chetan Bafna",
+      location: "Residential Area",
+      phone: "91 7654321098"
+    },
+    items: [
+      { name: "Chicken Satay", quantity: 2, price: 300.00 },
+      { name: "Tom Yum Soup", quantity: 1, price: 120.00 }
+    ],
+    subTotal: 720.00,
+    gst: 36.00,
+    deliveryCharge: 50.00,
+    total: 806.00,
+    logs: [
+      { date: "20/07/2024 12:18 PM", status: "Pending", comments: "Order confirmed", updatedBy: "Chetan Bafna" }
+    ],
+    currentStatus: "Pending"
+  },
+  {
+    id: 5,
+    orderId: "1211",
+    restaurant: "Havan Havanna Cafe",
+    orderDate: "24/06/2024 2:54 PM",
+    paymentMode: "Card",
+    paymentStatus: "Pending",
+    transactionId: "CARD345678",
+    preferredTime: "3:15 PM",
+    deliveryAddress: {
+      customerName: "Kshitij Rasal",
+      location: "Business District",
+      phone: "91 6543210987"
+    },
+    items: [
+      { name: "Tofu Satay", quantity: 1, price: 270.00 },
+      { name: "Dumpling", quantity: 1, price: 200.00 }
+    ],
+    subTotal: 470.00,
+    gst: 23.50,
+    deliveryCharge: 40.00,
+    total: 533.50,
+    logs: [
+      { date: "24/06/2024 2:54 PM", status: "Pending", comments: "Payment processing", updatedBy: "Kshitij Rasal" }
+    ],
+    currentStatus: "Pending"
+  },
+  {
+    id: 6,
+    orderId: "1204",
+    restaurant: "Havan Havanna Cafe",
+    orderDate: "17/05/2024 4:27 PM",
+    paymentMode: "UPI",
+    paymentStatus: "Paid",
+    transactionId: "UPI901234",
+    preferredTime: "4:45 PM",
+    deliveryAddress: {
+      customerName: "Chetan Bafna",
+      location: "City Center",
+      phone: "91 5432109876"
+    },
+    items: [
+      { name: "Golden Triangles", quantity: 1, price: 200.00 }
+    ],
+    subTotal: 200.00,
+    gst: 10.00,
+    deliveryCharge: 25.00,
+    total: 235.00,
+    logs: [
+      { date: "17/05/2024 4:27 PM", status: "Pending", comments: "Order in preparation", updatedBy: "Chetan Bafna" }
+    ],
+    currentStatus: "Pending"
+  },
+  {
+    id: 7,
+    orderId: "1203",
+    restaurant: "Havan Havanna Cafe",
+    orderDate: "17/05/2024 4:25 PM",
+    paymentMode: "Cash",
+    paymentStatus: "Pending",
+    transactionId: "",
+    preferredTime: "5:00 PM",
+    deliveryAddress: {
+      customerName: "Chetan Bafna",
+      location: "Mall Complex",
+      phone: "91 4321098765"
+    },
+    items: [
+      { name: "Glass Noodles Soup", quantity: 1, price: 250.00 }
+    ],
+    subTotal: 250.00,
+    gst: 12.50,
+    deliveryCharge: 30.00,
+    total: 292.50,
+    logs: [
+      { date: "17/05/2024 4:25 PM", status: "Pending", comments: "Waiting for confirmation", updatedBy: "Chetan Bafna" }
+    ],
+    currentStatus: "Pending"
+  },
+  {
+    id: 8,
+    orderId: "1168",
+    restaurant: "Havan Havanna Cafe",
+    orderDate: "18/01/2024 12:55 PM",
+    paymentMode: "Card",
+    paymentStatus: "Paid",
+    transactionId: "CARD567890",
+    preferredTime: "1:15 PM",
+    deliveryAddress: {
+      customerName: "Deepak Gupta",
+      location: "Tech Park",
+      phone: "91 3210987654"
+    },
+    items: [
+      { name: "Beef Noodle Soup", quantity: 1, price: 250.00 }
+    ],
+    subTotal: 250.00,
+    gst: 12.50,
+    deliveryCharge: 35.00,
+    total: 297.50,
+    logs: [
+      { date: "18/01/2024 12:55 PM", status: "Pending", comments: "Ready for pickup", updatedBy: "Deepak Gupta" }
+    ],
+    currentStatus: "Pending"
   }
 ];
 
