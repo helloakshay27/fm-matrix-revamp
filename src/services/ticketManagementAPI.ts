@@ -464,9 +464,9 @@ export const ticketManagementAPI = {
   },
 
   // Get ticket details by ID
-  async getTicketDetails(ticketIds: number[]) {
+  async getTicketDetails(ticketId: string) {
     try {
-      const response = await apiClient.get(`/pms/admin/complaints/${ticketIds}.json`);
+      const response = await apiClient.get(`/pms/admin/complaints/${ticketId}.json`);
       return response.data;
     } catch (error) {
       console.error('Error fetching ticket details:', error);
