@@ -177,11 +177,6 @@ export const TicketListDashboard = () => {
     }
   };
 
-  const handleSearch = () => {
-    // Search is handled by debounced effect
-    setCurrentPage(1);
-  };
-
   const handleReset = () => {
     setSearchTerm('');
     setActiveFilters({});
@@ -382,13 +377,6 @@ export const TicketListDashboard = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
           />
-          <Button 
-            onClick={handleSearch}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            Go!
-          </Button>
           <Button 
             variant="outline"
             onClick={handleReset}

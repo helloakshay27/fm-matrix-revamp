@@ -264,14 +264,6 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   };
 
   const fieldStyles = {
-    minHeight: 40,
-    '& .MuiInputBase-root': {
-      minHeight: 40,
-    },
-    '& .MuiSelect-select': {
-      padding: '10px 14px',
-      minHeight: 'unset',
-    },
     '& .MuiOutlinedInput-root': {
       backgroundColor: 'white',
       '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -280,6 +272,30 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
         borderColor: '#C72030',
       },
+    },
+  };
+
+  const selectMenuProps = {
+    PaperProps: {
+      sx: {
+        maxHeight: 200,
+        backgroundColor: 'white',
+        zIndex: 9999,
+        '& .MuiMenuItem-root': {
+          padding: '8px 16px',
+          '&:hover': {
+            backgroundColor: '#f5f5f5',
+          },
+        },
+      },
+    },
+    anchorOrigin: {
+      vertical: 'bottom' as const,
+      horizontal: 'left' as const,
+    },
+    transformOrigin: {
+      vertical: 'top' as const,
+      horizontal: 'left' as const,
     },
   };
 
@@ -335,22 +351,13 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.categories}>
-              <InputLabel id="category-select-label">Category</InputLabel>
+              <InputLabel>Category</InputLabel>
               <MuiSelect
-                labelId="category-select-label"
                 label="Category"
                 value={filters.category_type_id_eq || ''}
                 onChange={(e) => handleFilterChange('category_type_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   <em>Select Category</em>
@@ -374,22 +381,13 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
           {/* Row 2 */}
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.subcategories || !filters.category_type_id_eq}>
-              <InputLabel id="subcategory-select-label">Sub Category</InputLabel>
+              <InputLabel>Sub Category</InputLabel>
               <MuiSelect
-                labelId="subcategory-select-label"
                 label="Sub Category"
                 value={filters.sub_category_id_eq || ''}
                 onChange={(e) => handleFilterChange('sub_category_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   <em>Select Sub Category</em>
@@ -412,22 +410,13 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.departments}>
-              <InputLabel id="department-select-label">Department</InputLabel>
+              <InputLabel>Department</InputLabel>
               <MuiSelect
-                labelId="department-select-label"
                 label="Department"
                 value={filters.dept_id_eq || ''}
                 onChange={(e) => handleFilterChange('dept_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   <em>Select Department</em>
@@ -450,22 +439,13 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.sites}>
-              <InputLabel id="site-select-label">Site</InputLabel>
+              <InputLabel>Site</InputLabel>
               <MuiSelect
-                labelId="site-select-label"
                 label="Site"
                 value={filters.site_id_eq || ''}
                 onChange={(e) => handleFilterChange('site_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   <em>Select Site</em>
@@ -489,22 +469,13 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
           {/* Row 3 */}
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.units}>
-              <InputLabel id="unit-select-label">Unit</InputLabel>
+              <InputLabel>Unit</InputLabel>
               <MuiSelect
-                labelId="unit-select-label"
                 label="Unit"
                 value={filters.unit_id_eq || ''}
                 onChange={(e) => handleFilterChange('unit_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   <em>Select Unit</em>
@@ -527,9 +498,8 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.statuses}>
-              <InputLabel id="status-select-label">Status</InputLabel>
+              <InputLabel>Status</InputLabel>
               <MuiSelect
-                labelId="status-select-label"
                 label="Status"
                 multiple
                 value={filters.issue_status_in || []}
@@ -547,15 +517,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                   </div>
                 )}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 {state.loading.statuses ? (
                   <MenuItem disabled>
@@ -575,22 +537,13 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined">
-              <InputLabel id="priority-select-label">Priority</InputLabel>
+              <InputLabel>Priority</InputLabel>
               <MuiSelect
-                labelId="priority-select-label"
                 label="Priority"
                 value={filters.priority_eq || ''}
                 onChange={(e) => handleFilterChange('priority_eq', e.target.value)}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   <em>Select Priority</em>
@@ -619,9 +572,8 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.users}>
-              <InputLabel id="assigned-to-select-label">Assigned To</InputLabel>
+              <InputLabel>Assigned To</InputLabel>
               <MuiSelect
-                labelId="assigned-to-select-label"
                 label="Assigned To"
                 multiple
                 value={filters.assigned_to_in || []}
@@ -639,15 +591,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                   </div>
                 )}
                 sx={fieldStyles}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 200,
-                      bgcolor: 'background.paper',
-                      boxShadow: 3,
-                    },
-                  },
-                }}
+                MenuProps={selectMenuProps}
               >
                 {state.loading.users ? (
                   <MenuItem disabled>
