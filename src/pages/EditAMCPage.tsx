@@ -809,6 +809,7 @@ export const EditAMCPage = () => {
                   value={formData.startDate}
                   onChange={(value) => handleInputChange('startDate', value)}
                   placeholder="Select Start Date"
+                  className="h-[28px] sm:h-[36px] md:h-[45px]"
                 />
               </div>
 
@@ -817,6 +818,7 @@ export const EditAMCPage = () => {
                   value={formData.firstService}
                   onChange={(value) => handleInputChange('firstService', value)}
                   placeholder="Select First Service Date"
+                  className="h-[28px] sm:h-[36px] md:h-[45px]"
                 />
               </div>
 
@@ -847,6 +849,7 @@ export const EditAMCPage = () => {
                   value={formData.endDate}
                   onChange={(value) => handleInputChange('endDate', value)}
                   placeholder="Select End Date"
+                  className="h-[28px] sm:h-[36px] md:h-[45px]"
                 />
               </div>
 
