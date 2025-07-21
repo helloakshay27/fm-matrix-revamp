@@ -31,6 +31,43 @@ export interface CategoryResponse {
   selected_icon_url: string;
 }
 
+// New interfaces for filter dropdown data
+export interface CategoryOption {
+  id: number;
+  name: string;
+}
+
+export interface SubcategoryOption {
+  id: number;
+  name: string;
+  category_id: number;
+}
+
+export interface DepartmentOption {
+  id: number;
+  department_name: string;
+}
+
+export interface SiteOption {
+  id: number;
+  site_name: string;
+}
+
+export interface UnitOption {
+  id: number;
+  unit_name: string;
+}
+
+export interface StatusOption {
+  id: number;
+  name: string;
+}
+
+export interface UserOption {
+  id: number;
+  name: string;
+}
+
 // Subcategory Types
 export interface SubCategoryFormData {
   helpdesk_category_id: number;
@@ -181,8 +218,69 @@ export interface OccupantUserResponse {
   };
 }
 
+// Interface for ticket filters
+export interface TicketFilters {
+  date_range?: string;
+  category_type_id_eq?: number;
+  sub_category_id_eq?: number;
+  dept_id_eq?: number;
+  site_id_eq?: number;
+  unit_id_eq?: number;
+  issue_status_in?: number[];
+  priority_eq?: string;
+  user_firstname_or_user_lastname_cont?: string;
+  search_all_fields_cont?: string;
+  assigned_to_in?: number[];
+}
+
+// Helper function to format date for API (DD/MM/YYYY)
+const formatDateForAPI = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 // API Services
 export const ticketManagementAPI = {
+  // New methods for filter dropdown data
+  async getHelpdeskCategories(): Promise<CategoryOption[]> {
+    const response = await apiClient.get(ENDPOINTS.HELPDESK_CATEGORIES);
+    return response.data.helpdesk_categories || [];
+  },
+
+  async getHelpdeskSubcategories(): Promise<SubcategoryOption[]> {
+    const response = await apiClient.get(`${ENDPOINTS.HELPDESK_SUBCATEGORIES}.json`);
+    return response.data.helpdesk_sub_categories || [];
+  },
+
+  async getDepartments(): Promise<DepartmentOption[]> {
+    const response = await apiClient.get(ENDPOINTS.DEPARTMENTS);
+    return response.data.departments || [];
+  },
+
+  async getAllSites(): Promise<SiteOption[]> {
+    const response = await apiClient.get(ENDPOINTS.SITES);
+    return response.data.sites || [];
+  },
+
+  async getUnits(): Promise<UnitOption[]> {
+    const response = await apiClient.get(ENDPOINTS.UNITS);
+    return response.data.units || [];
+  },
+
+  async getComplaintStatuses(): Promise<StatusOption[]> {
+    const response = await apiClient.get(ENDPOINTS.COMPLAINT_STATUSES);
+    return response.data.complaint_statuses || [];
+  },
+
+  async getFMUsers(): Promise<UserOption[]> {
+    const response = await apiClient.get(ENDPOINTS.FM_USERS);
+    return response.data.fm_users || [];
+  },
+
   // Categories
   async createCategory(data: CategoryFormData, emailData: CategoryEmailData) {
     const formData = new FormData();
@@ -227,8 +325,36 @@ export const ticketManagementAPI = {
   },
 
   // Tickets
-  async getTickets(page: number = 1, perPage: number = 20): Promise<TicketListResponse> {
-    const response = await apiClient.get(`/pms/admin/complaints.json?per_page=${perPage}&page=${page}`);
+  async getTickets(page: number = 1, perPage: number = 20, filters?: TicketFilters): Promise<TicketListResponse> {
+    const queryParams = new URLSearchParams();
+    
+    // Add pagination
+    queryParams.append('page', page.toString());
+    queryParams.append('per_page', perPage.toString());
+    
+    // Add filters if provided
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (Array.isArray(value)) {
+            // Handle array parameters like issue_status_in[] and assigned_to_in[]
+            value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
+            // Handle date range - convert from ISO to DD/MM/YYYY format
+            const [fromDate, toDate] = value.split('+-+');
+            const formattedFromDate = formatDateForAPI(fromDate);
+            const formattedToDate = formatDateForAPI(toDate);
+            if (formattedFromDate && formattedToDate) {
+              queryParams.append(`q[${key}]`, `${formattedFromDate}+-+${formattedToDate}`);
+            }
+          } else {
+            queryParams.append(`q[${key}]`, value.toString());
+          }
+        }
+      });
+    }
+
+    const response = await apiClient.get(`/pms/admin/complaints.json?${queryParams.toString()}`);
     return {
       complaints: response.data.complaints || [],
       pagination: response.data.pagination
@@ -461,5 +587,99 @@ export const ticketManagementAPI = {
     const idsParam = ticketIds.join(',');
     const response = await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${idsParam}]`);
     return response.data;
+  },
+
+  // Get ticket details by ID
+  async getTicketDetails(ticketId: string) {
+    try {
+      const response = await apiClient.get(`/pms/admin/complaints/${ticketId}.json`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching ticket details:', error);
+      throw error;
+    }
+  },
+
+  // Get ticket feeds by ID
+  async getTicketFeeds(ticketId: string) {
+    try {
+      const response = await apiClient.get(`/pms/admin/complaints/${ticketId}/feeds.json`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching ticket feeds:', error);
+      throw error;
+    }
+  },
+
+  // Get ticket summary with optional filters
+  async getTicketSummary(filters?: TicketFilters): Promise<{
+    total_tickets: number;
+    open_tickets: number;
+    in_progress_tickets: number;
+    closed_tickets: number;
+    complaints: number;
+    suggestions: number;
+    requests: number;
+  }> {
+    const queryParams = new URLSearchParams();
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (Array.isArray(value)) {
+            value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
+            // Handle date range - convert from ISO to DD/MM/YYYY format
+            const [fromDate, toDate] = value.split('+-+');
+            const formattedFromDate = formatDateForAPI(fromDate);
+            const formattedToDate = formatDateForAPI(toDate);
+            if (formattedFromDate && formattedToDate) {
+              queryParams.append(`q[${key}]`, `${formattedFromDate}+-+${formattedToDate}`);
+            }
+          } else {
+            queryParams.append(`q[${key}]`, value.toString());
+          }
+        }
+      });
+    }
+
+    const url = `${ENDPOINTS.TICKETS_SUMMARY}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Export tickets with filters in Excel format
+  async exportTicketsExcel(filters?: TicketFilters): Promise<Blob> {
+    const queryParams = new URLSearchParams();
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (Array.isArray(value)) {
+            value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
+            // Handle date range - convert from ISO to DD/MM/YYYY format
+            const [fromDate, toDate] = value.split('+-+');
+            const formattedFromDate = formatDateForAPI(fromDate);
+            const formattedToDate = formatDateForAPI(toDate);
+            if (formattedFromDate && formattedToDate) {
+              queryParams.append(`q[${key}]`, `${formattedFromDate}+-+${formattedToDate}`);
+            }
+          } else {
+            queryParams.append(`q[${key}]`, value.toString());
+          }
+        }
+      });
+    }
+
+    const url = `${ENDPOINTS.TICKETS_EXPORT_EXCEL}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiClient.get(url, { responseType: 'blob' });
+    return response.data;
+  },
+
+  // Export tickets (legacy CSV method)
+  async exportTickets(ticketIds: number[]) {
+    // Implementation for CSV export if needed
+    return null;
   },
 };

@@ -1,51 +1,86 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+
+interface FeedEntry {
+  type: string;
+  time: string;
+  user: string;
+  status: string;
+  reason: string;
+  expected_date: string | null;
+  changes: any[];
+  comments: any[];
+}
+
+interface FeedData {
+  date: string;
+  entries: FeedEntry[];
+}
+
+interface TicketFeedsResponse {
+  ticket_number: string;
+  heading: string;
+  created_on: string;
+  created_by: string;
+  category: string;
+  sub_category: string;
+  site_name: string;
+  site_address: string;
+  description: string | null;
+  feeds: FeedData[];
+}
 
 export const TicketFeedsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [feedsData, setFeedsData] = useState<TicketFeedsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const feedsData = [
-    {
-      time: 'Jun 16, 2025\n05:29 PM',
-      action: 'Resolution Escalation',
-      details: 'E4 escalated to Abdul A'
-    },
-    {
-      time: 'Jun 16, 2025\n05:28 PM',
-      action: 'Resolution Escalation',
-      details: 'E3 escalated to Abdul A'
-    },
-    {
-      time: 'Jun 16, 2025\n05:27 PM',
-      action: 'Resolution Escalation',
-      details: 'E2 escalated to Abdul A'
-    },
-    {
-      time: 'Jun 16, 2025\n05:21 PM',
-      action: 'Response Escalation',
-      details: 'E2 escalated to Abdul A'
-    },
-    {
-      time: 'Jun 16, 2025\n05:19 PM',
-      action: 'Response Escalation',
-      details: 'E1 escalated to Jayesh P, Devesh Jain'
-    },
-    {
-      time: 'Jun 16, 2025\n05:19 PM',
-      action: 'Resolution Escalation',
-      details: 'E1 escalated to Abdul A, Jayesh P'
-    },
-    {
-      time: 'Jun 16, 2025\n05:17 PM',
-      action: 'Ticket Created.',
-      details: 'Status - Pending'
+  useEffect(() => {
+    if (id) {
+      fetchTicketFeeds();
     }
-  ];
+  }, [id]);
+
+  const fetchTicketFeeds = async () => {
+    try {
+      setLoading(true);
+      const data = await ticketManagementAPI.getTicketFeeds(id!);
+      setFeedsData(data);
+    } catch (err) {
+      setError('Failed to fetch ticket feeds');
+      console.error('Error fetching feeds:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => navigate(`/maintenance/ticket/details/${id}`)}>
+            Back to Ticket Details
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-white min-h-screen">
@@ -79,21 +114,36 @@ export const TicketFeedsPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="space-y-4">
-              {feedsData.map((feed, index) => (
-                <div key={index} className="flex gap-4 p-4 border-b border-gray-200 last:border-b-0">
-                  <div className="min-w-[120px]">
-                    <div className="text-sm text-gray-600 whitespace-pre-line">
-                      {feed.time}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900 mb-1">
-                      {feed.action}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {feed.details}
-                    </div>
+            <div className="space-y-6">
+              {feedsData?.feeds?.map((feedGroup, groupIndex) => (
+                <div key={groupIndex}>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{feedGroup.date}</h3>
+                  <div className="space-y-4">
+                    {feedGroup.entries.map((entry, entryIndex) => (
+                      <div key={entryIndex} className="flex gap-4 p-4 border-b border-gray-200 last:border-b-0">
+                        <div className="min-w-[120px]">
+                          <div className="text-sm text-gray-600">
+                            {entry.time}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900 mb-1">
+                            {entry.status} - {entry.type}
+                          </div>
+                          <div className="text-sm text-gray-600 mb-1">
+                            By: {entry.user}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {entry.reason}
+                          </div>
+                          {entry.expected_date && (
+                            <div className="text-sm text-gray-500 mt-1">
+                              Expected: {entry.expected_date}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

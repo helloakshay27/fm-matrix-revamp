@@ -28,6 +28,7 @@ export const API_CONFIG = {
     SUPPLIERS: '/pms/suppliers.json',
     DEPARTMENTS: '/pms/departments.json',
     SITES: '/pms/sites.json',
+    UNITS: '/pms/units.json',
     ROLES: '/lock_roles.json',
     FUNCTIONS: '/lock_functions.json',
     EMAIL_RULES: '/pms/email_rule_setups.json',
@@ -37,6 +38,8 @@ export const API_CONFIG = {
     ALLOWED_SITES: '/pms/sites/allowed_sites.json',
     CHANGE_SITE: '/change_site.json',
     HELPDESK_CATEGORIES: '/pms/admin/helpdesk_categories.json',
+    HELPDESK_SUBCATEGORIES: '/pms/admin/get_all_helpdesk_sub_categories',
+    COMPLAINT_STATUSES: '/pms/admin/complaint_statuses.json',
     CREATE_COMPLAINT_WORKER: '/pms/admin/create_complaint_worker.json',
     COST_APPROVALS: '/pms/admin/cost_approvals.json',
     USER_ACCOUNT: '/api/users/account.json',
@@ -58,6 +61,8 @@ export const API_CONFIG = {
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
     ACCOUNT_DETAILS: '/api/users/account.json',
     OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
+    TICKETS_SUMMARY: '/pms/admin/ticket_summary',
+    TICKETS_EXPORT_EXCEL: '/pms/admin/complaints.xlsx',
   },
 } as const
 
