@@ -119,6 +119,7 @@ import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
 import { ProductSetupDetailPage } from './pages/ProductSetupDetailPage';
 import { ProductEditPage } from './pages/ProductEditPage';
+import { RestaurantOrderDetailPage } from './pages/RestaurantOrderDetailPage';
 import { FnBDiscountsPage } from './pages/FnBDiscountsPage';
 import { AddRestaurantPage } from './pages/AddRestaurantPage';
 import ParkingDashboard from './pages/ParkingDashboard';
@@ -747,6 +748,7 @@ function App() {
               <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
               <Route path="/vas/fnb/restaurant-menu/details/:id" element={<ProductSetupDetailPage />} />
               <Route path="/vas/fnb/restaurant-menu/edit/:id" element={<ProductEditPage />} />
+              <Route path="/vas/fnb/restaurant-orders/details/:id" element={<RestaurantOrderDetailPage />} />
               <Route path="/vas/fnb/discounts" element={<FnBDiscountsPage />} />
               <Route path="/vas/parking" element={<ParkingDashboard />} />
               <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />

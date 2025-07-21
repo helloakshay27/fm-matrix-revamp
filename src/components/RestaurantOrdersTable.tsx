@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -47,6 +48,7 @@ const mockOrders: RestaurantOrder[] = [
 ];
 
 export const RestaurantOrdersTable = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<RestaurantOrder[]>(mockOrders);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<RestaurantOrder | null>(null);
@@ -96,6 +98,10 @@ export const RestaurantOrdersTable = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleViewOrder = (order: RestaurantOrder) => {
+    navigate(`/vas/fnb/restaurant-orders/details/${order.id}`);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-start">
@@ -137,6 +143,7 @@ export const RestaurantOrdersTable = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleViewOrder(order)}
                         className="p-1 h-8 w-8"
                       >
                         <Eye className="w-4 h-4" />
