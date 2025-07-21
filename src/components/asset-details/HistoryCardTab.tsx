@@ -73,300 +73,315 @@ export const HistoryCardTab = () => {
       </div>
 
       <Accordion type="multiple" defaultValue={["basic-info", "acquisition", "maintenance1", "maintenance2", "cost1", "cost2", "certification", "audit", "ebom", "disposal"]} className="space-y-4">
-        {/* Basic Asset Info & Acquisition Details - Side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AccordionItem value="basic-info" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Basic Asset Info</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableBody>
+        {/* Basic Asset Info */}
+        <AccordionItem value="basic-info" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Basic Asset Info</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {basicAssetInfo.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium py-2">{item.label}</TableCell>
-                          <TableCell className="py-2">{item.value}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-700">{item.label}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.value}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-          <AccordionItem value="acquisition" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Acquisition Details</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableBody>
+        {/* Acquisition Details */}
+        <AccordionItem value="acquisition" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Acquisition Details</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {acquisitionDetails.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium py-2">{item.label}</TableCell>
-                          <TableCell className="py-2">{item.value}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-700">{item.label}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.value}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
-        </div>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-        {/* Maintenance & Repair History - Side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AccordionItem value="maintenance1" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Maintenance & Repair History</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Assigned To</TableHead>
-                        <TableHead>From Location</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        {/* Maintenance & Repair History 1 */}
+        <AccordionItem value="maintenance1" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Maintenance & Repair History</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Assigned To</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">From Location</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {maintenanceHistory1.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.assignedTo}</TableCell>
-                          <TableCell>{item.fromLocation}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.assignedTo}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.fromLocation}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-          <AccordionItem value="maintenance2" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Maintenance & Repair History</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Performed By</TableHead>
-                        <TableHead>Cost</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        {/* Maintenance & Repair History 2 */}
+        <AccordionItem value="maintenance2" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Maintenance & Repair History</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Performed By</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Cost</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {maintenanceHistory2.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.performedBy}</TableCell>
-                          <TableCell>{item.cost}</TableCell>
-                          <TableCell>{item.status}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.performedBy}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.cost}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.status}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
-        </div>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-        {/* Cost & Depreciation - Side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AccordionItem value="cost1" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Cost & Depreciation</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Year</TableHead>
-                        <TableHead>Amount Depreciated</TableHead>
-                        <TableHead>Net Book Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        {/* Cost & Depreciation 1 */}
+        <AccordionItem value="cost1" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Cost & Depreciation</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Year</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount Depreciated</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Net Book Value</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {costDepreciation1.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.year}</TableCell>
-                          <TableCell>{item.amountDepreciated}</TableCell>
-                          <TableCell>{item.netBookValue}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.year}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.amountDepreciated}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.netBookValue}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-          <AccordionItem value="cost2" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Cost & Depreciation</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Year</TableHead>
-                        <TableHead>Depreciation %</TableHead>
-                        <TableHead>Amount Depreciated</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        {/* Cost & Depreciation 2 */}
+        <AccordionItem value="cost2" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Cost & Depreciation</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Year</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Depreciation %</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount Depreciated</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {costDepreciation2.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.year}</TableCell>
-                          <TableCell>{item.depreciationPercent}</TableCell>
-                          <TableCell>{item.amountDepreciated}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.year}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.depreciationPercent}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.amountDepreciated}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
-        </div>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-        {/* Certification & Compliance and Audit & Inspections - Side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AccordionItem value="certification" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Certification & Compliance</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Certificate No</TableHead>
-                        <TableHead>Expiry</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        {/* Certification & Compliance */}
+        <AccordionItem value="certification" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Certification & Compliance</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Certificate No</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Expiry</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {certificationCompliance.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.type}</TableCell>
-                          <TableCell>{item.certificateNo}</TableCell>
-                          <TableCell>{item.expiry}</TableCell>
-                          <TableCell>{item.status}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.type}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.certificateNo}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.expiry}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.status}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-          <AccordionItem value="audit" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Audit & Inspections</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Conducted By</TableHead>
-                        <TableHead>Observations</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        {/* Audit & Inspections */}
+        <AccordionItem value="audit" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Audit & Inspections</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Conducted By</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Observations</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {auditInspections.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.conductedBy}</TableCell>
-                          <TableCell>{item.observations}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.conductedBy}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.observations}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
-        </div>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-        {/* EBOM Summary and Disposal Details - Side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AccordionItem value="ebom" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">EBOM Summary</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Component</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Remarks</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        {/* EBOM Summary */}
+        <AccordionItem value="ebom" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">EBOM Summary</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Component</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quantity</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {ebomSummary.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.component}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{item.remarks}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.component}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.remarks}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
 
-          <AccordionItem value="disposal" className="border rounded-lg">
-            <Card>
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <CardTitle className="text-base font-semibold">Disposal / Write-Off Details</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableBody>
+        {/* Disposal / Write-Off Details */}
+        <AccordionItem value="disposal" className="border rounded-lg">
+          <Card>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <CardTitle className="text-base font-semibold">Disposal / Write-Off Details</CardTitle>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0">
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {disposalDetails.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium py-2">{item.label}</TableCell>
-                          <TableCell className="py-2">{item.value}</TableCell>
-                        </TableRow>
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-700">{item.label}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.value}</td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </AccordionContent>
-            </Card>
-          </AccordionItem>
-        </div>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
       </Accordion>
     </div>
   );
