@@ -18,6 +18,12 @@ const EcoFriendlyListPage = () => {
     status: ''
   });
 
+  // Handle status toggle
+  const handleStatusToggle = (id: number) => {
+    console.log('Status toggle for eco-friendly item ID:', id);
+    // Here you would typically update the status in your state/API
+  };
+
   // Sample data matching the table structure from the image
   const ecoFriendlyData = [{
     id: 1,
@@ -196,8 +202,17 @@ const EcoFriendlyListPage = () => {
     switch (columnKey) {
       case 'status':
         return <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${item.status === 'Active' ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-            <span className={item.status === 'Active' ? 'text-green-600' : 'text-gray-600'}>
+            <div 
+              onClick={() => handleStatusToggle(item.id)} 
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                item.status === 'Active' ? 'bg-green-500' : 'bg-gray-400'
+              }`}
+            >
+              <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                item.status === 'Active' ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </div>
+            <span className={`ml-2 text-sm ${item.status === 'Active' ? 'text-green-600' : 'text-gray-600'}`}>
               {item.status}
             </span>
           </div>;
