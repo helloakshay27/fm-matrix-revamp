@@ -15,9 +15,9 @@ import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 interface AttUser {
   id: number;
-  name: string;
-  email: string;
-  department: string;
+  name: string | null;
+  email: string | null;
+  department: string | null;
   profile_image: string | null;
 }
 
@@ -115,13 +115,18 @@ export const AttendanceDetailsPage = () => {
               <div className="w-32 h-32 rounded-full bg-gray-200 mb-4 flex items-center justify-center border-4 border-blue-200">
                 <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center">
                   <span className="text-2xl font-bold text-blue-600">
-                    {attendanceData.att_user.name.split(' ').map(n => n[0]).join('')}
+                    {attendanceData.att_user.name 
+                      ? attendanceData.att_user.name.split(' ').map(n => n[0]).join('')
+                      : 'N/A'
+                    }
                   </span>
                 </div>
               </div>
-              <h2 className="text-xl font-semibold text-gray-800">{attendanceData.att_user.name}</h2>
-              <p className="text-sm text-gray-600 mt-1">{attendanceData.att_user.email}</p>
-              <p className="text-sm text-gray-600">{attendanceData.att_user.department}</p>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {attendanceData.att_user.name || 'No Name'}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">{attendanceData.att_user.email || 'No Email'}</p>
+              <p className="text-sm text-gray-600">{attendanceData.att_user.department || 'No Department'}</p>
             </div>
           </div>
 
