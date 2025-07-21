@@ -73,9 +73,9 @@ export const AddInventoryPage = () => {
   const handleSubmit = async () => {
     const payload = {
       pms_inventory: {
-        user_id: 12437, // You may want to get this from user context/state
-        company_id: 15, // You may want to get this from user context/state
-        pms_site_id: 7, // You may want to get this from user context/state
+        user_id: "",
+        company_id: "",
+        pms_site_id: "",
         inventory_type: inventoryType === 'spares' ? 1 : 2,
         criticality: criticality === 'critical' ? 1 : 2,
         asset_id: parseInt(formData.assetName) || null,
