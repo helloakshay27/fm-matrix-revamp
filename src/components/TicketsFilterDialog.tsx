@@ -72,8 +72,14 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
     const loadSubCategories = async () => {
       if (category) {
         try {
-          const subcategoriesData = await ticketManagementAPI.getSubCategoriesByCategory(category);
-          setSubcategories(subcategoriesData);
+          const subcategoriesData = await ticketManagementAPI.getSubCategoriesByCategory(Number(category));
+          // Map SubCategoryResponse to SubcategoryOption
+          const mappedSubcategories = subcategoriesData.map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            category_id: sub.helpdesk_category_id
+          }));
+          setSubcategories(mappedSubcategories);
         } catch (error) {
           console.error('Error loading subcategories:', error);
           toast({
@@ -281,7 +287,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                   <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
                     {sites.map((siteItem) => (
                       <SelectItem key={siteItem.id} value={siteItem.id.toString()}>
-                        {siteItem.name}
+                        {siteItem.site_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -349,7 +355,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                   <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id.toString()}>
-                        {user.firstname + ' ' + user.lastname || user.username  || user.email }
+                        {user.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
