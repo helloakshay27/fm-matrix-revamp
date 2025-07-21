@@ -215,7 +215,8 @@ const modulesByPackage = {
       href: '/maintenance/inventory',
       subItems: [
         { name: 'Inventory', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
-        { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' }
+        { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' },
+        { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
       ]
     },
     { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },

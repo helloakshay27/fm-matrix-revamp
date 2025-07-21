@@ -63,6 +63,7 @@ import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
 import { EditInventoryPage } from './pages/EditInventoryPage';
 import InventoryConsumptionDashboard from './pages/InventoryConsumptionDashboard';
 import InventoryConsumptionViewPage from './pages/InventoryConsumptionViewPage';
+import EcoFriendlyListPage from './pages/EcoFriendlyListPage';
 
 // Import Task pages
 import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
@@ -690,6 +691,7 @@ function App() {
               <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
               <Route path="/maintenance/inventory-consumption" element={<InventoryConsumptionDashboard />} />
               <Route path="/maintenance/inventory-consumption/view/:id" element={<InventoryConsumptionViewPage />} />
+              <Route path="/maintenance/eco-friendly-list" element={<EcoFriendlyListPage />} />
 
               {/* Task Routes */}
               <Route path="/maintenance/task" element={<ScheduledTaskDashboard />} />
