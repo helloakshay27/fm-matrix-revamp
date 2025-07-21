@@ -15,7 +15,11 @@ interface ServiceFilterModalProps {
 
 export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterModalProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { buildings, areas, loading, error } = useSelector((state: RootState) => state.serviceFilter);
+  const serviceFilterState = useSelector((state: RootState) => state.serviceFilter);
+  console.log('ServiceFilter state:', serviceFilterState);
+  
+  // Fallback to empty state if serviceFilter is undefined
+  const { buildings = [], areas = [], loading = { buildings: false, areas: false }, error = { buildings: null, areas: null } } = serviceFilterState || {};
   
   const [filters, setFilters] = useState({
     serviceName: '',
