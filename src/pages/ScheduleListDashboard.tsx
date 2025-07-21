@@ -79,18 +79,18 @@ export const ScheduleListDashboard = () => {
     label: 'Created On',
     sortable: true
   }];
-  const renderCustomActions = () => <div className="flex flex-wrap gap-3">
-      <Button onClick={handleAddSchedule} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Plus className="w-4 h-4 mr-2" /> Add
+  const renderCustomActions = () => <div className="flex flex-wrap gap-2 sm:gap-3">
+      <Button onClick={handleAddSchedule} className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm">
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Add
       </Button>
-      <Button onClick={() => setShowImportModal(true)} variant="outline">
-        <Upload className="w-4 h-4 mr-2" /> Import
+      <Button onClick={() => setShowImportModal(true)} variant="outline" className="text-sm">
+        <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Import
       </Button>
-      <Button onClick={() => setShowFilterDialog(true)} variant="outline">
-        <Filter className="w-4 h-4 mr-2" /> Filters
+      <Button onClick={() => setShowFilterDialog(true)} variant="outline" className="text-sm">
+        <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Filters
       </Button>
-      <Button onClick={handleExport} variant="outline">
-        <Download className="w-4 h-4 mr-2" /> Export
+      <Button onClick={handleExport} variant="outline" className="text-sm">
+        <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Export
       </Button>
     </div>;
   const renderRowActions = (schedule: TransformedScheduleData) => <div className="flex gap-1">
@@ -209,84 +209,84 @@ export const ScheduleListDashboard = () => {
     medium: 0,
     high: 0
   }];
-  const renderAnalyticsTab = () => <div className="space-y-6">
+  const renderAnalyticsTab = () => <div className="space-y-4 sm:space-y-6">
       {/* Analytics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
         {/* Total Schedules */}
-        <div className="p-4 rounded-lg flex items-center gap-3" style={{
+        <div className="p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3" style={{
         backgroundColor: '#f6f4ee'
       }}>
-          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
-            <Calendar className="w-6 h-6 text-[#C72030]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center flex-shrink-0">
+            <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{totalSchedules}</div>
-            <div className="text-sm text-gray-600">Total Schedules</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">{totalSchedules}</div>
+            <div className="text-xs sm:text-sm text-gray-600 truncate">Total Schedules</div>
           </div>
         </div>
 
         {/* Active Schedules */}
-        <div className="p-4 rounded-lg flex items-center gap-3" style={{
+        <div className="p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3" style={{
         backgroundColor: '#f6f4ee'
       }}>
-          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
-            <BarChart3 className="w-6 h-6 text-[#C72030]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center flex-shrink-0">
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{activeSchedules}</div>
-            <div className="text-sm text-gray-600">Active Schedules</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">{activeSchedules}</div>
+            <div className="text-xs sm:text-sm text-gray-600 truncate">Active Schedules</div>
           </div>
         </div>
 
         {/* Inactive Schedules */}
-        <div className="p-4 rounded-lg flex items-center gap-3" style={{
+        <div className="p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3" style={{
         backgroundColor: '#f6f4ee'
       }}>
-          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
-            <Clock className="w-6 h-6 text-[#C72030]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{inactiveSchedules}</div>
-            <div className="text-sm text-gray-600">Inactive Schedules</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">{inactiveSchedules}</div>
+            <div className="text-xs sm:text-sm text-gray-600 truncate">Inactive Schedules</div>
           </div>
         </div>
 
         {/* PPM Schedules */}
-        <div className="p-4 rounded-lg flex items-center gap-3" style={{
+        <div className="p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3" style={{
         backgroundColor: '#f6f4ee'
       }}>
-          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
-            <Settings className="w-6 h-6 text-[#C72030]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center flex-shrink-0">
+            <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{ppmSchedules}</div>
-            <div className="text-sm text-gray-600">PPM Schedules</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">{ppmSchedules}</div>
+            <div className="text-xs sm:text-sm text-gray-600 truncate">PPM Schedules</div>
           </div>
         </div>
 
         {/* Routine Schedules */}
-        <div className="p-4 rounded-lg flex items-center gap-3" style={{
+        <div className="p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3" style={{
         backgroundColor: '#f6f4ee'
       }}>
-          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
-            <Wrench className="w-6 h-6 text-[#C72030]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center flex-shrink-0">
+            <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{routineSchedules}</div>
-            <div className="text-sm text-gray-600">Routine Schedules</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">{routineSchedules}</div>
+            <div className="text-xs sm:text-sm text-gray-600 truncate">Routine Schedules</div>
           </div>
         </div>
 
         {/* Safety Schedules */}
-        <div className="p-4 rounded-lg flex items-center gap-3" style={{
+        <div className="p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3" style={{
         backgroundColor: '#f6f4ee'
       }}>
-          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
-            <Shield className="w-6 h-6 text-[#C72030]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center flex-shrink-0">
+            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{safetySchedules}</div>
-            <div className="text-sm text-gray-600">Safety Schedules</div>
+          <div className="min-w-0">
+            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">{safetySchedules}</div>
+            <div className="text-xs sm:text-sm text-gray-600 truncate">Safety Schedules</div>
           </div>
         </div>
       </div>
@@ -297,19 +297,19 @@ export const ScheduleListDashboard = () => {
       </div>
 
       {/* Main Analytics Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
         {/* Left Section - Charts (3 columns) */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="xl:col-span-3 space-y-4 sm:space-y-6">
           {/* Charts Row 1 */}
-          {selectedItems.includes('checklist') && <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 border border-[hsl(var(--analytics-border))]">
-                <h3 className="text-lg font-semibold mb-4 text-[hsl(var(--analytics-text))]">Schedule Type Distribution</h3>
-                <ResponsiveContainer width="100%" height={250}>
+          {selectedItems.includes('checklist') && <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-white p-4 sm:p-6 border border-[hsl(var(--analytics-border))]">
+                <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[hsl(var(--analytics-text))]">Schedule Type Distribution</h3>
+                <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie data={typeChartData} cx="50%" cy="50%" labelLine={false} label={({
                   name,
                   percent
-                }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={80} fill="#8884d8" dataKey="value">
+                }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={60} fill="#8884d8" dataKey="value">
                       {typeChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                     </Pie>
                     <Tooltip />
@@ -317,9 +317,9 @@ export const ScheduleListDashboard = () => {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white p-6 border border-[hsl(var(--analytics-border))]">
-                <h3 className="text-lg font-semibold mb-4 text-[hsl(var(--analytics-text))]">Category Breakdown</h3>
-                <ResponsiveContainer width="100%" height={250}>
+              <div className="bg-white p-4 sm:p-6 border border-[hsl(var(--analytics-border))]">
+                <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[hsl(var(--analytics-text))]">Category Breakdown</h3>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={categoryChartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
@@ -332,9 +332,9 @@ export const ScheduleListDashboard = () => {
             </div>}
 
           {/* Charts Row 2 */}
-          {(selectedItems.includes('technical-checklist') || selectedItems.includes('non-technical-checklist')) && <div className="bg-white p-6 border border-[hsl(var(--analytics-border))]">
-              <h3 className="text-lg font-semibold mb-4 text-[hsl(var(--analytics-text))]">Association Analysis</h3>
-              <ResponsiveContainer width="100%" height={300}>
+          {(selectedItems.includes('technical-checklist') || selectedItems.includes('non-technical-checklist')) && <div className="bg-white p-4 sm:p-6 border border-[hsl(var(--analytics-border))]">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[hsl(var(--analytics-text))]">Association Analysis</h3>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={associationData} margin={{
               top: 5,
               right: 30,
@@ -351,10 +351,10 @@ export const ScheduleListDashboard = () => {
             </div>}
 
           {/* Aging Matrix */}
-          {selectedItems.includes('top-10-checklist') && <div className="bg-white p-6 border border-[hsl(var(--analytics-border))]">
-              <h3 className="text-lg font-semibold mb-4 text-[hsl(var(--analytics-text))]">Schedule Aging Matrix</h3>
+          {selectedItems.includes('top-10-checklist') && <div className="bg-white p-4 sm:p-6 border border-[hsl(var(--analytics-border))]">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[hsl(var(--analytics-text))]">Schedule Aging Matrix</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs sm:text-sm">
                   <thead>
                     <tr className="border-b border-[hsl(var(--analytics-border))]">
                       <th className="text-left p-2 text-[hsl(var(--analytics-text))]">Category</th>
@@ -377,7 +377,7 @@ export const ScheduleListDashboard = () => {
         </div>
 
         {/* Right Section - Sidebar (1 column) */}
-        <div className="lg:col-span-1">
+        <div className="xl:col-span-1 order-first xl:order-last">
           <RecentSchedulesSidebar />
         </div>
       </div>
@@ -396,29 +396,28 @@ export const ScheduleListDashboard = () => {
           <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
         </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." />}
     </div>;
-  return <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        
-        <h1 className="text-xl sm:text-2xl font-bold">Schedule Dashboard</h1>
+  return <div className="p-2 sm:p-4 lg:p-6">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Schedule Dashboard</h1>
       </div>
 
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <BarChart3 className="w-4 h-4" />
+          <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
+            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="list" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <Calendar className="w-4 h-4" />
+          <TabsTrigger value="list" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
             Schedule List
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="analytics" className="mt-6">
+        <TabsContent value="analytics" className="mt-4 sm:mt-6">
           {renderAnalyticsTab()}
         </TabsContent>
         
-        <TabsContent value="list" className="mt-6">
+        <TabsContent value="list" className="mt-4 sm:mt-6">
           {renderListTab()}
         </TabsContent>
       </Tabs>
