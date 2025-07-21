@@ -34,6 +34,27 @@ export const AddInventoryPage = () => {
     console.log('Dispatching fetchInventoryAssets...');
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
+    
+    // Fetch inventories data
+    const fetchInventories = async () => {
+      try {
+        const response = await fetch(getFullUrl('/pms/inventories.json'), {
+          method: 'GET',
+          headers: {
+            'Authorization': getAuthHeader(),
+          },
+        });
+        
+        if (response.ok) {
+          const inventoriesData = await response.json();
+          console.log('Inventories data:', inventoriesData);
+        }
+      } catch (error) {
+        console.error('Error fetching inventories:', error);
+      }
+    };
+    
+    fetchInventories();
   }, [dispatch]);
 
   // Debug logging
