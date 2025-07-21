@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, CircularProgress } from '@mui/material';
+import { fetchBuildings, fetchAreas, clearAreas } from '@/store/slices/serviceFilterSlice';
+import type { RootState, AppDispatch } from '@/store/store';
 
 interface ServiceFilterModalProps {
   isOpen: boolean;
@@ -11,11 +14,25 @@ interface ServiceFilterModalProps {
 }
 
 export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterModalProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const serviceFilterState = useSelector((state: RootState) => state.serviceFilter);
+  console.log('ServiceFilter state:', serviceFilterState);
+  
+  // Fallback to empty state if serviceFilter is undefined
+  const { buildings = [], areas = [], loading = { buildings: false, areas: false }, error = { buildings: null, areas: null } } = serviceFilterState || {};
+  
   const [filters, setFilters] = useState({
     serviceName: '',
     building: '',
     area: ''
   });
+
+  // Load buildings on modal open (using siteId = 1 as default)
+  useEffect(() => {
+    if (isOpen && buildings.length === 0) {
+      dispatch(fetchBuildings(1));
+    }
+  }, [isOpen, dispatch, buildings.length]);
 
   console.log('ServiceFilterModal rendered with filters:', filters);
   console.log('Modal isOpen:', isOpen);
@@ -25,6 +42,21 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     setFilters(prev => {
       const updated = { ...prev, [field]: value };
       console.log('Updated filters:', updated);
+      
+      // Clear areas when building changes
+      if (field === 'building') {
+        updated.area = '';
+        dispatch(clearAreas());
+        
+        // Fetch areas for the selected building (using wingId = building value for now)
+        if (value) {
+          const wingId = parseInt(value);
+          if (!isNaN(wingId)) {
+            dispatch(fetchAreas(wingId));
+          }
+        }
+      }
+      
       return updated;
     });
   };
@@ -134,11 +166,21 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     }}
                     sx={fieldStyles}
                     MenuProps={menuProps}
+                    disabled={loading.buildings}
                   >
                     <MenuItem value=""><em>Building</em></MenuItem>
-                    <MenuItem value="wing2">Wing2</MenuItem>
-                    <MenuItem value="main-building">Main Building</MenuItem>
-                    <MenuItem value="annexe">Annexe</MenuItem>
+                    {loading.buildings ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={16} sx={{ mr: 1 }} />
+                        Loading...
+                      </MenuItem>
+                    ) : (
+                      buildings.map((building) => (
+                        <MenuItem key={building.id} value={building.id.toString()}>
+                          {building.name}
+                        </MenuItem>
+                      ))
+                    )}
                   </MuiSelect>
                 </FormControl>
               </div>
@@ -156,11 +198,25 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     }}
                     sx={fieldStyles}
                     MenuProps={menuProps}
+                    disabled={loading.areas || !filters.building}
                   >
                     <MenuItem value=""><em>Area</em></MenuItem>
-                    <MenuItem value="lobby">Lobby</MenuItem>
-                    <MenuItem value="office">Office</MenuItem>
-                    <MenuItem value="cafeteria">Cafeteria</MenuItem>
+                    {loading.areas ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={16} sx={{ mr: 1 }} />
+                        Loading...
+                      </MenuItem>
+                    ) : !filters.building ? (
+                      <MenuItem disabled>
+                        <em>Select a building first</em>
+                      </MenuItem>
+                    ) : (
+                      areas.map((area) => (
+                        <MenuItem key={area.id} value={area.id.toString()}>
+                          {area.name}
+                        </MenuItem>
+                      ))
+                    )}
                   </MuiSelect>
                 </FormControl>
               </div>
