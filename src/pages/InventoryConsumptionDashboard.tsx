@@ -248,15 +248,22 @@ const InventoryConsumptionDashboard = () => {
               {/* First Row - Three Dropdowns */}
               <div className="grid grid-cols-3 gap-6">
                 {/* Group */}
-                <FormControl fullWidth>
-                  <InputLabel id="group-label" sx={{
-                    color: '#374151',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    '&.Mui-focused': {
-                      color: '#C72030'
-                    }
-                  }}>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel 
+                    id="group-label" 
+                    shrink={true}
+                    sx={{
+                      color: '#374151',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      '&.Mui-focused': {
+                        color: '#C72030'
+                      },
+                      '&.MuiInputLabel-shrink': {
+                        transform: 'translate(14px, -9px) scale(0.75)'
+                      }
+                    }}
+                  >
                     Group
                   </InputLabel>
                   <Select 
@@ -294,15 +301,22 @@ const InventoryConsumptionDashboard = () => {
                 </FormControl>
 
                 {/* Sub Group */}
-                <FormControl fullWidth>
-                  <InputLabel id="subgroup-label" sx={{
-                    color: '#374151',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    '&.Mui-focused': {
-                      color: '#C72030'
-                    }
-                  }}>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel 
+                    id="subgroup-label" 
+                    shrink={true}
+                    sx={{
+                      color: '#374151',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      '&.Mui-focused': {
+                        color: '#C72030'
+                      },
+                      '&.MuiInputLabel-shrink': {
+                        transform: 'translate(14px, -9px) scale(0.75)'
+                      }
+                    }}
+                  >
                     Sub Group
                   </InputLabel>
                   <Select 
@@ -340,15 +354,22 @@ const InventoryConsumptionDashboard = () => {
                 </FormControl>
 
                 {/* Criticality */}
-                <FormControl fullWidth>
-                  <InputLabel id="criticality-label" sx={{
-                    color: '#374151',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    '&.Mui-focused': {
-                      color: '#C72030'
-                    }
-                  }}>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel 
+                    id="criticality-label" 
+                    shrink={true}
+                    sx={{
+                      color: '#374151',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      '&.Mui-focused': {
+                        color: '#C72030'
+                      },
+                      '&.MuiInputLabel-shrink': {
+                        transform: 'translate(14px, -9px) scale(0.75)'
+                      }
+                    }}
+                  >
                     Select Criticality
                   </InputLabel>
                   <Select 
