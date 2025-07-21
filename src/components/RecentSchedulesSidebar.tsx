@@ -116,18 +116,18 @@ export const RecentSchedulesSidebar = () => {
   };
 
   return (
-    <div className="bg-white border border-[hsl(var(--analytics-border))] h-fit">
-      <div className="p-4 border-b border-[hsl(var(--analytics-border))]">
-        <h3 className="text-lg font-semibold text-[hsl(var(--analytics-text))]">Recent Schedules</h3>
+    <div className="bg-white rounded-lg border border-gray-200 h-fit">
+      <div className="p-4 border-b border-gray-200 bg-[#f6f4ee]">
+        <h3 className="text-lg font-semibold text-[#C72030]">Recent Schedules</h3>
       </div>
       
       <div className="max-h-[600px] overflow-y-auto">
         {recentSchedules.map((schedule) => (
-          <div key={schedule.id} className="p-4 border-b border-[hsl(var(--analytics-border))] last:border-b-0">
+          <div key={schedule.id} className="p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
             <div className="space-y-3">
               <div>
-                <div className="font-medium text-[hsl(var(--analytics-text))] text-sm">{schedule.activityName}</div>
-                <div className="text-xs text-[hsl(var(--analytics-muted))]">ID: {schedule.scheduleId}</div>
+                <div className="font-medium text-gray-900 text-sm mb-1">{schedule.activityName}</div>
+                <div className="text-xs text-gray-500">Schedule ID: {schedule.scheduleId}</div>
               </div>
               
               <div className="flex items-center justify-between">
@@ -140,7 +140,7 @@ export const RecentSchedulesSidebar = () => {
                   </span>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-[hsl(var(--analytics-muted))]">TAT</div>
+                  <div className="text-xs text-gray-500 mb-1">TAT</div>
                   <div className={`text-xs font-medium ${getTatColor(schedule.tatStatus)}`}>
                     {schedule.tat}
                   </div>
@@ -151,7 +151,7 @@ export const RecentSchedulesSidebar = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex-1 h-7 text-xs"
+                  className="flex-1 h-8 text-xs border-gray-300 hover:bg-gray-50"
                   onClick={() => handleAddComment(schedule.id)}
                 >
                   <MessageSquare className="w-3 h-3 mr-1" />
@@ -160,18 +160,18 @@ export const RecentSchedulesSidebar = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className={`h-7 px-2 ${flaggedSchedules.has(schedule.id) ? 'bg-red-50 border-red-200' : ''}`}
+                  className={`h-8 px-2 border-gray-300 hover:bg-gray-50 ${flaggedSchedules.has(schedule.id) ? 'bg-red-50 border-red-200' : ''}`}
                   onClick={() => handleFlag(schedule.id)}
                 >
-                  <Flag className={`w-3 h-3 ${flaggedSchedules.has(schedule.id) ? 'text-red-600' : ''}`} />
+                  <Flag className={`w-3 h-3 ${flaggedSchedules.has(schedule.id) ? 'text-red-600' : 'text-gray-600'}`} />
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 px-2"
+                  className="h-8 px-2 border-gray-300 hover:bg-gray-50"
                   onClick={() => handleViewDetails(schedule.scheduleId)}
                 >
-                  <Eye className="w-3 h-3" />
+                  <Eye className="w-3 h-3 text-gray-600" />
                 </Button>
               </div>
             </div>
