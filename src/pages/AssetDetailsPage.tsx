@@ -149,30 +149,27 @@ export const AssetDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="asset-info" className="p-0">
-            <Tabs defaultValue="analytics" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-                <TabsTrigger 
-                  value="analytics" 
-                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-                >
-                  Analytics
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="info" 
-                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-                >
-                  Asset List
-                </TabsTrigger>
-              </TabsList>
+            <div className="flex flex-col lg:flex-row gap-4 p-4 sm:p-6">
+              {/* Analytics Section - 60% width */}
+              <div className="w-full lg:w-3/5 bg-white rounded-lg border border-gray-200">
+                <div className="bg-[#C72030] text-white px-4 py-3 rounded-t-lg">
+                  <h3 className="font-medium">Analytics</h3>
+                </div>
+                <div className="p-4">
+                  <AssetAnalyticsTab />
+                </div>
+              </div>
               
-              <TabsContent value="analytics" className="p-4 sm:p-6 mt-0">
-                <AssetAnalyticsTab />
-              </TabsContent>
-              
-              <TabsContent value="info" className="p-4 sm:p-6 mt-0">
-                <AssetInfoTab assetId={asset.id} />
-              </TabsContent>
-            </Tabs>
+              {/* Asset List Section - 40% width */}
+              <div className="w-full lg:w-2/5 bg-white rounded-lg border border-gray-200">
+                <div className="bg-[#C72030] text-white px-4 py-3 rounded-t-lg">
+                  <h3 className="font-medium">Asset List</h3>
+                </div>
+                <div className="p-4">
+                  <AssetInfoTab assetId={asset.id} />
+                </div>
+              </div>
+            </div>
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab />
