@@ -423,7 +423,7 @@ export const AddInventoryPage = () => {
                     value={formData.expiryDate}
                     onChange={(value) => handleInputChange('expiryDate', value)}
                     placeholder="Date of Expiry"
-                    className="h-[45px]"
+                    className="[&>button]:h-[45px] [&>button]:rounded-[6px]"
                   />
                 </div>
 
