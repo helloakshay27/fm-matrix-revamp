@@ -326,7 +326,7 @@ export const ScheduleListDashboard = () => {
         <h1 className="text-xl sm:text-2xl font-bold">Schedule Dashboard</h1>
       </div>
 
-      <Tabs defaultValue="analytics" className="w-full">
+      <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="list">List</TabsTrigger>
