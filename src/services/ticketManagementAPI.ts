@@ -484,4 +484,72 @@ export const ticketManagementAPI = {
       throw error;
     }
   },
+
+  // Get ticket summary with optional filters
+  async getTicketSummary(filters?: {
+    date_range?: string;
+    category_type_id_eq?: number;
+    sub_category_id_eq?: number;
+    dept_id_eq?: number;
+    site_id_eq?: number;
+    unit_id_eq?: number;
+    issue_status_in?: number[];
+    priority_eq?: string;
+    user_firstname_or_user_lastname_cont?: string;
+    search_all_fields_cont?: string;
+    assigned_to_in?: number[];
+  }): Promise<{
+    total_tickets: number;
+    open_tickets: number;
+    in_progress_tickets: number;
+    closed_tickets: number;
+    complaints: number;
+    suggestions: number;
+    requests: number;
+  }> {
+    const queryParams = new URLSearchParams();
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else {
+            queryParams.append(`q[${key}]`, value.toString());
+          }
+        }
+      });
+    }
+
+    const url = `${ENDPOINTS.TICKETS_SUMMARY}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Export tickets with filters in Excel format
+  async exportTicketsExcel(filters?: any): Promise<Blob> {
+    const queryParams = new URLSearchParams();
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else {
+            queryParams.append(`q[${key}]`, value.toString());
+          }
+        }
+      });
+    }
+
+    const url = `${ENDPOINTS.TICKETS_EXPORT_EXCEL}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiClient.get(url, { responseType: 'blob' });
+    return response.data;
+  },
+
+  // Export tickets (legacy CSV method)
+  async exportTickets(ticketIds: number[]) {
+    // Implementation for CSV export if needed
+    return null;
+  },
 };

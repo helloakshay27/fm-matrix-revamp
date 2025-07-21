@@ -52,6 +52,8 @@ export const API_CONFIG = {
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
     ACCOUNT_DETAILS: '/api/users/account.json',
     OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
+    TICKETS_SUMMARY: '/pms/admin/ticket_summary',
+    TICKETS_EXPORT_EXCEL: '/pms/admin/complaints.xlsx',
   },
 } as const
 

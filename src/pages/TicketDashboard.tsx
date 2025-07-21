@@ -252,6 +252,16 @@ export const TicketDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+  const [ticketSummary, setTicketSummary] = useState({
+    total_tickets: 0,
+    open_tickets: 0,
+    in_progress_tickets: 0,
+    closed_tickets: 0,
+    complaints: 0,
+    suggestions: 0,
+    requests: 0
+  });
+  const [filters, setFilters] = useState<any>({});
   const perPage = 20;
 
   // Drag and drop sensors
@@ -261,6 +271,21 @@ export const TicketDashboard = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Fetch ticket summary from API
+  const fetchTicketSummary = async () => {
+    try {
+      const summary = await ticketManagementAPI.getTicketSummary(filters);
+      setTicketSummary(summary);
+    } catch (error) {
+      console.error('Error fetching ticket summary:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch ticket summary. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Fetch tickets from API
   const fetchTickets = async (page: number = 1) => {
@@ -288,21 +313,35 @@ export const TicketDashboard = () => {
 
   useEffect(() => {
     fetchTickets(currentPage);
-  }, [currentPage]);
+    fetchTicketSummary();
+  }, [currentPage, filters]);
 
-  // Calculate stats from API data (with safe fallbacks)
-  const safeTickets = tickets || [];
-  const openTickets = safeTickets.filter(t => t.issue_status === 'Open').length;
-  const inProgressTickets = safeTickets.filter(t => t.issue_status === 'In Progress').length;
-  const pendingTickets = safeTickets.filter(t => t.issue_status === 'Pending').length;
-  const closedTickets = safeTickets.filter(t => t.issue_status === 'Closed').length;
+  // Use ticket summary data from API
+  const openTickets = ticketSummary.open_tickets;
+  const inProgressTickets = ticketSummary.in_progress_tickets;
+  const closedTickets = ticketSummary.closed_tickets;
+  const totalSummaryTickets = ticketSummary.total_tickets;
 
   // Analytics data with updated colors matching design
   const statusData = [
     { name: 'Open', value: openTickets, color: '#c6b692' },
+    { name: 'In Progress', value: inProgressTickets, color: '#f59e0b' },
     { name: 'Closed', value: closedTickets, color: '#d8dcdd' }
   ];
 
+  // Ticket type breakdown cards
+  const ticketTypeCards = [
+    { title: 'Total Tickets', value: totalSummaryTickets, icon: Ticket, color: 'bg-blue-500' },
+    { title: 'Open Tickets', value: openTickets, icon: AlertCircle, color: 'bg-yellow-500' },
+    { title: 'In Progress', value: inProgressTickets, icon: Clock, color: 'bg-orange-500' },
+    { title: 'Closed Tickets', value: closedTickets, icon: CheckCircle, color: 'bg-green-500' },
+    { title: 'Complaints', value: ticketSummary.complaints, icon: AlertCircle, color: 'bg-red-500' },
+    { title: 'Suggestions', value: ticketSummary.suggestions, icon: TrendingUp, color: 'bg-purple-500' },
+    { title: 'Requests', value: ticketSummary.requests, icon: Ticket, color: 'bg-indigo-500' }
+  ];
+
+  // Calculate category data from tickets
+  const safeTickets = tickets || [];
   const categoryData = safeTickets.reduce((acc, ticket) => {
     const category = ticket.category_type;
     if (category) {
@@ -314,7 +353,7 @@ export const TicketDashboard = () => {
   const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({ name, value }));
 
   const agingMatrixData = [
-    { priority: 'P1', '0-10': 20, '11-20': 3, '21-30': 4, '31-40': 0, '41-50': 203 },
+    { priority: 'P1', '0-10': 20, '11-20': 3, '21-30': 4, '31-40': 0, '41-50': Math.max(203, openTickets) },
     { priority: 'P2', '0-10': 2, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 4 },
     { priority: 'P3', '0-10': 1, '11-20': 0, '21-30': 1, '31-40': 0, '41-50': 7 },
     { priority: 'P4', '0-10': 1, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 5 }
@@ -404,32 +443,34 @@ export const TicketDashboard = () => {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     console.log('TicketDashboard - Export action for tickets:', selectedTickets);
-    const selectedTicketObjects = tickets.filter(ticket => 
-      selectedTickets.includes(ticket.id)
-    );
-    
-    const csvContent = [
-      ['Ticket ID', 'Description', 'Category', 'Status', 'Priority', 'Created By', 'Assigned To'],
-      ...selectedTicketObjects.map(ticket => [
-        ticket.ticket_number,
-        ticket.heading,
-        ticket.category_type,
-        ticket.issue_status,
-        ticket.priority,
-        ticket.posted_by,
-        ticket.assigned_to
-      ])
-    ].map(row => row.join(',')).join('\n');
+    try {
+      const blob = await ticketManagementAPI.exportTicketsExcel(filters);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tickets_${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Success",
+        description: "Tickets exported successfully",
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export tickets",
+        variant: "destructive"
+      });
+    }
+  };
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `tickets_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const handleFilterApply = (newFilters: any) => {
+    setFilters(newFilters);
+    setIsFilterOpen(false);
   };
 
   // Handle drag end for chart reordering
@@ -637,6 +678,23 @@ export const TicketDashboard = () => {
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          {/* Ticket Summary Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+            {ticketTypeCards.map((card, index) => (
+              <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">{card.title}</p>
+                    <p className="text-lg font-bold text-gray-900">{card.value}</p>
+                  </div>
+                  <div className={`w-8 h-8 rounded-full ${card.color} flex items-center justify-center`}>
+                    <card.icon className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Header with Ticket Selector */}
           <div className="flex justify-end">
             <TicketSelector onSelectionChange={handleSelectionChange} />
@@ -715,11 +773,11 @@ export const TicketDashboard = () => {
                                       <Tooltip />
                                     </PieChart>
                                   </ResponsiveContainer>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
-                                    </div>
-                                  </div>
+                                   <div className="absolute inset-0 flex items-center justify-center">
+                                     <div className="text-center">
+                                       <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalSummaryTickets}</div>
+                                     </div>
+                                   </div>
                                 </div>
                                 <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
                                   {statusData.map((item, index) => (
@@ -936,7 +994,7 @@ export const TicketDashboard = () => {
               icon: Clock
             }, {
               label: 'Pending',
-              value: pendingTickets,
+              value: inProgressTickets,
               icon: Clock
             }, {
               label: 'Closed',
@@ -1046,13 +1104,10 @@ export const TicketDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      <TicketsFilterDialog 
-        isOpen={isFilterOpen} 
-        onClose={() => setIsFilterOpen(false)} 
-        onApplyFilters={(filters) => {
-          console.log('Applied filters:', filters);
-          setIsFilterOpen(false);
-        }} 
+      <TicketsFilterDialog
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={handleFilterApply}
       />
 
       {/* Ticket Selection Panel */}
