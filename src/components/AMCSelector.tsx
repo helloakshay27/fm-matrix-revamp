@@ -8,9 +8,10 @@ import {
 } from '@/components/ui/popover';
 
 const amcOptions = [
-  { id: 'status', label: 'AMC Status', checked: true, chartSection: 'statusChart' },
-  { id: 'expiry', label: 'AMC Expiry Analysis', checked: true, chartSection: 'expiryChart' },
-  { id: 'resource-type', label: 'Resource Type Distribution', checked: true, chartSection: 'resourceChart' },
+  { id: 'status', label: 'AMCs', checked: true, chartSection: 'statusChart' },
+  { id: 'type', label: 'Reactive Proactive AMCs', checked: true, chartSection: 'typeChart' },
+  { id: 'resource-type', label: 'Resource-wise AMCs', checked: true, chartSection: 'resourceChart' },
+  { id: 'aging-matrix', label: 'AMCs Ageing Matrix', checked: true, chartSection: 'agingMatrix' },
   { id: 'vendor-wise', label: 'Vendor-wise AMCs', checked: false, chartSection: 'vendorChart' },
   { id: 'monthly-trends', label: 'Monthly Trends', checked: false, chartSection: 'trendsChart' },
   { id: 'active-amc', label: 'Active AMCs', checked: false, chartSection: 'activeChart' },

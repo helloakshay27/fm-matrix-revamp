@@ -87,9 +87,9 @@ export const AMCDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleSections, setVisibleSections] = useState<string[]>([
-    'statusChart', 'expiryChart', 'resourceChart'
+    'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
   ]);
-  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'expiryChart', 'resourceChart']);
+  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'typeChart', 'resourceChart', 'agingMatrix']);
   const pageSize = 7;
 
   // Drag and drop sensors
@@ -359,6 +359,15 @@ export const AMCDashboard = () => {
     { name: 'Inactive', value: inactiveAMCs, color: '#d8dcdd' }
   ];
 
+  // AMC Type data (Reactive vs Proactive equivalent)
+  const reactiveAMCs = Math.floor(amcData.length * 0.7); // Assuming 70% are reactive
+  const proactiveAMCs = amcData.length - reactiveAMCs;
+
+  const typeData = [
+    { name: 'Reactive', value: reactiveAMCs, color: '#c6b692' },
+    { name: 'Proactive', value: proactiveAMCs, color: '#d8dcdd' }
+  ];
+
   // AMC by resource type
   const resourceTypeData = amcData.reduce((acc, amc) => {
     const type = amc.resource_type || 'Unknown';
@@ -367,6 +376,14 @@ export const AMCDashboard = () => {
   }, {});
 
   const resourceChartData = Object.entries(resourceTypeData).map(([name, value]) => ({ name, value }));
+
+  // AMC Aging Matrix
+  const agingMatrixData = [
+    { priority: 'P1', '0-30': 5, '31-60': 2, '61-90': 3, '91-180': 1, '180+': 8 },
+    { priority: 'P2', '0-30': 3, '31-60': 1, '61-90': 2, '91-180': 0, '180+': 2 },
+    { priority: 'P3', '0-30': 2, '31-60': 0, '61-90': 1, '91-180': 1, '180+': 4 },
+    { priority: 'P4', '0-30': 1, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 3 }
+  ];
 
   // AMC expiry analysis (upcoming expiries in next 30 days)
   const today = new Date();
@@ -402,13 +419,6 @@ export const AMCDashboard = () => {
     const currentYear = new Date().getFullYear();
     return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
   }).length;
-
-  const statsData = [
-    { label: 'Total AMCs', value: amcData.length, icon: FileText },
-    { label: 'Active AMCs', value: activeAMCs, icon: CheckCircle },
-    { label: 'Expiring Soon', value: upcomingExpiries, icon: AlertCircle },
-    { label: 'This Month', value: thisMonthAMCs, icon: Calendar }
-  ];
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
@@ -450,13 +460,13 @@ export const AMCDashboard = () => {
                   <div className="space-y-4 sm:space-y-6">
                     {/* Top Row - Two Donut Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder.filter(id => ['statusChart', 'expiryChart'].includes(id)).map((chartId) => {
+                      {chartOrder.filter(id => ['statusChart', 'typeChart'].includes(id)).map((chartId) => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
                               <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                                 <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Status</h3>
+                                  <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMCs</h3>
                                   <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                                 </div>
                                 <div className="relative flex items-center justify-center">
@@ -513,19 +523,19 @@ export const AMCDashboard = () => {
                           );
                         }
                         
-                        if (chartId === 'expiryChart' && visibleSections.includes('expiryChart')) {
+                        if (chartId === 'typeChart' && visibleSections.includes('typeChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
                               <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                                 <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">AMC Expiry Analysis</h3>
+                                  <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive AMCs</h3>
                                   <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                                 </div>
                                 <div className="relative flex items-center justify-center">
                                   <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
                                     <PieChart>
                                       <Pie
-                                        data={expiryData}
+                                        data={typeData}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={40}
@@ -549,7 +559,7 @@ export const AMCDashboard = () => {
                                         }}
                                         labelLine={false}
                                       >
-                                        {expiryData.map((entry, index) => (
+                                        {typeData.map((entry, index) => (
                                           <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                       </Pie>
@@ -563,7 +573,7 @@ export const AMCDashboard = () => {
                                   </div>
                                 </div>
                                 <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {expiryData.map((item, index) => (
+                                  {typeData.map((item, index) => (
                                     <div key={index} className="flex items-center gap-2">
                                       <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
                                       <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
@@ -579,14 +589,14 @@ export const AMCDashboard = () => {
                       })}
                     </div>
 
-                    {/* Bottom Charts - Resource Type */}
-                    {chartOrder.filter(id => ['resourceChart'].includes(id)).map((chartId) => {
+                    {/* Bottom Charts - Resource Type and Aging Matrix */}
+                    {chartOrder.filter(id => ['resourceChart', 'agingMatrix'].includes(id)).map((chartId) => {
                       if (chartId === 'resourceChart' && visibleSections.includes('resourceChart')) {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
                               <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>AMC by Resource Type</h3>
+                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Resource-wise AMCs</h3>
                                 <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
                               </div>
                               <div className="w-full overflow-x-auto">
@@ -606,6 +616,55 @@ export const AMCDashboard = () => {
                                     <Bar dataKey="value" fill="#c6b692" />
                                   </BarChart>
                                 </ResponsiveContainer>
+                              </div>
+                            </div>
+                          </SortableChartItem>
+                        );
+                      }
+
+                      if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
+                              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>AMCs Ageing Matrix</h3>
+                                <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
+                              </div>
+                              
+                              <div className="space-y-4 sm:space-y-6">
+                                {/* Table - Horizontally scrollable on mobile */}
+                                <div className="overflow-x-auto -mx-3 sm:mx-0">
+                                  <div className="min-w-[500px] px-3 sm:px-0">
+                                    <table className="w-full border-collapse border border-gray-300">
+                                      <thead>
+                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
+                                          <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days Since Last Service</th>
+                                        </tr>
+                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                          <th className="border border-gray-300 p-2 sm:p-3"></th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-30</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-60</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">61-90</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">91-180</th>
+                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">180+</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {agingMatrixData.map((row, index) => (
+                                          <tr key={index} className="bg-white">
+                                            <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-30']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-60']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['61-90']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['91-180']}</td>
+                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['180+']}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </SortableChartItem>
