@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye } from "lucide-react";
 import { toast } from 'sonner';
 
 interface RestaurantOrder {
@@ -50,8 +48,6 @@ const mockOrders: RestaurantOrder[] = [
 export const RestaurantOrdersTable = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<RestaurantOrder[]>(mockOrders);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<RestaurantOrder | null>(null);
 
   const handleExport = () => {
     // Create CSV content
@@ -82,20 +78,6 @@ export const RestaurantOrdersTable = () => {
     document.body.removeChild(link);
     
     toast.success('Orders exported successfully!');
-  };
-
-  const handleDeleteOrder = () => {
-    if (selectedOrder) {
-      setOrders(orders.filter(order => order.id !== selectedOrder.id));
-      setSelectedOrder(null);
-      setIsDeleteDialogOpen(false);
-      toast.success('Order deleted successfully!');
-    }
-  };
-
-  const openDeleteDialog = (order: RestaurantOrder) => {
-    setSelectedOrder(order);
-    setIsDeleteDialogOpen(true);
   };
 
   const handleViewOrder = (order: RestaurantOrder) => {
@@ -148,14 +130,6 @@ export const RestaurantOrdersTable = () => {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openDeleteDialog(order)}
-                        className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">{order.orderId}</TableCell>
@@ -198,31 +172,6 @@ export const RestaurantOrdersTable = () => {
           </TableBody>
         </Table>
       </div>
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>app.lockated.com says</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this order?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel 
-              onClick={() => setIsDeleteDialogOpen(false)}
-              className="bg-gray-200 text-gray-800 hover:bg-gray-300"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteOrder}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            >
-              OK
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
