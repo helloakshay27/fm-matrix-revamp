@@ -313,95 +313,51 @@ export const AssetInfoTab = ({
           }}>Movement Details</h3>
           </div>
 
-          <div className="space-y-8">
-            {/* From/To Sites */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-500">From Site</span>
+          {/* Movement Timeline - Vertical Layout */}
+          <div className="flex-1">
+            <div className="relative">
+              {/* Requested Stage */}
+              <div className="flex items-center mb-6">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
                 </div>
-                <div className="font-semibold text-gray-800 text-lg">Sai Radhe, Bund Garden</div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">Requested</div>
+                  <div className="text-sm text-gray-500">From Site</div>
+                  <div className="text-sm text-gray-600 mt-1">19/06/2025, 11:00 AM - Abdul Ghaffar</div>
+                </div>
               </div>
               
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-500">To Site</span>
+              {/* Connecting line */}
+              <div className="absolute left-3 top-6 bottom-6 w-0.5" style={{
+                backgroundColor: '#C72030'
+              }}></div>
+              
+              {/* Approved Stage */}
+              <div className="flex items-center mb-6">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
                 </div>
-                <div className="font-semibold text-gray-800 text-lg">Sai Radhe, Bund Garden</div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">Approved</div>
+                  <div className="text-sm text-gray-500">Status</div>
+                  <div className="text-sm text-gray-600 mt-1">20/06/2025, 11:10 AM - Chetan Bafna</div>
+                </div>
               </div>
-            </div>
-
-            {/* Movement Timeline */}
-            <div className="relative">
-              <div className="flex flex-col md:flex-row md:items-center gap-8 md:gap-0">
-                {/* Requested Stage */}
-                <div className="flex flex-col items-center flex-1">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
-                  backgroundColor: '#C72030'
-                }}>
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-base font-semibold mb-2" style={{
-                  color: '#C72030'
-                }}>Requested</div>
-                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                    <Clock className="w-4 h-4" />
-                    <span>19/06/2025 , 11:00 AM</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <UserIcon className="w-4 h-4" />
-                    <span>Abdul Ghaffar</span>
-                  </div>
+              
+              {/* Received Stage */}
+              <div className="flex items-center">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4 bg-gray-300">
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
                 </div>
-
-                {/* Connecting line */}
-                <div className="hidden md:block flex-1 h-px mx-4" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-                <div className="md:hidden w-px h-8 mx-auto" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-
-                {/* Approved Stage */}
-                <div className="flex flex-col items-center flex-1">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
-                  backgroundColor: '#C72030'
-                }}>
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-base font-semibold mb-2" style={{
-                  color: '#C72030'
-                }}>Approved</div>
-                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                    <Clock className="w-4 h-4" />
-                    <span>20/06/2025 , 11:10 AM</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <UserIcon className="w-4 h-4" />
-                    <span>Chetan Bafna</span>
-                  </div>
-                </div>
-
-                {/* Connecting line */}
-                <div className="hidden md:block flex-1 h-px bg-gray-300 mx-4"></div>
-                <div className="md:hidden w-px h-8 bg-gray-300 mx-auto"></div>
-
-                {/* Received Stage */}
-                <div className="flex flex-col items-center flex-1">
-                  <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mb-4">
-                    <Box className="w-6 h-6 text-gray-500" />
-                  </div>
-                  <div className="text-base font-semibold text-gray-400 mb-2">Received</div>
-                  <div className="flex items-center gap-1 text-sm text-gray-400 mb-1">
-                    <Clock className="w-4 h-4" />
-                    <span>Pending</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-400">
-                    <UserIcon className="w-4 h-4" />
-                    <span>Awaiting</span>
-                  </div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-400">Received</div>
+                  <div className="text-sm text-gray-400">To Site</div>
+                  <div className="text-sm text-gray-400 mt-1">Pending - Awaiting</div>
                 </div>
               </div>
             </div>
