@@ -462,4 +462,15 @@ export const ticketManagementAPI = {
     const response = await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${idsParam}]`);
     return response.data;
   },
+
+  // Get ticket details by ID
+  async getTicketDetails(ticketId: string) {
+    try {
+      const response = await apiClient.get(`/pms/admin/complaints/${ticketId}.json`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching ticket details:', error);
+      throw error;
+    }
+  },
 };

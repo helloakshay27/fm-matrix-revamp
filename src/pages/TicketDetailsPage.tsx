@@ -1,15 +1,38 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye } from 'lucide-react';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [ticketData, setTicketData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchTicketDetails = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const data = await ticketManagementAPI.getTicketDetails(id);
+        setTicketData(data);
+      } catch (err) {
+        setError('Failed to fetch ticket details');
+        console.error('Error fetching ticket details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTicketDetails();
+  }, [id]);
 
   const handleBackToList = () => {
     navigate('/maintenance/ticket');
@@ -27,97 +50,33 @@ export const TicketDetailsPage = () => {
     console.log('Create task clicked');
   };
 
-  // Enhanced ticket data with all required fields
-  const ticketData = {
-    id: id || '2189-11106',
-    title: 'test',
-    status: 'Pending',
-    createdOn: '16/06/2025 5:17 PM',
-    category: 'Air Conditioner',
-    adminPriority: 'p1',
-    subCategory: 'test',
-    referenceNumber: '-',
-    createdBy: 'Abhishek Sharma',
-    department: 'Technician',
-    site: 'Lockated',
-    
-    // Location Information
-    locationInfo: {
-      site: 'Lockated',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      building: 'Tower A',
-      district: 'Andheri West',
-      address: '123 Main Street, Andheri West',
-      floor: '10th Floor',
-      wing: 'A Wing',
-      room: 'A-1001'
-    },
-    
-    // Survey Information
-    surveyInfo: {
-      name: 'Customer Satisfaction Survey',
-      surveyType: 'Post Resolution',
-      surveyStatus: 'Pending',
-      assignedTo: 'Survey Team'
-    },
-    
-    // Additional Information
-    additionalInfo: {
-      assignedTo: 'John Doe',
-      externalPriority: 'High',
-      serviceFrequency: 'Monthly',
-      paymentFrequency: 'Quarterly',
-      preventiveAction: 'Regular maintenance check',
-      responsiblePerson: 'Maintenance Team',
-      rootCause: 'Equipment aging',
-      assetService: 'HVAC Maintenance',
-      taskId: 'TSK-2189-001',
-      vendor: 'ABC Services Ltd',
-      assetServiceLocation: 'Building A - 10th Floor'
-    }
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading ticket details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !ticketData) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">{error || 'Ticket not found'}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper function to display value or "Not Provided"
+  const displayValue = (value) => {
+    return value && value !== null && value !== undefined && value !== '' ? value : 'Not Provided';
   };
 
-  // Mock attachments data
-  const attachments = [
-    { id: 1, name: 'ticket_image_1.jpg', size: '2.5 MB', type: 'image', uploadedBy: 'Abhishek Sharma', uploadedOn: '16/06/2025 5:20 PM' },
-    { id: 2, name: 'maintenance_report.pdf', size: '1.8 MB', type: 'pdf', uploadedBy: 'Abhishek Sharma', uploadedOn: '16/06/2025 5:25 PM' },
-    { id: 3, name: 'invoice_copy.pdf', size: '980 KB', type: 'pdf', uploadedBy: 'John Doe', uploadedOn: '16/06/2025 6:00 PM' }
-  ];
-
-  // Mock cost approval data
-  const costApprovalData = [
-    {
-      requestId: 'CAR-2189-001',
-      amount: '₹15,000',
-      comments: 'Replacement of AC compressor',
-      createdOn: '16/06/2025 5:30 PM',
-      createdBy: 'Abhishek Sharma',
-      l1: 'Approved',
-      l2: 'Approved',
-      l3: 'Pending',
-      l4: '-',
-      l5: '-',
-      masterStatus: 'In Progress',
-      cancelledBy: '-',
-      attachment: 'quotation.pdf'
-    },
-    {
-      requestId: 'CAR-2189-002',
-      amount: '₹8,500',
-      comments: 'Additional spare parts',
-      createdOn: '17/06/2025 10:15 AM',
-      createdBy: 'John Doe',
-      l1: 'Approved',
-      l2: 'Pending',
-      l3: '-',
-      l4: '-',
-      l5: '-',
-      masterStatus: 'Pending',
-      cancelledBy: '-',
-      attachment: 'parts_list.pdf'
-    }
-  ];
+  // Process complaint logs for table display
+  const complaintLogs = ticketData.complaint_logs || [];
 
   return (
     <div className="p-6 bg-white min-h-screen">
@@ -165,41 +124,61 @@ export const TicketDetailsPage = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Title</label>
-                <p className="font-medium">{ticketData.title}</p>
+                <p className="font-medium">{displayValue(ticketData.heading)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Status</label>
-                <Badge className="bg-yellow-100 text-yellow-700">{ticketData.status}</Badge>
+                <Badge className="bg-yellow-100 text-yellow-700">{displayValue(ticketData.issue_status)}</Badge>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">SubCategory</label>
-                <p className="font-medium">{ticketData.subCategory}</p>
+                <p className="font-medium">{displayValue(ticketData.sub_category_type)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Created By</label>
+                <p className="font-medium">{displayValue(ticketData.created_by_name)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Assigned To</label>
+                <p className="font-medium">{displayValue(ticketData.assigned_to)}</p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Created on</label>
-                <p className="font-medium">{ticketData.createdOn}</p>
+                <label className="text-sm text-gray-600 block mb-1">Created On</label>
+                <p className="font-medium">{displayValue(`${ticketData.created_date} ${ticketData.created_time}`)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Category</label>
-                <p className="font-medium">{ticketData.category}</p>
+                <p className="font-medium">{displayValue(ticketData.category_type)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Reference Number</label>
-                <p className="font-medium">{ticketData.referenceNumber}</p>
+                <p className="font-medium">{displayValue(ticketData.reference_number)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Updated By</label>
+                <p className="font-medium">{displayValue(ticketData.updated_by)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Complaint Mode</label>
+                <p className="font-medium">{displayValue(ticketData.complaint_mode)}</p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Ticket No.</label>
-                <p className="font-medium">{ticketData.id}</p>
+                <label className="text-sm text-gray-600 block mb-1">Ticket Number</label>
+                <p className="font-medium">{displayValue(ticketData.ticket_number)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Priority</label>
+                <p className="font-medium">{displayValue(ticketData.priority || ticketData.external_priority)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Admin Priority</label>
-                <p className="font-medium">{ticketData.adminPriority}</p>
+                <p className="font-medium">{displayValue(ticketData.priority_status || ticketData.effective_priority)}</p>
               </div>
             </div>
           </div>
@@ -217,16 +196,12 @@ export const TicketDetailsPage = () => {
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-8">
             <div>
-              <label className="text-sm text-gray-600 block mb-1">Created By</label>
-              <p className="font-medium">{ticketData.createdBy}</p>
+              <label className="text-sm text-gray-600 block mb-1">Posted By</label>
+              <p className="font-medium">{displayValue(ticketData.posted_by)}</p>
             </div>
             <div>
-              <label className="text-sm text-gray-600 block mb-1">Department</label>
-              <p className="font-medium">{ticketData.department}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Site</label>
-              <p className="font-medium">{ticketData.site}</p>
+              <label className="text-sm text-gray-600 block mb-1">Society</label>
+              <p className="font-medium">{displayValue(ticketData.id_society)}</p>
             </div>
           </div>
         </CardContent>
@@ -244,46 +219,58 @@ export const TicketDetailsPage = () => {
           <div className="grid grid-cols-3 gap-8">
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Site</label>
-                <p className="font-medium">{ticketData.locationInfo.site}</p>
+                <label className="text-sm text-gray-600 block mb-1">Region</label>
+                <p className="font-medium">{displayValue(ticketData.region)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Building</label>
-                <p className="font-medium">{ticketData.locationInfo.building}</p>
+                <p className="font-medium">{displayValue(ticketData.building_name)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Floor</label>
-                <p className="font-medium">{ticketData.locationInfo.floor}</p>
+                <p className="font-medium">{displayValue(ticketData.floor_name)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Flat Number / Unit Name</label>
+                <p className="font-medium">{displayValue(ticketData.flat_number || ticketData.unit_name)}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Zone</label>
+                <p className="font-medium">{displayValue(ticketData.zone)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">District</label>
+                <p className="font-medium">{displayValue(ticketData.district)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Room</label>
+                <p className="font-medium">{displayValue(ticketData.room_name)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Area Name / Site Name</label>
+                <p className="font-medium">{displayValue(ticketData.area_name || ticketData.site_name)}</p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-gray-600 block mb-1">City</label>
-                <p className="font-medium">{ticketData.locationInfo.city}</p>
+                <p className="font-medium">{displayValue(ticketData.city)}</p>
               </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">District</label>
-                <p className="font-medium">{ticketData.locationInfo.district}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Wing</label>
-                <p className="font-medium">{ticketData.locationInfo.wing}</p>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
               <div>
                 <label className="text-sm text-gray-600 block mb-1">State</label>
-                <p className="font-medium">{ticketData.locationInfo.state}</p>
+                <p className="font-medium">{displayValue(ticketData.state)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Address</label>
-                <p className="font-medium">{ticketData.locationInfo.address}</p>
+                <p className="font-medium">{displayValue(ticketData.address)}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Room</label>
-                <p className="font-medium">{ticketData.locationInfo.room}</p>
+                <label className="text-sm text-gray-600 block mb-1">Wing</label>
+                <p className="font-medium">{displayValue(ticketData.wing_name)}</p>
               </div>
             </div>
           </div>
@@ -301,16 +288,16 @@ export const TicketDetailsPage = () => {
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-8">
             <div>
-              <label className="text-sm text-gray-600 block mb-1">Name</label>
-              <p className="font-medium">{ticketData.surveyInfo.name}</p>
+              <label className="text-sm text-gray-600 block mb-1">Survey ID</label>
+              <p className="font-medium">{displayValue(ticketData.survey_id)}</p>
             </div>
             <div>
-              <label className="text-sm text-gray-600 block mb-1">Survey Type</label>
-              <p className="font-medium">{ticketData.surveyInfo.surveyType}</p>
+              <label className="text-sm text-gray-600 block mb-1">Survey Name</label>
+              <p className="font-medium">{displayValue(ticketData.survey_name)}</p>
             </div>
             <div>
-              <label className="text-sm text-gray-600 block mb-1">Status</label>
-              <Badge className="bg-yellow-100 text-yellow-700">{ticketData.surveyInfo.surveyStatus}</Badge>
+              <label className="text-sm text-gray-600 block mb-1">Survey Location</label>
+              <p className="font-medium">{displayValue(ticketData.survey_location)}</p>
             </div>
           </div>
         </CardContent>
@@ -328,54 +315,58 @@ export const TicketDetailsPage = () => {
           <div className="grid grid-cols-3 gap-8">
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Assigned To</label>
-                <p className="font-medium">{ticketData.additionalInfo.assignedTo}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Service Frequency</label>
-                <p className="font-medium">{ticketData.additionalInfo.serviceFrequency}</p>
+                <label className="text-sm text-gray-600 block mb-1">Corrective Action</label>
+                <p className="font-medium">{displayValue(ticketData.corrective_action)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Preventive Action</label>
-                <p className="font-medium">{ticketData.additionalInfo.preventiveAction}</p>
+                <p className="font-medium">{displayValue(ticketData.preventive_action)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Root Cause</label>
-                <p className="font-medium">{ticketData.additionalInfo.rootCause}</p>
+                <p className="font-medium">{displayValue(ticketData.root_cause)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Response TAT</label>
+                <p className="font-medium">{displayValue(ticketData.response_tat)}</p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-600 block mb-1">External Priority</label>
-                <p className="font-medium">{ticketData.additionalInfo.externalPriority}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Payment Frequency</label>
-                <p className="font-medium">{ticketData.additionalInfo.paymentFrequency}</p>
+                <label className="text-sm text-gray-600 block mb-1">Ticket Urgency</label>
+                <p className="font-medium">{displayValue(ticketData.ticket_urgency)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Responsible Person</label>
-                <p className="font-medium">{ticketData.additionalInfo.responsiblePerson}</p>
+                <p className="font-medium">{displayValue(ticketData.responsible_person)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Asset Service</label>
-                <p className="font-medium">{ticketData.additionalInfo.assetService}</p>
+                <p className="font-medium">{displayValue(ticketData.asset_service)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Resolution TAT</label>
+                <p className="font-medium">{displayValue(ticketData.resolution_tat)}</p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Task ID</label>
-                <p className="font-medium">{ticketData.additionalInfo.taskId}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Vendor</label>
-                <p className="font-medium">{ticketData.additionalInfo.vendor}</p>
+                <p className="font-medium">{displayValue(ticketData.task_id)}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Asset/Service Location</label>
-                <p className="font-medium">{ticketData.additionalInfo.assetServiceLocation}</p>
+                <p className="font-medium">{displayValue(ticketData.asset_service_location)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Resolution Time</label>
+                <p className="font-medium">{displayValue(ticketData.resolution_time)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Escalation Tracking</label>
+                <p className="font-medium">{displayValue(`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`)}</p>
               </div>
             </div>
           </div>
@@ -391,16 +382,16 @@ export const TicketDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          {attachments.length > 0 ? (
+          {ticketData.documents && ticketData.documents.length > 0 ? (
             <div className="space-y-3">
-              {attachments.map((attachment) => (
-                <div key={attachment.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+              {ticketData.documents.map((document, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
                   <div className="flex items-center gap-3">
                     <Paperclip className="w-4 h-4 text-gray-500" />
                     <div>
-                      <p className="font-medium text-sm">{attachment.name}</p>
+                      <p className="font-medium text-sm">{document.name || `Document ${index + 1}`}</p>
                       <p className="text-xs text-gray-500">
-                        {attachment.size} • Uploaded by {attachment.uploadedBy} on {attachment.uploadedOn}
+                        Attachment
                       </p>
                     </div>
                   </div>
@@ -432,74 +423,95 @@ export const TicketDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Request ID</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Comments</TableHead>
-                  <TableHead>Created On</TableHead>
-                  <TableHead>Created By</TableHead>
-                  <TableHead>L1</TableHead>
-                  <TableHead>L2</TableHead>
-                  <TableHead>L3</TableHead>
-                  <TableHead>L4</TableHead>
-                  <TableHead>L5</TableHead>
-                  <TableHead>Master Status</TableHead>
-                  <TableHead>Cancelled By</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Attachment</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {costApprovalData.map((request, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{request.requestId}</TableCell>
-                    <TableCell>{request.amount}</TableCell>
-                    <TableCell>{request.comments}</TableCell>
-                    <TableCell>{request.createdOn}</TableCell>
-                    <TableCell>{request.createdBy}</TableCell>
-                    <TableCell>
-                      <Badge className={request.l1 === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
-                        {request.l1}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={request.l2 === 'Approved' ? 'bg-green-100 text-green-700' : request.l2 === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}>
-                        {request.l2}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={request.l3 === 'Approved' ? 'bg-green-100 text-green-700' : request.l3 === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}>
-                        {request.l3}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{request.l4}</TableCell>
-                    <TableCell>{request.l5}</TableCell>
-                    <TableCell>
-                      <Badge className={request.masterStatus === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
-                        {request.masterStatus}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{request.cancelledBy}</TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        <FileText className="w-4 h-4 mr-1" />
-                        {request.attachment}
-                      </Button>
-                    </TableCell>
+          {ticketData.cost_approval_enabled && ticketData.requests && ticketData.requests.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Request ID</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Comments</TableHead>
+                    <TableHead>Created On</TableHead>
+                    <TableHead>Created By</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {ticketData.requests.map((request, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{request.id || `REQ-${index + 1}`}</TableCell>
+                      <TableCell>{request.amount || 'Not Provided'}</TableCell>
+                      <TableCell>{request.comments || 'No comments'}</TableCell>
+                      <TableCell>{request.created_at || 'Not Provided'}</TableCell>
+                      <TableCell>{request.created_by || 'Not Provided'}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-yellow-100 text-yellow-700">
+                          {request.status || 'Pending'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">
+              {ticketData.cost_approval_enabled ? 'No cost approval requests found' : 'Cost approval not enabled for this ticket'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Section 8: Complaint/Action Logs */}
+      <Card className="mt-6">
+        <CardHeader className="border-b bg-white">
+          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>8</div>
+            COMPLAINT/ACTION LOGS
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          {complaintLogs.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date/Time</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Comment/Action</TableHead>
+                    <TableHead>By</TableHead>
+                    <TableHead>Priority</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {complaintLogs.map((log, index) => (
+                    <TableRow key={log.id || index}>
+                      <TableCell className="font-medium">
+                        {new Date(log.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-blue-100 text-blue-700">
+                          {log.log_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{log.log_comment || 'No comment'}</TableCell>
+                      <TableCell>{log.log_by || 'System'}</TableCell>
+                      <TableCell>{log.priority || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">No action logs found</p>
+          )}
         </CardContent>
       </Card>
     </div>
