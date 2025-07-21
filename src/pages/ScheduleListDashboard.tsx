@@ -155,38 +155,86 @@ export const ScheduleListDashboard = () => {
 
   const renderAnalyticsTab = () => (
     <div className="space-y-6">
-      {/* Cards Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {scheduleCards.map((card, index) => {
-          const IconComponent = card.icon;
-          return (
-            <div key={index} className={`relative p-6 rounded-lg bg-gradient-to-r ${card.gradient} text-white overflow-hidden`}>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/90 text-sm font-medium">{card.title}</p>
-                    <p className="text-3xl font-bold mt-2">{card.value}</p>
-                  </div>
-                  <IconComponent className="w-8 h-8 text-white/80" />
-                </div>
-              </div>
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
-              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/10 rounded-full"></div>
-            </div>
-          );
-        })}
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+        {/* Total Schedules */}
+        <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
+          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+            <Calendar className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-[#C72030]">{totalSchedules}</div>
+            <div className="text-sm text-gray-600">Total Schedules</div>
+          </div>
+        </div>
+
+        {/* Active Schedules */}
+        <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
+          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+            <BarChart3 className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-[#C72030]">{activeSchedules}</div>
+            <div className="text-sm text-gray-600">Active Schedules</div>
+          </div>
+        </div>
+
+        {/* Inactive Schedules */}
+        <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
+          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+            <Clock className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-[#C72030]">{inactiveSchedules}</div>
+            <div className="text-sm text-gray-600">Inactive Schedules</div>
+          </div>
+        </div>
+
+        {/* PPM Schedules */}
+        <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
+          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+            <Settings className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-[#C72030]">{ppmSchedules}</div>
+            <div className="text-sm text-gray-600">PPM Schedules</div>
+          </div>
+        </div>
+
+        {/* Routine Schedules */}
+        <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
+          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+            <Wrench className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-[#C72030]">{routineSchedules}</div>
+            <div className="text-sm text-gray-600">Routine Schedules</div>
+          </div>
+        </div>
+
+        {/* Safety Schedules */}
+        <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
+          <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+            <Shield className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-[#C72030]">{safetySchedules}</div>
+            <div className="text-sm text-gray-600">Safety Schedules</div>
+          </div>
+        </div>
       </div>
 
-      {/* Selector */}
-      <div className="flex justify-start">
+      {/* Header with Schedule Selector */}
+      <div className="flex justify-end">
         <ScheduleSelector
           selectedItems={selectedItems}
           onSelectionChange={setSelectedItems}
         />
       </div>
 
-      {/* Charts and Sidebar Layout */}
+      {/* Main Analytics Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Section - Charts (3 columns) */}
         <div className="lg:col-span-3 space-y-6">
           {/* Charts Row 1 */}
           {selectedItems.includes('checklist') && (
@@ -275,7 +323,7 @@ export const ScheduleListDashboard = () => {
           )}
         </div>
 
-        {/* Recent Schedules Sidebar */}
+        {/* Right Section - Sidebar (1 column) */}
         <div className="lg:col-span-1">
           <RecentSchedulesSidebar />
         </div>
