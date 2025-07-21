@@ -245,6 +245,7 @@ export const ProductSetupDetailPage = () => {
           </Button>
         </div>
       </div>
+
       {/* Tabs Navigation */}
       <div className="bg-white border-b px-6 py-3">
         <Tabs value="restaurant-menu" className="w-full">
