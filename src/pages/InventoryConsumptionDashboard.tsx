@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Filter, Eye, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
@@ -130,11 +131,11 @@ const InventoryConsumptionDashboard = () => {
     return value || '-';
   };
 
-  // Handle select change
-  const handleSelectChange = (field: string, value: string) => {
+  // Handle MUI Select change
+  const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
     setFilterValues(prev => ({
       ...prev,
-      [field]: value
+      [field]: event.target.value
     }));
   };
 
@@ -247,60 +248,174 @@ const InventoryConsumptionDashboard = () => {
               {/* First Row - Three Dropdowns */}
               <div className="grid grid-cols-3 gap-6">
                 {/* Group */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Group</label>
-                  <select
-                    value={filterValues.group}
-                    onChange={(e) => handleSelectChange('group', e.target.value)}
-                    className="w-full h-12 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none bg-white"
+                <FormControl fullWidth>
+                  <InputLabel id="group-label" sx={{
+                    color: '#374151',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    '&.Mui-focused': {
+                      color: '#C72030'
+                    }
+                  }}>
+                    Group
+                  </InputLabel>
+                  <Select 
+                    labelId="group-label" 
+                    value={filterValues.group} 
+                    label="Group" 
+                    onChange={handleSelectChange('group')} 
+                    displayEmpty 
+                    sx={{
+                      height: '48px',
+                      borderRadius: '8px',
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#D1D5DB'
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#9CA3AF'
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#C72030'
+                        }
+                      }
+                    }}
                   >
-                    <option value="" disabled className="text-red-500">Select Group</option>
-                    <option value="group1">Group 1</option>
-                    <option value="group2">Group 2</option>
-                    <option value="group3">Group 3</option>
-                  </select>
-                </div>
+                    <MenuItem value="" disabled>
+                      <span style={{ color: '#EF4444' }}>Select Group</span>
+                    </MenuItem>
+                    <MenuItem value="group1">Group 1</MenuItem>
+                    <MenuItem value="group2">Group 2</MenuItem>
+                    <MenuItem value="group3">Group 3</MenuItem>
+                  </Select>
+                </FormControl>
 
                 {/* Sub Group */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Sub Group</label>
-                  <select
-                    value={filterValues.subGroup}
-                    onChange={(e) => handleSelectChange('subGroup', e.target.value)}
-                    className="w-full h-12 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none bg-white"
+                <FormControl fullWidth>
+                  <InputLabel id="subgroup-label" sx={{
+                    color: '#374151',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    '&.Mui-focused': {
+                      color: '#C72030'
+                    }
+                  }}>
+                    Sub Group
+                  </InputLabel>
+                  <Select 
+                    labelId="subgroup-label" 
+                    value={filterValues.subGroup} 
+                    label="Sub Group" 
+                    onChange={handleSelectChange('subGroup')} 
+                    displayEmpty 
+                    sx={{
+                      height: '48px',
+                      borderRadius: '8px',
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#D1D5DB'
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#9CA3AF'
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#C72030'
+                        }
+                      }
+                    }}
                   >
-                    <option value="" disabled className="text-red-500">Select Sub Group</option>
-                    <option value="subgroup1">Sub Group 1</option>
-                    <option value="subgroup2">Sub Group 2</option>
-                    <option value="subgroup3">Sub Group 3</option>
-                  </select>
-                </div>
+                    <MenuItem value="" disabled>
+                      <span style={{ color: '#EF4444' }}>Select Sub Group</span>
+                    </MenuItem>
+                    <MenuItem value="subgroup1">Sub Group 1</MenuItem>
+                    <MenuItem value="subgroup2">Sub Group 2</MenuItem>
+                    <MenuItem value="subgroup3">Sub Group 3</MenuItem>
+                  </Select>
+                </FormControl>
 
                 {/* Criticality */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Select Criticality</label>
-                  <select
-                    value={filterValues.criticality}
-                    onChange={(e) => handleSelectChange('criticality', e.target.value)}
-                    className="w-full h-12 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none bg-white"
+                <FormControl fullWidth>
+                  <InputLabel id="criticality-label" sx={{
+                    color: '#374151',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    '&.Mui-focused': {
+                      color: '#C72030'
+                    }
+                  }}>
+                    Select Criticality
+                  </InputLabel>
+                  <Select 
+                    labelId="criticality-label" 
+                    value={filterValues.criticality} 
+                    label="Select Criticality" 
+                    onChange={handleSelectChange('criticality')} 
+                    displayEmpty 
+                    sx={{
+                      height: '48px',
+                      borderRadius: '8px',
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#D1D5DB'
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#9CA3AF'
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#C72030'
+                        }
+                      }
+                    }}
                   >
-                    <option value="" disabled className="text-red-500">Select Criticality</option>
-                    <option value="critical">Critical</option>
-                    <option value="non-critical">Non-Critical</option>
-                    <option value="medium">Medium</option>
-                  </select>
-                </div>
+                    <MenuItem value="" disabled>
+                      <span style={{ color: '#EF4444' }}>Select Criticality</span>
+                    </MenuItem>
+                    <MenuItem value="critical">Critical</MenuItem>
+                    <MenuItem value="non-critical">Non-Critical</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
 
               {/* Second Row - Name Input */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input
-                  type="text"
-                  placeholder="Enter Name"
-                  value={filterValues.name}
-                  onChange={handleTextChange('name')}
-                  className="w-full h-12 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] outline-none"
+                <TextField 
+                  fullWidth 
+                  label="Name" 
+                  placeholder="Enter Name" 
+                  value={filterValues.name} 
+                  onChange={handleTextChange('name')} 
+                  variant="outlined" 
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '48px',
+                      borderRadius: '8px',
+                      '& fieldset': {
+                        borderColor: '#D1D5DB'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#9CA3AF'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: '#374151',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      '&.Mui-focused': {
+                        color: '#C72030'
+                      }
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      padding: '12px 14px',
+                      fontSize: '14px',
+                      '&::placeholder': {
+                        color: '#9CA3AF'
+                      }
+                    }
+                  }} 
                 />
               </div>
 
