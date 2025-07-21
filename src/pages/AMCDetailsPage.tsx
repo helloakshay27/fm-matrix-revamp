@@ -28,12 +28,38 @@ interface AMCDetailsData {
   remarks: string;
 }
 
+interface Technician {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface AmcVisitLog {
+  id: number;
+  visit_number: number;
+  visit_date: string;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+  asset_period: string;
+  technician: Technician | null;
+}
+
+interface AMCDetailsDataWithVisits extends AMCDetailsData {
+  amc_visit_logs: AmcVisitLog[];
+}
+
+
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
-  const { data: amcData, loading, error } = useAppSelector((state) => state.amcDetails);
-  const [showAddVisitModal, setShowAddVisitModal] = useState(false);
+  const { data: amcData, loading, error } = useAppSelector(
+    (state) => state.amcDetails as { data: AMCDetailsDataWithVisits; loading: boolean; error: any }
+  ); const [showAddVisitModal, setShowAddVisitModal] = useState(false);
+
+  const amcVisitData = amcData?.amc_visit_logs?.map((visit) => visit) ?? [];
+
 
   useEffect(() => {
     if (id) {
@@ -94,8 +120,8 @@ export const AMCDetailsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => navigate('/maintenance/amc')}
           className="mb-4"
         >
@@ -105,14 +131,14 @@ export const AMCDetailsPage = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details - {amcDetails.id}</h1>
           <div className="flex gap-2">
-            <Button 
+            <Button
               onClick={() => setShowAddVisitModal(true)}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"
             >
               + Add Visit
             </Button>
-            <Button 
+            <Button
               onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
               variant="outline"
               className="border-[#C72030] text-[#C72030]"
@@ -167,11 +193,10 @@ export const AMCDetailsPage = () => {
                 <TableCell>—</TableCell>
                 <TableCell>No</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    amcDetails.active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`px-2 py-1 text-xs rounded ${amcDetails.active
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}>
                     {amcDetails.active ? 'Active' : 'Inactive'}
                   </span>
                 </TableCell>
@@ -243,7 +268,7 @@ export const AMCDetailsPage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">L</span>
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">A</span>
             AMC DATA LOGS
           </CardTitle>
         </CardHeader>
@@ -254,21 +279,37 @@ export const AMCDetailsPage = () => {
                 <TableHead>Asset Period</TableHead>
                 <TableHead>Visit No</TableHead>
                 <TableHead>Visit Date</TableHead>
+                <TableHead>Technician</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* Placeholder for AMC Data Logs */}
-              <TableRow>
-                <TableCell colSpan={10} className="text-center text-gray-600">
-                 
-                </TableCell>
-              </TableRow>
+              {amcVisitData.length > 0 ? (
+                amcVisitData.map((visit: any, index: number) => (
+                  <TableRow key={visit.id || index}>
+                    <TableCell>{visit.asset_period}</TableCell>
+                    <TableCell>{visit.visit_number}</TableCell>
+                    <TableCell>
+                      {new Date(visit.visit_date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {visit.technician ? visit.technician.name : "Not Assigned"}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-600">
+                    No AMC visit logs available.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      <AddVisitModal 
+
+      <AddVisitModal
         isOpen={showAddVisitModal}
         onClose={() => setShowAddVisitModal(false)}
         amcId={amcDetails?.id?.toString() || id || ''}

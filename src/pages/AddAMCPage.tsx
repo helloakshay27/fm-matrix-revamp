@@ -159,7 +159,6 @@ export const AddAMCPage = () => {
     if (groupId) {
       setLoading(true);
       try {
-        console.log('Making API call for subgroups...');
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
         console.log('SubGroup API Response - Full response:', response);
         console.log('SubGroup API Response - Data only:', response.data);
@@ -198,17 +197,15 @@ export const AddAMCPage = () => {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Create FormData for sending
+  
     const sendData = new FormData();
-    
-    // Add all form fields directly to FormData
+  
     sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? 
       formData.asset_ids[0] : '');
     sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-    sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+    sendData.append('pms_asset_amc[pms_site_id]', '1');
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
-    sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+    sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
     sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
     sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
@@ -219,47 +216,43 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
       (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
-
-    // Add asset_ids at top level as array
+  
+    if (formData.type === 'Group') {
+      sendData.append('group_id', formData.group);
+      sendData.append('sub_group_id', formData.subgroup);
+    }
+  
     if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
       formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
     }
-
-    // Add contract files
+  
     attachments.contracts.forEach((file, index) => {
       sendData.append(`amc_contract_${index}`, file);
     });
-
-    // Add invoice files  
+  
     attachments.invoices.forEach((file, index) => {
       sendData.append(`amc_invoice_${index}`, file);
     });
-
-    console.log('Submitting AMC Data via Redux');
-    console.log('Attachments:', attachments);
-    
-    // Log the complete payload structure
-    console.log('=== COMPLETE PAYLOAD ===');
+  
+    console.log('=== Submit Payload ===');
+    console.log('formData:', formData);
     for (let [key, value] of sendData.entries()) {
       console.log(`${key}:`, value);
     }
-    console.log('========================');
-
-    // Use Redux action to create AMC
+    console.log('=====================');
+  
     dispatch(createAMC(sendData));
   };
-
+  
   const handleSaveAndSchedule = async () => {
-    // Create FormData for sending (same as handleSubmit)
     const sendData = new FormData();
-    
-    // Add all form fields directly to FormData
+  
     sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? 
       formData.asset_ids[0] : '');
     sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-    sendData.append('pms_asset_amc[pms_site_id]', '1'); // TODO: Get from context or site selector
+    sendData.append('pms_asset_amc[pms_site_id]', '1');
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
-    sendData.append('pms_asset_amc[checklist_type]', formData.details); // "Asset" or "Service"
+    sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
     sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
     sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
@@ -270,34 +263,32 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? 
       (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
-    sendData.append('pms_asset_amc[schedule_immediately]', 'true'); // Flag for save & schedule
-
-    // Add asset_ids at top level as array
+    sendData.append('pms_asset_amc[schedule_immediately]', 'true');
+  
+    if (formData.type === 'Group') {
+      sendData.append('group_id', formData.group);
+      sendData.append('sub_group_id', formData.subgroup);
+    }
+  
     if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
       formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
     }
-
-    // Add contract files
+  
     attachments.contracts.forEach((file, index) => {
       sendData.append(`amc_contract_${index}`, file);
     });
-
-    // Add invoice files  
+  
     attachments.invoices.forEach((file, index) => {
       sendData.append(`amc_invoice_${index}`, file);
     });
-
-    console.log('Save & Schedule AMC via Redux');
-    console.log('Attachments:', attachments);
-    
-    // Log the complete payload structure
-    console.log('=== SAVE & SCHEDULE PAYLOAD ===');
+  
+    console.log('=== Save & Schedule Payload ===');
+    console.log('formData:', formData);
     for (let [key, value] of sendData.entries()) {
       console.log(`${key}:`, value);
     }
-    console.log('===============================');
-
-    // Use Redux action to create AMC
+    console.log('=====================');
+  
     dispatch(createAMC(sendData));
   };
 

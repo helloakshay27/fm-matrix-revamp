@@ -66,14 +66,14 @@ export const EditAMCPage = () => {
   }, [dispatch, id]);
 
   // Update form data when AMC data is loaded
+
+  
   useEffect(() => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
-      // Determine details and type based on resource_type and resource_id
       const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
-      const isGroupType = data.resource_id && data.resource_type === 'Pms::Asset';
-
-      // Handle asset IDs
+      const isGroupType = data.resource_type === 'Pms::Asset';
+  
       let assetIds = [];
       if (data.asset_id) {
         if (typeof data.asset_id === 'string') {
@@ -90,21 +90,20 @@ export const EditAMCPage = () => {
         }
         assetIds = assetIds.map(id => id.toString());
       }
-
-      // Find supplier and service
+  
       const supplierId = data.supplier_id?.toString();
       const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
       const serviceId = data.service_id?.toString();
       const foundService = services.find(service => service.id.toString() === serviceId);
-
+  
       setFormData({
         details: detailType,
         type: isGroupType ? 'Group' : 'Individual',
         assetName: foundService ? serviceId : '',
         asset_ids: assetIds,
         vendor: foundSupplier ? supplierId : '',
-        group: isGroupType ? (data.resource_id?.toString() || '') : '',
-        subgroup: data.sub_group_id?.toString() || '',
+        group: isGroupType ? (data.group_id?.toString() || '') : '',
+        subgroup: data.sub_group_id || '',
         service: '',
         supplier: foundSupplier ? supplierId : '',
         startDate: data.amc_start_date || '',
@@ -115,14 +114,15 @@ export const EditAMCPage = () => {
         noOfVisits: data.no_of_visits?.toString() || '',
         remarks: data.remarks || ''
       });
-
-      // If it's a group type and we have a group ID, fetch subgroups
-      if (isGroupType && data.resource_id) {
-        handleGroupChange(data.resource_id.toString());
+      console.log('AMC Data of SubGroup:', data.sub_group_id);
+      console.log('AMC Data of Group:', data.group_id);
+  
+      // Ensure handleGroupChange is called with the group_id
+      if (isGroupType && data.group_id) {
+        handleGroupChange(data.group_id.toString());
       }
     }
   }, [amcData, assets, suppliers, services]);
-
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       // Clear the assetName when switching between Asset and Service
@@ -178,9 +178,7 @@ export const EditAMCPage = () => {
     const fetchAssetGroups = async () => {
       setLoading(true);
       try {
-        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
-        console.log('API Response:', response.data);
-
+        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');    
         if (Array.isArray(response.data)) {
           setAssetGroups(response.data);
         } else if (response.data && Array.isArray(response.data.asset_groups)) {
@@ -206,38 +204,28 @@ export const EditAMCPage = () => {
   }, [dispatch, toast]);
 
   const handleGroupChange = async (groupId: string) => {
-    console.log('=== GROUP CHANGED ===');
-    console.log('Selected Group ID:', groupId);
-
     handleInputChange('group', groupId);
-    handleInputChange('subgroup', '');
-
+  
     if (groupId) {
       setLoading(true);
       try {
-        console.log('Making API call for subgroups...');
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
-        console.log('SubGroup API Response - Full response:', response);
-        console.log('SubGroup API Response - Data only:', response.data);
-        console.log('SubGroup API Response - Data type:', typeof response.data);
-        console.log('SubGroup API Response - Is Array?', Array.isArray(response.data));
-
+  
+        let subgroups = [];
         if (Array.isArray(response.data)) {
-          console.log('Setting subgroups - Direct array:', response.data);
-          setSubGroups(response.data);
+          subgroups = response.data;
         } else if (response.data && Array.isArray(response.data.asset_groups)) {
-          console.log('Setting subgroups - asset_groups property:', response.data.asset_groups);
-          setSubGroups(response.data.asset_groups);
-        } else if (response.data && Array.isArray(response.data.sub_groups)) {
-          console.log('Setting subgroups - sub_groups property:', response.data.sub_groups);
-          setSubGroups(response.data.sub_groups);
-        } else if (response.data && Array.isArray(response.data.asset_sub_groups)) {
-          console.log('Setting subgroups - asset_sub_groups property:', response.data.asset_sub_groups);
-          setSubGroups(response.data.asset_sub_groups);
+          subgroups = response.data.asset_groups;
+        } else if (response.data && Array.isArray(response.data.asset_groups)) {
+          subgroups = response.data.sub_groups; // Adjust based on API structure
         } else {
           console.warn('SubGroup API response structure unknown:', response.data);
-          console.log('Available keys in response.data:', Object.keys(response.data || {}));
-          setSubGroups([]);
+        }
+        setSubGroups(subgroups);
+  
+        // Pre-select subgroup if it matches formData.subgroup
+        if (formData.subgroup && subgroups.some(sub => sub.id.toString() === formData.subgroup)) {
+          handleInputChange('subgroup', formData.subgroup);
         }
       } catch (error) {
         console.error('Error fetching subgroups:', error);
@@ -251,7 +239,6 @@ export const EditAMCPage = () => {
         setLoading(false);
       }
     } else {
-      console.log('No group selected, clearing subgroups');
       setSubGroups([]);
     }
   };
@@ -645,7 +632,8 @@ export const EditAMCPage = () => {
                         labelId="subgroup-select-label"
                         label="SubGroup"
                         displayEmpty
-                        value={formData.subgroup}
+                        value={`${formData.subgroup}`}
+                        
                         onChange={e => handleInputChange('subgroup', e.target.value)}
                         sx={fieldStyles}
                         disabled={!formData.group || loading || updateLoading}
