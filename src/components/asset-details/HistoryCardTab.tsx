@@ -81,17 +81,19 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {basicAssetInfo.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-700">{item.label}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableBody>
+                        {basicAssetInfo.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center font-medium text-gray-700">{item.label}</TableCell>
+                            <TableCell className="p-4 text-center text-gray-900">{item.value}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -106,17 +108,19 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {acquisitionDetails.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-700">{item.label}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableBody>
+                        {acquisitionDetails.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center font-medium text-gray-700">{item.label}</TableCell>
+                            <TableCell className="p-4 text-center text-gray-900">{item.value}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -131,25 +135,27 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Assigned To</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">From Location</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {maintenanceHistory1.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.assignedTo}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.fromLocation}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="bg-[#f6f4ee] text-center">Date</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Assigned To</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">From Location</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {maintenanceHistory1.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center">{item.date}</TableCell>
+                            <TableCell className="p-4 text-center">{item.assignedTo}</TableCell>
+                            <TableCell className="p-4 text-center">{item.fromLocation}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -164,27 +170,29 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Performed By</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Cost</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {maintenanceHistory2.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.performedBy}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.cost}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.status}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="bg-[#f6f4ee] text-center">Date</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Performed By</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Cost</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {maintenanceHistory2.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center">{item.date}</TableCell>
+                            <TableCell className="p-4 text-center">{item.performedBy}</TableCell>
+                            <TableCell className="p-4 text-center">{item.cost}</TableCell>
+                            <TableCell className="p-4 text-center">{item.status}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -199,25 +207,27 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Year</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount Depreciated</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Net Book Value</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {costDepreciation1.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.year}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.amountDepreciated}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.netBookValue}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="bg-[#f6f4ee] text-center">Year</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Amount Depreciated</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Net Book Value</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {costDepreciation1.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center">{item.year}</TableCell>
+                            <TableCell className="p-4 text-center">{item.amountDepreciated}</TableCell>
+                            <TableCell className="p-4 text-center">{item.netBookValue}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -232,25 +242,27 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Year</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Depreciation %</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount Depreciated</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {costDepreciation2.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.year}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.depreciationPercent}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.amountDepreciated}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="bg-[#f6f4ee] text-center">Year</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Depreciation %</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Amount Depreciated</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {costDepreciation2.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center">{item.year}</TableCell>
+                            <TableCell className="p-4 text-center">{item.depreciationPercent}</TableCell>
+                            <TableCell className="p-4 text-center">{item.amountDepreciated}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -265,27 +277,29 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Certificate No</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Expiry</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {certificationCompliance.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.type}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.certificateNo}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.expiry}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.status}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="bg-[#f6f4ee] text-center">Type</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Certificate No</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Expiry</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {certificationCompliance.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center">{item.type}</TableCell>
+                            <TableCell className="p-4 text-center">{item.certificateNo}</TableCell>
+                            <TableCell className="p-4 text-center">{item.expiry}</TableCell>
+                            <TableCell className="p-4 text-center">{item.status}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -300,25 +314,27 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Conducted By</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Observations</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {auditInspections.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.conductedBy}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.observations}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="bg-[#f6f4ee] text-center">Date</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Conducted By</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Observations</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {auditInspections.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center">{item.date}</TableCell>
+                            <TableCell className="p-4 text-center">{item.conductedBy}</TableCell>
+                            <TableCell className="p-4 text-center">{item.observations}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -333,25 +349,27 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Component</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quantity</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {ebomSummary.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.component}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.remarks}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="bg-[#f6f4ee] text-center">Component</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Quantity</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Remarks</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {ebomSummary.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center">{item.component}</TableCell>
+                            <TableCell className="p-4 text-center">{item.quantity}</TableCell>
+                            <TableCell className="p-4 text-center">{item.remarks}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
@@ -366,17 +384,19 @@ export const HistoryCardTab = () => {
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {disposalDetails.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-700">{item.label}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableBody>
+                        {disposalDetails.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="p-4 text-center font-medium text-gray-700">{item.label}</TableCell>
+                            <TableCell className="p-4 text-center text-gray-900">{item.value}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </AccordionContent>
