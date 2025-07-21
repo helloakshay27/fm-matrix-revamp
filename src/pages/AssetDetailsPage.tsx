@@ -149,27 +149,30 @@ export const AssetDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="asset-info" className="p-0">
-            <div className="flex flex-col xl:flex-row gap-4 p-4 sm:p-6 max-h-[calc(100vh-320px)] overflow-hidden">
-              {/* Analytics Section - 60% width */}
-              <div className="w-full xl:w-3/5 bg-white rounded-lg border border-gray-200 flex flex-col min-h-0">
-                <div className="bg-[#C72030] text-white px-4 py-3 rounded-t-lg flex-shrink-0">
-                  <h3 className="font-medium">Analytics</h3>
-                </div>
-                <div className="p-4 overflow-y-auto flex-1 min-h-0">
-                  <AssetAnalyticsTab />
-                </div>
-              </div>
+            <Tabs defaultValue="analytics" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+                <TabsTrigger 
+                  value="analytics" 
+                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+                >
+                  Analytics
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="info" 
+                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+                >
+                  Asset List
+                </TabsTrigger>
+              </TabsList>
               
-              {/* Asset List Section - 40% width */}
-              <div className="w-full xl:w-2/5 bg-white rounded-lg border border-gray-200 flex flex-col min-h-0">
-                <div className="bg-[#C72030] text-white px-4 py-3 rounded-t-lg flex-shrink-0">
-                  <h3 className="font-medium">Asset List</h3>
-                </div>
-                <div className="p-4 overflow-y-auto flex-1 min-h-0">
-                  <AssetInfoTab assetId={asset.id} />
-                </div>
-              </div>
-            </div>
+              <TabsContent value="analytics" className="p-4 sm:p-6 mt-0">
+                <AssetAnalyticsTab />
+              </TabsContent>
+              
+              <TabsContent value="info" className="p-4 sm:p-6 mt-0">
+                <AssetInfoTab assetId={asset.id} />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab />
