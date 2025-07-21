@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Pencil } from "lucide-react";
 
 interface MenuItem {
@@ -216,23 +217,54 @@ export const ProductSetupDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
+      {/* Tabs Navigation */}
       <div className="bg-white border-b px-6 py-3">
-        <div className="flex items-center text-sm text-gray-600">
-          <span>Restaurant</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Status Setup</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Categories Setup</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Sub Categories Setup</span>
-          <span className="mx-2">{'>'}</span>
-          <span className="text-[#C72030]">Restaurant Menu</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Restaurant Bookings</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Restaurant Orders</span>
-        </div>
+        <Tabs value="restaurant-menu" className="w-full">
+          <TabsList className="grid grid-cols-7 w-full bg-transparent border-0 gap-2">
+            <TabsTrigger 
+              value="restaurant" 
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
+            >
+              Restaurant
+            </TabsTrigger>
+            <TabsTrigger 
+              value="status-setup"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
+            >
+              Status Setup
+            </TabsTrigger>
+            <TabsTrigger 
+              value="categories-setup"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
+            >
+              Categories Setup
+            </TabsTrigger>
+            <TabsTrigger 
+              value="sub-categories-setup"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
+            >
+              Sub Categories Setup
+            </TabsTrigger>
+            <TabsTrigger 
+              value="restaurant-menu"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-[#C72030] data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
+            >
+              Restaurant Menu
+            </TabsTrigger>
+            <TabsTrigger 
+              value="restaurant-bookings"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
+            >
+              Restaurant Bookings
+            </TabsTrigger>
+            <TabsTrigger 
+              value="restaurant-orders"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
+            >
+              Restaurant Orders
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       <div className="p-6">
