@@ -209,7 +209,15 @@ const modulesByPackage = {
     { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
     { name: 'Services', icon: Wrench, href: '/maintenance/services' },
     { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
-    { name: 'Inventory', icon: Package, href: '/maintenance/inventory' },
+    { 
+      name: 'Inventory', 
+      icon: Package, 
+      href: '/maintenance/inventory',
+      subItems: [
+        { name: 'Inventory', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
+        { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
     { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
     { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },

@@ -61,6 +61,7 @@ import { InventoryDashboard } from './pages/InventoryDashboard';
 import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
 import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
 import { EditInventoryPage } from './pages/EditInventoryPage';
+import InventoryConsumptionDashboard from './pages/InventoryConsumptionDashboard';
 
 // Import Task pages
 import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
@@ -683,6 +684,7 @@ function App() {
               <Route path="/maintenance/inventory/details/:id" element={<InventoryDetailsPage />} />
               <Route path="/maintenance/inventory/edit/:id" element={<EditInventoryPage />} />
               <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
+              <Route path="/maintenance/inventory-consumption" element={<InventoryConsumptionDashboard />} />
 
               {/* Task Routes */}
               <Route path="/maintenance/task" element={<ScheduledTaskDashboard />} />
