@@ -159,14 +159,14 @@ export const AssetDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
-            <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
               {/* Analytics - 60% width */}
-              <div className="w-full lg:w-[60%]">
+              <div className="w-full md:w-[60%]">
                 <AssetAnalyticsTab />
               </div>
               
               {/* Asset List - 40% width */}
-              <div className="w-full lg:w-[40%]">
+              <div className="w-full md:w-[40%]">
                 <AssetInfoTab assetId={asset.id} />
               </div>
             </div>
