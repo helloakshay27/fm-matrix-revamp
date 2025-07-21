@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Upload, Pencil, Trash2 } from "lucide-react";
+import { Plus, Upload, Eye, Pencil } from "lucide-react";
 import { AddMenuItemModal } from "./AddMenuItemModal";
 import { ImportDataModal } from "./ImportDataModal";
 import { StatusBadge } from "./ui/status-badge";
@@ -21,10 +22,190 @@ interface MenuItem {
 }
 
 const mockMenuItems: MenuItem[] = [
-  // Empty initial state - no menu items yet
+  {
+    id: 1,
+    sku: "Imperial Rolls",
+    productName: "Imperial Rolls",
+    masterPrice: 250,
+    displayPrice: 250,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "21/03/2023",
+    status: 'Inactive'
+  },
+  {
+    id: 2,
+    sku: "Corn Fritters",
+    productName: "Corn Fritters",
+    masterPrice: 220,
+    displayPrice: 220,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "20/04/2023",
+    status: 'Active'
+  },
+  {
+    id: 3,
+    sku: "Spring Rolls",
+    productName: "Spring Rolls",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 4,
+    sku: "Chicken Satay",
+    productName: "Chicken Satay",
+    masterPrice: 300,
+    displayPrice: 300,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "20/04/2023",
+    status: 'Active'
+  },
+  {
+    id: 5,
+    sku: "Tofu Satay",
+    productName: "Tofu Satay",
+    masterPrice: 300,
+    displayPrice: 300,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 6,
+    sku: "Dumpling",
+    productName: "Dumpling",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 7,
+    sku: "Golden Triangles",
+    productName: "Golden Triangles",
+    masterPrice: 250,
+    displayPrice: 250,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 8,
+    sku: "Tom Yum Gai",
+    productName: "Tom Yum Gai",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 9,
+    sku: "Glass Noodles Soup",
+    productName: "Glass Noodles Soup",
+    masterPrice: 250,
+    displayPrice: 250,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 10,
+    sku: "Beef Noodle Soup",
+    productName: "Beef Noodle Soup",
+    masterPrice: 280,
+    displayPrice: 280,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 11,
+    sku: "Larb Gai",
+    productName: "Larb Gai",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 12,
+    sku: "Ginger Salad",
+    productName: "Ginger Salad",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "18/04/2023",
+    status: 'Inactive'
+  },
+  {
+    id: 13,
+    sku: "Fish Cake Salad",
+    productName: "Fish Cake Salad",
+    masterPrice: 280,
+    displayPrice: 280,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 14,
+    sku: "Shrimp Salad",
+    productName: "Shrimp Salad",
+    masterPrice: 300,
+    displayPrice: 300,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 15,
+    sku: "Duck Salad",
+    productName: "Duck Salad",
+    masterPrice: 340,
+    displayPrice: 340,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  }
 ];
 
 export const RestaurantMenuTable = () => {
+  const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -58,6 +239,14 @@ export const RestaurantMenuTable = () => {
   const openDeleteDialog = (menuItem: MenuItem) => {
     setSelectedMenuItem(menuItem);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleViewDetails = (menuItem: MenuItem) => {
+    navigate(`/vas/fnb/restaurant-menu/details/${menuItem.id}`);
+  };
+
+  const handleEditProduct = (menuItem: MenuItem) => {
+    navigate(`/vas/fnb/restaurant-menu/edit/${menuItem.id}`);
   };
 
   return (
@@ -110,17 +299,18 @@ export const RestaurantMenuTable = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleViewDetails(menuItem)}
                         className="p-1 h-8 w-8"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => openDeleteDialog(menuItem)}
-                        className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+                        onClick={() => handleEditProduct(menuItem)}
+                        className="p-1 h-8 w-8"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>

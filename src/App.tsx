@@ -61,6 +61,9 @@ import { InventoryDashboard } from './pages/InventoryDashboard';
 import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
 import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
 import { EditInventoryPage } from './pages/EditInventoryPage';
+import InventoryConsumptionDashboard from './pages/InventoryConsumptionDashboard';
+import InventoryConsumptionViewPage from './pages/InventoryConsumptionViewPage';
+import EcoFriendlyListPage from './pages/EcoFriendlyListPage';
 
 // Import Task pages
 import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
@@ -115,6 +118,9 @@ import { EditStaffPage } from './pages/EditStaffPage';
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
+import { ProductSetupDetailPage } from './pages/ProductSetupDetailPage';
+import { ProductEditPage } from './pages/ProductEditPage';
+import { RestaurantOrderDetailPage } from './pages/RestaurantOrderDetailPage';
 import { FnBDiscountsPage } from './pages/FnBDiscountsPage';
 import { AddRestaurantPage } from './pages/AddRestaurantPage';
 import ParkingDashboard from './pages/ParkingDashboard';
@@ -674,6 +680,15 @@ function App() {
                 {/* Attendance Routes */}
                 <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
                 <Route path="/maintenance/attendance/details/:id" element={<AttendanceDetailsPage />} />
+                {/* Inventory Routes */}
+                <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
+                <Route path="/maintenance/inventory/add" element={<AddInventoryPage />} />
+                <Route path="/maintenance/inventory/details/:id" element={<InventoryDetailsPage />} />
+                <Route path="/maintenance/inventory/edit/:id" element={<EditInventoryPage />} />
+                <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
+                <Route path="/maintenance/inventory-consumption" element={<InventoryConsumptionDashboard />} />
+                <Route path="/maintenance/inventory-consumption/view/:id" element={<InventoryConsumptionViewPage />} />
+                <Route path="/maintenance/eco-friendly-list" element={<EcoFriendlyListPage />} />
 
                 {/* Inventory Routes */}
                 <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
@@ -732,6 +747,25 @@ function App() {
 
                 <Route path="/security/vehicle/r-vehicles/in" element={<RVehiclesInDashboard />} />
                 <Route path="/security/vehicle/r-vehicles/out" element={<RVehiclesOutDashboard />} />
+                {/* Value Added Services Routes */}
+                <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
+                <Route path="/vas/fnb/add" element={<AddRestaurantPage />} />
+                <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
+                <Route path="/vas/fnb/restaurant-menu/details/:id" element={<ProductSetupDetailPage />} />
+                <Route path="/vas/fnb/restaurant-menu/edit/:id" element={<ProductEditPage />} />
+                <Route path="/vas/fnb/restaurant-orders/details/:id" element={<RestaurantOrderDetailPage />} />
+                <Route path="/vas/fnb/discounts" element={<FnBDiscountsPage />} />
+                <Route path="/vas/parking" element={<ParkingDashboard />} />
+                <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />
+                <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
+                <Route path="/vas/osr" element={<OSRDashboard />} />
+                <Route path="/vas/osr/details/:id" element={<OSRDetailsPage />} />
+                <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
+                <Route path="/vas/redemption-marketplace" element={<RedemptionMarketplacePage />} />
+                <Route path="/vas/hotels/rewards" element={<HotelRewardsPage />} />
+                <Route path="/vas/hotels/details" element={<HotelDetailsPage />} />
+                <Route path="/vas/hotels/booking" element={<HotelBookingPage />} />
+                <Route path="/vas/tickets/discounts" element={<TicketDiscountsPage />} />
 
                 {/* Value Added Services Routes */}
                 <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
