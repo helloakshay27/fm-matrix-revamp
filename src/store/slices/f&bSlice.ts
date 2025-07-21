@@ -145,6 +145,243 @@ export const createRestaurantStatus = createAsyncThunk(
     }
 );
 
+export const fetchRestaurantStatuses = createAsyncThunk(
+    "fetchRestaurantStatuses",
+    async (
+        { baseUrl, token, id }: { baseUrl: string; token: string; id: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_statuses.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch restaurant statuses";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const createRestaurantCategory = createAsyncThunk(
+    "createRestaurantCategory",
+    async (
+        {
+            baseUrl,
+            token,
+            data,
+            id,
+        }: { baseUrl: string; token: string; data: any; id: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.post(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_categories.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to create restaurant category";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const fetchRestaurantCategory = createAsyncThunk(
+    "fetchRestaurantCategory",
+    async (
+        { baseUrl, token, id }: { baseUrl: string; token: string; id: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_categories.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data.categories;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch restaurant category";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const deleteCategory = createAsyncThunk(
+    "deleteCategory",
+    async (
+        {
+            baseUrl,
+            token,
+            id,
+            catId,
+        }: { baseUrl: string; token: string; id: number; catId: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_categories/${catId}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to delete category";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const editCategory = createAsyncThunk(
+    "editCategory",
+    async (
+        {
+            baseUrl,
+            token,
+            id,
+            catId,
+            data,
+        }: { baseUrl: string; token: string; id: number; catId: number; data: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.put(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_categories/${catId}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to edit category";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const createSubcategory = createAsyncThunk(
+    "createSubcategory",
+    async (
+        {
+            baseUrl,
+            token,
+            id,
+            data,
+        }: { baseUrl: string; token: string; id: number; data: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.post(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_sub_categories.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to create subcategory";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const fetchSubcategory = createAsyncThunk(
+    "fetchSubcategory",
+    async (
+        { baseUrl, token, id }: { baseUrl: string; token: string; id: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_sub_categories.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data.sub_categories;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to create subcategory";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const deleteSubCategory = createAsyncThunk(
+    "deleteSubCategory",
+    async (
+        {
+            baseUrl,
+            token,
+            id,
+            subId,
+        }: { baseUrl: string; token: string; id: number; subId: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_sub_categories/${subId}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to delete subcategory";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 export const fetchRestaurantsSlice = createApiSlice(
     "fetchRestaurants",
     fetchRestaurants
@@ -165,6 +402,35 @@ export const createRestaurantStatusSlice = createApiSlice(
     "createRestaurantStatus",
     createRestaurantStatus
 );
+export const fetchRestaurantStatusesSlice = createApiSlice(
+    "fetchRestaurantStatuses",
+    fetchRestaurantStatuses
+);
+export const createRestaurantCategorySlice = createApiSlice(
+    "createRestaurantCategory",
+    createRestaurantCategory
+);
+export const fetchRestaurantCategorySlice = createApiSlice(
+    "fetchRestaurantCategory",
+    fetchRestaurantCategory
+);
+export const deleteCategorySlice = createApiSlice(
+    "deleteCategory",
+    deleteCategory
+);
+export const editCategorySlice = createApiSlice("editCategory", editCategory);
+export const createSubcategorySlice = createApiSlice(
+    "createSubcategory",
+    createSubcategory
+);
+export const fetchSubcategorySlice = createApiSlice(
+    "fetchSubcategory",
+    fetchSubcategory
+);
+export const deleteSubCategorySlice = createApiSlice(
+    "deleteSubCategory",
+    deleteSubCategory
+);
 
 export const fetchRestaurantsReducer = fetchRestaurantsSlice.reducer;
 export const createRestaurantReducer = createRestaurantSlice.reducer;
@@ -173,3 +439,14 @@ export const fetchRestaurantDetailsReducer =
 export const editRestaurantReducer = editRestaurantSlice.reducer;
 export const createRestaurantStatusReducer =
     createRestaurantStatusSlice.reducer;
+export const fetchRestaurantStatusesReducer =
+    fetchRestaurantStatusesSlice.reducer;
+export const createRestaurantCategoryReducer =
+    createRestaurantCategorySlice.reducer;
+export const fetchRestaurantCategoryReducer =
+    fetchRestaurantCategorySlice.reducer;
+export const deleteCategoryReducer = deleteCategorySlice.reducer;
+export const editCategoryReducer = editCategorySlice.reducer;
+export const createSubcategoryReducer = createSubcategorySlice.reducer;
+export const fetchSubcategoryReducer = fetchSubcategorySlice.reducer;
+export const deleteSubCategoryReducer = deleteSubCategorySlice.reducer;

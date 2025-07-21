@@ -7,8 +7,8 @@ import { X } from 'lucide-react';
 
 interface SubCategory {
   id: number;
-  category: string;
-  subCategory: string;
+  name: string;
+  subCategory?: string;
   description: string;
   active: boolean;
 }
@@ -22,11 +22,11 @@ interface EditSubCategoryModalProps {
 
 const categories = ["Breakfast", "Lunch", "Dinner", "Snacks", "Beverages"];
 
-export const EditSubCategoryModal = ({ 
-  isOpen, 
-  onClose, 
-  subCategory, 
-  onSubmit 
+export const EditSubCategoryModal = ({
+  isOpen,
+  onClose,
+  subCategory,
+  onSubmit
 }: EditSubCategoryModalProps) => {
   const [formData, setFormData] = useState({
     category: "",
@@ -37,7 +37,7 @@ export const EditSubCategoryModal = ({
   useEffect(() => {
     if (subCategory) {
       setFormData({
-        category: subCategory.category,
+        category: subCategory.name,
         subCategory: subCategory.subCategory,
         description: subCategory.description
       });
@@ -48,11 +48,11 @@ export const EditSubCategoryModal = ({
     if (subCategory) {
       const updatedSubCategory: SubCategory = {
         ...subCategory,
-        category: formData.category,
+        name: formData.category,
         subCategory: formData.subCategory,
         description: formData.description
       };
-      
+
       onSubmit(updatedSubCategory);
     }
     setFormData({ category: "", subCategory: "", description: "" });
@@ -158,9 +158,9 @@ export const EditSubCategoryModal = ({
 
           <div className="space-y-4 py-4">
             <FormControl fullWidth>
-              <InputLabel 
+              <InputLabel
                 shrink={true}
-                sx={{ 
+                sx={{
                   color: '#666',
                   fontSize: '16px',
                   '&.Mui-focused': { color: '#000000' }
@@ -210,7 +210,7 @@ export const EditSubCategoryModal = ({
           </div>
 
           <div className="flex justify-center pt-4">
-            <Button 
+            <Button
               onClick={handleSubmit}
               className="bg-green-600 hover:bg-green-700 text-white px-8"
             >

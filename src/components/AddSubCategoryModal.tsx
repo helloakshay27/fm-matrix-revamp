@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { X } from 'lucide-react';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchRestaurantCategory } from '@/store/slices/f&bSlice';
+import { useParams } from 'react-router-dom';
 
 interface AddSubCategoryModalProps {
   isOpen: boolean;
@@ -11,21 +13,40 @@ interface AddSubCategoryModalProps {
   onSubmit: (subCategory: { category: string; subCategory: string; description: string }) => void;
 }
 
-const categories = ["Breakfast", "Lunch", "Dinner", "Snacks", "Beverages"];
+// const categories = ["Breakfast", "Lunch", "Dinner", "Snacks", "Beverages"];
 
-export const AddSubCategoryModal = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit 
+export const AddSubCategoryModal = ({
+  isOpen,
+  onClose,
+  onSubmit
 }: AddSubCategoryModalProps) => {
+  const dispatch = useAppDispatch()
+  const { id } = useParams();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const [formData, setFormData] = useState({
     category: "",
     subCategory: "",
     description: ""
   });
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantCategory({ baseUrl, token, id: Number(id) })).unwrap();
+        setCategories(response)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const handleSubmit = () => {
-    if (formData.category.trim() && formData.subCategory.trim()) {
+    if (formData.category && formData.subCategory.trim()) {
       onSubmit(formData);
       setFormData({ category: "", subCategory: "", description: "" });
       onClose();
@@ -85,28 +106,33 @@ export const AddSubCategoryModal = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onClose={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold" style={{ color: '#000000' }}>
-              ADD Category
-            </DialogTitle>
-            <button
-              onClick={onClose}
-              className="p-1 rounded-md transition-colors"
-            >
-              <X size={20} className="text-gray-500" />
-            </button>
-          </div>
-        </DialogHeader>
+        <div className="flex items-center justify-between">
+          <DialogTitle
+            sx={{
+              fontSize: '18px',
+              fontWeight: 550,
+              color: '#000000',
+              padding: '12px 0px',
+            }}
+          >
+            ADD Subcategory
+          </DialogTitle>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md transition-colors"
+          >
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
 
         <div className="space-y-4 py-4">
           <FormControl fullWidth>
-            <InputLabel 
-              id="category-label" 
+            <InputLabel
+              id="category-label"
               shrink={true}
-              sx={{ 
+              sx={{
                 color: '#666',
                 fontSize: '16px',
                 '&.Mui-focused': { color: '#000000' }
@@ -122,7 +148,7 @@ export const AddSubCategoryModal = ({
               sx={selectStyles}
             >
               {categories.map(category => (
-                <MenuItem key={category} value={category}>{category}</MenuItem>
+                <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -181,7 +207,7 @@ export const AddSubCategoryModal = ({
         </div>
 
         <div className="flex justify-center pt-4">
-          <Button 
+          <Button
             onClick={handleSubmit}
             className="bg-black hover:bg-gray-800 text-white px-8"
           >
@@ -189,6 +215,6 @@ export const AddSubCategoryModal = ({
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 };

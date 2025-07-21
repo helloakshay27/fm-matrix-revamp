@@ -1,52 +1,74 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { AddCategoryModal } from "./AddCategoryModal";
 import { EditCategoryModal } from "./EditCategoryModal";
+import { useAppDispatch } from '@/store/hooks';
+import { createRestaurantCategory, deleteCategory, fetchRestaurantCategory } from '@/store/slices/f&bSlice';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface Category {
   id: number;
-  category: string;
-  timings: string;
+  name: string;
+  timing: string;
   active: boolean;
 }
 
-const mockCategories: Category[] = [
-  { id: 1, category: "Breakfast", timings: "9 Am to 1 Pm", active: true },
-  { id: 2, category: "Lunch", timings: "1 Pm to 3:30 Pm", active: true },
-  { id: 3, category: "Dinner", timings: "5 Pm to 11:45 Pm", active: true },
-];
-
 export const CategoriesSetupTable = () => {
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const { id } = useParams()
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
-  const handleAddCategory = (categoryData: { category: string; timings?: string }) => {
-    const newCategory: Category = {
-      id: Math.max(...categories.map(c => c.id), 0) + 1,
-      category: categoryData.category,
-      timings: categoryData.timings || '',
-      active: true
-    };
-    setCategories([...categories, newCategory]);
+  const fetchData = async () => {
+    try {
+      const response = await dispatch(fetchRestaurantCategory({ baseUrl, token, id: Number(id) })).unwrap();
+      setCategories(response);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, [])
+
+  const handleAddCategory = async (categoryData: { category: string; timings?: string }) => {
+    const payload = {
+      spree_manage_restaurant_category: {
+        restaurant_id: Number(id),
+        name: categoryData.category,
+        timing: categoryData.timings
+      },
+      restaurant_id: Number(id)
+    }
+    try {
+      await dispatch(createRestaurantCategory({ baseUrl, token, data: payload, id: Number(id) })).unwrap();
+      fetchData();
+      toast.success('Category added successfully');
+    } catch (error) {
+      console.log(error)
+    }
   };
 
-  const handleEditCategory = (updatedCategory: Category) => {
-    setCategories(categories.map(cat => 
-      cat.id === updatedCategory.id ? updatedCategory : cat
-    ));
-  };
-
-  const handleDeleteCategory = () => {
-    if (selectedCategory) {
-      setCategories(categories.filter(cat => cat.id !== selectedCategory.id));
-      setSelectedCategory(null);
+  const handleDeleteCategory = async () => {
+    try {
+      await dispatch(deleteCategory({ baseUrl, token, id: Number(id), catId: Number(selectedCategory?.id) })).unwrap();
+      fetchData();
+      toast.success('Category deleted successfully');
       setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.log(error)
+      toast.error('Failed to delete category');
     }
   };
 
@@ -82,7 +104,7 @@ export const CategoriesSetupTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((category) => (
+            {[...categories].reverse().map((category: Category) => (
               <TableRow key={category.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -104,8 +126,8 @@ export const CategoriesSetupTable = () => {
                     </Button>
                   </div>
                 </TableCell>
-                <TableCell className="text-center">{category.category}</TableCell>
-                <TableCell className="text-center">{category.timings}</TableCell>
+                <TableCell className="text-center">{category.name}</TableCell>
+                <TableCell className="text-center">{category.timing}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -122,7 +144,7 @@ export const CategoriesSetupTable = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         category={selectedCategory}
-        onSubmit={handleEditCategory}
+        fetchData={fetchData}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -134,7 +156,7 @@ export const CategoriesSetupTable = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => setIsDeleteDialogOpen(false)}
               className="bg-gray-200 text-gray-800 hover:bg-gray-300"
             >

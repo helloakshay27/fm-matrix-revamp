@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { MonthPicker } from './MonthPicker';
+import { useToast } from '@/hooks/use-toast';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 import { fetchSites } from '@/store/slices/siteSlice';
@@ -26,6 +27,7 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
   open,
   onClose
 }) => {
+  const { toast } = useToast();
   const dispatch = useAppDispatch();
   const { data: departments, loading: departmentsLoading } = useAppSelector((state) => state.department);
   const { sites, loading: sitesLoading } = useAppSelector((state) => state.site);
@@ -55,7 +57,11 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
 
   const handleExport = async () => {
     if (!site || !userType || !department || !month) {
-      alert('Please fill in all required fields');
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -105,6 +111,12 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
       
       console.log('Export completed successfully');
       
+      // Show success toast
+      toast({
+        title: "Export Successful",
+        description: "Attendance report has been exported successfully."
+      });
+      
       // Clear all fields after successful export
       setSite('');
       setUserType('');
@@ -115,7 +127,11 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Failed to export attendance report. Please try again.');
+      toast({
+        title: "Export Failed",
+        description: "Failed to export attendance report. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsExporting(false);
     }
@@ -257,7 +273,6 @@ export const AttendanceExportModal: React.FC<AttendanceExportModalProps> = ({
               px: 4,
               py: 1.5,
               height: '36px',
-              borderRadius: 2,
               textTransform: 'none',
               fontSize: '16px',
               fontWeight: 500,

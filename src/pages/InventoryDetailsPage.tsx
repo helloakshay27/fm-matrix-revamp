@@ -129,7 +129,7 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Type</label>
-                    <Badge className="bg-blue-500 text-white">
+                    <Badge className="bg-blue-500 text-white mt-1">
                       {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '-'}
                     </Badge>
                   </div>

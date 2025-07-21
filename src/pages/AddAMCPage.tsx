@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -13,14 +13,13 @@ import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
 import { apiClient } from '@/utils/apiClient';
 export const AddAMCPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const dispatch = useAppDispatch();
   
   // Redux state
   const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
   const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
-  const { loading: amcCreateLoading, success: amcCreateSuccess } = useAppSelector(state => state.amcCreate);
+  const { loading: amcCreateLoading, success: amcCreateSuccess, error: amcCreateError } = useAppSelector(state => state.amcCreate);
   const [formData, setFormData] = useState({
     details: 'Asset',
     type: 'Individual',
@@ -122,30 +121,31 @@ export const AddAMCPage = () => {
       } catch (error) {
         console.error('Error fetching asset groups:', error);
         setAssetGroups([]);
-        toast({
-          title: "Error",
-          description: "Failed to fetch asset groups.",
-          variant: "destructive"
-        });
+        toast.error("Failed to fetch asset groups.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchAssetGroups();
-  }, [dispatch, toast]);
+  }, [dispatch]);
 
   // Handle AMC creation success
   useEffect(() => {
     if (amcCreateSuccess) {
-      toast({
-        title: "AMC Created",
-        description: "AMC has been successfully created."
-      });
+      toast.success("AMC has been successfully created.");
       dispatch(resetAmcCreate());
       navigate('/maintenance/amc');
     }
-  }, [amcCreateSuccess, dispatch, navigate, toast]);
+  }, [amcCreateSuccess, dispatch, navigate]);
+
+  // Handle AMC creation error
+  useEffect(() => {
+    if (amcCreateError) {
+      toast.error(amcCreateError);
+      dispatch(resetAmcCreate());
+    }
+  }, [amcCreateError, dispatch]);
 
   // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
@@ -186,11 +186,7 @@ export const AddAMCPage = () => {
       } catch (error) {
         console.error('Error fetching subgroups:', error);
         setSubGroups([]);
-        toast({
-          title: "Error",
-          description: "Failed to fetch subgroups.",
-          variant: "destructive"
-        });
+        toast.error("Failed to fetch subgroups.");
       } finally {
         setLoading(false);
       }
@@ -323,7 +319,7 @@ export const AddAMCPage = () => {
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate('/maintenance/amc')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to AMC List
+          AMC &gt; AMC List &gt; Add
         </Button>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW AMC</h1>
       </div>
@@ -614,7 +610,8 @@ export const AddAMCPage = () => {
         <TextField required label="End Date" placeholder="Select Date" name="endDate" type="date" value={formData.endDate} onChange={e => handleInputChange('endDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
                 shrink: true
               }} InputProps={{
-                sx: fieldStyles
+                sx: fieldStyles,
+                inputProps: { min: formData.startDate }
               }} />
       </div>
 
@@ -716,7 +713,7 @@ export const AddAMCPage = () => {
           </CardContent>
         </Card>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 justify-center">
           <Button 
             type="button" 
             onClick={handleSaveAndSchedule} 

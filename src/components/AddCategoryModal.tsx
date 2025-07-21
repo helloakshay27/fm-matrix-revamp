@@ -14,40 +14,23 @@ interface AddCategoryModalProps {
   showAmount?: boolean;
 }
 
-export const AddCategoryModal = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  showTimings = true, 
-  showAmount = false 
+export const AddCategoryModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  showTimings = true,
+  showAmount = false
 }: AddCategoryModalProps) => {
-  const { toast } = useToast();
   const [formData, setFormData] = useState({
     category: "",
     timings: "",
-    amount: ""
+    // amount: ""
   });
 
   const handleSubmit = () => {
     if (formData.category.trim()) {
-      const submitData: { category: string; timings?: string; amount?: string } = {
-        category: formData.category
-      };
-      
-      if (showTimings) {
-        submitData.timings = formData.timings;
-      }
-      
-      if (showAmount) {
-        submitData.amount = formData.amount;
-      }
-      
-      onSubmit(submitData);
-      toast({
-        title: "Success",
-        description: "Category added successfully!",
-      });
-      setFormData({ category: "", timings: "", amount: "" });
+      onSubmit(formData);
+      setFormData({ category: "", timings: "" });
       onClose();
     }
   };
@@ -151,53 +134,10 @@ export const AddCategoryModal = ({
               }}
             />
           )}
-
-          {showAmount && (
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Amount"
-              placeholder="Enter Amount"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={{
-                '& .MuiInputBase-root': {
-                  height: { xs: '36px', sm: '45px' },
-                  borderRadius: '6px',
-                },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '6px',
-                  '& fieldset': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#000000',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#666',
-                  fontSize: '16px',
-                  '&.Mui-focused': {
-                    color: '#000000',
-                  },
-                },
-                '& .MuiInputBase-input': {
-                  padding: '8px 14px',
-                  fontSize: '14px',
-                }
-              }}
-            />
-          )}
         </div>
 
         <div className="flex justify-center pt-4">
-          <Button 
+          <Button
             onClick={handleSubmit}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
           >

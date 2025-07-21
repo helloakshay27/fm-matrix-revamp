@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,10 +8,13 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TicketSelector } from '@/components/TicketSelector';
 import { RecentTicketsSidebar } from '@/components/RecentTicketsSidebar';
+import { TicketSelectionPanel } from '@/components/TicketSelectionPanel';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
+import { useToast } from '@/hooks/use-toast';
 
 const ticketData = [{
   id: '2189-11106',
@@ -237,11 +240,19 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 
 export const TicketDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix'
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
+  const [tickets, setTickets] = useState<TicketResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTickets, setTotalTickets] = useState(0);
+  const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+  const perPage = 20;
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -251,11 +262,40 @@ export const TicketDashboard = () => {
     })
   );
 
-  const totalTickets = ticketData.length;
-  const openTickets = ticketData.filter(t => t.status === 'Open').length;
-  const inProgressTickets = ticketData.filter(t => t.status === 'In Progress').length;
-  const pendingTickets = ticketData.filter(t => t.status === 'Pending').length;
-  const closedTickets = ticketData.filter(t => t.status === 'Closed').length;
+  // Fetch tickets from API
+  const fetchTickets = async (page: number = 1) => {
+    setLoading(true);
+    try {
+      const response = await ticketManagementAPI.getTickets(page, perPage);
+      setTickets(response.complaints);
+      if (response.pagination) {
+        setTotalPages(response.pagination.total_pages);
+        setTotalTickets(response.pagination.total_count);
+      } else {
+        setTotalTickets(response.complaints.length);
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch tickets. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets(currentPage);
+  }, [currentPage]);
+
+  // Calculate stats from API data (with safe fallbacks)
+  const safeTickets = tickets || [];
+  const openTickets = safeTickets.filter(t => t.issue_status === 'Open').length;
+  const inProgressTickets = safeTickets.filter(t => t.issue_status === 'In Progress').length;
+  const pendingTickets = safeTickets.filter(t => t.issue_status === 'Pending').length;
+  const closedTickets = safeTickets.filter(t => t.issue_status === 'Closed').length;
 
   // Analytics data with updated colors matching design
   const statusData = [
@@ -263,9 +303,11 @@ export const TicketDashboard = () => {
     { name: 'Closed', value: closedTickets, color: '#d8dcdd' }
   ];
 
-  const categoryData = ticketData.reduce((acc, ticket) => {
-    const category = ticket.category;
-    acc[category] = (acc[category] || 0) + 1;
+  const categoryData = safeTickets.reduce((acc, ticket) => {
+    const category = ticket.category_type;
+    if (category) {
+      acc[category] = (acc[category] || 0) + 1;
+    }
     return acc;
   }, {});
 
@@ -278,8 +320,8 @@ export const TicketDashboard = () => {
     { priority: 'P4', '0-10': 1, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 5 }
   ];
 
-  const reactiveTickets = Math.floor(totalTickets * 0.7);
-  const proactiveTickets = totalTickets - reactiveTickets;
+  const reactiveTickets = Math.floor(safeTickets.length * 0.7);
+  const proactiveTickets = safeTickets.length - reactiveTickets;
 
   const typeData = [
     { name: 'Open', value: reactiveTickets, color: '#c6b692' },
@@ -292,6 +334,102 @@ export const TicketDashboard = () => {
 
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
+  };
+
+  // Selection handlers
+  const handleTicketSelection = (ticketIdString: string, isSelected: boolean) => {
+    const ticketId = parseInt(ticketIdString);
+    console.log('TicketDashboard - Ticket selection changed:', ticketId, isSelected);
+    setSelectedTickets(prev => {
+      if (isSelected) {
+        return [...prev, ticketId];
+      } else {
+        return prev.filter(id => id !== ticketId);
+      }
+    });
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    console.log('TicketDashboard - Select all changed:', isSelected);
+    if (isSelected) {
+      const allTicketIds = tickets.map(ticket => ticket.id);
+      setSelectedTickets(allTicketIds);
+    } else {
+      setSelectedTickets([]);
+    }
+  };
+
+  const handleClearSelection = () => {
+    console.log('TicketDashboard - Clearing selection');
+    setSelectedTickets([]);
+  };
+
+  const handleGoldenTicket = async () => {
+    console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
+    try {
+      await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
+      toast({
+        title: "Success",
+        description: "Tickets marked as Golden Ticket successfully",
+      });
+      await fetchTickets(currentPage);
+      setSelectedTickets([]);
+    } catch (error) {
+      console.error('Golden Ticket action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark tickets as Golden Ticket",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFlag = async () => {
+    console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
+    try {
+      await ticketManagementAPI.markAsFlagged(selectedTickets);
+      toast({
+        title: "Success",
+        description: "Tickets flagged successfully",
+      });
+      await fetchTickets(currentPage);
+      setSelectedTickets([]);
+    } catch (error) {
+      console.error('Flag action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to flag tickets",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleExport = () => {
+    console.log('TicketDashboard - Export action for tickets:', selectedTickets);
+    const selectedTicketObjects = tickets.filter(ticket => 
+      selectedTickets.includes(ticket.id)
+    );
+    
+    const csvContent = [
+      ['Ticket ID', 'Description', 'Category', 'Status', 'Priority', 'Created By', 'Assigned To'],
+      ...selectedTicketObjects.map(ticket => [
+        ticket.ticket_number,
+        ticket.heading,
+        ticket.category_type,
+        ticket.issue_status,
+        ticket.priority,
+        ticket.posted_by,
+        ticket.assigned_to
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tickets_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   // Handle drag end for chart reordering
@@ -309,35 +447,31 @@ export const TicketDashboard = () => {
   };
 
   const columns = [{
-    key: 'id',
+    key: 'ticket_number',
     label: 'Ticket ID',
     sortable: true
   }, {
-    key: 'taskNumber',
-    label: 'Task Number',
-    sortable: true
-  }, {
-    key: 'description',
+    key: 'heading',
     label: 'Description',
     sortable: true
   }, {
-    key: 'category',
+    key: 'category_type',
     label: 'Category',
     sortable: true
   }, {
-    key: 'subCategory',
+    key: 'sub_category_type',
     label: 'Sub Category',
     sortable: true
   }, {
-    key: 'createdBy',
+    key: 'posted_by',
     label: 'Created By',
     sortable: true
   }, {
-    key: 'assignedTo',
+    key: 'assigned_to',
     label: 'Assigned To',
     sortable: true
   }, {
-    key: 'status',
+    key: 'issue_status',
     label: 'Status',
     sortable: true
   }, {
@@ -345,16 +479,68 @@ export const TicketDashboard = () => {
     label: 'Priority',
     sortable: true
   }, {
-    key: 'site',
+    key: 'site_name',
     label: 'Site',
     sortable: true
   }, {
-    key: 'unit',
-    label: 'Unit',
+    key: 'created_at',
+    label: 'Created On',
     sortable: true
   }, {
-    key: 'createdOn',
-    label: 'Created On',
+    key: 'issue_type',
+    label: 'Ticket Type',
+    sortable: true
+  }, {
+    key: 'complaint_mode',
+    label: 'Complaint Mode',
+    sortable: true
+  }, {
+    key: 'service_or_asset',
+    label: 'Asset / Service Name',
+    sortable: true
+  }, {
+    key: 'asset_task_occurrence_id',
+    label: 'Task ID',
+    sortable: true
+  }, {
+    key: 'proactive_reactive',
+    label: 'Proactive / Reactive',
+    sortable: true
+  }, {
+    key: 'review_tracking_date',
+    label: 'Review',
+    sortable: true
+  }, {
+    key: 'response_escalation',
+    label: 'Response Escalation',
+    sortable: true
+  }, {
+    key: 'response_tat',
+    label: 'Response TAT (Min)',
+    sortable: true
+  }, {
+    key: 'response_time',
+    label: 'Response Time (D:H:M)',
+    sortable: true
+  }, {
+    key: 'escalation_response_name',
+    label: 'Response Escalation Level',
+    sortable: true
+  }, {
+    key: 'resolution_escalation',
+    label: 'Resolution Escalation',
+    sortable: true
+  }, {
+    key: 'resolution_tat',
+    label: 'Resolution TAT (Min)',
+    sortable: true
+  }, {
+    key: 'resolution_time',
+    label: 'Resolution Time (D:H:M)',
+    sortable: true
+  }, {
+    key: 'escalation_resolution_name',
+    label: 'Resolution Escalation Level',
     sortable: true
   }];
 
@@ -367,20 +553,65 @@ export const TicketDashboard = () => {
       </Button>
     </div>;
 
-  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
+  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.ticket_number)}>
       <Eye className="w-4 h-4" />
     </Button>;
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '--';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB');
+  };
+
+  const TruncatedDescription = ({ text, maxLength = 50 }: { text: string; maxLength?: number }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    
+    if (!text) return <span>--</span>;
+    
+    if (text.length <= maxLength) {
+      return <span>{text}</span>;
+    }
+    
+    return (
+      <div className="w-48">
+        <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
+          {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+        </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in"
+        >
+          {isExpanded ? 'Show less' : 'Show more'}
+        </button>
+      </div>
+    );
+  };
+
   const renderCell = (item, columnKey) => {
-    if (columnKey === 'status') {
-      return <span className={`px-2 py-1 rounded text-xs ${item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.status === 'Closed' ? 'bg-green-100 text-green-700' : item.status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-          {item.status}
+    if (columnKey === 'heading') {
+      return <TruncatedDescription text={item.heading} />;
+    }
+    if (columnKey === 'issue_status') {
+      return <span className={`px-2 py-1 rounded text-xs animate-scale-in ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+          {item.issue_status}
         </span>;
     }
     if (columnKey === 'priority') {
-      return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
+      return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 animate-scale-in">
           {item.priority}
         </span>;
+    }
+    if (columnKey === 'created_at') {
+      return formatDate(item.created_at);
+    }
+    if (columnKey === 'review_tracking_date') {
+      return formatDate(item.review_tracking_date);
+    }
+    if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
+      return '--';
     }
     return item[columnKey];
   };
@@ -733,20 +964,84 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Tickets Table */}
-          <div className="overflow-x-auto">
-            <EnhancedTable 
-              data={ticketData} 
-              columns={columns} 
-              renderCell={renderCell} 
-              renderActions={renderRowActions} 
-              selectable={true} 
-              pagination={true} 
-              pageSize={10}
-              enableExport={true} 
-              exportFileName="tickets" 
-              onRowClick={handleViewDetails} 
-              storageKey="tickets-table" 
-            />
+          <div className="overflow-x-auto animate-fade-in">
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-muted-foreground">Loading tickets...</div>
+              </div>
+            ) : (
+              <>
+                <EnhancedTable 
+                  data={safeTickets} 
+                  columns={columns} 
+                  renderCell={renderCell} 
+                  renderActions={renderRowActions} 
+                  selectable={true} 
+                  pagination={false}
+                  enableExport={true} 
+                  exportFileName="tickets" 
+                  onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)} 
+                  storageKey="tickets-table"
+                  enableSelection={true}
+                  selectedItems={selectedTickets.map(id => id.toString())}
+                  onSelectItem={handleTicketSelection}
+                  onSelectAll={handleSelectAll}
+                  getItemId={(ticket) => ticket.id.toString()}
+                />
+                
+                {/* Custom Pagination */}
+                <div className="flex items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
+                  <div className="flex items-center text-sm text-gray-700">
+                    <span>
+                      Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, totalTickets)} of {totalTickets} results
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1 || loading}
+                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex space-x-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNum = currentPage <= 3 ? i + 1 : 
+                                       currentPage >= totalPages - 2 ? totalPages - 4 + i :
+                                       currentPage - 2 + i;
+                        
+                        if (pageNum < 1 || pageNum > totalPages) return null;
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            disabled={loading}
+                            className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${
+                              currentPage === pageNum
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-white border-gray-300 hover:bg-gray-50'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages || loading}
+                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -758,6 +1053,18 @@ export const TicketDashboard = () => {
           console.log('Applied filters:', filters);
           setIsFilterOpen(false);
         }} 
+      />
+
+      {/* Ticket Selection Panel */}
+      <TicketSelectionPanel
+        selectedTickets={selectedTickets}
+        selectedTicketObjects={tickets.filter(ticket => 
+          selectedTickets.includes(ticket.id)
+        )}
+        onGoldenTicket={handleGoldenTicket}
+        onFlag={handleFlag}
+        onExport={handleExport}
+        onClearSelection={handleClearSelection}
       />
     </div>
   );

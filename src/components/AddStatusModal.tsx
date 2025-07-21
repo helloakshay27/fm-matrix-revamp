@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
+import { useAppSelector } from '@/store/hooks';
 
 interface AddStatusModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface AddStatusModalProps {
 }
 
 export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose, onSave }) => {
+  const { data: statuses } = useAppSelector(state => state.fetchRestaurantStatuses)
   const [formData, setFormData] = useState({
     status: '',
     displayName: '',
@@ -86,7 +88,7 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
               InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
-            
+
             <TextField
               label={
                 <span>
@@ -156,7 +158,7 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
             </div>
           </div>
         </div>
-        
+
         <div className="flex justify-center gap-2 pt-4">
           <Button variant="outline" onClick={onClose}>
             Cancel

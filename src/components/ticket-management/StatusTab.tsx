@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -36,6 +38,14 @@ const statusSchema = z.object({
 
 type StatusFormData = z.infer<typeof statusSchema>;
 
+interface StatusType {
+  id: number;
+  name: string;
+  fixed_state: string;
+  color_code: string;
+  position: number;
+  email: boolean;
+}
 
 const fixedStates = [
   { value: 'closed', label: 'Closed' },
@@ -45,15 +55,17 @@ const fixedStates = [
 
 export const StatusTab: React.FC = () => {
   const dispatch = useDispatch<any>();
-  const { data: statuses = [], loading, fetchLoading, error } = useSelector((state: any) => state.statuses) || {};
+  const { data: statusess = [], loading, fetchLoading, error } = useSelector((state: any) => state.statuses) || {};
   const { accounts = [] } = useSelector((state: any) => state.complaintModes) || {}; // adjust if you have a separate accounts slice
+  const [statuses, setStatuses] = useState<StatusType[]>(statusess);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [allowReopen, setAllowReopen] = useState(false);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-const currentSiteId =
-  accounts && accounts.length > 0
-    ? accounts[0].site_id || accounts[0].society_id || '15'
-    : '15';
+  const currentSiteId =
+    accounts && accounts.length > 0
+      ? accounts[0].site_id || accounts[0].society_id || '15'
+      : '15';
 
   const form = useForm<StatusFormData>({
     resolver: zodResolver(statusSchema),
@@ -66,35 +78,41 @@ const currentSiteId =
   });
 
   useEffect(() => {
-    dispatch(fetchStatuses());
-    dispatch(fetchAccounts());
-  }, [dispatch]);
+    fetchStatuses();
+  }, []);
+
+  const fetchStatuses = async () => {
+    setIsLoading(true);
+    try {
+      const data = await ticketManagementAPI.getStatuses();
+      setStatuses(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error('Failed to fetch statuses');
+      console.error('Error fetching statuses:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (data: StatusFormData) => {
     setIsSubmitting(true);
     try {
-      const payload = {
-        complaint_status: {
-          of_phase: 'pms',
-          society_id: currentSiteId, // Use dynamic value here
-          name: data.name,
-          fixed_state: data.fixedState,
-          color_code: data.colorCode,
-          position: data.position.toString(),
-        },
+      const statusData = {
+        name: data.name,
+        fixed_state: data.fixedState,
+        color_code: data.colorCode,
+        position: data.position,
+        of_phase: 'pms',
+        society_id: '15', // Default society ID
       };
-      const resultAction = await dispatch(createStatus(payload));
-      if (createStatus.fulfilled.match(resultAction)) {
-        toast.success('Status created successfully!');
-        form.reset();
-        dispatch(fetchStatuses());
-      } else {
-        toast.error(
-          (resultAction.payload as any)?.message || 'Failed to create status'
-        );
-      }
+
+      await ticketManagementAPI.createStatus(statusData);
+      toast.success('Status created successfully!');
+      form.reset();
+      fetchStatuses();
     } catch (error) {
       toast.error('Failed to create status');
+      console.error('Error creating status:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -103,11 +121,17 @@ const currentSiteId =
     setAllowReopen(checked === true);
   };
 
+  const handleDelete = (status: StatusType) => {
+    setStatuses(statuses.filter(s => s.id !== status.id));
+    toast.success('Status deleted successfully!');
+  };
+
   const columns = [
     { key: 'position', label: 'Order', sortable: true },
     { key: 'name', label: 'Status', sortable: true },
     { key: 'fixed_state', label: 'Fixed State', sortable: true },
     { key: 'color_code', label: 'Color', sortable: false },
+    { key: 'email', label: 'Email', sortable: true },
   ];
 
   const renderCell = (item: any, columnKey: string) => {
@@ -122,6 +146,10 @@ const currentSiteId =
             <span>{item.color_code}</span>
           </div>
         );
+      case 'email':
+        return item.email ? 'Yes' : 'No';
+      case 'fixed_state':
+        return fixedStates.find(state => state.value === item.fixed_state)?.label || item.fixed_state;
       default:
         return item[columnKey];
     }
@@ -132,7 +160,7 @@ const currentSiteId =
       <Button variant="ghost" size="sm">
         <Edit className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -259,14 +287,19 @@ const currentSiteId =
           <CardTitle>Status List</CardTitle>
         </CardHeader>
         <CardContent>
-          <EnhancedTable
-            data={statuses}
-            columns={columns}
-            renderCell={renderCell}
-            renderActions={renderActions}
-            storageKey="status-table"
-            loading={fetchLoading}
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500">Loading statuses...</div>
+            </div>
+          ) : (
+            <EnhancedTable
+              data={statuses}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderActions}
+              storageKey="status-table"
+            />
+          )}
         </CardContent>
       </Card>
     </div>

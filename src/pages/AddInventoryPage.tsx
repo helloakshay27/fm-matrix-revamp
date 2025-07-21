@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
   const { assets = [], loading = false } = inventoryAssetsState || {};
@@ -112,14 +114,32 @@ export const AddInventoryPage = () => {
       if (response.ok) {
         const result = await response.json();
         console.log('Inventory created successfully:', result);
+        
+        toast({
+          title: "Inventory Created",
+          description: "Inventory has been successfully created."
+        });
+        
         navigate(-1);
       } else {
         console.error('Failed to create inventory:', response.status, response.statusText);
         const errorData = await response.text();
         console.error('Error response:', errorData);
+        
+        toast({
+          title: "Error",
+          description: "Failed to create inventory. Please try again.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error creating inventory:', error);
+      
+      toast({
+        title: "Error",
+        description: "Failed to create inventory. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 

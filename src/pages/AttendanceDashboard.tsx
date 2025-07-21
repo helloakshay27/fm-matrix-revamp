@@ -71,9 +71,9 @@ export const AttendanceDashboard = () => {
   const renderCell = (item: AttendanceRecord, columnKey: string) => {
     switch (columnKey) {
       case 'name':
-        return <span className="font-medium">{item.name}</span>;
+        return <span className="font-medium text-center block">{item.name}</span>;
       case 'department':
-        return item.department || '-';
+        return <span className="text-center block">{item.department || '-'}</span>;
       default:
         return '-';
     }

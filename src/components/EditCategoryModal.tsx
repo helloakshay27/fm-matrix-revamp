@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { TextField } from '@mui/material';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAppDispatch } from '@/store/hooks';
+import { editCategory } from '@/store/slices/f&bSlice';
+import { useParams } from 'react-router-dom';
 
 interface Category {
   id: number;
-  category: string;
-  timings?: string;
+  name: string;
+  timing?: string;
   amount?: string;
   active: boolean;
 }
@@ -18,59 +21,56 @@ interface EditCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   category: Category | null;
-  onSubmit: (category: Category) => void;
   showTimings?: boolean;
   showAmount?: boolean;
+  fetchData: () => void
 }
 
-export const EditCategoryModal = ({ 
-  isOpen, 
-  onClose, 
-  category, 
-  onSubmit, 
-  showTimings = true, 
-  showAmount = false 
+export const EditCategoryModal = ({
+  isOpen,
+  onClose,
+  category,
+  showTimings = true,
+  showAmount = false,
+  fetchData
 }: EditCategoryModalProps) => {
-  const { toast } = useToast();
+  const dispatch = useAppDispatch()
+  const baseUrl = localStorage.getItem('baseUrl')
+  const token = localStorage.getItem('token')
+  const { id } = useParams()
+
   const [formData, setFormData] = useState({
     category: "",
-    timings: "",
+    timing: "",
     amount: ""
   });
 
   useEffect(() => {
     if (category) {
       setFormData({
-        category: category.category,
-        timings: category.timings || "",
+        category: category.name,
+        timing: category.timing || "",
         amount: category.amount || ""
       });
     }
   }, [category]);
 
-  const handleSubmit = () => {
-    if (category) {
-      const updatedCategory: Category = {
-        ...category,
-        category: formData.category
-      };
-      
-      if (showTimings) {
-        updatedCategory.timings = formData.timings;
-      }
-      
-      if (showAmount) {
-        updatedCategory.amount = formData.amount;
-      }
-      
-      onSubmit(updatedCategory);
-      toast({
-        title: "Success",
-        description: "Category updated successfully!",
-      });
+  const handleSubmit = async () => {
+    const payload = {
+      spree_manage_restaurant_category: {
+        name: formData.category,
+        timing: formData.timing,
+      },
+      restaurant_id: Number(id)
     }
-    setFormData({ category: "", timings: "", amount: "" });
-    onClose();
+    try {
+      await dispatch(editCategory({ baseUrl, token, id: Number(id), catId: category?.id, data: payload })).unwrap();
+      setFormData({ category: "", timing: "", amount: "" });
+      fetchData()
+      onClose();
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   return (
@@ -110,8 +110,8 @@ export const EditCategoryModal = ({
               <TextField
                 label="Timings"
                 placeholder="Enter Timings"
-                value={formData.timings}
-                onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
+                value={formData.timing}
+                onChange={(e) => setFormData(prev => ({ ...prev, timing: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 InputProps={{
@@ -138,7 +138,7 @@ export const EditCategoryModal = ({
           </div>
 
           <div className="flex justify-center pt-4">
-            <Button 
+            <Button
               onClick={handleSubmit}
               className="bg-green-600 hover:bg-green-700 text-white px-8"
             >

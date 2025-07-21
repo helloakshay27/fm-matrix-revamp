@@ -77,7 +77,7 @@ export const AddServicePage = () => {
           pms_asset_group_id: formData.groupId || "",
           pms_asset_sub_group_id: formData.subGroupId || "",
           active: true,
-          description: "",
+          description: formData.serviceDescription || "",
           service_category: "",
           service_group: "",
           service_code: "",
@@ -131,15 +131,20 @@ export const AddServicePage = () => {
   return (
     <div className="p-6">{/* Service creation form */}
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/maintenance/service')}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Service List
-        </Button>
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Service List &gt; Create Service</p>
+        <div className="flex items-center mb-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              console.log('Back button clicked');
+              navigate('/maintenance/service');
+            }}
+            className="p-1 hover:bg-gray-100 mr-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <p className="text-[#1a1a1a] opacity-70">Services &gt; Service List &gt; Add Page</p>
+        </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 

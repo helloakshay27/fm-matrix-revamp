@@ -1,10 +1,11 @@
+
 import { getBaseUrl, getToken } from '@/utils/auth';
 
 // API Configuration - Central place for managing API endpoints and tokens
 const getApiConfig = () => {
   const savedBaseUrl = getBaseUrl();
   const savedToken = getToken();
-  
+
   return {
     BASE_URL: savedBaseUrl || 'https://fm-uat-api.lockated.com',
     TOKEN: savedToken || 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
@@ -51,7 +52,12 @@ export const API_CONFIG = {
     ACCOUNTS: '/api/users/account.json',
     STATUSES: '/pms/admin/create_complaint_statuses.json',
     STATUSES_LIST: '/pms/admin/complaint_statuses.json',
-    STATUSES_UPDATE:'/pms/admin/modify_complaint_status.json'
+    STATUSES_UPDATE: '/pms/admin/modify_complaint_status.json',
+    // New endpoints for ticket creation
+    CREATE_TICKET: '/pms/admin/complaints.json',
+    GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
+    ACCOUNT_DETAILS: '/api/users/account.json',
+    OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
   },
 } as const
 

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
@@ -7,20 +7,18 @@ import { AddSubCategoryModal } from "./AddSubCategoryModal";
 import { EditSubCategoryModal } from "./EditSubCategoryModal";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useAppDispatch } from '@/store/hooks';
+import { createSubcategory, deleteSubCategory, fetchSubcategory } from '@/store/slices/f&bSlice';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface SubCategory {
   id: number;
-  category: string;
-  subCategory: string;
+  category_id: string;
+  name: string;
   description: string;
   active: boolean;
 }
-
-const mockSubCategories: SubCategory[] = [
-  { id: 1, category: "Breakfast", subCategory: "Continental", description: "Continental breakfast items", active: true },
-  { id: 2, category: "Lunch", subCategory: "Indian", description: "Traditional Indian lunch", active: true },
-  { id: 3, category: "Dinner", subCategory: "Italian", description: "Italian dinner specialties", active: true },
-];
 
 const columns: ColumnConfig[] = [
   { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
@@ -31,34 +29,62 @@ const columns: ColumnConfig[] = [
 ];
 
 export const SubCategoriesSetupTable = () => {
-  const [subCategories, setSubCategories] = useState<SubCategory[]>(mockSubCategories);
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const { id } = useParams();
+
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
 
-  const handleAddSubCategory = (subCategoryData: { category: string; subCategory: string; description: string }) => {
-    const newSubCategory: SubCategory = {
-      id: Math.max(...subCategories.map(c => c.id), 0) + 1,
-      category: subCategoryData.category,
-      subCategory: subCategoryData.subCategory,
-      description: subCategoryData.description,
-      active: true
-    };
-    setSubCategories([...subCategories, newSubCategory]);
+  const fetchData = async () => {
+    try {
+      const response = await dispatch(fetchSubcategory({ baseUrl, token, id: Number(id) })).unwrap();
+      setSubCategories(response);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleAddSubCategory = async (subCategoryData: { category: string; subCategory: string; description: string }) => {
+    const payload = {
+      spree_manage_restaurant_sub_category: {
+        category_id: Number(subCategoryData.category),
+        name: subCategoryData.subCategory,
+        description: subCategoryData.description
+      },
+      restaurant_id: Number(id)
+    }
+    try {
+      await dispatch(createSubcategory({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      fetchData();
+      toast.success('Subcategory added successfully');
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleEditSubCategory = (updatedSubCategory: SubCategory) => {
-    setSubCategories(subCategories.map(cat => 
+    setSubCategories(subCategories.map(cat =>
       cat.id === updatedSubCategory.id ? updatedSubCategory : cat
     ));
   };
 
-  const handleDeleteSubCategory = () => {
-    if (selectedSubCategory) {
-      setSubCategories(subCategories.filter(cat => cat.id !== selectedSubCategory.id));
-      setSelectedSubCategory(null);
-      setIsDeleteDialogOpen(false);
+  const handleDeleteSubCategory = async () => {
+    try {
+      await dispatch(deleteSubCategory({ baseUrl, token, id: Number(id), subId: selectedSubCategory?.id })).unwrap();
+      fetchData();
+      toast.success('Subcategory deleted successfully');
+    } catch (error) {
+      console.log(error)
+      toast.error('Failed to delete subcategory');
     }
   };
 
@@ -73,15 +99,14 @@ export const SubCategoriesSetupTable = () => {
   };
 
   const renderRow = (item: SubCategory) => ({
-    category: item.category,
-    subCategory: item.subCategory,
+    category: item.category_id,
+    subCategory: item.name,
     description: item.description,
     active: (
-      <span className={`px-2 py-1 rounded-full text-xs ${
-        item.active 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800'
-      }`}>
+      <span className={`px-2 py-1 rounded-full text-xs ${item.active
+        ? 'bg-green-100 text-green-800'
+        : 'bg-red-100 text-red-800'
+        }`}>
         {item.active ? 'Active' : 'Inactive'}
       </span>
     ),
@@ -120,7 +145,7 @@ export const SubCategoriesSetupTable = () => {
       </div>
 
       <EnhancedTable
-        data={subCategories}
+        data={[...subCategories].reverse()}
         columns={columns}
         renderRow={renderRow}
         enableSearch={true}
@@ -151,7 +176,7 @@ export const SubCategoriesSetupTable = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => setIsDeleteDialogOpen(false)}
               className="bg-gray-200 text-gray-800 hover:bg-gray-300"
             >

@@ -6,6 +6,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { fetchRestaurants } from "@/store/slices/f&bSlice";
 
 interface DaySchedule {
+  is_open: number;
   dayofweek: string;
 }
 
@@ -148,6 +149,7 @@ export const FnBRestaurantDashboard = () => {
                 };
 
                 let openDays = restaurant.restaurant_operations
+                  .filter(op => op.is_open) // filter days where is_open is 1 or true
                   .map(op => dayMap[op.dayofweek.toLowerCase()])
                   .filter(Boolean)
                   .join(', ');

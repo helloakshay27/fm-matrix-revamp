@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
@@ -8,6 +8,10 @@ import { EditStatusModal } from './EditStatusModal';
 import { StatusBadge } from './ui/status-badge';
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useAppDispatch } from '@/store/hooks';
+import { createRestaurantStatus, fetchRestaurantStatuses } from '@/store/slices/f&bSlice';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface StatusItem {
   id: number;
@@ -48,24 +52,66 @@ const columns: ColumnConfig[] = [
 ];
 
 export const StatusSetupTable = () => {
+  const { id } = useParams()
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const [statusItems, setStatusItems] = useState<StatusItem[]>(mockStatusData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusItem | null>(null);
 
-  const handleAddStatus = (newStatus: any) => {
-    const statusItem: StatusItem = {
-      id: statusItems.length + 1,
-      order: parseInt(newStatus.order),
-      status: newStatus.status,
-      display: newStatus.status,
-      fixedStatus: newStatus.fixedState,
-      mail: false,
-      sms: false,
-      canCancel: false,
-      color: newStatus.color
-    };
-    setStatusItems([...statusItems, statusItem]);
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantStatuses({ baseUrl, token, id: Number(id) })).unwrap();
+        // setStatusItems(response);
+        console.log(response)
+      } catch (error) {
+
+      }
+    }
+
+    fetchStatus();
+  }, [])
+
+  const handleAddStatus = async (newStatus: any) => {
+    // const statusItem: StatusItem = {
+    //   id: statusItems.length + 1,
+    //   order: parseInt(newStatus.order),
+    //   status: newStatus.status,
+    //   display: newStatus.status,
+    //   fixedStatus: newStatus.fixedState,
+    //   mail: false,
+    //   sms: false,
+    //   canCancel: false,
+    //   color: newStatus.color
+    // };
+    // setStatusItems([...statusItems, statusItem]);
+
+    const payload = {
+      restaurant_status: {
+        name: newStatus.status,
+        display: newStatus.displayName,
+        fixed_state: newStatus.fixedState,
+        position: newStatus.order,
+        color_code: newStatus.color
+      }
+    }
+
+    try {
+      await dispatch(createRestaurantStatus({
+        baseUrl,
+        token,
+        data: payload,
+        id: Number(id)
+      })).unwrap();
+
+      toast.success('Status added successfully');
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleEditStatus = (status: StatusItem) => {
@@ -78,7 +124,7 @@ export const StatusSetupTable = () => {
   };
 
   const toggleCheckbox = (id: number, field: 'mail' | 'sms' | 'canCancel') => {
-    setStatusItems(statusItems.map(item => 
+    setStatusItems(statusItems.map(item =>
       item.id === id ? { ...item, [field]: !item[field] } : item
     ));
   };
@@ -177,13 +223,13 @@ export const StatusSetupTable = () => {
         storageKey="status-table"
       />
 
-      <AddStatusModal 
+      <AddStatusModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleAddStatus}
       />
 
-      <EditStatusModal 
+      <EditStatusModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
       />

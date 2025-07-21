@@ -869,7 +869,10 @@ export const EditAMCPage = () => {
                   fullWidth 
                   variant="outlined" 
                   InputLabelProps={{ shrink: true }} 
-                  InputProps={{ sx: fieldStyles }} 
+                  InputProps={{ 
+                    sx: fieldStyles,
+                    inputProps: { min: formData.startDate }
+                  }} 
                 />
               </div>
 
@@ -1022,7 +1025,7 @@ export const EditAMCPage = () => {
           </CardContent>
         </Card>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 justify-center">
           <Button 
             type="button" 
             onClick={handleSaveAndSchedule} 
@@ -1030,7 +1033,7 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }} 
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update & Show Details'}
+            {updateLoading ? 'Updating...' : 'Update & show details'}
           </Button>
           <Button 
             type="submit" 
@@ -1038,7 +1041,7 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }} 
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update & Schedule AMC'}
+            {updateLoading ? 'Updating...' : 'Update & Create New Service'}
           </Button>
         </div>
       </form>

@@ -426,7 +426,7 @@ export const InventoryDashboard = () => {
         <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
       </div>
 
-      <Tabs defaultValue="analytics" className="w-full">
+      <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 
             value="analytics" 
