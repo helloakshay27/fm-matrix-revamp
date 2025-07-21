@@ -8,7 +8,6 @@ import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
-import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
@@ -419,11 +418,16 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <MaterialDatePicker
-                    value={formData.expiryDate}
-                    onChange={(value) => handleInputChange('expiryDate', value)}
+                  <TextField
+                    label="Expiry Date"
+                    type="date"
                     placeholder="Date of Expiry"
-                    className="[&>button]:h-[45px] [&>button]:rounded-[6px]"
+                    value={formData.expiryDate}
+                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 
