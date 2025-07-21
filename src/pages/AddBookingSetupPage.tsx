@@ -91,6 +91,7 @@ export const AddBookingSetupPage = () => {
     advanceBooking: { day: 'd', hour: 'h', minute: 'm' },
     canCancelBefore: { day: 'd', hour: 'h', minute: 'm' },
     allowMultipleSlots: false,
+    maximumSlots: '',
     facilityBookedTimes: '',
     termsConditions: '',
     cancellationText: '',
@@ -628,7 +629,7 @@ export const AddBookingSetupPage = () => {
                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">5</div>
                 <h3 className="text-lg font-semibold text-[#C72030]">SLOT SETUP</h3>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="allowMultipleSlots"
@@ -637,8 +638,32 @@ export const AddBookingSetupPage = () => {
                   />
                   <label htmlFor="allowMultipleSlots">Allow Multiple Slots</label>
                 </div>
-                <div className="text-sm text-gray-600">
-                  Facility can be booked <span className="mx-4">times per day by User</span>
+                
+                {formData.allowMultipleSlots && (
+                  <div>
+                    <TextField
+                      label="Maximum no. of slots"
+                      placeholder="Maximum no. of slots"
+                      value={formData.maximumSlots}
+                      onChange={(e) => setFormData({ ...formData, maximumSlots: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      style={{ width: '200px' }}
+                    />
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>Facility can be booked</span>
+                  <TextField
+                    placeholder=""
+                    value={formData.facilityBookedTimes}
+                    onChange={(e) => setFormData({ ...formData, facilityBookedTimes: e.target.value })}
+                    variant="outlined"
+                    size="small"
+                    style={{ width: '80px' }}
+                  />
+                  <span>times per day by User</span>
                 </div>
               </div>
             </div>
