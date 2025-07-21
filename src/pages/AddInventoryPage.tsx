@@ -102,7 +102,7 @@ export const AddInventoryPage = () => {
     console.log('Submitting inventory payload:', payload);
     
     try {
-      const response = await fetch(getFullUrl('/pms/inventories'), {
+      const response = await fetch(getFullUrl('/pms/inventories.json'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
