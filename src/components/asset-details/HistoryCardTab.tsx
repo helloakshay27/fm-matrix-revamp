@@ -77,7 +77,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="basic-info" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Basic Asset Info</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Basic Asset Info</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -104,7 +104,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="acquisition" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Acquisition Details</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Acquisition Details</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -131,7 +131,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="maintenance1" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Maintenance & Repair History</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Maintenance & Repair History</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -166,7 +166,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="maintenance2" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Maintenance & Repair History</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Maintenance & Repair History</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -203,7 +203,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="cost1" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Cost & Depreciation</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Cost & Depreciation</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -238,7 +238,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="cost2" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Cost & Depreciation</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Cost & Depreciation</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -273,7 +273,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="certification" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Certification & Compliance</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Certification & Compliance</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -310,7 +310,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="audit" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Audit & Inspections</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Audit & Inspections</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -345,7 +345,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="ebom" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">EBOM Summary</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">EBOM Summary</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -380,7 +380,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="disposal" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold">Disposal / Write-Off Details</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Disposal / Write-Off Details</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
