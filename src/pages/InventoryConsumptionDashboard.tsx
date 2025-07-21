@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Download, Filter, Eye, Edit2, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -18,6 +19,7 @@ import {
 } from '@mui/material';
 
 const InventoryConsumptionDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({
     group: '',
@@ -192,6 +194,11 @@ const InventoryConsumptionDashboard = () => {
     });
   };
 
+  // Navigate to view page
+  const handleViewItem = (item: any) => {
+    navigate(`/maintenance/inventory-consumption/view/${item.id}`);
+  };
+
   // Render actions for each row
   const renderActions = (item: any) => (
     <div className="flex gap-2 justify-center">
@@ -199,6 +206,7 @@ const InventoryConsumptionDashboard = () => {
         size="sm"
         variant="ghost"
         className="h-8 w-8 p-0 hover:bg-gray-100"
+        title="Edit Item"
       >
         <Edit2 className="w-4 h-4 text-gray-600" />
       </Button>
@@ -206,6 +214,8 @@ const InventoryConsumptionDashboard = () => {
         size="sm"
         variant="ghost"
         className="h-8 w-8 p-0 hover:bg-gray-100"
+        onClick={() => handleViewItem(item)}
+        title="View Details"
       >
         <Eye className="w-4 h-4 text-gray-600" />
       </Button>
