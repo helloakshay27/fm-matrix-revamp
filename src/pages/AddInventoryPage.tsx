@@ -11,6 +11,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Sele
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
 
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
@@ -73,9 +74,9 @@ export const AddInventoryPage = () => {
   const handleSubmit = async () => {
     const payload = {
       pms_inventory: {
-        user_id: 12437, // You may want to get this from user context/state
-        company_id: 15, // You may want to get this from user context/state
-        pms_site_id: 7, // You may want to get this from user context/state
+        user_id: "",
+        company_id: "",
+        pms_site_id: "",
         inventory_type: inventoryType === 'spares' ? 1 : 2,
         criticality: criticality === 'critical' ? 1 : 2,
         asset_id: parseInt(formData.assetName) || null,
@@ -420,16 +421,11 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <TextField
-                    label="Expiry Date"
-                    type="date"
-                    placeholder="Date of Expiry"
-                    value={formData.expiryDate}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                  <ResponsiveDatePicker
+                    value={formData.expiryDate ? new Date(formData.expiryDate) : undefined}
+                    onChange={(date) => handleInputChange('expiryDate', date ? date.toISOString().split('T')[0] : '')}
+                    placeholder="Expiry Date"
+                    className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
                   />
                 </div>
 

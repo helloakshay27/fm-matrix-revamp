@@ -354,7 +354,7 @@ export const AssetDashboard = () => {
     <div className="p-4 sm:p-6">
       
 
-      <Tabs defaultValue="analytics" className="w-full">
+      <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 
             value="analytics" 

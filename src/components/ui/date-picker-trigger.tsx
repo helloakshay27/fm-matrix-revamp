@@ -29,14 +29,16 @@ export const DatePickerTrigger = React.forwardRef<HTMLButtonElement, DatePickerT
       disabled={disabled}
       className={cn(
         "w-full justify-start text-left font-normal",
-        "border border-gray-300 bg-white hover:bg-gray-50",
-        "transition-all duration-200 ease-in-out",
-        !value && "text-gray-500",
+        "!bg-white !text-gray-700 !border !border-gray-300 hover:!bg-gray-50",
+        "!transition-all !duration-200 !ease-in-out",
+        "focus:!ring-2 focus:!ring-gray-500 focus:!ring-offset-0",
+        !value && "!text-gray-500",
+        "[&_svg]:!text-gray-400",
         className
       )}
       {...props}
     >
-      <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
+      <CalendarIcon className="mr-2 h-4 w-4" />
       {value ? format(value, "dd/MM/yyyy") : placeholder}
     </Button>
   );

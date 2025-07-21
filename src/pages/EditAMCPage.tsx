@@ -5,6 +5,7 @@ import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
@@ -737,34 +738,20 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <TextField
-                  required
-                  label="Start Date"
-                  placeholder="Select Date"
-                  name="startDate"
-                  type="date"
+                <MaterialDatePicker
                   value={formData.startDate}
-                  onChange={e => handleInputChange('startDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  onChange={(value) => handleInputChange('startDate', value)}
+                  placeholder="Select Start Date"
+                  className="h-[28px] sm:h-[36px] md:h-[45px]"
                 />
               </div>
 
               <div>
-                <TextField
-                  required
-                  label="First Service Date"
-                  placeholder="Select Date"
-                  name="firstService"
-                  type="date"
+                <MaterialDatePicker
                   value={formData.firstService}
-                  onChange={e => handleInputChange('firstService', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  onChange={(value) => handleInputChange('firstService', value)}
+                  placeholder="Select First Service Date"
+                  className="h-[28px] sm:h-[36px] md:h-[45px]"
                 />
               </div>
 
@@ -791,18 +778,11 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <TextField
-                  required
-                  label="End Date"
-                  placeholder="Select Date"
-                  name="endDate"
-                  type="date"
+                <MaterialDatePicker
                   value={formData.endDate}
-                  onChange={e => handleInputChange('endDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  onChange={(value) => handleInputChange('endDate', value)}
+                  placeholder="Select End Date"
+                  className="h-[28px] sm:h-[36px] md:h-[45px]"
                 />
               </div>
 

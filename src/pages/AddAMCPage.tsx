@@ -5,6 +5,7 @@ import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
@@ -576,19 +577,21 @@ export const AddAMCPage = () => {
       </div>
 
       <div>
-        <TextField required label="Start Date" placeholder="Select Date" name="startDate" type="date" value={formData.startDate} onChange={e => handleInputChange('startDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
+        <ResponsiveDatePicker
+          value={formData.startDate ? new Date(formData.startDate) : undefined}
+          onChange={(date) => handleInputChange('startDate', date ? date.toISOString().split('T')[0] : '')}
+          placeholder="Start Date"
+          className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+        />
       </div>
 
       <div>
-        <TextField required label="First Service Date" placeholder="Select Date" name="firstService" type="date" value={formData.firstService} onChange={e => handleInputChange('firstService', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} />
+        <ResponsiveDatePicker
+          value={formData.firstService ? new Date(formData.firstService) : undefined}
+          onChange={(date) => handleInputChange('firstService', date ? date.toISOString().split('T')[0] : '')}
+          placeholder="First Service Date"
+          className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+        />
       </div>
 
       <div>
@@ -607,12 +610,13 @@ export const AddAMCPage = () => {
       </div>
 
       <div>
-        <TextField required label="End Date" placeholder="Select Date" name="endDate" type="date" value={formData.endDate} onChange={e => handleInputChange('endDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles,
-                inputProps: { min: formData.startDate }
-              }} />
+        <ResponsiveDatePicker
+          value={formData.endDate ? new Date(formData.endDate) : undefined}
+          onChange={(date) => handleInputChange('endDate', date ? date.toISOString().split('T')[0] : '')}
+          placeholder="End Date"
+          className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+          minDate={formData.startDate ? new Date(formData.startDate) : undefined}
+        />
       </div>
 
       <div>
