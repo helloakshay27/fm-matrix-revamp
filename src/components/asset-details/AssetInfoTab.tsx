@@ -21,86 +21,90 @@ export const AssetInfoTab = ({
           }}>Location Details</h3>
           </div>
 
-          {/* Location Timeline */}
+          {/* Location Timeline - Vertical Layout */}
           <div className="flex-1">
-            <div className="relative flex items-center">
+            <div className="relative">
               {/* Site */}
-              <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 rounded-full" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-                <div className="text-xs text-gray-500 mt-2 mb-1">Site</div>
-                <div className="text-sm font-medium text-center">Haven Infoline</div>
+              <div className="flex items-center mb-6">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">Haven Infoline</div>
+                  <div className="text-sm text-gray-500">Site</div>
+                </div>
               </div>
               
               {/* Connecting line */}
-              <div className="flex-1 h-px mx-6" style={{
-              backgroundColor: '#C72030'
-            }}></div>
+              <div className="absolute left-3 top-6 bottom-6 w-0.5" style={{
+                backgroundColor: '#C72030'
+              }}></div>
               
               {/* Building */}
-              <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 rounded-full" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-                <div className="text-xs text-gray-500 mt-2 mb-1">Building</div>
-                <div className="text-sm font-medium text-center">Jyoti Tower</div>
+              <div className="flex items-center mb-6">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">Jyoti Tower</div>
+                  <div className="text-sm text-gray-500">Building</div>
+                </div>
               </div>
-              
-              {/* Connecting line */}
-              <div className="flex-1 h-px mx-6" style={{
-              backgroundColor: '#C72030'
-            }}></div>
               
               {/* Wing */}
-              <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 rounded-full" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-                <div className="text-xs text-gray-500 mt-2 mb-1">Wing</div>
-                <div className="text-sm font-medium text-center">J - Wing</div>
+              <div className="flex items-center mb-6">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">J - Wing</div>
+                  <div className="text-sm text-gray-500">Wing</div>
+                </div>
               </div>
-              
-              {/* Connecting line */}
-              <div className="flex-1 h-px mx-6" style={{
-              backgroundColor: '#C72030'
-            }}></div>
               
               {/* Floor */}
-              <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 rounded-full" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-                <div className="text-xs text-gray-500 mt-2 mb-1">Floor</div>
-                <div className="text-sm font-medium text-center">02<sup>nd</sup></div>
+              <div className="flex items-center mb-6">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">02<sup>nd</sup></div>
+                  <div className="text-sm text-gray-500">Floor</div>
+                </div>
               </div>
-              
-              {/* Connecting line */}
-              <div className="flex-1 h-px mx-6" style={{
-              backgroundColor: '#C72030'
-            }}></div>
               
               {/* Area */}
-              <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 rounded-full" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-                <div className="text-xs text-gray-500 mt-2 mb-1">Area</div>
-                <div className="text-sm font-medium text-center">East</div>
+              <div className="flex items-center mb-6">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">East</div>
+                  <div className="text-sm text-gray-500">Area</div>
+                </div>
               </div>
               
-              {/* Connecting line */}
-              <div className="flex-1 h-px mx-6" style={{
-              backgroundColor: '#C72030'
-            }}></div>
-              
               {/* Room */}
-              <div className="flex flex-col items-center relative">
-                <div className="w-3 h-3 rounded-full" style={{
-                backgroundColor: '#C72030'
-              }}></div>
-                <div className="text-xs text-gray-500 mt-2 mb-1">Room</div>
-                <div className="text-sm font-medium text-center">R 202</div>
+              <div className="flex items-center">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-medium text-gray-800">R 202</div>
+                  <div className="text-sm text-gray-500">Room</div>
+                </div>
               </div>
             </div>
           </div>
