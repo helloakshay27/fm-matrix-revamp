@@ -139,9 +139,9 @@ export const AttendanceDashboard = () => {
 
   // Attendance status data
   const statusData = [
-    { name: 'Present', value: presentCount, color: '#4ade80' },
-    { name: 'Absent', value: absentCount, color: '#ef4444' },
-    { name: 'Late', value: lateCount, color: '#fb923c' }
+    { name: 'Present', value: presentCount, color: '#c6b692' },
+    { name: 'Absent', value: absentCount, color: '#d8dcdd' },
+    { name: 'Late', value: lateCount, color: '#e5e7eb' }
   ];
 
   // Department-wise attendance data
