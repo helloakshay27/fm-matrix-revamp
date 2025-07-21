@@ -3,35 +3,208 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil } from "lucide-react";
 
-interface ProductDetail {
+interface MenuItem {
   id: number;
+  sku: string;
   productName: string;
   masterPrice: number;
-  stock: number;
-  category: string;
-  sku: string;
   displayPrice: number;
-  active: string;
+  category: string;
   subCategory: string;
-  description: string;
+  createdOn: string;
+  updatedOn: string;
+  status: 'Active' | 'Inactive';
 }
 
-const mockProductData: ProductDetail = {
-  id: 1,
-  productName: "Imperial Rolls",
-  masterPrice: 250,
-  stock: 20,
-  category: "Appetizers",
-  sku: "Imperial Rolls",
-  displayPrice: 250,
-  active: "No",
-  subCategory: "",
-  description: ""
-};
+const mockMenuItems: MenuItem[] = [
+  {
+    id: 1,
+    sku: "Imperial Rolls",
+    productName: "Imperial Rolls",
+    masterPrice: 250,
+    displayPrice: 250,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "21/03/2023",
+    status: 'Inactive'
+  },
+  {
+    id: 2,
+    sku: "Corn Fritters",
+    productName: "Corn Fritters",
+    masterPrice: 220,
+    displayPrice: 220,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "20/04/2023",
+    status: 'Active'
+  },
+  {
+    id: 3,
+    sku: "Spring Rolls",
+    productName: "Spring Rolls",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 4,
+    sku: "Chicken Satay",
+    productName: "Chicken Satay",
+    masterPrice: 300,
+    displayPrice: 300,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "20/04/2023",
+    status: 'Active'
+  },
+  {
+    id: 5,
+    sku: "Tofu Satay",
+    productName: "Tofu Satay",
+    masterPrice: 300,
+    displayPrice: 300,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 6,
+    sku: "Dumpling",
+    productName: "Dumpling",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 7,
+    sku: "Golden Triangles",
+    productName: "Golden Triangles",
+    masterPrice: 250,
+    displayPrice: 250,
+    category: "Appetizers",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 8,
+    sku: "Tom Yum Gai",
+    productName: "Tom Yum Gai",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 9,
+    sku: "Glass Noodles Soup",
+    productName: "Glass Noodles Soup",
+    masterPrice: 250,
+    displayPrice: 250,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 10,
+    sku: "Beef Noodle Soup",
+    productName: "Beef Noodle Soup",
+    masterPrice: 280,
+    displayPrice: 280,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 11,
+    sku: "Larb Gai",
+    productName: "Larb Gai",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Soups",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 12,
+    sku: "Ginger Salad",
+    productName: "Ginger Salad",
+    masterPrice: 200,
+    displayPrice: 200,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "18/04/2023",
+    status: 'Inactive'
+  },
+  {
+    id: 13,
+    sku: "Fish Cake Salad",
+    productName: "Fish Cake Salad",
+    masterPrice: 280,
+    displayPrice: 280,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 14,
+    sku: "Shrimp Salad",
+    productName: "Shrimp Salad",
+    masterPrice: 300,
+    displayPrice: 300,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  },
+  {
+    id: 15,
+    sku: "Duck Salad",
+    productName: "Duck Salad",
+    masterPrice: 340,
+    displayPrice: 340,
+    category: "Salads",
+    subCategory: "",
+    createdOn: "12/10/2021",
+    updatedOn: "12/10/2021",
+    status: 'Active'
+  }
+];
 
 export const ProductSetupDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Find the specific product based on the ID
+  const product = mockMenuItems.find(item => item.id === parseInt(id || '1')) || mockMenuItems[0];
 
   const handleEdit = () => {
     navigate(`/vas/fnb/restaurant-menu/edit/${id}`);
@@ -89,47 +262,47 @@ export const ProductSetupDetailPage = () => {
                 <div className="flex">
                   <span className="w-32 text-gray-600">Product Name</span>
                   <span className="mr-2">:</span>
-                  <span className="text-blue-600">{mockProductData.productName}</span>
+                  <span className="text-blue-600">{product.productName}</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">SKU</span>
                   <span className="mr-2">:</span>
-                  <span className="text-blue-600">{mockProductData.sku}</span>
+                  <span className="text-blue-600">{product.sku}</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">Master Price</span>
                   <span className="mr-2">:</span>
-                  <span>{mockProductData.masterPrice}</span>
+                  <span>{product.masterPrice}</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">Display Price</span>
                   <span className="mr-2">:</span>
-                  <span>{mockProductData.displayPrice}</span>
+                  <span>{product.displayPrice}</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">Stock</span>
                   <span className="mr-2">:</span>
-                  <span>{mockProductData.stock}</span>
+                  <span>20</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">Active</span>
                   <span className="mr-2">:</span>
-                  <span>{mockProductData.active}</span>
+                  <span>{product.status === 'Active' ? 'Yes' : 'No'}</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">Category</span>
                   <span className="mr-2">:</span>
-                  <span>{mockProductData.category}</span>
+                  <span>{product.category}</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">Sub-Category</span>
                   <span className="mr-2">:</span>
-                  <span>{mockProductData.subCategory || "-"}</span>
+                  <span>{product.subCategory || "-"}</span>
                 </div>
                 <div className="flex">
                   <span className="w-32 text-gray-600">Description</span>
                   <span className="mr-2">:</span>
-                  <span>{mockProductData.description || "-"}</span>
+                  <span>-</span>
                 </div>
               </div>
             </div>
