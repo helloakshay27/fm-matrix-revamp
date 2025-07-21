@@ -132,14 +132,6 @@ const InventoryConsumptionViewPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">Inventory Consumption History</h1>
       </div>
 
-      {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-sm text-gray-600">
-        <span>Inventory Consumption</span>
-        <span>{">"}</span>
-        <span>Consumption List</span>
-        <span>{">"}</span>
-        <span className="text-gray-900 font-medium">View Details</span>
-      </div>
 
       {/* Controls */}
       <div className="flex items-center gap-4">
