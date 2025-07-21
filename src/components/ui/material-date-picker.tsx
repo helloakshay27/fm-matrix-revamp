@@ -38,6 +38,7 @@ export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date
             "!bg-white !text-gray-700 !border !border-gray-300 hover:!bg-gray-50",
             "!transition-all !duration-200 !ease-in-out",
             "focus:!ring-2 focus:!ring-gray-500 focus:!ring-offset-0",
+            "!rounded-md",
             !date && "!text-gray-500",
             "[&_svg]:!text-gray-400",
             className
