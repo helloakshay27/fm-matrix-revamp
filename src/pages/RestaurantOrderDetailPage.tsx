@@ -41,14 +41,14 @@ interface OrderDetail {
 
 const mockOrderDetails: OrderDetail[] = [
   {
-    id: 1,
+    id: 1247,
     orderId: "1247",
     restaurant: "Havan Havanna Cafe",
     orderDate: "21/07/2025 12:39 PM",
-    paymentMode: "",
-    paymentStatus: "",
-    transactionId: "",
-    preferredTime: "",
+    paymentMode: "UPI",
+    paymentStatus: "Completed",
+    transactionId: "UPI123456789",
+    preferredTime: "1:00 PM",
     deliveryAddress: {
       customerName: "Ankit Gupta",
       location: "Locatedd",
@@ -67,17 +67,17 @@ const mockOrderDetails: OrderDetail[] = [
     currentStatus: "Received"
   },
   {
-    id: 2,
+    id: 1246,
     orderId: "1246",
     restaurant: "Havan Havanna Cafe",
     orderDate: "21/07/2025 12:38 PM",
     paymentMode: "Card",
     paymentStatus: "Pending",
-    transactionId: "TXN123456",
-    preferredTime: "1:00 PM",
+    transactionId: "CARD987654321",
+    preferredTime: "1:30 PM",
     deliveryAddress: {
       customerName: "Ankit Gupta",
-      location: "Downtown Location",
+      location: "Business Park, Block A",
       phone: "91 9876543210"
     },
     items: [
@@ -93,7 +93,7 @@ const mockOrderDetails: OrderDetail[] = [
     currentStatus: "Pending"
   },
   {
-    id: 3,
+    id: 1223,
     orderId: "1223",
     restaurant: "Havan Havanna Cafe",
     orderDate: "24/07/2024 1:07 PM",
@@ -103,7 +103,7 @@ const mockOrderDetails: OrderDetail[] = [
     preferredTime: "2:00 PM",
     deliveryAddress: {
       customerName: "Kshitij Rasal",
-      location: "Office Complex",
+      location: "IT Complex, Wing B",
       phone: "91 8765432109"
     },
     items: [
@@ -119,17 +119,17 @@ const mockOrderDetails: OrderDetail[] = [
     currentStatus: "Not Available"
   },
   {
-    id: 4,
+    id: 1217,
     orderId: "1217",
     restaurant: "Havan Havanna Cafe",
     orderDate: "20/07/2024 12:18 PM",
     paymentMode: "UPI",
     paymentStatus: "Paid",
-    transactionId: "UPI789012",
+    transactionId: "UPI789012345",
     preferredTime: "12:30 PM",
     deliveryAddress: {
       customerName: "Chetan Bafna",
-      location: "Residential Area",
+      location: "Residential Area, Plot 45",
       phone: "91 7654321098"
     },
     items: [
@@ -146,17 +146,17 @@ const mockOrderDetails: OrderDetail[] = [
     currentStatus: "Pending"
   },
   {
-    id: 5,
+    id: 1211,
     orderId: "1211",
     restaurant: "Havan Havanna Cafe",
     orderDate: "24/06/2024 2:54 PM",
     paymentMode: "Card",
-    paymentStatus: "Pending",
-    transactionId: "CARD345678",
+    paymentStatus: "Processing",
+    transactionId: "CARD345678901",
     preferredTime: "3:15 PM",
     deliveryAddress: {
       customerName: "Kshitij Rasal",
-      location: "Business District",
+      location: "Tech Hub, Floor 3",
       phone: "91 6543210987"
     },
     items: [
@@ -171,84 +171,6 @@ const mockOrderDetails: OrderDetail[] = [
       { date: "24/06/2024 2:54 PM", status: "Pending", comments: "Payment processing", updatedBy: "Kshitij Rasal" }
     ],
     currentStatus: "Pending"
-  },
-  {
-    id: 6,
-    orderId: "1204",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "17/05/2024 4:27 PM",
-    paymentMode: "UPI",
-    paymentStatus: "Paid",
-    transactionId: "UPI901234",
-    preferredTime: "4:45 PM",
-    deliveryAddress: {
-      customerName: "Chetan Bafna",
-      location: "City Center",
-      phone: "91 5432109876"
-    },
-    items: [
-      { name: "Golden Triangles", quantity: 1, price: 200.00 }
-    ],
-    subTotal: 200.00,
-    gst: 10.00,
-    deliveryCharge: 25.00,
-    total: 235.00,
-    logs: [
-      { date: "17/05/2024 4:27 PM", status: "Pending", comments: "Order in preparation", updatedBy: "Chetan Bafna" }
-    ],
-    currentStatus: "Pending"
-  },
-  {
-    id: 7,
-    orderId: "1203",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "17/05/2024 4:25 PM",
-    paymentMode: "Cash",
-    paymentStatus: "Pending",
-    transactionId: "",
-    preferredTime: "5:00 PM",
-    deliveryAddress: {
-      customerName: "Chetan Bafna",
-      location: "Mall Complex",
-      phone: "91 4321098765"
-    },
-    items: [
-      { name: "Glass Noodles Soup", quantity: 1, price: 250.00 }
-    ],
-    subTotal: 250.00,
-    gst: 12.50,
-    deliveryCharge: 30.00,
-    total: 292.50,
-    logs: [
-      { date: "17/05/2024 4:25 PM", status: "Pending", comments: "Waiting for confirmation", updatedBy: "Chetan Bafna" }
-    ],
-    currentStatus: "Pending"
-  },
-  {
-    id: 8,
-    orderId: "1168",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "18/01/2024 12:55 PM",
-    paymentMode: "Card",
-    paymentStatus: "Paid",
-    transactionId: "CARD567890",
-    preferredTime: "1:15 PM",
-    deliveryAddress: {
-      customerName: "Deepak Gupta",
-      location: "Tech Park",
-      phone: "91 3210987654"
-    },
-    items: [
-      { name: "Beef Noodle Soup", quantity: 1, price: 250.00 }
-    ],
-    subTotal: 250.00,
-    gst: 12.50,
-    deliveryCharge: 35.00,
-    total: 297.50,
-    logs: [
-      { date: "18/01/2024 12:55 PM", status: "Pending", comments: "Ready for pickup", updatedBy: "Deepak Gupta" }
-    ],
-    currentStatus: "Pending"
   }
 ];
 
@@ -259,8 +181,8 @@ export const RestaurantOrderDetailPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [comments, setComments] = useState("");
 
-  // Find the specific order based on the ID
-  const order = mockOrderDetails.find(item => item.id === parseInt(id || '1')) || mockOrderDetails[0];
+  // Find the specific order based on the orderId parameter from URL
+  const order = mockOrderDetails.find(item => item.orderId === id) || mockOrderDetails[0];
 
   const handleBack = () => {
     navigate(-1);

@@ -81,7 +81,7 @@ export const RestaurantOrdersTable = () => {
   };
 
   const handleViewOrder = (order: RestaurantOrder) => {
-    navigate(`/vas/fnb/restaurant-orders/details/${order.id}`);
+    navigate(`/vas/fnb/restaurant-orders/details/${order.orderId}`);
   };
 
   return (
