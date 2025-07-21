@@ -468,7 +468,8 @@ export const Sidebar = () => {
   const currentModules = modulesByPackage[currentSection] || [];
 
   const isActiveRoute = (href: string) => {
-    return location.pathname === href || location.pathname.startsWith(href + '/');
+    const currentPath = location.pathname;
+    return currentPath === href || currentPath.startsWith(href + '/');
   };
 
   const renderMenuItem = (item: any, level: number = 0) => {
