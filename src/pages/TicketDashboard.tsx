@@ -226,10 +226,10 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
       {...listeners}
       className="cursor-move"
     >
@@ -453,7 +453,7 @@ export const TicketDashboard = () => {
       a.download = `tickets_${new Date().toISOString().split('T')[0]}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-      
+
       toast({
         title: "Success",
         description: "Tickets exported successfully",
@@ -587,17 +587,17 @@ export const TicketDashboard = () => {
   }];
 
   const renderCustomActions = () => <div className="flex flex-wrap gap-3">
-      <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Plus className="w-4 h-4 mr-2" /> Add
-      </Button>
-      <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
-        <Filter className="w-4 h-4 mr-2" /> Filters
-      </Button>
-    </div>;
+    <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+      <Plus className="w-4 h-4 mr-2" /> Add
+    </Button>
+    <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
+      <Filter className="w-4 h-4 mr-2" /> Filters
+    </Button>
+  </div>;
 
   const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
-      <Eye className="w-4 h-4" />
-    </Button>;
+    <Eye className="w-4 h-4" />
+  </Button>;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
@@ -607,13 +607,13 @@ export const TicketDashboard = () => {
 
   const TruncatedDescription = ({ text, maxLength = 50 }: { text: string; maxLength?: number }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    
+
     if (!text) return <span>--</span>;
-    
+
     if (text.length <= maxLength) {
       return <span>{text}</span>;
     }
-    
+
     return (
       <div className="w-48">
         <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
@@ -638,13 +638,13 @@ export const TicketDashboard = () => {
     }
     if (columnKey === 'issue_status') {
       return <span className={`px-2 py-1 rounded text-xs animate-scale-in ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-          {item.issue_status}
-        </span>;
+        {item.issue_status}
+      </span>;
     }
     if (columnKey === 'priority') {
       return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 animate-scale-in">
-          {item.priority}
-        </span>;
+        {item.priority}
+      </span>;
     }
     if (columnKey === 'created_at') {
       return formatDate(item.created_at);
@@ -662,15 +662,15 @@ export const TicketDashboard = () => {
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="analytics" 
+          <TabsTrigger
+            value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
             <BarChart3 className="w-4 h-4" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger 
-            value="tickets" 
+          <TabsTrigger
+            value="tickets"
             className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
             <Ticket className="w-4 h-4" />
@@ -706,9 +706,9 @@ export const TicketDashboard = () => {
             {/* Left Section - Charts */}
             <div className="xl:col-span-8 space-y-4 sm:space-y-6">
               {/* All Charts with Drag and Drop */}
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter} 
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
@@ -738,8 +738,8 @@ export const TicketDashboard = () => {
                                         label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
                                           if (name === 'Open') {
                                             return (
-                                              <text 
-                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                              <text
+                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
                                                 y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
                                                 fill="black"
                                                 textAnchor="middle"
@@ -752,8 +752,8 @@ export const TicketDashboard = () => {
                                             );
                                           }
                                           return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                            <text
+                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
                                               y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
                                               fill="black"
                                               textAnchor="middle"
@@ -774,11 +774,11 @@ export const TicketDashboard = () => {
                                       <Tooltip />
                                     </PieChart>
                                   </ResponsiveContainer>
-                                   <div className="absolute inset-0 flex items-center justify-center">
-                                     <div className="text-center">
-                                       <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalSummaryTickets}</div>
-                                     </div>
-                                   </div>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="text-center">
+                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalSummaryTickets}</div>
+                                    </div>
+                                  </div>
                                 </div>
                                 <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
                                   {statusData.map((item, index) => (
@@ -792,7 +792,7 @@ export const TicketDashboard = () => {
                             </SortableChartItem>
                           );
                         }
-                        
+
                         if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
@@ -815,8 +815,8 @@ export const TicketDashboard = () => {
                                         label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
                                           if (name === 'Open') {
                                             return (
-                                              <text 
-                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                              <text
+                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
                                                 y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
                                                 fill="black"
                                                 textAnchor="middle"
@@ -829,14 +829,14 @@ export const TicketDashboard = () => {
                                             );
                                           }
                                           return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                                fill="black"
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                fontSize="14"
-                                                fontWeight="bold"
+                                            <text
+                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
+                                              y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                              fill="black"
+                                              textAnchor="middle"
+                                              dominantBaseline="middle"
+                                              fontSize="14"
+                                              fontWeight="bold"
                                             >
                                               {value}
                                             </text>
@@ -869,7 +869,7 @@ export const TicketDashboard = () => {
                             </SortableChartItem>
                           );
                         }
-                        
+
                         return null;
                       })}
                     </div>
@@ -888,10 +888,10 @@ export const TicketDashboard = () => {
                                 <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
                                   <BarChart data={categoryChartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                                    <XAxis 
-                                      dataKey="name" 
-                                      angle={-45} 
-                                      textAnchor="end" 
+                                    <XAxis
+                                      dataKey="name"
+                                      angle={-45}
+                                      textAnchor="end"
                                       height={80}
                                       tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }}
                                       className="text-xs"
@@ -915,7 +915,7 @@ export const TicketDashboard = () => {
                                 <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Tickets Ageing Matrix</h3>
                                 <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
                               </div>
-                              
+
                               <div className="space-y-4 sm:space-y-6">
                                 {/* Table - Horizontally scrollable on mobile */}
                                 <div className="overflow-x-auto -mx-3 sm:mx-0">
@@ -1018,8 +1018,14 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="mb-4">
-            {renderCustomActions()}
+
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              {renderCustomActions()}
+
+            </div>
+
           </div>
 
           {/* Tickets Table */}
@@ -1030,24 +1036,26 @@ export const TicketDashboard = () => {
               </div>
             ) : (
               <>
-                <EnhancedTable 
-                  data={safeTickets} 
-                  columns={columns} 
-                  renderCell={renderCell} 
-                  renderActions={renderRowActions} 
-                  selectable={true} 
+                <EnhancedTable
+                  data={safeTickets}
+                  columns={columns}
+                  renderCell={renderCell}
+                  renderActions={renderRowActions}
+                  selectable={true}
                   pagination={false}
-                  enableExport={true} 
-                  exportFileName="tickets" 
-                  onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)} 
+                  enableExport={true}
+                  exportFileName="tickets"
+                  onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)}
                   storageKey="tickets-table"
                   enableSelection={true}
                   selectedItems={selectedTickets.map(id => id.toString())}
                   onSelectItem={handleTicketSelection}
                   onSelectAll={handleSelectAll}
                   getItemId={(ticket) => ticket.id.toString()}
+                  onExport={handleExport}
+
                 />
-                
+
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
                   <div className="flex items-center text-sm text-gray-700">
@@ -1055,7 +1063,7 @@ export const TicketDashboard = () => {
                       Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, totalTickets)} of {totalTickets} results
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -1064,32 +1072,31 @@ export const TicketDashboard = () => {
                     >
                       Previous
                     </button>
-                    
+
                     <div className="flex space-x-1">
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const pageNum = currentPage <= 3 ? i + 1 : 
-                                       currentPage >= totalPages - 2 ? totalPages - 4 + i :
-                                       currentPage - 2 + i;
-                        
+                        const pageNum = currentPage <= 3 ? i + 1 :
+                          currentPage >= totalPages - 2 ? totalPages - 4 + i :
+                            currentPage - 2 + i;
+
                         if (pageNum < 1 || pageNum > totalPages) return null;
-                        
+
                         return (
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
                             disabled={loading}
-                            className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${
-                              currentPage === pageNum
-                                ? 'bg-primary text-white border-primary'
-                                : 'bg-white border-gray-300 hover:bg-gray-50'
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${currentPage === pageNum
+                              ? 'bg-primary text-white border-primary'
+                              : 'bg-white border-gray-300 hover:bg-gray-50'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
                             {pageNum}
                           </button>
                         );
                       })}
                     </div>
-                    
+
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages || loading}
@@ -1114,7 +1121,7 @@ export const TicketDashboard = () => {
       {/* Ticket Selection Panel */}
       <TicketSelectionPanel
         selectedTickets={selectedTickets}
-        selectedTicketObjects={tickets.filter(ticket => 
+        selectedTicketObjects={tickets.filter(ticket =>
           selectedTickets.includes(ticket.id)
         )}
         onGoldenTicket={handleGoldenTicket}
