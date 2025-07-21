@@ -399,8 +399,8 @@ export const EditAMCPage = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to AMC Details
-          </Button>
+            AMC &gt; AMC List &gt; Edit AMC
+            </Button>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT AMC - {id}</h1>
         </div>
         <div className="flex justify-center items-center py-12">
@@ -416,8 +416,7 @@ export const EditAMCPage = () => {
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to AMC Details
-          </Button>
+            AMC &gt; AMC List &gt; Edit AMC          </Button>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT AMC - {id}</h1>
         </div>
         <div className="flex justify-center items-center py-12">
@@ -432,8 +431,7 @@ export const EditAMCPage = () => {
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to AMC Details
-        </Button>
+          AMC &gt; AMC List &gt; Edit AMC        </Button>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT AMC - {id}</h1>
       </div>
 
@@ -784,6 +782,8 @@ export const EditAMCPage = () => {
                   placeholder="Select End Date"
                   className="h-[28px] sm:h-[36px] md:h-[45px]"
                 />
+
+
               </div>
 
               <div>
@@ -932,7 +932,7 @@ export const EditAMCPage = () => {
           </CardContent>
         </Card>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 justify-center">
           <Button
             type="button"
             onClick={handleSaveAndSchedule}
