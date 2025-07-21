@@ -67,11 +67,39 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
     }
   }, [isOpen]);
 
+  // Add effect to load subcategories when category changes
+  useEffect(() => {
+    const loadSubCategories = async () => {
+      if (category) {
+        try {
+          const subcategoriesData = await ticketManagementAPI.getSubCategoriesByCategory(Number(category));
+          // Map SubCategoryResponse to SubcategoryOption
+          const mappedSubcategories = subcategoriesData.map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            category_id: sub.helpdesk_category_id
+          }));
+          setSubcategories(mappedSubcategories);
+        } catch (error) {
+          console.error('Error loading subcategories:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load subcategories.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setSubcategories([]);
+      }
+    };
+
+    loadSubCategories();
+  }, [category]);
+
   const loadFilterData = async () => {
     try {
       const [
         categoriesData,
-        subcategoriesData,
         departmentsData,
         sitesData,
         unitsData,
@@ -79,7 +107,6 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
         usersData
       ] = await Promise.all([
         ticketManagementAPI.getHelpdeskCategories(),
-        ticketManagementAPI.getHelpdeskSubcategories(),
         ticketManagementAPI.getDepartments(),
         ticketManagementAPI.getAllSites(),
         ticketManagementAPI.getUnits(),
@@ -88,7 +115,6 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
       ]);
 
       setCategories(categoriesData);
-      setSubcategories(subcategoriesData);
       setDepartments(departmentsData);
       setSites(sitesData);
       setUnits(unitsData);
@@ -225,7 +251,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                     <SelectValue placeholder="Select Sub Category" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
-                    {filteredSubcategories.map((subcat) => (
+                    {subcategories.map((subcat) => (
                       <SelectItem key={subcat.id} value={subcat.id.toString()}>
                         {subcat.name}
                       </SelectItem>

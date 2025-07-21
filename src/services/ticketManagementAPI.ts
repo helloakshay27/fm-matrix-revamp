@@ -268,12 +268,12 @@ export const ticketManagementAPI = {
 
   async getUnits(): Promise<UnitOption[]> {
     const response = await apiClient.get(ENDPOINTS.UNITS);
-    return response.data.units || [];
+    return response.data || [];
   },
 
   async getComplaintStatuses(): Promise<StatusOption[]> {
     const response = await apiClient.get(ENDPOINTS.COMPLAINT_STATUSES);
-    return response.data.complaint_statuses || [];
+    return response.data || [];
   },
 
   async getFMUsers(): Promise<UserOption[]> {
@@ -332,12 +332,11 @@ export const ticketManagementAPI = {
     queryParams.append('page', page.toString());
     queryParams.append('per_page', perPage.toString());
     
-    // Add filters if provided
+    
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
-            // Handle array parameters like issue_status_in[] and assigned_to_in[]
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
           } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
             // Handle date range - convert from ISO to DD/MM/YYYY format

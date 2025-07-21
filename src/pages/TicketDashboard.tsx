@@ -13,7 +13,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
 
 const ticketData = [{
@@ -261,7 +261,7 @@ export const TicketDashboard = () => {
     suggestions: 0,
     requests: 0
   });
-  const [filters, setFilters] = useState<any>({});
+  const [filters, setFilters] = useState<TicketFilters>({});
   const perPage = 20;
 
   // Drag and drop sensors
@@ -275,7 +275,7 @@ export const TicketDashboard = () => {
   // Fetch ticket summary from API
   const fetchTicketSummary = async () => {
     try {
-      const summary = await ticketManagementAPI.getTicketSummary(filters);
+      const summary = await ticketManagementAPI.getTicketSummary();
       setTicketSummary(summary);
     } catch (error) {
       console.error('Error fetching ticket summary:', error);
@@ -291,7 +291,7 @@ export const TicketDashboard = () => {
   const fetchTickets = async (page: number = 1) => {
     setLoading(true);
     try {
-      const response = await ticketManagementAPI.getTickets(page, perPage);
+      const response = await ticketManagementAPI.getTickets(page, perPage, filters);
       setTickets(response.complaints);
       if (response.pagination) {
         setTotalPages(response.pagination.total_pages);
@@ -468,8 +468,9 @@ export const TicketDashboard = () => {
     }
   };
 
-  const handleFilterApply = (newFilters: any) => {
+  const handleFilterApply = (newFilters: TicketFilters) => {
     setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
   };
 
@@ -830,12 +831,12 @@ export const TicketDashboard = () => {
                                           return (
                                             <text 
                                               x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                              y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                              fill="black"
-                                              textAnchor="middle"
-                                              dominantBaseline="middle"
-                                              fontSize="14"
-                                              fontWeight="bold"
+                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                                fill="black"
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                fontSize="14"
+                                                fontWeight="bold"
                                             >
                                               {value}
                                             </text>
