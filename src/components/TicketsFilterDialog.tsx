@@ -264,9 +264,22 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   };
 
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+    minHeight: 40,
+    '& .MuiInputBase-root': {
+      minHeight: 40,
+    },
+    '& .MuiSelect-select': {
+      padding: '10px 14px',
+      minHeight: 'unset',
+    },
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'white',
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#C72030',
+      },
     },
   };
 
@@ -300,11 +313,10 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
               type="date"
               value={currentRange[0] || ''}
               onChange={(e) => handleDateRangeChange('from', e.target.value)}
-              placeholder="Select From Date"
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              sx={fieldStyles}
             />
           </div>
 
@@ -314,100 +326,162 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
               type="date"
               value={currentRange[1] || ''}
               onChange={(e) => handleDateRangeChange('to', e.target.value)}
-              placeholder="Select To Date"
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.categories}>
-              <InputLabel id="category-select-label" shrink>Category</InputLabel>
+              <InputLabel id="category-select-label">Category</InputLabel>
               <MuiSelect
                 labelId="category-select-label"
                 label="Category"
-                displayEmpty
                 value={filters.category_type_id_eq || ''}
                 onChange={(e) => handleFilterChange('category_type_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                startAdornment={state.loading.categories ? <CircularProgress size={20} /> : undefined}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                {state.data.categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
+                <MenuItem value="">
+                  <em>Select Category</em>
+                </MenuItem>
+                {state.loading.categories ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    <span style={{ marginLeft: 8 }}>Loading...</span>
                   </MenuItem>
-                ))}
+                ) : (
+                  state.data.categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))
+                )}
               </MuiSelect>
             </FormControl>
           </div>
 
           {/* Row 2 */}
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined" disabled={state.loading.subcategories}>
-              <InputLabel id="subcategory-select-label" shrink>Sub Category</InputLabel>
+            <FormControl fullWidth variant="outlined" disabled={state.loading.subcategories || !filters.category_type_id_eq}>
+              <InputLabel id="subcategory-select-label">Sub Category</InputLabel>
               <MuiSelect
                 labelId="subcategory-select-label"
                 label="Sub Category"
-                displayEmpty
                 value={filters.sub_category_id_eq || ''}
                 onChange={(e) => handleFilterChange('sub_category_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                startAdornment={state.loading.subcategories ? <CircularProgress size={20} /> : undefined}
-                disabled={!filters.category_type_id_eq}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-                {filteredSubcategories.map((subcategory) => (
-                  <MenuItem key={subcategory.id} value={subcategory.id}>
-                    {subcategory.name}
+                <MenuItem value="">
+                  <em>Select Sub Category</em>
+                </MenuItem>
+                {state.loading.subcategories ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    <span style={{ marginLeft: 8 }}>Loading...</span>
                   </MenuItem>
-                ))}
+                ) : (
+                  filteredSubcategories.map((subcategory) => (
+                    <MenuItem key={subcategory.id} value={subcategory.id}>
+                      {subcategory.name}
+                    </MenuItem>
+                  ))
+                )}
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.departments}>
-              <InputLabel id="department-select-label" shrink>Department</InputLabel>
+              <InputLabel id="department-select-label">Department</InputLabel>
               <MuiSelect
                 labelId="department-select-label"
                 label="Department"
-                displayEmpty
                 value={filters.dept_id_eq || ''}
                 onChange={(e) => handleFilterChange('dept_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                startAdornment={state.loading.departments ? <CircularProgress size={20} /> : undefined}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                <MenuItem value=""><em>Select Department</em></MenuItem>
-                {state.data.departments.map((department) => (
-                  <MenuItem key={department.id} value={department.id}>
-                    {department.department_name}
+                <MenuItem value="">
+                  <em>Select Department</em>
+                </MenuItem>
+                {state.loading.departments ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    <span style={{ marginLeft: 8 }}>Loading...</span>
                   </MenuItem>
-                ))}
+                ) : (
+                  state.data.departments.map((department) => (
+                    <MenuItem key={department.id} value={department.id}>
+                      {department.department_name}
+                    </MenuItem>
+                  ))
+                )}
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.sites}>
-              <InputLabel id="site-select-label" shrink>Site</InputLabel>
+              <InputLabel id="site-select-label">Site</InputLabel>
               <MuiSelect
                 labelId="site-select-label"
                 label="Site"
-                displayEmpty
                 value={filters.site_id_eq || ''}
                 onChange={(e) => handleFilterChange('site_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                startAdornment={state.loading.sites ? <CircularProgress size={20} /> : undefined}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                <MenuItem value=""><em>Select Site</em></MenuItem>
-                {state.data.sites.map((site) => (
-                  <MenuItem key={site.id} value={site.id}>
-                    {site.site_name}
+                <MenuItem value="">
+                  <em>Select Site</em>
+                </MenuItem>
+                {state.loading.sites ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    <span style={{ marginLeft: 8 }}>Loading...</span>
                   </MenuItem>
-                ))}
+                ) : (
+                  state.data.sites.map((site) => (
+                    <MenuItem key={site.id} value={site.id}>
+                      {site.site_name}
+                    </MenuItem>
+                  ))
+                )}
               </MuiSelect>
             </FormControl>
           </div>
@@ -415,68 +489,112 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
           {/* Row 3 */}
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.units}>
-              <InputLabel id="unit-select-label" shrink>Unit</InputLabel>
+              <InputLabel id="unit-select-label">Unit</InputLabel>
               <MuiSelect
                 labelId="unit-select-label"
                 label="Unit"
-                displayEmpty
                 value={filters.unit_id_eq || ''}
                 onChange={(e) => handleFilterChange('unit_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
-                startAdornment={state.loading.units ? <CircularProgress size={20} /> : undefined}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                <MenuItem value=""><em>Select Unit</em></MenuItem>
-                {state.data.units.map((unit) => (
-                  <MenuItem key={unit.id} value={unit.id}>
-                    {unit.unit_name}
+                <MenuItem value="">
+                  <em>Select Unit</em>
+                </MenuItem>
+                {state.loading.units ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    <span style={{ marginLeft: 8 }}>Loading...</span>
                   </MenuItem>
-                ))}
+                ) : (
+                  state.data.units.map((unit) => (
+                    <MenuItem key={unit.id} value={unit.id}>
+                      {unit.unit_name}
+                    </MenuItem>
+                  ))
+                )}
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.statuses}>
-              <InputLabel id="status-select-label" shrink>Status</InputLabel>
+              <InputLabel id="status-select-label">Status</InputLabel>
               <MuiSelect
                 labelId="status-select-label"
                 label="Status"
                 multiple
-                displayEmpty
                 value={filters.issue_status_in || []}
                 onChange={handleMultiSelectChange.bind(null, 'issue_status_in')}
                 input={<OutlinedInput label="Status" />}
                 renderValue={(selected) => (
                   <div className="flex flex-wrap gap-1">
-                    {(selected as number[]).map((value) => (
-                      <Chip key={value} label={getStatusNameById(value)} size="small" />
-                    ))}
+                    {(selected as number[]).length === 0 ? (
+                      <em>Select Status</em>
+                    ) : (
+                      (selected as number[]).map((value) => (
+                        <Chip key={value} label={getStatusNameById(value)} size="small" />
+                      ))
+                    )}
                   </div>
                 )}
                 sx={fieldStyles}
-                startAdornment={state.loading.statuses ? <CircularProgress size={20} /> : undefined}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                {state.data.statuses.map((status) => (
-                  <MenuItem key={status.id} value={status.id}>
-                    {status.name}
+                {state.loading.statuses ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    <span style={{ marginLeft: 8 }}>Loading...</span>
                   </MenuItem>
-                ))}
+                ) : (
+                  state.data.statuses.map((status) => (
+                    <MenuItem key={status.id} value={status.id}>
+                      {status.name}
+                    </MenuItem>
+                  ))
+                )}
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined">
-              <InputLabel id="priority-select-label" shrink>Priority</InputLabel>
+              <InputLabel id="priority-select-label">Priority</InputLabel>
               <MuiSelect
                 labelId="priority-select-label"
                 label="Priority"
-                displayEmpty
                 value={filters.priority_eq || ''}
                 onChange={(e) => handleFilterChange('priority_eq', e.target.value)}
                 sx={fieldStyles}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                <MenuItem value=""><em>Select Priority</em></MenuItem>
+                <MenuItem value="">
+                  <em>Select Priority</em>
+                </MenuItem>
                 {priorityOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}
@@ -495,37 +613,54 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
               onChange={(e) => handleFilterChange('user_firstname_or_user_lastname_cont', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" disabled={state.loading.users}>
-              <InputLabel id="assigned-to-select-label" shrink>Assigned To</InputLabel>
+              <InputLabel id="assigned-to-select-label">Assigned To</InputLabel>
               <MuiSelect
                 labelId="assigned-to-select-label"
                 label="Assigned To"
                 multiple
-                displayEmpty
                 value={filters.assigned_to_in || []}
                 onChange={handleMultiSelectChange.bind(null, 'assigned_to_in')}
                 input={<OutlinedInput label="Assigned To" />}
                 renderValue={(selected) => (
                   <div className="flex flex-wrap gap-1">
-                    {(selected as number[]).map((value) => (
-                      <Chip key={value} label={getUserNameById(value)} size="small" />
-                    ))}
+                    {(selected as number[]).length === 0 ? (
+                      <em>Select Assigned To</em>
+                    ) : (
+                      (selected as number[]).map((value) => (
+                        <Chip key={value} label={getUserNameById(value)} size="small" />
+                      ))
+                    )}
                   </div>
                 )}
                 sx={fieldStyles}
-                startAdornment={state.loading.users ? <CircularProgress size={20} /> : undefined}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 200,
+                      bgcolor: 'background.paper',
+                      boxShadow: 3,
+                    },
+                  },
+                }}
               >
-                {state.data.users.map((user) => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {user.name}
+                {state.loading.users ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                    <span style={{ marginLeft: 8 }}>Loading...</span>
                   </MenuItem>
-                ))}
+                ) : (
+                  state.data.users.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name}
+                    </MenuItem>
+                  ))
+                )}
               </MuiSelect>
             </FormControl>
           </div>
