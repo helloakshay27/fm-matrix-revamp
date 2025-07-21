@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -204,6 +205,7 @@ const mockMenuItems: MenuItem[] = [
 ];
 
 export const RestaurantMenuTable = () => {
+  const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -237,6 +239,14 @@ export const RestaurantMenuTable = () => {
   const openDeleteDialog = (menuItem: MenuItem) => {
     setSelectedMenuItem(menuItem);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleViewDetails = (menuItem: MenuItem) => {
+    navigate(`/vas/fnb/restaurant-menu/details/${menuItem.id}`);
+  };
+
+  const handleEditProduct = (menuItem: MenuItem) => {
+    navigate(`/vas/fnb/restaurant-menu/edit/${menuItem.id}`);
   };
 
   return (
@@ -289,6 +299,7 @@ export const RestaurantMenuTable = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleViewDetails(menuItem)}
                         className="p-1 h-8 w-8"
                       >
                         <Eye className="w-4 h-4" />
@@ -296,6 +307,7 @@ export const RestaurantMenuTable = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleEditProduct(menuItem)}
                         className="p-1 h-8 w-8"
                       >
                         <Pencil className="w-4 h-4" />
