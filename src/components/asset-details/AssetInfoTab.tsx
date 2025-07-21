@@ -365,10 +365,10 @@ export const AssetInfoTab = ({
 
             {/* Movement Timeline - Horizontal Layout */}
             <div className="flex justify-between items-center relative">
-              {/* Connecting lines - positioned behind circles */}
-              <div className="absolute top-6 left-6 right-6 flex justify-between -z-10">
-                <div className="flex-1 h-0.5 mr-12" style={{ backgroundColor: '#C72030' }}></div>
-                <div className="flex-1 h-0.5 ml-12 bg-gray-300"></div>
+              {/* Connecting lines */}
+              <div className="absolute top-6 left-16 right-16 flex justify-between">
+                <div className="w-1/2 h-0.5" style={{ backgroundColor: '#C72030' }}></div>
+                <div className="w-1/2 h-0.5 bg-gray-300"></div>
               </div>
               
               {/* Requested Stage */}
