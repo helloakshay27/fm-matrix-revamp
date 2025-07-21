@@ -254,6 +254,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
       return acc;
     }, {} as TicketFilters);
 
+    console.log('Applying filters:', cleanFilters);
     onApplyFilters(cleanFilters);
     toast({
       title: "Success",
@@ -355,6 +356,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 onChange={(e) => handleFilterChange('sub_category_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
                 startAdornment={state.loading.subcategories ? <CircularProgress size={20} /> : undefined}
+                disabled={!filters.category_type_id_eq}
               >
                 <MenuItem value=""><em>Select Sub Category</em></MenuItem>
                 {filteredSubcategories.map((subcategory) => (
