@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Pencil } from "lucide-react";
 
 interface MenuItem {
@@ -248,52 +247,29 @@ export const ProductSetupDetailPage = () => {
 
       {/* Tabs Navigation */}
       <div className="bg-white border-b px-6 py-3">
-        <Tabs value="restaurant-menu" className="w-full">
-          <TabsList className="grid grid-cols-7 w-full bg-transparent border-0 gap-2">
-            <TabsTrigger 
-              value="restaurant" 
-              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
-            >
-              Restaurant
-            </TabsTrigger>
-            <TabsTrigger 
-              value="status-setup"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
-            >
-              Status Setup
-            </TabsTrigger>
-            <TabsTrigger 
-              value="categories-setup"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
-            >
-              Categories Setup
-            </TabsTrigger>
-            <TabsTrigger 
-              value="sub-categories-setup"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
-            >
-              Sub Categories Setup
-            </TabsTrigger>
-            <TabsTrigger 
-              value="restaurant-menu"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-[#C72030] data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
-            >
-              Restaurant Menu
-            </TabsTrigger>
-            <TabsTrigger 
-              value="restaurant-bookings"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
-            >
-              Restaurant Bookings
-            </TabsTrigger>
-            <TabsTrigger 
-              value="restaurant-orders"
-              className="data-[state=active]:bg-transparent data-[state=active]:text-black data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] data-[state=active]:rounded-none bg-transparent text-gray-600 border-b-2 border-transparent rounded-none"
-            >
-              Restaurant Orders
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-6">
+          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+            Restaurant
+          </button>
+          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+            Status Setup
+          </button>
+          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+            Categories Setup
+          </button>
+          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+            Sub Categories Setup
+          </button>
+          <button className="px-4 py-2 text-sm text-red-500 border-b-2 border-red-500">
+            Restaurant Menu
+          </button>
+          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+            Restaurant Bookings
+          </button>
+          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+            Restaurant Orders
+          </button>
+        </div>
       </div>
 
       {/* Sub Breadcrumb */}
