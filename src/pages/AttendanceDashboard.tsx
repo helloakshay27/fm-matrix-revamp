@@ -184,7 +184,7 @@ export const AttendanceDashboard = () => {
         return '-';
     }
   };
-  const renderActions = (item: AttendanceRecord) => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.id)} className="hover:bg-gray-100">
+  const renderActions = (item: AttendanceRecord) => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.user_id)} className="hover:bg-gray-100">
       <Eye className="w-4 h-4" />
     </Button>;
   const bulkActions = [{

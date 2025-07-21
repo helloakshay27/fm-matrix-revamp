@@ -4,6 +4,7 @@ import { apiClient } from '@/utils/apiClient'
 
 export interface AttendanceRecord {
   id: number;
+  user_id: number; // Adding user_id to store the actual user ID from API
   name: string;
   department: string;
 }
@@ -17,7 +18,8 @@ export const fetchAttendanceData = createAsyncThunk(
       
       // Map API response to our AttendanceRecord interface
       const mappedData: AttendanceRecord[] = response.data.map((item: any, index: number) => ({
-        id: index + 1, // Using index as ID since API might not have ID
+        id: index + 1, // Keep this for table row identification
+        user_id: item.id || index + 1, // Use actual user ID from API, fallback to index
         name: item.full_name || '-',
         department: item.department_name || '-'
       }))
