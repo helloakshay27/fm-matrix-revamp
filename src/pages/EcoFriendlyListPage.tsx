@@ -308,4 +308,5 @@ const EcoFriendlyListPage = () => {
   );
 };
 
+// Eco-Friendly List Page Component
 export default EcoFriendlyListPage;
