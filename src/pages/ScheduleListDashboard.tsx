@@ -161,15 +161,15 @@ export const ScheduleListDashboard = () => {
   const typeChartData = [{
     name: 'PPM',
     value: ppmSchedules,
-    fill: '#8884d8'
+    fill: '#C72030'
   }, {
     name: 'Routine',
     value: routineSchedules,
-    fill: '#82ca9d'
+    fill: '#D2B48C'
   }, {
     name: 'Safety',
     value: safetySchedules,
-    fill: '#ffc658'
+    fill: '#8B4513'
   }];
   const categoryChartData = [{
     name: 'Technical',
