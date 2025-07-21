@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Upload, Filter, Eye, Edit2 } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 const InventoryConsumptionDashboard = () => {
   const [consumptionData] = useState([
@@ -85,6 +79,87 @@ const InventoryConsumptionDashboard = () => {
     }
   ]);
 
+  // Define table columns for drag and drop functionality
+  const columns: ColumnConfig[] = [
+    {
+      key: 'inventory',
+      label: 'Inventory',
+      sortable: true,
+      draggable: true
+    },
+    {
+      key: 'stock',
+      label: 'Stock',
+      sortable: true,
+      draggable: true
+    },
+    {
+      key: 'unit',
+      label: 'Unit',
+      sortable: true,
+      draggable: true
+    },
+    {
+      key: 'minStockLevel',
+      label: 'Min. Stock Level',
+      sortable: true,
+      draggable: true
+    },
+    {
+      key: 'group',
+      label: 'Group',
+      sortable: true,
+      draggable: true
+    },
+    {
+      key: 'subGroup',
+      label: 'Sub Group',
+      sortable: true,
+      draggable: true
+    },
+    {
+      key: 'criticality',
+      label: 'Criticality',
+      sortable: true,
+      draggable: true
+    }
+  ];
+
+  // Render cell content
+  const renderCell = (item: any, columnKey: string) => {
+    const value = item[columnKey];
+    
+    if (columnKey === 'criticality') {
+      return <span className="text-sm text-gray-600">{value}</span>;
+    }
+    
+    if (columnKey === 'inventory') {
+      return <span className="font-medium">{value}</span>;
+    }
+    
+    return value || '-';
+  };
+
+  // Render actions for each row
+  const renderActions = (item: any) => (
+    <div className="flex gap-2 justify-center">
+      <Button 
+        size="sm"
+        variant="ghost"
+        className="h-8 w-8 p-0 hover:bg-gray-100"
+      >
+        <Edit2 className="w-4 h-4 text-gray-600" />
+      </Button>
+      <Button 
+        size="sm"
+        variant="ghost"
+        className="h-8 w-8 p-0 hover:bg-gray-100"
+      >
+        <Eye className="w-4 h-4 text-gray-600" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
@@ -121,59 +196,20 @@ const InventoryConsumptionDashboard = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-semibold text-gray-900">Actions</TableHead>
-                <TableHead className="font-semibold text-gray-900">View</TableHead>
-                <TableHead className="font-semibold text-gray-900">Inventory</TableHead>
-                <TableHead className="font-semibold text-gray-900">Stock</TableHead>
-                <TableHead className="font-semibold text-gray-900">Unit</TableHead>
-                <TableHead className="font-semibold text-gray-900">Min. Stock Level</TableHead>
-                <TableHead className="font-semibold text-gray-900">Group</TableHead>
-                <TableHead className="font-semibold text-gray-900">Sub Group</TableHead>
-                <TableHead className="font-semibold text-gray-900">Criticality</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {consumptionData.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <Button 
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 hover:bg-gray-100"
-                    >
-                      <Edit2 className="w-4 h-4 text-gray-600" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button 
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 hover:bg-gray-100"
-                    >
-                      <Eye className="w-4 h-4 text-gray-600" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.inventory}</TableCell>
-                  <TableCell>{item.stock}</TableCell>
-                  <TableCell>{item.unit}</TableCell>
-                  <TableCell>{item.minStockLevel}</TableCell>
-                  <TableCell>{item.group}</TableCell>
-                  <TableCell>{item.subGroup}</TableCell>
-                  <TableCell>
-                    <span className="text-sm text-gray-600">{item.criticality}</span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Enhanced Table with Drag and Drop */}
+      <EnhancedTable
+        data={consumptionData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="inventory-consumption-table"
+        emptyMessage="No consumption data available"
+        enableExport={true}
+        exportFileName="inventory-consumption"
+        hideTableExport={true}
+        hideTableSearch={true}
+        hideColumnsButton={false}
+      />
     </div>
   );
 };
