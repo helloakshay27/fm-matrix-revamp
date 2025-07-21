@@ -791,23 +791,6 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-<<<<<<< Updated upstream
-                <TextField 
-                  required 
-                  label="End Date" 
-                  placeholder="Select Date" 
-                  name="endDate" 
-                  type="date" 
-                  value={formData.endDate} 
-                  onChange={e => handleInputChange('endDate', e.target.value)} 
-                  fullWidth 
-                  variant="outlined" 
-                  InputLabelProps={{ shrink: true }} 
-                  InputProps={{ 
-                    sx: fieldStyles,
-                    inputProps: { min: formData.startDate }
-                  }} 
-=======
                 <TextField
                   required
                   label="End Date"
@@ -820,7 +803,6 @@ export const EditAMCPage = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
->>>>>>> Stashed changes
                 />
               </div>
 
@@ -970,17 +952,10 @@ export const EditAMCPage = () => {
           </CardContent>
         </Card>
 
-<<<<<<< Updated upstream
-        <div className="flex gap-4 justify-center">
-          <Button 
-            type="button" 
-            onClick={handleSaveAndSchedule} 
-=======
         <div className="flex gap-4">
           <Button
             type="button"
             onClick={handleSaveAndSchedule}
->>>>>>> Stashed changes
             disabled={updateLoading}
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
