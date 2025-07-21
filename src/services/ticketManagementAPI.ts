@@ -473,4 +473,15 @@ export const ticketManagementAPI = {
       throw error;
     }
   },
+
+  // Get ticket feeds by ID
+  async getTicketFeeds(ticketId: string) {
+    try {
+      const response = await apiClient.get(`/pms/admin/complaints/${ticketId}/feeds.json`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching ticket feeds:', error);
+      throw error;
+    }
+  },
 };
