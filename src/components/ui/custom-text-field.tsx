@@ -10,23 +10,27 @@ const textFieldTheme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: '4px',
+            borderRadius: '6px',
             backgroundColor: '#FFFFFF',
             boxShadow: 'none',
             '& fieldset': {
               borderColor: '#4A90E2',
-              borderWidth: '2px',
-              borderRadius: '4px',
+              borderWidth: '1px',
+              borderRadius: '6px',
             },
             '&:hover fieldset': {
               borderColor: '#4A90E2',
+              borderWidth: '1px',
             },
             '&.Mui-focused fieldset': {
               borderColor: '#4A90E2',
               borderWidth: '2px',
             },
             '&.Mui-disabled': {
-              opacity: 0.5,
+              backgroundColor: '#F9F9F9',
+              '& fieldset': {
+                borderColor: '#E0E0E0',
+              },
             },
             '&.MuiOutlinedInput-multiline': {
               paddingTop: '16px',
