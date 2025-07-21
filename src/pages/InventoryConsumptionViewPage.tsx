@@ -129,7 +129,7 @@ const InventoryConsumptionViewPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
-        <h1 className="text-2xl font-bold text-gray-900">Inventory Consumption History</h1>
+        
       </div>
 
 
