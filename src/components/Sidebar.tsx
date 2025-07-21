@@ -207,7 +207,7 @@ const modulesByPackage = {
   'Maintenance': [
     { name: 'Assets', icon: Building, href: '/maintenance/asset' },
     { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
-    { name: 'Services', icon: Wrench, href: '/maintenance/services' },
+    { name: 'Services', icon: Wrench, href: '/maintenance/service' },
     { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
     { 
       name: 'Inventory', 
