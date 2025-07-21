@@ -1,10 +1,8 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select, MenuItem, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { X } from 'lucide-react';
-import { useAppSelector } from '@/store/hooks';
 
 interface AddStatusModalProps {
   isOpen: boolean;
@@ -13,7 +11,6 @@ interface AddStatusModalProps {
 }
 
 export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose, onSave }) => {
-  const { data: statuses } = useAppSelector(state => state.fetchRestaurantStatuses)
   const [formData, setFormData] = useState({
     status: '',
     displayName: '',
@@ -59,19 +56,26 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onClose={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="relative">
-          <DialogTitle>Add Status</DialogTitle>
+        <div className="flex items-center justify-between">
+          <DialogTitle
+            sx={{
+              fontSize: '18px',
+              fontWeight: 550,
+              color: '#000000',
+              padding: '12px 0px',
+            }}
+          >
+            Add Status
+          </DialogTitle>
           <button
             onClick={onClose}
-            className="absolute right-0 top-0 p-2 hover:bg-gray-100 rounded-full transition-colors"
-            tabIndex={-1}
-            aria-label="Close"
+            className="p-1 rounded-md transition-colors"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X size={20} className="text-gray-500" />
           </button>
-        </DialogHeader>
+        </div>
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <TextField

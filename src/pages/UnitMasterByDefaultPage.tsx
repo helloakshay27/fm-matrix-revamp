@@ -8,31 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Edit, Plus } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
-
-// Mock data for meter types
-const meterData = [
-  {
-    id: 1,
-    meterCategory: 'Electric Meter',
-    unitName: 'Electricity',
-    meterType: 'Digital',
-    status: true
-  },
-  {
-    id: 2,
-    meterCategory: 'Water Meter',
-    unitName: 'Water',
-    meterType: 'Analog',
-    status: true
-  },
-  {
-    id: 3,
-    meterCategory: 'Gas Meter',
-    unitName: 'Gas',
-    meterType: 'Smart',
-    status: false
-  }
-];
+import { useAppDispatch } from '@/store/hooks';
+import { createMasterUnit, fetchMasterUnits } from '@/store/slices/unitMaster';
+import { toast } from 'sonner';
 
 interface AddMeterModalProps {
   isOpen: boolean;
@@ -40,15 +18,32 @@ interface AddMeterModalProps {
 }
 
 const AddMeterModal = ({ isOpen, onClose }: AddMeterModalProps) => {
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const [formData, setFormData] = useState({
     meterType: '',
     meterCategory: '',
     unitName: ''
   });
 
-  const handleSubmit = () => {
-    // Add validation and submit logic here
-    console.log('Submitting new meter type:', formData);
+  const handleSubmit = async () => {
+    const payload = {
+      pms_meter_type: {
+        name: formData.meterCategory,
+        meter_type: formData.meterType,
+      },
+      meter_type_tags: formData.unitName.split(',')
+    }
+    try {
+      await dispatch(createMasterUnit({ baseUrl, token, data: payload })).unwrap();
+      setFormData({ meterType: '', meterCategory: '', unitName: '' });
+      toast.success('Meter added successfully');
+    } catch (error) {
+      console.log(error)
+      toast.error('Failed to add meter');
+    }
     onClose();
   };
 
@@ -58,18 +53,18 @@ const AddMeterModal = ({ isOpen, onClose }: AddMeterModalProps) => {
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">New Meter Type</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label className="text-sm">Meter Type</Label>
-            <Select value={formData.meterType} onValueChange={(value) => setFormData({...formData, meterType: value})}>
+            <Select value={formData.meterType} onValueChange={(value) => setFormData({ ...formData, meterType: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Digital">Digital</SelectItem>
-                <SelectItem value="Analog">Analog</SelectItem>
-                <SelectItem value="Smart">Smart</SelectItem>
+                <SelectItem value="Energy">Energy</SelectItem>
+                <SelectItem value="Water">Water</SelectItem>
+                <SelectItem value="STP">STP</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -80,7 +75,7 @@ const AddMeterModal = ({ isOpen, onClose }: AddMeterModalProps) => {
             </Label>
             <Input
               value={formData.meterCategory}
-              onChange={(e) => setFormData({...formData, meterCategory: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, meterCategory: e.target.value })}
             />
           </div>
 
@@ -90,13 +85,13 @@ const AddMeterModal = ({ isOpen, onClose }: AddMeterModalProps) => {
             </Label>
             <Input
               value={formData.unitName}
-              onChange={(e) => setFormData({...formData, unitName: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, unitName: e.target.value })}
               placeholder="Enter Unit Name"
             />
           </div>
 
           <div className="flex justify-center pt-4">
-            <Button 
+            <Button
               className="bg-[#8B5A99] hover:bg-[#8B5A99]/90 text-white px-8"
               onClick={handleSubmit}
             >
@@ -117,12 +112,19 @@ interface EditModalProps {
 
 const EditMeterModal = ({ isOpen, onClose, meterData }: EditModalProps) => {
   const [formData, setFormData] = useState({
-    meterType: meterData?.meterType || '',
-    meterCategory: meterData?.meterCategory || 'Electric Meter',
-    kwEnabled: true,
-    kwhEnabled: false,
-    unitType: ''
+    meterType: "",
+    meterCategory: "",
+    unitType: [],
   });
+
+  useEffect(() => {
+    if (!meterData) return
+    setFormData({
+      meterType: meterData?.meter_type,
+      meterCategory: meterData?.name,
+      unitType: meterData.meter_unit_types.map((unitType: any) => unitType),
+    })
+  }, [meterData])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -130,18 +132,18 @@ const EditMeterModal = ({ isOpen, onClose, meterData }: EditModalProps) => {
         <DialogHeader>
           <DialogTitle>Edit Meter Type</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6 py-4">
           <div className="space-y-2">
             <Label>Meter Type*</Label>
-            <Select value={formData.meterType} onValueChange={(value) => setFormData({...formData, meterType: value})}>
+            <Select value={formData.meterType} onValueChange={(value) => setFormData({ ...formData, meterType: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select meter type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Digital">Digital</SelectItem>
-                <SelectItem value="Analog">Analog</SelectItem>
-                <SelectItem value="Smart">Smart</SelectItem>
+                <SelectItem value="Energy">Energy</SelectItem>
+                <SelectItem value="Water">Water</SelectItem>
+                <SelectItem value="STP">STP</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -150,7 +152,7 @@ const EditMeterModal = ({ isOpen, onClose, meterData }: EditModalProps) => {
             <Label>Meter Category</Label>
             <Input
               value={formData.meterCategory}
-              onChange={(e) => setFormData({...formData, meterCategory: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, meterCategory: e.target.value })}
               className="bg-gray-50"
               readOnly
             />
@@ -158,24 +160,18 @@ const EditMeterModal = ({ isOpen, onClose, meterData }: EditModalProps) => {
 
           <div className="space-y-4">
             <Label className="text-base font-medium">Meter Unit</Label>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="kw">KW</Label>
-              <Switch
-                id="kw"
-                checked={formData.kwEnabled}
-                onCheckedChange={(checked) => setFormData({...formData, kwEnabled: checked})}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="kwh">Kwh</Label>
-              <Switch
-                id="kwh"
-                checked={formData.kwhEnabled}
-                onCheckedChange={(checked) => setFormData({...formData, kwhEnabled: checked})}
-              />
-            </div>
+
+            {
+              formData.unitType.map((unitType: any) => (
+                <div key={unitType.id} className="flex items-center justify-between">
+                  <Label>{unitType.unit_name}</Label>
+                  <Switch
+                    checked={unitType.active}
+                  // onCheckedChange={(checked) => setFormData({ ...formData, kwEnabled: checked })}
+                  />
+                </div>
+              ))
+            }
           </div>
 
           <div className="space-y-2">
@@ -186,7 +182,7 @@ const EditMeterModal = ({ isOpen, onClose, meterData }: EditModalProps) => {
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button 
+            <Button
               className="bg-[#C72030] hover:bg-[#C72030]/90"
               onClick={onClose}
             >
@@ -200,11 +196,28 @@ const EditMeterModal = ({ isOpen, onClose, meterData }: EditModalProps) => {
 };
 
 export const UnitMasterByDefaultPage = () => {
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const { setCurrentSection } = useLayout();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [selectedMeter, setSelectedMeter] = useState(null);
-  const [meters, setMeters] = useState(meterData);
+  const [meters, setMeters] = useState([]);
+
+  useEffect(() => {
+    const fetchMeters = async () => {
+      try {
+        const response = await dispatch(fetchMasterUnits({ baseUrl, token })).unwrap();
+        setMeters(response);
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchMeters();
+  }, [])
 
   useEffect(() => {
     setCurrentSection('Master');
@@ -216,7 +229,7 @@ export const UnitMasterByDefaultPage = () => {
   };
 
   const handleStatusToggle = (id: number) => {
-    setMeters(meters.map(meter => 
+    setMeters(meters.map(meter =>
       meter.id === id ? { ...meter, status: !meter.status } : meter
     ));
   };
@@ -226,7 +239,7 @@ export const UnitMasterByDefaultPage = () => {
       <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">UNIT MASTER (BY DEFAULT)</h1>
-          <Button 
+          <Button
             className="bg-[#C72030] hover:bg-[#C72030]/90"
             onClick={() => setAddModalOpen(true)}
           >
@@ -249,18 +262,18 @@ export const UnitMasterByDefaultPage = () => {
             <TableBody>
               {meters.map((meter) => (
                 <TableRow key={meter.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{meter.meterCategory}</TableCell>
-                  <TableCell>{meter.unitName}</TableCell>
-                  <TableCell>{meter.meterType}</TableCell>
+                  <TableCell className="font-medium">{meter.name}</TableCell>
+                  <TableCell>{meter.unit_name.join(', ')}</TableCell>
+                  <TableCell>{meter.meter_type}</TableCell>
                   <TableCell>
                     <Switch
-                      checked={meter.status}
+                      checked={meter.active}
                       onCheckedChange={() => handleStatusToggle(meter.id)}
                     />
                   </TableCell>
                   <TableCell>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleEditClick(meter)}
                     >

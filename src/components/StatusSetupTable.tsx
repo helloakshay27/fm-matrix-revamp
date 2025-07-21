@@ -9,35 +9,21 @@ import { StatusBadge } from './ui/status-badge';
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from '@/store/hooks';
-import { createRestaurantStatus, fetchRestaurantStatuses } from '@/store/slices/f&bSlice';
+import { createRestaurantStatus, deleteRestaurantStatus, editRestaurantStatus, fetchRestaurantStatuses } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-interface StatusItem {
+export interface StatusItem {
   id: number;
-  order: number;
-  status: string;
+  position: number;
+  name: string;
   display: string;
-  fixedStatus: string;
+  fixed_state: string;
   mail: boolean;
   sms: boolean;
-  canCancel: boolean;
-  color: string;
+  cancel: boolean;
+  color_code: string;
 }
-
-const mockStatusData: StatusItem[] = [
-  {
-    id: 1,
-    order: 1,
-    status: 'Active',
-    display: 'Welcome',
-    fixedStatus: 'Table Booking Accepted',
-    mail: false,
-    sms: false,
-    canCancel: false,
-    color: '#16B364'
-  }
-];
 
 const columns: ColumnConfig[] = [
   { key: 'order', label: 'Order', sortable: true, hideable: true, draggable: true },
@@ -57,47 +43,32 @@ export const StatusSetupTable = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
-  const [statusItems, setStatusItems] = useState<StatusItem[]>(mockStatusData);
+  const [statusItems, setStatusItems] = useState<StatusItem[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusItem | null>(null);
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const response = await dispatch(fetchRestaurantStatuses({ baseUrl, token, id: Number(id) })).unwrap();
-        // setStatusItems(response);
-        console.log(response)
-      } catch (error) {
+  const fetchStatus = async () => {
+    try {
+      const response = await dispatch(fetchRestaurantStatuses({ baseUrl, token, id: Number(id) })).unwrap();
+      setStatusItems(response);
+      console.log(response)
+    } catch (error) {
 
-      }
     }
+  }
 
+  useEffect(() => {
     fetchStatus();
   }, [])
 
   const handleAddStatus = async (newStatus: any) => {
-    // const statusItem: StatusItem = {
-    //   id: statusItems.length + 1,
-    //   order: parseInt(newStatus.order),
-    //   status: newStatus.status,
-    //   display: newStatus.status,
-    //   fixedStatus: newStatus.fixedState,
-    //   mail: false,
-    //   sms: false,
-    //   canCancel: false,
-    //   color: newStatus.color
-    // };
-    // setStatusItems([...statusItems, statusItem]);
-
     const payload = {
-      restaurant_status: {
-        name: newStatus.status,
-        display: newStatus.displayName,
-        fixed_state: newStatus.fixedState,
-        position: newStatus.order,
-        color_code: newStatus.color
-      }
+      name: newStatus.status,
+      display: newStatus.displayName,
+      fixed_state: newStatus.fixedState,
+      position: newStatus.order,
+      color_code: newStatus.color
     }
 
     try {
@@ -108,6 +79,7 @@ export const StatusSetupTable = () => {
         id: Number(id)
       })).unwrap();
 
+      fetchStatus();
       toast.success('Status added successfully');
     } catch (error) {
       console.log(error)
@@ -119,8 +91,16 @@ export const StatusSetupTable = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteStatus = (id: number) => {
-    setStatusItems(statusItems.filter(item => item.id !== id));
+  const handleDeleteStatus = async (sid: number) => {
+    const payload = { active: 0 };
+    try {
+      await dispatch(deleteRestaurantStatus({ baseUrl, token, id: Number(id), statusId: sid, data: payload })).unwrap();
+      fetchStatus();
+      toast.success('Status deleted successfully');
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to delete status');
+    }
   };
 
   const toggleCheckbox = (id: number, field: 'mail' | 'sms' | 'canCancel') => {
@@ -130,7 +110,7 @@ export const StatusSetupTable = () => {
   };
 
   const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'active':
         return 'accepted';
       case 'inactive':
@@ -143,16 +123,16 @@ export const StatusSetupTable = () => {
   };
 
   const renderRow = (item: StatusItem) => ({
-    order: item.order,
+    order: item.position,
     status: (
-      <StatusBadge status={getStatusVariant(item.status)}>
-        {item.status}
+      <StatusBadge status={getStatusVariant(item.name)}>
+        {item.name}
       </StatusBadge>
     ),
     display: item.display,
     fixedStatus: (
       <select className="border rounded px-2 py-1 text-sm">
-        <option value={item.fixedStatus}>{item.fixedStatus}</option>
+        <option value={item.fixed_state}>{item.fixed_state}</option>
       </select>
     ),
     mail: (
@@ -169,14 +149,14 @@ export const StatusSetupTable = () => {
     ),
     canCancel: (
       <Checkbox
-        checked={item.canCancel}
+        checked={item.cancel}
         onCheckedChange={() => toggleCheckbox(item.id, 'canCancel')}
       />
     ),
     color: (
       <div
         className="w-8 h-6 border rounded mx-auto"
-        style={{ backgroundColor: item.color }}
+        style={{ backgroundColor: item.color_code }}
       />
     ),
     actions: (
@@ -232,6 +212,8 @@ export const StatusSetupTable = () => {
       <EditStatusModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
+        status={selectedStatus}
+        fetchStatus={fetchStatus}
       />
     </div>
   );

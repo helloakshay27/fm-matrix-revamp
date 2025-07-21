@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,36 +8,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAppDispatch } from '@/store/hooks';
+import { fetchFacilitySetup } from '@/store/slices/facilitySetupsSlice';
 
 export const BookingSetupDetailPage = () => {
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
   const { id } = useParams();
   const navigate = useNavigate();
 
   // Mock data - in real app this would come from API based on id
-  const [bookingData] = useState({
-    facilityName: "conference room now",
-    active: true,
-    department: "Slot",
-    appKey: "TEST123",
-    paymentPortland: false,
-    paymentPrepaid: true,
-    paymentGSTN: "05",
-    configureSlotData: {
-      startTime: "09",
-      endTime: "18",
-      bookTimeSlots: "30",
-      breakTimeEnd: "30",
-      consumptionSlots: "30",
-      slotBy: "30",
-      wrapTime: "15"
-    },
-    perSlotCharge: "1000.0",
-    bookingAllowedService: true,
-    allowMultipleSlots: true,
-    facilityCanBeBooked: true,
-    viewPerSlotByUser: true,
-    seaterInfo: "8 Seater"
-  });
+  const [bookingData, setBookingData] = useState({});
+
+  useEffect(() => {
+    const fetchBookingData = async () => {
+      try {
+        const response = await dispatch(fetchFacilitySetup({ baseUrl, token, id: Number(id) })).unwrap();
+        setBookingData(response);
+      } catch (error) {
+        console.error('Error fetching booking data:', error);
+      }
+    };
+    fetchBookingData();
+  }, [])
 
   const handleBack = () => {
     navigate('/vas/booking/setup');
@@ -48,8 +42,8 @@ export const BookingSetupDetailPage = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={handleBack}
             className="mb-4 p-0 h-auto font-normal text-gray-600 hover:text-gray-900"
           >
@@ -66,23 +60,23 @@ export const BookingSetupDetailPage = () => {
               {/* Radio buttons */}
               <div className="flex items-center space-x-6 mb-6">
                 <div className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    id="bookable" 
-                    name="type" 
-                    value="bookable" 
-                    defaultChecked 
+                  <input
+                    type="radio"
+                    id="bookable"
+                    name="type"
+                    value="bookable"
+                    defaultChecked
                     disabled
                     className="w-4 h-4 text-blue-600"
                   />
                   <label htmlFor="bookable" className="text-sm font-medium">Bookable</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    id="request" 
-                    name="type" 
-                    value="request" 
+                  <input
+                    type="radio"
+                    id="request"
+                    name="type"
+                    value="request"
                     disabled
                     className="w-4 h-4 text-blue-600"
                   />
@@ -96,14 +90,14 @@ export const BookingSetupDetailPage = () => {
                   <Label className="text-sm font-medium">
                     Facility Name<span className="text-red-500">*</span>
                   </Label>
-                  <Input value={bookingData.facilityName} className="mt-1" readOnly />
+                  <Input value={bookingData.fac_name} className="mt-1" readOnly />
                 </div>
                 <div>
                   <Label className="text-sm font-medium">
                     Active<span className="text-red-500">*</span>
                   </Label>
                   <Select value="Yes" disabled>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1" value={bookingData.active}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -158,7 +152,7 @@ export const BookingSetupDetailPage = () => {
                   <Label className="text-sm">Portland</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Switch checked={bookingData.paymentPrepaid} disabled />
+                  <Switch checked={bookingData.prepaid} disabled />
                   <Label className="text-sm">Prepaid</Label>
                 </div>
                 <div>
@@ -167,7 +161,7 @@ export const BookingSetupDetailPage = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium">GST(%) :</Label>
-                  <Input value={bookingData.paymentGSTN} className="mt-1" readOnly />
+                  <Input value={bookingData.gst} className="mt-1" readOnly />
                 </div>
               </div>
             </CardContent>
@@ -187,7 +181,7 @@ export const BookingSetupDetailPage = () => {
                   Add
                 </Button>
               </div>
-              
+
               <div className="bg-gray-100 p-4 rounded-lg">
                 <div className="grid grid-cols-7 gap-4 mb-4">
                   <div>
@@ -212,7 +206,7 @@ export const BookingSetupDetailPage = () => {
                     <Label className="text-sm font-medium text-gray-700">Wrap Time</Label>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-7 gap-4">
                   <div className="flex gap-1">
                     <Select value="09" disabled>
@@ -232,7 +226,7 @@ export const BookingSetupDetailPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex gap-1">
                     <Select value="13" disabled>
                       <SelectTrigger className="h-8 w-16">
@@ -251,7 +245,7 @@ export const BookingSetupDetailPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex gap-1">
                     <Select value="14" disabled>
                       <SelectTrigger className="h-8 w-16">
@@ -270,7 +264,7 @@ export const BookingSetupDetailPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex gap-1">
                     <Select value="19" disabled>
                       <SelectTrigger className="h-8 w-16">
@@ -289,7 +283,7 @@ export const BookingSetupDetailPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Select disabled>
                       <SelectTrigger className="h-8">
@@ -297,7 +291,7 @@ export const BookingSetupDetailPage = () => {
                       </SelectTrigger>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Select value="15 Minutes" disabled>
                       <SelectTrigger className="h-8">
@@ -308,7 +302,7 @@ export const BookingSetupDetailPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Select disabled>
                       <SelectTrigger className="h-8">
@@ -335,7 +329,7 @@ export const BookingSetupDetailPage = () => {
                   <Label className="text-sm font-medium text-gray-700">Per Slot Charge:</Label>
                   <Input value={bookingData.perSlotCharge} className="mt-1 w-64" readOnly />
                 </div>
-                
+
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Booking Allowed before :</Label>
                   <div className="text-xs text-gray-500 mt-1">(Enter Time: DD Days, HH Hours, MM Minutes)</div>
@@ -348,7 +342,7 @@ export const BookingSetupDetailPage = () => {
                     <span className="text-gray-500">m</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Advance Booking :</Label>
                   <div className="flex items-center gap-2 mt-2">
@@ -360,7 +354,7 @@ export const BookingSetupDetailPage = () => {
                     <span className="text-gray-500">m</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Can Cancel Before Schedule :</Label>
                   <div className="flex items-center gap-2 mt-2">
@@ -388,9 +382,9 @@ export const BookingSetupDetailPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center space-x-2">
-                    <input 
-                      type="checkbox" 
-                      checked={bookingData.allowMultipleSlots} 
+                    <input
+                      type="checkbox"
+                      checked={bookingData.allowMultipleSlots}
                       disabled
                       className="w-4 h-4 text-blue-600"
                     />
@@ -398,7 +392,7 @@ export const BookingSetupDetailPage = () => {
                   </div>
                   <Input value="15" className="w-20" readOnly />
                 </div>
-                
+
                 <div className="flex items-center gap-4">
                   <Label className="text-sm font-medium">Facility can be booked</Label>
                   <Input value="10" className="w-20" readOnly />
@@ -452,10 +446,10 @@ export const BookingSetupDetailPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Textarea 
-                placeholder="Enter description..." 
-                className="min-h-[100px]" 
-                readOnly 
+              <Textarea
+                placeholder="Enter description..."
+                className="min-h-[100px]"
+                readOnly
               />
             </CardContent>
           </Card>
@@ -470,10 +464,10 @@ export const BookingSetupDetailPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea 
-                  placeholder="Enter terms and conditions..." 
-                  className="min-h-[100px]" 
-                  readOnly 
+                <Textarea
+                  placeholder="Enter terms and conditions..."
+                  className="min-h-[100px]"
+                  readOnly
                 />
               </CardContent>
             </Card>
@@ -486,10 +480,10 @@ export const BookingSetupDetailPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea 
-                  placeholder="Enter cancellation text..." 
-                  className="min-h-[100px]" 
-                  readOnly 
+                <Textarea
+                  placeholder="Enter cancellation text..."
+                  className="min-h-[100px]"
+                  readOnly
                 />
               </CardContent>
             </Card>
@@ -511,22 +505,22 @@ export const BookingSetupDetailPage = () => {
                   </div>
                   <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="radio" 
-                        id="entireDay" 
-                        name="blockType" 
-                        value="entireDay" 
+                      <input
+                        type="radio"
+                        id="entireDay"
+                        name="blockType"
+                        value="entireDay"
                         disabled
                         className="w-4 h-4"
                       />
                       <label htmlFor="entireDay" className="text-sm">Entire Day</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="radio" 
-                        id="selectedSlots" 
-                        name="blockType" 
-                        value="selectedSlots" 
+                      <input
+                        type="radio"
+                        id="selectedSlots"
+                        name="blockType"
+                        value="selectedSlots"
                         disabled
                         className="w-4 h-4"
                       />
@@ -534,14 +528,14 @@ export const BookingSetupDetailPage = () => {
                     </div>
                   </div>
                   <div>
-                    <Textarea 
-                      placeholder="Please mention block reason" 
-                      className="min-h-[80px] resize-none" 
-                      readOnly 
+                    <Textarea
+                      placeholder="Please mention block reason"
+                      className="min-h-[80px] resize-none"
+                      readOnly
                     />
                   </div>
                 </div>
-                
+
                 <div className="mt-6">
                   <div className="grid grid-cols-3 gap-4 py-3 bg-gray-100 px-4 font-semibold text-sm">
                     <div>Block Days</div>
@@ -649,10 +643,10 @@ export const BookingSetupDetailPage = () => {
               <p className="text-sm text-gray-600 mb-3">
                 Text content will appear on booking room share icon in Application
               </p>
-              <Textarea 
-                placeholder="Enter shared content text..." 
-                className="min-h-[100px]" 
-                readOnly 
+              <Textarea
+                placeholder="Enter shared content text..."
+                className="min-h-[100px]"
+                readOnly
               />
             </CardContent>
           </Card>

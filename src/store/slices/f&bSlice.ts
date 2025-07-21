@@ -160,7 +160,7 @@ export const fetchRestaurantStatuses = createAsyncThunk(
                     },
                 }
             );
-            return response.data;
+            return response.data.statuses;
         } catch (error) {
             const message =
                 error.response?.data?.message ||
@@ -170,6 +170,48 @@ export const fetchRestaurantStatuses = createAsyncThunk(
         }
     }
 );
+
+export const deleteRestaurantStatus = createAsyncThunk("deleteRestaurantStatus", async ({ baseUrl, token, id, statusId, data }: { baseUrl: string; token: string; id: number; statusId: number; data: any }, { rejectWithValue }) => {
+    try {
+        const response = await axios.patch(
+            `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_statuses/${statusId}.json`,
+            data,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        const message =
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to delete restaurant status";
+        return rejectWithValue(message);
+    }
+})
+
+export const editRestaurantStatus = createAsyncThunk("editRestaurantStatus", async ({ baseUrl, token, id, statusId, data }: { baseUrl: string; token: string; id: number; statusId: number; data: any }, { rejectWithValue }) => {
+    try {
+        const response = await axios.put(
+            `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_statuses/${statusId}.json`,
+            data,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        const message =
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to edit restaurant status";
+        return rejectWithValue(message);
+    }
+})
 
 export const createRestaurantCategory = createAsyncThunk(
     "createRestaurantCategory",
@@ -382,6 +424,201 @@ export const deleteSubCategory = createAsyncThunk(
     }
 );
 
+export const editSubCategory = createAsyncThunk(
+    "editSubCategory",
+    async (
+        {
+            baseUrl,
+            token,
+            id,
+            subId,
+            data,
+        }: { baseUrl: string; token: string; id: number; subId: number; data: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.put(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_sub_categories/${subId}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to edit subcategory";
+            return rejectWithValue(message);
+        }
+    }
+)
+
+export const createMenu = createAsyncThunk(
+    "createMenu",
+    async ({ baseUrl, token, id, data }: { baseUrl: string; token: string; id: number; data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to create menu";
+            return rejectWithValue(message);
+        }
+    }
+)
+
+export const fetchMenu = createAsyncThunk(
+    "fetchMenu",
+    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data.restaurant_menu;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch menu";
+            return rejectWithValue(message);
+        }
+    }
+)
+
+export const fetchRestaurantBookings = createAsyncThunk(
+    "fetchRestaurantBookings",
+    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/table_bookings.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch restaurant bookings";
+            return rejectWithValue(message);
+        }
+    }
+)
+
+export const fetchRestaurantOrders = createAsyncThunk(
+    "fetchRestaurantOrders",
+    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch restaurant orders";
+            return rejectWithValue(message);
+        }
+    }
+)
+
+export const fetchMenuDetails = createAsyncThunk(
+    "fetchMenuDetails",
+    async ({ baseUrl, token, id, mid }: { baseUrl: string; token: string; id: number, mid: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus/${mid}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch menu details";
+            return rejectWithValue(message);
+        }
+    }
+)
+
+export const fetchOrderDetails = createAsyncThunk(
+    "fetchOrderDetails",
+    async ({ baseUrl, token, id, oid }: { baseUrl: string; token: string; id: number, oid: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders/${oid}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch order details";
+            return rejectWithValue(message);
+        }
+    }
+)
+
+export const exportOrders = createAsyncThunk(
+    "exportOrders",
+    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.xlsx`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to export orders";
+            return rejectWithValue(message);
+        }
+    }
+)
+
 export const fetchRestaurantsSlice = createApiSlice(
     "fetchRestaurants",
     fetchRestaurants
@@ -431,6 +668,42 @@ export const deleteSubCategorySlice = createApiSlice(
     "deleteSubCategory",
     deleteSubCategory
 );
+export const editRestaurantStatusSlice = createApiSlice(
+    "editRestaurantStatus",
+    editRestaurantStatus
+);
+export const deleteRestaurantStatusSlice = createApiSlice(
+    "deleteRestaurantStatus",
+    deleteRestaurantStatus
+);
+export const editSubCategorySlice = createApiSlice(
+    "editSubCategory",
+    editSubCategory
+);
+export const fetchRestaurantBookingsSlice = createApiSlice(
+    "fetchRestaurantBookings",
+    fetchRestaurantBookings
+);
+export const createMenuSlice = createApiSlice(
+    "createMenu",
+    createMenu
+);
+export const fetchMenuSlice = createApiSlice(
+    "fetchMenu",
+    fetchMenu
+);
+export const fetchMenuDetailsSlice = createApiSlice(
+    "fetchMenuDetails",
+    fetchMenuDetails
+);
+export const fetchOrderDetailsSlice = createApiSlice(
+    "fetchOrderDetails",
+    fetchOrderDetails
+);
+export const exportOrdersSlice = createApiSlice(
+    "exportOrders",
+    exportOrders
+);
 
 export const fetchRestaurantsReducer = fetchRestaurantsSlice.reducer;
 export const createRestaurantReducer = createRestaurantSlice.reducer;
@@ -450,3 +723,12 @@ export const editCategoryReducer = editCategorySlice.reducer;
 export const createSubcategoryReducer = createSubcategorySlice.reducer;
 export const fetchSubcategoryReducer = fetchSubcategorySlice.reducer;
 export const deleteSubCategoryReducer = deleteSubCategorySlice.reducer;
+export const editRestaurantStatusReducer = editRestaurantStatusSlice.reducer;
+export const deleteRestaurantStatusReducer = deleteRestaurantStatusSlice.reducer;
+export const editSubCategoryReducer = editSubCategorySlice.reducer;
+export const fetchRestaurantBookingsReducer = fetchRestaurantBookingsSlice.reducer;
+export const createMenuReducer = createMenuSlice.reducer;
+export const fetchMenuReducer = fetchMenuSlice.reducer;
+export const fetchMenuDetailsReducer = fetchMenuDetailsSlice.reducer;
+export const fetchOrderDetailsReducer = fetchOrderDetailsSlice.reducer;
+export const exportOrdersReducer = exportOrdersSlice.reducer;
