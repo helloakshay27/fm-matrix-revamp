@@ -45,10 +45,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             type={type}
             className={cn(
-              "floating-label w-full px-[15px] text-base border rounded-md transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 bg-white",
-              isFocused ? "border-[#4A90E2] border-2" : "border-[#4A90E2] border-1",
-              props.disabled && "bg-[#F9F9F9] border-[#E0E0E0]",
-              "h-[40px]",
+              "floating-label w-full px-[15px] text-base border border-[#ccc] rounded transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
+              "h-[36px]", // ✅ fixed height to 36px
               className
             )}
             placeholder=""
@@ -60,10 +58,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
           <label
             className={cn(
-              "absolute left-[15px] transition-all duration-150 ease-in pointer-events-none",
+              "absolute left-[15px] transition-all duration-150 ease-in text-[#676767] pointer-events-none",
               shouldFloatLabel
-                ? "field-active -translate-y-[25px] text-[0.9em] text-[#4A90E2] font-medium"
-                : "top-[10px] text-base text-[#676767]"
+                ? "field-active -translate-y-[25px] text-[0.9em] text-black"
+                : "top-[6px] text-base"
             )}
             style={{
               textShadow: shouldFloatLabel
@@ -81,17 +79,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex w-full rounded-md border bg-white px-3 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
-          isFocused ? "border-[#4A90E2] border-2" : "border-[#4A90E2] border-1",
-          props.disabled && "bg-[#F9F9F9] border-[#E0E0E0]",
-          "h-[40px]",
+          "flex w-full rounded-md border border-gray-300 bg-transparent px-3 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
+          "h-[36px]", // ✅ fixed height to 36px
           className
         )}
         placeholder={placeholder}
         ref={ref}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onChange={handleChange}
         {...props}
       />
     );
