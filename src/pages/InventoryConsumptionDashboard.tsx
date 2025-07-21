@@ -278,11 +278,14 @@ const InventoryConsumptionDashboard = () => {
                         '&.Mui-focused fieldset': {
                           borderColor: '#C72030'
                         }
+                      },
+                      '& .MuiSelect-select': {
+                        padding: '12px 14px'
                       }
                     }}
                   >
                     <MenuItem value="" disabled>
-                      <span style={{ color: '#EF4444' }}>Select Group</span>
+                      <span style={{ color: '#9CA3AF' }}>Select Group</span>
                     </MenuItem>
                     <MenuItem value="group1">Group 1</MenuItem>
                     <MenuItem value="group2">Group 2</MenuItem>
@@ -321,11 +324,14 @@ const InventoryConsumptionDashboard = () => {
                         '&.Mui-focused fieldset': {
                           borderColor: '#C72030'
                         }
+                      },
+                      '& .MuiSelect-select': {
+                        padding: '12px 14px'
                       }
                     }}
                   >
                     <MenuItem value="" disabled>
-                      <span style={{ color: '#EF4444' }}>Select Sub Group</span>
+                      <span style={{ color: '#9CA3AF' }}>Select Sub Group</span>
                     </MenuItem>
                     <MenuItem value="subgroup1">Sub Group 1</MenuItem>
                     <MenuItem value="subgroup2">Sub Group 2</MenuItem>
@@ -364,11 +370,14 @@ const InventoryConsumptionDashboard = () => {
                         '&.Mui-focused fieldset': {
                           borderColor: '#C72030'
                         }
+                      },
+                      '& .MuiSelect-select': {
+                        padding: '12px 14px'
                       }
                     }}
                   >
                     <MenuItem value="" disabled>
-                      <span style={{ color: '#EF4444' }}>Select Criticality</span>
+                      <span style={{ color: '#9CA3AF' }}>Select Criticality</span>
                     </MenuItem>
                     <MenuItem value="critical">Critical</MenuItem>
                     <MenuItem value="non-critical">Non-Critical</MenuItem>
