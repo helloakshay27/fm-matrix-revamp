@@ -120,7 +120,24 @@ const InventoryConsumptionViewPage = () => {
   };
 
   const handleAddConsume = () => {
-    console.log('Navigate to Add/Consume page');
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFormData({ quantity: '', moveType: '', comments: '' });
+  };
+
+  const handleFormSubmit = () => {
+    console.log('Form submitted:', formData);
+    handleCloseModal();
+  };
+
+  const handleInputChange = (field: string) => (event: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
   };
 
   const handleBack = () => {
@@ -231,6 +248,95 @@ const InventoryConsumptionViewPage = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Add/Consume Modal */}
+      <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
+          Add / Consume
+          <IconButton onClick={handleCloseModal}>
+            <X className="w-5 h-5" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <div className="space-y-6">
+            <TextField
+              label="Enter Quantity"
+              placeholder="Enter Quantity"
+              value={formData.quantity}
+              onChange={handleInputChange('quantity')}
+              variant="outlined"
+              fullWidth
+              required
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  height: '48px',
+                  borderRadius: '8px',
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#9CA3AF',
+                  fontSize: '14px',
+                  '&.Mui-focused': { color: '#C72030' }
+                }
+              }}
+            />
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink={true} sx={{ color: '#9CA3AF', fontSize: '14px', '&.Mui-focused': { color: '#C72030' } }}>
+                Select Type
+              </InputLabel>
+              <Select
+                value={formData.moveType}
+                onChange={handleInputChange('moveType')}
+                label="Select Type"
+                displayEmpty
+                sx={{
+                  height: '48px',
+                  borderRadius: '8px',
+                  '& .MuiSelect-select': {
+                    padding: '12px 14px',
+                  }
+                }}
+              >
+                <MenuItem value="">Select a Move Type</MenuItem>
+                <MenuItem value="add">Add</MenuItem>
+                <MenuItem value="consume">Consume</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Comments"
+              placeholder="Enter comments"
+              value={formData.comments}
+              onChange={handleInputChange('comments')}
+              variant="outlined"
+              fullWidth
+              multiline
+              rows={4}
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#9CA3AF',
+                  fontSize: '14px',
+                  '&.Mui-focused': { color: '#C72030' }
+                }
+              }}
+            />
+
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={handleFormSubmit}
+                className="bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-lg px-8 py-3 h-12 font-medium"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
