@@ -181,6 +181,21 @@ export interface OccupantUserResponse {
   };
 }
 
+// New interface for ticket filters
+export interface TicketFilters {
+  date_range?: string;
+  category_type_id_eq?: number;
+  sub_category_id_eq?: number;
+  dept_id_eq?: number;
+  site_id_eq?: number;
+  unit_id_eq?: number;
+  issue_status_in?: number[];
+  priority_eq?: string;
+  user_firstname_or_user_lastname_cont?: string;
+  search_all_fields_cont?: string;
+  assigned_to_in?: number[];
+}
+
 // API Services
 export const ticketManagementAPI = {
   // Categories
@@ -227,8 +242,28 @@ export const ticketManagementAPI = {
   },
 
   // Tickets
-  async getTickets(page: number = 1, perPage: number = 20): Promise<TicketListResponse> {
-    const response = await apiClient.get(`/pms/admin/complaints.json?per_page=${perPage}&page=${page}`);
+  async getTickets(page: number = 1, perPage: number = 20, filters?: TicketFilters): Promise<TicketListResponse> {
+    const queryParams = new URLSearchParams();
+    
+    // Add pagination
+    queryParams.append('page', page.toString());
+    queryParams.append('per_page', perPage.toString());
+    
+    // Add filters if provided
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (Array.isArray(value)) {
+            // Handle array parameters like issue_status_in[] and assigned_to_in[]
+            value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else {
+            queryParams.append(`q[${key}]`, value.toString());
+          }
+        }
+      });
+    }
+
+    const response = await apiClient.get(`/pms/admin/complaints.json?${queryParams.toString()}`);
     return {
       complaints: response.data.complaints || [],
       pagination: response.data.pagination
@@ -486,19 +521,7 @@ export const ticketManagementAPI = {
   },
 
   // Get ticket summary with optional filters
-  async getTicketSummary(filters?: {
-    date_range?: string;
-    category_type_id_eq?: number;
-    sub_category_id_eq?: number;
-    dept_id_eq?: number;
-    site_id_eq?: number;
-    unit_id_eq?: number;
-    issue_status_in?: number[];
-    priority_eq?: string;
-    user_firstname_or_user_lastname_cont?: string;
-    search_all_fields_cont?: string;
-    assigned_to_in?: number[];
-  }): Promise<{
+  async getTicketSummary(filters?: TicketFilters): Promise<{
     total_tickets: number;
     open_tickets: number;
     in_progress_tickets: number;
@@ -511,7 +534,7 @@ export const ticketManagementAPI = {
     
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
           } else {
@@ -527,12 +550,12 @@ export const ticketManagementAPI = {
   },
 
   // Export tickets with filters in Excel format
-  async exportTicketsExcel(filters?: any): Promise<Blob> {
+  async exportTicketsExcel(filters?: TicketFilters): Promise<Blob> {
     const queryParams = new URLSearchParams();
     
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
           } else {

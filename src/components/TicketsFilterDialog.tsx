@@ -1,21 +1,22 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip, OutlinedInput, SelectChangeEvent } from '@mui/material';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface FilterData {
-  createdDate: string;
-  category: string;
-  subcategory: string;
-  department: string;
-  site: string;
-  unit: string;
-  status: string;
-  adminPriority: string;
-  createdBy: string;
-  assignedTo: string;
+  date_range?: string;
+  category_type_id_eq?: number;
+  sub_category_id_eq?: number;
+  dept_id_eq?: number;
+  site_id_eq?: number;
+  unit_id_eq?: number;
+  issue_status_in?: number[];
+  priority_eq?: string;
+  user_firstname_or_user_lastname_cont?: string;
+  assigned_to_in?: number[];
 }
 
 interface TicketsFilterDialogProps {
@@ -27,42 +28,73 @@ interface TicketsFilterDialogProps {
 export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: TicketsFilterDialogProps) => {
   const { toast } = useToast();
   const [filters, setFilters] = useState<FilterData>({
-    createdDate: '',
-    category: '',
-    subcategory: '',
-    department: '',
-    site: '',
-    unit: '',
-    status: '',
-    adminPriority: '',
-    createdBy: '',
-    assignedTo: ''
+    date_range: '',
+    category_type_id_eq: undefined,
+    sub_category_id_eq: undefined,
+    dept_id_eq: undefined,
+    site_id_eq: undefined,
+    unit_id_eq: undefined,
+    issue_status_in: [],
+    priority_eq: '',
+    user_firstname_or_user_lastname_cont: '',
+    assigned_to_in: []
   });
 
-  const handleFilterChange = (key: keyof FilterData, value: string) => {
+  const handleFilterChange = (key: keyof FilterData, value: any) => {
     setFilters(prev => ({
       ...prev,
       [key]: value
     }));
   };
 
+  const handleMultiSelectChange = (key: keyof FilterData, event: SelectChangeEvent<number[]>) => {
+    const value = event.target.value;
+    setFilters(prev => ({
+      ...prev,
+      [key]: typeof value === 'string' ? value.split(',').map(Number) : value
+    }));
+  };
+
+  const handleDateRangeChange = (type: 'from' | 'to', value: string) => {
+    const currentRange = filters.date_range?.split('+-+') || ['', ''];
+    const newRange = type === 'from' 
+      ? [value, currentRange[1]] 
+      : [currentRange[0], value];
+    
+    if (newRange[0] && newRange[1]) {
+      setFilters(prev => ({
+        ...prev,
+        date_range: `${newRange[0]}+-+${newRange[1]}`
+      }));
+    }
+  };
+
   const handleReset = () => {
     setFilters({
-      createdDate: '',
-      category: '',
-      subcategory: '',
-      department: '',
-      site: '',
-      unit: '',
-      status: '',
-      adminPriority: '',
-      createdBy: '',
-      assignedTo: ''
+      date_range: '',
+      category_type_id_eq: undefined,
+      sub_category_id_eq: undefined,
+      dept_id_eq: undefined,
+      site_id_eq: undefined,
+      unit_id_eq: undefined,
+      issue_status_in: [],
+      priority_eq: '',
+      user_firstname_or_user_lastname_cont: '',
+      assigned_to_in: []
     });
   };
 
   const handleApply = () => {
-    onApplyFilters(filters);
+    // Clean up empty filters
+    const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== '' && 
+          !(Array.isArray(value) && value.length === 0)) {
+        acc[key as keyof FilterData] = value;
+      }
+      return acc;
+    }, {} as FilterData);
+
+    onApplyFilters(cleanFilters);
     toast({
       title: "Success",
       description: "Filters applied successfully!",
@@ -70,13 +102,14 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
     onClose();
   };
 
-  // Responsive styles for TextField and Select
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
   };
+
+  const currentRange = filters.date_range?.split('+-+') || ['', ''];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,22 +122,32 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
         </DialogHeader>
 
         <div className="grid grid-cols-3 gap-4 py-4">
-          {/* Row 1 */}
+          {/* Row 1 - Date Range */}
           <div className="space-y-2">
             <TextField
-              label="Created Date"
+              label="Date From"
               type="date"
-              value={filters.createdDate}
-              onChange={(e) => handleFilterChange('createdDate', e.target.value)}
-              placeholder="Select Created Date"
+              value={currentRange[0] || ''}
+              onChange={(e) => handleDateRangeChange('from', e.target.value)}
+              placeholder="Select From Date"
               fullWidth
               variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              InputProps={{
-                sx: fieldStyles
-              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <TextField
+              label="Date To"
+              type="date"
+              value={currentRange[1] || ''}
+              onChange={(e) => handleDateRangeChange('to', e.target.value)}
+              placeholder="Select To Date"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
             />
           </div>
 
@@ -115,36 +158,16 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 labelId="category-select-label"
                 label="Category"
                 displayEmpty
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
+                value={filters.category_type_id_eq || ''}
+                onChange={(e) => handleFilterChange('category_type_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Category Type</em></MenuItem>
-                <MenuItem value="air-conditioner">Air Conditioner</MenuItem>
-                <MenuItem value="fire-system">FIRE SYSTEM</MenuItem>
-                <MenuItem value="cleaning">Cleaning</MenuItem>
-                <MenuItem value="electrical">Electrical</MenuItem>
-                <MenuItem value="printer">Printer</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="subcategory-select-label" shrink>Subcategory</InputLabel>
-              <MuiSelect
-                labelId="subcategory-select-label"
-                label="Subcategory"
-                displayEmpty
-                value={filters.subcategory}
-                onChange={(e) => handleFilterChange('subcategory', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select SubCategory</em></MenuItem>
-                <MenuItem value="test">test</MenuItem>
-                <MenuItem value="na">NA</MenuItem>
-                <MenuItem value="fire">fire</MenuItem>
-                <MenuItem value="dentry">dentry</MenuItem>
+                <MenuItem value=""><em>Select Category</em></MenuItem>
+                <MenuItem value={682}>Air Conditioner</MenuItem>
+                <MenuItem value={683}>FIRE SYSTEM</MenuItem>
+                <MenuItem value={684}>Cleaning</MenuItem>
+                <MenuItem value={685}>Electrical</MenuItem>
+                <MenuItem value={686}>Printer</MenuItem>
               </MuiSelect>
             </FormControl>
           </div>
@@ -152,19 +175,39 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
           {/* Row 2 */}
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined">
+              <InputLabel id="subcategory-select-label" shrink>Sub Category</InputLabel>
+              <MuiSelect
+                labelId="subcategory-select-label"
+                label="Sub Category"
+                displayEmpty
+                value={filters.sub_category_id_eq || ''}
+                onChange={(e) => handleFilterChange('sub_category_id_eq', e.target.value ? Number(e.target.value) : undefined)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Sub Category</em></MenuItem>
+                <MenuItem value={746}>Test</MenuItem>
+                <MenuItem value={747}>NA</MenuItem>
+                <MenuItem value={748}>Fire</MenuItem>
+                <MenuItem value={749}>Dentry</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="space-y-2">
+            <FormControl fullWidth variant="outlined">
               <InputLabel id="department-select-label" shrink>Department</InputLabel>
               <MuiSelect
                 labelId="department-select-label"
                 label="Department"
                 displayEmpty
-                value={filters.department}
-                onChange={(e) => handleFilterChange('department', e.target.value)}
+                value={filters.dept_id_eq || ''}
+                onChange={(e) => handleFilterChange('dept_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
               >
                 <MenuItem value=""><em>Select Department</em></MenuItem>
-                <MenuItem value="technician">Technician</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="facility">Facility</MenuItem>
+                <MenuItem value={3}>Technician</MenuItem>
+                <MenuItem value={4}>Maintenance</MenuItem>
+                <MenuItem value={5}>Facility</MenuItem>
               </MuiSelect>
             </FormControl>
           </div>
@@ -176,33 +219,14 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 labelId="site-select-label"
                 label="Site"
                 displayEmpty
-                value={filters.site}
-                onChange={(e) => handleFilterChange('site', e.target.value)}
+                value={filters.site_id_eq || ''}
+                onChange={(e) => handleFilterChange('site_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
               >
                 <MenuItem value=""><em>Select Site</em></MenuItem>
-                <MenuItem value="lockated">Lockated</MenuItem>
-                <MenuItem value="mumbai">Mumbai</MenuItem>
-                <MenuItem value="pune">Pune</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="unit-select-label" shrink>Unit</InputLabel>
-              <MuiSelect
-                labelId="unit-select-label"
-                label="Unit"
-                displayEmpty
-                value={filters.unit}
-                onChange={(e) => handleFilterChange('unit', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Unit</em></MenuItem>
-                <MenuItem value="unit1">Unit 1</MenuItem>
-                <MenuItem value="unit2">Unit 2</MenuItem>
-                <MenuItem value="unit3">Unit 3</MenuItem>
+                <MenuItem value={7}>Lockated</MenuItem>
+                <MenuItem value={8}>Mumbai</MenuItem>
+                <MenuItem value={9}>Pune</MenuItem>
               </MuiSelect>
             </FormControl>
           </div>
@@ -210,36 +234,63 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
           {/* Row 3 */}
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined">
-              <InputLabel id="status-select-label" shrink>Status</InputLabel>
+              <InputLabel id="unit-select-label" shrink>Unit</InputLabel>
               <MuiSelect
-                labelId="status-select-label"
-                label="Status"
+                labelId="unit-select-label"
+                label="Unit"
                 displayEmpty
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
+                value={filters.unit_id_eq || ''}
+                onChange={(e) => handleFilterChange('unit_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Status</em></MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="open">Open</MenuItem>
-                <MenuItem value="in-progress">In Progress</MenuItem>
-                <MenuItem value="closed">Closed</MenuItem>
+                <MenuItem value=""><em>Select Unit</em></MenuItem>
+                <MenuItem value={46}>Unit 1</MenuItem>
+                <MenuItem value={47}>Unit 2</MenuItem>
+                <MenuItem value={48}>Unit 3</MenuItem>
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined">
-              <InputLabel id="admin-priority-select-label" shrink>Admin Priority</InputLabel>
+              <InputLabel id="status-select-label" shrink>Status</InputLabel>
               <MuiSelect
-                labelId="admin-priority-select-label"
-                label="Admin Priority"
+                labelId="status-select-label"
+                label="Status"
+                multiple
                 displayEmpty
-                value={filters.adminPriority}
-                onChange={(e) => handleFilterChange('adminPriority', e.target.value)}
+                value={filters.issue_status_in || []}
+                onChange={handleMultiSelectChange.bind(null, 'issue_status_in')}
+                input={<OutlinedInput label="Status" />}
+                renderValue={(selected) => (
+                  <div className="flex flex-wrap gap-1">
+                    {(selected as number[]).map((value) => (
+                      <Chip key={value} label={value === 323 ? 'Pending' : value === 325 ? 'Open' : value === 326 ? 'Closed' : value} size="small" />
+                    ))}
+                  </div>
+                )}
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Admin Priority</em></MenuItem>
+                <MenuItem value={323}>Pending</MenuItem>
+                <MenuItem value={325}>Open</MenuItem>
+                <MenuItem value={326}>Closed</MenuItem>
+                <MenuItem value={327}>In Progress</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="space-y-2">
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="priority-select-label" shrink>Priority</InputLabel>
+              <MuiSelect
+                labelId="priority-select-label"
+                label="Priority"
+                displayEmpty
+                value={filters.priority_eq || ''}
+                onChange={(e) => handleFilterChange('priority_eq', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Priority</em></MenuItem>
                 <MenuItem value="p1">P1</MenuItem>
                 <MenuItem value="p2">P2</MenuItem>
                 <MenuItem value="p3">P3</MenuItem>
@@ -248,39 +299,45 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
             </FormControl>
           </div>
 
-          <div className="space-y-2">
-            <TextField
-              label="Created By"
-              placeholder="Enter Created By"
-              value={filters.createdBy}
-              onChange={(e) => handleFilterChange('createdBy', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              InputProps={{
-                sx: fieldStyles
-              }}
-            />
-          </div>
-
           {/* Row 4 */}
           <div className="space-y-2">
             <TextField
-              label="Assigned To"
-              placeholder="Enter Assigned To"
-              value={filters.assignedTo}
-              onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
+              label="Created By"
+              placeholder="Enter Created By Name"
+              value={filters.user_firstname_or_user_lastname_cont || ''}
+              onChange={(e) => handleFilterChange('user_firstname_or_user_lastname_cont', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              InputProps={{
-                sx: fieldStyles
-              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
             />
+          </div>
+
+          <div className="space-y-2">
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="assigned-to-select-label" shrink>Assigned To</InputLabel>
+              <MuiSelect
+                labelId="assigned-to-select-label"
+                label="Assigned To"
+                multiple
+                displayEmpty
+                value={filters.assigned_to_in || []}
+                onChange={handleMultiSelectChange.bind(null, 'assigned_to_in')}
+                input={<OutlinedInput label="Assigned To" />}
+                renderValue={(selected) => (
+                  <div className="flex flex-wrap gap-1">
+                    {(selected as number[]).map((value) => (
+                      <Chip key={value} label={value === 35905 ? 'John Doe' : value === 35948 ? 'Jane Smith' : value} size="small" />
+                    ))}
+                  </div>
+                )}
+                sx={fieldStyles}
+              >
+                <MenuItem value={35905}>John Doe</MenuItem>
+                <MenuItem value={35948}>Jane Smith</MenuItem>
+                <MenuItem value={35949}>Mike Johnson</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
         </div>
 
