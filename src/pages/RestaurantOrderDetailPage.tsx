@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, X } from "lucide-react";
 
 interface OrderDetail {
   id: number;
@@ -344,8 +344,16 @@ export const RestaurantOrderDetailPage = () => {
       {/* Edit Status Dialog */}
       <Dialog open={isEditStatusOpen} onOpenChange={setIsEditStatusOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b">
             <DialogTitle>Edit Status</DialogTitle>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsEditStatusOpen(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogHeader>
           <div className="space-y-4">
             <div>
