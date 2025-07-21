@@ -1,33 +1,35 @@
+
 import React from 'react';
 import { TextField, TextFieldProps, createTheme, ThemeProvider } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-// Custom theme for text fields
+// Custom theme for text fields to match the design reference
 const textFieldTheme = createTheme({
   components: {
     MuiTextField: {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: '6px', // rounded-md equivalent
+            borderRadius: '4px',
             backgroundColor: '#FFFFFF',
             boxShadow: 'none',
             '& fieldset': {
-              borderColor: '#E0E0E0',
-              borderRadius: '6px', // rounded-md equivalent
+              borderColor: '#4A90E2',
+              borderWidth: '2px',
+              borderRadius: '4px',
             },
             '&:hover fieldset': {
-              borderColor: '#1A1A1A',
+              borderColor: '#4A90E2',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#C72030',
-              borderWidth: 2,
+              borderColor: '#4A90E2',
+              borderWidth: '2px',
             },
             '&.Mui-disabled': {
               opacity: 0.5,
             },
             '&.MuiOutlinedInput-multiline': {
-              paddingTop: '20px',
+              paddingTop: '16px',
             },
           },
         },
@@ -36,15 +38,17 @@ const textFieldTheme = createTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: '#1A1A1A',
-          fontWeight: 500,
+          color: '#4A90E2',
+          fontWeight: 400,
+          fontSize: '14px',
           '&.Mui-focused': {
-            color: '#C72030',
+            color: '#4A90E2',
           },
           '&.MuiInputLabel-shrink': {
-            transform: 'translate(14px, -9px) scale(0.75)',
+            transform: 'translate(14px, -9px) scale(0.85)',
             backgroundColor: '#FFFFFF',
-            padding: '0 4px',
+            padding: '0 6px',
+            fontWeight: 400,
           },
         },
       },
@@ -52,11 +56,12 @@ const textFieldTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         input: {
-          color: '#1A1A1A',
-          opacity: 0.54,
+          color: '#333333',
+          fontSize: '14px',
+          padding: '12px 14px',
           '&::placeholder': {
-            color: '#1A1A1A',
-            opacity: 0.54,
+            color: '#999999',
+            opacity: 1,
           },
         },
       },
@@ -69,20 +74,20 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     // Desktop (default)
     width: '316px',
-    height: '45px',
+    height: '48px',
     '& input': {
       fontSize: '14px',
       fontWeight: 400,
-      padding: '12px 20px 20px 12px',
+      padding: '12px 14px',
     },
     '& textarea': {
       fontSize: '14px',
       fontWeight: 400,
-      padding: '12px',
+      padding: '12px 14px',
     },
     '& .MuiInputLabel-root': {
       fontSize: '14px',
-      fontWeight: 500,
+      fontWeight: 400,
     },
   },
   
@@ -92,15 +97,15 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
       width: '254px',
       height: '45px',
       '& input': {
-        fontSize: '12px',
-        padding: '4px 12px 12px 12px',
+        fontSize: '13px',
+        padding: '10px 14px',
       },
       '& textarea': {
-        fontSize: '12px',
-        padding: '12px',
+        fontSize: '13px',
+        padding: '12px 14px',
       },
       '& .MuiInputLabel-root': {
-        fontSize: '14px',
+        fontSize: '13px',
       },
     },
   },
@@ -111,15 +116,15 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
       width: '128px',
       height: '36px',
       '& input': {
-        fontSize: '8px',
-        padding: '8px',
+        fontSize: '12px',
+        padding: '8px 12px',
       },
       '& textarea': {
-        fontSize: '8px',
-        padding: '8px',
+        fontSize: '12px',
+        padding: '8px 12px',
       },
       '& .MuiInputLabel-root': {
-        fontSize: '10px',
+        fontSize: '12px',
       },
     },
   },
@@ -190,10 +195,10 @@ export const DesktopTextField: React.FC<CustomTextFieldProps> = (props) => (
     sx={{
       '& .MuiOutlinedInput-root': {
         width: '316px',
-        height: '45px',
+        height: '48px',
         '& input': {
           fontSize: '14px',
-          padding: '12px 20px 20px 12px',
+          padding: '12px 14px',
         },
       },
     }}
@@ -208,8 +213,8 @@ export const TabletTextField: React.FC<CustomTextFieldProps> = (props) => (
         width: '254px',
         height: '45px',
         '& input': {
-          fontSize: '12px',
-          padding: '4px 12px 12px 12px',
+          fontSize: '13px',
+          padding: '10px 14px',
         },
       },
     }}
@@ -224,11 +229,11 @@ export const MobileTextField: React.FC<CustomTextFieldProps> = (props) => (
         width: '128px',
         height: '36px',
         '& input': {
-          fontSize: '8px',
-          padding: '8px',
+          fontSize: '12px',
+          padding: '8px 12px',
         },
         '& .MuiInputLabel-root': {
-          fontSize: '10px',
+          fontSize: '12px',
         },
       },
     }}
