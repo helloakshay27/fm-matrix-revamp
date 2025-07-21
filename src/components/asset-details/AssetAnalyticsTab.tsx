@@ -16,44 +16,44 @@ export const AssetAnalyticsTab = () => {
       </div>
 
       {/* Asset Config Table */}
-      <div className="rounded-xl p-6 border shadow-lg bg-white">
-        <h3 className="text-lg font-semibold mb-4 text-red-600">Asset Config Table</h3>
-        <div className="grid grid-cols-9 gap-4">
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">Asset Basic</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+      <div className="rounded-xl p-3 sm:p-6 border shadow-lg bg-white">
+        <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-red-600">Asset Config Table</h3>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2 sm:gap-4">
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">Asset Basic</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">AMC</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">AMC</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">PPM</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">PPM</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">Group</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">Group</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">Dep.</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">Dep.</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">Tagged</div>
-            <span className="text-sm text-red-600 font-medium">Partial</span>
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">Tagged</div>
+            <span className="text-xs sm:text-sm text-red-600 font-medium">Partial</span>
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">Mtr.</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">Mtr.</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">Audit</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">Audit</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
-          <div className="text-center p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#f6f4ee' }}>
-            <div className="text-sm font-medium mb-2 text-red-600">Cost</div>
-            <Check className="w-5 h-5 text-red-600 mx-auto" />
+          <div className="text-center p-2 sm:p-4 border border-red-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-red-50">
+            <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-red-600">Cost</div>
+            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mx-auto" />
           </div>
         </div>
       </div>
