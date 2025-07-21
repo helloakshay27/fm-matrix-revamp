@@ -111,7 +111,31 @@ export const AssetInfoTab = ({
         </div>
 
         {/* QR Code - 20% width */}
-        
+        <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm border">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{
+              backgroundColor: '#C72030'
+            }}>
+              <QrCode className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase" style={{
+              color: '#C72030'
+            }}>QR Code</h3>
+          </div>
+          
+          <div className="flex flex-col items-center">
+            <div className="w-24 h-24 border-2 border-gray-300 rounded-lg mb-4 flex items-center justify-center bg-gray-50">
+              <div className="grid grid-cols-4 gap-1">
+                {Array.from({ length: 16 }).map((_, i) => (
+                  <div key={i} className={`w-1 h-1 ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}`}></div>
+                ))}
+              </div>
+            </div>
+            <button className="text-xs text-gray-600 border border-gray-300 px-2 py-1 rounded">
+              📥
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Asset Details - Full Width */}
