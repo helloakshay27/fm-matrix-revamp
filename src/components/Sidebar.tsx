@@ -469,7 +469,20 @@ export const Sidebar = () => {
 
   const isActiveRoute = (href: string) => {
     const currentPath = location.pathname;
-    return currentPath === href || currentPath.startsWith(href + '/');
+    const isActive = currentPath === href || currentPath.startsWith(href + '/');
+    
+    // Debug logging for Services
+    if (href === '/maintenance/service') {
+      console.log('Services route check:', {
+        currentPath,
+        href,
+        exactMatch: currentPath === href,
+        prefixMatch: currentPath.startsWith(href + '/'),
+        isActive
+      });
+    }
+    
+    return isActive;
   };
 
   const renderMenuItem = (item: any, level: number = 0) => {
