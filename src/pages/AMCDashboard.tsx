@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Eye, Trash2, BarChart3, FileText, Download, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCData } from '@/store/slices/amcSlice';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Pagination,
   PaginationContent,
@@ -281,87 +283,312 @@ export const AMCDashboard = () => {
     return items;
   };
 
+  // Analytics data calculations
+  const activeAMCs = amcData.filter(amc => amc.active).length;
+  const inactiveAMCs = amcData.length - activeAMCs;
+  
+  // Status data for pie chart
+  const statusData = [
+    { name: 'Active', value: activeAMCs, color: '#c6b692' },
+    { name: 'Inactive', value: inactiveAMCs, color: '#d8dcdd' }
+  ];
+
+  // AMC by resource type
+  const resourceTypeData = amcData.reduce((acc, amc) => {
+    const type = amc.resource_type || 'Unknown';
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+
+  const resourceChartData = Object.entries(resourceTypeData).map(([name, value]) => ({ name, value }));
+
+  // AMC expiry analysis (upcoming expiries in next 30 days)
+  const today = new Date();
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+  const upcomingExpiries = amcData.filter(amc => {
+    if (!amc.amc_end_date) return false;
+    const endDate = new Date(amc.amc_end_date);
+    return endDate >= today && endDate <= thirtyDaysFromNow;
+  }).length;
+
+  const expiredAMCs = amcData.filter(amc => {
+    if (!amc.amc_end_date) return false;
+    const endDate = new Date(amc.amc_end_date);
+    return endDate < today;
+  }).length;
+
+  const validAMCs = amcData.length - upcomingExpiries - expiredAMCs;
+
+  const expiryData = [
+    { name: 'Valid', value: validAMCs, color: '#4ade80' },
+    { name: 'Expiring Soon', value: upcomingExpiries, color: '#fb923c' },
+    { name: 'Expired', value: expiredAMCs, color: '#ef4444' }
+  ];
+
+  // Stats for cards
+  const totalAMCValue = amcData.length * 50000; // Assuming average AMC value
+  const thisMonthAMCs = amcData.filter(amc => {
+    if (!amc.created_at) return false;
+    const createdDate = new Date(amc.created_at);
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
+  }).length;
+
+  const statsData = [
+    { label: 'Total AMCs', value: amcData.length, icon: FileText },
+    { label: 'Active AMCs', value: activeAMCs, icon: CheckCircle },
+    { label: 'Expiring Soon', value: upcomingExpiries, icon: AlertCircle },
+    { label: 'This Month', value: thisMonthAMCs, icon: Calendar }
+  ];
+
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
-          AMC LIST
-        </h1>
-      </div>
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+      <Tabs defaultValue="analytics" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger 
+            value="analytics" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger 
+            value="amclist" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+          >
+            <FileText className="w-4 h-4" />
+            AMC List
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={handleAddClick} 
-          className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      </div>
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          {/* Header */}
+          <div className="mb-6">
+            <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; Analytics</p>
+            <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
+              AMC ANALYTICS
+            </h1>
+          </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading AMC data...</div>
-        </div>
-      )}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {statsData.map((item, index) => {
+              const IconComponent = item.icon;
+              return (
+                <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate" style={{ color: '#C72030' }}>{item.value}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{item.label}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-red-600">Error: {error}</div>
-        </div>
-      )}
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+            {/* AMC Status Chart */}
+            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Status</h3>
+                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+              </div>
+              <div className="relative flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ value }) => value}
+                      labelLine={false}
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                {statusData.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-      {/* Enhanced Table */}
-      {!loading && (
-        <EnhancedTable
-          data={paginatedData}
-          columns={columns}
-          renderCell={renderCell}
-          renderActions={renderActions}
-          onRowClick={(item) => handleViewDetails(item.id)}
-          selectable={true}
-          selectedItems={selectedItems}
-          onSelectAll={handleSelectAll}
-          onSelectItem={handleSelectItem}
-          getItemId={(item) => item.id.toString()}
-          storageKey="amc-dashboard-table"
-          emptyMessage="No AMC records found"
-          searchPlaceholder="Search AMC records..."
-          enableExport={true}
-          exportFileName="amc-records"
-          bulkActions={bulkActions}
-          showBulkActions={true}
-          pagination={false}
-        />
-      )}
+            {/* AMC Expiry Analysis */}
+            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Expiry Analysis</h3>
+                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+              </div>
+              <div className="relative flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                  <PieChart>
+                    <Pie
+                      data={expiryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ value }) => value}
+                      labelLine={false}
+                    >
+                      {expiryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                {expiryData.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-      {/* Custom Pagination - Always show for debugging */}
-      <div className="flex justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-            
-            {renderPaginationItems()}
-            
-            <PaginationItem>
-              <PaginationNext 
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+            {/* Resource Type Distribution */}
+            <div className="xl:col-span-2 bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC by Resource Type</h3>
+                <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030]" />
+              </div>
+              <div className="w-full overflow-x-auto">
+                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
+                  <BarChart data={resourceChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={80}
+                      tick={{ fill: '#6b7280', fontSize: 10 }}
+                      className="text-xs"
+                    />
+                    <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#c6b692" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          {/* Header */}
+          <div className="mb-6">
+            <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
+            <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
+              AMC LIST
+            </h1>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 mb-6">
+            <Button 
+              onClick={handleAddClick} 
+              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          </div>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-8">
+              <div className="text-gray-600">Loading AMC data...</div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="flex justify-center items-center py-8">
+              <div className="text-red-600">Error: {error}</div>
+            </div>
+          )}
+
+          {/* Enhanced Table */}
+          {!loading && (
+            <EnhancedTable
+              data={paginatedData}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderActions}
+              onRowClick={(item) => handleViewDetails(item.id)}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
+              getItemId={(item) => item.id.toString()}
+              storageKey="amc-dashboard-table"
+              emptyMessage="No AMC records found"
+              searchPlaceholder="Search AMC records..."
+              enableExport={true}
+              exportFileName="amc-records"
+              bulkActions={bulkActions}
+              showBulkActions={true}
+              pagination={false}
+            />
+          )}
+
+          {/* Custom Pagination */}
+          <div className="flex justify-center mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                
+                {renderPaginationItems()}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
