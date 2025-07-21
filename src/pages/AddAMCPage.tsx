@@ -577,26 +577,34 @@ export const AddAMCPage = () => {
       </div>
 
       <div>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Start Date *</label>
+        <div className="relative">
           <ResponsiveDatePicker
             value={formData.startDate ? new Date(formData.startDate) : undefined}
             onChange={(date) => handleInputChange('startDate', date ? date.toISOString().split('T')[0] : '')}
             placeholder="Select Date"
-            className="w-full"
+            className="w-full h-[45px]"
           />
+          <label className={`absolute left-3 transition-all duration-200 pointer-events-none ${
+            formData.startDate ? 'top-[-8px] text-xs bg-white px-1 text-[#C72030]' : 'top-3 text-sm text-gray-500'
+          }`}>
+            Start Date *
+          </label>
         </div>
       </div>
 
       <div>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">First Service Date *</label>
+        <div className="relative">
           <ResponsiveDatePicker
             value={formData.firstService ? new Date(formData.firstService) : undefined}
             onChange={(date) => handleInputChange('firstService', date ? date.toISOString().split('T')[0] : '')}
             placeholder="Select Date"
-            className="w-full"
+            className="w-full h-[45px]"
           />
+          <label className={`absolute left-3 transition-all duration-200 pointer-events-none ${
+            formData.firstService ? 'top-[-8px] text-xs bg-white px-1 text-[#C72030]' : 'top-3 text-sm text-gray-500'
+          }`}>
+            First Service Date *
+          </label>
         </div>
       </div>
 
@@ -616,15 +624,19 @@ export const AddAMCPage = () => {
       </div>
 
       <div>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">End Date *</label>
+        <div className="relative">
           <ResponsiveDatePicker
             value={formData.endDate ? new Date(formData.endDate) : undefined}
             onChange={(date) => handleInputChange('endDate', date ? date.toISOString().split('T')[0] : '')}
             placeholder="Select Date"
-            className="w-full"
+            className="w-full h-[45px]"
             minDate={formData.startDate ? new Date(formData.startDate) : undefined}
           />
+          <label className={`absolute left-3 transition-all duration-200 pointer-events-none ${
+            formData.endDate ? 'top-[-8px] text-xs bg-white px-1 text-[#C72030]' : 'top-3 text-sm text-gray-500'
+          }`}>
+            End Date *
+          </label>
         </div>
       </div>
 
