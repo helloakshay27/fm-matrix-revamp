@@ -32,6 +32,7 @@ import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 import inventoryEditReducer from './slices/inventoryEditSlice'
 import serviceEditReducer from './slices/serviceSlice'
 import { createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
+import serviceFilterReducer from './slices/serviceFilterSlice'
 
 export const store = configureStore({
   reducer: {
@@ -83,8 +84,11 @@ export const store = configureStore({
     createSubcategory: createSubcategoryReducer,
     fetchSubcategory: fetchSubcategoryReducer,
     deleteSubCategory: deleteSubCategoryReducer,
+    serviceFilter: serviceFilterReducer,
   },
 })
+
+console.log('Store configured with reducers:', Object.keys(store.getState()));
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch

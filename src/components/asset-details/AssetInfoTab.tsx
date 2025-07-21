@@ -21,89 +21,97 @@ export const AssetInfoTab = ({
           }}>Location Details</h3>
           </div>
 
-          {/* Location Timeline - Vertical Layout */}
+          {/* Location Timeline - Horizontal Layout */}
           <div className="flex-1">
-            <div className="relative">
+            <div className="flex items-center justify-between">
               {/* Site */}
-              <div className="flex items-center mb-6">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+              <div className="flex flex-col items-center">
+                <div className="w-4 h-4 rounded-full mb-2" style={{
                   backgroundColor: '#C72030'
-                }}>
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-lg font-medium text-gray-800">Haven Infoline</div>
-                  <div className="text-sm text-gray-500">Site</div>
+                }}></div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">Site</div>
+                  <div className="text-sm font-medium text-gray-800">Haven Infoline</div>
                 </div>
               </div>
               
               {/* Connecting line */}
-              <div className="absolute left-3 top-6 bottom-6 w-0.5" style={{
+              <div className="flex-1 h-0.5 mx-4" style={{
                 backgroundColor: '#C72030'
               }}></div>
               
               {/* Building */}
-              <div className="flex items-center mb-6">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+              <div className="flex flex-col items-center">
+                <div className="w-4 h-4 rounded-full mb-2" style={{
                   backgroundColor: '#C72030'
-                }}>
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-lg font-medium text-gray-800">Jyoti Tower</div>
-                  <div className="text-sm text-gray-500">Building</div>
+                }}></div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">Building</div>
+                  <div className="text-sm font-medium text-gray-800">Jyoti Tower</div>
                 </div>
               </div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-0.5 mx-4" style={{
+                backgroundColor: '#C72030'
+              }}></div>
               
               {/* Wing */}
-              <div className="flex items-center mb-6">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+              <div className="flex flex-col items-center">
+                <div className="w-4 h-4 rounded-full mb-2" style={{
                   backgroundColor: '#C72030'
-                }}>
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-lg font-medium text-gray-800">J - Wing</div>
-                  <div className="text-sm text-gray-500">Wing</div>
+                }}></div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">Wing</div>
+                  <div className="text-sm font-medium text-gray-800">J - Wing</div>
                 </div>
               </div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-0.5 mx-4" style={{
+                backgroundColor: '#C72030'
+              }}></div>
               
               {/* Floor */}
-              <div className="flex items-center mb-6">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+              <div className="flex flex-col items-center">
+                <div className="w-4 h-4 rounded-full mb-2" style={{
                   backgroundColor: '#C72030'
-                }}>
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-lg font-medium text-gray-800">02<sup>nd</sup></div>
-                  <div className="text-sm text-gray-500">Floor</div>
+                }}></div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">Floor</div>
+                  <div className="text-sm font-medium text-gray-800">02<sup>nd</sup></div>
                 </div>
               </div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-0.5 mx-4" style={{
+                backgroundColor: '#C72030'
+              }}></div>
               
               {/* Area */}
-              <div className="flex items-center mb-6">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+              <div className="flex flex-col items-center">
+                <div className="w-4 h-4 rounded-full mb-2" style={{
                   backgroundColor: '#C72030'
-                }}>
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-lg font-medium text-gray-800">East</div>
-                  <div className="text-sm text-gray-500">Area</div>
+                }}></div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">Area</div>
+                  <div className="text-sm font-medium text-gray-800">East</div>
                 </div>
               </div>
               
+              {/* Connecting line */}
+              <div className="flex-1 h-0.5 mx-4" style={{
+                backgroundColor: '#C72030'
+              }}></div>
+              
               {/* Room */}
-              <div className="flex items-center">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mr-4" style={{
+              <div className="flex flex-col items-center">
+                <div className="w-4 h-4 rounded-full mb-2" style={{
                   backgroundColor: '#C72030'
-                }}>
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
-                </div>
-                <div className="flex-1">
-                  <div className="text-lg font-medium text-gray-800">R 202</div>
-                  <div className="text-sm text-gray-500">Room</div>
+                }}></div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">Room</div>
+                  <div className="text-sm font-medium text-gray-800">R 202</div>
                 </div>
               </div>
             </div>
@@ -111,7 +119,31 @@ export const AssetInfoTab = ({
         </div>
 
         {/* QR Code - 20% width */}
-        
+        <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm border">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{
+              backgroundColor: '#C72030'
+            }}>
+              <QrCode className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase" style={{
+              color: '#C72030'
+            }}>QR Code</h3>
+          </div>
+          
+          <div className="flex flex-col items-center">
+            <div className="w-24 h-24 border-2 border-gray-300 rounded-lg mb-4 flex items-center justify-center bg-gray-50">
+              <div className="grid grid-cols-4 gap-1">
+                {Array.from({ length: 16 }).map((_, i) => (
+                  <div key={i} className={`w-1 h-1 ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}`}></div>
+                ))}
+              </div>
+            </div>
+            <button className="text-xs text-gray-600 border border-gray-300 px-2 py-1 rounded">
+              📥
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Asset Details - Full Width */}
@@ -313,86 +345,103 @@ export const AssetInfoTab = ({
           }}>Movement Details</h3>
           </div>
 
-          <div className="space-y-8">
-            {/* Movement Timeline - Vertical Layout */}
-            <div className="relative">
-              {/* Continuous vertical line */}
-              <div className="absolute left-6 top-12 bottom-12 w-0.5" style={{
-                background: 'linear-gradient(to bottom, #C72030 0%, #C72030 50%, #d1d5db 50%, #d1d5db 100%)'
-              }}></div>
+          <div className="space-y-6">
+            {/* From Site and To Site */}
+            <div className="flex justify-between items-center text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>From Site</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>To Site</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-between text-lg font-semibold text-gray-800 mb-8">
+              <span>Sai Radhe, Bund Garden</span>
+              <span>Sai Radhe, Bund Garden</span>
+            </div>
+
+            {/* Movement Timeline - Horizontal Layout */}
+            <div className="flex justify-between items-center relative">
+              {/* Connecting lines that stop at icon edges */}
+              <div className="absolute top-6 flex justify-between w-full px-6">
+                {/* Line from Requested to Approved */}
+                <div 
+                  className="h-0.5 ml-6 mr-6" 
+                  style={{ 
+                    backgroundColor: '#C72030',
+                    width: 'calc(50% - 3rem)'
+                  }}
+                ></div>
+                {/* Line from Approved to Received */}
+                <div 
+                  className="h-0.5 ml-6 mr-6 bg-gray-300" 
+                  style={{ 
+                    width: 'calc(50% - 3rem)'
+                  }}
+                ></div>
+              </div>
               
-              <div className="space-y-8">
-                {/* Requested Stage */}
-                <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{
-                    backgroundColor: '#C72030'
-                  }}>
-                    <FileText className="w-6 h-6 text-white" />
+              {/* Requested Stage */}
+              <div className="flex flex-col items-center relative z-10">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-semibold mb-2" style={{
+                    color: '#C72030'
+                  }}>Requested</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>19/06/2025 , 11:00 AM</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="text-base font-semibold" style={{
-                        color: '#C72030'
-                      }}>Requested</div>
-                      <div className="text-sm text-gray-500 flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>From Site: Sai Radhe, Bund Garden</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span>19/06/2025 , 11:00 AM</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <UserIcon className="w-4 h-4" />
-                      <span>Abdul Ghaffar</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Abdul Ghaffar</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Approved Stage */}
-                <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{
-                    backgroundColor: '#C72030'
-                  }}>
-                    <CheckCircle className="w-6 h-6 text-white" />
+              {/* Approved Stage */}
+              <div className="flex flex-col items-center relative z-10">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-semibold mb-2" style={{
+                    color: '#C72030'
+                  }}>Approved</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>20/06/2025 , 11:10 AM</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="text-base font-semibold mb-2" style={{
-                      color: '#C72030'
-                    }}>Approved</div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span>20/06/2025 , 11:10 AM</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <UserIcon className="w-4 h-4" />
-                      <span>Chetan Bafna</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Chetan Bafna</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Received Stage */}
-                <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                    <Box className="w-6 h-6 text-gray-500" />
+              {/* Received Stage */}
+              <div className="flex flex-col items-center relative z-10">
+                <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mb-4">
+                  <Box className="w-6 h-6 text-gray-500" />
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-semibold text-gray-400 mb-2">Received</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>Pending</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="text-base font-semibold text-gray-400">Received</div>
-                      <div className="text-sm text-gray-400 flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>To Site: Sai Radhe, Bund Garden</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-400 mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span>Pending</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-400">
-                      <UserIcon className="w-4 h-4" />
-                      <span>Awaiting</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Awaiting</span>
                   </div>
                 </div>
               </div>
