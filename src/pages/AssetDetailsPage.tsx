@@ -18,6 +18,7 @@ import { DepreciationTab } from '@/components/asset-details/DepreciationTab';
 import { TicketTab } from '@/components/asset-details/TicketTab';
 import { RepairReplaceModal } from '@/components/RepairReplaceModal';
 import { EditStatusModal } from '@/components/EditStatusModal';
+import { QRCodeModal } from '@/components/QRCodeModal';
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -25,6 +26,7 @@ export const AssetDetailsPage = () => {
   const [isInUse, setIsInUse] = useState(true);
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   const asset = {
     id: id || '203696',
@@ -93,6 +95,14 @@ export const AssetDetailsPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setIsQRModalOpen(true)}
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+            >
+              View QR
+            </Button>
+
             <Button
               onClick={handleCreateChecklist}
               className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -213,6 +223,14 @@ export const AssetDetailsPage = () => {
       <EditStatusModal
         isOpen={isEditStatusOpen}
         onClose={() => setIsEditStatusOpen(false)}
+      />
+
+      <QRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        qrCode={asset.id}
+        serviceName={asset.name}
+        site="Main Building"
       />
     </div>
   );
