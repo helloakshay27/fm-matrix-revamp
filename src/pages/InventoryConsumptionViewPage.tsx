@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowLeft, Calendar, X } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -17,6 +17,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
 } from '@mui/material';
 
 const InventoryConsumptionViewPage = () => {
@@ -24,6 +28,12 @@ const InventoryConsumptionViewPage = () => {
   const navigate = useNavigate();
   
   const [dateRange, setDateRange] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    quantity: '',
+    moveType: '',
+    comments: ''
+  });
   
   // Sample consumption history data - in real app this would come from API based on inventory ID
   const [consumptionHistory] = useState([
