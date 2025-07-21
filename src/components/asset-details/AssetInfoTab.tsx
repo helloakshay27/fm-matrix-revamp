@@ -345,86 +345,90 @@ export const AssetInfoTab = ({
           }}>Movement Details</h3>
           </div>
 
-          <div className="space-y-8">
-            {/* Movement Timeline - Vertical Layout */}
-            <div className="relative">
-              {/* Continuous vertical line */}
-              <div className="absolute left-6 top-12 bottom-12 w-0.5" style={{
-                background: 'linear-gradient(to bottom, #C72030 0%, #C72030 50%, #d1d5db 50%, #d1d5db 100%)'
-              }}></div>
+          <div className="space-y-6">
+            {/* From Site and To Site */}
+            <div className="flex justify-between items-center text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>From Site</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>To Site</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-between text-lg font-semibold text-gray-800 mb-8">
+              <span>Sai Radhe, Bund Garden</span>
+              <span>Sai Radhe, Bund Garden</span>
+            </div>
+
+            {/* Movement Timeline - Horizontal Layout */}
+            <div className="flex justify-between items-center relative">
+              {/* Connecting lines */}
+              <div className="absolute top-6 left-16 right-16 flex justify-between">
+                <div className="w-1/2 h-0.5" style={{ backgroundColor: '#C72030' }}></div>
+                <div className="w-1/2 h-0.5 bg-gray-300"></div>
+              </div>
               
-              <div className="space-y-8">
-                {/* Requested Stage */}
-                <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{
-                    backgroundColor: '#C72030'
-                  }}>
-                    <FileText className="w-6 h-6 text-white" />
+              {/* Requested Stage */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-semibold mb-2" style={{
+                    color: '#C72030'
+                  }}>Requested</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>19/06/2025 , 11:00 AM</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="text-base font-semibold" style={{
-                        color: '#C72030'
-                      }}>Requested</div>
-                      <div className="text-sm text-gray-500 flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>From Site: Sai Radhe, Bund Garden</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span>19/06/2025 , 11:00 AM</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <UserIcon className="w-4 h-4" />
-                      <span>Abdul Ghaffar</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Abdul Ghaffar</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Approved Stage */}
-                <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{
-                    backgroundColor: '#C72030'
-                  }}>
-                    <CheckCircle className="w-6 h-6 text-white" />
+              {/* Approved Stage */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
+                  backgroundColor: '#C72030'
+                }}>
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-semibold mb-2" style={{
+                    color: '#C72030'
+                  }}>Approved</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>20/06/2025 , 11:10 AM</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="text-base font-semibold mb-2" style={{
-                      color: '#C72030'
-                    }}>Approved</div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span>20/06/2025 , 11:10 AM</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <UserIcon className="w-4 h-4" />
-                      <span>Chetan Bafna</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Chetan Bafna</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Received Stage */}
-                <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                    <Box className="w-6 h-6 text-gray-500" />
+              {/* Received Stage */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mb-4">
+                  <Box className="w-6 h-6 text-gray-500" />
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-semibold text-gray-400 mb-2">Received</div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400 mb-1">
+                    <Clock className="w-4 h-4" />
+                    <span>Pending</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="text-base font-semibold text-gray-400">Received</div>
-                      <div className="text-sm text-gray-400 flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>To Site: Sai Radhe, Bund Garden</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-400 mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span>Pending</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-400">
-                      <UserIcon className="w-4 h-4" />
-                      <span>Awaiting</span>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    <UserIcon className="w-4 h-4" />
+                    <span>Awaiting</span>
                   </div>
                 </div>
               </div>
