@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Checkbox } from '../components/ui/checkbox';
-import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText, Search, RotateCcw, Grid3X3 } from 'lucide-react';
+import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText } from 'lucide-react';
 import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
 import { TicketPagination } from '../components/TicketPagination';
 import { TicketSelectionPanel } from '../components/TicketSelectionPanel';
@@ -263,81 +263,47 @@ export const TicketListDashboard = () => {
         ))}
       </div>
 
-      {/* Single-line Action Bar */}
-      <div className="flex items-center justify-between gap-4 mb-6">
-        {/* Left Section - Action Buttons */}
-        <div className="flex items-center gap-3">
-          <Button 
-            onClick={handleAddTicket}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 h-9"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-          <Button 
-            onClick={handleExport}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 h-9"
-            disabled={tickets.length === 0}
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button 
-            variant="outline" 
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 h-9"
-            onClick={() => setIsFilterOpen(true)}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-        </div>
-
-        {/* Right Section - Search and Action Buttons */}
-        <div className="flex items-center gap-3">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input 
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 h-9"
-            />
-          </div>
-          
-          {/* Action Buttons */}
+      {/* Action Buttons */}
+      <div className="flex gap-3 mb-6">
+        <Button 
+          onClick={handleAddTicket}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+        <Button 
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          onClick={() => setIsFilterOpen(true)}
+        >
+          <Filter className="w-4 h-4 mr-2" />
+          Filters
+        </Button>
+        <Button 
+          onClick={handleExport}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
+          disabled={tickets.length === 0}
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Export
+        </Button>
+        <div className="ml-auto flex gap-2">
+          <Input 
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64"
+          />
           <Button 
             style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 h-9 px-6"
+            className="text-white hover:bg-[#C72030]/90"
           >
             Go!
           </Button>
-          <Button 
-            variant="outline" 
-            className="h-9 px-4"
-            onClick={() => setSearchTerm('')}
-          >
-            Reset
-          </Button>
-          
-          {/* Icon Buttons */}
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="h-9 w-9"
-            onClick={() => window.location.reload()}
-          >
-            <RotateCcw className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="h-9 w-9"
-          >
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
+          <Button variant="outline">Reset</Button>
         </div>
       </div>
 

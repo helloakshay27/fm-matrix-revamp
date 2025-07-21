@@ -88,10 +88,6 @@ export const BookingSetupDashboard = () => {
   };
   return <div className="p-6 bg-gray-50 min-h-screen">
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
-        <div className="mb-6">
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Booking Setup &gt; Booking Setup List</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">BOOKING SETUP</h1>
-        </div>
 
         <div className="flex items-center gap-2 mb-6">
           <Button onClick={handleAddBooking} className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2">

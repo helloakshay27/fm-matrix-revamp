@@ -125,9 +125,12 @@ export const AssetDetailsPage = () => {
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-11 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
             <TabsTrigger value="asset-info" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
               Asset Info
+            </TabsTrigger>
+            <TabsTrigger value="asset-analytics" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
+              Analytics
             </TabsTrigger>
             <TabsTrigger value="amc-details" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
               AMC Details
@@ -156,17 +159,10 @@ export const AssetDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
-            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-              {/* Analytics - 60% width */}
-              <div className="w-full md:w-[60%]">
-                <AssetAnalyticsTab />
-              </div>
-              
-              {/* Asset List - 40% width */}
-              <div className="w-full md:w-[40%]">
-                <AssetInfoTab assetId={asset.id} />
-              </div>
-            </div>
+            <AssetInfoTab assetId={asset.id} />
+          </TabsContent>
+          <TabsContent value="asset-analytics" className="p-4 sm:p-6">
+            <AssetAnalyticsTab />
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab />

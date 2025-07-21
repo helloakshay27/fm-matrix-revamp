@@ -31,6 +31,7 @@ import { attendanceReducer } from './slices/attendanceSlice'
 import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 import inventoryEditReducer from './slices/inventoryEditSlice'
 import serviceEditReducer from './slices/serviceSlice'
+import { createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
 
 export const store = configureStore({
@@ -67,6 +68,22 @@ export const store = configureStore({
     inventoryAssets: inventoryAssetsReducer,
     inventoryEdit: inventoryEditReducer,
     serviceEdit: serviceEditReducer,
+
+    fetchBookingDetails: fetchBookingDetailsReducer,
+    exportReport: exportReportReducer,
+    fetchRestaurants: fetchRestaurantsReducer,
+    createRestaurant: createRestaurantReducer,
+    fetchRestaurantDetails: fetchRestaurantDetailsReducer,
+    editRestaurant: editRestaurantReducer,
+    createRestaurantStatus: createRestaurantStatusReducer,
+    fetchRestaurantStatuses: fetchRestaurantStatusesReducer,
+    createRestaurantCategory: createRestaurantCategoryReducer,
+    fetchRestaurantCategory: fetchRestaurantCategoryReducer,
+    deleteCategory: deleteCategoryReducer,
+    editCategory: editCategoryReducer,
+    createSubcategory: createSubcategoryReducer,
+    fetchSubcategory: fetchSubcategoryReducer,
+    deleteSubCategory: deleteSubCategoryReducer,
     serviceFilter: serviceFilterReducer,
   },
 })
