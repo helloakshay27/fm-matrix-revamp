@@ -89,7 +89,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
     const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
       if (value !== undefined && value !== null && value !== '' && 
           !(Array.isArray(value) && value.length === 0)) {
-        acc[key as keyof FilterData] = value;
+        (acc as any)[key] = value;
       }
       return acc;
     }, {} as FilterData);
