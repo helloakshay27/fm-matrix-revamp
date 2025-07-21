@@ -11,7 +11,7 @@ const recentAMCs = [{
   site: 'GoPhygital',
   priority: 'P1',
   status: 'Active',
-  expiry_date: '2024-12-31',
+  nextStatus: 'Renewal Due',
   handledBy: 'John Smith'
 }, {
   id: 'AMC-002',
@@ -21,7 +21,7 @@ const recentAMCs = [{
   site: 'GoPhygital',
   priority: 'P2',
   status: 'Active',
-  expiry_date: '2024-11-15',
+  nextStatus: 'Service Due',
   handledBy: 'Sarah Johnson'
 }, {
   id: 'AMC-003',
@@ -31,7 +31,7 @@ const recentAMCs = [{
   site: 'GoPhygital',
   priority: 'P1',
   status: 'Expiring Soon',
-  expiry_date: '2024-08-30',
+  nextStatus: 'Renewal Required',
   handledBy: 'Mike Wilson'
 }, {
   id: 'AMC-004',
@@ -41,7 +41,7 @@ const recentAMCs = [{
   site: 'GoPhygital',
   priority: 'P1',
   status: 'Active',
-  expiry_date: '2025-01-20',
+  nextStatus: 'Service Due',
   handledBy: 'Lisa Chen'
 }, {
   id: 'AMC-005',
@@ -51,13 +51,18 @@ const recentAMCs = [{
   site: 'GoPhygital',
   priority: 'P3',
   status: 'Active',
-  expiry_date: '2024-10-15',
+  nextStatus: 'Review Due',
   handledBy: 'David Miller'
 }];
 
 export function RecentAMCSidebar() {
   const [flaggedAMCs, setFlaggedAMCs] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+
+  const handleAddComment = (amcId: string) => {
+    console.log('Add comment for AMC:', amcId);
+    // Add comment functionality
+  };
 
   const handleFlag = (amcId: string) => {
     setFlaggedAMCs(prev => {
@@ -75,123 +80,121 @@ export function RecentAMCSidebar() {
     navigate(`/maintenance/amc/details/${amcId}`);
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'P1': return 'text-red-600 bg-red-50';
-      case 'P2': return 'text-orange-600 bg-orange-50';
-      case 'P3': return 'text-yellow-600 bg-yellow-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'text-green-600 bg-green-50';
-      case 'Expiring Soon': return 'text-orange-600 bg-orange-50';
-      case 'Expired': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
-  };
-
   return (
     <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold text-gray-900">Recent AMCs</h2>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-            <RotateCcw className="h-4 w-4" />
-          </Button>
+        <h2 className="text-lg font-semibold text-red-600 mb-2">
+          Recent AMCs
+        </h2>
+        <div className="text-sm font-medium text-gray-800">
+          {new Date().toLocaleDateString('en-GB')}
         </div>
-        <p className="text-sm text-gray-600">Latest AMC contracts and updates</p>
       </div>
-
-      {/* AMC List */}
-      <div className="flex-1 overflow-y-auto space-y-3">
-        {recentAMCs.map((amc) => (
+      
+      {/* AMCs List */}
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {recentAMCs.map((amc, index) => (
           <div 
-            key={amc.id} 
-            className="bg-white rounded-lg border border-gray-100 p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer"
-            onClick={() => handleViewDetails(amc.id)}
+            key={`${amc.id}-${index}`} 
+            className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" 
+            style={{ borderWidth: '0.6px' }}
           >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 text-sm leading-tight mb-1 truncate">
-                  {amc.title}
-                </h3>
-                <p className="text-xs text-gray-600 mb-2">ID: {amc.id}</p>
-              </div>
-              <div className="flex items-center gap-1 ml-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-6 w-6 p-0 ${flaggedAMCs.has(amc.id) ? 'text-red-500' : 'text-gray-400'}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleFlag(amc.id);
-                  }}
-                >
-                  <Flag className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Details */}
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Resource:</span>
-                <span className="font-medium text-gray-900">{amc.resource_type}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Vendor:</span>
-                <span className="font-medium text-gray-900 truncate max-w-24" title={amc.vendor_name}>
-                  {amc.vendor_name}
+            {/* Header with ID, Star, and Priority */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-semibold text-gray-800 text-sm">{amc.id}</span>
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
+                  {amc.priority}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Expires:</span>
-                <span className="font-medium text-gray-900">{new Date(amc.expiry_date).toLocaleDateString()}</span>
+            </div>
+            
+            {/* Title and Contract Status */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 text-base">{amc.title}</h3>
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium text-gray-700">Status :</span>
+                <span className="text-sm font-bold text-blue-600">"{amc.status}"</span>
               </div>
             </div>
-
-            {/* Status and Priority */}
-            <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(amc.status)}`}>
-                {amc.status}
-              </span>
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(amc.priority)}`}>
-                {amc.priority}
-              </span>
+            
+            {/* Details */}
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center gap-3">
+                <Building2 className="h-4 w-4 text-red-500" />
+                <span className="text-sm font-medium text-gray-700 min-w-[100px]">Resource Type</span>
+                <span className="text-sm text-gray-700">:</span>
+                <span className="text-sm text-gray-900">{amc.resource_type}</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Building2 className="h-4 w-4 text-red-500" />
+                <span className="text-sm font-medium text-gray-700 min-w-[100px]">Vendor</span>
+                <span className="text-sm text-gray-700">:</span>
+                <span className="text-sm text-gray-900">{amc.vendor_name}</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <User className="h-4 w-4 text-red-500" />
+                <span className="text-sm font-medium text-gray-700 min-w-[100px]">Handled By</span>
+                <span className="text-sm text-gray-700">:</span>
+                <span className="text-sm text-gray-900">{amc.handledBy}</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Globe className="h-4 w-4 text-red-500" />
+                <span className="text-sm font-medium text-gray-700 min-w-[100px]">Site</span>
+                <span className="text-sm text-gray-700">:</span>
+                <span className="text-sm text-gray-900">{amc.site}</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <RotateCcw className="h-4 w-4 text-red-500" />
+                <span className="text-sm font-medium text-gray-700 min-w-[100px]">Update</span>
+                <span className="text-sm text-gray-700">:</span>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="italic text-gray-600">{amc.status}</span>
+                  <ChevronRight className="h-3 w-3 text-gray-600" />
+                  <span className="italic text-gray-600">{amc.nextStatus}</span>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-600 ml-7">
+                (Handled By {amc.handledBy})
+              </div>
             </div>
-
-            {/* Handler */}
-            <div className="flex items-center mt-2 text-xs text-gray-600">
-              <User className="h-3 w-3 mr-1" />
-              <span>Handled by {amc.handledBy}</span>
+            
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-6">
+                <button 
+                  className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80" 
+                  onClick={() => handleAddComment(amc.id)}
+                >
+                  <MessageSquare className="h-4 w-4 text-red-500" />
+                  Add Comment
+                </button>
+                
+                <button 
+                  className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedAMCs.has(amc.id) ? 'opacity-60' : ''}`} 
+                  onClick={() => handleFlag(amc.id)}
+                >
+                  <Flag className="h-4 w-4 text-red-500" />
+                  Flag Issue
+                </button>
+              </div>
+              
+              <button 
+                className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
+                onClick={() => handleViewDetails(amc.id)}
+              >
+                View Detail&gt;&gt;
+              </button>
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Footer */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full text-gray-600 hover:text-gray-900"
-          onClick={() => navigate('/maintenance/amc')}
-        >
-          View All AMCs
-        </Button>
       </div>
     </div>
   );
