@@ -87,9 +87,9 @@ export const AttendanceDetailsPage = () => {
           {/* User Profile Section */}
           <div className="bg-white rounded-lg border mb-6 p-6">
             <div className="flex flex-col items-center">
-              <div className="w-32 h-32 rounded-full bg-gray-200 mb-4 flex items-center justify-center border-4 border-blue-200">
-                <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-blue-600">
+              <div className="w-32 h-32 rounded-full bg-gray-200 mb-4 flex items-center justify-center border-4 border-[#C72030]">
+                <div className="w-24 h-24 rounded-full bg-[#C72030]/10 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-[#C72030]">
                     {attendanceData.att_user.name ? attendanceData.att_user.name.split(' ').map(n => n[0]).join('') : 'N/A'}
                   </span>
                 </div>
