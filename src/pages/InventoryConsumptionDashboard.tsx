@@ -370,9 +370,10 @@ const InventoryConsumptionDashboard = () => {
         emptyMessage="No consumption data available"
         enableExport={true}
         exportFileName="inventory-consumption"
-        hideTableExport={true}
-        hideTableSearch={true}
+        hideTableExport={false}
+        hideTableSearch={false}
         hideColumnsButton={false}
+        searchPlaceholder="Search inventory items..."
       />
     </div>
   );
