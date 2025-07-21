@@ -553,7 +553,7 @@ export const TicketDashboard = () => {
       </Button>
     </div>;
 
-  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.ticket_number)}>
+  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
       <Eye className="w-4 h-4" />
     </Button>;
 
