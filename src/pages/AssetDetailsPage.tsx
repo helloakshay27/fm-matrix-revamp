@@ -12,12 +12,13 @@ import { PPMTab } from '@/components/asset-details/PPMTab';
 import { EBOMTab } from '@/components/asset-details/EBOMTab';
 import { AttachmentsTab } from '@/components/asset-details/AttachmentsTab';
 import { ReadingsTab } from '@/components/asset-details/ReadingsTab';
-import { LogsTab } from '@/components/asset-details/LogsTab';
+
 import { HistoryCardTab } from '@/components/asset-details/HistoryCardTab';
 import { DepreciationTab } from '@/components/asset-details/DepreciationTab';
 import { TicketTab } from '@/components/asset-details/TicketTab';
 import { RepairReplaceModal } from '@/components/RepairReplaceModal';
 import { EditStatusModal } from '@/components/EditStatusModal';
+import { QRCodeModal } from '@/components/QRCodeModal';
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -25,6 +26,7 @@ export const AssetDetailsPage = () => {
   const [isInUse, setIsInUse] = useState(true);
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   const asset = {
     id: id || '203696',
@@ -94,6 +96,14 @@ export const AssetDetailsPage = () => {
 
           <div className="flex items-center gap-3">
             <Button
+              onClick={() => setIsQRModalOpen(true)}
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+            >
+              View QR
+            </Button>
+
+            <Button
               onClick={handleCreateChecklist}
               className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
             >
@@ -134,9 +144,6 @@ export const AssetDetailsPage = () => {
             <TabsTrigger value="readings" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
               Readings
             </TabsTrigger>
-            <TabsTrigger value="logs" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Logs
-            </TabsTrigger>
             <TabsTrigger value="history-card" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
               History Card
             </TabsTrigger>
@@ -148,31 +155,18 @@ export const AssetDetailsPage = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="asset-info" className="p-0">
-            <Tabs defaultValue="analytics" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-                <TabsTrigger 
-                  value="analytics" 
-                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-                >
-                  Analytics
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="info" 
-                  className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-                >
-                  Asset List
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="analytics" className="p-4 sm:p-6 mt-0">
+          <TabsContent value="asset-info" className="p-4 sm:p-6">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+              {/* Analytics - 60% width */}
+              <div className="w-full md:w-[60%]">
                 <AssetAnalyticsTab />
-              </TabsContent>
+              </div>
               
-              <TabsContent value="info" className="p-4 sm:p-6 mt-0">
+              {/* Asset List - 40% width */}
+              <div className="w-full md:w-[40%]">
                 <AssetInfoTab assetId={asset.id} />
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab />
@@ -188,9 +182,6 @@ export const AssetDetailsPage = () => {
           </TabsContent>
           <TabsContent value="readings" className="p-4 sm:p-6">
             <ReadingsTab />
-          </TabsContent>
-          <TabsContent value="logs" className="p-4 sm:p-6">
-            <LogsTab />
           </TabsContent>
           <TabsContent value="history-card" className="p-4 sm:p-6">
             <HistoryCardTab />
@@ -213,6 +204,14 @@ export const AssetDetailsPage = () => {
       <EditStatusModal
         isOpen={isEditStatusOpen}
         onClose={() => setIsEditStatusOpen(false)}
+      />
+
+      <QRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        qrCode={asset.id}
+        serviceName={asset.name}
+        site="Main Building"
       />
     </div>
   );
