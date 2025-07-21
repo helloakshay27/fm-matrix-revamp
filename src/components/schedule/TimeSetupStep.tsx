@@ -7,7 +7,21 @@ import { Check, ChevronUp, Settings } from 'lucide-react';
 import { Box, Card, CardHeader, Typography, IconButton, Collapse, CardContent } from '@mui/material';
 
 interface TimeSetupStepProps {
-  data: any;
+  data: {
+    hourMode: string;
+    minuteMode: string;
+    dayMode: string;
+    monthMode: string;
+    selectedHours: string[];
+    selectedMinutes: string[];
+    selectedWeekdays: string[];
+    selectedDays: string[];
+    selectedMonths: string[];
+    betweenMinuteStart: string;
+    betweenMinuteEnd: string;
+    betweenMonthStart: string;
+    betweenMonthEnd: string;
+  };
   updateData?: (data: any) => void;
   onChange?: (field: string, value: any) => void;
   isCompleted?: boolean;
@@ -23,21 +37,22 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
   isCollapsed, 
   onToggleCollapse 
 }) => {
-  const [hourMode, setHourMode] = useState<'specific'>('specific');
-  const [minuteMode, setMinuteMode] = useState<'specific' | 'between'>('specific');
-  const [dayMode, setDayMode] = useState<'placeholder' | 'specific'>('placeholder');
-  const [monthMode, setMonthMode] = useState<'placeholder' | 'between'>('placeholder');
-  
-  const [selectedHours, setSelectedHours] = useState<string[]>(['00']);
-  const [selectedMinutes, setSelectedMinutes] = useState<string[]>(['00']);
-  const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>(['Monday']);
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [selectedMonths, setSelectedMonths] = useState<string[]>(['January']);
-  
-  const [betweenMinuteStart, setBetweenMinuteStart] = useState('00');
-  const [betweenMinuteEnd, setBetweenMinuteEnd] = useState('00');
-  const [betweenMonthStart, setBetweenMonthStart] = useState('January');
-  const [betweenMonthEnd, setBetweenMonthEnd] = useState('January');
+  // Use props data instead of local state
+  const {
+    hourMode = 'specific',
+    minuteMode = 'specific',
+    dayMode = 'weekdays',
+    monthMode = 'all',
+    selectedHours = ['12'],
+    selectedMinutes = ['00'],
+    selectedWeekdays = [],
+    selectedDays = [],
+    selectedMonths = [],
+    betweenMinuteStart = '00',
+    betweenMinuteEnd = '59',
+    betweenMonthStart = 'January',
+    betweenMonthEnd = 'December'
+  } = data;
 
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const specificMinutes = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
@@ -48,72 +63,6 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-  const handleHourChange = (hour: string, checked: boolean) => {
-    const newHours = checked 
-      ? [...selectedHours, hour]
-      : selectedHours.filter(h => h !== hour);
-    setSelectedHours(newHours);
-    updateData?.({ ...data, hours: newHours });
-    onChange?.('hours', newHours);
-  };
-
-  const handleSelectAllHours = (checked: boolean) => {
-    const newHours = checked ? hours : [];
-    setSelectedHours(newHours);
-    updateData?.({ ...data, hours: newHours });
-    onChange?.('hours', newHours);
-  };
-
-  const handleMinuteChange = (minute: string, checked: boolean) => {
-    const newMinutes = checked 
-      ? [...selectedMinutes, minute]
-      : selectedMinutes.filter(m => m !== minute);
-    setSelectedMinutes(newMinutes);
-    updateData?.({ ...data, minutes: newMinutes });
-    onChange?.('minutes', newMinutes);
-  };
-
-  const handleWeekdayChange = (weekday: string, checked: boolean) => {
-    const newWeekdays = checked 
-      ? [...selectedWeekdays, weekday]
-      : selectedWeekdays.filter(w => w !== weekday);
-    setSelectedWeekdays(newWeekdays);
-    updateData?.({ ...data, weekdays: newWeekdays });
-    onChange?.('weekdays', newWeekdays);
-  };
-
-  const handleDayChange = (day: string, checked: boolean) => {
-    const newDays = checked 
-      ? [...selectedDays, day]
-      : selectedDays.filter(d => d !== day);
-    setSelectedDays(newDays);
-    updateData?.({ ...data, days: newDays });
-    onChange?.('days', newDays);
-  };
-
-  const handleSelectAllDays = (checked: boolean) => {
-    const newDays = checked ? days : [];
-    setSelectedDays(newDays);
-    updateData?.({ ...data, days: newDays });
-    onChange?.('days', newDays);
-  };
-
-  const handleMonthChange = (month: string, checked: boolean) => {
-    const newMonths = checked 
-      ? [...selectedMonths, month]
-      : selectedMonths.filter(m => m !== month);
-    setSelectedMonths(newMonths);
-    updateData?.({ ...data, months: newMonths });
-    onChange?.('months', newMonths);
-  };
-
-  const handleSelectAllMonths = (checked: boolean) => {
-    const newMonths = checked ? months : [];
-    setSelectedMonths(newMonths);
-    updateData?.({ ...data, months: newMonths });
-    onChange?.('months', newMonths);
-  };
 
   return (
     <div className="bg-gray-50">
@@ -126,35 +75,6 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
       </div>
 
     <Card sx={{ mb: 2, pt:3, border: isCompleted ? '1px solid #059669' : '1px solid #E5E7EB' }}>
-      {/* <CardHeader
-        sx={{ 
-          pb: 1,
-          '& .MuiCardHeader-content': { flex: '1 1 auto' },
-          '& .MuiCardHeader-action': { mt: 0, mr: 0 }
-        }}
-        title={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {isCompleted && <Check color="#059669" size={20} />}
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: isCompleted ? '#059669' : '#111827', 
-                fontSize: '16px', 
-                fontWeight: 600 
-              }}
-            >
-              Time Setup
-            </Typography>
-          </Box>
-        }
-        action={
-          isCompleted && onToggleCollapse && (
-            <IconButton onClick={onToggleCollapse} size="small">
-              <ChevronUp />
-            </IconButton>
-          )
-        }
-      /> */}
       
       <Collapse in={!isCollapsed || !isCompleted} timeout="auto" unmountOnExit>
         <CardContent sx={{ pt: 0 }}>
@@ -181,7 +101,9 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               {/* Hours Column */}
               <div className="border-r border-gray-300 p-4">
                 <div className="space-y-4">
-                  <RadioGroup value={hourMode} onValueChange={(value: 'specific') => setHourMode(value)}>
+                  <RadioGroup value={hourMode} onValueChange={(value: 'specific') => {
+                    onChange?.('hourMode', value);
+                  }}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="specific" id="hour-specific" />
                       <Label htmlFor="hour-specific" className="text-sm">
@@ -196,9 +118,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       checked={selectedHours.length === hours.length}
                       onCheckedChange={(checked) => {
                         const newHours = checked ? hours : [];
-                        setSelectedHours(newHours);
-                        updateData?.({ ...data, hours: newHours });
-                        onChange?.('hours', newHours);
+                        onChange?.('selectedHours', newHours);
                       }}
                       className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                     />
@@ -217,9 +137,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                             const newHours = checked 
                               ? [...selectedHours, hour]
                               : selectedHours.filter(h => h !== hour);
-                            setSelectedHours(newHours);
-                            updateData?.({ ...data, hours: newHours });
-                            onChange?.('hours', newHours);
+                            onChange?.('selectedHours', newHours);
                           }}
                           className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                         />
@@ -235,7 +153,9 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               {/* Minutes Column */}
               <div className="border-r border-gray-300 p-4">
                 <div className="space-y-4">
-                  <RadioGroup value={minuteMode} onValueChange={(value: 'specific' | 'between') => setMinuteMode(value)}>
+                  <RadioGroup value={minuteMode} onValueChange={(value: 'specific' | 'between') => {
+                    onChange?.('minuteMode', value);
+                  }}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="specific" id="minute-specific" />
                       <Label htmlFor="minute-specific" className="text-sm">
@@ -262,9 +182,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                               const newMinutes = checked 
                                 ? [...selectedMinutes, minute]
                                 : selectedMinutes.filter(m => m !== minute);
-                              setSelectedMinutes(newMinutes);
-                              updateData?.({ ...data, minutes: newMinutes });
-                              onChange?.('minutes', newMinutes);
+                              onChange?.('selectedMinutes', newMinutes);
                             }}
                             className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                           />
@@ -279,7 +197,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                   {minuteMode === 'between' && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
-                        <Select value={betweenMinuteStart} onValueChange={setBetweenMinuteStart}>
+                        <Select value={betweenMinuteStart} onValueChange={(value) => onChange?.('betweenMinuteStart', value)}>
                           <SelectTrigger className="w-16 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -292,7 +210,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span>and minute</span>
-                        <Select value={betweenMinuteEnd} onValueChange={setBetweenMinuteEnd}>
+                        <Select value={betweenMinuteEnd} onValueChange={(value) => onChange?.('betweenMinuteEnd', value)}>
                           <SelectTrigger className="w-16 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -311,11 +229,13 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               {/* Days Column */}
               <div className="border-r border-gray-300 p-4">
                 <div className="space-y-4">
-                  <RadioGroup value={dayMode} onValueChange={(value: 'placeholder' | 'specific') => setDayMode(value)}>
+                  <RadioGroup value={dayMode} onValueChange={(value: 'weekdays' | 'specific') => {
+                    onChange?.('dayMode', value);
+                  }}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="placeholder" id="day-placeholder" />
-                      <Label htmlFor="day-placeholder" className="text-sm">
-                        Placeholder
+                      <RadioGroupItem value="weekdays" id="day-weekdays" />
+                      <Label htmlFor="day-weekdays" className="text-sm">
+                        Days of week
                       </Label>
                     </div>
                     
@@ -327,7 +247,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                     </div>
                   </RadioGroup>
 
-                  {dayMode === 'placeholder' && (
+                  {dayMode === 'weekdays' && (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -335,7 +255,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                           checked={selectedWeekdays.length === weekdays.length}
                           onCheckedChange={(checked) => {
                             const newWeekdays = checked ? weekdays : [];
-                            setSelectedWeekdays(newWeekdays);
+                            onChange?.('selectedWeekdays', newWeekdays);
                           }}
                           className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                         />
@@ -352,7 +272,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                               const newWeekdays = checked 
                                 ? [...selectedWeekdays, day]
                                 : selectedWeekdays.filter(w => w !== day);
-                              setSelectedWeekdays(newWeekdays);
+                              onChange?.('selectedWeekdays', newWeekdays);
                             }}
                             className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                           />
@@ -372,9 +292,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                           checked={selectedDays.length === days.length}
                           onCheckedChange={(checked) => {
                             const newDays = checked ? days : [];
-                            setSelectedDays(newDays);
-                            updateData?.({ ...data, days: newDays });
-                            onChange?.('days', newDays);
+                            onChange?.('selectedDays', newDays);
                           }}
                           className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                         />
@@ -392,9 +310,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                                 const newDays = checked 
                                   ? [...selectedDays, day]
                                   : selectedDays.filter(d => d !== day);
-                                setSelectedDays(newDays);
-                                updateData?.({ ...data, days: newDays });
-                                onChange?.('days', newDays);
+                                onChange?.('selectedDays', newDays);
                               }}
                               className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                             />
@@ -412,11 +328,20 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               {/* Months Column */}
               <div className="p-4">
                 <div className="space-y-4">
-                  <RadioGroup value={monthMode} onValueChange={(value: 'placeholder' | 'between') => setMonthMode(value)}>
+                  <RadioGroup value={monthMode} onValueChange={(value: 'all' | 'specific' | 'between') => {
+                    onChange?.('monthMode', value);
+                  }}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="placeholder" id="month-placeholder" />
-                      <Label htmlFor="month-placeholder" className="text-sm">
-                        Placeholder
+                      <RadioGroupItem value="all" id="month-all" />
+                      <Label htmlFor="month-all" className="text-sm">
+                        All months
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="specific" id="month-specific" />
+                      <Label htmlFor="month-specific" className="text-sm">
+                        Specific months
                       </Label>
                     </div>
                     
@@ -428,7 +353,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                     </div>
                   </RadioGroup>
 
-                  {monthMode === 'placeholder' && (
+                  {monthMode === 'specific' && (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -436,9 +361,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                           checked={selectedMonths.length === months.length}
                           onCheckedChange={(checked) => {
                             const newMonths = checked ? months : [];
-                            setSelectedMonths(newMonths);
-                            updateData?.({ ...data, months: newMonths });
-                            onChange?.('months', newMonths);
+                            onChange?.('selectedMonths', newMonths);
                           }}
                           className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                         />
@@ -456,9 +379,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                                 const newMonths = checked 
                                   ? [...selectedMonths, month]
                                   : selectedMonths.filter(m => m !== month);
-                                setSelectedMonths(newMonths);
-                                updateData?.({ ...data, months: newMonths });
-                                onChange?.('months', newMonths);
+                                onChange?.('selectedMonths', newMonths);
                               }}
                               className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                             />
@@ -473,7 +394,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
 
                   {monthMode === 'between' && (
                     <div className="space-y-2">
-                      <Select value={betweenMonthStart} onValueChange={setBetweenMonthStart}>
+                      <Select value={betweenMonthStart} onValueChange={(value) => onChange?.('betweenMonthStart', value)}>
                         <SelectTrigger className="w-32 h-8">
                           <SelectValue />
                         </SelectTrigger>
@@ -485,7 +406,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       </Select>
                       <div className="flex items-center gap-2">
                         <span className="text-sm">and</span>
-                        <Select value={betweenMonthEnd} onValueChange={setBetweenMonthEnd}>
+                        <Select value={betweenMonthEnd} onValueChange={(value) => onChange?.('betweenMonthEnd', value)}>
                           <SelectTrigger className="w-32 h-8">
                             <SelectValue />
                           </SelectTrigger>

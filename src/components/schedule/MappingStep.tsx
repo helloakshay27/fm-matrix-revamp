@@ -125,17 +125,7 @@ export const MappingStep = ({
     <Card className={`mb-6 ${isCompleted ? 'border-green-600' : 'border-gray-200'}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isCompleted && (
-              <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs">✓</span>
-              </div>
-            )}
-            <CardTitle className={`text-lg ${isCompleted ? 'text-green-600' : 'text-gray-900'}`}>
-              Mapping
-            </CardTitle>
-            <Settings className="w-4 h-4 text-[#C72030]" />
-          </div>
+          
           <div className="flex items-center gap-2">
             <Button 
               onClick={addRow}

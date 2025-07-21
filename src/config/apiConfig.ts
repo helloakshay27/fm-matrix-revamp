@@ -1,4 +1,3 @@
-
 import { getBaseUrl, getToken } from '@/utils/auth';
 
 // API Configuration - Central place for managing API endpoints and tokens
@@ -58,6 +57,15 @@ export const API_CONFIG = {
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
     ACCOUNT_DETAILS: '/api/users/account.json',
     OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
+    // Add template endpoints
+    TEMPLATES: '/pms/custom_forms/get_templates.json',
+    TEMPLATE_DETAILS: '/exisiting_checklist.json', // Base path, will append ?id=templateId
+    USER_GROUPS: '/pms/usergroups.json',
+    // Add escalation users endpoint
+    ESCALATION_USERS: '/pms/users/get_escalate_to_users.json',
+    // Add task group endpoints
+    TASK_GROUPS: '/pms/asset_groups.json?type=checklist',
+    TASK_SUB_GROUPS: '/pms/assets/get_asset_group_sub_group.json', // Will append ?group_id=
   },
 } as const
 
@@ -74,4 +82,21 @@ export const getFullUrl = (endpoint: string): string => {
 // Helper to get authorization header
 export const getAuthHeader = (): string => {
   return `Bearer ${API_CONFIG.TOKEN}`
+}
+
+// Helper to create authenticated fetch options
+export const getAuthenticatedFetchOptions = (method: string = 'GET', body?: any): RequestInit => {
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Authorization': getAuthHeader(),
+      'Content-Type': 'application/json',
+    },
+  };
+
+  if (body && method !== 'GET') {
+    options.body = JSON.stringify(body);
+  }
+
+  return options;
 }
