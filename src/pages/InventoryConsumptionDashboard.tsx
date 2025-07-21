@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, Filter, Eye, Edit2, X, ChevronDown } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Download, Filter, Eye, Edit2, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -163,22 +160,24 @@ const InventoryConsumptionDashboard = () => {
     return value || '-';
   };
 
-  // Handle filter changes for MUI Select
-  const handleFilterChange = (field: string, value: string) => {
+  // Handle MUI Select change
+  const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
     setFilterValues(prev => ({
       ...prev,
-      [field]: value
+      [field]: event.target.value
     }));
   };
 
-  // Handle MUI Select change
-  const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
-    handleFilterChange(field, event.target.value);
+  // Handle text field change
+  const handleTextChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterValues(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
   };
 
   // Apply filters
   const handleApplyFilter = () => {
-    // Filter logic would go here
     console.log('Applied filters:', filterValues);
     setIsFilterOpen(false);
   };
@@ -293,8 +292,7 @@ const InventoryConsumptionDashboard = () => {
                           '& fieldset': { borderColor: '#D1D5DB' },
                           '&:hover fieldset': { borderColor: '#9CA3AF' },
                           '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                        },
-                        '& .MuiSelect-placeholder': { color: '#EF4444', fontSize: '14px' }
+                        }
                       }}
                     >
                       <MenuItem value="" disabled>
@@ -390,7 +388,7 @@ const InventoryConsumptionDashboard = () => {
                     label="Name"
                     placeholder="Enter Name"
                     value={filterValues.name}
-                    onChange={(e) => handleFilterChange('name', e.target.value)}
+                    onChange={handleTextChange('name')}
                     variant="outlined"
                     sx={{
                       '& .MuiOutlinedInput-root': {
