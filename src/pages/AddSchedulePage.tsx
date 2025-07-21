@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { MappingStep } from '@/components/schedule/MappingStep';
-import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
+import {TimeSetupStep}  from '@/components/schedule/TimeSetupStep'
 import {
   TextField,
   FormControl,
@@ -778,7 +778,7 @@ export const AddSchedulePage = () => {
                     }
                   }}
                 >
-                  + Weightage
+                 Weightage
                 </MuiButton>
                 <MuiButton
                   variant="outlined"
@@ -794,7 +794,7 @@ export const AddSchedulePage = () => {
                     }
                   }}
                 >
-                  + Add Section
+                  Add Section
                 </MuiButton>
               </Box>
             </Box>
@@ -943,7 +943,7 @@ export const AddSchedulePage = () => {
                     }
                   }}
                 >
-                  + Add Question
+                  Add Question
                 </MuiButton>
               </Box>
             </SectionCard>

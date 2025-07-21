@@ -220,22 +220,21 @@ export const QuestionSetupStep = ({
       <Collapse in={!isCollapsed || !isCompleted} timeout="auto" unmountOnExit>
         <CardContent sx={{ pt: 0 }}>
           <Box sx={{ mb: 3 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Add />}
-              onClick={addSection}
-              sx={{
-                borderColor: '#C72030',
-                color: '#C72030',
-                '&:hover': {
-                  borderColor: '#C72030',
-                  backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                },
-              }}
-            >
-              Add Section
-            </Button>
-          </Box>
+  <Button
+    variant="outlined"
+    onClick={addSection}
+    sx={{
+      borderColor: '#C72030',
+      color: '#C72030',
+      '&:hover': {
+        borderColor: '#C72030',
+        backgroundColor: 'rgba(199, 32, 48, 0.04)',
+      },
+    }}
+  >
+    Section
+  </Button>
+</Box>
 
           {(data.sections || []).map((section, sectionIndex) => (
             <Accordion 
