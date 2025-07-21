@@ -69,7 +69,7 @@ export const HistoryCardTab = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6">
         <FileText className="w-5 h-5 text-[#C72030]" />
-        <h2 className="text-xl font-bold text-gray-900">History In Details</h2>
+        <h2 className="text-xl font-bold text-[#C72030]">History In Details</h2>
       </div>
 
       <Accordion type="multiple" defaultValue={["basic-info", "acquisition", "maintenance1", "maintenance2", "cost1", "cost2", "certification", "audit", "ebom", "disposal"]} className="space-y-4">
