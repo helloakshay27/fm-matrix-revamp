@@ -202,19 +202,10 @@ const EcoFriendlyListPage = () => {
     switch (columnKey) {
       case 'status':
         return <div className="flex items-center">
-            <div 
-              onClick={() => handleStatusToggle(item.id)} 
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                item.status === 'Active' ? 'bg-green-500' : 'bg-gray-400'
-              }`}
-            >
-              <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                item.status === 'Active' ? 'translate-x-6' : 'translate-x-1'
-              }`} />
+            <div onClick={() => handleStatusToggle(item.id)} className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status === 'Active' ? 'bg-green-500' : 'bg-gray-400'}`}>
+              <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.status === 'Active' ? 'translate-x-6' : 'translate-x-1'}`} />
             </div>
-            <span className={`ml-2 text-sm ${item.status === 'Active' ? 'text-green-600' : 'text-gray-600'}`}>
-              {item.status}
-            </span>
+            
           </div>;
       default:
         return item[columnKey] || '';
