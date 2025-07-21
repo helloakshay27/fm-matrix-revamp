@@ -35,7 +35,11 @@ export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date
           variant="outline"
           className={cn(
             "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground",
+            "!bg-white !text-gray-700 !border !border-gray-300 hover:!bg-gray-50",
+            "!transition-all !duration-200 !ease-in-out",
+            "focus:!ring-2 focus:!ring-gray-500 focus:!ring-offset-0",
+            !date && "!text-gray-500",
+            "[&_svg]:!text-gray-400",
             className
           )}
         >
