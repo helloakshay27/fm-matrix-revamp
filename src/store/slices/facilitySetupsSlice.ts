@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit'
 import createApiSlice from '../api/apiSlice'
 import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
+import axios from 'axios';
 
 // Define the Facility interface based on API response
 export interface Facility {
@@ -28,7 +29,23 @@ export const fetchFacilitySetups = createAsyncThunk(
   }
 )
 
+export const fetchFacilitySetup = createAsyncThunk("fetchFacilitySetup", async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups/${id}.json`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.facility_setup;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch facility setup';
+    return rejectWithValue(message);
+  }
+})
+
 // Create the facility setups slice
 const facilitySetupsSlice = createApiSlice<FacilitySetupsResponse>('facilitySetups', fetchFacilitySetups)
+const fetchFacilitySetupSlice = createApiSlice('fetchFacilitySetup', fetchFacilitySetup)
 
 export default facilitySetupsSlice.reducer
+export const fetchFacilitySetupReducer = fetchFacilitySetupSlice.reducer

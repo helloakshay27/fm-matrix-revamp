@@ -12,9 +12,10 @@ import { createSubcategory, deleteSubCategory, fetchSubcategory } from '@/store/
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-interface SubCategory {
+export interface SubCategory {
   id: number;
   category_id: string;
+  category_name: string;
   name: string;
   description: string;
   active: boolean;
@@ -71,12 +72,6 @@ export const SubCategoriesSetupTable = () => {
     }
   };
 
-  const handleEditSubCategory = (updatedSubCategory: SubCategory) => {
-    setSubCategories(subCategories.map(cat =>
-      cat.id === updatedSubCategory.id ? updatedSubCategory : cat
-    ));
-  };
-
   const handleDeleteSubCategory = async () => {
     try {
       await dispatch(deleteSubCategory({ baseUrl, token, id: Number(id), subId: selectedSubCategory?.id })).unwrap();
@@ -99,7 +94,7 @@ export const SubCategoriesSetupTable = () => {
   };
 
   const renderRow = (item: SubCategory) => ({
-    category: item.category_id,
+    category: item.category_name,
     subCategory: item.name,
     description: item.description,
     active: (
@@ -164,7 +159,7 @@ export const SubCategoriesSetupTable = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         subCategory={selectedSubCategory}
-        onSubmit={handleEditSubCategory}
+        fetchData={fetchData}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

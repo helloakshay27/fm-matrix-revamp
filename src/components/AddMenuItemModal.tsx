@@ -1,26 +1,30 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from "lucide-react";
+import { useAppDispatch } from '@/store/hooks';
+import { fetchRestaurantCategory, fetchSubcategory } from '@/store/slices/f&bSlice';
+import { useParams } from 'react-router-dom';
 
 interface AddMenuItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (menuItem: any) => void;
+  onSubmit: (menuItem: any, file?: File) => void;
 }
 
-const categories = ["Breakfast", "Lunch", "Dinner", "Snacks", "Beverages"];
-const subCategories = ["Continental", "Indian", "Italian", "Chinese", "South Indian"];
-
-export const AddMenuItemModal = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit 
+export const AddMenuItemModal = ({
+  isOpen,
+  onClose,
+  onSubmit
 }: AddMenuItemModalProps) => {
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const { id } = useParams();
+
   const [formData, setFormData] = useState({
     productName: "",
     sku: "",
@@ -34,17 +38,39 @@ export const AddMenuItemModal = ({
     cgstAmount: "",
     description: "",
     masterPrice: "",
-    active: "Yes"
+    active: ""
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [categories, setCategories] = useState([])
+  const [subCategories, setSubCategories] = useState([])
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantCategory({ baseUrl, token, id: Number(id) })).unwrap();
+        setCategories(response);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    const fetchSubCategories = async () => {
+      try {
+        const response = await dispatch(fetchSubcategory({ baseUrl, token, id: Number(id) })).unwrap();
+        setSubCategories(response);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    fetchCategories()
+    fetchSubCategories()
+  }, [])
 
   const handleSubmit = () => {
     if (formData.productName.trim() && formData.sku.trim()) {
-      onSubmit({
-        ...formData,
-        active: formData.active === "Yes"
-      });
+      onSubmit(formData, selectedFile);
       setFormData({
         productName: "",
         sku: "",
@@ -58,7 +84,7 @@ export const AddMenuItemModal = ({
         cgstAmount: "",
         description: "",
         masterPrice: "",
-        active: "Yes"
+        active: ""
       });
       setSelectedFile(null);
       onClose();
@@ -167,21 +193,32 @@ export const AddMenuItemModal = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-lg font-semibold flex items-center gap-2 text-black">
+    <Dialog open={isOpen} onClose={onClose} PaperProps={{
+      sx: {
+        width: '100%',
+        maxWidth: '60rem',
+        borderRadius: 2,
+      },
+    }}>
+      <DialogContent className="w-full max-h-[90vh] overflow-y-auto bg-white" sx={{ width: '100%' }}>
+        <div className="flex items-center justify-between">
+          <DialogTitle
+            sx={{
+              fontSize: '18px',
+              fontWeight: 550,
+              color: '#000000',
+              padding: '12px 0px',
+            }}
+          >
             ADD PRODUCT
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={onClose}
-            className="h-6 w-6 p-0"
+            className="p-1 rounded-md transition-colors"
           >
-            <X className="h-4 w-4" />
-          </Button>
-        </DialogHeader>
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
           <div className="space-y-2">
@@ -260,8 +297,8 @@ export const AddMenuItemModal = ({
                 label="Active"
                 notched
               >
-                <MenuItem value="Yes">Yes</MenuItem>
-                <MenuItem value="No">No</MenuItem>
+                <MenuItem value="1">Yes</MenuItem>
+                <MenuItem value="0">No</MenuItem>
               </MuiSelect>
             </FormControl>
           </div>
@@ -276,7 +313,7 @@ export const AddMenuItemModal = ({
                 notched
               >
                 {categories.map(category => (
-                  <MenuItem key={category} value={category}>{category}</MenuItem>
+                  <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>
                 ))}
               </MuiSelect>
             </FormControl>
@@ -292,7 +329,7 @@ export const AddMenuItemModal = ({
                 notched
               >
                 {subCategories.map(subCategory => (
-                  <MenuItem key={subCategory} value={subCategory}>{subCategory}</MenuItem>
+                  <MenuItem key={subCategory.id} value={subCategory.id}>{subCategory.name}</MenuItem>
                 ))}
               </MuiSelect>
             </FormControl>
@@ -398,7 +435,7 @@ export const AddMenuItemModal = ({
         </div>
 
         <div className="flex justify-center pt-4">
-          <Button 
+          <Button
             onClick={handleSubmit}
             className="bg-red-600 hover:bg-red-700 text-white px-8"
           >

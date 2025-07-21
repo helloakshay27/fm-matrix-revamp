@@ -1,62 +1,83 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
-
-interface SubCategory {
-  id: number;
-  name: string;
-  subCategory?: string;
-  description: string;
-  active: boolean;
-}
+import { SubCategory } from './SubCategoriesSetupTable';
+import { editSubCategory, fetchRestaurantCategory } from '@/store/slices/f&bSlice';
+import { useAppDispatch } from '@/store/hooks';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface EditSubCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   subCategory: SubCategory | null;
-  onSubmit: (subCategory: SubCategory) => void;
+  fetchData: () => Promise<void>;
 }
-
-const categories = ["Breakfast", "Lunch", "Dinner", "Snacks", "Beverages"];
 
 export const EditSubCategoryModal = ({
   isOpen,
   onClose,
   subCategory,
-  onSubmit
+  fetchData
 }: EditSubCategoryModalProps) => {
+  const dispatch = useAppDispatch()
+  const baseUrl = localStorage.getItem('baseUrl')
+  const token = localStorage.getItem('token')
+  const { id } = useParams();
+
   const [formData, setFormData] = useState({
     category: "",
     subCategory: "",
     description: ""
   });
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantCategory({ baseUrl, token, id: Number(id) })).unwrap();
+        setCategories(response)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   useEffect(() => {
     if (subCategory) {
       setFormData({
-        category: subCategory.name,
-        subCategory: subCategory.subCategory,
+        category: subCategory.category_id,
+        subCategory: subCategory.name,
         description: subCategory.description
       });
     }
   }, [subCategory]);
 
-  const handleSubmit = () => {
-    if (subCategory) {
-      const updatedSubCategory: SubCategory = {
-        ...subCategory,
-        name: formData.category,
-        subCategory: formData.subCategory,
+  const handleSubmit = async () => {
+    const payload = {
+      spree_manage_restaurant_sub_category: {
+        category_id: Number(formData.category),
+        name: formData.subCategory,
         description: formData.description
-      };
-
-      onSubmit(updatedSubCategory);
+      },
+      restaurant_id: Number(id)
     }
-    setFormData({ category: "", subCategory: "", description: "" });
-    onClose();
+
+    try {
+      await dispatch(editSubCategory({ baseUrl, token, id: Number(id), subId: subCategory?.id, data: payload })).unwrap();
+      setFormData({ category: "", subCategory: "", description: "" });
+      fetchData();
+      onClose();
+      toast.success('Subcategory edited successfully');
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to edit subcategory');
+    }
   };
 
   const fieldStyles = {
@@ -144,18 +165,26 @@ export const EditSubCategoryModal = ({
           font-size: 16px !important;
         }
       `}</style>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onClose={onClose}>
         <DialogContent className="max-w-md">
-          <DialogHeader className="relative">
-            <DialogTitle className="text-lg font-semibold">Edit Sub Category</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle
+              sx={{
+                fontSize: '18px',
+                fontWeight: 550,
+                color: '#000000',
+                padding: '12px 0px',
+              }}
+            >
+              Edit Sub Category
+            </DialogTitle>
             <button
               onClick={onClose}
-              className="absolute right-0 top-0 p-1 rounded-md transition-colors hover:bg-gray-100"
+              className="p-1 rounded-md transition-colors"
             >
               <X size={20} className="text-gray-500" />
             </button>
-          </DialogHeader>
-
+          </div>
           <div className="space-y-4 py-4">
             <FormControl fullWidth>
               <InputLabel
@@ -175,7 +204,7 @@ export const EditSubCategoryModal = ({
                 sx={selectStyles}
               >
                 {categories.map(category => (
-                  <MenuItem key={category} value={category}>{category}</MenuItem>
+                  <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -218,7 +247,7 @@ export const EditSubCategoryModal = ({
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
     </>
   );
 };
