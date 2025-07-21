@@ -137,14 +137,22 @@ export const AttendanceDetailsPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {attendanceData.attendances.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium">{record.date}</TableCell>
-                    <TableCell>{record.punched_in_time}</TableCell>
-                    <TableCell>{record.punched_out_time || '-'}</TableCell>
-                    <TableCell>{record.duration}</TableCell>
+                {attendanceData.attendances.length > 0 ? (
+                  attendanceData.attendances.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">{record.date}</TableCell>
+                      <TableCell>{record.punched_in_time}</TableCell>
+                      <TableCell>{record.punched_out_time || '-'}</TableCell>
+                      <TableCell>{record.duration}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      No attendance records found for this user.
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
 
