@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Upload, Pencil, Trash2 } from "lucide-react";
+import { Plus, Upload, Eye, Pencil } from "lucide-react";
 import { AddMenuItemModal } from "./AddMenuItemModal";
 import { ImportDataModal } from "./ImportDataModal";
 import { StatusBadge } from "./ui/status-badge";
@@ -291,15 +291,14 @@ export const RestaurantMenuTable = () => {
                         size="sm"
                         className="p-1 h-8 w-8"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => openDeleteDialog(menuItem)}
-                        className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+                        className="p-1 h-8 w-8"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>
