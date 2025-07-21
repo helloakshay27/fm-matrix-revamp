@@ -154,9 +154,9 @@ export function RecentSchedulesSidebar() {
               </div>
               
               {/* Title and TAT */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900 text-base">{schedule.activityName}</h3>
-                <div className="flex items-center gap-1">
+              <div className="flex items-start justify-between mb-4 gap-2">
+                <h3 className="font-semibold text-gray-900 text-base flex-1 break-words">{schedule.activityName}</h3>
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <span className="text-sm font-medium text-gray-700">TAT :</span>
                   <span className="text-sm font-bold text-blue-600">"{schedule.tat}"</span>
                 </div>
@@ -209,27 +209,27 @@ export function RecentSchedulesSidebar() {
               </div>
               
               {/* Action Buttons */}
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-6">
+              <div className="flex items-center justify-between w-full gap-2">
+                <div className="flex items-center gap-4 flex-wrap">
                   <button 
-                    className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80" 
+                    className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 whitespace-nowrap" 
                     onClick={() => handleAddComment(schedule.id)}
                   >
-                    <MessageSquare className="h-4 w-4 text-red-500" />
+                    <MessageSquare className="h-4 w-4 text-red-500 flex-shrink-0" />
                     Add Comment
                   </button>
                   
                   <button 
-                    className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedSchedules.has(schedule.id) ? 'opacity-60' : ''}`} 
+                    className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 whitespace-nowrap ${flaggedSchedules.has(schedule.id) ? 'opacity-60' : ''}`} 
                     onClick={() => handleFlag(schedule.id)}
                   >
-                    <Flag className="h-4 w-4 text-red-500" />
+                    <Flag className="h-4 w-4 text-red-500 flex-shrink-0" />
                     Flag Issue
                   </button>
                 </div>
                 
                 <button 
-                  className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
+                  className="text-blue-600 text-sm font-medium underline hover:text-blue-800 whitespace-nowrap flex-shrink-0" 
                   onClick={() => handleViewDetails(schedule.scheduleId)}
                 >
                   View Detail&gt;&gt;
