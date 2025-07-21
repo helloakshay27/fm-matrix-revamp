@@ -31,6 +31,43 @@ export interface CategoryResponse {
   selected_icon_url: string;
 }
 
+// New interfaces for filter dropdown data
+export interface CategoryOption {
+  id: number;
+  name: string;
+}
+
+export interface SubcategoryOption {
+  id: number;
+  name: string;
+  category_id: number;
+}
+
+export interface DepartmentOption {
+  id: number;
+  department_name: string;
+}
+
+export interface SiteOption {
+  id: number;
+  site_name: string;
+}
+
+export interface UnitOption {
+  id: number;
+  unit_name: string;
+}
+
+export interface StatusOption {
+  id: number;
+  name: string;
+}
+
+export interface UserOption {
+  id: number;
+  name: string;
+}
+
 // Subcategory Types
 export interface SubCategoryFormData {
   helpdesk_category_id: number;
@@ -181,7 +218,7 @@ export interface OccupantUserResponse {
   };
 }
 
-// New interface for ticket filters
+// Interface for ticket filters
 export interface TicketFilters {
   date_range?: string;
   category_type_id_eq?: number;
@@ -196,8 +233,54 @@ export interface TicketFilters {
   assigned_to_in?: number[];
 }
 
+// Helper function to format date for API (DD/MM/YYYY)
+const formatDateForAPI = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 // API Services
 export const ticketManagementAPI = {
+  // New methods for filter dropdown data
+  async getHelpdeskCategories(): Promise<CategoryOption[]> {
+    const response = await apiClient.get(ENDPOINTS.HELPDESK_CATEGORIES);
+    return response.data.helpdesk_categories || [];
+  },
+
+  async getHelpdeskSubcategories(): Promise<SubcategoryOption[]> {
+    const response = await apiClient.get(`${ENDPOINTS.HELPDESK_SUBCATEGORIES}.json`);
+    return response.data.helpdesk_sub_categories || [];
+  },
+
+  async getDepartments(): Promise<DepartmentOption[]> {
+    const response = await apiClient.get(ENDPOINTS.DEPARTMENTS);
+    return response.data.departments || [];
+  },
+
+  async getAllSites(): Promise<SiteOption[]> {
+    const response = await apiClient.get(ENDPOINTS.SITES);
+    return response.data.sites || [];
+  },
+
+  async getUnits(): Promise<UnitOption[]> {
+    const response = await apiClient.get(ENDPOINTS.UNITS);
+    return response.data.units || [];
+  },
+
+  async getComplaintStatuses(): Promise<StatusOption[]> {
+    const response = await apiClient.get(ENDPOINTS.COMPLAINT_STATUSES);
+    return response.data.complaint_statuses || [];
+  },
+
+  async getFMUsers(): Promise<UserOption[]> {
+    const response = await apiClient.get(ENDPOINTS.FM_USERS);
+    return response.data.fm_users || [];
+  },
+
   // Categories
   async createCategory(data: CategoryFormData, emailData: CategoryEmailData) {
     const formData = new FormData();
@@ -256,6 +339,14 @@ export const ticketManagementAPI = {
           if (Array.isArray(value)) {
             // Handle array parameters like issue_status_in[] and assigned_to_in[]
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
+            // Handle date range - convert from ISO to DD/MM/YYYY format
+            const [fromDate, toDate] = value.split('+-+');
+            const formattedFromDate = formatDateForAPI(fromDate);
+            const formattedToDate = formatDateForAPI(toDate);
+            if (formattedFromDate && formattedToDate) {
+              queryParams.append(`q[${key}]`, `${formattedFromDate}+-+${formattedToDate}`);
+            }
           } else {
             queryParams.append(`q[${key}]`, value.toString());
           }
@@ -537,6 +628,14 @@ export const ticketManagementAPI = {
         if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
+            // Handle date range - convert from ISO to DD/MM/YYYY format
+            const [fromDate, toDate] = value.split('+-+');
+            const formattedFromDate = formatDateForAPI(fromDate);
+            const formattedToDate = formatDateForAPI(toDate);
+            if (formattedFromDate && formattedToDate) {
+              queryParams.append(`q[${key}]`, `${formattedFromDate}+-+${formattedToDate}`);
+            }
           } else {
             queryParams.append(`q[${key}]`, value.toString());
           }
@@ -558,6 +657,14 @@ export const ticketManagementAPI = {
         if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
+          } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
+            // Handle date range - convert from ISO to DD/MM/YYYY format
+            const [fromDate, toDate] = value.split('+-+');
+            const formattedFromDate = formatDateForAPI(fromDate);
+            const formattedToDate = formatDateForAPI(toDate);
+            if (formattedFromDate && formattedToDate) {
+              queryParams.append(`q[${key}]`, `${formattedFromDate}+-+${formattedToDate}`);
+            }
           } else {
             queryParams.append(`q[${key}]`, value.toString());
           }

@@ -1,33 +1,60 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip, OutlinedInput, SelectChangeEvent } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip, OutlinedInput, SelectChangeEvent, CircularProgress } from '@mui/material';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface FilterData {
-  date_range?: string;
-  category_type_id_eq?: number;
-  sub_category_id_eq?: number;
-  dept_id_eq?: number;
-  site_id_eq?: number;
-  unit_id_eq?: number;
-  issue_status_in?: number[];
-  priority_eq?: string;
-  user_firstname_or_user_lastname_cont?: string;
-  assigned_to_in?: number[];
-}
+import { 
+  ticketManagementAPI, 
+  TicketFilters, 
+  CategoryOption, 
+  SubcategoryOption, 
+  DepartmentOption, 
+  SiteOption, 
+  UnitOption, 
+  StatusOption, 
+  UserOption 
+} from '@/services/ticketManagementAPI';
 
 interface TicketsFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyFilters: (filters: FilterData) => void;
+  onApplyFilters: (filters: TicketFilters) => void;
 }
+
+interface FilterDialogState {
+  loading: {
+    categories: boolean;
+    subcategories: boolean;
+    departments: boolean;
+    sites: boolean;
+    units: boolean;
+    statuses: boolean;
+    users: boolean;
+  };
+  data: {
+    categories: CategoryOption[];
+    subcategories: SubcategoryOption[];
+    departments: DepartmentOption[];
+    sites: SiteOption[];
+    units: UnitOption[];
+    statuses: StatusOption[];
+    users: UserOption[];
+  };
+  errors: Record<string, string | null>;
+}
+
+const priorityOptions = [
+  { value: 'p1', label: 'P1 - Critical' },
+  { value: 'p2', label: 'P2 - Very High' },
+  { value: 'p3', label: 'P3 - High' },
+  { value: 'p4', label: 'P4 - Medium' },
+  { value: 'p5', label: 'P5 - Low' }
+];
 
 export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: TicketsFilterDialogProps) => {
   const { toast } = useToast();
-  const [filters, setFilters] = useState<FilterData>({
+  const [filters, setFilters] = useState<TicketFilters>({
     date_range: '',
     category_type_id_eq: undefined,
     sub_category_id_eq: undefined,
@@ -40,14 +67,136 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
     assigned_to_in: []
   });
 
-  const handleFilterChange = (key: keyof FilterData, value: any) => {
-    setFilters(prev => ({
+  const [state, setState] = useState<FilterDialogState>({
+    loading: {
+      categories: false,
+      subcategories: false,
+      departments: false,
+      sites: false,
+      units: false,
+      statuses: false,
+      users: false,
+    },
+    data: {
+      categories: [],
+      subcategories: [],
+      departments: [],
+      sites: [],
+      units: [],
+      statuses: [],
+      users: [],
+    },
+    errors: {},
+  });
+
+  // Filtered subcategories based on selected category
+  const filteredSubcategories = useMemo(() => {
+    if (!filters.category_type_id_eq) {
+      return state.data.subcategories;
+    }
+    return state.data.subcategories.filter(sub => sub.category_id === filters.category_type_id_eq);
+  }, [state.data.subcategories, filters.category_type_id_eq]);
+
+  // Load initial data when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      loadInitialData();
+    }
+  }, [isOpen]);
+
+  const loadInitialData = async () => {
+    const loadingUpdates = {
+      categories: true,
+      departments: true,
+      sites: true,
+      units: true,
+      statuses: true,
+      users: true,
+    };
+
+    setState(prev => ({
       ...prev,
-      [key]: value
+      loading: { ...prev.loading, ...loadingUpdates },
+      errors: {},
     }));
+
+    try {
+      const [categories, subcategories, departments, sites, units, statuses, users] = await Promise.allSettled([
+        ticketManagementAPI.getHelpdeskCategories(),
+        ticketManagementAPI.getHelpdeskSubcategories(),
+        ticketManagementAPI.getDepartments(),
+        ticketManagementAPI.getAllSites(),
+        ticketManagementAPI.getUnits(),
+        ticketManagementAPI.getComplaintStatuses(),
+        ticketManagementAPI.getFMUsers(),
+      ]);
+
+      setState(prev => ({
+        ...prev,
+        loading: {
+          categories: false,
+          subcategories: false,
+          departments: false,
+          sites: false,
+          units: false,
+          statuses: false,
+          users: false,
+        },
+        data: {
+          categories: categories.status === 'fulfilled' ? categories.value : [],
+          subcategories: subcategories.status === 'fulfilled' ? subcategories.value : [],
+          departments: departments.status === 'fulfilled' ? departments.value : [],
+          sites: sites.status === 'fulfilled' ? sites.value : [],
+          units: units.status === 'fulfilled' ? units.value : [],
+          statuses: statuses.status === 'fulfilled' ? statuses.value : [],
+          users: users.status === 'fulfilled' ? users.value : [],
+        },
+        errors: {
+          categories: categories.status === 'rejected' ? 'Failed to load categories' : null,
+          subcategories: subcategories.status === 'rejected' ? 'Failed to load subcategories' : null,
+          departments: departments.status === 'rejected' ? 'Failed to load departments' : null,
+          sites: sites.status === 'rejected' ? 'Failed to load sites' : null,
+          units: units.status === 'rejected' ? 'Failed to load units' : null,
+          statuses: statuses.status === 'rejected' ? 'Failed to load statuses' : null,
+          users: users.status === 'rejected' ? 'Failed to load users' : null,
+        },
+      }));
+
+      // Show error toast if any API calls failed
+      const failedCalls = [categories, subcategories, departments, sites, units, statuses, users]
+        .filter(result => result.status === 'rejected');
+      
+      if (failedCalls.length > 0) {
+        toast({
+          title: "Warning",
+          description: `Failed to load some filter options. Some dropdowns may be empty.`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading filter data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load filter options. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleMultiSelectChange = (key: keyof FilterData, event: SelectChangeEvent<number[]>) => {
+  const handleFilterChange = (key: keyof TicketFilters, value: any) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [key]: value };
+      
+      // Clear subcategory when category changes
+      if (key === 'category_type_id_eq') {
+        newFilters.sub_category_id_eq = undefined;
+      }
+      
+      return newFilters;
+    });
+  };
+
+  const handleMultiSelectChange = (key: keyof TicketFilters, event: SelectChangeEvent<number[]>) => {
     const value = event.target.value;
     setFilters(prev => ({
       ...prev,
@@ -65,6 +214,17 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
       setFilters(prev => ({
         ...prev,
         date_range: `${newRange[0]}+-+${newRange[1]}`
+      }));
+    } else if (newRange[0] || newRange[1]) {
+      // Keep partial date range
+      setFilters(prev => ({
+        ...prev,
+        date_range: `${newRange[0] || ''}+-+${newRange[1] || ''}`
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        date_range: ''
       }));
     }
   };
@@ -92,7 +252,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
         (acc as any)[key] = value;
       }
       return acc;
-    }, {} as FilterData);
+    }, {} as TicketFilters);
 
     onApplyFilters(cleanFilters);
     toast({
@@ -110,6 +270,16 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   };
 
   const currentRange = filters.date_range?.split('+-+') || ['', ''];
+
+  const getUserNameById = (id: number): string => {
+    const user = state.data.users.find(u => u.id === id);
+    return user ? user.name : `User ${id}`;
+  };
+
+  const getStatusNameById = (id: number): string => {
+    const status = state.data.statuses.find(s => s.id === id);
+    return status ? status.name : `Status ${id}`;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -152,7 +322,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
           </div>
 
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" disabled={state.loading.categories}>
               <InputLabel id="category-select-label" shrink>Category</InputLabel>
               <MuiSelect
                 labelId="category-select-label"
@@ -161,20 +331,21 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 value={filters.category_type_id_eq || ''}
                 onChange={(e) => handleFilterChange('category_type_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
+                startAdornment={state.loading.categories ? <CircularProgress size={20} /> : undefined}
               >
                 <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value={682}>Air Conditioner</MenuItem>
-                <MenuItem value={683}>FIRE SYSTEM</MenuItem>
-                <MenuItem value={684}>Cleaning</MenuItem>
-                <MenuItem value={685}>Electrical</MenuItem>
-                <MenuItem value={686}>Printer</MenuItem>
+                {state.data.categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
 
           {/* Row 2 */}
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" disabled={state.loading.subcategories}>
               <InputLabel id="subcategory-select-label" shrink>Sub Category</InputLabel>
               <MuiSelect
                 labelId="subcategory-select-label"
@@ -183,18 +354,20 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 value={filters.sub_category_id_eq || ''}
                 onChange={(e) => handleFilterChange('sub_category_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
+                startAdornment={state.loading.subcategories ? <CircularProgress size={20} /> : undefined}
               >
                 <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-                <MenuItem value={746}>Test</MenuItem>
-                <MenuItem value={747}>NA</MenuItem>
-                <MenuItem value={748}>Fire</MenuItem>
-                <MenuItem value={749}>Dentry</MenuItem>
+                {filteredSubcategories.map((subcategory) => (
+                  <MenuItem key={subcategory.id} value={subcategory.id}>
+                    {subcategory.name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" disabled={state.loading.departments}>
               <InputLabel id="department-select-label" shrink>Department</InputLabel>
               <MuiSelect
                 labelId="department-select-label"
@@ -203,17 +376,20 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 value={filters.dept_id_eq || ''}
                 onChange={(e) => handleFilterChange('dept_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
+                startAdornment={state.loading.departments ? <CircularProgress size={20} /> : undefined}
               >
                 <MenuItem value=""><em>Select Department</em></MenuItem>
-                <MenuItem value={3}>Technician</MenuItem>
-                <MenuItem value={4}>Maintenance</MenuItem>
-                <MenuItem value={5}>Facility</MenuItem>
+                {state.data.departments.map((department) => (
+                  <MenuItem key={department.id} value={department.id}>
+                    {department.department_name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" disabled={state.loading.sites}>
               <InputLabel id="site-select-label" shrink>Site</InputLabel>
               <MuiSelect
                 labelId="site-select-label"
@@ -222,18 +398,21 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 value={filters.site_id_eq || ''}
                 onChange={(e) => handleFilterChange('site_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
+                startAdornment={state.loading.sites ? <CircularProgress size={20} /> : undefined}
               >
                 <MenuItem value=""><em>Select Site</em></MenuItem>
-                <MenuItem value={7}>Lockated</MenuItem>
-                <MenuItem value={8}>Mumbai</MenuItem>
-                <MenuItem value={9}>Pune</MenuItem>
+                {state.data.sites.map((site) => (
+                  <MenuItem key={site.id} value={site.id}>
+                    {site.site_name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
 
           {/* Row 3 */}
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" disabled={state.loading.units}>
               <InputLabel id="unit-select-label" shrink>Unit</InputLabel>
               <MuiSelect
                 labelId="unit-select-label"
@@ -242,17 +421,20 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 value={filters.unit_id_eq || ''}
                 onChange={(e) => handleFilterChange('unit_id_eq', e.target.value ? Number(e.target.value) : undefined)}
                 sx={fieldStyles}
+                startAdornment={state.loading.units ? <CircularProgress size={20} /> : undefined}
               >
                 <MenuItem value=""><em>Select Unit</em></MenuItem>
-                <MenuItem value={46}>Unit 1</MenuItem>
-                <MenuItem value={47}>Unit 2</MenuItem>
-                <MenuItem value={48}>Unit 3</MenuItem>
+                {state.data.units.map((unit) => (
+                  <MenuItem key={unit.id} value={unit.id}>
+                    {unit.unit_name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
 
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" disabled={state.loading.statuses}>
               <InputLabel id="status-select-label" shrink>Status</InputLabel>
               <MuiSelect
                 labelId="status-select-label"
@@ -265,16 +447,18 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 renderValue={(selected) => (
                   <div className="flex flex-wrap gap-1">
                     {(selected as number[]).map((value) => (
-                      <Chip key={value} label={value === 323 ? 'Pending' : value === 325 ? 'Open' : value === 326 ? 'Closed' : value} size="small" />
+                      <Chip key={value} label={getStatusNameById(value)} size="small" />
                     ))}
                   </div>
                 )}
                 sx={fieldStyles}
+                startAdornment={state.loading.statuses ? <CircularProgress size={20} /> : undefined}
               >
-                <MenuItem value={323}>Pending</MenuItem>
-                <MenuItem value={325}>Open</MenuItem>
-                <MenuItem value={326}>Closed</MenuItem>
-                <MenuItem value={327}>In Progress</MenuItem>
+                {state.data.statuses.map((status) => (
+                  <MenuItem key={status.id} value={status.id}>
+                    {status.name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
@@ -291,10 +475,11 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 sx={fieldStyles}
               >
                 <MenuItem value=""><em>Select Priority</em></MenuItem>
-                <MenuItem value="p1">P1</MenuItem>
-                <MenuItem value="p2">P2</MenuItem>
-                <MenuItem value="p3">P3</MenuItem>
-                <MenuItem value="p4">P4</MenuItem>
+                {priorityOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
@@ -314,7 +499,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
           </div>
 
           <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" disabled={state.loading.users}>
               <InputLabel id="assigned-to-select-label" shrink>Assigned To</InputLabel>
               <MuiSelect
                 labelId="assigned-to-select-label"
@@ -327,15 +512,18 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                 renderValue={(selected) => (
                   <div className="flex flex-wrap gap-1">
                     {(selected as number[]).map((value) => (
-                      <Chip key={value} label={value === 35905 ? 'John Doe' : value === 35948 ? 'Jane Smith' : value} size="small" />
+                      <Chip key={value} label={getUserNameById(value)} size="small" />
                     ))}
                   </div>
                 )}
                 sx={fieldStyles}
+                startAdornment={state.loading.users ? <CircularProgress size={20} /> : undefined}
               >
-                <MenuItem value={35905}>John Doe</MenuItem>
-                <MenuItem value={35948}>Jane Smith</MenuItem>
-                <MenuItem value={35949}>Mike Johnson</MenuItem>
+                {state.data.users.map((user) => (
+                  <MenuItem key={user.id} value={user.id}>
+                    {user.name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
           </div>
@@ -346,6 +534,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
             onClick={handleApply}
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90 px-8"
+            disabled={Object.values(state.loading).some(loading => loading)}
           >
             Apply
           </Button>
