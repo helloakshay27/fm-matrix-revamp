@@ -577,22 +577,20 @@ export const AddAMCPage = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
         <ResponsiveDatePicker
           value={formData.startDate ? new Date(formData.startDate) : undefined}
           onChange={(date) => handleInputChange('startDate', date ? date.toISOString().split('T')[0] : '')}
           placeholder="Select Date"
-          className="w-full h-[45px] border border-gray-300 rounded-md"
+          className="w-full h-[45px]"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">First Service Date *</label>
         <ResponsiveDatePicker
           value={formData.firstService ? new Date(formData.firstService) : undefined}
           onChange={(date) => handleInputChange('firstService', date ? date.toISOString().split('T')[0] : '')}
           placeholder="Select Date"
-          className="w-full h-[45px] border border-gray-300 rounded-md"
+          className="w-full h-[45px]"
         />
       </div>
 
@@ -612,12 +610,11 @@ export const AddAMCPage = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
         <ResponsiveDatePicker
           value={formData.endDate ? new Date(formData.endDate) : undefined}
           onChange={(date) => handleInputChange('endDate', date ? date.toISOString().split('T')[0] : '')}
           placeholder="Select Date"
-          className="w-full h-[45px] border border-gray-300 rounded-md"
+          className="w-full h-[45px]"
           minDate={formData.startDate ? new Date(formData.startDate) : undefined}
         />
       </div>
