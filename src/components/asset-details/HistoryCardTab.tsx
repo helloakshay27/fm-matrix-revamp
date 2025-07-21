@@ -1,11 +1,12 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export const HistoryCardTab = () => {
+  const [activeTab, setActiveTab] = useState('history-details');
+
   const basicAssetInfo = [
     { label: 'Asset Name', value: 'CCTV-Server—Parking Lot' },
     { label: 'Asset Code', value: 'AST-CCTV-034' },
@@ -65,13 +66,29 @@ export const HistoryCardTab = () => {
     { label: 'Approved By', value: 'Facility Head' }
   ];
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6">
-        <FileText className="w-5 h-5 text-[#C72030]" />
-        <h2 className="text-xl font-bold text-[#C72030]">History In Details</h2>
-      </div>
+  const logEntries = [
+    {
+      id: 1,
+      user: 'Anushree',
+      action: 'created an Asset "Dell Laptop"',
+      date: '26th Nov, 2020, 12:30 pm'
+    },
+    {
+      id: 2,
+      user: 'Rakesh K.',
+      action: 'made a visit on "01/01/2021" and updated the Remarks as "Demo Remarks"',
+      date: '01st Jan, 2021, 04:19 pm'
+    },
+    {
+      id: 3,
+      user: 'Nupura W.',
+      action: 'updated the no. of visits to "3"',
+      date: '18th Oct, 2021, 10:52 am'
+    }
+  ];
 
+  const renderHistoryDetails = () => (
+    <div className="space-y-4">
       <Accordion type="multiple" defaultValue={["basic-info", "acquisition", "maintenance1", "maintenance2", "cost1", "cost2", "certification", "audit", "ebom", "disposal"]} className="space-y-4">
         {/* Basic Asset Info */}
         <AccordionItem value="basic-info" className="border rounded-lg">
@@ -250,6 +267,7 @@ export const HistoryCardTab = () => {
                           <TableHead className="bg-[#f6f4ee] text-center">Year</TableHead>
                           <TableHead className="bg-[#f6f4ee] text-center">Depreciation %</TableHead>
                           <TableHead className="bg-[#f6f4ee] text-center">Amount Depreciated</TableHead>
+                          <TableHead className="bg-[#f6f4ee] text-center">Net Value</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -258,6 +276,7 @@ export const HistoryCardTab = () => {
                             <TableCell className="p-4 text-center">{item.year}</TableCell>
                             <TableCell className="p-4 text-center">{item.depreciationPercent}</TableCell>
                             <TableCell className="p-4 text-center">{item.amountDepreciated}</TableCell>
+                            <TableCell className="p-4 text-center">{item.netValue}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -380,7 +399,7 @@ export const HistoryCardTab = () => {
         <AccordionItem value="disposal" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <CardTitle className="text-base font-semibold text-[#C72030]">Disposal / Write-Off Details</CardTitle>
+              <CardTitle className="text-base font-semibold text-[#C72030]">Disposal Details</CardTitle>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0">
@@ -403,6 +422,83 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
       </Accordion>
+    </div>
+  );
+
+  const renderLogs = () => (
+    <div className="space-y-6">
+      <div className="relative">
+        {/* Timeline line */}
+        <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-[#C72030]"></div>
+        
+        <div className="space-y-8">
+          {logEntries.map((entry, index) => (
+            <div key={entry.id} className="flex items-start gap-4 relative">
+              {/* Timeline dot */}
+              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center z-10 flex-shrink-0">
+                <div className="w-3 h-3 bg-white rounded-full"></div>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="bg-white">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-gray-900 text-base leading-relaxed">
+                        <span className="font-medium">{entry.user}</span> {entry.action}.
+                      </p>
+                    </div>
+                    <div className="text-gray-400 text-sm whitespace-nowrap">
+                      {entry.date}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-6">
+        <FileText className="w-5 h-5 text-[#C72030]" />
+        <h2 className="text-xl font-bold text-[#C72030]">History In Details</h2>
+      </div>
+
+      {/* Internal Tabs */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {/* Tab Headers */}
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('history-details')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'history-details'
+                ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            History Details
+          </button>
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'logs'
+                ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Logs
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-4 sm:p-6 max-h-96 overflow-y-auto">
+          {activeTab === 'history-details' && renderHistoryDetails()}
+          {activeTab === 'logs' && renderLogs()}
+        </div>
+      </div>
     </div>
   );
 };

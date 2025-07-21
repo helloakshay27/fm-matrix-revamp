@@ -12,7 +12,7 @@ import { PPMTab } from '@/components/asset-details/PPMTab';
 import { EBOMTab } from '@/components/asset-details/EBOMTab';
 import { AttachmentsTab } from '@/components/asset-details/AttachmentsTab';
 import { ReadingsTab } from '@/components/asset-details/ReadingsTab';
-import { LogsTab } from '@/components/asset-details/LogsTab';
+
 import { HistoryCardTab } from '@/components/asset-details/HistoryCardTab';
 import { DepreciationTab } from '@/components/asset-details/DepreciationTab';
 import { TicketTab } from '@/components/asset-details/TicketTab';
@@ -144,9 +144,6 @@ export const AssetDetailsPage = () => {
             <TabsTrigger value="readings" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
               Readings
             </TabsTrigger>
-            <TabsTrigger value="logs" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Logs
-            </TabsTrigger>
             <TabsTrigger value="history-card" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
               History Card
             </TabsTrigger>
@@ -185,9 +182,6 @@ export const AssetDetailsPage = () => {
           </TabsContent>
           <TabsContent value="readings" className="p-4 sm:p-6">
             <ReadingsTab />
-          </TabsContent>
-          <TabsContent value="logs" className="p-4 sm:p-6">
-            <LogsTab />
           </TabsContent>
           <TabsContent value="history-card" className="p-4 sm:p-6">
             <HistoryCardTab />
