@@ -365,14 +365,27 @@ export const AssetInfoTab = ({
 
             {/* Movement Timeline - Horizontal Layout */}
             <div className="flex justify-between items-center relative">
-              {/* Connecting lines */}
-              <div className="absolute top-6 left-16 right-16 flex justify-between">
-                <div className="w-1/2 h-0.5" style={{ backgroundColor: '#C72030' }}></div>
-                <div className="w-1/2 h-0.5 bg-gray-300"></div>
+              {/* Connecting lines that stop at icon edges */}
+              <div className="absolute top-6 flex justify-between w-full px-6">
+                {/* Line from Requested to Approved */}
+                <div 
+                  className="h-0.5 ml-6 mr-6" 
+                  style={{ 
+                    backgroundColor: '#C72030',
+                    width: 'calc(50% - 3rem)'
+                  }}
+                ></div>
+                {/* Line from Approved to Received */}
+                <div 
+                  className="h-0.5 ml-6 mr-6 bg-gray-300" 
+                  style={{ 
+                    width: 'calc(50% - 3rem)'
+                  }}
+                ></div>
               </div>
               
               {/* Requested Stage */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center relative z-10">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
                   backgroundColor: '#C72030'
                 }}>
@@ -394,7 +407,7 @@ export const AssetInfoTab = ({
               </div>
 
               {/* Approved Stage */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center relative z-10">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{
                   backgroundColor: '#C72030'
                 }}>
@@ -416,7 +429,7 @@ export const AssetInfoTab = ({
               </div>
 
               {/* Received Stage */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center relative z-10">
                 <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mb-4">
                   <Box className="w-6 h-6 text-gray-500" />
                 </div>
