@@ -104,6 +104,8 @@ export const InventoryDashboard = () => {
     'statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix'
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix']);
+  const [activeTab, setActiveTab] = useState<string>("list");
+
   const pageSize = 15; // Use larger page size for API data
 
   // Map API data to display format
@@ -411,8 +413,8 @@ export const InventoryDashboard = () => {
     return items;
   };
 
-  const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-    return null; // No labels on the pie
+  const getHeading = () => {
+    return activeTab === "analytics" ? "Inventory Analytics" : "Inventory List";
   };
 
   return (
@@ -423,10 +425,10 @@ export const InventoryDashboard = () => {
           <span>&gt;</span>
           <span>Inventory Dashboard</span>
         </div>
-        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
+        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">  {getHeading().toUpperCase()}</h1>
       </div>
 
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 
             value="analytics" 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -205,7 +204,7 @@ export const AMCDetailsPage = () => {
       </Card>
 
       {/* Attachments */}
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">A</span>
@@ -237,6 +236,35 @@ export const AMCDetailsPage = () => {
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* AMC Data Logs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">L</span>
+            AMC DATA LOGS
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Asset Period</TableHead>
+                <TableHead>Visit No</TableHead>
+                <TableHead>Visit Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {/* Placeholder for AMC Data Logs */}
+              <TableRow>
+                <TableCell colSpan={10} className="text-center text-gray-600">
+                 
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
