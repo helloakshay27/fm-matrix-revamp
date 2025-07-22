@@ -694,16 +694,6 @@ export const AMCDashboard = () => {
             </h1>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 mb-6">
-            <Button 
-              onClick={handleAddClick} 
-              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-          </div>
 
           {/* Loading State */}
           {loading && (
@@ -740,6 +730,15 @@ export const AMCDashboard = () => {
               bulkActions={bulkActions}
               showBulkActions={true}
               pagination={false}
+              leftActions={
+                <Button 
+                  onClick={handleAddClick} 
+                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+              }
             />
           )}
 

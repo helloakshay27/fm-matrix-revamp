@@ -74,6 +74,7 @@ interface EnhancedTableProps<T> {
   hideTableExport?: boolean;
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
+  leftActions?: React.ReactNode;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -109,6 +110,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideTableExport = false,
   hideTableSearch = false,
   hideColumnsButton = false,
+  leftActions,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -266,7 +268,7 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-         
+          {leftActions}
           
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
