@@ -781,7 +781,8 @@ export const TicketDashboard = () => {
     }
     return item[columnKey];
   };
-  return <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+  return (
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
@@ -1071,9 +1072,12 @@ export const TicketDashboard = () => {
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
-            {loading ? <div className="flex items-center justify-center p-8">
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
-              </div> : <>
+              </div>
+            ) : (
+              <>
                 <EnhancedTable 
                   data={safeTickets} 
                   columns={columns} 
@@ -1089,16 +1093,22 @@ export const TicketDashboard = () => {
                   onSelectItem={handleTicketSelection} 
                   onSelectAll={handleSelectAll} 
                   getItemId={ticket => ticket.id.toString()} 
-                  leftActions={renderCustomActions()}
+                  leftActions={
+                    <div className="flex gap-3">
+                      {renderCustomActions()}
+                      <Button 
+                        variant="outline" 
+                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                        onClick={() => setIsFilterOpen(true)}
+                      >
+                        <Filter className="w-4 h-4 mr-2" /> Filter
+                      </Button>
+                    </div>
+                  }
                   searchPlaceholder="Search Tickets"
-                  hideTableExport={true}
-                  hideColumnsButton={true}
+                  hideTableExport={false}
+                  hideColumnsButton={false}
                 />
-                
-                {/* Custom Right Actions */}
-                <div className="flex justify-end gap-2 mt-4">
-                  {renderRightActions()}
-                </div>
                 
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
@@ -1190,7 +1200,8 @@ export const TicketDashboard = () => {
                     </button>
                   </div>
                 </div>
-              </>}
+              </>
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -1198,6 +1209,14 @@ export const TicketDashboard = () => {
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
 
       {/* Ticket Selection Panel */}
-      <TicketSelectionPanel selectedTickets={selectedTickets} selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} onGoldenTicket={handleGoldenTicket} onFlag={handleFlag} onExport={handleExport} onClearSelection={handleClearSelection} />
-    </div>;
+      <TicketSelectionPanel 
+        selectedTickets={selectedTickets} 
+        selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} 
+        onGoldenTicket={handleGoldenTicket} 
+        onFlag={handleFlag} 
+        onExport={handleExport} 
+        onClearSelection={handleClearSelection} 
+      />
+    </div>
+  );
 };
