@@ -7,6 +7,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCData } from '@/store/slices/amcSlice';
+import { exportAMCData } from '@/store/slices/amcExportSlice';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -157,6 +158,51 @@ export const AMCDashboard = () => {
     // In a real implementation, you would make an API call to delete the selected items
   };
 
+  const handleBulkExport = (selectedItems: AMCRecord[]) => {
+    if (selectedItems.length === 0) {
+      alert('Please select at least one AMC record to export');
+      return;
+    }
+
+    // Get data from localStorage
+    const siteId = localStorage.getItem('site_id');
+    const token = localStorage.getItem('access_token');
+
+    if (!siteId || !token) {
+      alert('Site ID or access token not found in localStorage');
+      return;
+    }
+
+    // Get date range from the selected AMC items
+    const dates = selectedItems
+      .map(item => ({
+        start: item.amc_start_date,
+        end: item.amc_end_date
+      }))
+      .filter(date => date.start && date.end);
+
+    if (dates.length === 0) {
+      alert('No valid date range found in selected AMC records');
+      return;
+    }
+
+    // Find the earliest start date and latest end date
+    const startDates = dates.map(d => new Date(d.start).getTime());
+    const endDates = dates.map(d => new Date(d.end).getTime());
+    const fromDate = new Date(Math.min(...startDates)).toISOString().split('T')[0];
+    const toDate = new Date(Math.max(...endDates)).toISOString().split('T')[0];
+
+    // Dispatch export action
+    dispatch(exportAMCData({
+      site_id: siteId,
+      from_date: fromDate,
+      to_date: toDate,
+      access_token: token
+    }));
+
+    setSelectedItems([]);
+  };
+
   const handleSelectionChange = (selectedSections: string[]) => {
     setVisibleSections(selectedSections);
   };
@@ -226,6 +272,12 @@ export const AMCDashboard = () => {
   );
 
   const bulkActions = [
+    {
+      label: 'Export Selected',
+      icon: Download,
+      variant: 'default' as const,
+      onClick: handleBulkExport,
+    },
     {
       label: 'Delete Selected',
       icon: Trash2,

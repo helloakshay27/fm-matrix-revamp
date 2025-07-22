@@ -2,6 +2,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { testReducer, loginReducer } from './slices/testSlice'
 import { amcReducer } from './slices/amcSlice'
+import { amcExportReducer } from './slices/amcExportSlice'
 import { amcDetailsReducer } from './slices/amcDetailsSlice'
 import { servicesReducer } from './slices/servicesSlice'
 import { serviceDetailsReducer } from './slices/serviceDetailsSlice'
@@ -41,6 +42,7 @@ export const store = configureStore({
     test: testReducer,
     login: loginReducer,
     amc: amcReducer,
+    amcExport: amcExportReducer,
     amcDetails: amcDetailsReducer,
     services: servicesReducer,
     serviceDetails: serviceDetailsReducer,
