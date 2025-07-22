@@ -738,15 +738,6 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
-          <div title="Delete ticket">
-            <Trash2 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteTicket(item.id);
-              }}
-            />
-          </div>
         </div>
       );
     }
