@@ -409,10 +409,155 @@ const modulesByPackage = {
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
   'Settings': [
-    ...navigationStructure.Settings.items,
-    ...navigationStructure.Maintenance.items,
-    ...navigationStructure.Finance.items,
-    ...navigationStructure.Security.items
+    {
+      name: 'Account',
+      icon: Users,
+      href: '/settings/account',
+      subItems: [
+        { name: 'General', href: '/settings/account/general' },
+        { name: 'Holiday Calendar', href: '/settings/account/holiday-calendar' },
+        { name: 'About', href: '/settings/account/about' },
+        { name: 'Language', href: '/settings/account/language' },
+        { name: 'Company Logo Upload', href: '/settings/account/company-logo-upload' },
+        { name: 'Report Setup', href: '/settings/account/report-setup' },
+        { name: 'Notification Setup', href: '/settings/account/notification-setup' }
+      ]
+    },
+    {
+      name: 'Roles (RACI)',
+      icon: UserCheck,
+      href: '/settings/roles',
+      subItems: [
+        { name: 'Department', href: '/settings/roles/department' },
+        { name: 'Role', href: '/settings/roles/role' },
+        { name: 'Approval Matrix', href: '/settings/approval-matrix/setup' }
+      ]
+    },
+    {
+      name: 'Maintenance',
+      icon: Wrench,
+      href: '/settings/maintenance',
+      subItems: [
+        {
+          name: 'Asset Setup',
+          href: '/settings/asset-setup',
+          subItems: [
+            { name: 'Approval Matrix', href: '/settings/asset-setup/approval-matrix' },
+            { name: 'Asset Group & Sub Group', href: '/settings/asset-setup/asset-groups' }
+          ]
+        },
+        {
+          name: 'Checklist Setup',
+          href: '/settings/checklist-setup',
+          subItems: [
+            { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/groups' },
+            { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
+            { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
+          ]
+        },
+        {
+          name: 'Ticket Management',
+          href: '/settings/ticket-management',
+          subItems: [
+            { name: 'Setup', href: '/settings/ticket-management/setup' },
+            { name: 'Escalation Matrix', href: '/settings/ticket-management/escalation-matrix' },
+            { name: 'Cost Approval', href: '/settings/ticket-management/cost-approval' }
+          ]
+        },
+        {
+          name: 'Inventory Management',
+          href: '/settings/inventory-management',
+          subItems: [
+            { name: 'SAC/HSN Code', href: '/settings/inventory-management/sac-hsn-code' }
+          ]
+        },
+        {
+          name: 'Safety',
+          href: '/settings/safety',
+          subItems: [
+            { name: 'Permit Setup', href: '/settings/safety/permit-setup' },
+            { name: 'Incident Setup', href: '/settings/safety/incident' }
+          ]
+        },
+        {
+          name: 'Waste Management',
+          href: '/settings/waste-management',
+          subItems: [
+            { name: 'Setup', href: '/settings/waste-management/setup' }
+          ]
+        },
+      ]
+    },
+    {
+      name: 'Finance',
+      icon: DollarSign,
+      href: '/settings/finance',
+      subItems: [
+        { name: 'Wallet Setup', href: '/finance/wallet-setup' }
+      ]
+    },
+    {
+      name: 'Security',
+      icon: Shield,
+      href: '/settings/security',
+      subItems: [
+        {
+          name: 'Visitor Management',
+          href: '/security/visitor-management',
+          subItems: [
+            { name: 'Setup', href: '/security/visitor-management/setup' },
+            { name: 'Visiting Purpose', href: '/security/visitor-management/visiting-purpose' },
+            { name: 'Support Staff', href: '/security/visitor-management/support-staff' }
+          ]
+        },
+        {
+          name: 'Gate Pass',
+          href: '/security/gate-pass',
+          subItems: [
+            { name: 'Materials Type', href: '/security/gate-pass/materials-type' },
+            { name: 'Items Name', href: '/security/gate-pass/items-name' }
+          ]
+        }
+      ]
+    },
+    {
+      name: 'Value Added Services',
+      icon: Star,
+      href: '/settings/vas',
+      subItems: [
+        {
+          name: 'MOM',
+          href: '/settings/vas/mom',
+          subItems: [
+            { name: 'Client Tag Setup', href: '/settings/vas/mom/client-tag-setup' },
+            { name: 'Product Tag Setup', href: '/settings/vas/mom/product-tag-setup' }
+          ]
+        },
+        {
+          name: 'Space Management',
+          href: '/settings/vas/space-management',
+          subItems: [
+            { name: 'Seat Setup', href: '/settings/vas/space-management/seat-setup' }
+          ]
+        },
+        {
+          name: 'Booking',
+          href: '/settings/vas/booking',
+          subItems: [
+            { name: 'Setup', href: '/settings/vas/booking/setup' }
+          ]
+        },
+        {
+          name: 'Parking Management',
+          href: '/settings/vas/parking-management',
+          subItems: [
+            { name: 'Parking Category', href: '/settings/vas/parking-management/parking-category' },
+            { name: 'Slot Configuration', href: '/settings/vas/parking-management/slot-configuration' },
+            { name: 'Time Slot Setup', href: '/settings/vas/parking-management/time-slot-setup' }
+          ]
+        }
+      ]
+    }
   ]
 };
 
@@ -483,6 +628,52 @@ export const Sidebar = () => {
     
     return isActive;
   };
+
+  // Auto-expand functionality for Settings section
+  React.useEffect(() => {
+    // Determine which items to expand based on current route
+    if (currentSection === 'Settings') {
+      const path = location.pathname;
+      const settingsItems = modulesByPackage['Settings'];
+      const itemsToExpand = [];
+      
+      // Add all main categories to expanded items
+      settingsItems.forEach(item => {
+        itemsToExpand.push(item.name);
+        
+        // If this category's path is in the current path, expand its children
+        if (item.href && path.includes(item.href)) {
+          if (item.subItems) {
+            item.subItems.forEach(subItem => {
+              if (subItem.href && path.includes(subItem.href)) {
+                itemsToExpand.push(subItem.name);
+                
+                // If this subitem's path is in current path, expand its children
+                if (subItem.subItems) {
+                  subItem.subItems.forEach(nestedItem => {
+                    if (nestedItem.href && path.includes(nestedItem.href)) {
+                      itemsToExpand.push(nestedItem.name);
+                    }
+                  });
+                }
+              }
+            });
+          }
+        }
+      });
+      
+      // Update expanded items state
+      setExpandedItems(prev => {
+        const newItems = [...prev];
+        itemsToExpand.forEach(item => {
+          if (!newItems.includes(item)) {
+            newItems.push(item);
+          }
+        });
+        return newItems;
+      });
+    }
+  }, [currentSection, location.pathname]);
 
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
@@ -641,7 +832,110 @@ export const Sidebar = () => {
         )}
 
         <nav className="space-y-2">
-          {currentModules.map((module) => renderMenuItem(module))}
+          {currentSection === 'Settings' ? (
+            <div className="space-y-1">
+              {currentModules.map((module) => (
+                <div key={module.name} className="mb-3">
+                  <button
+                    onClick={() => toggleExpanded(module.name)}
+                    className="flex items-center justify-between w-full py-2 px-3 border-b border-gray-300"
+                  >
+                    <div className="flex items-center gap-2">
+                      <module.icon className="w-4 h-4" />
+                      <span className="font-semibold text-[#1a1a1a] text-sm">{module.name}</span>
+                    </div>
+                    {expandedItems.includes(module.name) ? 
+                      <ChevronDown className="w-4 h-4" /> : 
+                      <ChevronRight className="w-4 h-4" />
+                    }
+                  </button>
+                  {expandedItems.includes(module.name) && module.subItems && (
+                    <div className="pl-3 pt-1 space-y-1">
+                      {module.subItems.map((subItem) => (
+                        <div key={subItem.name} className="pl-4">
+                          {subItem.subItems ? (
+                            <div>
+                              <button
+                                onClick={() => toggleExpanded(subItem.name)}
+                                className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium"
+                              >
+                                <span className={isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
+                                  {subItem.name}
+                                </span>
+                                {expandedItems.includes(subItem.name) ? 
+                                  <ChevronDown className="w-3 h-3" /> : 
+                                  <ChevronRight className="w-3 h-3" />
+                                }
+                              </button>
+                              {expandedItems.includes(subItem.name) && subItem.subItems && (
+                                <div className="pl-3 pt-1">
+                                  {subItem.subItems.map((nestedItem) => (
+                                    <div key={nestedItem.name} className="py-1">
+                                      {nestedItem.subItems ? (
+                                        <div>
+                                          <button
+                                            onClick={() => toggleExpanded(nestedItem.name)}
+                                            className="flex items-center justify-between w-full px-2 text-sm"
+                                          >
+                                            <span className={isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
+                                              {nestedItem.name}
+                                            </span>
+                                            {expandedItems.includes(nestedItem.name) ? 
+                                              <ChevronDown className="w-3 h-3" /> : 
+                                              <ChevronRight className="w-3 h-3" />
+                                            }
+                                          </button>
+                                          {expandedItems.includes(nestedItem.name) && nestedItem.subItems && (
+                                            <div className="pl-3 pt-1">
+                                              {nestedItem.subItems.map((item) => (
+                                                <button
+                                                  key={item.name}
+                                                  onClick={() => handleNavigation(item.href, currentSection)}
+                                                  className={`block w-full text-left px-2 py-1 text-sm ${
+                                                    isActiveRoute(item.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                                                  }`}
+                                                >
+                                                  {item.name}
+                                                </button>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleNavigation(nestedItem.href, currentSection)}
+                                          className={`block w-full text-left px-2 py-1 text-sm ${
+                                            isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                                          }`}
+                                        >
+                                          {nestedItem.name}
+                                        </button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleNavigation(subItem.href, currentSection)}
+                              className={`block w-full text-left px-2 py-1 text-sm font-medium ${
+                                isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                              }`}
+                            >
+                              {subItem.name}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            currentModules.map((module) => renderMenuItem(module))
+          )}
         </nav>
       </div>
     </div>
