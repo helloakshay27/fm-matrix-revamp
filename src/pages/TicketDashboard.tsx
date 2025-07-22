@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit3, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -722,7 +722,7 @@ export const TicketDashboard = () => {
         <div className="flex gap-2">
           <div title="View ticket">
             <Eye 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              className="w-5 h-5 text-gray-700 cursor-pointer hover:text-[#C72030] fill-current" 
               onClick={(e) => {
                 e.stopPropagation();
                 handleViewDetails(item.ticket_number);
@@ -730,8 +730,8 @@ export const TicketDashboard = () => {
             />
           </div>
           <div title="Edit ticket">
-            <Edit 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+            <Edit3 
+              className="w-5 h-5 text-gray-700 cursor-pointer hover:text-[#C72030]" 
               onClick={(e) => {
                 e.stopPropagation();
                 handleEditTicket(item.ticket_number);
@@ -740,7 +740,7 @@ export const TicketDashboard = () => {
           </div>
           <div title="Flag ticket">
             <Flag 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              className="w-5 h-5 text-gray-700 cursor-pointer hover:text-[#C72030] fill-current" 
               onClick={(e) => {
                 e.stopPropagation();
                 // Add flag functionality here
@@ -749,7 +749,7 @@ export const TicketDashboard = () => {
           </div>
           <div title="Star ticket">
             <Star 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              className="w-5 h-5 text-gray-700 cursor-pointer hover:text-[#C72030]" 
               onClick={(e) => {
                 e.stopPropagation();
                 // Add star functionality here
