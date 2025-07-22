@@ -27,6 +27,9 @@ export function BuildingPage() {
     building.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Limit results based on entries per page selection
+  const displayedBuildings = filteredBuildings.slice(0, parseInt(entriesPerPage));
+
   const handleAddBuilding = async () => {
     if (newBuilding.trim()) {
       try {
@@ -119,14 +122,14 @@ export function BuildingPage() {
                   Loading buildings...
                 </TableCell>
               </TableRow>
-            ) : filteredBuildings.length === 0 ? (
+            ) : displayedBuildings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-4">
                   No buildings found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredBuildings.map((building, index) => (
+              displayedBuildings.map((building, index) => (
                 <TableRow key={building.id}>
                   <TableCell>{building.name}</TableCell>
                   <TableCell>{building.site_id}</TableCell>
