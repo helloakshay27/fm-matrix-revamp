@@ -667,13 +667,6 @@ export const TicketDashboard = () => {
       >
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
-      <Button 
-        style={{ backgroundColor: '#C72030' }}
-        className="text-white hover:bg-[#C72030]/90"
-        onClick={handleExport}
-      >
-        <Upload className="w-4 h-4 mr-2" /> Export
-      </Button>
     </div>
   );
 
