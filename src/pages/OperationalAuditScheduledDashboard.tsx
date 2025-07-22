@@ -68,16 +68,6 @@ export const OperationalAuditScheduledDashboard = () => {
         </div>
       </div>
       
-      <div className="mb-4">
-        <Button 
-          onClick={handleAddSchedule}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-      </div>
 
       <div className="overflow-x-auto">
         <EnhancedTable
@@ -91,6 +81,16 @@ export const OperationalAuditScheduledDashboard = () => {
           getItemId={(item) => item.id}
           storageKey="schedule-list-table"
           className="w-full"
+          leftActions={
+            <Button 
+              onClick={handleAddSchedule}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          }
         />
       </div>
     </div>
