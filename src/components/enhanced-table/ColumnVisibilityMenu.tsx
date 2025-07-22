@@ -38,7 +38,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
           className="h-8 flex items-center"
         >
           <img 
-            src="/lovable-uploads/7e131395-5276-4e00-a2f5-8c96217222e9.png" 
+            src="/lovable-uploads/819453c8-fcd9-4080-8a26-422621e5cf51.png" 
             alt="Columns" 
             className="w-4 h-4"
           />
