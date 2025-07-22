@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Grid3X3, FilterIcon } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -1080,6 +1080,39 @@ export const TicketDashboard = () => {
                   leftActions={
                     <div className="flex gap-3">
                       {renderCustomActions()}
+                      <div className="flex gap-2 items-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 p-2"
+                          onClick={() => {
+                            toast({ title: "Upload", description: "Upload functionality triggered" });
+                          }}
+                          title="Upload"
+                        >
+                          <Upload className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 p-2"
+                          onClick={() => {
+                            toast({ title: "Grid View", description: "Grid view toggled" });
+                          }}
+                          title="Grid View"
+                        >
+                          <Grid3X3 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 p-2"
+                          onClick={() => setIsFilterOpen(true)}
+                          title="Advanced Filter"
+                        >
+                          <FilterIcon className="w-4 h-4" />
+                        </Button>
+                      </div>
                       <Button 
                         variant="outline" 
                         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
