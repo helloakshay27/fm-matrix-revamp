@@ -31,7 +31,7 @@ import {
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Search, Download, Loader2 } from 'lucide-react';
+import { Search, Download, Loader2, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -75,6 +75,7 @@ interface EnhancedTableProps<T> {
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
   leftActions?: React.ReactNode;
+  onFilterClick?: () => void;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -111,6 +112,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideTableSearch = false,
   hideColumnsButton = false,
   leftActions,
+  onFilterClick,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -284,22 +286,31 @@ export function EnhancedTable<T extends Record<string, any>>({
                 placeholder={searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => handleInternalSearchChange(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => handleInternalSearchChange('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-gray-700"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           )}
-          {!hideTableExport && enableExport && (
+          
+          {onFilterClick && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onExport || handleExport}
-              className="flex items-center gap-2"
+              onClick={onFilterClick}
+              className="h-10 w-10 p-0 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
             >
-              <Download className="w-4 h-4" />
-              
+              <Filter className="w-4 h-4" />
             </Button>
           )}
-          
           
           {!hideColumnsButton && (
             <ColumnVisibilityMenu

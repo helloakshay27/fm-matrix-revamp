@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -427,6 +427,30 @@ export const TicketDashboard = () => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
 
+  const handleEditTicket = (ticketNumber: string) => {
+    navigate(`/maintenance/ticket/edit/${ticketNumber}`);
+  };
+
+  const handleDeleteTicket = async (ticketId: number) => {
+    if (window.confirm('Are you sure you want to delete this ticket?')) {
+      try {
+        // Add delete API call here when available
+        toast({
+          title: "Success",
+          description: "Ticket deleted successfully"
+        });
+        await fetchTickets(currentPage);
+      } catch (error) {
+        console.error('Delete ticket failed:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete ticket",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   // Selection handlers
   const handleTicketSelection = (ticketIdString: string, isSelected: boolean) => {
     const ticketId = parseInt(ticketIdString);
@@ -634,14 +658,35 @@ export const TicketDashboard = () => {
     label: 'Resolution Escalation Level',
     sortable: true
   }];
-  const renderCustomActions = () => <div className="flex flex-wrap gap-3">
-      <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+  const renderCustomActions = () => (
+    <div className="flex gap-3">
+      <Button 
+        onClick={() => navigate('/maintenance/ticket/add')} 
+        style={{ backgroundColor: '#C72030' }}
+        className="text-white hover:bg-[#C72030]/90"
+      >
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
-      <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
-        <Filter className="w-4 h-4 mr-2" /> Filters
+    </div>
+  );
+
+  const renderRightActions = () => (
+    <div className="flex gap-2">
+      <Button 
+        variant="outline" 
+        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+        onClick={() => setIsFilterOpen(true)}
+      >
+        <Filter className="w-4 h-4 mr-2" /> Filter
       </Button>
-    </div>;
+      <Button 
+        variant="outline"
+        className="border-gray-300 text-gray-600 hover:bg-gray-50"
+      >
+        <Settings className="w-4 h-4 mr-2" /> Columns
+      </Button>
+    </div>
+  );
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
     const date = new Date(dateString);
@@ -674,9 +719,35 @@ export const TicketDashboard = () => {
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
       return (
-        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.id)}>
-          <Eye className="w-4 h-4" />
-        </Button>
+        <div className="flex gap-2">
+          <div title="View ticket">
+            <Eye 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewDetails(item.ticket_number);
+              }}
+            />
+          </div>
+          <div title="Edit ticket">
+            <Edit 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditTicket(item.ticket_number);
+              }}
+            />
+          </div>
+          <div title="Delete ticket">
+            <Trash2 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteTicket(item.id);
+              }}
+            />
+          </div>
+        </div>
       );
     }
     if (columnKey === 'heading') {
@@ -703,7 +774,8 @@ export const TicketDashboard = () => {
     }
     return item[columnKey];
   };
-  return <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+  return (
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
@@ -993,10 +1065,33 @@ export const TicketDashboard = () => {
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
-            {loading ? <div className="flex items-center justify-center p-8">
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
-              </div> : <>
-                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} leftActions={renderCustomActions()} />
+              </div>
+            ) : (
+              <>
+                <EnhancedTable 
+                  data={safeTickets} 
+                  columns={columns} 
+                  renderCell={renderCell} 
+                  selectable={true} 
+                  pagination={false} 
+                  enableExport={true} 
+                  exportFileName="tickets" 
+                  onRowClick={ticket => handleViewDetails(ticket.ticket_number)} 
+                  storageKey="tickets-table" 
+                  enableSelection={true} 
+                  selectedItems={selectedTickets.map(id => id.toString())} 
+                  onSelectItem={handleTicketSelection} 
+                  onSelectAll={handleSelectAll} 
+                  getItemId={ticket => ticket.id.toString()} 
+                  leftActions={renderCustomActions()}
+                  searchPlaceholder="Search Tickets"
+                  hideTableExport={false}
+                  hideColumnsButton={false}
+                  onFilterClick={() => setIsFilterOpen(true)}
+                />
                 
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
@@ -1088,7 +1183,8 @@ export const TicketDashboard = () => {
                     </button>
                   </div>
                 </div>
-              </>}
+              </>
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -1096,6 +1192,14 @@ export const TicketDashboard = () => {
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
 
       {/* Ticket Selection Panel */}
-      <TicketSelectionPanel selectedTickets={selectedTickets} selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} onGoldenTicket={handleGoldenTicket} onFlag={handleFlag} onExport={handleExport} onClearSelection={handleClearSelection} />
-    </div>;
+      <TicketSelectionPanel 
+        selectedTickets={selectedTickets} 
+        selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} 
+        onGoldenTicket={handleGoldenTicket} 
+        onFlag={handleFlag} 
+        onExport={handleExport} 
+        onClearSelection={handleClearSelection} 
+      />
+    </div>
+  );
 };
