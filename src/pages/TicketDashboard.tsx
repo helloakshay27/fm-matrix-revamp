@@ -736,7 +736,7 @@ export const TicketDashboard = () => {
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
               onClick={(e) => {
                 e.stopPropagation();
-                handleEditTicket(item.ticket_number);
+                navigate(`/maintenance/ticket/edit/${item.ticket_number}`);
               }}
             />
           </div>
@@ -747,9 +747,15 @@ export const TicketDashboard = () => {
       return <TruncatedDescription text={item.heading} />;
     }
     if (columnKey === 'issue_status') {
-      return <span className={`px-2 py-1 rounded text-xs animate-scale-in ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-          {item.issue_status}
-        </span>;
+      return <span 
+        className={`px-2 py-1 rounded text-xs animate-scale-in cursor-pointer hover:opacity-80 transition-opacity ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsEditStatusOpen(true);
+        }}
+      >
+        {item.issue_status}
+      </span>;
     }
     if (columnKey === 'priority') {
       return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 animate-scale-in">
