@@ -43,7 +43,9 @@ export function AreaPage() {
   }, [dispatch, selectedBuilding, selectedWing]);
 
   const filteredAreas = areas.data.filter(area =>
-    area.name.toLowerCase().includes(searchTerm.toLowerCase())
+    area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    area.building?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    area.wing?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleBuildingChange = (buildingId: string) => {
