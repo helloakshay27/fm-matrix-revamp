@@ -977,9 +977,58 @@ export const EditAMCPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
                 
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
+                  <input 
+                    type="file" 
+                    multiple 
+                    className="hidden" 
+                    id="contracts-upload" 
+                    onChange={e => handleFileUpload('contracts', e.target.files)} 
+                  />
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <span 
+                      className="text-[#C72030] font-medium cursor-pointer" 
+                      style={{ fontSize: '14px' }} 
+                      onClick={() => document.getElementById('contracts-upload')?.click()}
+                    >
+                      Choose File
+                    </span>
+                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
+                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} new file(s) selected` : 'No new file chosen'}
+                    </span>
+                  </div>
+                  <Button 
+                    type="button" 
+                    onClick={() => document.getElementById('contracts-upload')?.click()} 
+                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Upload New Files
+                  </Button>
+                </div>
+                
+                {attachments.contracts.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
+                    {attachments.contracts.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm bg-green-50 p-2 rounded border">
+                        <span>{file.name}</span>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => removeFile('contracts', index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {/* Existing Files */}
                 {existingFiles.contracts.length > 0 && (
-                  <div className="mb-4">
+                  <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
                     <div className="space-y-2">
                       {existingFiles.contracts.map((file, index) => {
@@ -1016,47 +1065,53 @@ export const EditAMCPage = () => {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* AMC Invoice */}
+              <div>
+                <label className="block text-sm font-medium mb-2">AMC Invoice</label>
                 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
                   <input 
                     type="file" 
                     multiple 
                     className="hidden" 
-                    id="contracts-upload" 
-                    onChange={e => handleFileUpload('contracts', e.target.files)} 
+                    id="invoices-upload" 
+                    onChange={e => handleFileUpload('invoices', e.target.files)} 
                   />
                   <div className="flex items-center justify-center gap-2 mb-4">
                     <span 
                       className="text-[#C72030] font-medium cursor-pointer" 
                       style={{ fontSize: '14px' }} 
-                      onClick={() => document.getElementById('contracts-upload')?.click()}
+                      onClick={() => document.getElementById('invoices-upload')?.click()}
                     >
                       Choose File
                     </span>
                     <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} new file(s) selected` : 'No new file chosen'}
+                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} new file(s) selected` : 'No new file chosen'}
                     </span>
                   </div>
                   <Button 
                     type="button" 
-                    onClick={() => document.getElementById('contracts-upload')?.click()} 
-                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
+                    onClick={() => document.getElementById('invoices-upload')?.click()} 
+                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4 mr-1" />
                     Upload New Files
                   </Button>
                 </div>
-                {attachments.contracts.length > 0 && (
+                
+                {attachments.invoices.length > 0 && (
                   <div className="mt-2 space-y-1">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    {attachments.contracts.map((file, index) => (
+                    {attachments.invoices.map((file, index) => (
                       <div key={index} className="flex items-center justify-between text-sm bg-green-50 p-2 rounded border">
                         <span>{file.name}</span>
                         <Button 
                           type="button" 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => removeFile('contracts', index)}
+                          onClick={() => removeFile('invoices', index)}
                         >
                           <X className="w-3 h-3" />
                         </Button>
@@ -1064,15 +1119,10 @@ export const EditAMCPage = () => {
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* AMC Invoice */}
-              <div>
-                <label className="block text-sm font-medium mb-2">AMC Invoice</label>
                 
                 {/* Existing Files */}
                 {existingFiles.invoices.length > 0 && (
-                  <div className="mb-4">
+                  <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
                     <div className="space-y-2">
                       {existingFiles.invoices.map((file, index) => {
@@ -1107,54 +1157,6 @@ export const EditAMCPage = () => {
                         );
                       })}
                     </div>
-                  </div>
-                )}
-                
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="invoices-upload" 
-                    onChange={e => handleFileUpload('invoices', e.target.files)} 
-                  />
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <span 
-                      className="text-[#C72030] font-medium cursor-pointer" 
-                      style={{ fontSize: '14px' }} 
-                      onClick={() => document.getElementById('invoices-upload')?.click()}
-                    >
-                      Choose File
-                    </span>
-                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} new file(s) selected` : 'No new file chosen'}
-                    </span>
-                  </div>
-                  <Button 
-                    type="button" 
-                    onClick={() => document.getElementById('invoices-upload')?.click()} 
-                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Upload New Files
-                  </Button>
-                </div>
-                {attachments.invoices.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    {attachments.invoices.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-green-50 p-2 rounded border">
-                        <span>{file.name}</span>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => removeFile('invoices', index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>
