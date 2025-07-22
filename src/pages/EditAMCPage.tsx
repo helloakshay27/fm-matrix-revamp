@@ -48,6 +48,11 @@ export const EditAMCPage = () => {
     invoices: [] as File[]
   });
   
+  const [existingFiles, setExistingFiles] = useState({
+    contracts: [] as Array<{document_url: string, document_name: string, attachment_id: number}>,
+    invoices: [] as Array<{document_url: string, document_name: string, attachment_id: number}>
+  });
+  
   const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
   const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
   const [loading, setLoading] = useState(false);
@@ -74,6 +79,29 @@ export const EditAMCPage = () => {
       console.log('Assets loaded:', assets.length, assets);
       console.log('Suppliers loaded:', suppliers.length, suppliers);
       console.log('Services loaded:', services.length, services);
+      
+      // Set existing files from API response
+      if (data.amc_contracts && Array.isArray(data.amc_contracts)) {
+        const contractFiles = data.amc_contracts.flatMap((contract: any) => 
+          contract.documents ? contract.documents.map((doc: any) => ({
+            document_url: doc.document_url,
+            document_name: doc.document_name,
+            attachment_id: doc.attachment_id
+          })) : []
+        );
+        setExistingFiles(prev => ({ ...prev, contracts: contractFiles }));
+      }
+      
+      if (data.amc_invoices && Array.isArray(data.amc_invoices)) {
+        const invoiceFiles = data.amc_invoices.flatMap((invoice: any) => 
+          invoice.documents ? invoice.documents.map((doc: any) => ({
+            document_url: doc.document_url,
+            document_name: doc.document_name,
+            attachment_id: doc.attachment_id
+          })) : []
+        );
+        setExistingFiles(prev => ({ ...prev, invoices: invoiceFiles }));
+      }
       
       // Determine the correct form values based on API response
       const isAssetType = data.asset_id ? true : false;  // Show Asset radio if asset_id exists
@@ -325,18 +353,42 @@ export const EditAMCPage = () => {
         payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
       }
 
-      // Add file fields (currently null, would need separate file upload handling)
-      payload.pms_asset_amc.amc_contract = null;
-      payload.pms_asset_amc.amc_invoice = null;
-
       console.log('Updating AMC with payload:', payload);
 
-      // Use PUT request with JSON payload
-      const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Create FormData if there are files to upload
+      let sendData: FormData | any = payload;
+      let response;
+      
+      if (attachments.contracts.length > 0 || attachments.invoices.length > 0) {
+        sendData = new FormData();
+        
+        // Add the payload as JSON string
+        sendData.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
+        
+        // Add contract files
+        attachments.contracts.forEach((file) => {
+          sendData.append('amc_contracts[content][]', file);
+        });
+
+        // Add invoice files  
+        attachments.invoices.forEach((file) => {
+          sendData.append('amc_invoices[content][]', file);
+        });
+        
+        // Use FormData request
+        response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } else {
+        // Use JSON request if no files
+        response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
 
       console.log('AMC Updated Successfully:', response.data);
       
@@ -403,18 +455,42 @@ export const EditAMCPage = () => {
         payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
       }
 
-      // Add file fields (currently null, would need separate file upload handling)
-      payload.pms_asset_amc.amc_contract = null;
-      payload.pms_asset_amc.amc_invoice = null;
-
       console.log('Update & Schedule AMC with payload:', payload);
 
-      // Use PUT request with JSON payload
-      const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Create FormData if there are files to upload
+      let sendData: FormData | any = payload;
+      let response;
+      
+      if (attachments.contracts.length > 0 || attachments.invoices.length > 0) {
+        sendData = new FormData();
+        
+        // Add the payload as JSON string
+        sendData.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
+        
+        // Add contract files
+        attachments.contracts.forEach((file) => {
+          sendData.append('amc_contracts[content][]', file);
+        });
+
+        // Add invoice files  
+        attachments.invoices.forEach((file) => {
+          sendData.append('amc_invoices[content][]', file);
+        });
+        
+        // Use FormData request
+        response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } else {
+        // Use JSON request if no files
+        response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
 
       console.log('AMC Updated and Scheduled Successfully:', response.data);
       
@@ -900,6 +976,30 @@ export const EditAMCPage = () => {
               {/* AMC Contracts */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
+                
+                {/* Existing Files */}
+                {existingFiles.contracts.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
+                    <div className="space-y-2">
+                      {existingFiles.contracts.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
+                          <span className="flex-1">{file.document_name}</span>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => window.open(file.document_url, '_blank')}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            View/Download
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                   <input 
                     type="file" 
@@ -917,7 +1017,7 @@ export const EditAMCPage = () => {
                       Choose File
                     </span>
                     <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
+                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} new file(s) selected` : 'No new file chosen'}
                     </span>
                   </div>
                   <Button 
@@ -926,13 +1026,14 @@ export const EditAMCPage = () => {
                     className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Upload Files
+                    Upload New Files
                   </Button>
                 </div>
                 {attachments.contracts.length > 0 && (
                   <div className="mt-2 space-y-1">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
                     {attachments.contracts.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                      <div key={index} className="flex items-center justify-between text-sm bg-green-50 p-2 rounded border">
                         <span>{file.name}</span>
                         <Button 
                           type="button" 
@@ -951,6 +1052,30 @@ export const EditAMCPage = () => {
               {/* AMC Invoice */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Invoice</label>
+                
+                {/* Existing Files */}
+                {existingFiles.invoices.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
+                    <div className="space-y-2">
+                      {existingFiles.invoices.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
+                          <span className="flex-1">{file.document_name}</span>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => window.open(file.document_url, '_blank')}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            View/Download
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
                   <input 
                     type="file" 
@@ -968,7 +1093,7 @@ export const EditAMCPage = () => {
                       Choose File
                     </span>
                     <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
+                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} new file(s) selected` : 'No new file chosen'}
                     </span>
                   </div>
                   <Button 
@@ -977,13 +1102,14 @@ export const EditAMCPage = () => {
                     className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Upload Files
+                    Upload New Files
                   </Button>
                 </div>
                 {attachments.invoices.length > 0 && (
                   <div className="mt-2 space-y-1">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
                     {attachments.invoices.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                      <div key={index} className="flex items-center justify-between text-sm bg-green-50 p-2 rounded border">
                         <span>{file.name}</span>
                         <Button 
                           type="button" 
