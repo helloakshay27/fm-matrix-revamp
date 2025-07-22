@@ -154,12 +154,6 @@ const InventoryConsumptionDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-sm text-gray-600">
-        <span>Inventory Consumption</span>
-        <span>{">"}</span>
-        <span className="text-gray-900 font-medium">Consumption List</span>
-      </div>
 
       {/* Header */}
       <div className="space-y-4">
