@@ -1,318 +1,193 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  FormControl,
+  Select,
+  MenuItem,
+  CircularProgress,
+  styled
+} from '@mui/material';
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Settings, ChevronDown, ChevronUp } from "lucide-react";
+const SectionCard = styled(Paper)(({ theme }) => ({
+  padding: '24px',
+  borderRadius: '12px',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  border: '1px solid #F0F0F0',
+  marginBottom: '24px',
+}));
 
-interface MappingRow {
-  id: string;
-  asset: string;
-  readingEBKVAH: string;
-  readingDGKVAH: string;
-  voltage: string;
-  current: string;
-  kW: string;
-  pF: string;
-  thdI: string;
+interface ChecklistMappingsData {
+  form_id: number;
+  assets: {
+    id: number;
+    name: string;
+    measures: {
+      id: number;
+      name: string;
+    }[];
+    inputs: {
+      field_name: string;
+      field_label: string;
+      selected_measure_id: number | null;
+    }[];
+  }[];
 }
 
 interface MappingStepProps {
-  data: {
-    mappings: MappingRow[];
-  };
-  onChange: (field: string, value: any) => void;
-  isCompleted?: boolean;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
+  data: ChecklistMappingsData | null;
+  loading: boolean;
+  onChange: (mappingData: any) => void;
+  isCompleted: boolean;
+  isCollapsed: boolean;
 }
 
-export const MappingStep = ({ 
-  data, 
-  onChange, 
-  isCompleted = false, 
-  isCollapsed = false, 
-  onToggleCollapse 
-}: MappingStepProps) => {
+export const MappingStep: React.FC<MappingStepProps> = ({
+  data,
+  loading,
+  onChange,
+  isCompleted,
+  isCollapsed
+}) => {
+  const [mappings, setMappings] = useState<{[key: string]: number | null}>({});
 
-  const addRow = () => {
-    const newRow: MappingRow = {
-      id: `row_${Date.now()}`,
-      asset: '',
-      readingEBKVAH: '',
-      readingDGKVAH: '',
-      voltage: '',
-      current: '',
-      kW: '',
-      pF: '',
-      thdI: ''
+  // Initialize mappings from data
+  useEffect(() => {
+    if (data && data.assets && data.assets.length > 0) {
+      const initialMappings: {[key: string]: number | null} = {};
+      data.assets.forEach(asset => {
+        asset.inputs.forEach(input => {
+          initialMappings[input.field_name] = input.selected_measure_id;
+        });
+      });
+      setMappings(initialMappings);
+    }
+  }, [data]);
+
+  const handleMappingChange = (fieldName: string, measureId: number | null) => {
+    const newMappings = {
+      ...mappings,
+      [fieldName]: measureId
     };
-    onChange('mappings', [...(data.mappings || []), newRow]);
+    setMappings(newMappings);
+    onChange(newMappings);
   };
 
-  const updateRow = (id: string, field: string, value: string) => {
-    const updatedMappings = (data.mappings || []).map(row => 
-      row.id === id ? { ...row, [field]: value } : row
-    );
-    onChange('mappings', updatedMappings);
-  };
-
-  const removeRow = (id: string) => {
-    const updatedMappings = (data.mappings || []).filter(row => row.id !== id);
-    onChange('mappings', updatedMappings);
-  };
-
-  const assetOptions = [
-    'Generator 1',
-    'Generator 2', 
-    'Main Panel',
-    'UPS System',
-    'Transformer 1',
-    'Transformer 2',
-    'Motor 1',
-    'Motor 2'
-  ];
-
-  const parameterOptions = [
-    'Option 1',
-    'Option 2',
-    'Option 3',
-    'Option 4'
-  ];
-
-  // Collapsed view
-  if (isCompleted && isCollapsed) {
-    const mappedCount = (data.mappings || []).length;
-    
+  if (loading) {
     return (
-      <Card className="mb-6 border-green-600">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs">✓</span>
-              </div>
-              <CardTitle className="text-green-600 text-lg">Mapping</CardTitle>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={onToggleCollapse}
-                className="text-[#C72030] hover:text-[#C72030]/80"
-              >
-                Edit
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={onToggleCollapse}
-              >
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-          <div className="text-sm text-gray-600 mt-1">
-            {mappedCount} mapping row{mappedCount !== 1 ? 's' : ''} configured
-          </div>
-        </CardHeader>
-      </Card>
+      <SectionCard>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <CircularProgress sx={{ color: '#C72030' }} />
+          <Typography sx={{ ml: 2 }}>Loading mapping data...</Typography>
+        </Box>
+      </SectionCard>
+    );
+  }
+
+  if (!data || !data.assets || data.assets.length === 0) {
+    return (
+      <SectionCard>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" sx={{ color: '#666', mb: 2 }}>
+            No mapping data available
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#999' }}>
+            Please complete the previous steps to generate mapping data.
+          </Typography>
+        </Box>
+      </SectionCard>
     );
   }
 
   return (
-    <Card className={`mb-6 ${isCompleted ? 'border-green-600' : 'border-gray-200'}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+    <Box>
+      {data.assets.map((asset, assetIndex) => (
+        <SectionCard key={asset.id}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: '#C72030' }}>
+            {asset.name} - Field Mapping
+          </Typography>
           
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={addRow}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Row
-            </Button>
-            {isCompleted && onToggleCollapse && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={onToggleCollapse}
-              >
-                <ChevronUp className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#F6F4EE]">
-                <TableHead className="font-semibold text-gray-900">Asset</TableHead>
-                <TableHead className="font-semibold text-gray-900">Reading in EBKVAH</TableHead>
-                <TableHead className="font-semibold text-gray-900">Reading in DGKVAH</TableHead>
-                <TableHead className="font-semibold text-gray-900">Voltage</TableHead>
-                <TableHead className="font-semibold text-gray-900">Current</TableHead>
-                <TableHead className="font-semibold text-gray-900">kW</TableHead>
-                <TableHead className="font-semibold text-gray-900">PF</TableHead>
-                <TableHead className="font-semibold text-gray-900">THD (I)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(data.mappings || []).map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>
-                    <Select 
-                      value={row.asset} 
-                      onValueChange={(value) => updateRow(row.id, 'asset', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assetOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+          <TableContainer component={Paper} sx={{ border: '1px solid #E0E0E0' }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#F5F5F5' }}>
+                  <TableCell sx={{ fontWeight: 600, color: '#333', minWidth: 150 }}>
+                    Asset
                   </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={row.readingEBKVAH} 
-                      onValueChange={(value) => updateRow(row.id, 'readingEBKVAH', value)}
+                  {asset.measures.map((measure) => (
+                    <TableCell 
+                      key={measure.id} 
+                      align="center"
+                      sx={{ fontWeight: 600, color: '#333', minWidth: 150 }}
                     >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {parameterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={row.readingDGKVAH} 
-                      onValueChange={(value) => updateRow(row.id, 'readingDGKVAH', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {parameterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={row.voltage} 
-                      onValueChange={(value) => updateRow(row.id, 'voltage', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {parameterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={row.current} 
-                      onValueChange={(value) => updateRow(row.id, 'current', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {parameterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={row.kW} 
-                      onValueChange={(value) => updateRow(row.id, 'kW', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {parameterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={row.pF} 
-                      onValueChange={(value) => updateRow(row.id, 'pF', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {parameterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={row.thdI} 
-                      onValueChange={(value) => updateRow(row.id, 'thdI', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {parameterOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
+                      {measure.name}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {(data.mappings || []).length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No mapping rows added yet. Click "Add Row" to get started.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              </TableHead>
+              <TableBody>
+                {asset.inputs.map((input) => (
+                  <TableRow key={input.field_name}>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {input.field_label}
+                    </TableCell>
+                    {asset.measures.map((measure) => (
+                      <TableCell key={measure.id} align="center">
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={mappings[input.field_name] === measure.id ? measure.id : ''}
+                            onChange={(e) => {
+                              const selectedValue = e.target.value;
+                              // Clear any existing mapping for this field first
+                              const newMappings = { ...mappings };
+                              if (selectedValue === '') {
+                                newMappings[input.field_name] = null;
+                              } else {
+                                newMappings[input.field_name] = Number(selectedValue);
+                              }
+                              setMappings(newMappings);
+                              onChange(newMappings);
+                            }}
+                            displayEmpty
+                            sx={{
+                              '& .MuiSelect-select': {
+                                backgroundColor: mappings[input.field_name] === measure.id ? '#E8F5E8' : 'white',
+                                border: mappings[input.field_name] === measure.id ? '1px solid #4CAF50' : '1px solid #E0E0E0',
+                              }
+                            }}
+                          >
+                            <MenuItem value="">Select</MenuItem>
+                            <MenuItem value={measure.id}>
+                              Map
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          
+          {/* Summary */}
+          <Box sx={{ mt: 3, p: 2, backgroundColor: '#F9F9F9', borderRadius: '8px' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+              Mapping Summary:
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#666' }}>
+              {Object.values(mappings).filter(v => v !== null).length} of {asset.inputs.length} fields mapped
+            </Typography>
+          </Box>
+        </SectionCard>
+      ))}
+    </Box>
   );
 };

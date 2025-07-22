@@ -132,11 +132,16 @@ interface TaskQuestion {
   inputType: string;
   mandatory: boolean;
   helpText: boolean;
-  helpTextValue: string; // Added for help text input
+  helpTextValue: string;
   autoTicket: boolean;
-  weightage: string; // Added for weightage
-  rating: boolean; // Added for rating checkbox
-  reading: boolean; // Added for reading checkbox
+  weightage: string;
+  rating: boolean;
+  reading: boolean;
+  dropdownValues: Array<{label: string, type: string}>;
+  radioValues: Array<{label: string, type: string}>;
+  checkboxValues: string[];
+  checkboxSelectedStates: boolean[];
+  optionsInputsValues: string[];
 }
 
 interface QuestionSection {
@@ -149,11 +154,30 @@ interface QuestionSection {
   ticketCategory: string;
 }
 
+// Add interface for checklist mappings
+interface ChecklistMappingsData {
+  form_id: number;
+  assets: {
+    id: number;
+    name: string;
+    measures: {
+      id: number;
+      name: string;
+    }[];
+    inputs: {
+      field_name: string;
+      field_label: string;
+      selected_measure_id: number | null;
+    }[];
+  }[];
+}
+
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Stepper state
+  const [customCode, setCustomCode] = useState('');
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const steps = ['Basic Configuration', 'Schedule Setup', 'Question Setup', 'Time Setup', 'Mapping'];
@@ -224,7 +248,12 @@ export const AddSchedulePage = () => {
           autoTicket: false,
           weightage: '',
           rating: false,
-          reading: false // Added reading property to initial state
+          reading: false,
+          dropdownValues: [{label: '', type: 'positive'}],
+          radioValues: [{label: '', type: 'positive'}],
+          checkboxValues: [''],
+          checkboxSelectedStates: [false],
+          optionsInputsValues: ['']
         }
       ]
     }
@@ -281,6 +310,10 @@ export const AddSchedulePage = () => {
     taskGroups: false,
     taskSubGroups: false
   });
+
+  // Add checklist mappings state
+  const [checklistMappings, setChecklistMappings] = useState<ChecklistMappingsData | null>(null);
+  const [loadingMappings, setLoadingMappings] = useState(false);
 
   // Add validation states
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string[]}>({});
@@ -737,7 +770,12 @@ export const AddSchedulePage = () => {
             autoTicket: false,
             weightage: '',
             rating: false,
-            reading: false
+            reading: false,
+            dropdownValues: [{label: '', type: 'positive'}],
+            radioValues: [{label: '', type: 'positive'}],
+            checkboxValues: [''],
+            checkboxSelectedStates: [false], // Add initial checkbox state
+            optionsInputsValues: ['']
           }
         ]
       }
@@ -774,7 +812,12 @@ export const AddSchedulePage = () => {
                   autoTicket: false,
                   weightage: '',
                   rating: false,
-                  reading: false
+                  reading: false,
+                  dropdownValues: [{label: '', type: 'positive'}],
+                  radioValues: [{label: '', type: 'positive'}],
+                  checkboxValues: [''],
+                  checkboxSelectedStates: [false], // Add initial checkbox state
+                  optionsInputsValues: ['']
                 }
               ]
             }
@@ -870,12 +913,18 @@ export const AddSchedulePage = () => {
       }
 
       const result = await response.json();
-      console.log('Schedule created successfully:', result);
+      console.log('Schedule created successfully:', result.custom_form_code, result);
+      setCustomCode(result.custom_form_code);
       
       toast({
         title: "Success",
         description: "Schedule created successfully!",
       });
+      
+      // Fetch checklist mappings when moving to mapping step
+      if (result?.custom_form_code) {
+        await fetchChecklistMappings(customCode);
+      }
       
       // Move to next step (Mapping) after successful submission
       if (activeStep < steps.length - 1) {
@@ -894,6 +943,11 @@ export const AddSchedulePage = () => {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    fetchChecklistMappings(customCode);
+  }, [customCode]);
+
 
   const handleFinish = () => {
     toast({
@@ -1298,21 +1352,59 @@ export const AddSchedulePage = () => {
   const buildAPIPayload = () => {
     // Build content array from question sections
     const content = questionSections.flatMap(section => 
-      section.tasks.filter(task => task.task.trim()).map(task => ({
-        label: task.task,
-        name: `qnm_${Math.random().toString(36).substr(2, 5)}`,
-        className: "form-group",
-        group_id: task.group || "",
-        sub_group_id: task.subGroup || "",
-        type: mapInputTypeToAPI(task.inputType),
-        subtype: "",
-        required: task.mandatory ? "true" : "false",
-        is_reading: task.reading ? "true" : "false",
-        hint: task.helpTextValue || "",
-        values: task.inputType === 'checkbox' ? [] : [""],
-        weightage: task.weightage || "",
-        rating_enabled: task.rating ? "true" : "false"
-      }))
+      section.tasks.filter(task => task.task.trim()).map(task => {
+        let values: any[] = [];
+        
+        // Set values based on input type
+        switch (task.inputType) {
+          case 'dropdown':
+            values = task.dropdownValues
+              .filter(val => val.label.trim())
+              .map(val => ({
+                label: val.label,
+                type: val.type,
+                value: val.label
+              }));
+            break;
+          case 'radio':
+            values = task.radioValues
+              .filter(val => val.label.trim())
+              .map(val => ({
+                label: val.label,
+                type: val.type,
+                value: val.label
+              }));
+            break;
+          case 'checkbox':
+            values = task.checkboxValues
+              .filter(val => val.trim())
+              .map(val => val);
+            break;
+          case 'options-inputs':
+            values = task.optionsInputsValues
+              .filter(val => val.trim())
+              .map(val => val);
+            break;
+          default:
+            values = [];
+        }
+
+        return {
+          label: task.task,
+          name: `qnm_${Math.random().toString(36).substr(2, 5)}`,
+          className: "form-group",
+          group_id: task.group || "",
+          sub_group_id: task.subGroup || "",
+          type: mapInputTypeToAPI(task.inputType),
+          subtype: "",
+          required: task.mandatory ? "true" : "false",
+          is_reading: task.reading ? "true" : "false",
+          hint: task.helpTextValue || "",
+          values: values,
+          weightage: task.weightage || "",
+          rating_enabled: task.rating ? "true" : "false"
+        };
+      })
     );
 
     // Build custom_form object
@@ -2048,6 +2140,9 @@ export const AddSchedulePage = () => {
                 </FormControl>
                 
                 
+                
+                
+                
                 <FormControl fullWidth>
                   <InputLabel>End At</InputLabel>
                   <Select value={formData.endAt} onChange={(e) => setFormData({...formData, endAt: e.target.value})}>
@@ -2068,6 +2163,318 @@ export const AddSchedulePage = () => {
           if (templateId) {
             loadTemplateData(templateId);
           }
+        }
+
+        function updateDropdownValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+          ? {
+              ...section,
+              tasks: section.tasks.map(task =>
+                task.id === taskId
+            ? {
+                ...task,
+                dropdownValues: task.dropdownValues.map((v, idx) =>
+                  idx === valueIndex ? {...v, label: value} : v
+                )
+              }
+            : task
+              )
+            }
+          : section
+            )
+          );
+        }
+
+        function updateDropdownType(sectionId: string, taskId: string, valueIndex: number, type: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+          ? {
+              ...section,
+              tasks: section.tasks.map(task =>
+                task.id === taskId
+            ? {
+                ...task,
+                dropdownValues: task.dropdownValues.map((v, idx) =>
+                  idx === valueIndex ? {...v, type: type} : v
+                )
+              }
+            : task
+              )
+            }
+          : section
+            )
+          );
+        }
+
+        function addDropdownValue(sectionId: string, taskId: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+          ? {
+              ...section,
+              tasks: section.tasks.map(task =>
+                task.id === taskId
+            ? {
+                ...task,
+                dropdownValues: [...task.dropdownValues, {label: '', type: 'positive'}]
+              }
+            : task
+              )
+            }
+          : section
+            )
+          );
+        }
+
+        function updateRadioValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            radioValues: task.radioValues.map((v, idx) =>
+                              idx === valueIndex ? {...v, label: value} : v
+                            )
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function updateRadioType(sectionId: string, taskId: string, valueIndex: number, type: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            radioValues: task.radioValues.map((v, idx) =>
+                              idx === valueIndex ? {...v, type: type} : v
+                            )
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function addRadioValue(sectionId: string, taskId: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? { ...task, radioValues: [...task.radioValues, {label: '', type: 'positive'}] }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function removeDropdownValue(sectionId: string, taskId: string, valueIndex: number): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+          ? {
+              ...section,
+              tasks: section.tasks.map(task =>
+                task.id === taskId
+            ? {
+                ...task,
+                dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
+              }
+            : task
+              )
+            }
+          : section
+            )
+          );
+        }
+
+        function removeRadioValue(sectionId: string, taskId: string, valueIndex: number): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            radioValues: task.radioValues.filter((_, idx) => idx !== valueIndex)
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        // Add helper functions for checkbox values
+        function addCheckboxValue(sectionId: string, taskId: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? { 
+                            ...task, 
+                            checkboxValues: [...task.checkboxValues, ''],
+                            checkboxSelectedStates: [...task.checkboxSelectedStates, false]
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function updateCheckboxValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            checkboxValues: task.checkboxValues.map((v, idx) =>
+                              idx === valueIndex ? value : v
+                            )
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function updateCheckboxSelectedState(sectionId: string, taskId: string, valueIndex: number, checked: boolean): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            checkboxSelectedStates: task.checkboxSelectedStates.map((state, idx) =>
+                              idx === valueIndex ? checked : state
+                            )
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function removeCheckboxValue(sectionId: string, taskId: string, valueIndex: number): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            checkboxValues: task.checkboxValues.filter((_, idx) => idx !== valueIndex),
+                            checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex)
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        // Add helper functions for options & inputs values
+        function addOptionsInputsValue(sectionId: string, taskId: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? { ...task, optionsInputsValues: [...task.optionsInputsValues, ''] }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function updateOptionsInputsValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            optionsInputsValues: task.optionsInputsValues.map((v, idx) =>
+                              idx === valueIndex ? value : v
+                            )
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
+        }
+
+        function removeOptionsInputsValue(sectionId: string, taskId: string, valueIndex: number): void {
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                            ...task,
+                            optionsInputsValues: task.optionsInputsValues.filter((_, idx) => idx !== valueIndex)
+                          }
+                        : task
+                    )
+                  }
+                : section
+            )
+          );
         }
 
         return (
@@ -2376,6 +2783,7 @@ export const AddSchedulePage = () => {
                 
                 {section.tasks.map((task, taskIndex) => (
                   <Box key={task.id} sx={{ mb: 3 }}>
+                    
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                       Task {taskIndex + 1}
                     </Typography>
@@ -2496,7 +2904,23 @@ export const AddSchedulePage = () => {
                           <InputLabel>Input Type</InputLabel>
                           <Select 
                             value={task.inputType} 
-                            onChange={(e) => updateTaskInSection(section.id, task.id, 'inputType', e.target.value)}
+                            onChange={(e) => {
+                              updateTaskInSection(section.id, task.id, 'inputType', e.target.value);
+                              // Reset values when changing input type
+                              if (e.target.value !== 'dropdown') {
+                                updateTaskInSection(section.id, task.id, 'dropdownValues', [{label: '', type: 'positive'}]);
+                              }
+                              if (e.target.value !== 'radio') {
+                                updateTaskInSection(section.id, task.id, 'radioValues', [{label: '', type: 'positive'}]);
+                              }
+                              if (e.target.value !== 'checkbox') {
+                                updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
+                                updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
+                              }
+                              if (e.target.value !== 'options-inputs') {
+                                updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
+                              }
+                            }}
                           >
                             <MenuItem value="">Select Input Type</MenuItem>
                             <MenuItem value="text">Text</MenuItem>
@@ -2504,6 +2928,7 @@ export const AddSchedulePage = () => {
                             <MenuItem value="dropdown">Dropdown</MenuItem>
                             <MenuItem value="checkbox">Checkbox</MenuItem>
                             <MenuItem value="radio">Radio</MenuItem>
+                            <MenuItem value="options-inputs">Options & Inputs</MenuItem>
                           </Select>
                         </FormControl>
 
@@ -2528,6 +2953,321 @@ export const AddSchedulePage = () => {
                             value={task.helpTextValue}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'helpTextValue', e.target.value)}
                           />
+                        </Box>
+                      )}
+
+                      {/* Enter Value Section for Dropdown */}
+                      {task.inputType === 'dropdown' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Box sx={{
+                            backgroundColor: '#F5F5F5',
+                            border: '1px solid #E0E0E0',
+                            borderRadius: '8px',
+                            padding: 2
+                          }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
+                              Enter Value
+                            </Typography>
+                            
+                            {task.dropdownValues.map((value, valueIndex) => (
+                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  placeholder="Enter option value"
+                                  value={value.label}
+                                  onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      backgroundColor: 'white'
+                                    }
+                                  }}
+                                />
+                                
+                                <FormControl size="small" sx={{ minWidth: 80 }}>
+                                  <InputLabel>Type</InputLabel>
+                                  <Select
+                                    value={value.type}
+                                    onChange={(e) => updateDropdownType(section.id, task.id, valueIndex, e.target.value)}
+                                    sx={{
+                                      backgroundColor: 'white',
+                                      '& .MuiSelect-select': {
+                                        color: '#666'
+                                      }
+                                    }}
+                                  >
+                                    <MenuItem value="positive">P</MenuItem>
+                                    <MenuItem value="negative">N</MenuItem>
+                                  </Select>
+                                </FormControl>
+                                
+                                {task.dropdownValues.length > 1 && (
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
+                                    sx={{ color: '#C72030' }}
+                                  >
+                                    <Close />
+                                  </IconButton>
+                                )}
+                              </Box>
+                            ))}
+                            
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                              <MuiButton
+                                variant="outlined"
+                                size="small"
+                                startIcon={<Add />}
+                                onClick={() => addDropdownValue(section.id, task.id)}
+                                sx={{
+                                  color: '#C72030',
+                                  borderColor: '#C72030',
+                                  fontSize: '12px',
+                                  padding: '4px 12px',
+                                  '&:hover': {
+                                    borderColor: '#C72030',
+                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  }
+                                }}
+                              >
+                                Add Option
+                              </MuiButton>
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Enter Value Section for Radio */}
+                      {task.inputType === 'radio' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Box sx={{
+                            backgroundColor: '#F5F5F5',
+                            border: '1px solid #E0E0E0',
+                            borderRadius: '8px',
+                            padding: 2
+                          }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                Selected
+                              </Typography>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                Enter Value
+                              </Typography>
+                            </Box>
+                            
+                            {task.radioValues.map((value, valueIndex) => (
+                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                <Radio
+                                  checked={valueIndex === 0} // First option selected by default
+                                  name={`radio-${section.id}-${task.id}`}
+                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                />
+                                
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  placeholder="Enter option value"
+                                  value={value.label}
+                                  onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      backgroundColor: 'white'
+                                    }
+                                  }}
+                                />
+                                
+                                <FormControl size="small" sx={{ minWidth: 80 }}>
+                                  <InputLabel>Type</InputLabel>
+                                  <Select
+                                    value={value.type}
+                                    onChange={(e) => updateRadioType(section.id, task.id, valueIndex, e.target.value)}
+                                    sx={{
+                                      backgroundColor: 'white',
+                                      '& .MuiSelect-select': {
+                                        color: '#666'
+                                      }
+                                    }}
+                                  >
+                                    <MenuItem value="positive">P</MenuItem>
+                                    <MenuItem value="negative">N</MenuItem>
+                                  </Select>
+                                </FormControl>
+                                
+                                {task.radioValues.length > 1 && (
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
+                                    sx={{ color: '#C72030' }}
+                                  >
+                                    <Close />
+                                  </IconButton>
+                                )}
+                              </Box>
+                            ))}
+                            
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                              <MuiButton
+                                variant="outlined"
+                                size="small"
+                                startIcon={<Add />}
+                                onClick={() => addRadioValue(section.id, task.id)}
+                                sx={{
+                                  color: '#C72030',
+                                  borderColor: '#C72030',
+                                  fontSize: '12px',
+                                  padding: '4px 12px',
+                                  '&:hover': {
+                                    borderColor: '#C72030',
+                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  }
+                                }}
+                              >
+                                Add Option
+                              </MuiButton>
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Enter Value Section for Checkbox */}
+                      {task.inputType === 'checkbox' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Box sx={{
+                            backgroundColor: '#F5F5F5',
+                            border: '1px solid #E0E0E0',
+                            borderRadius: '8px',
+                            padding: 2
+                          }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                Selected
+                              </Typography>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                Enter Value
+                              </Typography>
+                            </Box>
+                            
+                            {task.checkboxValues.map((value, valueIndex) => (
+                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                <Checkbox
+                                  checked={task.checkboxSelectedStates?.[valueIndex] || false}
+                                  onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
+                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                />
+                                
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  placeholder="Enter option value"
+                                  value={value}
+                                  onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      backgroundColor: 'white'
+                                    }
+                                  }}
+                                />
+                                
+                                {task.checkboxValues.length > 1 && (
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
+                                    sx={{ color: '#C72030' }}
+                                  >
+                                    <Close />
+                                  </IconButton>
+                                )}
+                              </Box>
+                            ))}
+                            
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                              <MuiButton
+                                variant="outlined"
+                                size="small"
+                                startIcon={<Add />}
+                                onClick={() => addCheckboxValue(section.id, task.id)}
+                                sx={{
+                                  color: '#C72030',
+                                  borderColor: '#C72030',
+                                  fontSize: '12px',
+                                  padding: '4px 12px',
+                                  '&:hover': {
+                                    borderColor: '#C72030',
+                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  }
+                                }}
+                              >
+                                Add Option
+                              </MuiButton>
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Enter Value Section for Options & Inputs */}
+                      {task.inputType === 'options-inputs' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Box sx={{
+                            backgroundColor: '#F5F5F5',
+                            border: '1px solid #E0E0E0',
+                            borderRadius: '8px',
+                            padding: 2
+                          }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333', textAlign: 'center' }}>
+                              Enter Value
+                            </Typography>
+                            
+                            {task.optionsInputsValues.map((value, valueIndex) => (
+                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  placeholder=""
+                                  value={value}
+                                  onChange={(e) => updateOptionsInputsValue(section.id, task.id, valueIndex, e.target.value)}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      backgroundColor: 'white'
+                                    }
+                                  }}
+                                />
+                                
+                                <Typography 
+                                  variant="body2" 
+                                  sx={{ 
+                                    color: '#C72030', 
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    minWidth: 'auto'
+                                  }}
+                                  onClick={() => removeOptionsInputsValue(section.id, task.id, valueIndex)}
+                                >
+                                  close
+                                </Typography>
+                              </Box>
+                            ))}
+                            
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                              <MuiButton
+                                variant="outlined"
+                                size="small"
+                                startIcon={<Add />}
+                                onClick={() => addOptionsInputsValue(section.id, task.id)}
+                                sx={{
+                                  color: '#C72030',
+                                  borderColor: '#C72030',
+                                  fontSize: '12px',
+                                  padding: '4px 12px',
+                                  '&:hover': {
+                                    borderColor: '#C72030',
+                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  }
+                                }}
+                              >
+                                + Add Option
+                              </MuiButton>
+                            </Box>
+                          </Box>
                         </Box>
                       )}
                     </Box>
@@ -2633,8 +3373,12 @@ export const AddSchedulePage = () => {
             </Box>
 
             <MappingStep
-              data={{ mappings: formData.mappings || [] }}
-              onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+              data={checklistMappings}
+              loading={loadingMappings}
+              onChange={(mappingData) => {
+                console.log('Mapping data changed:', mappingData);
+                // Handle mapping data changes if needed
+              }}
               isCompleted={false}
               isCollapsed={false}
             />
@@ -2653,6 +3397,39 @@ export const AddSchedulePage = () => {
         {renderSingleStep(activeStep)}
       </Box>
     );
+  };
+
+  // Add function to fetch checklist mappings
+  const fetchChecklistMappings = async (customCode: string) => {
+    if (!customCode) return;
+    
+    setLoadingMappings(true);
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/checklist_mappings.json?id=${customCode}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Checklist mappings loaded successfully:', data);
+      setChecklistMappings(data);
+    } catch (error) {
+      console.error('Failed to load checklist mappings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load checklist mappings.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingMappings(false);
+    }
   };
 
   return (
