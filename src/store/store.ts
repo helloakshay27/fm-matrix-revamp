@@ -34,6 +34,7 @@ import serviceEditReducer from './slices/serviceSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
 import { inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
 import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
+import { ecoFriendlyListReducer } from './slices/ecoFriendlyListSlice'
 
 export const store = configureStore({
   reducer: {
@@ -72,6 +73,7 @@ export const store = configureStore({
   serviceFilter: serviceFilterReducer,
   inventoryConsumption: inventoryConsumptionReducer,
   inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
+  ecoFriendlyList: ecoFriendlyListReducer,
   },
 })
 
