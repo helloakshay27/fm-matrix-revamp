@@ -34,6 +34,9 @@ export function WingPage() {
     wing.building?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Limit results based on entries per page selection
+  const displayedWings = filteredWings.slice(0, parseInt(entriesPerPage));
+
   const handleBuildingChange = (buildingId: string) => {
     dispatch(setSelectedBuilding(parseInt(buildingId)));
   };
@@ -151,14 +154,14 @@ export function WingPage() {
                   Loading wings...
                 </TableCell>
               </TableRow>
-            ) : filteredWings.length === 0 ? (
+            ) : displayedWings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-4">
                   No wings found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredWings.map((wing, index) => (
+              displayedWings.map((wing, index) => (
                 <TableRow key={wing.id}>
                   <TableCell>{wing.building?.name || 'N/A'}</TableCell>
                   <TableCell>{wing.name}</TableCell>
