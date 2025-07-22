@@ -23,6 +23,16 @@ import {
 
 interface LocationSelectorProps {
   fieldStyles: any;
+  initialValues?: {
+    siteId?: number | null;
+    buildingId?: number | null;
+    wingId?: number | null;
+    areaId?: number | null;
+    floorId?: number | null;
+    roomId?: number | null;
+    groupId?: number | null;
+    subGroupId?: number | null;
+  };
   onLocationChange?: (location: {
     siteId: number | null;
     buildingId: number | null;
@@ -35,7 +45,7 @@ interface LocationSelectorProps {
   }) => void;
 }
 
-export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles, onLocationChange }) => {
+export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles, initialValues, onLocationChange }) => {
   const dispatch = useDispatch<AppDispatch>();
   const {
     sites,
@@ -62,6 +72,53 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
     dispatch(fetchSites());
     dispatch(fetchGroups());
   }, [dispatch]);
+
+  // Initialize with existing values
+  useEffect(() => {
+    if (initialValues) {
+      if (initialValues.siteId) {
+        dispatch(setSelectedSite(initialValues.siteId));
+        dispatch(fetchBuildings(initialValues.siteId));
+      }
+      if (initialValues.buildingId && initialValues.siteId) {
+        dispatch(setSelectedBuilding(initialValues.buildingId));
+        const selectedBuilding = buildings.find(b => b.id === initialValues.buildingId);
+        if (selectedBuilding?.has_wing && initialValues.wingId) {
+          dispatch(fetchWings(initialValues.buildingId));
+        }
+      }
+      if (initialValues.wingId && initialValues.buildingId) {
+        dispatch(setSelectedWing(initialValues.wingId));
+        if (initialValues.areaId) {
+          dispatch(fetchAreas(initialValues.wingId));
+        }
+      }
+      if (initialValues.areaId && initialValues.wingId) {
+        dispatch(setSelectedArea(initialValues.areaId));
+        if (initialValues.floorId) {
+          dispatch(fetchFloors(initialValues.areaId));
+        }
+      }
+      if (initialValues.floorId && initialValues.areaId) {
+        dispatch(setSelectedFloor(initialValues.floorId));
+        if (initialValues.roomId) {
+          dispatch(fetchRooms(initialValues.floorId));
+        }
+      }
+      if (initialValues.roomId && initialValues.floorId) {
+        dispatch(setSelectedRoom(initialValues.roomId));
+      }
+      if (initialValues.groupId) {
+        dispatch(setSelectedGroup(initialValues.groupId));
+        if (initialValues.subGroupId) {
+          dispatch(fetchSubGroups(initialValues.groupId));
+        }
+      }
+      if (initialValues.subGroupId && initialValues.groupId) {
+        dispatch(setSelectedSubGroup(initialValues.subGroupId));
+      }
+    }
+  }, [initialValues, dispatch, buildings]);
 
   // Trigger location change callback when selections change
   useEffect(() => {

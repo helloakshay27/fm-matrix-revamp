@@ -260,6 +260,16 @@ export const EditServicePage = () => {
           {/* Dynamic Location Selector */}
           <LocationSelector 
             fieldStyles={fieldStyles} 
+            initialValues={{
+              siteId: formData.siteId,
+              buildingId: formData.buildingId,
+              wingId: formData.wingId,
+              areaId: formData.areaId,
+              floorId: formData.floorId,
+              roomId: formData.roomId,
+              groupId: formData.groupId,
+              subGroupId: formData.subGroupId,
+            }}
             onLocationChange={handleLocationChange}
           />
         </CardContent>
