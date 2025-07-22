@@ -61,10 +61,6 @@ const EcoFriendlyListPage = () => {
 
   // Column configuration matching the image
   const columns: ColumnConfig[] = [{
-    key: 'actions',
-    label: 'Actions',
-    sortable: false
-  }, {
     key: 'name',
     label: 'Name',
     sortable: true
@@ -170,14 +166,6 @@ const EcoFriendlyListPage = () => {
   // Custom cell renderer
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
-        return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleViewItem(item)} className="h-8 w-8 p-0">
-              <Eye className="h-4 w-4" />
-            </Button>
-          </div>
-        );
       case 'status':
         return <div className="flex items-center">
             <div onClick={() => handleStatusToggle(item.id)} className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status === 'Active' ? 'bg-green-500' : 'bg-gray-400'}`}>
@@ -189,6 +177,13 @@ const EcoFriendlyListPage = () => {
         return item[columnKey] || '-';
     }
   };
+
+  // Render actions for each row
+  const renderActions = (item: any) => <div className="flex items-center space-x-2">
+      <Button variant="ghost" size="sm" onClick={() => handleViewItem(item)} className="h-8 w-8 p-0">
+        <Eye className="h-4 w-4" />
+      </Button>
+    </div>;
   return <div className="p-6 space-y-6">
 
       {/* Header */}
@@ -201,7 +196,8 @@ const EcoFriendlyListPage = () => {
       <EnhancedTable 
         data={ecoFriendlyData} 
         columns={columns} 
-        renderCell={renderCell}
+        renderCell={renderCell} 
+        renderActions={renderActions} 
         storageKey="eco-friendly-list-table" 
         emptyMessage="No eco-friendly items available" 
         enableExport={true} 

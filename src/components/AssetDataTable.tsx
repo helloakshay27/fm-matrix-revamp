@@ -29,7 +29,6 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   // Status color logic moved to StatusBadge component
 
   const columns: ColumnConfig[] = [
-    { key: 'actions', label: 'Actions', sortable: false, hideable: false, defaultVisible: true },
     { key: 'serialNumber', label: 'Serial Number', sortable: true, hideable: true, defaultVisible: visibleColumns.serialNumber },
     { key: 'assetName', label: 'Asset Name', sortable: true, hideable: true, defaultVisible: visibleColumns.assetName },
     { key: 'assetId', label: 'Asset ID', sortable: true, hideable: true, defaultVisible: visibleColumns.assetId },
@@ -48,20 +47,6 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
 
   const renderCell = (asset: Asset, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
-        return (
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewAsset(asset.id);
-            }}
-            className="p-1 h-8 w-8"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        );
       case 'serialNumber':
         return <span className="text-sm text-gray-600">{asset.serialNumber}</span>;
       case 'assetName':
@@ -97,12 +82,26 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     }
   };
 
+  const renderActions = (asset: Asset) => (
+    <Button 
+      variant="ghost" 
+      size="sm"
+      onClick={(e) => {
+        e.stopPropagation();
+        onViewAsset(asset.id);
+      }}
+      className="p-1 h-8 w-8"
+    >
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
 
   return (
     <EnhancedTable
       data={assets}
       columns={columns}
       renderCell={renderCell}
+      renderActions={renderActions}
       onRowClick={(asset) => onViewAsset(asset.id)}
       storageKey="asset-data-table"
       emptyMessage="No assets found"

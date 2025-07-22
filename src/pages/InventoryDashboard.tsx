@@ -229,7 +229,6 @@ export const InventoryDashboard = () => {
   };
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false },
     { key: 'name', label: 'Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
@@ -275,15 +274,13 @@ export const InventoryDashboard = () => {
     </div>
   );
 
+  const renderRowActions = (item) => (
+    <Button variant="ghost" size="sm" onClick={() => handleViewItem(item.id)}>
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
 
   const renderCell = (item, columnKey) => {
-    if (columnKey === 'actions') {
-      return (
-        <Button variant="ghost" size="sm" onClick={() => handleViewItem(item.id)}>
-          <Eye className="w-4 h-4" />
-        </Button>
-      );
-    }
     if (columnKey === 'criticality') {
       return (
         <span className={`px-2 py-1 rounded text-xs ${
@@ -847,6 +844,7 @@ export const InventoryDashboard = () => {
               data={paginatedData}
               columns={columns}
               renderCell={renderCell}
+              renderActions={renderRowActions}
               bulkActions={bulkActions}
               showBulkActions={true}
               selectable={true}

@@ -101,15 +101,6 @@ const InventoryConsumptionDashboard = () => {
 
   // Render cell content
   const renderCell = (item: any, columnKey: string) => {
-    if (columnKey === 'actions') {
-      return (
-        <div className="flex gap-2 justify-center">
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
-            <Eye className="w-4 h-4 text-gray-600" />
-          </Button>
-        </div>
-      );
-    }
     const value = item[columnKey];
     if (columnKey === 'criticality') {
       return <span className="text-sm text-gray-600">{value}</span>;
@@ -157,6 +148,14 @@ const InventoryConsumptionDashboard = () => {
     navigate(`/maintenance/inventory-consumption/view/${item.id}`);
   };
 
+  // Render actions for each row
+  const renderActions = (item: any) => (
+    <div className="flex gap-2 justify-center">
+      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
+        <Eye className="w-4 h-4 text-gray-600" />
+      </Button>
+    </div>
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -171,7 +170,8 @@ const InventoryConsumptionDashboard = () => {
       <EnhancedTable 
         data={paginatedData} 
         columns={columns} 
-        renderCell={renderCell}
+        renderCell={renderCell} 
+        renderActions={renderActions} 
         storageKey="inventory-consumption-table" 
         emptyMessage="No consumption data available" 
         enableExport={true} 

@@ -250,7 +250,6 @@ export const SurveyMappingDashboard = () => {
   };
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'serviceId', label: 'ID', sortable: true, draggable: true },
     { key: 'serviceName', label: 'Service Name', sortable: true, draggable: true },
     { key: 'site', label: 'Site', sortable: true, draggable: true },
@@ -266,15 +265,6 @@ export const SurveyMappingDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
-        return (
-          <button 
-            onClick={() => handleViewClick(item)}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-        );
       case 'status':
         return (
           <Switch
@@ -302,6 +292,14 @@ export const SurveyMappingDashboard = () => {
     }
   };
 
+  const renderActions = (item: any) => (
+    <button 
+      onClick={() => handleViewClick(item)}
+      className="text-gray-600 hover:text-gray-800"
+    >
+      <Eye className="w-4 h-4" />
+    </button>
+  );
 
   // Filter mappings based on search term
   const filteredMappings = mappings.filter(mapping =>
@@ -333,6 +331,7 @@ export const SurveyMappingDashboard = () => {
           data={filteredMappings}
           columns={columns}
           selectable={true}
+          renderActions={renderActions}
           renderCell={renderCell}
           storageKey="survey-mapping-table"
           enableExport={true}

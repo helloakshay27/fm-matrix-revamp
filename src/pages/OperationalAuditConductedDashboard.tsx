@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye } from "lucide-react";
+import { FileText } from "lucide-react";
 
 export const OperationalAuditConductedDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -67,7 +67,6 @@ export const OperationalAuditConductedDashboard = () => {
   };
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'report', label: 'Report', sortable: true, draggable: true },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'auditName', label: 'Audit Name', sortable: true, draggable: true },
@@ -82,12 +81,6 @@ export const OperationalAuditConductedDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
-        return (
-          <Button variant="ghost" size="sm" onClick={() => console.log('View conducted audit:', item.id)}>
-            <Eye className="w-4 h-4" />
-          </Button>
-        );
       case 'report':
         return item.report ? (
           <Button

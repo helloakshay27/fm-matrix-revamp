@@ -255,7 +255,6 @@ export const SurveyListDashboard = () => {
   const statusOptions = ['Active', 'Draft', 'Published', 'Inactive'];
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'title', label: 'Survey Title', sortable: true, draggable: true },
     { key: 'ticketCreation', label: 'Ticket Creation', sortable: false, draggable: true },
@@ -270,35 +269,6 @@ export const SurveyListDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
-        return (
-          <div className="flex space-x-1">
-            <button 
-              onClick={() => handleAction('Edit', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => handleAction('Copy', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Copy className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => handleAction('View', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => handleAction('Share', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-        );
       case 'ticketCreation':
         return (
           <div className="flex items-center">
@@ -345,6 +315,34 @@ export const SurveyListDashboard = () => {
     }
   };
 
+  const renderActions = (item: any) => (
+    <div className="flex space-x-1">
+      <button 
+        onClick={() => handleAction('Edit', item.id)}
+        className="p-1 text-gray-600 hover:text-gray-800"
+      >
+        <Edit className="w-4 h-4" />
+      </button>
+      <button 
+        onClick={() => handleAction('Copy', item.id)}
+        className="p-1 text-gray-600 hover:text-gray-800"
+      >
+        <Copy className="w-4 h-4" />
+      </button>
+      <button 
+        onClick={() => handleAction('View', item.id)}
+        className="p-1 text-gray-600 hover:text-gray-800"
+      >
+        <Eye className="w-4 h-4" />
+      </button>
+      <button 
+        onClick={() => handleAction('Share', item.id)}
+        className="p-1 text-gray-600 hover:text-gray-800"
+      >
+        <Share2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
 
   // Filter surveys based on search term
   const filteredSurveys = surveys.filter(survey =>
@@ -371,6 +369,7 @@ export const SurveyListDashboard = () => {
           data={filteredSurveys}
           columns={columns}
           selectable={true}
+          renderActions={renderActions}
           renderCell={renderCell}
           storageKey="survey-list-table"
           enableExport={true}

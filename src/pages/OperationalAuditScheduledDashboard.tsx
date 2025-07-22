@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { Plus, Eye } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 export const OperationalAuditScheduledDashboard = () => {
@@ -24,7 +24,6 @@ export const OperationalAuditScheduledDashboard = () => {
   ];
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'activityName', label: 'Activity Name', sortable: true, draggable: true },
     { key: 'noOfAssociation', label: 'No. Of Association', sortable: true, draggable: true },
@@ -38,13 +37,6 @@ export const OperationalAuditScheduledDashboard = () => {
   };
 
   const renderCell = (item: any, columnKey: string) => {
-    if (columnKey === 'actions') {
-      return (
-        <Button variant="ghost" size="sm" onClick={() => console.log('View audit:', item.id)}>
-          <Eye className="w-4 h-4" />
-        </Button>
-      );
-    }
     if (columnKey === 'id') {
       return <span className="text-blue-600 font-medium">{item.id}</span>;
     }

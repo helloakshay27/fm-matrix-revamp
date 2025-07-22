@@ -276,7 +276,10 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead className="w-12 lg:w-16">Edit</TableHead>
+              <TableHead className="w-12 lg:w-16">Copy</TableHead>
+              <TableHead className="w-12 lg:w-16">View</TableHead>
+              <TableHead className="w-12 lg:w-16">Share</TableHead>
               <TableHead className="w-16 lg:w-24">ID</TableHead>
               <TableHead className="min-w-[150px]">Survey Title</TableHead>
               <TableHead className="w-24 lg:w-32">Ticket Creation</TableHead>
@@ -301,32 +304,36 @@ export const SurveyListTable = ({ searchTerm }: SurveyListTableProps) => {
               return (
                 <TableRow key={`${survey.id}-${index}`}>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <button 
-                        onClick={() => handleAction('Edit', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleAction('Copy', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleAction('View', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleAction('Share', survey.id)}
-                        className="p-1 text-gray-600 hover:text-gray-800"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button 
+                      onClick={() => handleAction('Edit', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Copy', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('View', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleAction('Share', survey.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
                   </TableCell>
                   <TableCell className="font-medium">{survey.id}</TableCell>
                   <TableCell>{survey.title}</TableCell>

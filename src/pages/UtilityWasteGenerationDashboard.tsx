@@ -222,7 +222,6 @@ const UtilityWasteGenerationDashboard = () => {
   }];
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'location', label: 'Location', sortable: true, draggable: true },
     { key: 'vendor', label: 'Vendor', sortable: true, draggable: true },
@@ -238,23 +237,21 @@ const UtilityWasteGenerationDashboard = () => {
     { key: 'createdOn', label: 'Created On', sortable: true, draggable: true }
   ];
 
+  const renderActions = (record: any) => (
+    <div className="flex space-x-1">
+      <Button variant="ghost" size="sm" onClick={() => handleView(record.id)} className="h-8 w-8 p-0">
+        <Eye className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(record.id)} className="h-8 w-8 p-0">
+        <Edit className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => handleDelete(record.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 
   const renderCell = (item: any, columnKey: string) => {
-    if (columnKey === 'actions') {
-      return (
-        <div className="flex space-x-1">
-          <Button variant="ghost" size="sm" onClick={() => handleView(item.id)} className="h-8 w-8 p-0">
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleEdit(item.id)} className="h-8 w-8 p-0">
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      );
-    }
     return item[columnKey];
   };
   
@@ -317,6 +314,7 @@ const UtilityWasteGenerationDashboard = () => {
               data={wasteGenerationData}
               columns={columns}
               selectable={true}
+              renderActions={renderActions}
               renderCell={renderCell}
               storageKey="waste-generation-table"
               enableExport={true}

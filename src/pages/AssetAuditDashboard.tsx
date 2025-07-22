@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2, Eye } from 'lucide-react';
+import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -140,16 +140,6 @@ export const AssetAuditDashboard = () => {
 
   const renderCell = (item: AuditRecord, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleAuditNameClick(item.auditId)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        );
       case 'auditName':
         return (
           <button
