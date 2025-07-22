@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { X } from 'lucide-react';
 
 interface EditStatusDialogProps {
   open: boolean;
@@ -32,8 +33,16 @@ export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader className="relative">
           <DialogTitle>Edit Status</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 h-6 w-6 p-0 hover:bg-gray-100"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         <div className="space-y-4">
           <div>
