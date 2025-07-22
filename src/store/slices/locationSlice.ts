@@ -261,6 +261,17 @@ export const updateFloor = createAsyncThunk(
   }
 );
 
+export const updateUnit = createAsyncThunk(
+  'location/updateUnit',
+  async ({ id, updates }: { id: number; updates: Partial<Unit> }) => {
+    const payload = {
+      pms_unit: updates
+    };
+    const response = await apiClient.put(`/pms/units/${id}.json`, payload);
+    return { id, updates };
+  }
+);
+
 const initialState: LocationState = {
   buildings: { data: [], loading: false, error: null },
   wings: { data: [], loading: false, error: null },
@@ -413,6 +424,14 @@ const locationSlice = createSlice({
         const floorIndex = state.floors.data.findIndex(floor => floor.id === id);
         if (floorIndex !== -1) {
           state.floors.data[floorIndex] = { ...state.floors.data[floorIndex], ...updates };
+        }
+      })
+      // Update Unit
+      .addCase(updateUnit.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const unitIndex = state.units.data.findIndex(unit => unit.id === id);
+        if (unitIndex !== -1) {
+          state.units.data[unitIndex] = { ...state.units.data[unitIndex], ...updates };
         }
       });
   },

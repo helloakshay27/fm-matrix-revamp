@@ -19,7 +19,8 @@ import {
   setSelectedBuilding, 
   setSelectedWing,
   setSelectedArea,
-  setSelectedFloor
+  setSelectedFloor,
+  updateUnit
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
@@ -131,8 +132,20 @@ export const UnitPage = () => {
     }
   };
 
-  const toggleActiveStatus = (id: number) => {
-    console.log(`Toggle active status for unit ${id}`);
+  const toggleActiveStatus = async (unitId: number) => {
+    try {
+      const unit = units.data.find(u => u.id === unitId);
+      if (!unit) return;
+
+      await dispatch(updateUnit({
+        id: unitId,
+        updates: { active: !unit.active }
+      }));
+      
+      toast.success('Unit status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update unit status');
+    }
   };
 
   return (
