@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
+import { EditStatusDialog } from '@/components/EditStatusDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TicketSelector } from '@/components/TicketSelector';
@@ -258,6 +259,7 @@ export const TicketDashboard = () => {
     requests: 0
   });
   const [filters, setFilters] = useState<TicketFilters>({});
+  const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const perPage = 20;
 
   // Drag and drop sensors
@@ -428,7 +430,7 @@ export const TicketDashboard = () => {
   };
 
   const handleEditTicket = (ticketNumber: string) => {
-    navigate(`/maintenance/ticket/edit/${ticketNumber}`);
+    setIsEditStatusOpen(true);
   };
 
   const handleDeleteTicket = async (ticketId: number) => {
@@ -1193,6 +1195,12 @@ export const TicketDashboard = () => {
       </Tabs>
 
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
+
+      {/* Edit Status Dialog */}
+      <EditStatusDialog 
+        open={isEditStatusOpen} 
+        onOpenChange={setIsEditStatusOpen} 
+      />
 
       {/* Ticket Selection Panel */}
       <TicketSelectionPanel 
