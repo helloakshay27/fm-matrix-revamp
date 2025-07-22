@@ -11,6 +11,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Sele
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { getUser } from '@/utils/auth';
 import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
 
 export const AddInventoryPage = () => {
@@ -72,9 +73,10 @@ export const AddInventoryPage = () => {
   };
 
   const handleSubmit = async () => {
+    const user = getUser();
     const payload = {
       pms_inventory: {
-        user_id: "",
+        user_id: user?.id?.toString() || "",
         company_id: "",
         pms_site_id: "",
         inventory_type: inventoryType === 'spares' ? 1 : 2,
