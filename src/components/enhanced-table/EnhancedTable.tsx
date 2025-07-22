@@ -75,6 +75,7 @@ interface EnhancedTableProps<T> {
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
   leftActions?: React.ReactNode;
+  rightActions?: React.ReactNode;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -111,6 +112,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideTableSearch = false,
   hideColumnsButton = false,
   leftActions,
+  rightActions,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -309,6 +311,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               onResetToDefaults={resetToDefaults}
             />
           )}
+          
+          {rightActions}
         </div>
       </div>
 

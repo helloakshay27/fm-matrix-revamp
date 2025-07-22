@@ -1080,14 +1080,16 @@ export const TicketDashboard = () => {
                   leftActions={
                     <div className="flex gap-3">
                       {renderCustomActions()}
-                      <Button 
-                        variant="outline" 
-                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                        onClick={() => setIsFilterOpen(true)}
-                      >
-                        <Filter className="w-4 h-4 mr-2" /> Filter
-                      </Button>
                     </div>
+                  }
+                  rightActions={
+                    <Button 
+                      variant="outline" 
+                      className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                      onClick={() => setIsFilterOpen(true)}
+                    >
+                      <Filter className="w-4 h-4 mr-2" /> Filter
+                    </Button>
                   }
                   searchPlaceholder="Search Tickets"
                   hideTableExport={false}
