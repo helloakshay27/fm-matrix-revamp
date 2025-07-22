@@ -1462,7 +1462,7 @@ export const AddSchedulePage = () => {
     return {
       schedule_type: formData.type.toLowerCase(),
       pms_custom_form: {
-        pms_site_id: "7", // This should come from context/auth
+        // pms_site_id: "7", // This should come from context/auth
         created_source: "form",
         create_ticket: autoTicket ? "1" : "0",
         ticket_level: formData.ticketLevel,

@@ -16,15 +16,41 @@ export const ScheduleListDashboard = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>(['checklist', 'technical-checklist', 'non-technical-checklist']);
+  
+  // Add filter state
+  const [filters, setFilters] = useState({
+    activityName: '',
+    type: '',
+    category: ''
+  });
 
-  // Fetch custom forms data
+  // Build query parameters for API
+  const buildQueryParams = () => {
+    const params: Record<string, string> = {};
+    
+    if (filters.activityName) {
+      params['q[form_name_cont]'] = filters.activityName;
+    }
+    
+    if (filters.type) {
+      params['q[schedule_type_eq]'] = filters.type.toUpperCase();
+    }
+    
+    if (filters.category) {
+      params['q[tasks_category_eq]'] = filters.category.charAt(0).toUpperCase() + filters.category.slice(1).toLowerCase();
+    }
+    
+    return params;
+  };
+
+  // Fetch custom forms data with filters
   const {
     data: customFormsData,
     isLoading,
     error
   } = useQuery({
-    queryKey: ['custom-forms'],
-    queryFn: fetchCustomForms
+    queryKey: ['custom-forms', filters],
+    queryFn: () => fetchCustomForms(buildQueryParams())
   });
 
   // Transform the data
@@ -396,6 +422,20 @@ export const ScheduleListDashboard = () => {
           <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
         </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." />}
     </div>;
+  function handleApplyFilters(filters: { activityName: string; type: string; category: string; }): void {
+    setFilters(filters);
+    setShowFilterDialog(false);
+  }
+
+  function handleResetFilters(): void {
+    setFilters({
+      activityName: '',
+      type: '',
+      category: ''
+    });
+    setShowFilterDialog(false);
+  }
+
   return <div className="p-2 sm:p-4 lg:p-6">
       <div className="mb-4 sm:mb-6">
         <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Schedule Dashboard</h1>
@@ -423,6 +463,12 @@ export const ScheduleListDashboard = () => {
       </Tabs>
 
       <BulkUploadDialog open={showImportModal} onOpenChange={setShowImportModal} title="Bulk Upload" />
-      <ScheduleFilterDialog open={showFilterDialog} onOpenChange={setShowFilterDialog} />
+      <ScheduleFilterDialog 
+        open={showFilterDialog} 
+        onOpenChange={setShowFilterDialog}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
     </div>;
 };
