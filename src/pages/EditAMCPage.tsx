@@ -982,20 +982,37 @@ export const EditAMCPage = () => {
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
                     <div className="space-y-2">
-                      {existingFiles.contracts.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
-                          <span className="flex-1">{file.document_name}</span>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => window.open(file.document_url, '_blank')}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            View/Download
-                          </Button>
-                        </div>
-                      ))}
+                      {existingFiles.contracts.map((file, index) => {
+                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                        return (
+                          <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
+                            {isImage ? (
+                              <div className="flex items-center space-x-3 flex-1">
+                                <img 
+                                  src={file.document_url} 
+                                  alt={file.document_name}
+                                  className="w-16 h-16 object-cover rounded border"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                                <span className="flex-1">{file.document_name}</span>
+                              </div>
+                            ) : (
+                              <span className="flex-1">{file.document_name}</span>
+                            )}
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => window.open(file.document_url, '_blank')}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              View/Download
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1058,20 +1075,37 @@ export const EditAMCPage = () => {
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
                     <div className="space-y-2">
-                      {existingFiles.invoices.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
-                          <span className="flex-1">{file.document_name}</span>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => window.open(file.document_url, '_blank')}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            View/Download
-                          </Button>
-                        </div>
-                      ))}
+                      {existingFiles.invoices.map((file, index) => {
+                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                        return (
+                          <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
+                            {isImage ? (
+                              <div className="flex items-center space-x-3 flex-1">
+                                <img 
+                                  src={file.document_url} 
+                                  alt={file.document_name}
+                                  className="w-16 h-16 object-cover rounded border"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                                <span className="flex-1">{file.document_name}</span>
+                              </div>
+                            ) : (
+                              <span className="flex-1">{file.document_name}</span>
+                            )}
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => window.open(file.document_url, '_blank')}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              View/Download
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
