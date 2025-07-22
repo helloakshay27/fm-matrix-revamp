@@ -37,26 +37,26 @@ const EcoFriendlyListPage = () => {
   // Transform API data to match table structure
   const ecoFriendlyData = inventories.map(item => ({
     id: item.id,
-    name: item.name,
+    name: item.name || '-',
     itemId: item.id.toString(),
-    code: item.code,
-    serialNumber: item.serial_number,
+    code: item.code || '-',
+    serialNumber: item.serial_number || '-',
     type: item.inventory_type === 2 ? 'Consumable' : 'Non-Consumable',
-    group: '', // Not available in API
-    subGroup: '', // Not available in API
-    category: item.category || '',
-    manufacturer: item.manufacturer || '',
+    group: '-', // Not available in API
+    subGroup: '-', // Not available in API
+    category: item.category || '-',
+    manufacturer: item.manufacturer || '-',
     criticality: item.criticality === 0 ? 'Non-Critical' : 'Critical',
-    quantity: item.quantity.toString(),
-    unit: item.unit || '',
-    cost: item.cost?.toString() || '',
-    sacHsnCode: item.hsc_hsn_code,
-    maxStockLevel: item.max_stock_level?.toString() || '',
-    minStockLevel: item.min_stock_level,
-    minOrderLevel: item.min_order_level,
-    asset: item.asset_id?.toString() || '',
+    quantity: item.quantity?.toString() || '0',
+    unit: item.unit || '-',
+    cost: item.cost?.toString() || '-',
+    sacHsnCode: item.hsc_hsn_code || '-',
+    maxStockLevel: item.max_stock_level?.toString() || '-',
+    minStockLevel: item.min_stock_level || '-',
+    minOrderLevel: item.min_order_level || '-',
+    asset: item.asset_id?.toString() || '-',
     status: item.active ? 'Active' : 'Inactive',
-    expiryDate: '' // Not available in API
+    expiryDate: '-' // Not available in API
   }));
 
   // Column configuration matching the image
@@ -174,7 +174,7 @@ const EcoFriendlyListPage = () => {
             
           </div>;
       default:
-        return item[columnKey] || '';
+        return item[columnKey] || '-';
     }
   };
 
