@@ -35,7 +35,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         <Button 
           variant="outline" 
           size="sm"
-          className="h-8 w-8 p-0 flex items-center justify-center"
+          className="h-10 w-10 p-0 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center justify-center"
         >
           <img 
             src="/lovable-uploads/b9949d2a-e000-4007-b9c7-de9a4fc874cf.png" 
