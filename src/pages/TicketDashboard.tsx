@@ -1090,7 +1090,7 @@ export const TicketDashboard = () => {
                       className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
                       onClick={() => setIsFilterOpen(true)}
                     >
-                      <Filter className="w-4 h-4 mr-2" /> Filter
+                      <Filter className="w-4 h-4" />
                     </Button>
                   }
                   searchPlaceholder="Search Tickets"
