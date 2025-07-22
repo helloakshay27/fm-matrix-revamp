@@ -33,6 +33,7 @@ import inventoryEditReducer from './slices/inventoryEditSlice'
 import serviceEditReducer from './slices/serviceSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
 import { inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
+import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -70,6 +71,7 @@ export const store = configureStore({
   serviceEdit: serviceEditReducer,
   serviceFilter: serviceFilterReducer,
   inventoryConsumption: inventoryConsumptionReducer,
+  inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
   },
 })
 
