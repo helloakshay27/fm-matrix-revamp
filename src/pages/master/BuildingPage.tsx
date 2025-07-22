@@ -24,7 +24,8 @@ export function BuildingPage() {
   }, [dispatch]);
 
   const filteredBuildings = buildings.data.filter(building =>
-    building.name.toLowerCase().includes(searchTerm.toLowerCase())
+    building.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    building.site_id.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Limit results based on entries per page selection
