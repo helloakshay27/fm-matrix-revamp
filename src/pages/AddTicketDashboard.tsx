@@ -402,7 +402,7 @@ export const AddTicketDashboard = () => {
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
               <Input
                 placeholder="Enter Contact Number"
@@ -411,7 +411,7 @@ export const AddTicketDashboard = () => {
                 disabled={isFieldsReadOnly}
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
-            </div>
+            </div> */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
               <Input
