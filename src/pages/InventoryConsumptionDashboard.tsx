@@ -441,7 +441,7 @@ const InventoryConsumptionDashboard = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-4 pt-6">
+              <div className="flex justify-center gap-4 pt-6">
                 <Button 
                   variant="outline" 
                   onClick={handleResetFilter} 
