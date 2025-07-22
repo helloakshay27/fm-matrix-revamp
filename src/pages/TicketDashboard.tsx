@@ -736,7 +736,7 @@ export const TicketDashboard = () => {
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
               onClick={(e) => {
                 e.stopPropagation();
-                handleEditTicket(item.ticket_number);
+                navigate(`/maintenance/ticket/edit/${item.ticket_number}`);
               }}
             />
           </div>
