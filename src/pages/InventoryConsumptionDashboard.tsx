@@ -171,9 +171,6 @@ const InventoryConsumptionDashboard = () => {
             <Download className="w-4 h-4" />
             Import
           </Button>
-          <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
-            Export
-          </Button>
           <Button 
             variant="outline" 
             onClick={() => setIsFilterOpen(true)}
