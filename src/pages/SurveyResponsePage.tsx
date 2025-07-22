@@ -218,22 +218,6 @@ export const SurveyResponsePage = () => {
       </div>
 
       {/* Search and Action Buttons */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button 
-            variant="outline" 
-            className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-            onClick={handleFilterClick}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
-        </div>
-      </div>
 
       {/* Enhanced Data Table */}
       <div>
@@ -251,6 +235,22 @@ export const SurveyResponsePage = () => {
           searchPlaceholder="Search responses..."
           pagination={true}
           pageSize={10}
+          leftActions={
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
+                <Upload className="w-4 h-4 mr-2" />
+                Import
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
+                onClick={handleFilterClick}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+          }
         />
       </div>
 
