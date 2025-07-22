@@ -201,7 +201,7 @@ const InventoryConsumptionDashboard = () => {
         searchPlaceholder="Search inventory items..."
         loading={loading}
         pagination={false}
-        enableSelection={true}
+        selectable={true}
         selectedItems={selectedItems}
         onSelectItem={(itemId: string, checked: boolean) => {
           if (checked) {
