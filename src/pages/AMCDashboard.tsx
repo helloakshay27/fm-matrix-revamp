@@ -830,6 +830,7 @@ export const AMCDashboard = () => {
               searchPlaceholder="Search AMC records..."
               enableExport={true}
               exportFileName="amc-records"
+              onExport={() => handleBulkExport(paginatedData.filter(item => selectedItems.includes(item.id.toString())))}
               bulkActions={bulkActions}
               showBulkActions={true}
               pagination={false}
