@@ -310,14 +310,6 @@ export function EnhancedTable<T extends Record<string, any>>({
             </Button>
           )}
           
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Grid3x3 className="w-4 h-4" />
-          </Button>
-          
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
