@@ -69,6 +69,7 @@ interface AMCRecord {
 const initialAmcData: AMCRecord[] = [];
 
 const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
   { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
   { key: 'resource_type', label: 'Resource Type', sortable: true, defaultVisible: true },
@@ -177,6 +178,16 @@ export const AMCDashboard = () => {
 
   const renderCell = (item: AMCRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleViewDetails(item.id)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
@@ -215,15 +226,6 @@ export const AMCDashboard = () => {
     }
   };
 
-  const renderActions = (item: AMCRecord) => (
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      onClick={() => handleViewDetails(item.id)}
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
-  );
 
   const bulkActions = [
     {
@@ -715,7 +717,6 @@ export const AMCDashboard = () => {
               data={paginatedData}
               columns={columns}
               renderCell={renderCell}
-              renderActions={renderActions}
               onRowClick={(item) => handleViewDetails(item.id)}
               selectable={true}
               selectedItems={selectedItems}

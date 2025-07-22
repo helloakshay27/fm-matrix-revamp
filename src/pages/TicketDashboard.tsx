@@ -534,6 +534,10 @@ export const TicketDashboard = () => {
     }
   };
   const columns = [{
+    key: 'actions',
+    label: 'Actions',
+    sortable: false
+  }, {
     key: 'ticket_number',
     label: 'Ticket ID',
     sortable: true
@@ -638,9 +642,6 @@ export const TicketDashboard = () => {
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
     </div>;
-  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
-      <Eye className="w-4 h-4" />
-    </Button>;
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
     const date = new Date(dateString);
@@ -671,6 +672,13 @@ export const TicketDashboard = () => {
       </div>;
   };
   const renderCell = (item, columnKey) => {
+    if (columnKey === 'actions') {
+      return (
+        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.id)}>
+          <Eye className="w-4 h-4" />
+        </Button>
+      );
+    }
     if (columnKey === 'heading') {
       return <TruncatedDescription text={item.heading} />;
     }
@@ -988,7 +996,7 @@ export const TicketDashboard = () => {
             {loading ? <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
               </div> : <>
-                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} leftActions={renderCustomActions()} />
+                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} leftActions={renderCustomActions()} />
                 
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">

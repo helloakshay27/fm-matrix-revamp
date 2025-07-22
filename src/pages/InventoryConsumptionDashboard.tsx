@@ -58,6 +58,11 @@ const InventoryConsumptionDashboard = () => {
 
   // Define table columns for drag and drop functionality
   const columns: ColumnConfig[] = [{
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    draggable: true
+  }, {
     key: 'inventory',
     label: 'Inventory',
     sortable: true,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter, Download, Ticket, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Filter, Download, Ticket, Clock, AlertCircle, CheckCircle, Eye } from 'lucide-react';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 
@@ -78,6 +78,10 @@ export const TaskDashboard = () => {
   };
 
   const columns = [{
+    key: 'actions',
+    label: 'Actions',
+    sortable: false
+  }, {
     key: 'id',
     label: 'Task ID',
     sortable: true
@@ -140,6 +144,17 @@ export const TaskDashboard = () => {
     </div>;
 
   const renderCell = (item, columnKey) => {
+    if (columnKey === 'actions') {
+      return (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleViewDetails(item.id)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      );
+    }
     if (columnKey === 'status') {
       return <span className={`px-2 py-1 rounded text-xs ${item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.status === 'Closed' ? 'bg-green-100 text-green-700' : item.status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
           {item.status}

@@ -66,6 +66,7 @@ const auditData: AuditRecord[] = [
 ];
 
 const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'auditName', label: 'Audit Name', sortable: true, defaultVisible: true },
   { key: 'auditId', label: 'Audit ID', sortable: true, defaultVisible: true },
   { key: 'type', label: 'Type', sortable: true, defaultVisible: true },
