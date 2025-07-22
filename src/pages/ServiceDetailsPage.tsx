@@ -111,9 +111,6 @@ export const ServiceDetailsPage = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="text-sm text-[#1a1a1a] opacity-70 mb-1">
-              Service List &gt; Service Detail
-            </p>
             <h1 className="text-2xl font-bold text-[#1a1a1a]">
               {details.service_name || '—'} ({details.service_code || '—'})
             </h1>

@@ -102,7 +102,7 @@ export const CloneServicePRPage = () => {
           Back to Service PR
         </Button>
         <div>
-          <p className="text-sm text-gray-600 mb-2">Service PR &gt; New Service PR</p>
+          
           <h1 className="text-2xl font-bold">NEW SERVICE PR</h1>
         </div>
       </div>

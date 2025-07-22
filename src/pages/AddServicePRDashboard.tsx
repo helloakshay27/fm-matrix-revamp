@@ -30,10 +30,6 @@ export const AddServicePRDashboard = () => {
   if (currentStep === 1) {
     return (
       <div className="p-6">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
-          Service PR &gt; New Service PR
-        </div>
 
         {/* Page Title */}
         <h1 className="text-2xl font-bold mb-6">NEW SERVICE PR</h1>

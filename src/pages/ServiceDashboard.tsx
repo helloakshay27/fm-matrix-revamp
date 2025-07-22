@@ -361,7 +361,7 @@ export const ServiceDashboard = () => {
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <p className="text-muted-foreground mb-2">Services &gt; Service List</p>
+        
         <h1 className="font-semibold text-lg sm:text-2xl">SERVICE LIST</h1>
       </div>
 

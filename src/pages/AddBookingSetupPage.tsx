@@ -300,7 +300,7 @@ export const AddBookingSetupPage = () => {
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b bg-gray-50">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Settings &gt; Value Added Services &gt; Booking &gt; Setup &gt; Add</p>
+              
               <h2 className="text-xl font-bold text-gray-800">NEW BOOKING SETUP</h2>
             </div>
             <Button variant="ghost" onClick={handleClose} className="text-gray-500 hover:text-gray-700">
