@@ -1020,23 +1020,23 @@ export const TicketDashboard = () => {
             {[{
             label: 'Total Tickets',
             value: totalTickets,
-            icon: Ticket
+            icon: Settings
           }, {
             label: 'Open',
             value: openTickets,
-            icon: AlertCircle
+            icon: Settings
           }, {
             label: 'In Progress',
             value: inProgressTickets,
-            icon: Clock
+            icon: Settings
           }, {
             label: 'Pending',
             value: inProgressTickets,
-            icon: Clock
+            icon: Settings
           }, {
             label: 'Closed',
             value: closedTickets,
-            icon: CheckCircle
+            icon: Settings
           }].map((item, i) => {
             const IconComponent = item.icon;
             return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
