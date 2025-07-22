@@ -1034,7 +1034,7 @@ export const EditAMCPage = () => {
                       {existingFiles.contracts.map((file, index) => {
                         const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
                         return (
-                          <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
+                           <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{backgroundColor: '#f6f4ee'}}>
                             {isImage ? (
                               <div className="flex items-center space-x-3 flex-1">
                                 <img 
@@ -1050,12 +1050,12 @@ export const EditAMCPage = () => {
                             ) : (
                               <span className="flex-1">{file.document_name}</span>
                             )}
-                            <Button 
+                             <Button 
                               type="button" 
                               variant="ghost" 
                               size="sm"
                               onClick={() => window.open(file.document_url, '_blank')}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-red-600 hover:text-red-800"
                             >
                               View/Download
                             </Button>
@@ -1128,7 +1128,7 @@ export const EditAMCPage = () => {
                       {existingFiles.invoices.map((file, index) => {
                         const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
                         return (
-                          <div key={index} className="flex items-center justify-between text-sm bg-blue-50 p-2 rounded border">
+                          <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{backgroundColor: '#f6f4ee'}}>
                             {isImage ? (
                               <div className="flex items-center space-x-3 flex-1">
                                 <img 
@@ -1144,12 +1144,12 @@ export const EditAMCPage = () => {
                             ) : (
                               <span className="flex-1">{file.document_name}</span>
                             )}
-                            <Button 
+                             <Button 
                               type="button" 
                               variant="ghost" 
                               size="sm"
                               onClick={() => window.open(file.document_url, '_blank')}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-red-600 hover:text-red-800"
                             >
                               View/Download
                             </Button>
