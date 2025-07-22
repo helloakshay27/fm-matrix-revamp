@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -738,21 +738,12 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
-          <div title="Flag ticket">
-            <Flag 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+          <div title="Delete ticket">
+            <Trash2 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
               onClick={(e) => {
                 e.stopPropagation();
-                // Add flag functionality here
-              }}
-            />
-          </div>
-          <div title="Star ticket">
-            <Star 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-              onClick={(e) => {
-                e.stopPropagation();
-                // Add star functionality here
+                handleDeleteTicket(item.id);
               }}
             />
           </div>
@@ -1095,11 +1086,21 @@ export const TicketDashboard = () => {
                   onSelectItem={handleTicketSelection} 
                   onSelectAll={handleSelectAll} 
                   getItemId={ticket => ticket.id.toString()} 
-                  leftActions={renderCustomActions()}
+                  leftActions={
+                    <div className="flex gap-3">
+                      {renderCustomActions()}
+                      <Button 
+                        variant="outline" 
+                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                        onClick={() => setIsFilterOpen(true)}
+                      >
+                        <Filter className="w-4 h-4 mr-2" /> Filter
+                      </Button>
+                    </div>
+                  }
                   searchPlaceholder="Search Tickets"
                   hideTableExport={false}
                   hideColumnsButton={false}
-                  onFilterClick={() => setIsFilterOpen(true)}
                 />
                 
                 {/* Custom Pagination */}
