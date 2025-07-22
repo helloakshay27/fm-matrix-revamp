@@ -13,9 +13,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
-
 const ticketData = [{
   id: '2189-11106',
   taskNumber: 'test',
@@ -209,42 +208,39 @@ const ticketData = [{
 }];
 
 // Sortable Chart Item Component
-const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
+const SortableChartItem = ({
+  id,
+  children
+}: {
+  id: string;
+  children: React.ReactNode;
+}) => {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-    isDragging,
-  } = useSortable({ id });
-
+    isDragging
+  } = useSortable({
+    id
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1
   };
-
-  return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners}
-      className="cursor-move"
-    >
+  return <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-move">
       {children}
-    </div>
-  );
+    </div>;
 };
-
 export const TicketDashboard = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<string[]>([
-    'statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix'
-  ]);
+  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -252,21 +248,43 @@ export const TicketDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+  const [ticketSummary, setTicketSummary] = useState({
+    total_tickets: 0,
+    open_tickets: 0,
+    in_progress_tickets: 0,
+    closed_tickets: 0,
+    complaints: 0,
+    suggestions: 0,
+    requests: 0
+  });
+  const [filters, setFilters] = useState<TicketFilters>({});
   const perPage = 20;
 
   // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates
+  }));
+
+  // Fetch ticket summary from API
+  const fetchTicketSummary = async () => {
+    try {
+      const summary = await ticketManagementAPI.getTicketSummary();
+      setTicketSummary(summary);
+    } catch (error) {
+      console.error('Error fetching ticket summary:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch ticket summary. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Fetch tickets from API
   const fetchTickets = async (page: number = 1) => {
     setLoading(true);
     try {
-      const response = await ticketManagementAPI.getTickets(page, perPage);
+      const response = await ticketManagementAPI.getTickets(page, perPage, filters);
       setTickets(response.complaints);
       if (response.pagination) {
         setTotalPages(response.pagination.total_pages);
@@ -285,24 +303,72 @@ export const TicketDashboard = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchTickets(currentPage);
-  }, [currentPage]);
+    fetchTicketSummary();
+  }, [currentPage, filters]);
 
-  // Calculate stats from API data (with safe fallbacks)
-  const safeTickets = tickets || [];
-  const openTickets = safeTickets.filter(t => t.issue_status === 'Open').length;
-  const inProgressTickets = safeTickets.filter(t => t.issue_status === 'In Progress').length;
-  const pendingTickets = safeTickets.filter(t => t.issue_status === 'Pending').length;
-  const closedTickets = safeTickets.filter(t => t.issue_status === 'Closed').length;
+  // Use ticket summary data from API
+  const openTickets = ticketSummary.open_tickets;
+  const inProgressTickets = ticketSummary.in_progress_tickets;
+  const closedTickets = ticketSummary.closed_tickets;
+  const totalSummaryTickets = ticketSummary.total_tickets;
 
   // Analytics data with updated colors matching design
-  const statusData = [
-    { name: 'Open', value: openTickets, color: '#c6b692' },
-    { name: 'Closed', value: closedTickets, color: '#d8dcdd' }
-  ];
+  const statusData = [{
+    name: 'Open',
+    value: openTickets,
+    color: '#c6b692'
+  }, {
+    name: 'In Progress',
+    value: inProgressTickets,
+    color: '#f59e0b'
+  }, {
+    name: 'Closed',
+    value: closedTickets,
+    color: '#d8dcdd'
+  }];
 
+  // Ticket type breakdown cards
+  const ticketTypeCards = [{
+    title: 'Total Tickets',
+    value: totalSummaryTickets,
+    icon: Ticket,
+    color: 'bg-blue-500'
+  }, {
+    title: 'Open Tickets',
+    value: openTickets,
+    icon: AlertCircle,
+    color: 'bg-yellow-500'
+  }, {
+    title: 'In Progress',
+    value: inProgressTickets,
+    icon: Clock,
+    color: 'bg-orange-500'
+  }, {
+    title: 'Closed Tickets',
+    value: closedTickets,
+    icon: CheckCircle,
+    color: 'bg-green-500'
+  }, {
+    title: 'Complaints',
+    value: ticketSummary.complaints,
+    icon: AlertCircle,
+    color: 'bg-red-500'
+  }, {
+    title: 'Suggestions',
+    value: ticketSummary.suggestions,
+    icon: TrendingUp,
+    color: 'bg-purple-500'
+  }, {
+    title: 'Requests',
+    value: ticketSummary.requests,
+    icon: Ticket,
+    color: 'bg-indigo-500'
+  }];
+
+  // Calculate category data from tickets
+  const safeTickets = tickets || [];
   const categoryData = safeTickets.reduce((acc, ticket) => {
     const category = ticket.category_type;
     if (category) {
@@ -310,28 +376,53 @@ export const TicketDashboard = () => {
     }
     return acc;
   }, {});
-
-  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({ name, value }));
-
-  const agingMatrixData = [
-    { priority: 'P1', '0-10': 20, '11-20': 3, '21-30': 4, '31-40': 0, '41-50': 203 },
-    { priority: 'P2', '0-10': 2, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 4 },
-    { priority: 'P3', '0-10': 1, '11-20': 0, '21-30': 1, '31-40': 0, '41-50': 7 },
-    { priority: 'P4', '0-10': 1, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 5 }
-  ];
-
+  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({
+    name,
+    value
+  }));
+  const agingMatrixData = [{
+    priority: 'P1',
+    '0-10': 20,
+    '11-20': 3,
+    '21-30': 4,
+    '31-40': 0,
+    '41-50': Math.max(203, openTickets)
+  }, {
+    priority: 'P2',
+    '0-10': 2,
+    '11-20': 0,
+    '21-30': 0,
+    '31-40': 0,
+    '41-50': 4
+  }, {
+    priority: 'P3',
+    '0-10': 1,
+    '11-20': 0,
+    '21-30': 1,
+    '31-40': 0,
+    '41-50': 7
+  }, {
+    priority: 'P4',
+    '0-10': 1,
+    '11-20': 0,
+    '21-30': 0,
+    '31-40': 0,
+    '41-50': 5
+  }];
   const reactiveTickets = Math.floor(safeTickets.length * 0.7);
   const proactiveTickets = safeTickets.length - reactiveTickets;
-
-  const typeData = [
-    { name: 'Open', value: reactiveTickets, color: '#c6b692' },
-    { name: 'Closed', value: proactiveTickets, color: '#d8dcdd' }
-  ];
-
+  const typeData = [{
+    name: 'Open',
+    value: reactiveTickets,
+    color: '#c6b692'
+  }, {
+    name: 'Closed',
+    value: proactiveTickets,
+    color: '#d8dcdd'
+  }];
   const handleSelectionChange = (selectedSections: string[]) => {
     setVisibleSections(selectedSections);
   };
-
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
@@ -348,7 +439,6 @@ export const TicketDashboard = () => {
       }
     });
   };
-
   const handleSelectAll = (isSelected: boolean) => {
     console.log('TicketDashboard - Select all changed:', isSelected);
     if (isSelected) {
@@ -358,19 +448,17 @@ export const TicketDashboard = () => {
       setSelectedTickets([]);
     }
   };
-
   const handleClearSelection = () => {
     console.log('TicketDashboard - Clearing selection');
     setSelectedTickets([]);
   };
-
   const handleGoldenTicket = async () => {
     console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
     try {
       await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
       toast({
         title: "Success",
-        description: "Tickets marked as Golden Ticket successfully",
+        description: "Tickets marked as Golden Ticket successfully"
       });
       await fetchTickets(currentPage);
       setSelectedTickets([]);
@@ -383,14 +471,13 @@ export const TicketDashboard = () => {
       });
     }
   };
-
   const handleFlag = async () => {
     console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
     try {
       await ticketManagementAPI.markAsFlagged(selectedTickets);
       toast({
         title: "Success",
-        description: "Tickets flagged successfully",
+        description: "Tickets flagged successfully"
       });
       await fetchTickets(currentPage);
       setSelectedTickets([]);
@@ -403,49 +490,49 @@ export const TicketDashboard = () => {
       });
     }
   };
-
-  const handleExport = () => {
+  const handleExport = async () => {
     console.log('TicketDashboard - Export action for tickets:', selectedTickets);
-    const selectedTicketObjects = tickets.filter(ticket => 
-      selectedTickets.includes(ticket.id)
-    );
-    
-    const csvContent = [
-      ['Ticket ID', 'Description', 'Category', 'Status', 'Priority', 'Created By', 'Assigned To'],
-      ...selectedTicketObjects.map(ticket => [
-        ticket.ticket_number,
-        ticket.heading,
-        ticket.category_type,
-        ticket.issue_status,
-        ticket.priority,
-        ticket.posted_by,
-        ticket.assigned_to
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `tickets_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    try {
+      const blob = await ticketManagementAPI.exportTicketsExcel(filters);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tickets_${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast({
+        title: "Success",
+        description: "Tickets exported successfully"
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export tickets",
+        variant: "destructive"
+      });
+    }
+  };
+  const handleFilterApply = (newFilters: TicketFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when applying filters
+    setIsFilterOpen(false);
   };
 
   // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-
+    const {
+      active,
+      over
+    } = event;
     if (active.id !== over.id) {
-      setChartOrder((items) => {
+      setChartOrder(items => {
         const oldIndex = items.indexOf(active.id);
         const newIndex = items.indexOf(over.id);
-
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
-
   const columns = [{
     key: 'ticket_number',
     label: 'Ticket ID',
@@ -543,7 +630,6 @@ export const TicketDashboard = () => {
     label: 'Resolution Escalation Level',
     sortable: true
   }];
-
   const renderCustomActions = () => <div className="flex flex-wrap gap-3">
       <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4 mr-2" /> Add
@@ -552,44 +638,38 @@ export const TicketDashboard = () => {
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
     </div>;
-
-  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.ticket_number)}>
+  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
       <Eye className="w-4 h-4" />
     </Button>;
-
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB');
   };
-
-  const TruncatedDescription = ({ text, maxLength = 50 }: { text: string; maxLength?: number }) => {
+  const TruncatedDescription = ({
+    text,
+    maxLength = 50
+  }: {
+    text: string;
+    maxLength?: number;
+  }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    
     if (!text) return <span>--</span>;
-    
     if (text.length <= maxLength) {
       return <span>{text}</span>;
     }
-    
-    return (
-      <div className="w-48">
+    return <div className="w-48">
         <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
           {isExpanded ? text : `${text.substring(0, maxLength)}...`}
         </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
-          className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in"
-        >
+        <button onClick={e => {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
+      }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in">
           {isExpanded ? 'Show less' : 'Show more'}
         </button>
-      </div>
-    );
+      </div>;
   };
-
   const renderCell = (item, columnKey) => {
     if (columnKey === 'heading') {
       return <TruncatedDescription text={item.heading} />;
@@ -615,28 +695,23 @@ export const TicketDashboard = () => {
     }
     return item[columnKey];
   };
-
-  return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+  return <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="analytics" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
+          <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
             <BarChart3 className="w-4 h-4" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger 
-            value="tickets" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
+          <TabsTrigger value="tickets" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
             <Ticket className="w-4 h-4" />
             Ticket List
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          {/* Ticket Summary Cards */}
+          
+
           {/* Header with Ticket Selector */}
           <div className="flex justify-end">
             <TicketSelector onSelectionChange={handleSelectionChange} />
@@ -647,19 +722,14 @@ export const TicketDashboard = () => {
             {/* Left Section - Charts */}
             <div className="xl:col-span-8 space-y-4 sm:space-y-6">
               {/* All Charts with Drag and Drop */}
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter} 
-                onDragEnd={handleDragEnd}
-              >
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                   <div className="space-y-4 sm:space-y-6">
                     {/* Top Row - Two Donut Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map((chartId) => {
-                        if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
+                      {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
+                      if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
+                        return <SortableChartItem key={chartId} id={chartId}>
                               <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                                   <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
@@ -668,75 +738,48 @@ export const TicketDashboard = () => {
                                 <div className="relative flex items-center justify-center">
                                   <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
                                     <PieChart>
-                                      <Pie
-                                        data={statusData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={80}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                        label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                          if (name === 'Open') {
-                                            return (
-                                              <text 
-                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                                fill="black"
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                fontSize="14"
-                                                fontWeight="bold"
-                                              >
+                                      <Pie data={statusData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} paddingAngle={2} dataKey="value" label={({
+                                    value,
+                                    name,
+                                    cx,
+                                    cy,
+                                    midAngle,
+                                    innerRadius,
+                                    outerRadius
+                                  }) => {
+                                    if (name === 'Open') {
+                                      return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
                                                 2
-                                              </text>
-                                            );
-                                          }
-                                          return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                              y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                              fill="black"
-                                              textAnchor="middle"
-                                              dominantBaseline="middle"
-                                              fontSize="14"
-                                              fontWeight="bold"
-                                            >
+                                              </text>;
+                                    }
+                                    return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
                                               {value}
-                                            </text>
-                                          );
-                                        }}
-                                        labelLine={false}
-                                      >
-                                        {statusData.map((entry, index) => (
-                                          <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
+                                            </text>;
+                                  }} labelLine={false}>
+                                        {statusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                                       </Pie>
                                       <Tooltip />
                                     </PieChart>
                                   </ResponsiveContainer>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalTickets}</div>
-                                    </div>
-                                  </div>
+                                   <div className="absolute inset-0 flex items-center justify-center">
+                                     <div className="text-center">
+                                       <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalSummaryTickets}</div>
+                                     </div>
+                                   </div>
                                 </div>
                                 <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {statusData.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                  {statusData.map((item, index) => <div key={index} className="flex items-center gap-2">
+                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{
+                                  backgroundColor: item.color
+                                }}></div>
                                       <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                    </div>
-                                  ))}
+                                    </div>)}
                                 </div>
                               </div>
-                            </SortableChartItem>
-                          );
-                        }
-                        
-                        if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
+                            </SortableChartItem>;
+                      }
+                      if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
+                        return <SortableChartItem key={chartId} id={chartId}>
                               <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                                   <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
@@ -745,49 +788,25 @@ export const TicketDashboard = () => {
                                 <div className="relative flex items-center justify-center">
                                   <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
                                     <PieChart>
-                                      <Pie
-                                        data={typeData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={80}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                        label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                          if (name === 'Open') {
-                                            return (
-                                              <text 
-                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                                fill="black"
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                fontSize="14"
-                                                fontWeight="bold"
-                                              >
+                                      <Pie data={typeData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} paddingAngle={2} dataKey="value" label={({
+                                    value,
+                                    name,
+                                    cx,
+                                    cy,
+                                    midAngle,
+                                    innerRadius,
+                                    outerRadius
+                                  }) => {
+                                    if (name === 'Open') {
+                                      return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
                                                 2
-                                              </text>
-                                            );
-                                          }
-                                          return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
-                                              y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                              fill="black"
-                                              textAnchor="middle"
-                                              dominantBaseline="middle"
-                                              fontSize="14"
-                                              fontWeight="bold"
-                                            >
+                                              </text>;
+                                    }
+                                    return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
                                               {value}
-                                            </text>
-                                          );
-                                        }}
-                                        labelLine={false}
-                                      >
-                                        {typeData.map((entry, index) => (
-                                          <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
+                                            </text>;
+                                  }} labelLine={false}>
+                                        {typeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                                       </Pie>
                                       <Tooltip />
                                     </PieChart>
@@ -799,62 +818,63 @@ export const TicketDashboard = () => {
                                   </div>
                                 </div>
                                 <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {typeData.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                  {typeData.map((item, index) => <div key={index} className="flex items-center gap-2">
+                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{
+                                  backgroundColor: item.color
+                                }}></div>
                                       <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                    </div>
-                                  ))}
+                                    </div>)}
                                 </div>
                               </div>
-                            </SortableChartItem>
-                          );
-                        }
-                        
-                        return null;
-                      })}
+                            </SortableChartItem>;
+                      }
+                      return null;
+                    })}
                     </div>
 
                     {/* Bottom Charts - Category and Aging Matrix */}
-                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix'].includes(id)).map((chartId) => {
-                      if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
+                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix'].includes(id)).map(chartId => {
+                    if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
+                      return <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
                               <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Category-wise Tickets</h3>
-                                <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
+                                <h3 className="text-base sm:text-lg font-bold" style={{
+                              color: '#C72030'
+                            }}>Unit Category-wise Tickets</h3>
+                                <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{
+                              color: '#C72030'
+                            }} />
                               </div>
                               <div className="w-full overflow-x-auto">
                                 <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
                                   <BarChart data={categoryChartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                                    <XAxis 
-                                      dataKey="name" 
-                                      angle={-45} 
-                                      textAnchor="end" 
-                                      height={80}
-                                      tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }}
-                                      className="text-xs"
-                                    />
-                                    <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 10 }} />
+                                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{
+                                  fill: 'hsl(var(--analytics-text))',
+                                  fontSize: 10
+                                }} className="text-xs" />
+                                    <YAxis tick={{
+                                  fill: 'hsl(var(--analytics-text))',
+                                  fontSize: 10
+                                }} />
                                     <Tooltip />
                                     <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
                                   </BarChart>
                                 </ResponsiveContainer>
                               </div>
                             </div>
-                          </SortableChartItem>
-                        );
-                      }
-
-                      if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
+                          </SortableChartItem>;
+                    }
+                    if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
+                      return <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Tickets Ageing Matrix</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
+                                <h3 className="text-base sm:text-lg font-bold" style={{
+                              color: '#C72030'
+                            }}>Tickets Ageing Matrix</h3>
+                                <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{
+                              color: '#C72030'
+                            }} />
                               </div>
                               
                               <div className="space-y-4 sm:space-y-6">
@@ -863,11 +883,15 @@ export const TicketDashboard = () => {
                                   <div className="min-w-[500px] px-3 sm:px-0">
                                     <table className="w-full border-collapse border border-gray-300">
                                       <thead>
-                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                        <tr style={{
+                                      backgroundColor: '#EDE4D8'
+                                    }}>
                                           <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
                                           <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
                                         </tr>
-                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                        <tr style={{
+                                      backgroundColor: '#EDE4D8'
+                                    }}>
                                           <th className="border border-gray-300 p-2 sm:p-3"></th>
                                           <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
                                           <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
@@ -877,16 +901,14 @@ export const TicketDashboard = () => {
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        {agingMatrixData.map((row, index) => (
-                                          <tr key={index} className="bg-white">
+                                        {agingMatrixData.map((row, index) => <tr key={index} className="bg-white">
                                             <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
                                             <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
                                             <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
                                             <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
                                             <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
                                             <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
-                                          </tr>
-                                        ))}
+                                          </tr>)}
                                       </tbody>
                                     </table>
                                   </div>
@@ -894,19 +916,19 @@ export const TicketDashboard = () => {
 
                                 {/* Summary Box - Full Width Below Table */}
                                 <div className="w-full">
-                                  <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
+                                  <div className="rounded-lg p-4 sm:p-8 text-center" style={{
+                                backgroundColor: '#EDE4D8'
+                              }}>
                                     <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">569 Days</div>
                                     <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </SortableChartItem>
-                        );
-                      }
-
-                      return null;
-                    })}
+                          </SortableChartItem>;
+                    }
+                    return null;
+                  })}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -923,39 +945,41 @@ export const TicketDashboard = () => {
           {/* Ticket Statistics Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
             {[{
-              label: 'Total Tickets',
-              value: totalTickets,
-              icon: Ticket
-            }, {
-              label: 'Open',
-              value: openTickets,
-              icon: AlertCircle
-            }, {
-              label: 'In Progress',
-              value: inProgressTickets,
-              icon: Clock
-            }, {
-              label: 'Pending',
-              value: pendingTickets,
-              icon: Clock
-            }, {
-              label: 'Closed',
-              value: closedTickets,
-              icon: CheckCircle
-            }].map((item, i) => {
-              const IconComponent = item.icon;
-              return (
-                <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+            label: 'Total Tickets',
+            value: totalTickets,
+            icon: Ticket
+          }, {
+            label: 'Open',
+            value: openTickets,
+            icon: AlertCircle
+          }, {
+            label: 'In Progress',
+            value: inProgressTickets,
+            icon: Clock
+          }, {
+            label: 'Pending',
+            value: inProgressTickets,
+            icon: Clock
+          }, {
+            label: 'Closed',
+            value: closedTickets,
+            icon: CheckCircle
+          }].map((item, i) => {
+            const IconComponent = item.icon;
+            return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
                   <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
-                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" style={{
+                  color: '#C72030'
+                }} />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate" style={{ color: '#C72030' }}>{item.value}</div>
+                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate" style={{
+                  color: '#C72030'
+                }}>{item.value}</div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{item.label}</div>
                   </div>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </div>
 
           {/* Action Buttons */}
@@ -965,107 +989,49 @@ export const TicketDashboard = () => {
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
-            {loading ? (
-              <div className="flex items-center justify-center p-8">
+            {loading ? <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
-              </div>
-            ) : (
-              <>
-                <EnhancedTable 
-                  data={safeTickets} 
-                  columns={columns} 
-                  renderCell={renderCell} 
-                  renderActions={renderRowActions} 
-                  selectable={true} 
-                  pagination={false}
-                  enableExport={true} 
-                  exportFileName="tickets" 
-                  onRowClick={(ticket) => handleViewDetails(ticket.ticket_number)} 
-                  storageKey="tickets-table"
-                  enableSelection={true}
-                  selectedItems={selectedTickets.map(id => id.toString())}
-                  onSelectItem={handleTicketSelection}
-                  onSelectAll={handleSelectAll}
-                  getItemId={(ticket) => ticket.id.toString()}
-                />
+              </div> : <>
+                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} />
                 
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
                   <div className="flex items-center text-sm text-gray-700">
                     <span>
-                      Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, totalTickets)} of {totalTickets} results
+                      Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, totalTickets)} of {totalTickets} results
                     </span>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1 || loading}
-                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in"
-                    >
+                    <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1 || loading} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in">
                       Previous
                     </button>
                     
                     <div className="flex space-x-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const pageNum = currentPage <= 3 ? i + 1 : 
-                                       currentPage >= totalPages - 2 ? totalPages - 4 + i :
-                                       currentPage - 2 + i;
-                        
-                        if (pageNum < 1 || pageNum > totalPages) return null;
-                        
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            disabled={loading}
-                            className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${
-                              currentPage === pageNum
-                                ? 'bg-primary text-white border-primary'
-                                : 'bg-white border-gray-300 hover:bg-gray-50'
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                          >
+                      {Array.from({
+                    length: Math.min(5, totalPages)
+                  }, (_, i) => {
+                    const pageNum = currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
+                    if (pageNum < 1 || pageNum > totalPages) return null;
+                    return <button key={pageNum} onClick={() => setCurrentPage(pageNum)} disabled={loading} className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${currentPage === pageNum ? 'bg-primary text-white border-primary' : 'bg-white border-gray-300 hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed`}>
                             {pageNum}
-                          </button>
-                        );
-                      })}
+                          </button>;
+                  })}
                     </div>
                     
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages || loading}
-                      className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in"
-                    >
+                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || loading} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in">
                       Next
                     </button>
                   </div>
                 </div>
-              </>
-            )}
+              </>}
           </div>
         </TabsContent>
       </Tabs>
 
-      <TicketsFilterDialog 
-        isOpen={isFilterOpen} 
-        onClose={() => setIsFilterOpen(false)} 
-        onApplyFilters={(filters) => {
-          console.log('Applied filters:', filters);
-          setIsFilterOpen(false);
-        }} 
-      />
+      <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
 
       {/* Ticket Selection Panel */}
-      <TicketSelectionPanel
-        selectedTickets={selectedTickets}
-        selectedTicketObjects={tickets.filter(ticket => 
-          selectedTickets.includes(ticket.id)
-        )}
-        onGoldenTicket={handleGoldenTicket}
-        onFlag={handleFlag}
-        onExport={handleExport}
-        onClearSelection={handleClearSelection}
-      />
-    </div>
-  );
+      <TicketSelectionPanel selectedTickets={selectedTickets} selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} onGoldenTicket={handleGoldenTicket} onFlag={handleFlag} onExport={handleExport} onClearSelection={handleClearSelection} />
+    </div>;
 };

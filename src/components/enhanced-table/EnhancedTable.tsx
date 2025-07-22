@@ -74,9 +74,11 @@ interface EnhancedTableProps<T> {
   hideTableExport?: boolean;
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
+  handleExport?: () => void
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
+  handleExport,
   data,
   columns,
   renderCell,
@@ -112,7 +114,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   const {
@@ -133,7 +135,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Filter data based on search term
   const filteredData = useMemo(() => {
     if (!searchTerm) return baseSortedData;
-    
+
     return baseSortedData.filter(item =>
       Object.values(item).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
@@ -144,7 +146,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
     if (!pagination) return filteredData;
-    
+
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [filteredData, currentPage, pageSize, pagination]);
@@ -171,7 +173,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
 
   // Check if all visible items are selected
-  const isAllSelected = selectable && sortedData.length > 0 && 
+  const isAllSelected = selectable && sortedData.length > 0 &&
     sortedData.every(item => selectedItems.includes(getItemId(item)));
 
   // Check if some (but not all) items are selected
@@ -206,27 +208,6 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
-  const handleExport = () => {
-    const csvContent = [
-      visibleColumns.map(col => col.label).join(','),
-      ...filteredData.map(item => 
-        visibleColumns.map(col => {
-          const renderedRow = renderRow ? renderRow(item) : item;
-          const value = renderRow ? renderedRow[col.key] : renderCell?.(item, col.key);
-          return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : `"${value}"`;
-        }).join(',')
-      )
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${exportFileName}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-  };
-
   const selectedItemObjects = useMemo(() => {
     return filteredData.filter(item => selectedItems.includes(getItemId(item)));
   }, [filteredData, selectedItems, getItemId]);
@@ -235,7 +216,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const generatePageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -243,22 +224,22 @@ export function EnhancedTable<T extends Record<string, any>>({
     } else {
       const startPage = Math.max(1, currentPage - 2);
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-      
+
       if (startPage > 1) {
         pages.push(1);
         if (startPage > 2) pages.push('ellipsis-start');
       }
-      
+
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
-      
+
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) pages.push('ellipsis-end');
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -266,6 +247,15 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
+
+
+          {showBulkActions && selectedItems.length > 0 && (
+            <div className="flex items-center gap-2">
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
           {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -277,14 +267,6 @@ export function EnhancedTable<T extends Record<string, any>>({
               />
             </div>
           )}
-          
-          {showBulkActions && selectedItems.length > 0 && (
-            <div className="flex items-center gap-2">
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
@@ -293,10 +275,11 @@ export function EnhancedTable<T extends Record<string, any>>({
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              Export
+
             </Button>
           )}
-          
+
+
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -353,12 +336,12 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell 
+                    <TableCell
                       colSpan={
-                        visibleColumns.length + 
-                        (renderActions ? 1 : 0) + 
+                        visibleColumns.length +
+                        (renderActions ? 1 : 0) +
                         (selectable ? 1 : 0)
-                      } 
+                      }
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center">
@@ -370,12 +353,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                 )}
                 {!loading && sortedData.length === 0 && (
                   <TableRow>
-                    <TableCell 
+                    <TableCell
                       colSpan={
-                        visibleColumns.length + 
-                        (renderActions ? 1 : 0) + 
+                        visibleColumns.length +
+                        (renderActions ? 1 : 0) +
                         (selectable ? 1 : 0)
-                      } 
+                      }
                       className="text-center py-8 text-gray-500"
                     >
                       {emptyMessage}
@@ -385,9 +368,9 @@ export function EnhancedTable<T extends Record<string, any>>({
                 {!loading && sortedData.map((item, index) => {
                   const itemId = getItemId(item);
                   const isSelected = selectedItems.includes(itemId);
-                  
+
                   return (
-                    <TableRow 
+                    <TableRow
                       key={index}
                       className={cn(
                         onRowClick && "cursor-pointer",
@@ -436,12 +419,12 @@ export function EnhancedTable<T extends Record<string, any>>({
         <Pagination className="mt-6">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
+              <PaginationPrevious
                 onClick={() => setCurrentPage(prev => prev - 1)}
                 className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
-            
+
             {generatePageNumbers().map((page, index) => (
               <PaginationItem key={index}>
                 {page === 'ellipsis-start' || page === 'ellipsis-end' ? (
@@ -457,9 +440,9 @@ export function EnhancedTable<T extends Record<string, any>>({
                 )}
               </PaginationItem>
             ))}
-            
+
             <PaginationItem>
-              <PaginationNext 
+              <PaginationNext
                 onClick={() => setCurrentPage(prev => prev + 1)}
                 className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />

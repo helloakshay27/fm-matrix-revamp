@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Eye, Filter, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { RootState, AppDispatch } from '@/store/store';
+import { fetchEcoFriendlyList } from '@/store/slices/ecoFriendlyListSlice';
 const EcoFriendlyListPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  const { inventories, loading, error } = useSelector((state: RootState) => state.ecoFriendlyList);
+  
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({
     type: '',
@@ -23,75 +30,34 @@ const EcoFriendlyListPage = () => {
     console.log('Status toggle for eco-friendly item ID:', id);
     // Here you would typically update the status in your state/API
   };
-
-  // Sample data matching the table structure from the image
-  const ecoFriendlyData = [{
-    id: 1,
-    name: 'Paper',
-    itemId: '61775',
-    code: '55655544',
-    serialNumber: '556555442',
-    type: 'Consumable',
-    group: '',
-    subGroup: '',
-    category: '',
-    manufacturer: '',
-    criticality: 'Non-Critical',
-    quantity: '1023.0',
-    unit: '',
-    cost: '',
-    sacHsnCode: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: '20',
-    asset: '',
-    status: 'Active',
-    expiryDate: ''
-  }, {
-    id: 2,
-    name: 'Table',
-    itemId: '7621',
-    code: '1',
-    serialNumber: '1',
-    type: 'Consumable',
-    group: '',
-    subGroup: '',
-    category: '',
-    manufacturer: '',
-    criticality: 'Non-Critical',
-    quantity: '15.0',
-    unit: '',
-    cost: '',
-    sacHsnCode: '',
-    maxStockLevel: '5',
-    minStockLevel: '10',
-    minOrderLevel: '',
-    asset: '',
-    status: 'Active',
-    expiryDate: ''
-  }, {
-    id: 3,
-    name: 'Table',
-    itemId: '7513',
-    code: '1101',
-    serialNumber: '5521',
-    type: 'Consumable',
-    group: 'Demo',
-    subGroup: '',
-    category: '',
-    manufacturer: '',
-    criticality: 'Non-Critical',
-    quantity: '4.0',
-    unit: 'Piece',
-    cost: '10.0',
-    sacHsnCode: '1 73021010',
-    maxStockLevel: '5',
-    minStockLevel: '5',
-    minOrderLevel: '',
-    asset: '',
-    status: 'Active',
-    expiryDate: '10/06/2025'
-  }];
+  
+  useEffect(() => {
+    dispatch(fetchEcoFriendlyList());
+  }, [dispatch]);
+  // Transform API data to match table structure
+  const ecoFriendlyData = inventories.map(item => ({
+    id: item.id,
+    name: item.name || '-',
+    itemId: item.id.toString(),
+    code: item.code || '-',
+    serialNumber: item.serial_number || '-',
+    type: item.inventory_type === 2 ? 'Consumable' : 'Non-Consumable',
+    group: '-', // Not available in API
+    subGroup: '-', // Not available in API
+    category: item.category || '-',
+    manufacturer: item.manufacturer || '-',
+    criticality: item.criticality === 0 ? 'Non-Critical' : 'Critical',
+    quantity: item.quantity?.toString() || '0',
+    unit: item.unit || '-',
+    cost: item.cost?.toString() || '-',
+    sacHsnCode: item.hsc_hsn_code || '-',
+    maxStockLevel: item.max_stock_level?.toString() || '-',
+    minStockLevel: item.min_stock_level || '-',
+    minOrderLevel: item.min_order_level || '-',
+    asset: item.asset_id?.toString() || '-',
+    status: item.active ? 'Active' : 'Inactive',
+    expiryDate: '-' // Not available in API
+  }));
 
   // Column configuration matching the image
   const columns: ColumnConfig[] = [{
@@ -208,7 +174,7 @@ const EcoFriendlyListPage = () => {
             
           </div>;
       default:
-        return item[columnKey] || '';
+        return item[columnKey] || '-';
     }
   };
 
@@ -227,7 +193,21 @@ const EcoFriendlyListPage = () => {
       </div>
 
       {/* Enhanced Table */}
-      <EnhancedTable data={ecoFriendlyData} columns={columns} renderCell={renderCell} renderActions={renderActions} storageKey="eco-friendly-list-table" emptyMessage="No eco-friendly items available" enableExport={true} exportFileName="eco-friendly-list" hideTableExport={false} hideTableSearch={false} hideColumnsButton={false} searchPlaceholder="Search eco-friendly items..." />
+      <EnhancedTable 
+        data={ecoFriendlyData} 
+        columns={columns} 
+        renderCell={renderCell} 
+        renderActions={renderActions} 
+        storageKey="eco-friendly-list-table" 
+        emptyMessage="No eco-friendly items available" 
+        enableExport={true} 
+        exportFileName="eco-friendly-list" 
+        hideTableExport={false} 
+        hideTableSearch={false} 
+        hideColumnsButton={false} 
+        searchPlaceholder="Search eco-friendly items..."
+        loading={loading}
+      />
     </div>;
 };
 

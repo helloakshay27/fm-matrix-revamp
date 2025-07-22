@@ -2,8 +2,36 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
-
-export const ReadingsTab = () => {
+interface ReadingsTab {
+  asset: Asset;
+  assetId?: string | number;
+}
+interface Asset {
+  id: number;
+  name: string;
+  model_number: string;
+  serial_number: string;
+  purchase_cost: number;
+  purchased_on: string;
+  warranty: boolean;
+  warranty_expiry: string;
+  manufacturer: string;
+  asset_number: string;
+  asset_code: string;
+  group: string;
+  sub_group: string;
+  allocation_type: string;
+  depreciation_applicable: boolean;
+  depreciation_method: string;
+  useful_life: number;
+  salvage_value: number;
+  status: string;
+  current_book_value: number;
+  site_name: string;
+  commisioning_date: string;
+  vendor_name: string;
+}
+export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
   const [fromDate, setFromDate] = useState('2025-05-19');
   const [toDate, setToDate] = useState('2025-06-17');
 
