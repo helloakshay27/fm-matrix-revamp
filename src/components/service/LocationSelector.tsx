@@ -23,16 +23,6 @@ import {
 
 interface LocationSelectorProps {
   fieldStyles: any;
-  initialValues?: {
-    siteId?: number | null;
-    buildingId?: number | null;
-    wingId?: number | null;
-    areaId?: number | null;
-    floorId?: number | null;
-    roomId?: number | null;
-    groupId?: number | null;
-    subGroupId?: number | null;
-  };
   onLocationChange?: (location: {
     siteId: number | null;
     buildingId: number | null;
@@ -45,7 +35,7 @@ interface LocationSelectorProps {
   }) => void;
 }
 
-export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles, initialValues, onLocationChange }) => {
+export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles, onLocationChange }) => {
   const dispatch = useDispatch<AppDispatch>();
   const {
     sites,
@@ -72,67 +62,6 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
     dispatch(fetchSites());
     dispatch(fetchGroups());
   }, [dispatch]);
-
-  // Initialize with existing values - only run once when initialValues change
-  useEffect(() => {
-    if (initialValues) {
-      // Set initial site selection
-      if (initialValues.siteId) {
-        dispatch(setSelectedSite(initialValues.siteId));
-        dispatch(fetchBuildings(initialValues.siteId));
-        
-        // Set building selection after a short delay to ensure buildings are loaded
-        if (initialValues.buildingId) {
-          setTimeout(() => {
-            dispatch(setSelectedBuilding(initialValues.buildingId!));
-            
-            // Set wing selection
-            if (initialValues.wingId) {
-              dispatch(fetchWings(initialValues.buildingId!));
-              setTimeout(() => {
-                dispatch(setSelectedWing(initialValues.wingId!));
-                
-                // Set area selection
-                if (initialValues.areaId) {
-                  dispatch(fetchAreas(initialValues.wingId!));
-                  setTimeout(() => {
-                    dispatch(setSelectedArea(initialValues.areaId!));
-                    
-                    // Set floor selection
-                    if (initialValues.floorId) {
-                      dispatch(fetchFloors(initialValues.areaId!));
-                      setTimeout(() => {
-                        dispatch(setSelectedFloor(initialValues.floorId!));
-                        
-                        // Set room selection
-                        if (initialValues.roomId) {
-                          dispatch(fetchRooms(initialValues.floorId!));
-                          setTimeout(() => {
-                            dispatch(setSelectedRoom(initialValues.roomId!));
-                          }, 100);
-                        }
-                      }, 100);
-                    }
-                  }, 100);
-                }
-              }, 100);
-            }
-          }, 100);
-        }
-      }
-      
-      // Set group selections
-      if (initialValues.groupId) {
-        dispatch(setSelectedGroup(initialValues.groupId));
-        if (initialValues.subGroupId) {
-          dispatch(fetchSubGroups(initialValues.groupId));
-          setTimeout(() => {
-            dispatch(setSelectedSubGroup(initialValues.subGroupId!));
-          }, 100);
-        }
-      }
-    }
-  }, [initialValues, dispatch]); // Removed buildings dependency to prevent infinite loop
 
   // Trigger location change callback when selections change
   useEffect(() => {
