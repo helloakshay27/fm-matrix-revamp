@@ -33,6 +33,7 @@ const InventoryConsumptionDashboard = () => {
     criticality: '',
     name: ''
   });
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   useEffect(() => {
     dispatch(fetchInventoryConsumptionHistory());
@@ -200,6 +201,23 @@ const InventoryConsumptionDashboard = () => {
         searchPlaceholder="Search inventory items..."
         loading={loading}
         pagination={false}
+        enableSelection={true}
+        selectedItems={selectedItems}
+        onSelectItem={(itemId: string, checked: boolean) => {
+          if (checked) {
+            setSelectedItems(prev => [...prev, itemId]);
+          } else {
+            setSelectedItems(prev => prev.filter(id => id !== itemId));
+          }
+        }}
+        onSelectAll={(checked: boolean) => {
+          if (checked) {
+            setSelectedItems(paginatedData.map(item => item.id.toString()));
+          } else {
+            setSelectedItems([]);
+          }
+        }}
+        getItemId={(item) => item.id.toString()}
       />
 
       {/* Floating Filter Modal */}
