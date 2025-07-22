@@ -836,9 +836,6 @@ export const InventoryDashboard = () => {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
-          <div className="mb-4">
-            {renderCustomActions()}
-          </div>
 
           {/* Error handling */}
           {error && (
@@ -866,6 +863,7 @@ export const InventoryDashboard = () => {
               storageKey="inventory-table"
               loading={loading}
               emptyMessage={loading ? "Loading inventory data..." : "No inventory items found"}
+              leftActions={renderCustomActions()}
             />
           </div>
 
