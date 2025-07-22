@@ -1,15 +1,53 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 
-export const DynamicHeader: React.FC = () => {
-  const { currentSection } = useLayout();
+const packages = [
+  'Transitioning',
+  'Maintenance',
+  'Safety',
+  'Finance',
+  'CRM',
+  'Utility',
+  'Security',
+  'Value Added Services',
+  'Market Place',
+  'Master',
+  'Settings'
+];
+
+export const DynamicHeader = () => {
+  const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
+
+  // Set "Maintenance" as the default section when the component mounts
+  useEffect(() => {
+    setCurrentSection('Maintenance');
+  }, [setCurrentSection]);
 
   return (
-    <div className="fixed top-16 left-0 right-0 z-40 bg-background border-b border-border">
-      <div className="px-6 py-3">
-        <h1 className="text-xl font-semibold text-foreground">
-          {currentSection || 'Dashboard'}
-        </h1>
+    <div
+      className={`h-12 border-b border-[#D5DbDB] fixed top-16 right-0 ${isSidebarCollapsed ? 'left-16' : 'left-64'} z-10 transition-all duration-300`}
+      style={{ backgroundColor: '#f6f4ee' }}
+    >
+      <div className="flex items-center h-full px-4 overflow-x-auto">
+        <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
+          {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
+          <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">
+            {packages.map((packageName) => (
+              <button
+                key={packageName}
+                onClick={() => setCurrentSection(packageName)}
+                className={`pb-3 text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
+                  currentSection === packageName
+                    ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
+                    : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
+                }`}
+              >
+                {packageName}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
