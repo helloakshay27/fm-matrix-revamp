@@ -35,10 +35,9 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         <Button 
           variant="outline" 
           size="sm"
-          className="h-8 flex items-center gap-2"
+          className="h-8 flex items-center"
         >
           <Settings2 className="w-4 h-4" />
-          Columns
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
