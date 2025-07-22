@@ -30,7 +30,8 @@ export function WingPage() {
   }, [dispatch, selectedBuilding]);
 
   const filteredWings = wings.data.filter(wing =>
-    wing.name.toLowerCase().includes(searchTerm.toLowerCase())
+    wing.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    wing.building?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleBuildingChange = (buildingId: string) => {
