@@ -18,7 +18,7 @@ import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
 import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
-import { exportReportReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
+import { exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer, { fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
@@ -106,6 +106,7 @@ export const store = configureStore({
     inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
     ecoFriendlyList: ecoFriendlyListReducer,
     createInventoryConsumption: createInventoryConsumptionReducer,
+    facilityBookingSetupDetails: facilityBookingSetupDetailsReducer,
   },
 })
 
