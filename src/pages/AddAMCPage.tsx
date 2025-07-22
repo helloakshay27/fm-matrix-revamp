@@ -672,7 +672,7 @@ export const AddAMCPage = () => {
 
                 </div>
                 {attachments.contracts.length > 0 && <div className="mt-2 space-y-1">
-                    {attachments.contracts.map((file, index) => <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                    {attachments.contracts.map((file, index) => <div key={index} className="flex items-center justify-between text-sm p-2 rounded" style={{backgroundColor: '#f6f4ee'}}>
                         <span>{file.name}</span>
                         <Button type="button" variant="ghost" size="sm" onClick={() => removeFile('contracts', index)}>
                           <X className="w-3 h-3" />
@@ -705,7 +705,7 @@ export const AddAMCPage = () => {
 
                 </div>
                 {attachments.invoices.length > 0 && <div className="mt-2 space-y-1">
-                    {attachments.invoices.map((file, index) => <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                    {attachments.invoices.map((file, index) => <div key={index} className="flex items-center justify-between text-sm p-2 rounded" style={{backgroundColor: '#f6f4ee'}}>
                         <span>{file.name}</span>
                         <Button type="button" variant="ghost" size="sm" onClick={() => removeFile('invoices', index)}>
                           <X className="w-3 h-3" />
