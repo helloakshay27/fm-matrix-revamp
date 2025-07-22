@@ -547,14 +547,14 @@ export const AddTicketDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
               <Input
                 placeholder="Enter Reference Number"
                 value={formData.referenceNumber}
                 onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Description */}
