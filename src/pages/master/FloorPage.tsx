@@ -66,6 +66,9 @@ export function FloorPage() {
     floor.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Limit results based on entries per page selection
+  const displayedFloors = filteredFloors.slice(0, parseInt(entriesPerPage));
+
   const handleBuildingChange = (buildingId: string) => {
     dispatch(setSelectedBuilding(parseInt(buildingId)));
   };
@@ -237,14 +240,14 @@ export function FloorPage() {
                   Loading floors...
                 </TableCell>
               </TableRow>
-            ) : filteredFloors.length === 0 ? (
+            ) : displayedFloors.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-4">
                   No floors found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredFloors.map((floor, index) => (
+              displayedFloors.map((floor, index) => (
                 <TableRow key={floor.id}>
                   <TableCell>{floor.building?.name || 'N/A'}</TableCell>
                   <TableCell>{floor.wing?.name || 'N/A'}</TableCell>
