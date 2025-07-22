@@ -1,10 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit, Plus, ChevronDown } from 'lucide-react';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import {
+  ArrowLeft,
+  Edit,
+  Plus,
+  ChevronDown,
+} from 'lucide-react';
+
 import { AssetInfoTab } from '@/components/asset-details/AssetInfoTab';
 import { AssetAnalyticsTab } from '@/components/asset-details/AssetAnalyticsTab';
 import { AMCDetailsTab } from '@/components/asset-details/AMCDetailsTab';
@@ -12,28 +25,47 @@ import { PPMTab } from '@/components/asset-details/PPMTab';
 import { EBOMTab } from '@/components/asset-details/EBOMTab';
 import { AttachmentsTab } from '@/components/asset-details/AttachmentsTab';
 import { ReadingsTab } from '@/components/asset-details/ReadingsTab';
-
 import { HistoryCardTab } from '@/components/asset-details/HistoryCardTab';
 import { DepreciationTab } from '@/components/asset-details/DepreciationTab';
 import { TicketTab } from '@/components/asset-details/TicketTab';
+
 import { RepairReplaceModal } from '@/components/RepairReplaceModal';
 import { EditStatusModal } from '@/components/EditStatusModal';
 import { QRCodeModal } from '@/components/QRCodeModal';
 
+
 export const AssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const [assetData, setAssetData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isInUse, setIsInUse] = useState(true);
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
-  const asset = {
-    id: id || '203696',
-    name: 'DELL LAPTOP',
-    code: '#3423',
-    status: 'In Use'
+  useEffect(() => {
+  const fetchAsset = async () => {
+    try {
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}/pms/assets/${id}.json`,
+        {
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
+      setAssetData(response.data.asset);
+    } catch (error) {
+      console.error('Failed to fetch asset', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  fetchAsset();
+}, [id, API_CONFIG.BASE_URL, getAuthHeader]);
 
   const handleBack = () => {
     navigate('/maintenance/asset');
@@ -44,7 +76,7 @@ export const AssetDetailsPage = () => {
   };
 
   const handleEditDetails = () => {
-    navigate(`/maintenance/asset/edit/${asset.id}`);
+    navigate(`/maintenance/asset/edit/${id}`);
   };
 
   const handleCreateChecklist = () => {
@@ -57,6 +89,10 @@ export const AssetDetailsPage = () => {
       setIsRepairReplaceOpen(true);
     }
   };
+
+  if (loading || !assetData) {
+    return <div className="p-6">Loading asset data...</div>;
+  }
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
@@ -75,9 +111,9 @@ export const AssetDetailsPage = () => {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-4">
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
-                {asset.name} ({asset.code})
+                {assetData.name} (#{assetData.id})
               </h1>
-              
+
               <div className="relative">
                 <select className="appearance-none bg-green-500 text-white px-4 py-2 pr-8 rounded font-medium text-sm cursor-pointer">
                   <option>In Use</option>
@@ -88,7 +124,7 @@ export const AssetDetailsPage = () => {
                 <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
               </div>
             </div>
-            
+
             <div className="text-sm text-gray-600">
               Created by Rakesh • Last updated by Rakesh on 06/01/2022, 12:22pm
             </div>
@@ -159,34 +195,34 @@ export const AssetDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
-            <AssetInfoTab assetId={asset.id} />
+            <AssetInfoTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="asset-analytics" className="p-4 sm:p-6">
-            <AssetAnalyticsTab />
+            <AssetAnalyticsTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
-            <AMCDetailsTab />
+            <AMCDetailsTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="ppm" className="p-4 sm:p-6">
-            <PPMTab />
+            <PPMTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="e-bom" className="p-4 sm:p-6">
-            <EBOMTab />
+            <EBOMTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="attachments" className="p-4 sm:p-6">
-            <AttachmentsTab />
+            <AttachmentsTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="readings" className="p-4 sm:p-6">
-            <ReadingsTab />
+            <ReadingsTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="history-card" className="p-4 sm:p-6">
-            <HistoryCardTab />
+            <HistoryCardTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="depreciation" className="p-4 sm:p-6">
-            <DepreciationTab />
+            <DepreciationTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="ticket" className="p-4 sm:p-6">
-            <TicketTab />
+            <TicketTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
         </Tabs>
       </div>
@@ -205,8 +241,8 @@ export const AssetDetailsPage = () => {
       <QRCodeModal
         isOpen={isQRModalOpen}
         onClose={() => setIsQRModalOpen(false)}
-        qrCode={asset.id}
-        serviceName={asset.name}
+        qrCode={assetData.id}
+        serviceName={assetData.name}
         site="Main Building"
       />
     </div>

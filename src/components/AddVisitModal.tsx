@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import axios from 'axios';
-import { useAppDispatch } from '@/store/hooks';
 import { toast } from 'sonner';
 
 interface AddVisitModalProps {
@@ -26,7 +25,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(`${baseUrl}/pms/users/get_escalate_to_users.json`, {
+        const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,7 +36,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
       }
     };
     fetchUsers();
-  }, [baseUrl, token]);
+  }, []);
 
   // Early return after hooks
   if (!isOpen) return null;
@@ -61,12 +60,13 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     };
 
     axios
-      .patch(`${baseUrl}/pms/asset_amcs/${amcId}.json`, payload, {
+      .patch(`https://${baseUrl}/pms/asset_amcs/${amcId}.json`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       .then(() => {
+        setFormData({ vendor: '', startDate: '', technician: '' });
         toast.success('Visit added successfully');
         onClose();
       })
@@ -148,7 +148,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
                   sx={fieldStyles}
                 >
                   <MenuItem value="" disabled>
-                    Select Type
+                    Select Technician
                   </MenuItem>
                   {users?.map((user: any) => (
                     <MenuItem key={user.id} value={user.id}>
