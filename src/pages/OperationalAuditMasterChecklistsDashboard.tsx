@@ -66,17 +66,13 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         </Button>
 
         {/* File Upload Section */}
-        <div onDragOver={handleDragOver} onDrop={handleDrop} className="border-2 border-dashed border-[#C72030] rounded-lg p-4 text-center min-w-[200px]">
-          <div className="flex flex-col items-center">
-            <Upload className="w-5 h-5 text-[#C72030] mb-1" />
-            <p className="text-[#C72030] mb-1 text-xs">Drag & Drop or</p>
+        <div onDragOver={handleDragOver} onDrop={handleDrop} className="border-2 border-dashed border-[#C72030] rounded-lg px-4 py-2 text-center h-10 flex items-center min-w-[150px]">
+          <div className="flex items-center justify-center w-full">
+            <Upload className="w-4 h-4 text-[#C72030] mr-2" />
             <input type="file" id="fileInput" className="hidden" onChange={handleFileSelect} accept=".xlsx,.xls,.csv" />
-            <label htmlFor="fileInput" className="text-[#C72030] underline cursor-pointer hover:opacity-75 text-xs">
-              Choose File
+            <label htmlFor="fileInput" className="text-[#C72030] cursor-pointer hover:opacity-75 text-sm">
+              {selectedFile ? selectedFile.name.substring(0, 15) + (selectedFile.name.length > 15 ? '...' : '') : 'Choose File'}
             </label>
-            <p className="text-xs text-gray-500 mt-1 truncate max-w-[180px]">
-              {selectedFile ? selectedFile.name : "No file chosen"}
-            </p>
           </div>
         </div>
         
