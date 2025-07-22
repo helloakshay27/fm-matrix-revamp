@@ -11,15 +11,16 @@ export const AMCTable = ({ onAddAMC }: AMCTableProps) => {
   return (
     <div className="bg-white rounded-lg border border-[#D5DbDB]">
       {/* Table Header Actions */}
-      <div className="p-4 border-b border-[#D5DbDB] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onAddAMC}
-            className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </button>
+      <div className="p-4 border-b border-[#D5DbDB] flex items-center gap-3">
+        <button
+          onClick={onAddAMC}
+          className="flex items-center gap-2 px-4 py-2 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#8B5CF6]/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add
+        </button>
+        
+        <div className="flex-1 flex justify-end items-center gap-3">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
