@@ -1079,6 +1079,12 @@ export const TicketDashboard = () => {
                   getItemId={ticket => ticket.id.toString()} 
                   leftActions={
                     <div className="flex gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Action
+                      </Button>
                       {renderCustomActions()}
                     </div>
                   }

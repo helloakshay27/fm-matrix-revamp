@@ -31,7 +31,7 @@ import {
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Search, Download, Loader2 } from 'lucide-react';
+import { Search, Download, Loader2, Grid3x3, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -290,6 +290,15 @@ export function EnhancedTable<T extends Record<string, any>>({
               />
             </div>
           )}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          >
+            Go!
+          </Button>
+          
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
@@ -298,10 +307,16 @@ export function EnhancedTable<T extends Record<string, any>>({
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              
             </Button>
           )}
           
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </Button>
           
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
