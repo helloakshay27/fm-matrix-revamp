@@ -31,7 +31,7 @@ import {
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Search, Download, Loader2, Grid3x3, Plus } from 'lucide-react';
+import { Search, Download, Loader2, Grid3x3, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -115,6 +115,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   rightActions,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
@@ -202,11 +203,24 @@ export function EnhancedTable<T extends Record<string, any>>({
     onRowClick?.(item);
   };
 
-  const handleInternalSearchChange = (value: string) => {
-    setInternalSearchTerm(value);
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const handleSearchGo = () => {
+    setInternalSearchTerm(searchInput);
     setCurrentPage(1);
     if (onSearchChange) {
-      onSearchChange(value);
+      onSearchChange(searchInput);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setInternalSearchTerm('');
+    setCurrentPage(1);
+    if (onSearchChange) {
+      onSearchChange('');
     }
   };
 
@@ -284,16 +298,26 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => handleInternalSearchChange(e.target.value)}
-                className="pl-10"
+                value={searchInput}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                className="pl-10 pr-10"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearchGo()}
               />
+              {searchInput && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
           
           <Button
             variant="outline"
             size="sm"
+            onClick={handleSearchGo}
             className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
           >
             Go!
