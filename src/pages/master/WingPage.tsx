@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { fetchBuildings, fetchWings, createWing, setSelectedBuilding } from '@/store/slices/locationSlice';
+import { fetchBuildings, fetchWings, createWing, setSelectedBuilding, updateWing } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
 export function WingPage() {
@@ -58,9 +58,20 @@ export function WingPage() {
     }
   };
 
-  const toggleStatus = (index: number) => {
-    // This would require an update API call - placeholder for now
-    console.log(`Toggle status for wing at index ${index}`);
+  const toggleStatus = async (wingId: number) => {
+    try {
+      const wing = wings.data.find(w => w.id === wingId);
+      if (!wing) return;
+
+      await dispatch(updateWing({
+        id: wingId,
+        updates: { active: !wing.active }
+      }));
+      
+      toast.success('Wing status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update wing status');
+    }
   };
 
   return (
@@ -166,12 +177,12 @@ export function WingPage() {
                   <TableCell>{wing.building?.name || 'N/A'}</TableCell>
                   <TableCell>{wing.name}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => toggleStatus(index)}
-                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                        wing.active ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                    >
+                     <button
+                       onClick={() => toggleStatus(wing.id)}
+                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                         wing.active ? 'bg-green-500' : 'bg-gray-300'
+                       }`}
+                     >
                       <div
                         className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
                           wing.active ? 'translate-x-7' : 'translate-x-1'
