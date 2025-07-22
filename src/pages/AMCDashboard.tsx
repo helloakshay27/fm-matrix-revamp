@@ -161,6 +161,7 @@ export const AMCDashboard = () => {
   };
 
   const handleBulkExport = async (selectedItems: AMCRecord[]) => {
+    console.log('Export button clicked, selected items:', selectedItems);
     if (selectedItems.length === 0) {
       toast({
         title: "Selection Required",
