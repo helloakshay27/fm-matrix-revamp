@@ -274,15 +274,6 @@ export const AssetAuditDashboard = () => {
         </div>
 
         {/* Action Button */}
-        <div className="mb-6">
-          <Button 
-            onClick={handleAddClick}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Audit
-          </Button>
-        </div>
 
         {/* Enhanced Table */}
         <EnhancedTable
@@ -304,6 +295,15 @@ export const AssetAuditDashboard = () => {
           showBulkActions={true}
           pagination={true}
           pageSize={10}
+          leftActions={
+            <Button 
+              onClick={handleAddClick}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Audit
+            </Button>
+          }
         />
       </div>
     </div>
