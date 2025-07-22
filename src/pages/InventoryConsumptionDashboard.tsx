@@ -8,6 +8,15 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +25,8 @@ const InventoryConsumptionDashboard = () => {
   const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
   
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
   const [filterValues, setFilterValues] = useState({
     group: '',
     subGroup: '',
@@ -38,6 +49,11 @@ const InventoryConsumptionDashboard = () => {
     subGroup: item.sub_group || '-',
     criticality: item.criticality === 0 ? 'Non-Critical' : 'Critical'
   }));
+
+  // Calculate pagination
+  const totalPages = Math.ceil(Math.max(consumptionData.length, 1) / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedData = consumptionData.slice(startIndex, startIndex + pageSize);
 
   // Define table columns for drag and drop functionality
   const columns: ColumnConfig[] = [{
@@ -170,7 +186,7 @@ const InventoryConsumptionDashboard = () => {
 
       {/* Enhanced Table with Drag and Drop */}
       <EnhancedTable 
-        data={consumptionData} 
+        data={paginatedData} 
         columns={columns} 
         renderCell={renderCell} 
         renderActions={renderActions} 
@@ -183,6 +199,7 @@ const InventoryConsumptionDashboard = () => {
         hideColumnsButton={false} 
         searchPlaceholder="Search inventory items..."
         loading={loading}
+        pagination={false}
       />
 
       {/* Floating Filter Modal */}
@@ -428,6 +445,38 @@ const InventoryConsumptionDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Pagination */}
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(page)}
+                  isActive={currentPage === page}
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 };
