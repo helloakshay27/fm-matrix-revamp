@@ -1,87 +1,78 @@
-import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Eye } from "lucide-react";
 import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { useParams } from 'react-router-dom';
+import { exportOrders, fetchRestaurantOrders } from '@/store/slices/f&bSlice';
+import { AlertDialog, AlertDialogCancel, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { AlertDialogAction } from '@radix-ui/react-alert-dialog';
 
 interface RestaurantOrder {
   id: number;
-  orderId: string;
-  restaurant: string;
-  createdOn: string;
-  createdBy: string;
-  status: 'Pending' | 'Received' | 'Not Available' | 'Order Received';
-  amountPaid: number;
-  noOfItems: number;
-  paymentStatus: string;
+  created_at: string; // e.g., "21/07/2025 01:20 PM"
+  created_by: string;
+  details_url: string;
+  item_count: number;
+  payment_status: string;
+  payment_status_class: string;
+  restaurant_name: string;
+  status_name: string;
+  total_amount: number;
 }
 
-const mockOrders: RestaurantOrder[] = [
-  { id: 1, orderId: "1247", restaurant: "Havan Havanna Cafe", createdOn: "21/07/2025 12:39 PM", createdBy: "Ankit Gupta", status: "Received", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 2, orderId: "1246", restaurant: "Havan Havanna Cafe", createdOn: "21/07/2025 12:38 PM", createdBy: "Ankit Gupta", status: "Pending", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 3, orderId: "1223", restaurant: "Havan Havanna Cafe", createdOn: "24/07/2024 1:07 PM", createdBy: "Kshitij Rasal", status: "Not Available", amountPaid: 40.0, noOfItems: 1, paymentStatus: "" },
-  { id: 4, orderId: "1217", restaurant: "Havan Havanna Cafe", createdOn: "20/07/2024 12:18 PM", createdBy: "Chetan Bafna", status: "Pending", amountPaid: 720.0, noOfItems: 3, paymentStatus: "" },
-  { id: 5, orderId: "1211", restaurant: "Havan Havanna Cafe", createdOn: "24/06/2024 2:54 PM", createdBy: "Kshitij Rasal", status: "Pending", amountPaid: 470.0, noOfItems: 2, paymentStatus: "" },
-  { id: 6, orderId: "1204", restaurant: "Havan Havanna Cafe", createdOn: "17/05/2024 4:27 PM", createdBy: "Chetan Bafna", status: "Pending", amountPaid: 200.0, noOfItems: 1, paymentStatus: "" },
-  { id: 7, orderId: "1203", restaurant: "Havan Havanna Cafe", createdOn: "17/05/2024 4:25 PM", createdBy: "Chetan Bafna", status: "Pending", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 8, orderId: "1168", restaurant: "Havan Havanna Cafe", createdOn: "18/01/2024 12:55 PM", createdBy: "Deepak Gupta", status: "Pending", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 9, orderId: "1141", restaurant: "Havan Havanna Cafe", createdOn: "30/08/2023 5:27 PM", createdBy: "Shubh Jhanavi", status: "Pending", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 10, orderId: "1140", restaurant: "Havan Havanna Cafe", createdOn: "22/08/2023 11:45 AM", createdBy: "Shubh Jhanavi", status: "Pending", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 11, orderId: "1139", restaurant: "Havan Havanna Cafe", createdOn: "16/08/2023 5:03 PM", createdBy: "Kshitij Rasal", status: "Not Available", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 12, orderId: "1127", restaurant: "Havan Havanna Cafe", createdOn: "11/07/2023 11:47 AM", createdBy: "Chetan Bafna", status: "Pending", amountPaid: 730.0, noOfItems: 3, paymentStatus: "" },
-  { id: 13, orderId: "1126", restaurant: "Havan Havanna Cafe", createdOn: "11/07/2023 8:45 AM", createdBy: "Chetan Bafna", status: "Pending", amountPaid: 470.0, noOfItems: 2, paymentStatus: "" },
-  { id: 14, orderId: "1125", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 5:21 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 200.0, noOfItems: 1, paymentStatus: "" },
-  { id: 15, orderId: "1124", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 5:19 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 600.0, noOfItems: 2, paymentStatus: "" },
-  { id: 16, orderId: "1123", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 5:11 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 300.0, noOfItems: 1, paymentStatus: "" },
-  { id: 17, orderId: "1122", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 4:58 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 500.0, noOfItems: 2, paymentStatus: "" },
-  { id: 18, orderId: "1121", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 4:55 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 500.0, noOfItems: 2, paymentStatus: "" },
-  { id: 19, orderId: "1119", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 4:51 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 500.0, noOfItems: 2, paymentStatus: "" },
-  { id: 20, orderId: "1118", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 4:51 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 500.0, noOfItems: 2, paymentStatus: "" },
-  { id: 21, orderId: "1117", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 4:15 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 670.0, noOfItems: 3, paymentStatus: "" },
-  { id: 22, orderId: "1116", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 3:34 PM", createdBy: "", status: "Pending", amountPaid: 200.0, noOfItems: 1, paymentStatus: "" },
-  { id: 23, orderId: "1115", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 2:51 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 420.0, noOfItems: 2, paymentStatus: "" },
-  { id: 24, orderId: "1111", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 1:20 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 250.0, noOfItems: 1, paymentStatus: "" },
-  { id: 25, orderId: "1110", restaurant: "Havan Havanna Cafe", createdOn: "10/07/2023 12:44 PM", createdBy: "sanket Patil", status: "Pending", amountPaid: 500.0, noOfItems: 2, paymentStatus: "" }
-];
-
 export const RestaurantOrdersTable = () => {
-  const navigate = useNavigate();
-  const [orders, setOrders] = useState<RestaurantOrder[]>(mockOrders);
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const { id } = useParams()
 
-  const handleExport = () => {
+  const [orders, setOrders] = useState<RestaurantOrder[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<RestaurantOrder | null>(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(id) })).unwrap();
+        setOrders(response);
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchOrders()
+  }, [])
+
+  const handleExport = async () => {
     // Create CSV content
-    const headers = ['Order ID', 'Restaurant', 'Created on', 'Created by', 'Status', 'Amount Paid (₹)', 'No.of Items', 'Payment Status'];
-    const csvContent = [
-      headers.join(','),
-      ...orders.map(order => [
-        order.orderId,
-        order.restaurant,
-        order.createdOn,
-        order.createdBy,
-        order.status,
-        order.amountPaid,
-        order.noOfItems,
-        order.paymentStatus
-      ].join(','))
-    ].join('\n');
+    try {
+      const response = await dispatch(exportOrders({ baseUrl, token, id: Number(id) })).unwrap();
+      const blob = new Blob([response], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
 
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'restaurant_orders.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success('Orders exported successfully!');
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders.xlsx'; // Desired file name
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Orders exported successfully!');
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleViewOrder = (order: RestaurantOrder) => {
-    navigate(`/vas/fnb/restaurant-orders/details/${order.orderId}`);
+    navigate(`/vas/fnb/details/${id}/restaurant-order/${order.id}`);
   };
 
   return (
@@ -132,39 +123,33 @@ export const RestaurantOrdersTable = () => {
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">{order.orderId}</TableCell>
-                  <TableCell className="text-center">{order.restaurant}</TableCell>
-                  <TableCell className="text-center">{order.createdOn}</TableCell>
-                  <TableCell className="text-center">{order.createdBy}</TableCell>
+                  <TableCell className="text-center">{order.id}</TableCell>
+                  <TableCell className="text-center">{order.restaurant_name}</TableCell>
+                  <TableCell className="text-center">{order.created_at}</TableCell>
+                  <TableCell className="text-center">{order.created_by}</TableCell>
                   <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      order.status === 'Received' 
-                        ? 'bg-green-100 text-green-800' 
-                        : order.status === 'Pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : order.status === 'Not Available'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">₹{order.amountPaid}</TableCell>
-                  <TableCell className="text-center">{order.noOfItems}</TableCell>
-                  <TableCell className="text-center">
-                    {order.paymentStatus ? (
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        order.paymentStatus === 'Paid' 
-                          ? 'bg-green-100 text-green-800' 
-                          : order.paymentStatus === 'Pending'
+                    <span className={`px-2 py-1 rounded-full text-xs ${order.status_name === 'Completed'
+                      ? 'bg-green-100 text-green-800'
+                      : order.status_name === 'Confirmed'
+                        ? 'bg-blue-100 text-blue-800'
+                        : order.status_name === 'Pending'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {order.paymentStatus}
-                      </span>
-                    ) : (
-                      <span>-</span>
-                    )}
+                      {order.status_name}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">₹{order.total_amount}</TableCell>
+                  <TableCell className="text-center">{order.item_count}</TableCell>
+                  <TableCell className="text-center">
+                    <span className={`px-2 py-1 rounded-full text-xs ${order.payment_status === 'Paid'
+                      ? 'bg-green-100 text-green-800'
+                      : order.payment_status === 'Pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                      }`}>
+                      {order.payment_status}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))

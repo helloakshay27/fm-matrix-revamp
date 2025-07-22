@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Upload } from "lucide-react";
 import { TextField, Select, MenuItem, FormControl, InputLabel, Box } from '@mui/material';
@@ -142,7 +141,7 @@ export const AddBookingSetupPage = () => {
 
   const fetchDepartments = async () => {
     if (departments.length > 0) return; // Don't fetch if already loaded
-    
+
     setLoadingDepartments(true);
     try {
       const response = await fetch('https://fm-uat-api.lockated.com/pms/departments.json', {
@@ -152,7 +151,7 @@ export const AddBookingSetupPage = () => {
         }
       });
       const data = await response.json();
-      
+
       // Handle different response structures
       let departmentsList = [];
       if (Array.isArray(data)) {
@@ -163,7 +162,7 @@ export const AddBookingSetupPage = () => {
         // Handle case where data might be array-like
         departmentsList = Array.from(data);
       }
-      
+
       setDepartments(departmentsList);
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -181,12 +180,12 @@ export const AddBookingSetupPage = () => {
       formDataToSend.append('facility_setup[fac_type]', formData.isBookable ? 'bookable' : 'request');
       formDataToSend.append('facility_setup[fac_name]', formData.facilityName);
       formDataToSend.append('facility_setup[active]', formData.active === '1' ? '1' : '0');
-      
+
       // Find department ID from selected department name
       const selectedDept = departments.find(dept => dept.department_name === formData.department);
       const departmentId = selectedDept ? selectedDept.id.toString() : '1';
       formDataToSend.append('facility_setup[department_id]', departmentId);
-      
+
       formDataToSend.append('facility_setup[app_key]', formData.appKey);
       formDataToSend.append('facility_setup[postpaid]', formData.postpaid ? '1' : '0');
       formDataToSend.append('facility_setup[prepaid]', formData.prepaid ? '1' : '0');
@@ -455,7 +454,7 @@ export const AddBookingSetupPage = () => {
               <Button onClick={addSlot} className="mb-4 bg-purple-600 hover:bg-purple-700">
                 Add
               </Button>
-              
+
               {/* Slot Headers */}
               <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
                 <div>Start Time</div>
@@ -470,9 +469,17 @@ export const AddBookingSetupPage = () => {
               {/* Slot Rows */}
               {slots.map((slot, index) => (
                 <div key={index} className="grid grid-cols-7 gap-2 mb-2">
+                  {/* Start Time */}
                   <div className="flex gap-1">
                     <FormControl size="small">
-                      <Select value={slot.startTime.hour}>
+                      <Select
+                        value={slot.startTime.hour}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].startTime.hour = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 24 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -481,7 +488,14 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                     <FormControl size="small">
-                      <Select value={slot.startTime.minute}>
+                      <Select
+                        value={slot.startTime.minute}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].startTime.minute = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 60 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -490,9 +504,18 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                   </div>
+
+                  {/* Break Time Start */}
                   <div className="flex gap-1">
                     <FormControl size="small">
-                      <Select value={slot.breakTimeStart.hour}>
+                      <Select
+                        value={slot.breakTimeStart.hour}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].breakTimeStart.hour = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 24 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -501,7 +524,14 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                     <FormControl size="small">
-                      <Select value={slot.breakTimeStart.minute}>
+                      <Select
+                        value={slot.breakTimeStart.minute}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].breakTimeStart.minute = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 60 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -510,9 +540,18 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                   </div>
+
+                  {/* Break Time End */}
                   <div className="flex gap-1">
                     <FormControl size="small">
-                      <Select value={slot.breakTimeEnd.hour}>
+                      <Select
+                        value={slot.breakTimeEnd.hour}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].breakTimeEnd.hour = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 24 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -521,7 +560,14 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                     <FormControl size="small">
-                      <Select value={slot.breakTimeEnd.minute}>
+                      <Select
+                        value={slot.breakTimeEnd.minute}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].breakTimeEnd.minute = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 60 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -530,9 +576,18 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                   </div>
+
+                  {/* End Time */}
                   <div className="flex gap-1">
                     <FormControl size="small">
-                      <Select value={slot.endTime.hour}>
+                      <Select
+                        value={slot.endTime.hour}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].endTime.hour = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 24 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -541,7 +596,14 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                     <FormControl size="small">
-                      <Select value={slot.endTime.minute}>
+                      <Select
+                        value={slot.endTime.minute}
+                        onChange={(e) => {
+                          const updatedSlots = [...slots];
+                          updatedSlots[index].endTime.minute = e.target.value;
+                          setSlots(updatedSlots);
+                        }}
+                      >
                         {Array.from({ length: 60 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -550,14 +612,27 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                   </div>
-                  <TextField size="small" value={slot.concurrentSlots} variant="outlined" />
+
+                  {/* Concurrent Slots */}
+                  <TextField
+                    size="small"
+                    value={slot.concurrentSlots}
+                    variant="outlined"
+                    onChange={(e) => {
+                      const updatedSlots = [...slots];
+                      updatedSlots[index].concurrentSlots = e.target.value;
+                      setSlots(updatedSlots);
+                    }}
+                  />
+
+                  {/* Slot By */}
                   <FormControl size="small">
-                    <Select 
+                    <Select
                       value={slot.slotBy}
                       onChange={(e) => {
-                        const newSlots = [...slots];
-                        newSlots[index].slotBy = e.target.value;
-                        setSlots(newSlots);
+                        const updatedSlots = [...slots];
+                        updatedSlots[index].slotBy = e.target.value;
+                        setSlots(updatedSlots);
                       }}
                     >
                       <MenuItem value={15}>15 Minutes</MenuItem>
@@ -567,7 +642,18 @@ export const AddBookingSetupPage = () => {
                       <MenuItem value={90}>1 and a half hours</MenuItem>
                     </Select>
                   </FormControl>
-                  <TextField size="small" value={slot.wrapTime} variant="outlined" />
+
+                  {/* Wrap Time */}
+                  <TextField
+                    size="small"
+                    value={slot.wrapTime}
+                    variant="outlined"
+                    onChange={(e) => {
+                      const updatedSlots = [...slots];
+                      updatedSlots[index].wrapTime = e.target.value;
+                      setSlots(updatedSlots);
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -733,17 +819,47 @@ export const AddBookingSetupPage = () => {
               </div>
               {cancellationRules.map((rule, index) => (
                 <div key={index} className="grid grid-cols-3 gap-4 mb-2 items-center">
+                  {/* Description */}
                   <div className="text-sm text-gray-600">{rule.description}</div>
+
+                  {/* Time: Day, Type, Value */}
                   <div className="flex gap-2">
-                    <TextField placeholder="Day" size="small" style={{ width: '64px' }} variant="outlined" />
-                    <FormControl size="small" style={{ width: '64px' }}>
-                      <Select value={rule.time.type}>
+                    <TextField
+                      placeholder="Day"
+                      size="small"
+                      style={{ width: '80px' }}
+                      variant="outlined"
+                      value={rule.time.day}
+                      onChange={(e) => {
+                        const updated = [...cancellationRules];
+                        updated[index].time.day = e.target.value;
+                        setCancellationRules(updated);
+                      }}
+                    />
+
+                    <FormControl size="medium" style={{ width: '80px' }}>
+                      <Select
+                        value={rule.time.type}
+                        onChange={(e) => {
+                          const updated = [...cancellationRules];
+                          updated[index].time.type = e.target.value;
+                          setCancellationRules(updated);
+                        }}
+                      >
                         <MenuItem value="Hr">Hr</MenuItem>
                         <MenuItem value="Day">Day</MenuItem>
                       </Select>
                     </FormControl>
-                    <FormControl size="small" style={{ width: '64px' }}>
-                      <Select value={rule.time.value}>
+
+                    <FormControl size="medium" style={{ width: '80px' }}>
+                      <Select
+                        value={rule.time.value}
+                        onChange={(e) => {
+                          const updated = [...cancellationRules];
+                          updated[index].time.value = e.target.value;
+                          setCancellationRules(updated);
+                        }}
+                      >
                         {Array.from({ length: 24 }, (_, i) => (
                           <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                             {i.toString().padStart(2, '0')}
@@ -752,7 +868,19 @@ export const AddBookingSetupPage = () => {
                       </Select>
                     </FormControl>
                   </div>
-                  <TextField placeholder="%" size="small" variant="outlined" />
+
+                  {/* Percentage */}
+                  <TextField
+                    placeholder="%"
+                    size="small"
+                    variant="outlined"
+                    value={rule.percentage}
+                    onChange={(e) => {
+                      const updated = [...cancellationRules];
+                      updated[index].percentage = e.target.value;
+                      setCancellationRules(updated);
+                    }}
+                  />
                 </div>
               ))}
             </div>

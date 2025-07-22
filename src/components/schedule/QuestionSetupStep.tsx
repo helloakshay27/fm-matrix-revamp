@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  TextField, 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  TextField,
   Box,
   Collapse,
   IconButton,
@@ -20,11 +20,11 @@ import {
   Chip,
   Divider
 } from '@mui/material';
-import { 
-  ExpandMore, 
-  ExpandLess, 
-  Edit, 
-  Check, 
+import {
+  ExpandMore,
+  ExpandLess,
+  Edit,
+  Check,
   Add,
   Delete,
   DragIndicator
@@ -53,11 +53,11 @@ interface QuestionSetupStepProps {
   errors?: Record<string, string>;
 }
 
-export const QuestionSetupStep = ({ 
-  data, 
-  onChange, 
-  isCompleted = false, 
-  isCollapsed = false, 
+export const QuestionSetupStep = ({
+  data,
+  onChange,
+  isCompleted = false,
+  isCollapsed = false,
   onToggleCollapse,
   errors = {}
 }: QuestionSetupStepProps) => {
@@ -78,9 +78,9 @@ export const QuestionSetupStep = ({
       text: 'New Question',
       type: 'text'
     };
-    
-    const updatedSections = (data.sections || []).map(section => 
-      section.id === sectionId 
+
+    const updatedSections = (data.sections || []).map(section =>
+      section.id === sectionId
         ? { ...section, questions: [...section.questions, newQuestion] }
         : section
     );
@@ -88,8 +88,8 @@ export const QuestionSetupStep = ({
   };
 
   const updateSection = (sectionId: string, title: string) => {
-    const updatedSections = (data.sections || []).map(section => 
-      section.id === sectionId 
+    const updatedSections = (data.sections || []).map(section =>
+      section.id === sectionId
         ? { ...section, title }
         : section
     );
@@ -102,26 +102,26 @@ export const QuestionSetupStep = ({
   };
 
   const updateQuestion = (sectionId: string, questionId: string, text: string) => {
-    const updatedSections = (data.sections || []).map(section => 
-      section.id === sectionId 
+    const updatedSections = (data.sections || []).map(section =>
+      section.id === sectionId
         ? {
-            ...section,
-            questions: section.questions.map(q => 
-              q.id === questionId ? { ...q, text } : q
-            )
-          }
+          ...section,
+          questions: section.questions.map(q =>
+            q.id === questionId ? { ...q, text } : q
+          )
+        }
         : section
     );
     onChange('sections', updatedSections);
   };
 
   const deleteQuestion = (sectionId: string, questionId: string) => {
-    const updatedSections = (data.sections || []).map(section => 
-      section.id === sectionId 
+    const updatedSections = (data.sections || []).map(section =>
+      section.id === sectionId
         ? {
-            ...section,
-            questions: section.questions.filter(q => q.id !== questionId)
-          }
+          ...section,
+          questions: section.questions.filter(q => q.id !== questionId)
+        }
         : section
     );
     onChange('sections', updatedSections);
@@ -130,11 +130,11 @@ export const QuestionSetupStep = ({
   // Collapsed view
   if (isCompleted && isCollapsed) {
     const totalQuestions = (data.sections || []).reduce((acc, section) => acc + section.questions.length, 0);
-    
+
     return (
       <Card sx={{ mb: 2, border: '1px solid #E5E7EB' }}>
         <CardHeader
-          sx={{ 
+          sx={{
             pb: 2,
             '& .MuiCardHeader-content': { flex: '1 1 auto' },
             '& .MuiCardHeader-action': { mt: 0, mr: 0 }
@@ -149,25 +149,25 @@ export const QuestionSetupStep = ({
           }
           subheader={
             <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Chip 
-                label={`${(data.sections || []).length} sections`} 
-                size="small" 
-                variant="outlined" 
+              <Chip
+                label={`${(data.sections || []).length} sections`}
+                size="small"
+                variant="outlined"
               />
-              <Chip 
-                label={`${totalQuestions} questions`} 
-                size="small" 
-                variant="outlined" 
+              <Chip
+                label={`${totalQuestions} questions`}
+                size="small"
+                variant="outlined"
               />
             </Box>
           }
           action={
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button 
-                size="small" 
+              <Button
+                size="small"
                 startIcon={<Edit />}
                 onClick={onToggleCollapse}
-                sx={{ 
+                sx={{
                   color: '#C72030',
                   textTransform: 'none',
                   fontSize: '12px'
@@ -188,7 +188,7 @@ export const QuestionSetupStep = ({
   return (
     <Card sx={{ mb: 2, border: isCompleted ? '1px solid #059669' : '1px solid #E5E7EB' }}>
       <CardHeader
-        sx={{ 
+        sx={{
           pb: 1,
           '& .MuiCardHeader-content': { flex: '1 1 auto' },
           '& .MuiCardHeader-action': { mt: 0, mr: 0 }
@@ -196,12 +196,12 @@ export const QuestionSetupStep = ({
         title={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isCompleted && <Check sx={{ color: '#059669', fontSize: 20 }} />}
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: isCompleted ? '#059669' : '#111827', 
-                fontSize: '16px', 
-                fontWeight: 600 
+            <Typography
+              variant="h6"
+              sx={{
+                color: isCompleted ? '#059669' : '#111827',
+                fontSize: '16px',
+                fontWeight: 600
               }}
             >
               Question Setup
@@ -216,28 +216,28 @@ export const QuestionSetupStep = ({
           )
         }
       />
-      
+
       <Collapse in={!isCollapsed || !isCompleted} timeout="auto" unmountOnExit>
         <CardContent sx={{ pt: 0 }}>
           <Box sx={{ mb: 3 }}>
-  <Button
-    variant="outlined"
-    onClick={addSection}
-    sx={{
-      borderColor: '#C72030',
-      color: '#C72030',
-      '&:hover': {
-        borderColor: '#C72030',
-        backgroundColor: 'rgba(199, 32, 48, 0.04)',
-      },
-    }}
-  >
-    Section
-  </Button>
-</Box>
+            <Button
+              variant="outlined"
+              onClick={addSection}
+              sx={{
+                borderColor: '#C72030',
+                color: '#C72030',
+                '&:hover': {
+                  borderColor: '#C72030',
+                  backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                },
+              }}
+            >
+              Section
+            </Button>
+          </Box>
 
           {(data.sections || []).map((section, sectionIndex) => (
-            <Accordion 
+            <Accordion
               key={section.id}
               expanded={expandedSection === section.id}
               onChange={(_, isExpanded) => setExpandedSection(isExpanded ? section.id : false)}
@@ -254,8 +254,8 @@ export const QuestionSetupStep = ({
                       {section.questions.length} questions
                     </Typography>
                   </Box>
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteSection(section.id);
@@ -266,28 +266,28 @@ export const QuestionSetupStep = ({
                   </IconButton>
                 </Box>
               </AccordionSummary>
-              
+
               <AccordionDetails>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ width: '100%' }}>
-                  <TextField
-                    fullWidth
-                    label="Section Title"
-                    value={section.title}
-                    onChange={(e) => updateSection(section.id, e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#C72030',
+                  <Box sx={{ width: '100%' }}>
+                    <TextField
+                      fullWidth
+                      label="Section Title"
+                      value={section.title}
+                      onChange={(e) => updateSection(section.id, e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#C72030',
+                          },
                         },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#C72030',
-                      },
-                    }}
-                  />
-                </Box>
-                  
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#C72030',
+                        },
+                      }}
+                    />
+                  </Box>
+
                   <Box sx={{ width: '100%' }}>
                     <Divider sx={{ my: 2 }} />
                     <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 2 }}>
@@ -306,7 +306,7 @@ export const QuestionSetupStep = ({
                         Add Question
                       </Button>
                     </Box>
-                    
+
                     <List>
                       {section.questions.map((question, questionIndex) => (
                         <ListItem key={question.id} sx={{ px: 0 }}>
@@ -329,8 +329,8 @@ export const QuestionSetupStep = ({
                             }
                           />
                           <ListItemSecondaryAction>
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               onClick={() => deleteQuestion(section.id, question.id)}
                               sx={{ color: '#EF4444' }}
                             >

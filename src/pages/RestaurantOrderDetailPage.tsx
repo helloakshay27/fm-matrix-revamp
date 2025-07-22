@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -6,199 +6,119 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Pencil, X } from "lucide-react";
+import { fetchOrderDetails } from '@/store/slices/f&bSlice';
+import { useAppDispatch } from '@/store/hooks';
 
-interface OrderDetail {
+interface OrderData {
   id: number;
-  orderId: string;
-  restaurant: string;
-  orderDate: string;
-  paymentMode: string;
-  paymentStatus: string;
-  transactionId: string;
-  preferredTime: string;
-  deliveryAddress: {
-    customerName: string;
-    location: string;
+  restaurant: {
+    id: number;
+    name: string;
+  };
+  status: {
+    id: number;
+    name: string;
+    class: string;
+  };
+  user: {
+    id: number;
+    full_name: string;
+    unit_name: string | null;
+    department_name: string;
+    country_code: string;
+    mobile: string;
+  };
+  delivery_address: {
+    name: string;
+    site_name: string;
+    unit: string | null;
+    department: string;
     phone: string;
   };
+  order_details: {
+    order_id: number;
+    order_date: string;
+    payment_mode: string | null;
+    payment_status: string | null;
+    transaction_id: string | null;
+    preferred_time: string | null;
+  };
   items: {
-    name: string;
+    id: number;
+    menu_name: string;
+    rate: number;
     quantity: number;
-    price: number;
+    total: string;
   }[];
-  subTotal: number;
-  gst: number;
-  deliveryCharge: number;
-  total: number;
+  totals: {
+    sub_total: string;
+    gst: string;
+    delivery_charge: string;
+    total_amount: string;
+  };
   logs: {
+    id: number;
     date: string;
     status: string;
-    comments: string;
-    updatedBy: string;
+    comment: string;
+    updated_by: string;
   }[];
-  currentStatus: string;
+  available_statuses: {
+    id: number;
+    name: string;
+  }[];
+  urls: {
+    update_status_url: string;
+  };
 }
 
-const mockOrderDetails: OrderDetail[] = [
-  {
-    id: 1247,
-    orderId: "1247",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "21/07/2025 12:39 PM",
-    paymentMode: "UPI",
-    paymentStatus: "Completed",
-    transactionId: "UPI123456789",
-    preferredTime: "1:00 PM",
-    deliveryAddress: {
-      customerName: "Ankit Gupta",
-      location: "Locatedd",
-      phone: "91 7388997281"
-    },
-    items: [
-      { name: "Imperial Rolls", quantity: 1, price: 250.00 }
-    ],
-    subTotal: 250.00,
-    gst: 0.00,
-    deliveryCharge: 0.00,
-    total: 250.00,
-    logs: [
-      { date: "21/07/2025 2:38 PM", status: "Received", comments: "", updatedBy: "Ankit Gupta" }
-    ],
-    currentStatus: "Received"
-  },
-  {
-    id: 1246,
-    orderId: "1246",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "21/07/2025 12:38 PM",
-    paymentMode: "Card",
-    paymentStatus: "Pending",
-    transactionId: "CARD987654321",
-    preferredTime: "1:30 PM",
-    deliveryAddress: {
-      customerName: "Ankit Gupta",
-      location: "Business Park, Block A",
-      phone: "91 9876543210"
-    },
-    items: [
-      { name: "Corn Fritters", quantity: 1, price: 250.00 }
-    ],
-    subTotal: 250.00,
-    gst: 12.50,
-    deliveryCharge: 30.00,
-    total: 292.50,
-    logs: [
-      { date: "21/07/2025 12:38 PM", status: "Pending", comments: "Order placed", updatedBy: "Ankit Gupta" }
-    ],
-    currentStatus: "Pending"
-  },
-  {
-    id: 1223,
-    orderId: "1223",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "24/07/2024 1:07 PM",
-    paymentMode: "Cash",
-    paymentStatus: "Not Available",
-    transactionId: "",
-    preferredTime: "2:00 PM",
-    deliveryAddress: {
-      customerName: "Kshitij Rasal",
-      location: "IT Complex, Wing B",
-      phone: "91 8765432109"
-    },
-    items: [
-      { name: "Spring Rolls", quantity: 1, price: 40.00 }
-    ],
-    subTotal: 40.00,
-    gst: 0.00,
-    deliveryCharge: 0.00,
-    total: 40.00,
-    logs: [
-      { date: "24/07/2024 1:07 PM", status: "Not Available", comments: "Item out of stock", updatedBy: "Kshitij Rasal" }
-    ],
-    currentStatus: "Not Available"
-  },
-  {
-    id: 1217,
-    orderId: "1217",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "20/07/2024 12:18 PM",
-    paymentMode: "UPI",
-    paymentStatus: "Paid",
-    transactionId: "UPI789012345",
-    preferredTime: "12:30 PM",
-    deliveryAddress: {
-      customerName: "Chetan Bafna",
-      location: "Residential Area, Plot 45",
-      phone: "91 7654321098"
-    },
-    items: [
-      { name: "Chicken Satay", quantity: 2, price: 300.00 },
-      { name: "Tom Yum Soup", quantity: 1, price: 120.00 }
-    ],
-    subTotal: 720.00,
-    gst: 36.00,
-    deliveryCharge: 50.00,
-    total: 806.00,
-    logs: [
-      { date: "20/07/2024 12:18 PM", status: "Pending", comments: "Order confirmed", updatedBy: "Chetan Bafna" }
-    ],
-    currentStatus: "Pending"
-  },
-  {
-    id: 1211,
-    orderId: "1211",
-    restaurant: "Havan Havanna Cafe",
-    orderDate: "24/06/2024 2:54 PM",
-    paymentMode: "Card",
-    paymentStatus: "Processing",
-    transactionId: "CARD345678901",
-    preferredTime: "3:15 PM",
-    deliveryAddress: {
-      customerName: "Kshitij Rasal",
-      location: "Tech Hub, Floor 3",
-      phone: "91 6543210987"
-    },
-    items: [
-      { name: "Tofu Satay", quantity: 1, price: 270.00 },
-      { name: "Dumpling", quantity: 1, price: 200.00 }
-    ],
-    subTotal: 470.00,
-    gst: 23.50,
-    deliveryCharge: 40.00,
-    total: 533.50,
-    logs: [
-      { date: "24/06/2024 2:54 PM", status: "Pending", comments: "Payment processing", updatedBy: "Kshitij Rasal" }
-    ],
-    currentStatus: "Pending"
-  }
-];
-
 export const RestaurantOrderDetailPage = () => {
-  const { id } = useParams();
+  const dispatch = useAppDispatch();
+  const { id, oid } = useParams();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [comments, setComments] = useState("");
+  const [order, setOrder] = useState<OrderData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Find the specific order based on the orderId parameter from URL
-  const order = mockOrderDetails.find(item => item.orderId === id) || mockOrderDetails[0];
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        setIsLoading(true);
+        const response = await dispatch(fetchOrderDetails({ baseUrl, token, id: Number(id), oid: Number(oid) })).unwrap();
+        setOrder(response);
+      } catch (error) {
+        console.error('Error fetching order details:', error);
+        setError('Failed to load order details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [dispatch, baseUrl, token, id, oid]);
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleEditStatus = () => {
-    setSelectedStatus(order.currentStatus);
-    setIsEditStatusOpen(true);
-  };
-
   const handleSubmitStatus = () => {
-    // Handle status update logic here
     console.log("Updating status:", selectedStatus, "Comments:", comments);
     setIsEditStatusOpen(false);
     setComments("");
   };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+  }
+
+  if (error || !order) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">{error || 'Order not found'}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -232,9 +152,12 @@ export const RestaurantOrderDetailPage = () => {
         {/* Restaurant Header */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">{order.restaurant}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{order.restaurant.name}</h2>
             <Button
-              onClick={handleEditStatus}
+              onClick={() => {
+                setSelectedStatus(order.status.name);
+                setIsEditStatusOpen(true);
+              }}
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
@@ -248,21 +171,21 @@ export const RestaurantOrderDetailPage = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Delivery Address:</h3>
               <div className="space-y-2">
-                <div className="font-medium">{order.deliveryAddress.customerName}</div>
-                <div className="text-gray-600">{order.deliveryAddress.location}</div>
-                <div className="text-gray-600">{order.deliveryAddress.phone}</div>
+                <div className="font-medium">{order.delivery_address.name}</div>
+                <div className="text-gray-600">{order.delivery_address.site_name}</div>
+                <div className="text-gray-600">{order.delivery_address.phone}</div>
               </div>
             </div>
 
             {/* Right Column - Order Details */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Order ID: {order.orderId}</h3>
+              <h3 className="text-lg font-semibold mb-4">Order ID: {order.order_details.order_id}</h3>
               <div className="space-y-2">
-                <div><span className="font-medium">Order Date:</span> {order.orderDate}</div>
-                <div><span className="font-medium">Payment Mode:</span> {order.paymentMode}</div>
-                <div><span className="font-medium">Payment Status:</span> {order.paymentStatus}</div>
-                <div><span className="font-medium">Transaction ID:</span> {order.transactionId}</div>
-                <div><span className="font-medium">Preferred Time:</span> {order.preferredTime}</div>
+                <div><span className="font-medium">Order Date:</span> {order.order_details.order_date}</div>
+                <div><span className="font-medium">Payment Mode:</span> {order.order_details.payment_mode}</div>
+                <div><span className="font-medium">Payment Status:</span> {order.order_details.payment_status}</div>
+                <div><span className="font-medium">Transaction ID:</span> {order.order_details.transaction_id}</div>
+                <div><span className="font-medium">Preferred Time:</span> {order.order_details.preferred_time}</div>
               </div>
             </div>
           </div>
@@ -277,7 +200,7 @@ export const RestaurantOrderDetailPage = () => {
               <div className="space-y-2">
                 {order.items.map((item, index) => (
                   <div key={index} className="text-blue-600">
-                    {item.name}
+                    {item.menu_name}
                     <div className="text-gray-600 text-sm">{item.quantity}Qty x 1</div>
                   </div>
                 ))}
@@ -290,19 +213,19 @@ export const RestaurantOrderDetailPage = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Sub Total:</span>
-                  <span>{order.subTotal.toFixed(2)}</span>
+                  <span>{order.totals.sub_total}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>GST:</span>
-                  <span>{order.gst.toFixed(2)}</span>
+                  <span>{order.totals.gst}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery Charge:</span>
-                  <span>{order.deliveryCharge.toFixed(2)}</span>
+                  <span>{order.totals.delivery_charge}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
                   <span>TOTAL:</span>
-                  <span>{order.total.toFixed(2)}</span>
+                  <span>{order.totals.total_amount}</span>
                 </div>
               </div>
             </div>
@@ -331,8 +254,8 @@ export const RestaurantOrderDetailPage = () => {
                         {log.status}
                       </span>
                     </td>
-                    <td className="py-2 px-4">{log.comments}</td>
-                    <td className="py-2 px-4">{log.updatedBy}</td>
+                    <td className="py-2 px-4">{log.comment}</td>
+                    <td className="py-2 px-4">{log.updated_by}</td>
                   </tr>
                 ))}
               </tbody>
@@ -346,9 +269,9 @@ export const RestaurantOrderDetailPage = () => {
         <DialogContent className="max-w-md">
           <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b">
             <DialogTitle>Edit Status</DialogTitle>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsEditStatusOpen(false)}
               className="h-6 w-6 p-0"
             >
@@ -363,10 +286,11 @@ export const RestaurantOrderDetailPage = () => {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Received">Received</SelectItem>
-                  <SelectItem value="Not Available">Not Available</SelectItem>
-                  <SelectItem value="Order Received">Order Received</SelectItem>
+                  {order.available_statuses.map((status) => (
+                    <SelectItem key={status.id} value={status.name}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

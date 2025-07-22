@@ -20,7 +20,7 @@ import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
 import { exportReportReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
-import facilitySetupsReducer from './slices/facilitySetupsSlice'
+import facilitySetupsReducer, { fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
 import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
@@ -31,8 +31,9 @@ import { attendanceReducer } from './slices/attendanceSlice'
 import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 import inventoryEditReducer from './slices/inventoryEditSlice'
 import serviceEditReducer from './slices/serviceSlice'
-import { createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
+import { createMenuReducer, createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteRestaurantStatusReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, editRestaurantStatusReducer, editSubCategoryReducer, exportOrdersReducer, fetchMenuDetailsReducer, fetchMenuReducer, fetchOrderDetailsReducer, fetchRestaurantBookingsReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
+import { fetchMasterUnitsReducer } from './slices/unitMaster'
 
 export const store = configureStore({
   reducer: {
@@ -85,6 +86,19 @@ export const store = configureStore({
     fetchSubcategory: fetchSubcategoryReducer,
     deleteSubCategory: deleteSubCategoryReducer,
     serviceFilter: serviceFilterReducer,
+    deleteRestaurantStatus: deleteRestaurantStatusReducer,
+    editRestaurantStatus: editRestaurantStatusReducer,
+    editSubCategory: editSubCategoryReducer,
+    fetchRestaurantBookings: fetchRestaurantBookingsReducer,
+    createMenu: createMenuReducer,
+    fetchMenu: fetchMenuReducer,
+    fetchFacilitySetup: fetchFacilitySetupReducer,
+    fetchMenuDetails: fetchMenuDetailsReducer,
+    fetchOrderDetails: fetchOrderDetailsReducer,
+    exportOrders: exportOrdersReducer,
+
+    // Unit Master
+    fetchMasterUnits: fetchMasterUnitsReducer,
   },
 })
 

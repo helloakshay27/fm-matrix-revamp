@@ -1,29 +1,52 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2 } from "lucide-react";
+import { useAppDispatch } from '@/store/hooks';
+import { useParams } from 'react-router-dom';
+import { fetchRestaurantBookings } from '@/store/slices/f&bSlice';
+
+interface Schedule {
+  date: string; // e.g., "01/04/2023"
+  time: string; // e.g., "04:04 PM"
+}
 
 interface Booking {
   id: number;
-  bookingId: string;
-  name: string;
-  bookedOn: string;
-  scheduleOn: string;
-  guest: number;
-  status: 'Confirmed' | 'Pending' | 'Cancelled';
-  additionalRequest: string;
+  user_name: string;
+  guest_count: number;
+  additional_requests: string;
+  booked_on: string; // e.g., "29/03/2023 04:04 PM"
+  schedule_on: Schedule;
+  date: string; // same as schedule_on.date
+  time: string; // same as schedule_on.time
+  status_id: number;
+  status_name: string;
 }
 
-const mockBookings: Booking[] = [
-  // Empty initial state - no bookings yet
-];
-
 export const RestaurantBookingsTable = () => {
-  const [bookings, setBookings] = useState<Booking[]>(mockBookings);
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const { id } = useParams();
+
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantBookings({ baseUrl, token, id: Number(id) })).unwrap();
+        setBookings(response);
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      }
+    };
+    fetchBookings();
+  }, []);
 
   const handleDeleteBooking = () => {
     if (selectedBooking) {
@@ -83,23 +106,22 @@ export const RestaurantBookingsTable = () => {
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">{booking.bookingId}</TableCell>
-                  <TableCell className="text-center">{booking.name}</TableCell>
-                  <TableCell className="text-center">{booking.bookedOn}</TableCell>
-                  <TableCell className="text-center">{booking.scheduleOn}</TableCell>
-                  <TableCell className="text-center">{booking.guest}</TableCell>
+                  <TableCell className="text-center">{booking.id}</TableCell>
+                  <TableCell className="text-center">{booking.user_name}</TableCell>
+                  <TableCell className="text-center">{booking.booked_on}</TableCell>
+                  <TableCell className="text-center">{booking.schedule_on.date + ' ' + booking.schedule_on.time}</TableCell>
+                  <TableCell className="text-center">{booking.guest_count}</TableCell>
                   <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      booking.status === 'Confirmed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : booking.status === 'Pending'
+                    <span className={`px-2 py-1 rounded-full text-xs ${booking.status_name === 'Confirmed'
+                      ? 'bg-green-100 text-green-800'
+                      : booking.status_name === 'Pending'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
-                    }`}>
-                      {booking.status}
+                      }`}>
+                      {booking.status_name}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">{booking.additionalRequest}</TableCell>
+                  <TableCell className="text-center">{booking.additional_requests}</TableCell>
                 </TableRow>
               ))
             )}
@@ -116,7 +138,7 @@ export const RestaurantBookingsTable = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => setIsDeleteDialogOpen(false)}
               className="bg-gray-200 text-gray-800 hover:bg-gray-300"
             >

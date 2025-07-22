@@ -751,9 +751,9 @@ function App() {
                 <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
                 <Route path="/vas/fnb/add" element={<AddRestaurantPage />} />
                 <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
-                <Route path="/vas/fnb/restaurant-menu/details/:id" element={<ProductSetupDetailPage />} />
+                <Route path="/vas/fnb/details/:id/restaurant-menu/:mid" element={<ProductSetupDetailPage />} />
                 <Route path="/vas/fnb/restaurant-menu/edit/:id" element={<ProductEditPage />} />
-                <Route path="/vas/fnb/restaurant-orders/details/:id" element={<RestaurantOrderDetailPage />} />
+                <Route path="/vas/fnb/details/:id/restaurant-order/:oid" element={<RestaurantOrderDetailPage />} />
                 <Route path="/vas/fnb/discounts" element={<FnBDiscountsPage />} />
                 <Route path="/vas/parking" element={<ParkingDashboard />} />
                 <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />

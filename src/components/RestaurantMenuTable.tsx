@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -7,225 +6,88 @@ import { Plus, Upload, Eye, Pencil } from "lucide-react";
 import { AddMenuItemModal } from "./AddMenuItemModal";
 import { ImportDataModal } from "./ImportDataModal";
 import { StatusBadge } from "./ui/status-badge";
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { createMenu, fetchMenu } from '@/store/slices/f&bSlice';
 
 interface MenuItem {
   id: number;
+  restaurant_id: number;
+  name: string;
   sku: string;
-  productName: string;
-  masterPrice: number;
-  displayPrice: number;
-  category: string;
-  subCategory: string;
-  createdOn: string;
-  updatedOn: string;
-  status: 'Active' | 'Inactive';
+  master_price: number;
+  discount: number | null;
+  display_price: number;
+  stock: number;
+  active: number;
+  category_id: number;
+  sub_category_id: number;
+  sgst_rate: number;
+  sgst_amt: number;
+  cgst_rate: number;
+  cgst_amt: number;
+  igst_rate: number | null;
+  igst_amt: number | null;
+  veg_menu: boolean | null;
+  description: string;
+  created_at: string; // ISO string format
+  updated_at: string; // ISO string format
+  discounted_amount: number;
 }
-
-const mockMenuItems: MenuItem[] = [
-  {
-    id: 1,
-    sku: "Imperial Rolls",
-    productName: "Imperial Rolls",
-    masterPrice: 250,
-    displayPrice: 250,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "21/03/2023",
-    status: 'Inactive'
-  },
-  {
-    id: 2,
-    sku: "Corn Fritters",
-    productName: "Corn Fritters",
-    masterPrice: 220,
-    displayPrice: 220,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "20/04/2023",
-    status: 'Active'
-  },
-  {
-    id: 3,
-    sku: "Spring Rolls",
-    productName: "Spring Rolls",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 4,
-    sku: "Chicken Satay",
-    productName: "Chicken Satay",
-    masterPrice: 300,
-    displayPrice: 300,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "20/04/2023",
-    status: 'Active'
-  },
-  {
-    id: 5,
-    sku: "Tofu Satay",
-    productName: "Tofu Satay",
-    masterPrice: 300,
-    displayPrice: 300,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 6,
-    sku: "Dumpling",
-    productName: "Dumpling",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 7,
-    sku: "Golden Triangles",
-    productName: "Golden Triangles",
-    masterPrice: 250,
-    displayPrice: 250,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 8,
-    sku: "Tom Yum Gai",
-    productName: "Tom Yum Gai",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 9,
-    sku: "Glass Noodles Soup",
-    productName: "Glass Noodles Soup",
-    masterPrice: 250,
-    displayPrice: 250,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 10,
-    sku: "Beef Noodle Soup",
-    productName: "Beef Noodle Soup",
-    masterPrice: 280,
-    displayPrice: 280,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 11,
-    sku: "Larb Gai",
-    productName: "Larb Gai",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 12,
-    sku: "Ginger Salad",
-    productName: "Ginger Salad",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "18/04/2023",
-    status: 'Inactive'
-  },
-  {
-    id: 13,
-    sku: "Fish Cake Salad",
-    productName: "Fish Cake Salad",
-    masterPrice: 280,
-    displayPrice: 280,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 14,
-    sku: "Shrimp Salad",
-    productName: "Shrimp Salad",
-    masterPrice: 300,
-    displayPrice: 300,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 15,
-    sku: "Duck Salad",
-    productName: "Duck Salad",
-    masterPrice: 340,
-    displayPrice: 340,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  }
-];
 
 export const RestaurantMenuTable = () => {
   const navigate = useNavigate();
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const { id } = useParams();
+
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
 
-  const handleAddMenuItem = (menuItemData: any) => {
-    const newMenuItem: MenuItem = {
-      id: Math.max(...menuItems.map(item => item.id), 0) + 1,
-      sku: menuItemData.sku,
-      productName: menuItemData.productName,
-      masterPrice: parseFloat(menuItemData.masterPrice),
-      displayPrice: parseFloat(menuItemData.displayPrice),
-      category: menuItemData.category,
-      subCategory: menuItemData.subCategory,
-      createdOn: new Date().toLocaleDateString(),
-      updatedOn: new Date().toLocaleDateString(),
-      status: menuItemData.active ? 'Active' : 'Inactive'
-    };
-    setMenuItems([...menuItems, newMenuItem]);
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const response = await dispatch(fetchMenu({ baseUrl, token, id: Number(id) })).unwrap();
+        setMenuItems(response);
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchMenuItems();
+  }, [])
+
+  const handleAddMenuItem = async (menuItemData: any, selectedFile: File) => {
+    const menuItem = new FormData();
+
+    menuItem.append('manage_restaurant_menu[name]', menuItemData.productName);
+    menuItem.append('manage_restaurant_menu[restaurant_id]', id);
+    menuItem.append('manage_restaurant_menu[sku]', menuItemData.sku);
+    menuItem.append('manage_restaurant_menu[master_price]', menuItemData.masterPrice);
+    menuItem.append('manage_restaurant_menu[display_price]', menuItemData.displayPrice);
+    menuItem.append('manage_restaurant_menu[stock]', menuItemData.stock);
+    menuItem.append('manage_restaurant_menu[active]', menuItemData.active);
+    menuItem.append('manage_restaurant_menu[category_id]', menuItemData.category);
+    menuItem.append('manage_restaurant_menu[sub_category_id]', menuItemData.subCategory);
+    menuItem.append('manage_restaurant_menu[sgst_rate]', menuItemData.sgstRate);
+    menuItem.append('manage_restaurant_menu[sgst_amt]', menuItemData.sgstAmount);
+    menuItem.append('manage_restaurant_menu[cgst_rate]', menuItemData.cgstRate);
+    menuItem.append('manage_restaurant_menu[cgst_amt]', menuItemData.cgstAmount);
+    menuItem.append('manage_restaurant_menu[description]', menuItemData.description);
+    menuItem.append('images[]', selectedFile);
+    menuItem.append('restaurant_id', id);
+
+    try {
+      await dispatch(createMenu({ baseUrl, token, id: Number(id), data: menuItem }));
+      toast.success('Menu item added successfully');
+    } catch (error) {
+      console.log(error)
+      toast.error('Failed to add menu item');
+    }
   };
 
   const handleDeleteMenuItem = () => {
@@ -242,7 +104,7 @@ export const RestaurantMenuTable = () => {
   };
 
   const handleViewDetails = (menuItem: MenuItem) => {
-    navigate(`/vas/fnb/restaurant-menu/details/${menuItem.id}`);
+    navigate(`/vas/fnb/details/${id}/restaurant-menu/${menuItem.id}`);
   };
 
   const handleEditProduct = (menuItem: MenuItem) => {
@@ -315,18 +177,18 @@ export const RestaurantMenuTable = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">{menuItem.sku}</TableCell>
-                  <TableCell className="text-center">{menuItem.productName}</TableCell>
-                  <TableCell className="text-center">₹{menuItem.masterPrice}</TableCell>
-                  <TableCell className="text-center">₹{menuItem.displayPrice}</TableCell>
-                  <TableCell className="text-center">{menuItem.category}</TableCell>
-                  <TableCell className="text-center">{menuItem.subCategory}</TableCell>
-                  <TableCell className="text-center">{menuItem.createdOn}</TableCell>
-                  <TableCell className="text-center">{menuItem.updatedOn}</TableCell>
+                  <TableCell className="text-center">{menuItem.name}</TableCell>
+                  <TableCell className="text-center">₹{menuItem.master_price}</TableCell>
+                  <TableCell className="text-center">₹{menuItem.display_price}</TableCell>
+                  <TableCell className="text-center">{menuItem.category_id}</TableCell>
+                  <TableCell className="text-center">{menuItem.sub_category_id}</TableCell>
+                  <TableCell className="text-center">{menuItem.created_at.split('T')[0]}</TableCell>
+                  <TableCell className="text-center">{menuItem.updated_at.split('T')[0]}</TableCell>
                   <TableCell className="text-center">
-                    <StatusBadge 
-                      status={menuItem.status === 'Active' ? 'accepted' : 'rejected'}
+                    <StatusBadge
+                      status={menuItem.active === 1 ? 'accepted' : 'rejected'}
                     >
-                      {menuItem.status}
+                      {menuItem.active ? 'Active' : 'Inactive'}
                     </StatusBadge>
                   </TableCell>
                 </TableRow>
@@ -356,7 +218,7 @@ export const RestaurantMenuTable = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => setIsDeleteDialogOpen(false)}
               className="bg-gray-200 text-gray-800 hover:bg-gray-300"
             >
