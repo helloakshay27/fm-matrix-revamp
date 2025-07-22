@@ -165,21 +165,6 @@ const InventoryConsumptionDashboard = () => {
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">Consumption LIST</h1>
         
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Import
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsFilterOpen(true)}
-            className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            Filter
-          </Button>
-        </div>
       </div>
 
       {/* Enhanced Table with Drag and Drop */}
@@ -215,6 +200,22 @@ const InventoryConsumptionDashboard = () => {
           }
         }}
         getItemId={(item) => item.id.toString()}
+        leftActions={
+          <div className="flex gap-3">
+            <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Import
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsFilterOpen(true)}
+              className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Filter
+            </Button>
+          </div>
+        }
       />
 
       {/* Floating Filter Modal */}
