@@ -430,7 +430,7 @@ export const TicketDashboard = () => {
   };
 
   const handleEditTicket = (ticketNumber: string) => {
-    setIsEditStatusOpen(true);
+    navigate(`/maintenance/ticket/edit/${ticketNumber}`);
   };
 
   const handleDeleteTicket = async (ticketId: number) => {
@@ -747,9 +747,16 @@ export const TicketDashboard = () => {
       return <TruncatedDescription text={item.heading} />;
     }
     if (columnKey === 'issue_status') {
-      return <span className={`px-2 py-1 rounded text-xs animate-scale-in ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-          {item.issue_status}
-        </span>;
+      return <span 
+        className={`px-2 py-1 rounded text-xs animate-scale-in cursor-pointer hover:opacity-80 ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEditTicket(item.ticket_number);
+        }}
+        title="Click to edit ticket"
+      >
+        {item.issue_status}
+      </span>;
     }
     if (columnKey === 'priority') {
       return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 animate-scale-in">
