@@ -32,6 +32,8 @@ import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 import inventoryEditReducer from './slices/inventoryEditSlice'
 import serviceEditReducer from './slices/serviceSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
+import { createMenuReducer, createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteRestaurantStatusReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, editRestaurantStatusReducer, editSubCategoryReducer, exportOrdersReducer, fetchMenuDetailsReducer, fetchMenuReducer, fetchOrderDetailsReducer, fetchRestaurantBookingsReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
+import { fetchMasterUnitsReducer } from './slices/unitMaster'
 import { inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
 import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
 import { ecoFriendlyListReducer } from './slices/ecoFriendlyListSlice'
@@ -67,13 +69,42 @@ export const store = configureStore({
     location: locationReducer,
     serviceLocation: serviceLocationReducer,
     attendance: attendanceReducer,
-  inventoryAssets: inventoryAssetsReducer,
-  inventoryEdit: inventoryEditReducer,
-  serviceEdit: serviceEditReducer,
-  serviceFilter: serviceFilterReducer,
-  inventoryConsumption: inventoryConsumptionReducer,
-  inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
-  ecoFriendlyList: ecoFriendlyListReducer,
+    inventoryAssets: inventoryAssetsReducer,
+    inventoryEdit: inventoryEditReducer,
+    serviceEdit: serviceEditReducer,
+
+    fetchBookingDetails: fetchBookingDetailsReducer,
+    exportReport: exportReportReducer,
+    fetchRestaurants: fetchRestaurantsReducer,
+    createRestaurant: createRestaurantReducer,
+    fetchRestaurantDetails: fetchRestaurantDetailsReducer,
+    editRestaurant: editRestaurantReducer,
+    createRestaurantStatus: createRestaurantStatusReducer,
+    fetchRestaurantStatuses: fetchRestaurantStatusesReducer,
+    createRestaurantCategory: createRestaurantCategoryReducer,
+    fetchRestaurantCategory: fetchRestaurantCategoryReducer,
+    deleteCategory: deleteCategoryReducer,
+    editCategory: editCategoryReducer,
+    createSubcategory: createSubcategoryReducer,
+    fetchSubcategory: fetchSubcategoryReducer,
+    deleteSubCategory: deleteSubCategoryReducer,
+    serviceFilter: serviceFilterReducer,
+    deleteRestaurantStatus: deleteRestaurantStatusReducer,
+    editRestaurantStatus: editRestaurantStatusReducer,
+    editSubCategory: editSubCategoryReducer,
+    fetchRestaurantBookings: fetchRestaurantBookingsReducer,
+    createMenu: createMenuReducer,
+    fetchMenu: fetchMenuReducer,
+    fetchFacilitySetup: fetchFacilitySetupReducer,
+    fetchMenuDetails: fetchMenuDetailsReducer,
+    fetchOrderDetails: fetchOrderDetailsReducer,
+    exportOrders: exportOrdersReducer,
+
+    // Unit Master
+    fetchMasterUnits: fetchMasterUnitsReducer,
+    inventoryConsumption: inventoryConsumptionReducer,
+    inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
+    ecoFriendlyList: ecoFriendlyListReducer,
   },
 })
 

@@ -47,14 +47,14 @@ export const EditAMCPage = () => {
     contracts: [] as File[],
     invoices: [] as File[]
   });
-  
+
   const [existingFiles, setExistingFiles] = useState({
-    contracts: [] as Array<{document_url: string, document_name: string, attachment_id: number}>,
-    invoices: [] as Array<{document_url: string, document_name: string, attachment_id: number}>
+    contracts: [] as Array<{ document_url: string, document_name: string, attachment_id: number }>,
+    invoices: [] as Array<{ document_url: string, document_name: string, attachment_id: number }>
   });
-  
-  const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
-  const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
+
+  const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
+  const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
 
@@ -72,19 +72,22 @@ export const EditAMCPage = () => {
 
   // Update form data when AMC data is loaded
 
-  
+
   useEffect(() => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
+      const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
+      const isGroupType = data.resource_type === 'Pms::Asset';
+
       console.log('=== AMC Data Debug ===');
       console.log('Raw AMC Data:', data);
       console.log('Assets loaded:', assets.length, assets);
       console.log('Suppliers loaded:', suppliers.length, suppliers);
       console.log('Services loaded:', services.length, services);
-      
+
       // Set existing files from API response
       if (data.amc_contracts && Array.isArray(data.amc_contracts)) {
-        const contractFiles = data.amc_contracts.flatMap((contract: any) => 
+        const contractFiles = data.amc_contracts.flatMap((contract: any) =>
           contract.documents ? contract.documents.map((doc: any) => ({
             document_url: doc.document_url,
             document_name: doc.document_name,
@@ -93,9 +96,9 @@ export const EditAMCPage = () => {
         );
         setExistingFiles(prev => ({ ...prev, contracts: contractFiles }));
       }
-      
+
       if (data.amc_invoices && Array.isArray(data.amc_invoices)) {
-        const invoiceFiles = data.amc_invoices.flatMap((invoice: any) => 
+        const invoiceFiles = data.amc_invoices.flatMap((invoice: any) =>
           invoice.documents ? invoice.documents.map((doc: any) => ({
             document_url: doc.document_url,
             document_name: doc.document_name,
@@ -104,12 +107,12 @@ export const EditAMCPage = () => {
         );
         setExistingFiles(prev => ({ ...prev, invoices: invoiceFiles }));
       }
-      
+
       // Determine the correct form values based on API response
       const isAssetType = data.asset_id ? true : false;  // Show Asset radio if asset_id exists
       const isServiceType = data.service_id ? true : false;  // Show Service radio if service_id exists
       const isIndividualType = data.resource_type === 'Pms::Asset';
-      
+
       // Handle asset IDs - could be single ID, array, or JSON string
       let assetIds = [];
       if (data.asset_id) {
@@ -127,12 +130,12 @@ export const EditAMCPage = () => {
         }
         assetIds = assetIds.map(id => id.toString());
       }
-  
+
       const supplierId = data.supplier_id?.toString();
       const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
       const serviceId = data.service_id?.toString();
       const foundService = services.find(service => service.id.toString() === serviceId);
-  
+
       setFormData({
         details: detailType,
         type: isGroupType ? 'Group' : 'Individual',
@@ -153,7 +156,7 @@ export const EditAMCPage = () => {
       });
       console.log('AMC Data of SubGroup:', data.sub_group_id);
       console.log('AMC Data of Group:', data.group_id);
-  
+
       // Ensure handleGroupChange is called with the group_id
       if (isGroupType && data.group_id) {
         handleGroupChange(data.group_id.toString());
@@ -215,7 +218,7 @@ export const EditAMCPage = () => {
     const fetchAssetGroups = async () => {
       setLoading(true);
       try {
-        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');    
+        const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
         if (Array.isArray(response.data)) {
           setAssetGroups(response.data);
         } else if (response.data && Array.isArray(response.data.asset_groups)) {
@@ -242,12 +245,12 @@ export const EditAMCPage = () => {
 
   const handleGroupChange = async (groupId: string) => {
     handleInputChange('group', groupId);
-  
+
     if (groupId) {
       setLoading(true);
       try {
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
-  
+
         let subgroups = [];
         if (Array.isArray(response.data)) {
           subgroups = response.data;
@@ -259,7 +262,7 @@ export const EditAMCPage = () => {
           console.warn('SubGroup API response structure unknown:', response.data);
         }
         setSubGroups(subgroups);
-  
+
         // Pre-select subgroup if it matches formData.subgroup
         if (formData.subgroup && subgroups.some(sub => sub.id.toString() === formData.subgroup)) {
           handleInputChange('subgroup', formData.subgroup);
@@ -335,19 +338,57 @@ export const EditAMCPage = () => {
     setUpdateLoading(true);
 
     try {
-      const payload = createPayload();
+      // Create JSON payload with all AMC fields
+      let payload: any = {
+        pms_asset_amc: {
+          amc_cost: parseFloat(formData.cost) || 0,
+          amc_start_date: formData.startDate,
+          amc_end_date: formData.endDate,
+          amc_first_service: formData.firstService,
+          amc_frequency: formData.paymentTerms || null,
+          amc_period: `${formData.startDate} - ${formData.endDate}`,
+          no_of_visits: parseInt(formData.noOfVisits) || 0,
+          payment_term: formData.paymentTerms,
+          remarks: formData.remarks,
+          pms_site_id: (amcData as any)?.pms_site_id,
+          site_name: (amcData as any)?.site_name,
+          resource_id: (amcData as any)?.resource_id,
+          resource_name: (amcData as any)?.resource_name,
+          resource_type: (amcData as any)?.resource_type,
+          supplier_id: formData.vendor || formData.supplier,
+          supplier_name: (amcData as any)?.supplier_name
+        }
+      };
+
+      // Add asset_ids or service_id based on details type
+      if (formData.details === 'Asset') {
+        if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
+          payload.pms_asset_amc.asset_ids = formData.asset_ids;
+        }
+      } else if (formData.details === 'Service' && formData.assetName) {
+        payload.pms_asset_amc.service_id = formData.assetName;
+      }
+
+      // Add vendor information if available
+      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
+      if (selectedSupplier) {
+        payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
+        payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
+        payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
+      }
+
       console.log('Updating AMC with payload:', payload);
 
       // Create FormData if there are files to upload
       let sendData: FormData | any = payload;
       let response;
-      
+
       if (attachments.contracts.length > 0 || attachments.invoices.length > 0) {
         sendData = new FormData();
-        
+
         // Add the payload as JSON string
         sendData.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
-        
+
         // Add contract files
         attachments.contracts.forEach((file) => {
           sendData.append('amc_contracts[content][]', file);
@@ -357,7 +398,7 @@ export const EditAMCPage = () => {
         attachments.invoices.forEach((file) => {
           sendData.append('amc_invoices[content][]', file);
         });
-        
+
         // Use FormData request
         response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
           headers: {
@@ -441,13 +482,13 @@ export const EditAMCPage = () => {
       // Create FormData if there are files to upload
       let sendData: FormData | any = payload;
       let response;
-      
+
       if (attachments.contracts.length > 0 || attachments.invoices.length > 0) {
         sendData = new FormData();
-        
+
         // Add the payload as JSON string
         sendData.append('pms_asset_amc', JSON.stringify(payload.pms_asset_amc));
-        
+
         // Add contract files
         attachments.contracts.forEach((file) => {
           sendData.append('amc_contracts[content][]', file);
@@ -457,7 +498,7 @@ export const EditAMCPage = () => {
         attachments.invoices.forEach((file) => {
           sendData.append('amc_invoices[content][]', file);
         });
-        
+
         // Use FormData request
         response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
           headers: {
@@ -516,7 +557,7 @@ export const EditAMCPage = () => {
           <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             AMC &gt; AMC List &gt; Edit AMC
-            </Button>
+          </Button>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT AMC - {id}</h1>
         </div>
         <div className="flex justify-center items-center py-12">
@@ -762,7 +803,7 @@ export const EditAMCPage = () => {
                         label="SubGroup"
                         displayEmpty
                         value={`${formData.subgroup}`}
-                        
+
                         onChange={e => handleInputChange('subgroup', e.target.value)}
                         sx={fieldStyles}
                         disabled={!formData.group || loading || updateLoading}
@@ -948,7 +989,7 @@ export const EditAMCPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
-                
+
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                   <input
                     type="file"
@@ -978,7 +1019,7 @@ export const EditAMCPage = () => {
                     Upload New Files
                   </Button>
                 </div>
-                
+
                 {attachments.contracts.length > 0 && (
                   <div className="mt-2 space-y-1">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
@@ -997,7 +1038,7 @@ export const EditAMCPage = () => {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Existing Files */}
                 {existingFiles.contracts.length > 0 && (
                   <div className="mt-4">
@@ -1006,11 +1047,11 @@ export const EditAMCPage = () => {
                       {existingFiles.contracts.map((file, index) => {
                         const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
                         return (
-                           <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{backgroundColor: '#f6f4ee'}}>
+                          <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{ backgroundColor: '#f6f4ee' }}>
                             {isImage ? (
                               <div className="flex items-center space-x-3 flex-1">
-                                <img 
-                                  src={file.document_url} 
+                                <img
+                                  src={file.document_url}
                                   alt={file.document_name}
                                   className="w-16 h-16 object-cover rounded border"
                                   onError={(e) => {
@@ -1022,9 +1063,9 @@ export const EditAMCPage = () => {
                             ) : (
                               <span className="flex-1">{file.document_name}</span>
                             )}
-                             <Button 
-                              type="button" 
-                              variant="ghost" 
+                            <Button
+                              type="button"
+                              variant="ghost"
                               size="sm"
                               onClick={() => window.open(file.document_url, '_blank')}
                               className="text-red-600 hover:text-red-800"
@@ -1041,7 +1082,7 @@ export const EditAMCPage = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Invoice</label>
-                
+
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
                   <input
                     type="file"
@@ -1071,7 +1112,7 @@ export const EditAMCPage = () => {
                     Upload New Files
                   </Button>
                 </div>
-                
+
                 {attachments.invoices.length > 0 && (
                   <div className="mt-2 space-y-1">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
@@ -1090,7 +1131,7 @@ export const EditAMCPage = () => {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Existing Files */}
                 {existingFiles.invoices.length > 0 && (
                   <div className="mt-4">
@@ -1099,11 +1140,11 @@ export const EditAMCPage = () => {
                       {existingFiles.invoices.map((file, index) => {
                         const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
                         return (
-                          <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{backgroundColor: '#f6f4ee'}}>
+                          <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{ backgroundColor: '#f6f4ee' }}>
                             {isImage ? (
                               <div className="flex items-center space-x-3 flex-1">
-                                <img 
-                                  src={file.document_url} 
+                                <img
+                                  src={file.document_url}
                                   alt={file.document_name}
                                   className="w-16 h-16 object-cover rounded border"
                                   onError={(e) => {
@@ -1115,9 +1156,9 @@ export const EditAMCPage = () => {
                             ) : (
                               <span className="flex-1">{file.document_name}</span>
                             )}
-                             <Button 
-                              type="button" 
-                              variant="ghost" 
+                            <Button
+                              type="button"
+                              variant="ghost"
                               size="sm"
                               onClick={() => window.open(file.document_url, '_blank')}
                               className="text-red-600 hover:text-red-800"
