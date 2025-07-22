@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Grid3X3, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,203 +10,74 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Settings2, Eye, EyeOff, RotateCcw } from 'lucide-react';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
-// Support multiple interfaces for different pages
-interface ColumnVisibilityDropdownProps {
-  // CRM Campaign interface
-  visibleColumns?: {
-    actions?: boolean;
-    id?: boolean;
-    createdBy?: boolean;
-    uniqueId?: boolean;
-    project?: boolean;
-    lead?: boolean;
-    mobile?: boolean;
-    status?: boolean;
-    createdOn?: boolean;
-    // Broadcast interface
-    action?: boolean;
-    title?: boolean;
-    type?: boolean;
-    expiredOn?: boolean;
-    expired?: boolean;
-    attachment?: boolean;
-    // Asset Dashboard interface
-    assetName?: boolean;
-    assetId?: boolean;
-    assetCode?: boolean;
-    assetNo?: boolean;
-    assetStatus?: boolean;
-    equipmentId?: boolean;
-    site?: boolean;
-    building?: boolean;
-    wing?: boolean;
-    floor?: boolean;
-    area?: boolean;
-    room?: boolean;
-    meterType?: boolean;
-    assetType?: boolean;
-  };
-  onColumnChange?: (columns: any) => void;
-  
-  // Generic interface for other pages
-  columns?: Array<{
-    key: string;
-    label: string;
-    visible: boolean;
-  }>;
-  onColumnToggle?: (columnKey: string, visible: boolean) => void;
+interface ColumnVisibilityMenuProps {
+  columns: ColumnConfig[];
+  columnVisibility: Record<string, boolean>;
+  onToggleVisibility: (columnKey: string) => void;
+  onResetToDefaults: () => void;
 }
 
-export const ColumnVisibilityDropdown = ({ 
-  visibleColumns, 
-  onColumnChange, 
-  columns, 
-  onColumnToggle 
-}: ColumnVisibilityDropdownProps) => {
-  const handleColumnToggle = (column: string, checked: boolean) => {
-    if (onColumnChange && visibleColumns) {
-      onColumnChange({
-        ...visibleColumns,
-        [column]: checked
-      });
-    } else if (onColumnToggle) {
-      onColumnToggle(column, checked);
-    }
-  };
-
-  // Generate column labels based on which interface is being used
-  const getColumnData = () => {
-    if (visibleColumns) {
-      // Check if this is the asset dashboard columns
-      if (visibleColumns.hasOwnProperty('assetName')) {
-        const assetColumnLabels = {
-          actions: 'Actions',
-          serialNumber: 'Serial Number',
-          assetName: 'Asset Name',
-          assetId: 'Asset ID',
-          assetNo: 'Asset No.',
-          assetStatus: 'Asset Status',
-          site: 'Site',
-          building: 'Building',
-          wing: 'Wing',
-          floor: 'Floor',
-          area: 'Area',
-          room: 'Room',
-          group: 'Group',
-          subGroup: 'Sub-Group',
-          assetType: 'Asset Type'
-        };
-        
-        return Object.entries(assetColumnLabels).map(([key, label]) => ({
-          key,
-          label,
-          visible: visibleColumns[key as keyof typeof visibleColumns] ?? false
-        }));
-      }
-      
-      // Determine which column set we're using
-      const columnLabels = visibleColumns.hasOwnProperty('action') ? {
-        // Broadcast columns
-        action: 'Action',
-        title: 'Title',
-        type: 'Type',
-        createdOn: 'Created On',
-        createdBy: 'Created by',
-        status: 'Status',
-        expiredOn: 'Expired On',
-        expired: 'Expired',
-        attachment: 'Attachment'
-      } : {
-        // CRM Campaign columns
-        actions: 'Actions',
-        id: 'ID',
-        createdBy: 'Created By',
-        uniqueId: 'Unique Id',
-        project: 'Project',
-        lead: 'Lead',
-        mobile: 'Mobile',
-        status: 'Status',
-        createdOn: 'Created On'
-      };
-      
-      return Object.entries(columnLabels).map(([key, label]) => ({
-        key,
-        label,
-        visible: visibleColumns[key as keyof typeof visibleColumns] ?? false
-      }));
-    } else if (columns) {
-      return columns;
-    }
-    return [];
-  };
-
-  const columnData = getColumnData();
-  const visibleCount = columnData.filter(col => col.visible).length;
-
-  const handleResetToDefaults = () => {
-    if (onColumnChange && visibleColumns) {
-      // Reset to default state (all columns visible)
-      const defaultColumns = Object.keys(visibleColumns).reduce((acc, key) => {
-        acc[key] = true;
-        return acc;
-      }, {} as any);
-      onColumnChange(defaultColumns);
-    }
-  };
+export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
+  columns,
+  columnVisibility,
+  onToggleVisibility,
+  onResetToDefaults
+}) => {
+  const visibleCount = Object.values(columnVisibility).filter(Boolean).length;
+  const hideableColumns = columns.filter(col => col.hideable !== false);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50">
-          <Grid3X3 className="h-4 w-4" />
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="h-8 flex items-center gap-2"
+        >
+          <Settings2 className="w-4 h-4" />
+          
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Show Columns</span>
           <span className="text-xs text-gray-500">
-            {visibleCount} of {columnData.length}
+            {visibleCount} of {columns.length}
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
-        {columnData.map(({ key, label, visible }) => {
-          const isLastVisible = visibleCount === 1 && visible;
+        {hideableColumns.map((column) => {
+          const isVisible = columnVisibility[column.key];
+          const isLastVisible = visibleCount === 1 && isVisible;
           
           return (
             <DropdownMenuItem
-              key={key}
+              key={column.key}
               className="flex items-center gap-2 cursor-pointer"
               onSelect={(e) => {
-                e.preventDefault(); // Prevent dropdown from closing
+                e.preventDefault();
+                if (!isLastVisible) {
+                  onToggleVisibility(column.key);
+                }
               }}
             >
               <Checkbox
-                checked={visible}
+                checked={isVisible}
                 disabled={isLastVisible}
-                onCheckedChange={(checked) => {
-                  if (!isLastVisible) {
-                    handleColumnToggle(key, checked as boolean);
-                  }
-                }}
                 className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <div 
-                className="flex items-center gap-2 flex-1 cursor-pointer"
-                onClick={() => {
-                  if (!isLastVisible) {
-                    handleColumnToggle(key, !visible);
-                  }
-                }}
-              >
-                {visible ? (
+              <div className="flex items-center gap-2 flex-1">
+                {isVisible ? (
                   <Eye className="w-4 h-4 text-green-600" />
                 ) : (
                   <EyeOff className="w-4 h-4 text-gray-400" />
                 )}
                 <span className={isLastVisible ? "text-gray-400" : ""}>
-                  {label}
+                  {column.label}
                 </span>
               </div>
             </DropdownMenuItem>
@@ -216,7 +86,7 @@ export const ColumnVisibilityDropdown = ({
         
         <DropdownMenuSeparator />
         <DropdownMenuItem 
-          onClick={handleResetToDefaults}
+          onClick={onResetToDefaults}
           className="flex items-center gap-2 cursor-pointer text-gray-600"
         >
           <RotateCcw className="w-4 h-4" />
@@ -224,5 +94,63 @@ export const ColumnVisibilityDropdown = ({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+};
+
+// Legacy interface for backward compatibility
+interface LegacyColumnVisibilityProps {
+  visibleColumns?: Record<string, boolean>;
+  onColumnChange?: (columns: any) => void;
+  columns?: Array<{ key: string; label: string; visible: boolean }>;
+  onColumnToggle?: (columnKey: string, visible: boolean) => void;
+}
+
+// Wrapper component for backward compatibility
+export const ColumnVisibilityDropdown: React.FC<LegacyColumnVisibilityProps> = ({
+  visibleColumns,
+  onColumnChange,
+  columns,
+  onColumnToggle
+}) => {
+  // Transform legacy props to new format
+  const transformedColumns: ColumnConfig[] = columns 
+    ? columns.map(col => ({ key: col.key, label: col.label, hideable: true }))
+    : Object.keys(visibleColumns || {}).map(key => ({ 
+        key, 
+        label: key.charAt(0).toUpperCase() + key.slice(1),
+        hideable: true 
+      }));
+
+  const columnVisibility = visibleColumns || 
+    (columns ? columns.reduce((acc, col) => ({ ...acc, [col.key]: col.visible }), {}) : {});
+
+  const handleToggleVisibility = (columnKey: string) => {
+    if (onColumnToggle) {
+      onColumnToggle(columnKey, !columnVisibility[columnKey]);
+    } else if (onColumnChange) {
+      onColumnChange({
+        ...columnVisibility,
+        [columnKey]: !columnVisibility[columnKey]
+      });
+    }
+  };
+
+  const handleResetToDefaults = () => {
+    if (onColumnChange) {
+      const defaultVisibility = Object.keys(columnVisibility).reduce(
+        (acc, key) => ({ ...acc, [key]: true }), 
+        {}
+      );
+      onColumnChange(defaultVisibility);
+    }
+  };
+
+  return (
+    <ColumnVisibilityMenu
+      columns={transformedColumns}
+      columnVisibility={columnVisibility}
+      onToggleVisibility={handleToggleVisibility}
+      onResetToDefaults={handleResetToDefaults}
+    />
   );
 };

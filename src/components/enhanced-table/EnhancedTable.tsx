@@ -266,7 +266,16 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
+         
+          
+          {showBulkActions && selectedItems.length > 0 && (
+            <div className="flex items-center gap-2">
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+           {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
@@ -277,14 +286,6 @@ export function EnhancedTable<T extends Record<string, any>>({
               />
             </div>
           )}
-          
-          {showBulkActions && selectedItems.length > 0 && (
-            <div className="flex items-center gap-2">
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
@@ -293,9 +294,10 @@ export function EnhancedTable<T extends Record<string, any>>({
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              Export
+              
             </Button>
           )}
+          
           
           {!hideColumnsButton && (
             <ColumnVisibilityMenu

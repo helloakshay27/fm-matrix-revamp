@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import qrCodePlaceholder from '@/assets/qr-code-placeholder.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -273,8 +274,12 @@ export const InventoryDetailsPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 flex justify-center">
-              <div className="w-48 h-48 border-2 border-gray-300 flex items-center justify-center bg-gray-50">
-                <QrCode className="w-24 h-24 text-gray-400" />
+              <div className="w-48 h-48 bg-gray-100 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                <img 
+                  src={qrCodePlaceholder} 
+                  alt="QR Code" 
+                  className="w-40 h-40 object-contain"
+                />
               </div>
             </CardContent>
           </Card>

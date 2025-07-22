@@ -1,67 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface FilterData {
-  createdDate: string;
-  category: string;
-  subcategory: string;
-  department: string;
-  site: string;
-  unit: string;
-  status: string;
-  adminPriority: string;
-  createdBy: string;
-  assignedTo: string;
-}
+import { 
+  ticketManagementAPI, 
+  TicketFilters, 
+  CategoryOption, 
+  SubcategoryOption, 
+  DepartmentOption, 
+  SiteOption, 
+  UnitOption, 
+  StatusOption, 
+  UserOption 
+} from '@/services/ticketManagementAPI';
 
 interface TicketsFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyFilters: (filters: FilterData) => void;
+  onApplyFilters: (filters: TicketFilters) => void;
 }
+
+const priorityOptions = [
+  { value: 'p1', label: 'P1 - Critical' },
+  { value: 'p2', label: 'P2 - Very High' },
+  { value: 'p3', label: 'P3 - High' },
+  { value: 'p4', label: 'P4 - Medium' },
+  { value: 'p5', label: 'P5 - Low' }
+];
 
 export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: TicketsFilterDialogProps) => {
   const { toast } = useToast();
-  const [filters, setFilters] = useState<FilterData>({
-    createdDate: '',
-    category: '',
-    subcategory: '',
-    department: '',
-    site: '',
-    unit: '',
-    status: '',
-    adminPriority: '',
-    createdBy: '',
-    assignedTo: ''
-  });
+  
+  // Filter state
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [category, setCategory] = useState('');
+  const [subCategory, setSubCategory] = useState('');
+  const [department, setDepartment] = useState('');
+  const [site, setSite] = useState('');
+  const [unit, setUnit] = useState('');
+  const [status, setStatus] = useState('');
+  const [priority, setPriority] = useState('');
+  const [assignedUser, setAssignedUser] = useState('');
+  const [userSearch, setUserSearch] = useState('');
 
-  const handleFilterChange = (key: keyof FilterData, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  // Data state
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [sites, setSites] = useState<SiteOption[]>([]);
+  const [units, setUnits] = useState<UnitOption[]>([]);
+  const [statuses, setStatuses] = useState<StatusOption[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
+
+  // Common field styles
+  const commonFieldStyles = "h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white";
+
+  // Load data when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      loadFilterData();
+    }
+  }, [isOpen]);
+
+  // Add effect to load subcategories when category changes
+  useEffect(() => {
+    const loadSubCategories = async () => {
+      if (category) {
+        try {
+          const subcategoriesData = await ticketManagementAPI.getSubCategoriesByCategory(Number(category));
+          // Map SubCategoryResponse to SubcategoryOption
+          const mappedSubcategories = subcategoriesData.map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            category_id: sub.helpdesk_category_id
+          }));
+          setSubcategories(mappedSubcategories);
+        } catch (error) {
+          console.error('Error loading subcategories:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load subcategories.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setSubcategories([]);
+      }
+    };
+
+    loadSubCategories();
+  }, [category]);
+
+  const loadFilterData = async () => {
+    try {
+      const [
+        categoriesData,
+        departmentsData,
+        sitesData,
+        unitsData,
+        statusesData,
+        usersData
+      ] = await Promise.all([
+        ticketManagementAPI.getHelpdeskCategories(),
+        ticketManagementAPI.getDepartments(),
+        ticketManagementAPI.getAllSites(),
+        ticketManagementAPI.getUnits(),
+        ticketManagementAPI.getComplaintStatuses(),
+        ticketManagementAPI.getFMUsers(),
+      ]);
+
+      setCategories(categoriesData);
+      setDepartments(departmentsData);
+      setSites(sitesData);
+      setUnits(unitsData);
+      setStatuses(statusesData);
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error loading filter data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load filter options.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleReset = () => {
-    setFilters({
-      createdDate: '',
-      category: '',
-      subcategory: '',
-      department: '',
-      site: '',
-      unit: '',
-      status: '',
-      adminPriority: '',
-      createdBy: '',
-      assignedTo: ''
-    });
-  };
+  // Filter subcategories based on selected category
+  const filteredSubcategories = subcategories.filter(sub => 
+    !category || sub.category_id === Number(category)
+  );
 
-  const handleApply = () => {
+  const handleSubmit = () => {
+    const filters: TicketFilters = {};
+
+    // Build date range
+    if (dateFrom && dateTo) {
+      filters.date_range = `${dateFrom}+-+${dateTo}`;
+    }
+
+    // Add other filters
+    if (category) filters.category_type_id_eq = Number(category);
+    if (subCategory) filters.sub_category_id_eq = Number(subCategory);
+    if (department) filters.dept_id_eq = Number(department);
+    if (site) filters.site_id_eq = Number(site);
+    if (unit) filters.unit_id_eq = Number(unit);
+    if (status) filters.issue_status_in = [Number(status)];
+    if (priority) filters.priority_eq = priority;
+    if (assignedUser) filters.assigned_to_in = [Number(assignedUser)];
+    if (userSearch) filters.user_firstname_or_user_lastname_cont = userSearch;
+
+    console.log('Applying filters:', filters);
     onApplyFilters(filters);
     toast({
       title: "Success",
@@ -70,235 +163,238 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
     onClose();
   };
 
-  // Responsive styles for TextField and Select
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
+  const handleReset = () => {
+    setDateFrom('');
+    setDateTo('');
+    setCategory('');
+    setSubCategory('');
+    setDepartment('');
+    setSite('');
+    setUnit('');
+    setStatus('');
+    setPriority('');
+    setAssignedUser('');
+    setUserSearch('');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-xl font-bold">FILTER BY</DialogTitle>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <DialogTitle className="text-xl font-bold text-[hsl(var(--analytics-text))]">FILTER BY</DialogTitle>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-4 py-4">
-          {/* Row 1 */}
-          <div className="space-y-2">
-            <TextField
-              label="Created Date"
-              type="date"
-              value={filters.createdDate}
-              onChange={(e) => handleFilterChange('createdDate', e.target.value)}
-              placeholder="Select Created Date"
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              InputProps={{
-                sx: fieldStyles
-              }}
-            />
+        <div className="space-y-6 py-4">
+          {/* Date Range Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-[hsl(var(--analytics-text))]">Date Range</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateFrom" className="text-sm font-medium text-[hsl(var(--analytics-text))]">
+                  Date From
+                </Label>
+                <Input
+                  id="dateFrom"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className={commonFieldStyles}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateTo" className="text-sm font-medium text-[hsl(var(--analytics-text))]">
+                  Date To
+                </Label>
+                <Input
+                  id="dateTo"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className={commonFieldStyles}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="category-select-label" shrink>Category</InputLabel>
-              <MuiSelect
-                labelId="category-select-label"
-                label="Category"
-                displayEmpty
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Category Type</em></MenuItem>
-                <MenuItem value="air-conditioner">Air Conditioner</MenuItem>
-                <MenuItem value="fire-system">FIRE SYSTEM</MenuItem>
-                <MenuItem value="cleaning">Cleaning</MenuItem>
-                <MenuItem value="electrical">Electrical</MenuItem>
-                <MenuItem value="printer">Printer</MenuItem>
-              </MuiSelect>
-            </FormControl>
+          {/* Filter Options Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-[hsl(var(--analytics-text))]">Filter Options</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {/* Category */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Category</Label>
+                <Select value={category} onValueChange={(value) => {
+                  setCategory(value);
+                  setSubCategory(''); // Reset subcategory when category changes
+                }}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sub Category */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Sub Category</Label>
+                <Select value={subCategory} onValueChange={setSubCategory} disabled={!category}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Sub Category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {subcategories.map((subcat) => (
+                      <SelectItem key={subcat.id} value={subcat.id.toString()}>
+                        {subcat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Department */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Department</Label>
+                <Select value={department} onValueChange={setDepartment}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.department_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Site */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Site</Label>
+                <Select value={site} onValueChange={setSite}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Site" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {sites.map((siteItem) => (
+                      <SelectItem key={siteItem.id} value={siteItem.id.toString()}>
+                        {siteItem.site_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Unit */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Unit</Label>
+                <Select value={unit} onValueChange={setUnit}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Unit" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {units.map((unitItem) => (
+                      <SelectItem key={unitItem.id} value={unitItem.id.toString()}>
+                        {unitItem.unit_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {statuses.map((statusItem) => (
+                      <SelectItem key={statusItem.id} value={statusItem.id.toString()}>
+                        {statusItem.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Priority */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Priority</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Priority" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {priorityOptions.map((priorityItem) => (
+                      <SelectItem key={priorityItem.value} value={priorityItem.value}>
+                        {priorityItem.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Assigned User */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Assigned User</Label>
+                <Select value={assignedUser} onValueChange={setAssignedUser}>
+                  <SelectTrigger className={commonFieldStyles}>
+                    <SelectValue placeholder="Select Assigned User" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* User Search */}
+              <div className="space-y-2">
+                <Label htmlFor="userSearch" className="text-sm font-medium text-[hsl(var(--analytics-text))]">
+                  Search User
+                </Label>
+                <Input
+                  id="userSearch"
+                  type="text"
+                  placeholder="Search by user name"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className={commonFieldStyles}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="subcategory-select-label" shrink>Subcategory</InputLabel>
-              <MuiSelect
-                labelId="subcategory-select-label"
-                label="Subcategory"
-                displayEmpty
-                value={filters.subcategory}
-                onChange={(e) => handleFilterChange('subcategory', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select SubCategory</em></MenuItem>
-                <MenuItem value="test">test</MenuItem>
-                <MenuItem value="na">NA</MenuItem>
-                <MenuItem value="fire">fire</MenuItem>
-                <MenuItem value="dentry">dentry</MenuItem>
-              </MuiSelect>
-            </FormControl>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={handleReset}
+              className="text-[hsl(var(--analytics-text))] border-[hsl(var(--analytics-border))]"
+            >
+              Reset
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              className="bg-[hsl(var(--analytics-primary))] hover:bg-[hsl(var(--analytics-primary))]/90 text-white"
+            >
+              Apply Filters
+            </Button>
           </div>
-
-          {/* Row 2 */}
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="department-select-label" shrink>Department</InputLabel>
-              <MuiSelect
-                labelId="department-select-label"
-                label="Department"
-                displayEmpty
-                value={filters.department}
-                onChange={(e) => handleFilterChange('department', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Department</em></MenuItem>
-                <MenuItem value="technician">Technician</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="facility">Facility</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="site-select-label" shrink>Site</InputLabel>
-              <MuiSelect
-                labelId="site-select-label"
-                label="Site"
-                displayEmpty
-                value={filters.site}
-                onChange={(e) => handleFilterChange('site', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Site</em></MenuItem>
-                <MenuItem value="lockated">Lockated</MenuItem>
-                <MenuItem value="mumbai">Mumbai</MenuItem>
-                <MenuItem value="pune">Pune</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="unit-select-label" shrink>Unit</InputLabel>
-              <MuiSelect
-                labelId="unit-select-label"
-                label="Unit"
-                displayEmpty
-                value={filters.unit}
-                onChange={(e) => handleFilterChange('unit', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Unit</em></MenuItem>
-                <MenuItem value="unit1">Unit 1</MenuItem>
-                <MenuItem value="unit2">Unit 2</MenuItem>
-                <MenuItem value="unit3">Unit 3</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          {/* Row 3 */}
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="status-select-label" shrink>Status</InputLabel>
-              <MuiSelect
-                labelId="status-select-label"
-                label="Status"
-                displayEmpty
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Status</em></MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="open">Open</MenuItem>
-                <MenuItem value="in-progress">In Progress</MenuItem>
-                <MenuItem value="closed">Closed</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="admin-priority-select-label" shrink>Admin Priority</InputLabel>
-              <MuiSelect
-                labelId="admin-priority-select-label"
-                label="Admin Priority"
-                displayEmpty
-                value={filters.adminPriority}
-                onChange={(e) => handleFilterChange('adminPriority', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Admin Priority</em></MenuItem>
-                <MenuItem value="p1">P1</MenuItem>
-                <MenuItem value="p2">P2</MenuItem>
-                <MenuItem value="p3">P3</MenuItem>
-                <MenuItem value="p4">P4</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <TextField
-              label="Created By"
-              placeholder="Enter Created By"
-              value={filters.createdBy}
-              onChange={(e) => handleFilterChange('createdBy', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              InputProps={{
-                sx: fieldStyles
-              }}
-            />
-          </div>
-
-          {/* Row 4 */}
-          <div className="space-y-2">
-            <TextField
-              label="Assigned To"
-              placeholder="Enter Assigned To"
-              value={filters.assignedTo}
-              onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              InputProps={{
-                sx: fieldStyles
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-center gap-3 pt-4">
-          <Button 
-            onClick={handleApply}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8"
-          >
-            Apply
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleReset}
-            className="px-8"
-          >
-            Reset
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

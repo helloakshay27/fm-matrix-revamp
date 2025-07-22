@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -10,16 +11,9 @@ import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSq
 import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
 import { TicketPagination } from '../components/TicketPagination';
 import { TicketSelectionPanel } from '../components/TicketSelectionPanel';
-import { ticketManagementAPI, TicketResponse, TicketListResponse } from '../services/ticketManagementAPI';
+import { ticketManagementAPI, TicketResponse, TicketListResponse, TicketFilters } from '../services/ticketManagementAPI';
 import { toast } from 'sonner';
-
-const statusCards = [
-  { title: 'Closed Tickets', count: 301, color: 'bg-[#8B4513]', icon: CheckCircle },
-  { title: 'Open Tickets', count: 738, color: 'bg-green-600', icon: AlertTriangle },
-  { title: 'Complaint', count: 617, color: 'bg-orange-500', icon: MessageSquare },
-  { title: 'Suggestion', count: 110, color: 'bg-orange-400', icon: FileText },
-  { title: 'Request', count: 308, color: 'bg-[#C72030]', icon: Users }
-];
+import { useDebounce } from '@/hooks/useDebounce';
 
 const TruncatedDescription = ({ text }: { text: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -55,12 +49,37 @@ export const TicketListDashboard = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<TicketFilters>({});
+  const [ticketSummary, setTicketSummary] = useState({
+    total_tickets: 0,
+    open_tickets: 0,
+    in_progress_tickets: 0,
+    closed_tickets: 0,
+    complaints: 0,
+    suggestions: 0,
+    requests: 0
+  });
+  const [isExporting, setIsExporting] = useState(false);
   const navigate = useNavigate();
 
-  const fetchTickets = useCallback(async (page: number, itemsPerPage: number) => {
+  // Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Memoize the combined filters
+  const combinedFilters = useMemo(() => {
+    const filters: TicketFilters = { ...activeFilters };
+    
+    if (debouncedSearchTerm) {
+      filters.search_all_fields_cont = debouncedSearchTerm;
+    }
+    
+    return filters;
+  }, [activeFilters, debouncedSearchTerm]);
+
+  const fetchTickets = useCallback(async (page: number, itemsPerPage: number, filters: TicketFilters = {}) => {
     setIsLoading(true);
     try {
-      const response: TicketListResponse = await ticketManagementAPI.getTickets(page, itemsPerPage);
+      const response: TicketListResponse = await ticketManagementAPI.getTickets(page, itemsPerPage, filters);
       setTickets(response.complaints || []);
       
       if (response.pagination) {
@@ -76,9 +95,20 @@ export const TicketListDashboard = () => {
     }
   }, []);
 
+  const fetchTicketSummary = useCallback(async (filters: TicketFilters = {}) => {
+    try {
+      const summary = await ticketManagementAPI.getTicketSummary(filters);
+      setTicketSummary(summary);
+    } catch (error) {
+      console.error('Error fetching ticket summary:', error);
+    }
+  }, []);
+
+  // Fetch tickets when filters or pagination changes
   useEffect(() => {
-    fetchTickets(currentPage, perPage);
-  }, [fetchTickets, currentPage, perPage]);
+    fetchTickets(currentPage, perPage, combinedFilters);
+    fetchTicketSummary(combinedFilters);
+  }, [fetchTickets, fetchTicketSummary, currentPage, perPage, combinedFilters]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -86,7 +116,7 @@ export const TicketListDashboard = () => {
 
   const handlePerPageChange = (newPerPage: number) => {
     setPerPage(newPerPage);
-    setCurrentPage(1); // Reset to first page when changing per page
+    setCurrentPage(1);
   };
 
   const formatDate = (dateString: string) => {
@@ -103,9 +133,16 @@ export const TicketListDashboard = () => {
     return value || '--';
   };
 
-  const handleFilterApply = (filters: any) => {
+  const handleFilterApply = (filters: TicketFilters) => {
     console.log('Applied filters:', filters);
-    // TODO: Implement filter functionality with API
+    setActiveFilters(filters);
+    setCurrentPage(1); // Reset to first page when applying filters
+  };
+
+  const handleClearFilters = () => {
+    setActiveFilters({});
+    setSearchTerm('');
+    setCurrentPage(1);
   };
 
   const handleAddTicket = () => {
@@ -116,25 +153,34 @@ export const TicketListDashboard = () => {
     navigate(`/maintenance/ticket/${ticketNumber}`);
   };
 
-  const handleExport = () => {
-    console.log('Exporting tickets...');
-    if (tickets.length === 0) {
-      toast.error('No tickets to export');
-      return;
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await ticketManagementAPI.exportTicketsExcel(combinedFilters);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tickets_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Tickets exported successfully');
+    } catch (error) {
+      toast.error('Failed to export tickets');
+      console.error('Error exporting tickets:', error);
+    } finally {
+      setIsExporting(false);
     }
+  };
 
-    // Create CSV content with real data
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
-      + tickets.map(ticket => 
-          `"${ticket.ticket_number}","${ticket.heading}","${ticket.category_type}","${ticket.sub_category_type || ''}","${ticket.posted_by}","${ticket.assigned_to || ''}","${ticket.issue_status}","${ticket.priority}","${ticket.site_name}","${formatDate(ticket.created_at)}","${ticket.issue_type}","${ticket.complaint_mode || ''}","${ticket.assigned_to || ''}","${ticket.service_or_asset || ''}","${ticket.asset_task_occurrence_id || ''}","${ticket.proactive_reactive || ''}","${ticket.review_tracking_date || ''}","${ticket.response_escalation}","${ticket.response_tat}","${ticket.response_time || ''}","${ticket.escalation_response_name || ''}","${ticket.resolution_escalation}","${ticket.resolution_tat || ''}","${ticket.resolution_time || ''}","${ticket.escalation_resolution_name || ''}"`
-        ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "ticket_list.csv");
-    link.click();
+  const handleReset = () => {
+    setSearchTerm('');
+    setActiveFilters({});
+    setCurrentPage(1);
   };
 
   const handleSelectTicket = (ticketId: number, checked: boolean) => {
@@ -143,9 +189,7 @@ export const TicketListDashboard = () => {
         ? [...prev, ticketId]
         : prev.filter(id => id !== ticketId);
       
-      // Update select all state
       setSelectAll(newSelection.length === tickets.length && tickets.length > 0);
-      
       return newSelection;
     });
   };
@@ -165,7 +209,7 @@ export const TicketListDashboard = () => {
       toast.success(`${selectedTickets.length} ticket(s) marked as Golden Ticket successfully`);
       setSelectedTickets([]);
       setSelectAll(false);
-      await fetchTickets(currentPage, perPage);
+      await fetchTickets(currentPage, perPage, combinedFilters);
     } catch (error) {
       toast.error('Failed to mark tickets as Golden Ticket');
       console.error('Error marking as golden ticket:', error);
@@ -178,37 +222,41 @@ export const TicketListDashboard = () => {
       toast.success(`${selectedTickets.length} ticket(s) flagged successfully`);
       setSelectedTickets([]);
       setSelectAll(false);
-      await fetchTickets(currentPage, perPage);
+      await fetchTickets(currentPage, perPage, combinedFilters);
     } catch (error) {
       toast.error('Failed to flag tickets');
       console.error('Error flagging tickets:', error);
     }
   };
 
-  const handleExportSelected = () => {
+  const handleExportSelected = async () => {
     if (selectedTickets.length === 0) {
       toast.error('No tickets selected for export');
       return;
     }
 
-    const selectedTicketData = tickets.filter(ticket => 
-      selectedTickets.includes(ticket.id)
-    );
+    setIsExporting(true);
+    try {
+      // For selected tickets, we could add a specific filter or handle differently
+      // For now, we'll export the current filtered view
+      const blob = await ticketManagementAPI.exportTicketsExcel(combinedFilters);
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `selected_tickets_${selectedTickets.length}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-    // Create CSV content with selected tickets
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "Ticket ID,Description,Category,Sub Category,Created By,Assigned To,Status,Priority,Site,Created On,Ticket Type,Complaint Mode,Associated To,Asset/Service Name,Task ID,Proactive/Reactive,Review,Response Escalation,Response TAT (Min),Response Time (D:H:M),Response Escalation Level,Resolution Escalation,Resolution TAT (Min),Resolution Time (D:H:M),Resolution Escalation Level\n"
-      + selectedTicketData.map(ticket => 
-          `"${ticket.ticket_number}","${ticket.heading}","${ticket.category_type}","${ticket.sub_category_type || ''}","${ticket.posted_by}","${ticket.assigned_to || ''}","${ticket.issue_status}","${ticket.priority}","${ticket.site_name}","${formatDate(ticket.created_at)}","${ticket.issue_type}","${ticket.complaint_mode || ''}","${ticket.assigned_to || ''}","${ticket.service_or_asset || ''}","${ticket.asset_task_occurrence_id || ''}","${ticket.proactive_reactive || ''}","${ticket.review_tracking_date || ''}","${ticket.response_escalation}","${ticket.response_tat}","${ticket.response_time || ''}","${ticket.escalation_response_name || ''}","${ticket.resolution_escalation}","${ticket.resolution_tat || ''}","${ticket.resolution_time || ''}","${ticket.escalation_resolution_name || ''}"`
-        ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `selected_tickets_${selectedTickets.length}.csv`);
-    link.click();
-
-    toast.success(`Exported ${selectedTickets.length} selected tickets`);
+      toast.success(`Selected tickets exported successfully`);
+    } catch (error) {
+      toast.error('Failed to export selected tickets');
+      console.error('Error exporting selected tickets:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleClearSelection = () => {
@@ -235,6 +283,18 @@ export const TicketListDashboard = () => {
     selectedTickets.includes(ticket.id)
   );
 
+  const statusCards = [
+    { title: 'Total Tickets', count: ticketSummary.total_tickets, color: 'bg-gray-600', icon: FileText },
+    { title: 'Open Tickets', count: ticketSummary.open_tickets, color: 'bg-green-600', icon: AlertTriangle },
+    { title: 'In Progress', count: ticketSummary.in_progress_tickets, color: 'bg-blue-600', icon: Users },
+    { title: 'Closed Tickets', count: ticketSummary.closed_tickets, color: 'bg-[#8B4513]', icon: CheckCircle },
+    { title: 'Complaints', count: ticketSummary.complaints, color: 'bg-orange-500', icon: MessageSquare },
+    { title: 'Suggestions', count: ticketSummary.suggestions, color: 'bg-orange-400', icon: FileText },
+    { title: 'Requests', count: ticketSummary.requests, color: 'bg-[#C72030]', icon: Users }
+  ];
+
+  const hasActiveFilters = Object.keys(activeFilters).length > 0 || searchTerm.length > 0;
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -247,7 +307,7 @@ export const TicketListDashboard = () => {
       </div>
 
       {/* Status Cards */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
         {statusCards.map((card, index) => (
           <Card key={index} className={`${card.color} text-white`}>
             <CardContent className="p-4 flex items-center gap-3">
@@ -262,6 +322,26 @@ export const TicketListDashboard = () => {
           </Card>
         ))}
       </div>
+
+      {/* Active Filters Indicator */}
+      {hasActiveFilters && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-blue-800">
+              Filters active ({Object.keys(activeFilters).length} filter{Object.keys(activeFilters).length !== 1 ? 's' : ''})
+              {searchTerm && ` • Search: "${searchTerm}"`}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearFilters}
+              className="text-blue-600 border-blue-300 hover:bg-blue-100"
+            >
+              Clear All
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex gap-3 mb-6">
@@ -285,25 +365,24 @@ export const TicketListDashboard = () => {
           onClick={handleExport}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
-          disabled={tickets.length === 0}
+          disabled={isExporting}
         >
           <Upload className="w-4 h-4 mr-2" />
-          Export
+          {isExporting ? 'Exporting...' : 'Export Excel'}
         </Button>
         <div className="ml-auto flex gap-2">
           <Input 
-            placeholder="Search..."
+            placeholder="Search all fields..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
           />
           <Button 
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            variant="outline"
+            onClick={handleReset}
           >
-            Go!
+            Reset
           </Button>
-          <Button variant="outline">Reset</Button>
         </div>
       </div>
 
@@ -401,7 +480,7 @@ export const TicketListDashboard = () => {
                     <TableCell>{ticket.escalation_resolution_name || '--'}</TableCell>
                   </TableRow>
                 ))}
-                {tickets.length === 0 && (
+                {tickets.length === 0 && !isLoading && (
                   <TableRow>
                     <TableCell colSpan={27} className="text-center py-8 text-gray-500">
                       No tickets found

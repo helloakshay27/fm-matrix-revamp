@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, X } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RootState, AppDispatch } from '@/store/store';
+import { fetchInventoryConsumptionDetails } from '@/store/slices/inventoryConsumptionDetailsSlice';
 import {
   Table,
   TableBody,
@@ -26,6 +29,9 @@ import {
 const InventoryConsumptionViewPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  const { inventory, consumptions, loading, error } = useSelector((state: RootState) => state.inventoryConsumptionDetails);
   
   const [dateRange, setDateRange] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,81 +41,11 @@ const InventoryConsumptionViewPage = () => {
     comments: ''
   });
   
-  // Sample consumption history data - in real app this would come from API based on inventory ID
-  const [consumptionHistory] = useState([
-    {
-      id: 1,
-      inventory: 'Handwash',
-      date: '15/04/2024',
-      opening: '1.0',
-      addConsume: '1.0',
-      closing: '0.0',
-      consumptionType: 'Consume',
-      comments: 'Testing',
-      consumedBy: 'Abdul A',
-      isConsume: true
-    },
-    {
-      id: 2,
-      inventory: 'Handwash',
-      date: '15/04/2024',
-      opening: '2.0',
-      addConsume: '1.0',
-      closing: '1.0',
-      consumptionType: 'Consume',
-      comments: 'For washroom',
-      consumedBy: 'Shubh Jhaveri',
-      isConsume: true
-    },
-    {
-      id: 3,
-      inventory: 'Handwash',
-      date: '23/01/2024',
-      opening: '5.0',
-      addConsume: '3.0',
-      closing: '2.0',
-      consumptionType: 'Consume',
-      comments: '-',
-      consumedBy: 'Abdul A',
-      isConsume: true
-    },
-    {
-      id: 4,
-      inventory: 'Handwash',
-      date: '31/08/2021',
-      opening: '3.0',
-      addConsume: '2.0',
-      closing: '5.0',
-      consumptionType: '-',
-      comments: '-',
-      consumedBy: 'Mukesh Dabhi',
-      isConsume: false
-    },
-    {
-      id: 5,
-      inventory: 'Handwash',
-      date: '23/08/2021',
-      opening: '4.0',
-      addConsume: '1.0',
-      closing: '3.0',
-      consumptionType: 'Consume',
-      comments: '-',
-      consumedBy: 'Mukesh Dabhi',
-      isConsume: true
-    },
-    {
-      id: 6,
-      inventory: 'Handwash',
-      date: '19/08/2021',
-      opening: '3.0',
-      addConsume: '1.0',
-      closing: '4.0',
-      consumptionType: '-',
-      comments: 'Gents toilet',
-      consumedBy: 'Mukesh Dabhi',
-      isConsume: false
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchInventoryConsumptionDetails(id));
     }
-  ]);
+  }, [dispatch, id]);
 
   const handleSubmit = () => {
     console.log('Submitted with date range:', dateRange);
@@ -217,7 +153,6 @@ const InventoryConsumptionViewPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-semibold text-gray-900">Inventory</TableHead>
                 <TableHead className="font-semibold text-gray-900">Date</TableHead>
                 <TableHead className="font-semibold text-gray-900">Opening</TableHead>
                 <TableHead className="font-semibold text-gray-900">Add / Consume</TableHead>
@@ -228,37 +163,57 @@ const InventoryConsumptionViewPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {consumptionHistory.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{item.inventory}</TableCell>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>{item.opening}</TableCell>
-                  <TableCell>
-                    <span className={item.isConsume ? "text-red-500 font-medium" : "text-green-500 font-medium"}>
-                      {item.addConsume}
-                    </span>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    Loading consumption data...
                   </TableCell>
-                  <TableCell>{item.closing}</TableCell>
-                  <TableCell>{item.consumptionType}</TableCell>
-                  <TableCell>{item.comments}</TableCell>
-                  <TableCell>{item.consumedBy}</TableCell>
                 </TableRow>
-              ))}
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-red-500">
+                    Error loading data: {error}
+                  </TableCell>
+                </TableRow>
+              ) : consumptions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    No consumption data available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                consumptions.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-gray-50">
+                    <TableCell>{item.date}</TableCell>
+                    <TableCell>{item.opening}</TableCell>
+                    <TableCell>
+                      <span className={item.consumption_type === 'Consume' ? "text-red-500 font-medium" : "text-green-500 font-medium"}>
+                        {item.add_or_consume}
+                      </span>
+                    </TableCell>
+                    <TableCell>{item.closing}</TableCell>
+                    <TableCell>{item.consumption_type}</TableCell>
+                    <TableCell>{item.comments}</TableCell>
+                    <TableCell>{item.consumed_by}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
       {/* Add/Consume Modal */}
-      <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+      <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="md" fullWidth>
+        <div style={{ minHeight: '500px' }}>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
           Add / Consume
           <IconButton onClick={handleCloseModal}>
             <X className="w-5 h-5" />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <div className="space-y-6">
+        <DialogContent sx={{ pt: 1, minHeight: '400px', pb: 4 }}>
+          <div className="space-y-8 py-4">
             <TextField
               label="Enter Quantity"
               placeholder="Enter Quantity"
@@ -270,13 +225,19 @@ const InventoryConsumptionViewPage = () => {
               InputLabelProps={{ shrink: true }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  height: '48px',
+                  height: '56px',
                   borderRadius: '8px',
+                  fontSize: '16px',
                 },
                 '& .MuiInputLabel-root': {
                   color: '#9CA3AF',
-                  fontSize: '14px',
+                  fontSize: '16px',
+                  fontWeight: '500',
                   '&.Mui-focused': { color: '#C72030' }
+                },
+                '& .MuiOutlinedInput-input': {
+                  fontSize: '16px',
+                  padding: '16px 14px'
                 }
               }}
             />
@@ -336,6 +297,7 @@ const InventoryConsumptionViewPage = () => {
             </div>
           </div>
         </DialogContent>
+        </div>
       </Dialog>
     </div>
   );
