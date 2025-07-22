@@ -28,6 +28,7 @@ interface TaskTableProps {
 }
 
 const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
   { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
   { key: 'checklist', label: 'Checklist', sortable: true, hideable: true, draggable: true },
   { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
@@ -41,12 +42,21 @@ const columns: ColumnConfig[] = [
   { key: 'supplier', label: 'Supplier', sortable: true, hideable: true, draggable: true },
   { key: 'graceTime', label: 'Grace Time', sortable: true, hideable: true, draggable: true },
   { key: 'duration', label: 'Duration', sortable: true, hideable: true, draggable: true },
-  { key: 'percentage', label: '%', sortable: true, hideable: true, draggable: true },
-  { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false }
+  { key: 'percentage', label: '%', sortable: true, hideable: true, draggable: true }
 ];
 
 export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask }) => {
   const renderRow = (task: Task) => ({
+    actions: (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onViewTask(task.id)}
+        className="p-2 h-8 w-8 hover:bg-accent"
+      >
+        <Eye className="w-4 h-4 text-muted-foreground" />
+      </Button>
+    ),
     id: task.id,
     checklist: task.checklist,
     type: task.type,
@@ -68,17 +78,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask }) => {
     supplier: task.supplier || '-',
     graceTime: task.graceTime,
     duration: task.duration || '-',
-    percentage: task.percentage || '-',
-    actions: (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onViewTask(task.id)}
-        className="p-2 h-8 w-8 hover:bg-accent"
-      >
-        <Eye className="w-4 h-4 text-muted-foreground" />
-      </Button>
-    )
+    percentage: task.percentage || '-'
   });
 
   return (

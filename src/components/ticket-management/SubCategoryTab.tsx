@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -71,6 +70,49 @@ interface LocationOption {
   name: string;
 }
 
+interface EngineerResponse {
+  fm_users: Array<{
+    id: number;
+    firstname: string;
+    lastname: string;
+    email: string;
+    // ... other fields as needed
+  }>;
+}
+
+interface SubCategoriesResponse {
+  sub_categories: SubCategoryType[];
+  total_count: number;
+  filters: {
+    site_id: number | null;
+    category_id: number | null;
+    search: string | null;
+  };
+}
+
+interface BuildingsResponse {
+  id: number;
+  name: string;
+  site_id: string;
+  // ... other fields as needed
+}
+
+interface WingsResponse {
+  wings: Array<{
+    id: number;
+    name: string;
+    // ... other fields
+  }>;
+}
+
+interface FloorsResponse {
+  floors: Array<{
+    id: number;
+    name: string;
+    // ... other fields
+  }>;
+}
+
 export const SubCategoryTab: React.FC = () => {
   const [subCategories, setSubCategories] = useState<SubCategoryType[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -114,28 +156,70 @@ export const SubCategoryTab: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [categoriesData, engineersData, subCategoriesData, buildingsData, wingsData, zonesData, floorsData, roomsData] = await Promise.all([
+      const [
+        categoriesResponse,
+        engineersResponse,
+        subCategoriesResponse,
+        buildingsResponse,
+        wingsResponse,
+        zonesResponse,
+        floorsResponse,
+        roomsResponse
+      ] = await Promise.all([
         ticketManagementAPI.getCategories(),
         ticketManagementAPI.getEngineers(),
         ticketManagementAPI.getSubCategories(),
         ticketManagementAPI.getBuildings(),
         ticketManagementAPI.getWings(),
-        ticketManagementAPI.getZones(),
         ticketManagementAPI.getFloors(),
+        ticketManagementAPI.getZones(),
         ticketManagementAPI.getRooms(),
       ]);
 
-      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      setEngineers(Array.isArray(engineersData) ? engineersData : []);
-      setSubCategories(Array.isArray(subCategoriesData) ? subCategoriesData : []);
-      setBuildings(Array.isArray(buildingsData) ? buildingsData : []);
-      setWings(Array.isArray(wingsData?.wings) ? wingsData.wings : []);
-      setZones(Array.isArray(zonesData?.zones) ? zonesData.zones : []);
-      setFloors(Array.isArray(floorsData?.floors) ? floorsData.floors : []);
-      setRooms(Array.isArray(roomsData) ? roomsData : []);
+      // Process categories - includes name and icon_url
+      setCategories(categoriesResponse?.helpdesk_categories || []);
+
+      // Process engineers - extract from fm_users array
+      const formattedEngineers = engineersResponse?.fm_users?.map(user => ({
+        id: user.id,
+        firstname: user.firstname,
+        lastname: user.lastname
+      })) || [];
+      setEngineers(formattedEngineers);
+
+      // Process sub-categories
+      setSubCategories(subCategoriesResponse?.sub_categories || []);
+
+      // Process buildings - handle single building or array
+      const buildingsList = Array.isArray(buildingsResponse) 
+        ? buildingsResponse 
+        : buildingsResponse ? [buildingsResponse] : [];
+      setBuildings(buildingsList);
+
+      // Process wings
+      const wingsList = wingsResponse?.wings?.map(wing => ({
+        id: wing.id,
+        name: wing.name
+      })) || [];
+      setWings(wingsList);
+
+      // Process zones (if available)
+      setZones(zonesResponse || []);
+
+      // Process floors
+      const floorsList = floorsResponse?.floors?.map(floor => ({
+        id: floor.id,
+        name: floor.name
+      })) || [];
+      setFloors(floorsList);
+
+      // Process rooms - handle array response
+      const roomsList = Array.isArray(roomsResponse) ? roomsResponse : [];
+      setRooms(roomsList);
+
     } catch (error) {
-      toast.error('Failed to fetch data');
       console.error('Error fetching data:', error);
+      toast.error('Failed to fetch data');
     } finally {
       setIsLoading(false);
     }

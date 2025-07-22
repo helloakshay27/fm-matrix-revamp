@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { Plus } from "lucide-react";
+import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 export const OperationalAuditScheduledDashboard = () => {
@@ -24,6 +24,7 @@ export const OperationalAuditScheduledDashboard = () => {
   ];
 
   const columns = [
+    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'activityName', label: 'Activity Name', sortable: true, draggable: true },
     { key: 'noOfAssociation', label: 'No. Of Association', sortable: true, draggable: true },
@@ -37,6 +38,13 @@ export const OperationalAuditScheduledDashboard = () => {
   };
 
   const renderCell = (item: any, columnKey: string) => {
+    if (columnKey === 'actions') {
+      return (
+        <Button variant="ghost" size="sm" onClick={() => console.log('View audit:', item.id)}>
+          <Eye className="w-4 h-4" />
+        </Button>
+      );
+    }
     if (columnKey === 'id') {
       return <span className="text-blue-600 font-medium">{item.id}</span>;
     }
@@ -63,21 +71,11 @@ export const OperationalAuditScheduledDashboard = () => {
     <div className="p-6">
       <div className="mb-6">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule &gt; Schedule List</p>
+          
           <h1 className="text-2xl font-bold text-[#1a1a1a]">SCHEDULE LIST</h1>
         </div>
       </div>
       
-      <div className="mb-4">
-        <Button 
-          onClick={handleAddSchedule}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-      </div>
 
       <div className="overflow-x-auto">
         <EnhancedTable
@@ -91,6 +89,16 @@ export const OperationalAuditScheduledDashboard = () => {
           getItemId={(item) => item.id}
           storageKey="schedule-list-table"
           className="w-full"
+          leftActions={
+            <Button 
+              onClick={handleAddSchedule}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          }
         />
       </div>
     </div>

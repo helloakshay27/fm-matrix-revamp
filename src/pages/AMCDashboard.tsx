@@ -70,6 +70,7 @@ interface AMCRecord {
 const initialAmcData: AMCRecord[] = [];
 
 const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
   { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
   { key: 'resource_type', label: 'Resource Type', sortable: true, defaultVisible: true },
@@ -170,20 +171,37 @@ export const AMCDashboard = () => {
 
   const handleExport = async () => {
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/asset_amcs/status_of_amcs.xlsx?site_id=${siteId}&access_token=${token}`);
-      const data = response.data;
-      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+      // Construct the API URL based on whether there are selected items
+      const baseUrl = 'https://fm-uat-api.lockated.com';
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+      let url = `${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+      
+      // Append selected IDs to the URL if there are any
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+  
+      // Make the API request
+      const response = await axios.get(url, {
+        responseType: 'blob', // Important for handling binary data (Excel file)
+      });
+  
+      // Create a blob and trigger download
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = 'amc_data.json';
+      link.href = downloadUrl;
+      link.download = 'amc_export.xlsx'; // Set the file name
       link.click();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(downloadUrl); // Clean up
     } catch (error) {
-      console.log(error)
+      console.error('Export failed:', error);
+      // Optionally, show an error message to the user
+      alert('Failed to export AMC data. Please try again.');
     }
-  }
-
+  };
   // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -200,6 +218,16 @@ export const AMCDashboard = () => {
 
   const renderCell = (item: AMCRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleViewDetails(item.id)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
@@ -236,15 +264,6 @@ export const AMCDashboard = () => {
     }
   };
 
-  const renderActions = (item: AMCRecord) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => handleViewDetails(item.id)}
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
-  );
 
   const bulkActions = [
     {
@@ -718,16 +737,14 @@ export const AMCDashboard = () => {
         </TabsContent>
 
         <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 mb-6">
-            <Button
-              onClick={handleAddClick}
-              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
+          {/* Header */}
+          <div className="mb-6">
+            
+            <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
+              AMC LIST
+            </h1>
           </div>
+
 
           {/* Loading State */}
           {loading && (
@@ -750,7 +767,6 @@ export const AMCDashboard = () => {
               data={paginatedData}
               columns={columns}
               renderCell={renderCell}
-              renderActions={renderActions}
               onRowClick={(item) => handleViewDetails(item.id)}
               selectable={true}
               selectedItems={selectedItems}
@@ -765,6 +781,15 @@ export const AMCDashboard = () => {
               bulkActions={bulkActions}
               showBulkActions={true}
               pagination={false}
+              leftActions={
+                <Button 
+                  onClick={handleAddClick} 
+                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+              }
             />
           )}
 

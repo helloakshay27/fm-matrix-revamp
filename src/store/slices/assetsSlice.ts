@@ -43,6 +43,7 @@ interface AssetsState {
   filters: AssetFilters
   // Backward compatibility for existing code
   data: Asset[]
+   totalValue?: number | string
 }
 
 const initialState: AssetsState = {
@@ -53,7 +54,8 @@ const initialState: AssetsState = {
   currentPage: 1,
   totalPages: 0,
   filters: {},
-  data: [] // Backward compatibility
+  data: [] ,
+  totalValue: 0,
 }
 
 // Async thunk for fetching assets data with filters
@@ -108,10 +110,11 @@ const assetsSlice = createSlice({
       .addCase(fetchAssetsData.fulfilled, (state, action) => {
         state.loading = false
         state.items = action.payload.assets || []
-        state.data = action.payload.assets || [] // Backward compatibility
+        state.data = action.payload || [] // Backward compatibility
         state.totalCount = action.payload.total_count || 0
         state.currentPage = action.payload.pagination?.current_page || 1
         state.totalPages = action.payload.pagination?.total_pages || 0
+        state.totalValue = action.payload.total_value || 0
         if (action.payload.appliedFilters) {
           state.filters = action.payload.appliedFilters
         }

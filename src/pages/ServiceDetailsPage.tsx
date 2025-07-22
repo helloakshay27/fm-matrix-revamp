@@ -112,9 +112,6 @@ export const ServiceDetailsPage = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="text-sm text-[#1a1a1a] opacity-70 mb-1">
-              Service List &gt; Service Detail
-            </p>
             <h1 className="text-2xl font-bold text-[#1a1a1a]">
               {details.service_name || '—'} ({details.service_code || '—'})
             </h1>
@@ -250,13 +247,6 @@ export const ServiceDetailsPage = () => {
                 </>
               ) : (
                 <>
-                  <div className="w-48 h-48 bg-gray-100 mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-                    <img
-                      src={qrCodePlaceholder}
-                      alt="QR Code"
-                      className="w-40 h-40 object-contain"
-                    />
-                  </div>
                   <div className="text-sm text-gray-600">No QR code available</div>
                 </>
               )}

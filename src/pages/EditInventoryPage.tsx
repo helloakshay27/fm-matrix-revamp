@@ -252,14 +252,10 @@ export const EditInventoryPage = () => {
     <div className="p-6 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4" />
-            Inventory List
-          </button>
-          <span>&gt;</span>
-          <span>Edit Inventory</span>
-        </div>
+        <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Inventory List
+        </button>
         <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">EDIT INVENTORY - ID: {id}</h1>
       </div>
 

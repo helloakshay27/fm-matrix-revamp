@@ -65,20 +65,22 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   console.log('TicketSelectionPanel - Rendering with selected tickets:', selectedTickets);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50">
-      <div className="max-w-7xl mx-auto px-6 py-3">
-        <div className="flex items-center justify-between">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background border border-border shadow-lg rounded-lg z-50">
+      <div className="px-6 py-3">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md text-sm font-medium">
-              {selectedTickets.length}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Selection</span>
             </div>
-            <span className="text-sm text-muted-foreground font-medium">
-              Tickets Selected
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {selectedTicketObjects.slice(0, 3).map(ticket => ticket.ticket_number).join(', ')}
-              {selectedTicketObjects.length > 3 && ` and ${selectedTicketObjects.length - 3} more`}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium">
+                {selectedTickets.length}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {selectedTicketObjects.slice(0, 2).map(ticket => ticket.ticket_number).join(', ')}
+                {selectedTicketObjects.length > 2 && ` +${selectedTicketObjects.length - 2} more`}
+              </span>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -87,7 +89,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               disabled={isGoldenLoading}
               variant="outline"
               size="sm"
-              className="h-10 px-4 gap-2"
+              className="gap-2"
             >
               {isGoldenLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -102,7 +104,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               disabled={isFlagLoading}
               variant="outline"
               size="sm"
-              className="h-10 px-4 gap-2"
+              className="gap-2"
             >
               {isFlagLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -116,7 +118,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               onClick={handleExport}
               variant="outline"
               size="sm"
-              className="h-10 px-4 gap-2"
+              className="gap-2"
             >
               <Download className="w-4 h-4" />
               Export
@@ -126,7 +128,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               onClick={handleClearSelection}
               variant="outline"
               size="sm"
-              className="h-10 px-4 gap-2"
+              className="gap-2"
             >
               <X className="w-4 h-4" />
             </Button>

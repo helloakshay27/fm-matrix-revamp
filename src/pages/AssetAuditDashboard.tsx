@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2 } from 'lucide-react';
+import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -66,6 +66,7 @@ const auditData: AuditRecord[] = [
 ];
 
 const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'auditName', label: 'Audit Name', sortable: true, defaultVisible: true },
   { key: 'auditId', label: 'Audit ID', sortable: true, defaultVisible: true },
   { key: 'type', label: 'Type', sortable: true, defaultVisible: true },
@@ -139,6 +140,16 @@ export const AssetAuditDashboard = () => {
 
   const renderCell = (item: AuditRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAuditNameClick(item.auditId)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'auditName':
         return (
           <button
@@ -203,10 +214,6 @@ export const AssetAuditDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
-          Audit &gt; Audit List
-        </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
         
@@ -274,15 +281,6 @@ export const AssetAuditDashboard = () => {
         </div>
 
         {/* Action Button */}
-        <div className="mb-6">
-          <Button 
-            onClick={handleAddClick}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Audit
-          </Button>
-        </div>
 
         {/* Enhanced Table */}
         <EnhancedTable
@@ -304,6 +302,15 @@ export const AssetAuditDashboard = () => {
           showBulkActions={true}
           pagination={true}
           pageSize={10}
+          leftActions={
+            <Button 
+              onClick={handleAddClick}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Audit
+            </Button>
+          }
         />
       </div>
     </div>

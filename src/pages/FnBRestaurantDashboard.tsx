@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, Plus } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchRestaurants } from "@/store/slices/f&bSlice";
+import { editRestaurant, fetchRestaurants } from "@/store/slices/f&bSlice";
 
 interface DaySchedule {
   is_open: number;
@@ -20,9 +20,9 @@ interface Restaurant {
   fri: number;
   sat: number;
   sun: number;
-  status: number;
-  can_order: number;
-  booking_allowed: number;
+  status: boolean;
+  can_order: boolean;
+  booking_allowed: boolean;
   bookingAllowed: boolean;
   orderAllowed: boolean;
   active: boolean;
@@ -52,42 +52,90 @@ export const FnBRestaurantDashboard = () => {
     fetchRestaurant();
   }, [])
 
-  const toggleBookingAllowed = (id: number) => {
-    setRestaurants((prev) =>
-      prev.map((restaurant) =>
-        restaurant.id === id
-          ? {
-            ...restaurant,
-            bookingAllowed: !restaurant.bookingAllowed,
-          }
-          : restaurant
-      )
-    );
+  const toggleBookingAllowed = async (id: number) => {
+    const restaurantToUpdate = restaurants.find((r) => r.id === id);
+    if (!restaurantToUpdate) return;
+
+    const updatedBookingAllowed = !restaurantToUpdate.booking_allowed;
+
+    const dataToSubmit = {
+      restaurant: {
+        ...restaurantToUpdate,
+        booking_allowed: updatedBookingAllowed,
+      }
+    };
+
+    try {
+      await dispatch(editRestaurant({ token, baseUrl, id: id.toString(), data: dataToSubmit })).unwrap();
+
+      setRestaurants((prev) =>
+        prev.map((restaurant) =>
+          restaurant.id === id
+            ? { ...restaurant, booking_allowed: updatedBookingAllowed }
+            : restaurant
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update bookingAllowed:", error);
+    }
   };
-  const toggleOrderAllowed = (id: number) => {
-    setRestaurants((prev) =>
-      prev.map((restaurant) =>
-        restaurant.id === id
-          ? {
-            ...restaurant,
-            orderAllowed: !restaurant.orderAllowed,
-          }
-          : restaurant
-      )
-    );
+
+  const toggleOrderAllowed = async (id: number) => {
+    const restaurantToUpdate = restaurants.find((r) => r.id === id);
+    if (!restaurantToUpdate) return;
+
+    const updatedOrderAllowed = !restaurantToUpdate.can_order;
+
+    const dataToSubmit = {
+      restaurant: {
+        ...restaurantToUpdate,
+        can_order: updatedOrderAllowed,
+      }
+    };
+
+    try {
+      await dispatch(editRestaurant({ token, baseUrl, id: id.toString(), data: dataToSubmit })).unwrap();
+
+      setRestaurants((prev) =>
+        prev.map((restaurant) =>
+          restaurant.id === id
+            ? { ...restaurant, can_order: updatedOrderAllowed }
+            : restaurant
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update bookingAllowed:", error);
+    }
   };
-  const toggleActive = (id: number) => {
-    setRestaurants((prev) =>
-      prev.map((restaurant) =>
-        restaurant.id === id
-          ? {
-            ...restaurant,
-            active: !restaurant.active,
-          }
-          : restaurant
-      )
-    );
+
+  const toggleActive = async (id: number) => {
+    const restaurantToUpdate = restaurants.find((r) => r.id === id);
+    if (!restaurantToUpdate) return;
+
+    const isActive = !restaurantToUpdate.status;
+
+    const dataToSubmit = {
+      restaurant: {
+        ...restaurantToUpdate,
+        status: isActive,
+      }
+    };
+
+    try {
+      await dispatch(editRestaurant({ token, baseUrl, id: id.toString(), data: dataToSubmit })).unwrap();
+
+      setRestaurants((prev) =>
+        prev.map((restaurant) =>
+          restaurant.id === id
+            ? { ...restaurant, status: isActive }
+            : restaurant
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update bookingAllowed:", error);
+    }
   };
+
   return (
     <div className="p-6">
       <div className="mb-6">

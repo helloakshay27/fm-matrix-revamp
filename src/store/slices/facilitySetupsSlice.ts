@@ -1,8 +1,8 @@
-import { createAsyncThunk } from '@reduxjs/toolkit'
-import createApiSlice from '../api/apiSlice'
-import { apiClient } from '@/utils/apiClient'
-import { ENDPOINTS } from '@/config/apiConfig'
-import axios from 'axios';
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import createApiSlice from "../api/apiSlice";
+import { apiClient } from "@/utils/apiClient";
+import { ENDPOINTS } from "@/config/apiConfig";
+import axios from "axios";
 
 // Define the Facility interface based on API response
 export interface Facility {
@@ -18,16 +18,18 @@ export interface FacilitySetupsResponse {
 
 // Async thunk for fetching facility setups
 export const fetchFacilitySetups = createAsyncThunk(
-  'facilitySetups/fetchFacilitySetups',
+  "facilitySetups/fetchFacilitySetups",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get(ENDPOINTS.FACILITY_SETUPS)
-      return response.data
+      const response = await apiClient.get(ENDPOINTS.FACILITY_SETUPS);
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch facility setups')
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch facility setups"
+      );
     }
   }
-)
+);
 
 export const fetchFacilitySetup = createAsyncThunk("fetchFacilitySetup", async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
   try {
@@ -44,8 +46,14 @@ export const fetchFacilitySetup = createAsyncThunk("fetchFacilitySetup", async (
 })
 
 // Create the facility setups slice
-const facilitySetupsSlice = createApiSlice<FacilitySetupsResponse>('facilitySetups', fetchFacilitySetups)
-const fetchFacilitySetupSlice = createApiSlice('fetchFacilitySetup', fetchFacilitySetup)
+const facilitySetupsSlice = createApiSlice<FacilitySetupsResponse>(
+  "facilitySetups",
+  fetchFacilitySetups
+);
+const fetchFacilitySetupSlice = createApiSlice<FacilitySetupsResponse>(
+  "fetchFacilitySetup",
+  fetchFacilitySetup
+);
 
-export default facilitySetupsSlice.reducer
-export const fetchFacilitySetupReducer = fetchFacilitySetupSlice.reducer
+export default facilitySetupsSlice.reducer;
+export const fetchFacilitySetupReducer = fetchFacilitySetupSlice.reducer;

@@ -10,27 +10,30 @@ import { ArrowLeft, Plus, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppDispatch } from '@/store/hooks';
 import { fetchFacilitySetup } from '@/store/slices/facilitySetupsSlice';
+import { facilityBookingSetupDetails } from '@/store/slices/facilityBookingsSlice';
 
 export const BookingSetupDetailPage = () => {
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const { id } = useParams();
+
   const navigate = useNavigate();
 
   // Mock data - in real app this would come from API based on id
   const [bookingData, setBookingData] = useState({});
 
   useEffect(() => {
-    const fetchBookingData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await dispatch(fetchFacilitySetup({ baseUrl, token, id: Number(id) })).unwrap();
+        const response = await dispatch(facilityBookingSetupDetails({ baseUrl, token, id })).unwrap();
         setBookingData(response);
       } catch (error) {
-        console.error('Error fetching booking data:', error);
+        console.log(error)
       }
-    };
-    fetchBookingData();
+    }
+
+    fetchData();
   }, [])
 
   const handleBack = () => {

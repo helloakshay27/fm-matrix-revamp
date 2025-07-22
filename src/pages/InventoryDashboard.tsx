@@ -231,6 +231,7 @@ export const InventoryDashboard = () => {
   };
 
   const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
     { key: 'name', label: 'Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
@@ -276,13 +277,15 @@ export const InventoryDashboard = () => {
     </div>
   );
 
-  const renderRowActions = (item) => (
-    <Button variant="ghost" size="sm" onClick={() => handleViewItem(item.id)}>
-      <Eye className="w-4 h-4" />
-    </Button>
-  );
 
   const renderCell = (item, columnKey) => {
+    if (columnKey === 'actions') {
+      return (
+        <Button variant="ghost" size="sm" onClick={() => handleViewItem(item.id)}>
+          <Eye className="w-4 h-4" />
+        </Button>
+      );
+    }
     if (columnKey === 'criticality') {
       return (
         <span className={`px-2 py-1 rounded text-xs ${
@@ -420,12 +423,7 @@ export const InventoryDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6">
       <div className="mb-4 sm:mb-6">
-        <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-4">
-          <span>Inventories</span>
-          <span>&gt;</span>
-          <span>Inventory Dashboard</span>
-        </div>
-        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">  {getHeading().toUpperCase()}</h1>
+        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
@@ -838,9 +836,6 @@ export const InventoryDashboard = () => {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
-          <div className="mb-4">
-            {renderCustomActions()}
-          </div>
 
           {/* Error handling */}
           {error && (
@@ -854,7 +849,6 @@ export const InventoryDashboard = () => {
               data={paginatedData}
               columns={columns}
               renderCell={renderCell}
-              renderActions={renderRowActions}
               bulkActions={bulkActions}
               showBulkActions={true}
               selectable={true}
@@ -868,6 +862,7 @@ export const InventoryDashboard = () => {
               storageKey="inventory-table"
               loading={loading}
               emptyMessage={loading ? "Loading inventory data..." : "No inventory items found"}
+              leftActions={renderCustomActions()}
             />
           </div>
 

@@ -129,6 +129,7 @@ export const ServiceDashboard = () => {
   const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
 
   const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
@@ -199,14 +200,15 @@ export const ServiceDashboard = () => {
     </div>
   );
 
-  const renderRowActions = (service: ServiceRecord) => (
-    <Button variant="ghost" size="sm" onClick={() => handleViewService(service.id)}>
-      <Eye className="w-4 h-4" />
-    </Button>
-  );
 
   const renderCell = (item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'serviceName':
         return item.service_name || '-';
       case 'id':
@@ -361,13 +363,10 @@ export const ServiceDashboard = () => {
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <p className="text-muted-foreground mb-2">Services &gt; Service List</p>
+        
         <h1 className="font-semibold text-lg sm:text-2xl">SERVICE LIST</h1>
       </div>
 
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
 
       {/* Loading State */}
       {loading && (
@@ -389,7 +388,6 @@ export const ServiceDashboard = () => {
           data={paginatedServices}
           columns={columns}
           renderCell={renderCell}
-          renderActions={renderRowActions}
           bulkActions={bulkActions}
           showBulkActions={true}
           selectable={true}
@@ -402,6 +400,7 @@ export const ServiceDashboard = () => {
           onRowClick={(service) => handleViewService(service.id)}
           getItemId={(item) => item.id.toString()}
           storageKey="services-table"
+          leftActions={renderCustomActions()}
         />
       )}
 

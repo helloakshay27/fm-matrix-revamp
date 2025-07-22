@@ -47,6 +47,11 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   );
 };
 const columns: ColumnConfig[] = [{
+  key: 'actions',
+  label: 'Actions',
+  sortable: false,
+  defaultVisible: true
+}, {
   key: 'name',
   label: 'Name',
   sortable: true,
@@ -178,6 +183,12 @@ export const AttendanceDashboard = () => {
   };
   const renderCell = (item: AttendanceRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.user_id)} className="hover:bg-gray-100">
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'name':
         return <span className="font-medium text-center block">{item.name}</span>;
       case 'department':
@@ -186,9 +197,6 @@ export const AttendanceDashboard = () => {
         return '-';
     }
   };
-  const renderActions = (item: AttendanceRecord) => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.user_id)} className="hover:bg-gray-100">
-      <Eye className="w-4 h-4" />
-    </Button>;
   const bulkActions = [{
     label: 'Delete Selected',
     icon: Trash2,
@@ -514,13 +522,16 @@ export const AttendanceDashboard = () => {
 
         <TabsContent value="attendancelist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Header */}
+          <div className="mb-6">
+            
+            <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE LIST</h1>
+          </div>
 
           {/* Enhanced Table */}
           <EnhancedTable 
             data={paginatedData} 
             columns={columns} 
-            renderCell={renderCell} 
-            renderActions={renderActions} 
+            renderCell={renderCell}
             onRowClick={item => handleViewDetails(item.id)} 
             selectable={true} 
             selectedItems={selectedItems} 

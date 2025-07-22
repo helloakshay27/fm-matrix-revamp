@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import {
   Tabs,
   TabsContent,
@@ -30,50 +29,41 @@ import { DepreciationTab } from '@/components/asset-details/DepreciationTab';
 import { TicketTab } from '@/components/asset-details/TicketTab';
 
 import { RepairReplaceModal } from '@/components/RepairReplaceModal';
-import { EditStatusModal } from '@/components/EditStatusModal';
 import { QRCodeModal } from '@/components/QRCodeModal';
-
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [assetData, setAssetData] = useState(null);
+  const [assetData, setAssetData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isInUse, setIsInUse] = useState(true);
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
-  const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   useEffect(() => {
-  const fetchAsset = async () => {
-    try {
-      const response = await axios.get(
-        `${API_CONFIG.BASE_URL}/pms/assets/${id}.json`,
-        {
-          headers: {
-            Authorization: getAuthHeader(),
-          },
-        }
-      );
-      setAssetData(response.data.asset);
-    } catch (error) {
-      console.error('Failed to fetch asset', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchAsset = async () => {
+      try {
+        const response = await axios.get(
+          `${API_CONFIG.BASE_URL}/pms/assets/${id}.json`,
+          {
+            headers: {
+              Authorization: getAuthHeader(),
+            },
+          }
+        );
+        setAssetData(response.data.asset);
+      } catch (error) {
+        console.error('Failed to fetch asset', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchAsset();
-}, [id, API_CONFIG.BASE_URL, getAuthHeader]);
+    fetchAsset();
+  }, [id]);
 
-  const handleBack = () => {
-    navigate('/maintenance/asset');
-  };
-
-  const handleEditClick = () => {
-    setIsEditStatusOpen(true);
-  };
+  const handleBack = () => navigate('/maintenance/asset');
 
   const handleEditDetails = () => {
     navigate(`/maintenance/asset/edit/${id}`);
@@ -98,14 +88,10 @@ export const AssetDetailsPage = () => {
     <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 flex-wrap">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4" />
-            Assets
-          </button>
-          <span>&gt;</span>
-          <span>Asset Details</span>
-        </div>
+        <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Assets
+        </button>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-col gap-2">
@@ -162,36 +148,16 @@ export const AssetDetailsPage = () => {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-11 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
-            <TabsTrigger value="asset-info" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Asset Info
-            </TabsTrigger>
-            <TabsTrigger value="asset-analytics" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="amc-details" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              AMC Details
-            </TabsTrigger>
-            <TabsTrigger value="ppm" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              PPM
-            </TabsTrigger>
-            <TabsTrigger value="e-bom" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              E-BOM
-            </TabsTrigger>
-            <TabsTrigger value="attachments" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Attachments
-            </TabsTrigger>
-            <TabsTrigger value="readings" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Readings
-            </TabsTrigger>
-            <TabsTrigger value="history-card" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              History Card
-            </TabsTrigger>
-            <TabsTrigger value="depreciation" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Depreciation
-            </TabsTrigger>
-            <TabsTrigger value="ticket" className="rounded-none data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Ticket
-            </TabsTrigger>
+            <TabsTrigger value="asset-info">Asset Info</TabsTrigger>
+            <TabsTrigger value="asset-analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="amc-details">AMC Details</TabsTrigger>
+            <TabsTrigger value="ppm">PPM</TabsTrigger>
+            <TabsTrigger value="e-bom">E-BOM</TabsTrigger>
+            <TabsTrigger value="attachments">Attachments</TabsTrigger>
+            <TabsTrigger value="readings">Readings</TabsTrigger>
+            <TabsTrigger value="history-card">History Card</TabsTrigger>
+            <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
+            <TabsTrigger value="ticket">Ticket</TabsTrigger>
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
@@ -228,20 +194,15 @@ export const AssetDetailsPage = () => {
       </div>
 
       {/* Modals */}
-      <RepairReplaceModal
+      {/* <RepairReplaceModal
         isOpen={isRepairReplaceOpen}
         onClose={() => setIsRepairReplaceOpen(false)}
-      />
-
-      <EditStatusModal
-        isOpen={isEditStatusOpen}
-        onClose={() => setIsEditStatusOpen(false)}
-      />
+      /> */}
 
       <QRCodeModal
         isOpen={isQRModalOpen}
         onClose={() => setIsQRModalOpen(false)}
-        qrCode={assetData.id}
+        qrCode={assetData.qr_url}
         serviceName={assetData.name}
         site="Main Building"
       />

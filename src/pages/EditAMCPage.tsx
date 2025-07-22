@@ -322,17 +322,13 @@ export const EditAMCPage = () => {
       payload.pms_asset_amc.service_id = formData.assetName;
     }
 
-    // Add vendor information if available
-    const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-    if (selectedSupplier) {
-      payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
-      payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
-      payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
-    }
-
-    // Add file fields (currently null, would need separate file upload handling)
-    payload.pms_asset_amc.amc_contract = null;
-    payload.pms_asset_amc.amc_invoice = null;
+      // Add vendor information if available
+      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
+      if (selectedSupplier) {
+        payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
+        payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
+        payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
+      }
 
     return payload;
   };

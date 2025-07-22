@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -31,7 +30,7 @@ import {
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Search, Download, Loader2 } from 'lucide-react';
+import { Search, Download, Loader2, Grid3x3, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -57,7 +56,6 @@ interface EnhancedTableProps<T> {
   onSelectItem?: (itemId: string, checked: boolean) => void;
   getItemId?: (item: T) => string;
   selectAllLabel?: string;
-  // Enhanced features
   searchTerm?: string;
   onSearchChange?: (searchTerm: string) => void;
   searchPlaceholder?: string;
@@ -74,7 +72,8 @@ interface EnhancedTableProps<T> {
   hideTableExport?: boolean;
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
-  handleExport?: () => void
+  leftActions?: React.ReactNode;
+  rightActions?: React.ReactNode;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -94,7 +93,6 @@ export function EnhancedTable<T extends Record<string, any>>({
   onSelectItem,
   getItemId = (item: T) => item.id,
   selectAllLabel = "Select all",
-  // Enhanced features
   searchTerm: externalSearchTerm,
   onSearchChange,
   searchPlaceholder = 'Search...',
@@ -111,8 +109,11 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideTableExport = false,
   hideTableSearch = false,
   hideColumnsButton = false,
+  leftActions,
+  rightActions,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
@@ -169,7 +170,7 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
-  // Create column IDs for drag and drop, excluding checkbox column
+  // Create column IDs for drag and drop, excluding checkbox and actions columns
   const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
 
   // Check if all visible items are selected
@@ -200,11 +201,24 @@ export function EnhancedTable<T extends Record<string, any>>({
     onRowClick?.(item);
   };
 
-  const handleInternalSearchChange = (value: string) => {
-    setInternalSearchTerm(value);
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const handleSearchGo = () => {
+    setInternalSearchTerm(searchInput);
     setCurrentPage(1);
     if (onSearchChange) {
-      onSearchChange(value);
+      onSearchChange(searchInput);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setInternalSearchTerm('');
+    setCurrentPage(1);
+    if (onSearchChange) {
+      onSearchChange('');
     }
   };
 
@@ -247,8 +261,8 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-
-
+          {leftActions}
+          
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
             </div>
@@ -261,12 +275,31 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => handleInternalSearchChange(e.target.value)}
-                className="pl-10"
+                value={searchInput}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                className="pl-10 pr-10"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearchGo()}
               />
+              {searchInput && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSearchGo}
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          >
+            Go!
+          </Button>
+          
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
@@ -275,11 +308,9 @@ export function EnhancedTable<T extends Record<string, any>>({
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-
             </Button>
           )}
-
-
+          
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -288,6 +319,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               onResetToDefaults={resetToDefaults}
             />
           )}
+          
+          {rightActions}
         </div>
       </div>
 
@@ -302,6 +335,9 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                    {renderActions && (
+                      <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
+                    )}
                     {selectable && (
                       <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
                         <div className="flex justify-center">
@@ -327,9 +363,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                         {column.label}
                       </SortableColumnHeader>
                     ))}
-                    {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center">Actions</TableHead>
-                    )}
                   </SortableContext>
                 </TableRow>
               </TableHeader>
@@ -379,6 +412,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                       )}
                       onClick={(e) => handleRowClick(item, e)}
                     >
+                      {renderActions && (
+                        <TableCell className="p-4 text-center" data-actions>
+                          {renderActions(item)}
+                        </TableCell>
+                      )}
                       {selectable && (
                         <TableCell className="p-4 w-12 text-center" data-checkbox>
                           <div className="flex justify-center">
@@ -400,11 +438,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                           </TableCell>
                         );
                       })}
-                      {renderActions && (
-                        <TableCell className="p-4 text-center" data-actions>
-                          {renderActions(item)}
-                        </TableCell>
-                      )}
                     </TableRow>
                   );
                 })}

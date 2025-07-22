@@ -330,11 +330,6 @@ export const AddTicketDashboard = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Ticket List
           </Button>
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-            <span>Ticket List</span>
-            <span>&gt;</span>
-            <span>New Ticket</span>
-          </div>
           <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">
             NEW TICKET
           </h1>
@@ -407,7 +402,7 @@ export const AddTicketDashboard = () => {
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
               <Input
                 placeholder="Enter Contact Number"
@@ -416,8 +411,8 @@ export const AddTicketDashboard = () => {
                 disabled={isFieldsReadOnly}
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
               <Input
                 placeholder="Enter Site"
@@ -426,7 +421,7 @@ export const AddTicketDashboard = () => {
                 disabled={isFieldsReadOnly}
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
-            </div>
+            </div> */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
               <Input
@@ -437,7 +432,7 @@ export const AddTicketDashboard = () => {
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
               <Input
                 placeholder="Enter Unit"
@@ -446,7 +441,7 @@ export const AddTicketDashboard = () => {
                 disabled={isFieldsReadOnly}
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Ticket Type */}
@@ -552,14 +547,14 @@ export const AddTicketDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
               <Input
                 placeholder="Enter Reference Number"
                 value={formData.referenceNumber}
                 onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Description */}

@@ -241,75 +241,15 @@ const BookingListDashboard = () => {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4">
-        <Button
-          className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
-          onClick={handleAddBooking}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-
-        <Button
-          variant="outline"
-          className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white"
-          onClick={() => setIsFilterModalOpen(true)}
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-
-        <Popover open={isExportPopoverOpen} onOpenChange={setIsExportPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-              <ChevronDown className="w-4 h-4 ml-2" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-4 bg-white border border-gray-200 shadow-lg z-50" align="start">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Select columns to export:</h3>
-
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {exportColumns.map((column) => (
-                  <div key={column.id} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={column.id}
-                      checked={column.id === 'selectAll' ? isAllSelected : selectedColumns.includes(column.id)}
-                      onCheckedChange={() => handleColumnToggle(column.id)}
-                    />
-                    <label
-                      htmlFor={column.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {column.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-
-              <Button
-                onClick={handleDownload}
-                className="w-full bg-[#5D2A4B] hover:bg-[#4A2139] text-white"
-              >
-                Download
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-      </div>
 
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <p>Error loading bookings: {error}</p>
-          <Button
-            onClick={() => dispatch(fetchFacilityBookingsData())}
-            variant="outline"
-            size="sm"
+          <Button 
+            onClick={() => dispatch(fetchFacilityBookingsData())} 
+            variant="outline" 
+            size="sm" 
             className="mt-2"
             disabled={loading}
           >
@@ -329,10 +269,68 @@ const BookingListDashboard = () => {
         pageSize={itemsPerPage}
         loading={loading}
         emptyMessage={loading ? "Loading bookings..." : "No bookings found"}
+        leftActions={
+          <div className="flex flex-wrap gap-4">
+            <Button 
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+              onClick={handleAddBooking}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="border-[#8B4B8C] text-[#8B4B8C] hover:bg-[#8B4B8C] hover:text-white"
+              onClick={() => setIsFilterModalOpen(true)}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
+
+            <Popover open={isExportPopoverOpen} onOpenChange={setIsExportPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4 bg-white border border-gray-200 shadow-lg z-50" align="start">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Select columns to export:</h3>
+                  
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {exportColumns.map((column) => (
+                      <div key={column.id} className="flex items-center space-x-3">
+                        <Checkbox
+                          id={column.id}
+                          checked={column.id === 'selectAll' ? isAllSelected : selectedColumns.includes(column.id)}
+                          onCheckedChange={() => handleColumnToggle(column.id)}
+                          className="border-gray-400"
+                        />
+                        <label htmlFor={column.id} className="text-sm font-medium cursor-pointer">
+                          {column.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Button 
+                    onClick={handleDownload}
+                    className="w-full bg-[#5D2A4B] hover:bg-[#4A2139] text-white"
+                  >
+                    Download
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        }
       />
 
       {/* Filter Modal */}
-      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen} modal={false}>
         <DialogContent className="sm:max-w-md [&>button]:hidden">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>

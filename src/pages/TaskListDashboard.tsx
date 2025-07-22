@@ -53,11 +53,6 @@ export const TaskListDashboard = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span>Scheduled Task</span>
-          <span>&gt;</span>
-          <span>Scheduled Task List</span>
-        </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">SCHEDULED TASK</h1>
       </div>
 
