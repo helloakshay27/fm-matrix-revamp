@@ -175,6 +175,7 @@ export function BuildingPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Sr No</TableHead>
               <TableHead>Building Name</TableHead>
               <TableHead>Site ID</TableHead>
               <TableHead>Wing</TableHead>
@@ -187,19 +188,20 @@ export function BuildingPage() {
           <TableBody>
             {buildings.loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
+                <TableCell colSpan={8} className="text-center py-4">
                   Loading buildings...
                 </TableCell>
               </TableRow>
             ) : displayedBuildings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
+                <TableCell colSpan={8} className="text-center py-4">
                   No buildings found
                 </TableCell>
               </TableRow>
             ) : (
               displayedBuildings.map((building, index) => (
                 <TableRow key={building.id}>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>{building.name}</TableCell>
                   <TableCell>{building.site_id}</TableCell>
                   <TableCell>
