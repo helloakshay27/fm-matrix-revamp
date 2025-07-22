@@ -365,9 +365,6 @@ export const ServiceDashboard = () => {
         <h1 className="font-semibold text-lg sm:text-2xl">SERVICE LIST</h1>
       </div>
 
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
 
       {/* Loading State */}
       {loading && (
@@ -402,6 +399,7 @@ export const ServiceDashboard = () => {
           onRowClick={(service) => handleViewService(service.id)}
           getItemId={(item) => item.id.toString()}
           storageKey="services-table"
+          leftActions={renderCustomActions()}
         />
       )}
 
