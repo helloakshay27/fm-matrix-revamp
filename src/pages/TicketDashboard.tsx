@@ -1086,21 +1086,11 @@ export const TicketDashboard = () => {
                   onSelectItem={handleTicketSelection} 
                   onSelectAll={handleSelectAll} 
                   getItemId={ticket => ticket.id.toString()} 
-                  leftActions={
-                    <div className="flex gap-3">
-                      {renderCustomActions()}
-                      <Button 
-                        variant="outline" 
-                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                        onClick={() => setIsFilterOpen(true)}
-                      >
-                        <Filter className="w-4 h-4 mr-2" /> Filter
-                      </Button>
-                    </div>
-                  }
+                  leftActions={renderCustomActions()}
                   searchPlaceholder="Search Tickets"
                   hideTableExport={false}
                   hideColumnsButton={false}
+                  onFilterClick={() => setIsFilterOpen(true)}
                 />
                 
                 {/* Custom Pagination */}
