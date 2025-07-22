@@ -24,20 +24,7 @@ export const exportAMCData = createAsyncThunk(
         responseType: 'blob' // For downloading Excel file
       });
       
-      // Create download link for CSV file
-      const blob = new Blob([response.data], { 
-        type: 'text/csv' 
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `amc_export_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      return { success: true, message: 'Export completed successfully' };
+      return response.data;
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || 'Failed to export AMC data'
       return rejectWithValue(message)

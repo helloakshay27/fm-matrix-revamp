@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCData } from '@/store/slices/amcSlice';
 import { exportAMCData } from '@/store/slices/amcExportSlice';
+import { useToast } from '@/hooks/use-toast';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -85,6 +86,7 @@ export const AMCDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
+  const { toast } = useToast();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleSections, setVisibleSections] = useState<string[]>([
@@ -158,9 +160,13 @@ export const AMCDashboard = () => {
     // In a real implementation, you would make an API call to delete the selected items
   };
 
-  const handleBulkExport = (selectedItems: AMCRecord[]) => {
+  const handleBulkExport = async (selectedItems: AMCRecord[]) => {
     if (selectedItems.length === 0) {
-      alert('Please select at least one AMC record to export');
+      toast({
+        title: "Selection Required",
+        description: "Please select at least one AMC record to export",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -169,7 +175,11 @@ export const AMCDashboard = () => {
     const token = localStorage.getItem('access_token');
 
     if (!siteId || !token) {
-      alert('Site ID or access token not found in localStorage');
+      toast({
+        title: "Missing Credentials",
+        description: "Site ID or access token not found in localStorage",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -182,7 +192,11 @@ export const AMCDashboard = () => {
       .filter(date => date.start && date.end);
 
     if (dates.length === 0) {
-      alert('No valid date range found in selected AMC records');
+      toast({
+        title: "Invalid Date Range",
+        description: "No valid date range found in selected AMC records",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -192,15 +206,42 @@ export const AMCDashboard = () => {
     const fromDate = new Date(Math.min(...startDates)).toISOString().split('T')[0];
     const toDate = new Date(Math.max(...endDates)).toISOString().split('T')[0];
 
-    // Dispatch export action
-    dispatch(exportAMCData({
-      site_id: siteId,
-      from_date: fromDate,
-      to_date: toDate,
-      access_token: token
-    }));
+    try {
+      const response = await dispatch(exportAMCData({
+        site_id: siteId,
+        from_date: fromDate,
+        to_date: toDate,
+        access_token: token
+      })).unwrap();
 
-    setSelectedItems([]);
+      const blob = new Blob([response], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'amc_export.xlsx'; // Desired file name
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: "AMC data exported successfully!",
+      });
+
+      setSelectedItems([]);
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export AMC data. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSelectionChange = (selectedSections: string[]) => {
