@@ -677,13 +677,13 @@ export const TicketDashboard = () => {
         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
         onClick={() => setIsFilterOpen(true)}
       >
-        <Filter className="w-4 h-4 mr-2" /> Filter
+        <Filter className="w-4 h-4" />
       </Button>
       <Button 
         variant="outline"
         className="border-gray-300 text-gray-600 hover:bg-gray-50"
       >
-        <Settings className="w-4 h-4 mr-2" /> Columns
+        <Settings className="w-4 h-4" />
       </Button>
     </div>
   );
