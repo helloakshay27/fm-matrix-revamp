@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, Button, IconButton } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
+import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
@@ -79,11 +80,10 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
           </FormControl>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           <Button 
-            variant="contained"
             onClick={handleAssociate}
-            style={{ backgroundColor: '#C72030', color: 'white' }}
+            className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
           >
             Associate Service
           </Button>
