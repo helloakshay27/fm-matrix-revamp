@@ -383,9 +383,6 @@ export const ScheduleListDashboard = () => {
       </div>
     </div>;
   const renderListTab = () => <div className="space-y-4">
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
 
       {isLoading ? <div className="flex items-center justify-center h-32">
           <div className="text-center">
@@ -394,7 +391,7 @@ export const ScheduleListDashboard = () => {
           </div>
         </div> : error ? <div className="flex items-center justify-center h-32">
           <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
-        </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." />}
+        </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." leftActions={renderCustomActions()} />}
     </div>;
   return <div className="p-2 sm:p-4 lg:p-6">
       <div className="mb-4 sm:mb-6">
