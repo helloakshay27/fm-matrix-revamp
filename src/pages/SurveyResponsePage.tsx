@@ -131,6 +131,7 @@ export const SurveyResponsePage = () => {
   };
 
   const columns = [
+    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'surveyTitle', label: 'Survey Title', sortable: true, draggable: true },
     { key: 'responses', label: 'No. Of Responses', sortable: true, draggable: true },
@@ -140,6 +141,15 @@ export const SurveyResponsePage = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <button
+            onClick={() => handleViewDetails(item)}
+            className="text-gray-600 hover:text-[#C72030] transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        );
       case 'responses':
       case 'tickets':
         return <div className="text-center">{item[columnKey]}</div>;
@@ -148,14 +158,6 @@ export const SurveyResponsePage = () => {
     }
   };
 
-  const renderActions = (item: any) => (
-    <button
-      onClick={() => handleViewDetails(item)}
-      className="text-gray-600 hover:text-[#C72030] transition-colors"
-    >
-      <Eye className="w-4 h-4" />
-    </button>
-  );
 
   // Filter responses based on search term
   const filteredResponses = responseData.filter(item =>
@@ -225,7 +227,6 @@ export const SurveyResponsePage = () => {
           data={filteredResponses}
           columns={columns}
           selectable={true}
-          renderActions={renderActions}
           renderCell={renderCell}
           storageKey="survey-response-table"
           enableExport={true}
