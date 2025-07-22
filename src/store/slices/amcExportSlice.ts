@@ -24,14 +24,14 @@ export const exportAMCData = createAsyncThunk(
         responseType: 'blob' // For downloading Excel file
       });
       
-      // Create download link
+      // Create download link for CSV file
       const blob = new Blob([response.data], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        type: 'text/csv' 
       });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `amc_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      link.download = `amc_export_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
