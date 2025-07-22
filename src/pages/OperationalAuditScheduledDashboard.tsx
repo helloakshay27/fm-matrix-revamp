@@ -63,7 +63,7 @@ export const OperationalAuditScheduledDashboard = () => {
     <div className="p-6">
       <div className="mb-6">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule &gt; Schedule List</p>
+          
           <h1 className="text-2xl font-bold text-[#1a1a1a]">SCHEDULE LIST</h1>
         </div>
       </div>

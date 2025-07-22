@@ -203,10 +203,6 @@ export const AssetAuditDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
-          Audit &gt; Audit List
-        </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
         

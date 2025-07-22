@@ -62,14 +62,10 @@ export const AssetDetailsPage = () => {
     <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 flex-wrap">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4" />
-            Assets
-          </button>
-          <span>&gt;</span>
-          <span>Asset Details</span>
-        </div>
+        <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Assets
+        </button>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-col gap-2">

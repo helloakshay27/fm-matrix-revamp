@@ -993,9 +993,6 @@ export const AddSchedulePage = () => {
             <ArrowBack sx={{ color: '#D42F2F' }} />
           </IconButton>
         </Box>
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-          Schedule &gt; Add Schedule
-        </Typography>
         <Typography variant="h4" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
           ADD SCHEDULE
         </Typography>

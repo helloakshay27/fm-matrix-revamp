@@ -155,7 +155,7 @@ export const TaskDashboard = () => {
 
   return <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <p className="text-gray-600 mb-2 text-sm">Tasks &gt; Task List</p>
+        
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">TASK LIST</h1>
       </div>
 
