@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { Download, Filter, Eye, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { RootState, AppDispatch } from '@/store/store';
+import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
+  
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState({
     group: '',
@@ -15,71 +22,22 @@ const InventoryConsumptionDashboard = () => {
     criticality: '',
     name: ''
   });
+
+  useEffect(() => {
+    dispatch(fetchInventoryConsumptionHistory());
+  }, [dispatch]);
   
-  const [consumptionData] = useState([{
-    id: 1,
-    inventory: 'Handwash',
-    stock: '0.0',
-    unit: '',
-    minStockLevel: '2',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 2,
-    inventory: 'Notepad',
-    stock: '3.0',
-    unit: '',
-    minStockLevel: '2',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 3,
-    inventory: 'Pen',
-    stock: '3.0',
-    unit: '',
-    minStockLevel: '3',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 4,
-    inventory: 'Sanitizer',
-    stock: '9.0',
-    unit: '',
-    minStockLevel: '1',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 5,
-    inventory: 'Tissue Paper',
-    stock: '4.0',
-    unit: '',
-    minStockLevel: '5',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 6,
-    inventory: 'Phenyl',
-    stock: '5.0',
-    unit: '',
-    minStockLevel: '1',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 7,
-    inventory: 'Toilet Paper',
-    stock: '5.0',
-    unit: '',
-    minStockLevel: '5',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }]);
+  // Transform API data to match table structure
+  const consumptionData = inventories.map(item => ({
+    id: item.id,
+    inventory: item.name,
+    stock: item.quantity.toString(),
+    unit: item.unit || '',
+    minStockLevel: item.min_stock_level,
+    group: item.group || '-',
+    subGroup: item.sub_group || '-',
+    criticality: item.criticality === 0 ? 'Non-Critical' : 'Critical'
+  }));
 
   // Define table columns for drag and drop functionality
   const columns: ColumnConfig[] = [{
@@ -223,7 +181,8 @@ const InventoryConsumptionDashboard = () => {
         hideTableExport={false} 
         hideTableSearch={false} 
         hideColumnsButton={false} 
-        searchPlaceholder="Search inventory items..." 
+        searchPlaceholder="Search inventory items..."
+        loading={loading}
       />
 
       {/* Floating Filter Modal */}
