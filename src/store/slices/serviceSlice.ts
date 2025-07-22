@@ -22,8 +22,9 @@ interface ServiceData {
 
 interface UpdateServicePayload {
   id: string;
-  serviceData: ServiceData;
+  serviceData: ServiceData | FormData;
 }
+
 
 interface ServiceState {
   loading: boolean;
@@ -57,18 +58,18 @@ export const updateService = createAsyncThunk(
   'service/updateService',
   async ({ id, serviceData }: UpdateServicePayload, { rejectWithValue }) => {
     try {
-      const payload = {
-        pms_service: serviceData,
-        subaction: "save"
-      };
-
-      const response = await apiClient.put(`/pms/services/${id}.json`, payload);
+      const response = await apiClient.put(`/pms/services/${id}.json`, serviceData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update service');
     }
   }
 );
+
 
 const serviceSlice = createSlice({
   name: 'service',

@@ -4,8 +4,85 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-export const HistoryCardTab = () => {
+interface HistoryCardTabProps {
+  asset: Asset;
+  assetId?: string | number;
+}
+
+interface Asset {
+  id: number;
+  name: string;
+  model_number: string;
+  serial_number: string;
+  purchase_cost: number;
+  purchased_on: string;
+  warranty: boolean;
+  warranty_expiry: string;
+  manufacturer: string;
+  asset_number: string;
+  asset_code: string;
+  group: string;
+  sub_group: string;
+  allocation_type: string;
+  depreciation_applicable: boolean;
+  depreciation_method: string;
+  useful_life: number;
+  salvage_value: number;
+  status: string;
+  current_book_value: number;
+  site_name: string;
+  commisioning_date: string;
+  vendor_name: string;
+  supplier_detail?: {
+    company_name: string;
+    email: string;
+    mobile1: string;
+  };
+  asset_loan_detail?: {
+    agrement_from_date: string;
+    agrement_to_date: string;
+    supplier: string;
+  };
+  depreciation_details?: {
+    period: string;
+    book_value_beginning: number;
+    depreciation: number;
+    book_value_end: number;
+  }[];
+  asset_amcs?: any[];
+  custom_fields?: any;
+  floor?: { name: string };
+  building?: { name: string };
+  wing?: { name: string };
+  area?: { name: string };
+}
+
+export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }) => {
   const [activeTab, setActiveTab] = useState('history-details');
+
+  const activityHistory = [
+    {
+      id: 1,
+      owner: 'Anushree',
+      action: 'created an Asset "Dell Laptop"',
+      created_at: '26th Nov, 2020, 12:30 pm',
+      details: ['Asset created with initial details']
+    },
+    {
+      id: 2,
+      owner: 'Rakesh K.',
+      action: 'made a visit',
+      created_at: '01st Jan, 2021, 04:19 pm',
+      details: ['Visit on "01/01/2021"', 'Updated Remarks: "Demo Remarks"']
+    },
+    {
+      id: 3,
+      owner: 'Nupura W.',
+      action: 'updated visit count',
+      created_at: '18th Oct, 2021, 10:52 am',
+      details: ['Updated number of visits to "3"']
+    }
+  ];
 
   const basicAssetInfo = [
     { label: 'Asset Name', value: 'CCTV-Server—Parking Lot' },
@@ -66,31 +143,9 @@ export const HistoryCardTab = () => {
     { label: 'Approved By', value: 'Facility Head' }
   ];
 
-  const logEntries = [
-    {
-      id: 1,
-      user: 'Anushree',
-      action: 'created an Asset "Dell Laptop"',
-      date: '26th Nov, 2020, 12:30 pm'
-    },
-    {
-      id: 2,
-      user: 'Rakesh K.',
-      action: 'made a visit on "01/01/2021" and updated the Remarks as "Demo Remarks"',
-      date: '01st Jan, 2021, 04:19 pm'
-    },
-    {
-      id: 3,
-      user: 'Nupura W.',
-      action: 'updated the no. of visits to "3"',
-      date: '18th Oct, 2021, 10:52 am'
-    }
-  ];
-
   const renderHistoryDetails = () => (
     <div className="space-y-4">
       <Accordion type="multiple" defaultValue={["basic-info", "acquisition", "maintenance1", "maintenance2", "cost1", "cost2", "certification", "audit", "ebom", "disposal"]} className="space-y-4">
-        {/* Basic Asset Info */}
         <AccordionItem value="basic-info" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -117,7 +172,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Acquisition Details */}
         <AccordionItem value="acquisition" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -144,7 +198,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Maintenance & Repair History 1 */}
         <AccordionItem value="maintenance1" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -179,7 +232,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Maintenance & Repair History 2 */}
         <AccordionItem value="maintenance2" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -216,7 +268,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Cost & Depreciation 1 */}
         <AccordionItem value="cost1" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -251,7 +302,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Cost & Depreciation 2 */}
         <AccordionItem value="cost2" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -288,7 +338,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Certification & Compliance */}
         <AccordionItem value="certification" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -325,7 +374,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Audit & Inspections */}
         <AccordionItem value="audit" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -360,7 +408,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* EBOM Summary */}
         <AccordionItem value="ebom" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -395,7 +442,6 @@ export const HistoryCardTab = () => {
           </Card>
         </AccordionItem>
 
-        {/* Disposal / Write-Off Details */}
         <AccordionItem value="disposal" className="border rounded-lg">
           <Card>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -428,33 +474,41 @@ export const HistoryCardTab = () => {
   const renderLogs = () => (
     <div className="space-y-6">
       <div className="relative">
-        {/* Timeline line */}
         <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-[#C72030]"></div>
-        
         <div className="space-y-8">
-          {logEntries.map((entry, index) => (
-            <div key={entry.id} className="flex items-start gap-4 relative">
-              {/* Timeline dot */}
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center z-10 flex-shrink-0">
-                <div className="w-3 h-3 bg-white rounded-full"></div>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="bg-white">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <p className="text-gray-900 text-base leading-relaxed">
-                        <span className="font-medium">{entry.user}</span> {entry.action}.
-                      </p>
-                    </div>
-                    <div className="text-gray-400 text-sm whitespace-nowrap">
-                      {entry.date}
+          {activityHistory.length > 0 ? (
+            activityHistory.map((entry, index) => (
+              <div key={index} className="flex items-start gap-4 relative">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center z-10 flex-shrink-0">
+                  <div className="w-3 h-3 bg-white rounded-full"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="bg-white">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <p className="text-gray-900 text-base leading-relaxed">
+                          <span className="font-medium">{entry.owner}</span>
+                          {entry.action ? ` (${entry.action})` : ''}
+                        </p>
+                        {Array.isArray(entry.details) && entry.details.length > 0 && (
+                          <ul className="mt-2 list-disc list-inside text-gray-700 text-sm">
+                            {entry.details.map((detail: string, i: number) => (
+                              <li key={i} dangerouslySetInnerHTML={{ __html: detail }} />
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="text-gray-400 text-sm whitespace-nowrap">
+                        {entry.created_at}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="text-gray-400 text-center">No logs available.</div>
+          )}
         </div>
       </div>
     </div>
@@ -467,33 +521,28 @@ export const HistoryCardTab = () => {
         <h2 className="text-xl font-bold text-[#C72030]">History In Details</h2>
       </div>
 
-      {/* Internal Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        {/* Tab Headers */}
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('history-details')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'history-details'
-                ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
-                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-            }`}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'history-details'
+              ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              }`}
           >
             History Details
           </button>
           <button
             onClick={() => setActiveTab('logs')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'logs'
-                ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
-                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-            }`}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'logs'
+              ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              }`}
           >
             Logs
           </button>
         </div>
 
-        {/* Tab Content */}
         <div className="p-4 sm:p-6 max-h-96 overflow-y-auto">
           {activeTab === 'history-details' && renderHistoryDetails()}
           {activeTab === 'logs' && renderLogs()}

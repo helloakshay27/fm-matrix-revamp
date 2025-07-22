@@ -1,30 +1,76 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+interface DepreciationTab {
+  asset: Asset;
+  assetId?: string | number;
+}
+interface Asset {
+  id: number;
+  name: string;
+  model_number: string;
+  serial_number: string;
+  purchase_cost: number;
+  purchased_on: string;
+  warranty: boolean;
+  warranty_expiry: string;
+  manufacturer: string;
+  asset_number: string;
+  asset_code: string;
+  group: string;
+  sub_group: string;
+  allocation_type: string;
+  depreciation_applicable: boolean;
+  depreciation_method: string;
+  useful_life: number;
+  salvage_value: number;
+  status: string;
+  current_book_value: number;
+  site_name: string;
+  commisioning_date: string;
+  vendor_name: string;
+  supplier_detail?: {
+    company_name: string;
+    email: string;
+    mobile1: string;
+  };
+  asset_loan_detail?: {
+    agrement_from_date: string;
+    agrement_to_date: string;
+    supplier: string;
+  };
+  depreciation_details?: {
+    period: string;
+    book_value_beginning: number;
+    depreciation: number;
+    book_value_end: number;
+  }[];
+  asset_amcs?: any[];
+  custom_fields?: any;
+  floor?: { name: string };
+  building?: { name: string };
+  wing?: { name: string };
+  area?: { name: string };
+}
 
-export const DepreciationTab = () => {
+interface DepreciationTabProps {
+  asset: Asset;
+}
+export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) => {
   const [selectedMonth, setSelectedMonth] = useState('February');
   const [selectedYear, setSelectedYear] = useState('2022');
+  const [depreciationData, setDepreciationData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+   const [actualCost, setActualCost] = useState<number>(0);
+  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate());
 
-  const depreciationData = [
-    { year: 1, bookValueStart: 100000, depreciation: 16000, date: '01/02/2020', bookValueEnd: 84000 },
-    { year: 2, bookValueStart: 84000, depreciation: 16000, date: '01/02/2021', bookValueEnd: 68000 },
-    { year: 3, bookValueStart: 68000, depreciation: 16000, date: '01/02/2022', bookValueEnd: 52000 },
-    { year: 4, bookValueStart: 52000, depreciation: 16000, date: '01/02/2023', bookValueEnd: 36000 },
-    { year: 5, bookValueStart: 36000, depreciation: 16000, date: '01/02/2024', bookValueEnd: 20000 }
-  ];
 
-  const chartData = [
-    { year: '2020', value: 80000, color: '#FF8C00' },
-    { year: '2021', value: 68000, color: '#FF8C00' },
-    { year: '2022', value: 48000, color: '#C72030' },
-    { year: '2023', value: 35000, color: '#C72030' },
-    { year: '2024', value: 19000, color: '#00C896' }
-  ];
 
   const chartConfig = {
     value: {
@@ -40,6 +86,69 @@ export const DepreciationTab = () => {
     [21, 22, 23, 24, 25, 26, 27],
     [28, 1, 2, 3, 4, 5, 6]
   ];
+  function getApiDate(day: number, month: string, year: string) {
+    const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1;
+    return `${day.toString().padStart(2, '0')}/${monthIndex.toString().padStart(2, '0')}/${year}`;
+  }
+
+  useEffect(() => {
+    const fetchDepreciationData = async () => {
+      try {
+        const monthIndex = new Date(`${selectedMonth} 1, 2000`).getMonth() + 1;
+        const formattedDate = `21/${monthIndex.toString().padStart(2, '0')}/${selectedYear}`;
+        const response = await axios.get(
+          `${API_CONFIG.BASE_URL}/depreciations/calculate`,
+          {
+            params: {
+              id: assetId,
+              date: formattedDate,
+            },
+            headers: {
+              Authorization: getAuthHeader(),
+            },
+          }
+        );
+
+        const mapped = (response.data.depreciation_details || []).map((row: any) => ({
+          year: row.year,
+          bookValueStart: row.book_value_beginning,
+          depreciation: row.depreciation,
+          date: row.date,
+          bookValueEnd: row.book_value_end,
+        }));
+
+        setDepreciationData(mapped);
+
+        // ✅ Set chart data based on bookValueEnd (or bookValueStart)
+        setChartData(
+          mapped.map((item) => ({
+            year: item.year,
+            value: item.bookValueEnd, // or item.bookValueStart
+          }))
+        );
+      } catch (error) {
+        setDepreciationData([]);
+        setChartData([]); // Also clear chart data on error
+      }
+    };
+
+    fetchDepreciationData();
+  }, [assetId, selectedMonth, selectedYear]);
+  useEffect(() => {
+    if (!assetId) return;
+    const apiDate = getApiDate(selectedDay, selectedMonth, selectedYear);
+    axios.get(`${API_CONFIG.BASE_URL}/pms/depreciation_calculator.json`, {
+      params: {
+        id: assetId,
+        date: apiDate,
+      },
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    }).then(res => {
+      setActualCost(Number(res.data));
+    }).catch(() => setActualCost(0));
+  }, [assetId, selectedDay, selectedMonth, selectedYear]);
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -55,15 +164,25 @@ export const DepreciationTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="space-y-2">
               <label className="text-sm text-gray-500 font-medium">Method Name</label>
-              <div className="font-semibold text-base lg:text-lg">Straight Line</div>
+              <div className="font-semibold text-base lg:text-lg">
+                {asset.depreciation_method
+                  ? asset.depreciation_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                  : '-'}
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm text-gray-500 font-medium">Useful Life</label>
-              <div className="font-semibold text-base lg:text-lg">5 Years</div>
+              <div className="font-semibold text-base lg:text-lg">
+                {asset.useful_life ? `${asset.useful_life} Years` : '-'}
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm text-gray-500 font-medium">Salvage Value</label>
-              <div className="font-semibold text-base lg:text-lg">₹20,000</div>
+              <div className="font-semibold text-base lg:text-lg">
+                {asset.salvage_value !== undefined && asset.salvage_value !== null
+                  ? `₹${asset.salvage_value.toLocaleString()}`
+                  : '-'}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -127,36 +246,12 @@ export const DepreciationTab = () => {
             </CardHeader>
             <CardContent className="space-y-6 pt-0">
               <div className="grid grid-cols-2 gap-3 lg:gap-4">
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="January">January</SelectItem>
-                    <SelectItem value="February">February</SelectItem>
-                    <SelectItem value="March">March</SelectItem>
-                    <SelectItem value="April">April</SelectItem>
-                    <SelectItem value="May">May</SelectItem>
-                    <SelectItem value="June">June</SelectItem>
-                    <SelectItem value="July">July</SelectItem>
-                    <SelectItem value="August">August</SelectItem>
-                    <SelectItem value="September">September</SelectItem>
-                    <SelectItem value="October">October</SelectItem>
-                    <SelectItem value="November">November</SelectItem>
-                    <SelectItem value="December">December</SelectItem>
-                  </SelectContent>
+                {/* Month and Year Selects */}
+                <Select value={selectedMonth} onValueChange={val => { setSelectedMonth(val); setSelectedDay(1); }}>
+                  {/* ...month options... */}
                 </Select>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2020">2020</SelectItem>
-                    <SelectItem value="2021">2021</SelectItem>
-                    <SelectItem value="2022">2022</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                  </SelectContent>
+                <Select value={selectedYear} onValueChange={val => { setSelectedYear(val); setSelectedDay(1); }}>
+                  {/* ...year options... */}
                 </Select>
               </div>
 
@@ -172,13 +267,13 @@ export const DepreciationTab = () => {
                     {week.map((day, dayIndex) => (
                       <div
                         key={dayIndex}
-                        className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${
-                          day === 17 
-                            ? 'bg-orange-500 text-white font-medium' 
-                            : dayIndex === 6 
-                              ? 'text-red-500 hover:bg-red-50' 
+                        className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${day === selectedDay
+                            ? 'bg-orange-500 text-white font-medium'
+                            : dayIndex === 6
+                              ? 'text-red-500 hover:bg-red-50'
                               : 'text-gray-700 hover:bg-gray-200'
-                        }`}
+                          }`}
+                        onClick={() => setSelectedDay(day)}
                       >
                         {day}
                       </div>
@@ -193,7 +288,9 @@ export const DepreciationTab = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-gray-500 mb-1">ACTUAL COST</div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">₹ 00,000</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">
+                    ₹ {actualCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
                   <div className="w-full h-1 bg-[#C72030] mt-2 rounded-full"></div>
                 </div>
               </div>
@@ -212,42 +309,37 @@ export const DepreciationTab = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0 px-2 sm:px-6">
-          <div className="h-80 lg:h-96 w-full">
+          <div className="min-h-[320px] w-full">
             <ChartContainer config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart 
-                  data={chartData} 
-                  margin={{ 
-                    top: 20, 
-                    right: 60, 
-                    left: 60, 
-                    bottom: 40 
-                  }}
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 20, right: 20, left: 20, bottom: 40 }} // reduced margins
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="year" 
+                  <XAxis
+                    dataKey="year"
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12 }}
                     dy={10}
                   />
-                  <YAxis 
-                    domain={[0, 100000]}
-                    tickFormatter={(value) => `${value/1000}K`}
+                  <YAxis
+                    domain={['auto', 'auto']} // let Y-axis auto-scale
+                    tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12 }}
                     dx={-10}
                   />
-                  <ChartTooltip 
+                  <ChartTooltip
                     content={<ChartTooltipContent />}
                     formatter={(value) => [`₹${value.toLocaleString()}`, 'Book Value']}
                     wrapperStyle={{ zIndex: 1000 }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
+                  <Line
+                    type="monotone"
+                    dataKey="value"
                     stroke="#C72030"
                     strokeWidth={3}
                     dot={{ fill: '#C72030', strokeWidth: 2, r: 5 }}

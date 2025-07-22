@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { toast } from 'sonner';
 
 export const TicketDetailsPage = () => {
   const { id } = useParams();
@@ -46,8 +47,28 @@ export const TicketDetailsPage = () => {
     navigate(`/maintenance/ticket/${id}/tag-vendor`);
   };
 
-  const handleCreateTask = () => {
-    console.log('Create task clicked');
+  const handleCreateTask = async () => {
+    if (!id) {
+      console.error('No ticket ID available');
+      return;
+    }
+
+    try {
+      console.log('Fetching create task data for ticket:', id);
+      const taskData = await ticketManagementAPI.getCreateTaskData(id);
+      console.log('Create task data:', taskData);
+      
+      // You can handle the response data here
+      // For example, navigate to a create task page with the data
+      // or open a modal with the task creation form
+      
+      // Placeholder for now - you can customize this based on your requirements
+      toast.success('Create task data fetched successfully! Check console for details.');
+      
+    } catch (error) {
+      console.error('Error fetching create task data:', error);
+      toast.error('Failed to fetch create task data. Please try again.');
+    }
   };
 
   if (loading) {

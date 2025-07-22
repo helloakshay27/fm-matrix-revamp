@@ -1,7 +1,61 @@
 import React from 'react';
 import { Clock, Check, Download } from 'lucide-react';
+interface AssetAnalyticsTab {
+  asset: Asset;
+  assetId?: string | number;
+}
+interface Asset {
+  id: number;
+  name: string;
+  model_number: string;
+  serial_number: string;
+  purchase_cost: number;
+  purchased_on: string;
+  warranty: boolean;
+  warranty_expiry: string;
+  manufacturer: string;
+  asset_number: string;
+  asset_code: string;
+  group: string;
+  sub_group: string;
+  allocation_type: string;
+  depreciation_applicable: boolean;
+  depreciation_method: string;
+  useful_life: number;
+  salvage_value: number;
+  status: string;
+  current_book_value: number;
+  site_name: string;
+  commisioning_date: string;
+  vendor_name: string;
+  supplier_detail?: {
+    company_name: string;
+    email: string;
+    mobile1: string;
+  };
+  asset_loan_detail?: {
+    agrement_from_date: string;
+    agrement_to_date: string;
+    supplier: string;
+  };
+  depreciation_details?: {
+    period: string;
+    book_value_beginning: number;
+    depreciation: number;
+    book_value_end: number;
+  }[];
+  asset_amcs?: any[];
+  custom_fields?: any;
+  floor?: { name: string };
+  building?: { name: string };
+  wing?: { name: string };
+  area?: { name: string };
+}
 
-export const AssetAnalyticsTab = () => {
+interface AssetAnalyticsTabProps {
+  asset: Asset;
+}
+export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({ asset, assetId }) => {
   return (
     <div className="space-y-6">
       {/* Header */}

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
@@ -9,6 +8,13 @@ import { useToast } from '@/hooks/use-toast';
 interface ScheduleFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  filters: {
+    activityName: string;
+    type: string;
+    category: string;
+  };
+  onApplyFilters: (filters: { activityName: string; type: string; category: string }) => void;
+  onResetFilters: () => void;
 }
 
 const fieldStyles = {
@@ -52,32 +58,32 @@ const fieldStyles = {
   },
 };
 
-export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
-  open,
-  onOpenChange,
-}) => {
+export const ScheduleFilterDialog = ({ 
+  open, 
+  onOpenChange, 
+  filters, 
+  onApplyFilters, 
+  onResetFilters 
+}: ScheduleFilterDialogProps) => {
   const { toast } = useToast();
-  const [activityName, setActivityName] = useState('');
-  const [type, setType] = useState('');
-  const [category, setCategory] = useState('');
+  const [localFilters, setLocalFilters] = useState(filters);
+
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
 
   const handleApply = () => {
-    console.log('Applying filters:', { activityName, type, category });
-    toast({
-      title: "Success",
-      description: "Filters applied successfully!",
-    });
-    onOpenChange(false);
+    onApplyFilters(localFilters);
   };
 
   const handleReset = () => {
-    setActivityName('');
-    setType('');
-    setCategory('');
-    toast({
-      title: "Success",
-      description: "Filters reset successfully!",
+    setLocalFilters({
+      activityName: '',
+      type: '',
+      category: ''
     });
+    onResetFilters();
+    onOpenChange(false);
   };
 
   return (
@@ -103,8 +109,8 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
             <TextField
               label="Enter Activity"
               placeholder="Enter Name"
-              value={activityName}
-              onChange={(e) => setActivityName(e.target.value)}
+              value={localFilters.activityName}
+              onChange={(e) => setLocalFilters(prev => ({ ...prev, activityName: e.target.value }))}
               variant="outlined"
               InputLabelProps={{
                 shrink: true,
@@ -121,8 +127,8 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
                 labelId="type-label"
                 label="Select Type"
                 displayEmpty
-                value={type}
-                onChange={(e) => setType(e.target.value)}
+                value={localFilters.type}
+                onChange={(e) => setLocalFilters(prev => ({ ...prev, type: e.target.value }))}
               >
                 <MenuItem value=""><em>Select Type</em></MenuItem>
                 <MenuItem value="PPM">PPM</MenuItem>
@@ -140,8 +146,8 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
                 labelId="category-label"
                 label="Select Category"
                 displayEmpty
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={localFilters.category}
+                onChange={(e) => setLocalFilters(prev => ({ ...prev, category: e.target.value }))}
               >
                 <MenuItem value=""><em>Select Category</em></MenuItem>
                 <MenuItem value="Technical">Technical</MenuItem>

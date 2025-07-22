@@ -200,7 +200,6 @@ const serviceLocationSlice = createSlice({
   reducers: {
     setSelectedSite: (state, action: PayloadAction<number | null>) => {
       state.selectedSiteId = action.payload;
-      // Reset dependent selections
       state.selectedBuildingId = null;
       state.selectedWingId = null;
       state.selectedAreaId = null;
@@ -212,6 +211,7 @@ const serviceLocationSlice = createSlice({
       state.floors = [];
       state.rooms = [];
     },
+
     setSelectedBuilding: (state, action: PayloadAction<number | null>) => {
       state.selectedBuildingId = action.payload;
       // Reset dependent selections

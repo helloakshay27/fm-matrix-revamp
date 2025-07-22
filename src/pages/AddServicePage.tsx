@@ -1,8 +1,7 @@
-
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -13,6 +12,7 @@ import { TOKEN } from '@/config/apiConfig';
 export const AddServicePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
@@ -26,90 +26,70 @@ export const AddServicePage = () => {
     groupId: null as number | null,
     subGroupId: null as number | null,
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleLocationChange = useCallback((location: {
-    siteId: number | null;
-    buildingId: number | null;
-    wingId: number | null;
-    areaId: number | null;
-    floorId: number | null;
-    roomId: number | null;
-    groupId: number | null;
-    subGroupId: number | null;
-  }) => {
+  const handleLocationChange = useCallback((location: typeof formData) => {
     setFormData(prev => ({
       ...prev,
-      siteId: location.siteId,
-      buildingId: location.buildingId,
-      wingId: location.wingId,
-      areaId: location.areaId,
-      floorId: location.floorId,
-      roomId: location.roomId,
-      groupId: location.groupId,
-      subGroupId: location.subGroupId,
+      ...location
     }));
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      console.log('File selected:', file.name);
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setSelectedFiles(Array.from(files));
     }
   };
 
   const handleSubmit = async (action: string) => {
-    try {
-      const payload = {
-        pms_service: {
-          service_name: formData.serviceName || "",
-          site_id: formData.siteId || "",
-          building_id: formData.buildingId || "",
-          wing_id: formData.wingId || "",
-          area_id: formData.areaId || "",
-          floor_id: formData.floorId || "",
-          room_id: formData.roomId || "",
-          pms_asset_group_id: formData.groupId || "",
-          pms_asset_sub_group_id: formData.subGroupId || "",
-          active: true,
-          description: formData.serviceDescription || "",
-          service_category: "",
-          service_group: "",
-          service_code: "",
-          ext_code: "",
-          rate_contract_vendor_code: ""
-        },
-        subaction: "save"
-      };
+    const sendData = new FormData();
 
-      console.log('Service Payload:', payload);
+    try {
+      sendData.append('pms_service[service_name]', formData.serviceName);
+      sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
+      sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
+      sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
+      sendData.append('pms_service[area_id]', formData.areaId?.toString() || '');
+      sendData.append('pms_service[floor_id]', formData.floorId?.toString() || '');
+      sendData.append('pms_service[room_id]', formData.roomId?.toString() || '');
+      sendData.append('pms_service[pms_asset_group_id]', formData.groupId?.toString() || '');
+      sendData.append('pms_service[pms_asset_sub_group_id]', formData.subGroupId?.toString() || '');
+      sendData.append('pms_service[active]', 'true');
+      sendData.append('pms_service[description]', formData.serviceDescription || '');
+      sendData.append('pms_service[execution_type]', formData.executionType || '');
+      sendData.append('pms_service[service_category]', '');
+      sendData.append('pms_service[service_group]', '');
+      sendData.append('pms_service[service_code]', '');
+      sendData.append('pms_service[ext_code]', '');
+      sendData.append('pms_service[rate_contract_vendor_code]', '');
+      sendData.append('subaction', 'save');
+
+      selectedFiles.forEach(file => {
+        sendData.append('attachments[]', file);
+      });
 
       const response = await axios.post(
         'https://fm-uat-api.lockated.com/pms/services.json',
-        payload,
+        sendData,
         {
           headers: {
             'Authorization': `Bearer ${TOKEN}`,
-            'Content-Type': 'application/json'
-          }
+          },
         }
       );
 
-      console.log('Service Created Successfully:', response.data);
-      
       toast({
         title: "Service Created",
-        description: `Service has been ${action} successfully. Do you want to schedule new checklist? Already one scheduled under this group.`,
+        description: `Service has been ${action} successfully.`,
       });
-      
-      // Navigate to service list page after success
+
       navigate('/maintenance/service');
-      
     } catch (error) {
       console.error('Error creating service:', error);
       toast({
@@ -120,7 +100,6 @@ export const AddServicePage = () => {
     }
   };
 
-  // Responsive styles for TextField and Select
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -129,16 +108,13 @@ export const AddServicePage = () => {
   };
 
   return (
-    <div className="p-6">{/* Service creation form */}
+    <div className="p-6">
       <div className="mb-6">
         <div className="flex items-center mb-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={() => {
-              console.log('Back button clicked');
-              navigate('/maintenance/service');
-            }}
+            onClick={() => navigate('/maintenance/service')}
             className="p-1 hover:bg-gray-100 mr-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -148,7 +124,6 @@ export const AddServicePage = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 
-      {/* Basic Details */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -158,59 +133,42 @@ export const AddServicePage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <TextField
-                required
-                label="Service Name"
-                placeholder="Enter Service Name"
-                name="serviceName"
-                value={formData.serviceName}
-                onChange={(e) => handleInputChange('serviceName', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  sx: fieldStyles
-                }}
-              />
-            </div>
-            <div>
-              <FormControl 
-                fullWidth 
-                variant="outlined" 
-                required
-                sx={{
-                  '& .MuiInputBase-root': fieldStyles
-                }}
+            <TextField
+              required
+              label="Service Name"
+              placeholder="Enter Service Name"
+              value={formData.serviceName}
+              onChange={(e) => handleInputChange('serviceName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+            >
+              <InputLabel shrink>Execution Type</InputLabel>
+              <MuiSelect
+                value={formData.executionType}
+                onChange={(e) => handleInputChange('executionType', e.target.value)}
+                label="Execution Type"
+                notched
+                displayEmpty
               >
-                <InputLabel shrink>Execution Type</InputLabel>
-                <MuiSelect
-                  value={formData.executionType}
-                  onChange={(e) => handleInputChange('executionType', e.target.value)}
-                  label="Execution Type"
-                  notched
-                  displayEmpty
-                >
-                  <MenuItem value="">Select Execution Type</MenuItem>
-                  <MenuItem value="internal">Internal</MenuItem>
-                  <MenuItem value="external">External</MenuItem>
-                  <MenuItem value="both">Both</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+                <MenuItem value="">Select Execution Type</MenuItem>
+                <MenuItem value="internal">Internal</MenuItem>
+                <MenuItem value="external">External</MenuItem>
+                <MenuItem value="both">Both</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
-
-          {/* Dynamic Location Selector */}
-          <LocationSelector 
-            fieldStyles={fieldStyles} 
-            onLocationChange={handleLocationChange}
-          />
+          <LocationSelector fieldStyles={fieldStyles} onLocationChange={handleLocationChange} />
         </CardContent>
       </Card>
 
-      {/* Service Description */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -221,16 +179,13 @@ export const AddServicePage = () => {
         <CardContent>
           <TextField
             label="Service Description"
-            name="serviceDescription"
             value={formData.serviceDescription}
             onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
             fullWidth
             variant="outlined"
             multiline
             rows={4}
-            InputLabelProps={{
-              shrink: true,
-            }}
+            InputLabelProps={{ shrink: true }}
             InputProps={{
               sx: {
                 '& .MuiInputBase-input': {
@@ -242,7 +197,6 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      {/* Files Upload */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -253,39 +207,41 @@ export const AddServicePage = () => {
         <CardContent>
           <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8">
             <div className="text-center">
-              <input 
-                type="file" 
-                className="hidden" 
+              <input
+                type="file"
+                multiple
+                className="hidden"
                 id="file-upload"
                 onChange={handleFileUpload}
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               />
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => document.getElementById('file-upload')?.click()}
                 className="text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
               >
-                Choose File
+                Choose Files
               </Button>
               <p className="text-sm text-gray-500 mt-2">
-                {selectedFile ? selectedFile.name : 'No file chosen'}
+                {selectedFiles.length > 0
+                  ? selectedFiles.map(file => file.name).join(', ')
+                  : 'No files chosen'}
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
       <div className="flex gap-4 flex-wrap justify-center">
-        <Button 
+        <Button
           onClick={() => handleSubmit('saved with details')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
         >
           Save & show details
         </Button>
-        <Button 
+        <Button
           onClick={() => handleSubmit('created new service')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
@@ -293,7 +249,6 @@ export const AddServicePage = () => {
           Save & Create New Service
         </Button>
       </div>
-
     </div>
   );
 };

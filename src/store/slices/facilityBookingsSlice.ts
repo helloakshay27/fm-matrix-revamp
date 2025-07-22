@@ -69,12 +69,28 @@ export const exportReport = createAsyncThunk('exportReport', async ({ baseUrl, t
   }
 })
 
+export const facilityBookingSetupDetails = createAsyncThunk('facilityBookingSetupDetails', async ({ baseUrl, token, id }: FetchBookingDetails, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups/${id}.json`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.facility_setup;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch booking details';
+    return rejectWithValue(message);
+  }
+})
+
 // Create slice using the createApiSlice utility
 export const facilityBookingsSlice = createApiSlice<BookingData[]>('facilityBookings', fetchFacilityBookingsData)
 export const fetchBookingDetailsSlice = createApiSlice('fetchBookingDetails', fetchBookingDetails)
 export const exportReportSlice = createApiSlice('exportReport', exportReport)
+export const facilityBookingSetupDetailsSlice = createApiSlice('facilityBookingSetupDetails', facilityBookingSetupDetails)
 
 // Export reducer
 export const facilityBookingsReducer = facilityBookingsSlice.reducer
 export const fetchBookingDetailsReducer = fetchBookingDetailsSlice.reducer
 export const exportReportReducer = exportReportSlice.reducer
+export const facilityBookingSetupDetailsReducer = facilityBookingSetupDetailsSlice.reducer

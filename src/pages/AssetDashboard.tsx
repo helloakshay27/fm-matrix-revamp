@@ -50,10 +50,10 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
       {...listeners}
       className="cursor-move"
     >
@@ -65,10 +65,10 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 export const AssetDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   // Redux state
-  const { items: assets, loading, error, totalCount, totalPages, filters } = useSelector((state: RootState) => state.assets);
-  
+  const { items: assets, loading, error, totalCount, totalPages, filters,totalValue } = useSelector((state: RootState) => state.assets);
+
   // Local state
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
@@ -148,54 +148,54 @@ export const AssetDashboard = () => {
     console.log('Calculating stats for assets:', assetList.length, 'assets');
     console.log('Total count from API:', totalCount);
     console.log('Sample asset statuses:', assetList.slice(0, 3).map(a => ({ id: a.id, status: a.status })));
-    
+
     // IMPORTANT: The current implementation only calculates from visible page data
     // This should ideally be calculated from ALL filtered assets, not just current page
     const totalAssets = assetList.length;
-    
+
     // Check for various status formats from API
     const inUseAssets = assetList.filter(asset => {
       const status = asset.status?.toLowerCase();
       return status === 'in_use' || status === 'in use' || status === 'active' || status === 'in-use';
     }).length;
-    
+
     const breakdownAssets = assetList.filter(asset => {
       const status = asset.status?.toLowerCase();
       return status === 'breakdown' || status === 'broken' || status === 'faulty';
     }).length;
-    
+
     const inStoreAssets = assetList.filter(asset => {
       const status = asset.status?.toLowerCase();
       return status === 'in_storage' || status === 'in_store' || status === 'in store' || status === 'storage' || status === 'stored';
     }).length;
-    
+
     const disposeAssets = assetList.filter(asset => {
       const status = asset.status?.toLowerCase();
       return status === 'disposed' || status === 'dispose' || status === 'discarded';
     }).length;
-    
+
     const missingAssets = assetList.filter(asset => {
       const status = asset.status?.toLowerCase();
       return status === 'missing' || status === 'lost';
     }).length;
-    
+
     // Get unique status values for debugging
     const uniqueStatuses = [...new Set(assetList.map(asset => asset.status))];
     console.log('Unique status values found:', uniqueStatuses);
     console.log('Stats calculated from current page:', {
       total: totalAssets,
       inUse: inUseAssets,
-      breakdown: breakdownAssets, 
+      breakdown: breakdownAssets,
       inStore: inStoreAssets,
       dispose: disposeAssets,
       missing: missingAssets
     });
-    
+
     // Note: This is a limitation - we're showing stats for current page only
     // Ideally, the API should return aggregated stats for all filtered results
     return {
       total: totalCount || totalAssets, // Use total count from API if available
-      total_value: "₹0.00", 
+      total_value: "₹0.00",
       nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
       itAssets: Math.floor((totalCount || totalAssets) * 0.4),
       inUse: inUseAssets,
@@ -206,8 +206,11 @@ export const AssetDashboard = () => {
   };
 
   // Calculate stats from currently displayed assets (this updates with filters)
-  const stats = calculateStats(displayAssets);
-
+  // const stats = calculateStats(displayAssets);
+const stats = {
+  ...calculateStats(displayAssets),
+  total_value: totalValue !== undefined && totalValue !== null ? String(totalValue) : "₹0.00"
+};
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -352,19 +355,19 @@ export const AssetDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      
+
 
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="analytics" 
+          <TabsTrigger
+            value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
             <BarChart3 className="w-4 h-4" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger 
-            value="list" 
+          <TabsTrigger
+            value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
             <Package className="w-4 h-4" />
@@ -383,6 +386,8 @@ export const AssetDashboard = () => {
               <div>
                 <div className="text-2xl font-bold text-[#C72030]">{stats.total}</div>
                 <div className="text-sm text-gray-600">Total Assets</div>
+                <div className="text-sm text-gray-600">Total Value: {stats.total_value}</div>
+
               </div>
             </div>
 
@@ -444,7 +449,7 @@ export const AssetDashboard = () => {
 
           {/* Header with Asset Selector */}
           <div className="flex justify-end">
-            <AssetSelector 
+            <AssetSelector
               selectedItems={selectedAnalyticsItems}
               onSelectionChange={setSelectedAnalyticsItems}
             />
@@ -455,9 +460,9 @@ export const AssetDashboard = () => {
             {/* Left Section - Charts (3 columns) */}
             <div className="lg:col-span-3 space-y-6">
               {/* All Charts with Drag and Drop */}
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter} 
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
@@ -470,7 +475,7 @@ export const AssetDashboard = () => {
                           </SortableChartItem>
                         );
                       }
-                      
+
                       if (chartId === 'categoryChart') {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
@@ -482,8 +487,8 @@ export const AssetDashboard = () => {
                               <ResponsiveContainer width="100%" height={250}>
                                 <BarChart data={categoryData}>
                                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                                  <XAxis 
-                                    dataKey="name" 
+                                  <XAxis
+                                    dataKey="name"
                                     tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }}
                                   />
                                   <YAxis tick={{ fill: 'hsl(var(--analytics-text))', fontSize: 12 }} />
@@ -495,7 +500,7 @@ export const AssetDashboard = () => {
                           </SortableChartItem>
                         );
                       }
-                      
+
                       if (chartId === 'agingMatrix') {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
@@ -534,7 +539,7 @@ export const AssetDashboard = () => {
                           </SortableChartItem>
                         );
                       }
-                      
+
                       if (chartId === 'performanceMetrics') {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
@@ -565,7 +570,7 @@ export const AssetDashboard = () => {
                           </SortableChartItem>
                         );
                       }
-                      
+
                       return null;
                     })}
                   </div>
@@ -642,7 +647,7 @@ export const AssetDashboard = () => {
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious 
+                      <PaginationPrevious
                         onClick={() => {
                           if (pagination.currentPage > 1) {
                             handlePageChange(pagination.currentPage - 1);
@@ -651,10 +656,10 @@ export const AssetDashboard = () => {
                         className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                       />
                     </PaginationItem>
-                    
+
                     {Array.from({ length: Math.min(pagination.totalPages, 10) }, (_, i) => i + 1).map((page) => (
                       <PaginationItem key={page}>
-                        <PaginationLink 
+                        <PaginationLink
                           onClick={() => handlePageChange(page)}
                           isActive={pagination.currentPage === page}
                         >
@@ -662,15 +667,15 @@ export const AssetDashboard = () => {
                         </PaginationLink>
                       </PaginationItem>
                     ))}
-                    
+
                     {pagination.totalPages > 10 && (
                       <PaginationItem>
                         <PaginationEllipsis />
                       </PaginationItem>
                     )}
-                    
+
                     <PaginationItem>
-                      <PaginationNext 
+                      <PaginationNext
                         onClick={() => {
                           if (pagination.currentPage < pagination.totalPages) {
                             handlePageChange(pagination.currentPage + 1);
@@ -681,9 +686,9 @@ export const AssetDashboard = () => {
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
-                
+
                 <div className="text-center mt-2 text-sm text-gray-600">
-                  Showing page {pagination.currentPage} of {pagination.totalPages} 
+                  Showing page {pagination.currentPage} of {pagination.totalPages}
                   ({pagination.totalCount} total assets)
                 </div>
               </div>
@@ -692,13 +697,13 @@ export const AssetDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      <BulkUploadDialog 
+      <BulkUploadDialog
         open={isBulkUploadOpen}
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
       />
 
-      <AssetFilterDialog 
+      <AssetFilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
       />

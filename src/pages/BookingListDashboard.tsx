@@ -332,7 +332,7 @@ const BookingListDashboard = () => {
       />
 
       {/* Filter Modal */}
-      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen} modal={false}>
         <DialogContent className="sm:max-w-md [&>button]:hidden">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
