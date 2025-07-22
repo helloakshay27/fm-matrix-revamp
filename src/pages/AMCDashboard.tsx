@@ -175,7 +175,11 @@ export const AMCDashboard = () => {
     const siteId = localStorage.getItem('site_id');
     const token = localStorage.getItem('access_token');
 
+    console.log('Site ID from localStorage:', siteId);
+    console.log('Token exists:', !!token);
+
     if (!siteId || !token) {
+      console.log('Missing credentials - siteId:', siteId, 'token exists:', !!token);
       toast({
         title: "Missing Credentials",
         description: "Site ID or access token not found in localStorage",
