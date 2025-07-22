@@ -47,14 +47,14 @@ export const EditAMCPage = () => {
     contracts: [] as File[],
     invoices: [] as File[]
   });
-
+  
   const [existingFiles, setExistingFiles] = useState({
     contracts: [] as Array<{ document_url: string, document_name: string, attachment_id: number }>,
     invoices: [] as Array<{ document_url: string, document_name: string, attachment_id: number }>
   });
-
-  const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
-  const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
+  
+  const [assetGroups, setAssetGroups] = useState<Array<{id: number, name: string, sub_groups: Array<{id: number, name: string}>}>>([]);
+  const [subGroups, setSubGroups] = useState<Array<{id: number, name: string}>>([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
 
@@ -76,9 +76,6 @@ export const EditAMCPage = () => {
   useEffect(() => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
-      const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
-      const isGroupType = data.resource_type === 'Pms::Asset';
-
       console.log('=== AMC Data Debug ===');
       console.log('Raw AMC Data:', data);
       console.log('Assets loaded:', assets.length, assets);
@@ -322,17 +319,13 @@ export const EditAMCPage = () => {
       payload.pms_asset_amc.service_id = formData.assetName;
     }
 
-    // Add vendor information if available
-    const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-    if (selectedSupplier) {
-      payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
-      payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
-      payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
-    }
-
-    // Add file fields (currently null, would need separate file upload handling)
-    payload.pms_asset_amc.amc_contract = null;
-    payload.pms_asset_amc.amc_invoice = null;
+      // Add vendor information if available
+      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
+      if (selectedSupplier) {
+        payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
+        payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
+        payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
+      }
 
     return payload;
   };
@@ -342,45 +335,7 @@ export const EditAMCPage = () => {
     setUpdateLoading(true);
 
     try {
-      // Create JSON payload with all AMC fields
-      let payload: any = {
-        pms_asset_amc: {
-          amc_cost: parseFloat(formData.cost) || 0,
-          amc_start_date: formData.startDate,
-          amc_end_date: formData.endDate,
-          amc_first_service: formData.firstService,
-          amc_frequency: formData.paymentTerms || null,
-          amc_period: `${formData.startDate} - ${formData.endDate}`,
-          no_of_visits: parseInt(formData.noOfVisits) || 0,
-          payment_term: formData.paymentTerms,
-          remarks: formData.remarks,
-          pms_site_id: (amcData as any)?.pms_site_id,
-          site_name: (amcData as any)?.site_name,
-          resource_id: (amcData as any)?.resource_id,
-          resource_name: (amcData as any)?.resource_name,
-          resource_type: (amcData as any)?.resource_type,
-          supplier_id: formData.vendor || formData.supplier,
-          supplier_name: (amcData as any)?.supplier_name
-        }
-      };
-
-      // Add asset_ids or service_id based on details type
-      if (formData.details === 'Asset') {
-        if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-          payload.pms_asset_amc.asset_ids = formData.asset_ids;
-        }
-      } else if (formData.details === 'Service' && formData.assetName) {
-        payload.pms_asset_amc.service_id = formData.assetName;
-      }
-
-      // Add vendor information if available
-      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-      if (selectedSupplier) {
-        payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
-        payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
-        payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
-      }
-
+      const payload = createPayload();
       console.log('Updating AMC with payload:', payload);
 
       // Create FormData if there are files to upload
