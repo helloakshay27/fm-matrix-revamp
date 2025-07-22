@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { fetchBuildings, createBuilding } from '@/store/slices/locationSlice';
+import { fetchBuildings, createBuilding, updateBuilding } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
 export function BuildingPage() {
@@ -51,9 +51,20 @@ export function BuildingPage() {
     }
   };
 
-  const toggleStatus = (index: number, field: 'active' | 'has_wing' | 'has_floor' | 'has_area' | 'has_room') => {
-    // This would require an update API call - placeholder for now
-    console.log(`Toggle ${field} for building at index ${index}`);
+  const toggleStatus = async (buildingId: number, field: 'active' | 'has_wing' | 'has_floor' | 'has_area' | 'has_room') => {
+    try {
+      const building = buildings.data.find(b => b.id === buildingId);
+      if (!building) return;
+
+      const updates = {
+        [field]: !building[field]
+      };
+
+      await dispatch(updateBuilding({ id: buildingId, updates }));
+      toast.success(`Building ${field.replace('_', ' ')} updated successfully`);
+    } catch (error) {
+      toast.error(`Failed to update building ${field.replace('_', ' ')}`);
+    }
   };
 
   return (
@@ -171,7 +182,7 @@ export function BuildingPage() {
                   </TableCell>
                   <TableCell>
                     <button
-                      onClick={() => toggleStatus(index, 'active')}
+                      onClick={() => toggleStatus(building.id, 'active')}
                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
                         building.active ? 'bg-green-500' : 'bg-gray-300'
                       }`}

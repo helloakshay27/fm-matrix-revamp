@@ -216,6 +216,18 @@ export const createUnit = createAsyncThunk(
   }
 );
 
+// Update operations
+export const updateBuilding = createAsyncThunk(
+  'location/updateBuilding',
+  async ({ id, updates }: { id: number; updates: Partial<Building> }) => {
+    const payload = {
+      building: updates
+    };
+    const response = await apiClient.put(`/buildings/${id}.json`, payload);
+    return { id, updates };
+  }
+);
+
 const initialState: LocationState = {
   buildings: { data: [], loading: false, error: null },
   wings: { data: [], loading: false, error: null },
@@ -337,6 +349,14 @@ const locationSlice = createSlice({
       .addCase(fetchUnits.rejected, (state, action) => {
         state.units.loading = false;
         state.units.error = action.error.message || 'Failed to fetch units';
+      })
+      // Update Building
+      .addCase(updateBuilding.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const buildingIndex = state.buildings.data.findIndex(building => building.id === id);
+        if (buildingIndex !== -1) {
+          state.buildings.data[buildingIndex] = { ...state.buildings.data[buildingIndex], ...updates };
+        }
       });
   },
 });
