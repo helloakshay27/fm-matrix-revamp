@@ -982,17 +982,13 @@ export const TicketDashboard = () => {
           })}
           </div>
 
-          {/* Action Buttons */}
-          <div className="mb-4">
-            {renderCustomActions()}
-          </div>
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
             {loading ? <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
               </div> : <>
-                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} />
+                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} leftActions={renderCustomActions()} />
                 
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
