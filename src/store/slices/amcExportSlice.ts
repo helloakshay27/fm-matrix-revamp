@@ -3,10 +3,11 @@ import createApiSlice from '../api/apiSlice'
 import { apiClient } from '@/utils/apiClient'
 
 interface ExportParams {
+  baseUrl: string;
+  token: string;
   site_id: string;
   from_date: string;
   to_date: string;
-  access_token: string;
 }
 
 // AMC Export API call
@@ -14,12 +15,15 @@ export const exportAMCData = createAsyncThunk(
   'amcExport/exportAMCData',
   async (params: ExportParams, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get('/pms/asset_amcs/status_of_amcs.json', {
+      const response = await apiClient.get(`https://${params.baseUrl}/pms/asset_amcs/status_of_amcs.json`, {
         params: {
           site_id: params.site_id,
           from_date: params.from_date,
           to_date: params.to_date,
-          access_token: params.access_token
+          access_token: params.token
+        },
+        headers: {
+          Authorization: `Bearer ${params.token}`,
         },
         responseType: 'blob' // For downloading Excel file
       });

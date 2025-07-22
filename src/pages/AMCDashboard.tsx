@@ -171,10 +171,12 @@ export const AMCDashboard = () => {
       return;
     }
 
-    // Get data from localStorage
-    const siteId = localStorage.getItem('site_id');
+    // Get data from localStorage (or wherever your app stores these values)
+    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com'; // Add your default base URL
     const token = localStorage.getItem('access_token');
+    const siteId = localStorage.getItem('site_id');
 
+    console.log('BaseUrl:', baseUrl);
     console.log('Site ID from localStorage:', siteId);
     console.log('Token exists:', !!token);
 
@@ -213,10 +215,11 @@ export const AMCDashboard = () => {
 
     try {
       const response = await dispatch(exportAMCData({
+        baseUrl: baseUrl,
+        token: token,
         site_id: siteId,
         from_date: fromDate,
-        to_date: toDate,
-        access_token: token
+        to_date: toDate
       })).unwrap();
 
       const blob = new Blob([response], {
