@@ -30,7 +30,7 @@ import {
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Search, Download, Loader2 } from 'lucide-react';
+import { Search, Download, Loader2, Grid3x3, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -72,7 +72,8 @@ interface EnhancedTableProps<T> {
   hideTableExport?: boolean;
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
-  handleExport?: () => void;
+  leftActions?: React.ReactNode;
+  rightActions?: React.ReactNode;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -108,6 +109,8 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideTableExport = false,
   hideTableSearch = false,
   hideColumnsButton = false,
+  leftActions,
+  rightActions,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -244,6 +247,8 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
+          {leftActions}
+          
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
             </div>
@@ -262,6 +267,15 @@ export function EnhancedTable<T extends Record<string, any>>({
               />
             </div>
           )}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          >
+            Go!
+          </Button>
+          
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
@@ -272,6 +286,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Download className="w-4 h-4" />
             </Button>
           )}
+          
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -280,6 +295,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               onResetToDefaults={resetToDefaults}
             />
           )}
+          
+          {rightActions}
         </div>
       </div>
 

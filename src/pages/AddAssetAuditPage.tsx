@@ -85,7 +85,7 @@ export const AddAssetAuditPage = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <span>Audit &gt; Create New Audit</span>
+          
         </div>
 
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6">

@@ -13,10 +13,6 @@ const UtilityEVConsumptionDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        EV Consumption &gt; EV Consumption List
-      </div>
 
       {/* Page Title */}
       <div className="flex items-center justify-between">

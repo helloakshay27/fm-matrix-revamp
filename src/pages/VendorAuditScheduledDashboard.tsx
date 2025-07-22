@@ -98,16 +98,6 @@ export const VendorAuditScheduledDashboard = () => {
       </div>
 
       {/* Add Button */}
-      <div className="mb-6">
-        <Button 
-          onClick={handleAdd}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
@@ -122,6 +112,16 @@ export const VendorAuditScheduledDashboard = () => {
           getItemId={(item) => item.id}
           storageKey="vendor-schedule-table"
           className="w-full"
+          leftActions={
+            <Button 
+              onClick={handleAdd}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          }
         />
       </div>
     </div>

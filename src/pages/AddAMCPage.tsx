@@ -315,7 +315,7 @@ export const AddAMCPage = () => {
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate('/maintenance/amc')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          AMC &gt; AMC List &gt; Add
+          Back to AMC List
         </Button>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW AMC</h1>
       </div>

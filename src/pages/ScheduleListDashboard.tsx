@@ -65,6 +65,10 @@ export const ScheduleListDashboard = () => {
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
   const handleViewSchedule = (item: TransformedScheduleData) => navigate(`/maintenance/schedule/view/${item.id}`);
   const columns = [{
+    key: 'actions',
+    label: 'Actions',
+    sortable: false
+  }, {
     key: 'id',
     label: 'ID',
     sortable: true
@@ -119,18 +123,22 @@ export const ScheduleListDashboard = () => {
         <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Export
       </Button>
     </div>;
-  const renderRowActions = (schedule: TransformedScheduleData) => <div className="flex gap-1">
-      <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(schedule.id)}>
-        <Edit className="w-4 h-4" />
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(schedule.id)}>
-        <Copy className="w-4 h-4" />
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(schedule)}>
-        <Eye className="w-4 h-4" />
-      </Button>
-    </div>;
   const renderCell = (item: TransformedScheduleData, columnKey: string) => {
+    if (columnKey === 'actions') {
+      return (
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item.id)}>
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item.id)}>
+            <Copy className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)}>
+            <Eye className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    }
     if (columnKey === 'category') {
       return <span className={`px-2 py-1 rounded text-xs ${item.category === 'Technical' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
           {item.category}
@@ -409,9 +417,6 @@ export const ScheduleListDashboard = () => {
       </div>
     </div>;
   const renderListTab = () => <div className="space-y-4">
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
 
       {isLoading ? <div className="flex items-center justify-center h-32">
           <div className="text-center">
@@ -420,7 +425,7 @@ export const ScheduleListDashboard = () => {
           </div>
         </div> : error ? <div className="flex items-center justify-center h-32">
           <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
-        </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." />}
+        </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." leftActions={renderCustomActions()} />}
     </div>;
   function handleApplyFilters(filters: { activityName: string; type: string; category: string; }): void {
     setFilters(filters);

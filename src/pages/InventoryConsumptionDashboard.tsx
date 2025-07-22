@@ -92,6 +92,11 @@ const InventoryConsumptionDashboard = () => {
 
   // Define table columns for drag and drop functionality
   const columns: ColumnConfig[] = [{
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    draggable: true
+  }, {
     key: 'inventory',
     label: 'Inventory',
     sortable: true,
@@ -130,6 +135,15 @@ const InventoryConsumptionDashboard = () => {
 
   // Render cell content
   const renderCell = (item: any, columnKey: string) => {
+    if (columnKey === 'actions') {
+      return (
+        <div className="flex gap-2 justify-center">
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
+            <Eye className="w-4 h-4 text-gray-600" />
+          </Button>
+        </div>
+      );
+    }
     const value = item[columnKey];
     if (columnKey === 'criticality') {
       return <span className="text-sm text-gray-600">{value}</span>;
@@ -173,58 +187,28 @@ const InventoryConsumptionDashboard = () => {
     navigate(`/maintenance/inventory-consumption/view/${item.id}`);
   };
 
-  // Render actions for each row
-  const renderActions = (item: any) => (
-    <div className="flex gap-2 justify-center">
-      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
-        <Eye className="w-4 h-4 text-gray-600" />
-      </Button>
-    </div>
-  );
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-sm text-gray-600">
-        <span>Inventory Consumption</span>
-        <span>{">"}</span>
-        <span className="text-gray-900 font-medium">Consumption List</span>
-      </div>
 
       {/* Header */}
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">Consumption LIST</h1>
-
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Import
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsFilterOpen(true)}
-            className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            Filter
-          </Button>
-        </div>
+        
       </div>
 
       {/* Enhanced Table with Drag and Drop */}
-      <EnhancedTable
-        data={paginatedData}
-        columns={columns}
+      <EnhancedTable 
+        data={paginatedData} 
+        columns={columns} 
         renderCell={renderCell}
-        renderActions={renderActions}
-        storageKey="inventory-consumption-table"
-        emptyMessage="No consumption data available"
-        enableExport={true}
-        exportFileName="inventory-consumption"
-        hideTableExport={false}
-        hideTableSearch={false}
-        hideColumnsButton={false}
+        storageKey="inventory-consumption-table" 
+        emptyMessage="No consumption data available" 
+        enableExport={true} 
+        exportFileName="inventory-consumption" 
+        hideTableExport={false} 
+        hideTableSearch={false} 
+        hideColumnsButton={false} 
         searchPlaceholder="Search inventory items..."
         loading={loading}
         pagination={false}
@@ -245,6 +229,22 @@ const InventoryConsumptionDashboard = () => {
           }
         }}
         getItemId={(item) => item.id.toString()}
+        leftActions={
+          <div className="flex gap-3">
+            <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Import
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsFilterOpen(true)}
+              className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Filter
+            </Button>
+          </div>
+        }
       />
 
       {/* Floating Filter Modal */}

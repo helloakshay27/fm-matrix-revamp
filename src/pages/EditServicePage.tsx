@@ -210,7 +210,7 @@ export const EditServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <p className="text-[#1a1a1a] opacity-70">Service List &gt; Edit Service</p>
+          
         </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE - ID: {id}</h1>
       </div>

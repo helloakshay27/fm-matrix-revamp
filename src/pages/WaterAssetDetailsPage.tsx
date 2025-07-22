@@ -92,14 +92,10 @@ export const WaterAssetDetailsPage = () => {
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4" />
-            Assets List
-          </button>
-          <span>&gt;</span>
-          <span>Asset Details</span>
-        </div>
+        <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Assets List
+        </button>
         
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">

@@ -50,10 +50,6 @@ export const EditAssetAuditPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6 max-w-6xl mx-auto">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
-          Audit &gt; Edit Audit
-        </div>
 
         <h1 className="text-2xl font-bold mb-6">EDIT AUDIT</h1>
 

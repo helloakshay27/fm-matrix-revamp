@@ -119,7 +119,7 @@ export const AddServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <p className="text-[#1a1a1a] opacity-70">Services &gt; Service List &gt; Add Page</p>
+          
         </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>

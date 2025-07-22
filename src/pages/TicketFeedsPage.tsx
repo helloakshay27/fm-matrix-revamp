@@ -95,11 +95,6 @@ export const TicketFeedsPage = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Ticket Details
           </Button>
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-            <span>Ticket Details</span>
-            <span>&gt;</span>
-            <span>Feeds</span>
-          </div>
           <h1 className="text-2xl font-bold text-gray-900">FEEDS</h1>
         </div>
 

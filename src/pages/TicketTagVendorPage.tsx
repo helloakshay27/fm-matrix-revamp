@@ -191,11 +191,6 @@ export const TicketTagVendorPage = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Ticket Details
           </Button>
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-            <span>Ticket</span>
-            <span>&gt;</span>
-            <span>Tag a Vendor</span>
-          </div>
           <h1 className="text-2xl font-bold text-gray-900">TAG A VENDOR</h1>
         </div>
 

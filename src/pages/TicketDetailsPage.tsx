@@ -110,11 +110,6 @@ export const TicketDetailsPage = () => {
           </button>
         </div>
         
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span>Ticket</span>
-          <span>&gt;</span>
-          <span>Ticket Details</span>
-        </div>
         
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">TICKET DETAILS</h1>

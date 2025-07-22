@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
+import { EditStatusDialog } from '@/components/EditStatusDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TicketSelector } from '@/components/TicketSelector';
@@ -258,6 +259,7 @@ export const TicketDashboard = () => {
     requests: 0
   });
   const [filters, setFilters] = useState<TicketFilters>({});
+  const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const perPage = 20;
 
   // Drag and drop sensors
@@ -427,6 +429,30 @@ export const TicketDashboard = () => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
 
+  const handleEditTicket = (ticketNumber: string) => {
+    setIsEditStatusOpen(true);
+  };
+
+  const handleDeleteTicket = async (ticketId: number) => {
+    if (window.confirm('Are you sure you want to delete this ticket?')) {
+      try {
+        // Add delete API call here when available
+        toast({
+          title: "Success",
+          description: "Ticket deleted successfully"
+        });
+        await fetchTickets(currentPage);
+      } catch (error) {
+        console.error('Delete ticket failed:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete ticket",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   // Selection handlers
   const handleTicketSelection = (ticketIdString: string, isSelected: boolean) => {
     const ticketId = parseInt(ticketIdString);
@@ -534,6 +560,10 @@ export const TicketDashboard = () => {
     }
   };
   const columns = [{
+    key: 'actions',
+    label: 'Actions',
+    sortable: false
+  }, {
     key: 'ticket_number',
     label: 'Ticket ID',
     sortable: true
@@ -630,17 +660,35 @@ export const TicketDashboard = () => {
     label: 'Resolution Escalation Level',
     sortable: true
   }];
-  const renderCustomActions = () => <div className="flex flex-wrap gap-3">
-      <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+  const renderCustomActions = () => (
+    <div className="flex gap-3">
+      <Button 
+        onClick={() => navigate('/maintenance/ticket/add')} 
+        style={{ backgroundColor: '#C72030' }}
+        className="text-white hover:bg-[#C72030]/90"
+      >
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
-      <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
-        <Filter className="w-4 h-4 mr-2" /> Filters
+    </div>
+  );
+
+  const renderRightActions = () => (
+    <div className="flex gap-2">
+      <Button 
+        variant="outline" 
+        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+        onClick={() => setIsFilterOpen(true)}
+      >
+        <Filter className="w-4 h-4" />
       </Button>
-    </div>;
-  const renderRowActions = ticket => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(ticket.id)}>
-      <Eye className="w-4 h-4" />
-    </Button>;
+      <Button 
+        variant="outline"
+        className="border-gray-300 text-gray-600 hover:bg-gray-50"
+      >
+        <Settings className="w-4 h-4" />
+      </Button>
+    </div>
+  );
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
     const date = new Date(dateString);
@@ -671,6 +719,30 @@ export const TicketDashboard = () => {
       </div>;
   };
   const renderCell = (item, columnKey) => {
+    if (columnKey === 'actions') {
+      return (
+        <div className="flex gap-2">
+          <div title="View ticket">
+            <Eye 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewDetails(item.ticket_number);
+              }}
+            />
+          </div>
+          <div title="Edit ticket">
+            <Edit 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditTicket(item.ticket_number);
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
     if (columnKey === 'heading') {
       return <TruncatedDescription text={item.heading} />;
     }
@@ -695,7 +767,8 @@ export const TicketDashboard = () => {
     }
     return item[columnKey];
   };
-  return <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+  return (
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
@@ -947,23 +1020,23 @@ export const TicketDashboard = () => {
             {[{
             label: 'Total Tickets',
             value: totalTickets,
-            icon: Ticket
+            icon: Settings
           }, {
             label: 'Open',
             value: openTickets,
-            icon: AlertCircle
+            icon: Settings
           }, {
             label: 'In Progress',
             value: inProgressTickets,
-            icon: Clock
+            icon: Settings
           }, {
             label: 'Pending',
             value: inProgressTickets,
-            icon: Clock
+            icon: Settings
           }, {
             label: 'Closed',
             value: closedTickets,
-            icon: CheckCircle
+            icon: Settings
           }].map((item, i) => {
             const IconComponent = item.icon;
             return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
@@ -982,56 +1055,162 @@ export const TicketDashboard = () => {
           })}
           </div>
 
-          {/* Action Buttons */}
-          <div className="mb-4">
-            {renderCustomActions()}
-          </div>
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
-            {loading ? <div className="flex items-center justify-center p-8">
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
-              </div> : <>
-                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} renderActions={renderRowActions} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} />
+              </div>
+            ) : (
+              <>
+                <EnhancedTable 
+                  data={safeTickets} 
+                  columns={columns} 
+                  renderCell={renderCell} 
+                  selectable={true} 
+                  pagination={false} 
+                  enableExport={true} 
+                  exportFileName="tickets" 
+                  onRowClick={ticket => handleViewDetails(ticket.ticket_number)} 
+                  storageKey="tickets-table" 
+                  enableSelection={true} 
+                  selectedItems={selectedTickets.map(id => id.toString())} 
+                  onSelectItem={handleTicketSelection} 
+                  onSelectAll={handleSelectAll} 
+                  getItemId={ticket => ticket.id.toString()} 
+                  leftActions={
+                    <div className="flex gap-3">
+                      {renderCustomActions()}
+                    </div>
+                  }
+                  rightActions={
+                    <Button 
+                      variant="outline" 
+                      className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                      onClick={() => setIsFilterOpen(true)}
+                    >
+                      <Filter className="w-4 h-4" />
+                    </Button>
+                  }
+                  searchPlaceholder="Search Tickets"
+                  hideTableExport={false}
+                  hideColumnsButton={false}
+                />
                 
                 {/* Custom Pagination */}
-                <div className="flex items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
-                  <div className="flex items-center text-sm text-gray-700">
-                    <span>
-                      Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, totalTickets)} of {totalTickets} results
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1 || loading} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in">
-                      Previous
+                <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
+                  <div className="flex items-center space-x-1">
+                    {/* Previous Button */}
+                    <button 
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                      disabled={currentPage === 1 || loading} 
+                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
                     </button>
                     
-                    <div className="flex space-x-1">
-                      {Array.from({
-                    length: Math.min(5, totalPages)
-                  }, (_, i) => {
-                    const pageNum = currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
-                    if (pageNum < 1 || pageNum > totalPages) return null;
-                    return <button key={pageNum} onClick={() => setCurrentPage(pageNum)} disabled={loading} className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${currentPage === pageNum ? 'bg-primary text-white border-primary' : 'bg-white border-gray-300 hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed`}>
+                    {/* Page Numbers */}
+                    <div className="flex items-center space-x-1">
+                      {/* First page */}
+                      {currentPage > 3 && (
+                        <>
+                          <button 
+                            onClick={() => setCurrentPage(1)} 
+                            disabled={loading}
+                            className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                          >
+                            1
+                          </button>
+                          {currentPage > 4 && (
+                            <span className="px-2 text-gray-500">...</span>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Current page and surrounding pages */}
+                      {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (currentPage <= 2) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 1) {
+                          pageNum = totalPages - 2 + i;
+                        } else {
+                          pageNum = currentPage - 1 + i;
+                        }
+                        
+                        if (pageNum < 1 || pageNum > totalPages) return null;
+                        
+                        return (
+                          <button 
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)} 
+                            disabled={loading}
+                            className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${
+                              currentPage === pageNum 
+                                ? 'bg-[#C72030] text-white' 
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
                             {pageNum}
-                          </button>;
-                  })}
+                          </button>
+                        );
+                      })}
+                      
+                      {/* Last page */}
+                      {currentPage < totalPages - 2 && (
+                        <>
+                          {currentPage < totalPages - 3 && (
+                            <span className="px-2 text-gray-500">...</span>
+                          )}
+                          <button 
+                            onClick={() => setCurrentPage(totalPages)} 
+                            disabled={loading}
+                            className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                          >
+                            {totalPages}
+                          </button>
+                        </>
+                      )}
                     </div>
                     
-                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || loading} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in">
-                      Next
+                    {/* Next Button */}
+                    <button 
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                      disabled={currentPage === totalPages || loading} 
+                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </button>
                   </div>
                 </div>
-              </>}
+              </>
+            )}
           </div>
         </TabsContent>
       </Tabs>
 
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
 
+      {/* Edit Status Dialog */}
+      <EditStatusDialog 
+        open={isEditStatusOpen} 
+        onOpenChange={setIsEditStatusOpen} 
+      />
+
       {/* Ticket Selection Panel */}
-      <TicketSelectionPanel selectedTickets={selectedTickets} selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} onGoldenTicket={handleGoldenTicket} onFlag={handleFlag} onExport={handleExport} onClearSelection={handleClearSelection} />
-    </div>;
+      <TicketSelectionPanel 
+        selectedTickets={selectedTickets} 
+        selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} 
+        onGoldenTicket={handleGoldenTicket} 
+        onFlag={handleFlag} 
+        onExport={handleExport} 
+        onClearSelection={handleClearSelection} 
+      />
+    </div>
+  );
 };
