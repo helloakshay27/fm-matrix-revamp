@@ -402,7 +402,7 @@ export const AddTicketDashboard = () => {
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
               <Input
                 placeholder="Enter Contact Number"
@@ -411,8 +411,8 @@ export const AddTicketDashboard = () => {
                 disabled={isFieldsReadOnly}
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
               <Input
                 placeholder="Enter Site"
@@ -421,7 +421,7 @@ export const AddTicketDashboard = () => {
                 disabled={isFieldsReadOnly}
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
-            </div>
+            </div> */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
               <Input
@@ -432,7 +432,7 @@ export const AddTicketDashboard = () => {
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
               <Input
                 placeholder="Enter Unit"
@@ -441,7 +441,7 @@ export const AddTicketDashboard = () => {
                 disabled={isFieldsReadOnly}
                 className={isFieldsReadOnly ? "bg-gray-50" : ""}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Ticket Type */}
@@ -547,14 +547,14 @@ export const AddTicketDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
               <Input
                 placeholder="Enter Reference Number"
                 value={formData.referenceNumber}
                 onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Description */}
