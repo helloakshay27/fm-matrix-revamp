@@ -33,7 +33,7 @@ export const AttendanceDetailsPage = () => {
   const [attendanceData, setAttendanceData] = useState<AttendanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -70,17 +70,14 @@ export const AttendanceDetailsPage = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedRecords = attendanceData?.attendances.slice(startIndex, endIndex) || [];
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
   const handlePrevious = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
   };
-
   const handleNext = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -155,44 +152,30 @@ export const AttendanceDetailsPage = () => {
             </Table>
 
             {/* Functional Pagination */}
-            {totalPages > 1 && (
-              <div className="p-4">
+            {totalPages > 1 && <div className="p-4">
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={handlePrevious}
-                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
+                      <PaginationPrevious onClick={handlePrevious} className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
                     </PaginationItem>
                     
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink 
-                          onClick={() => handlePageChange(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
+                    {Array.from({
+                length: totalPages
+              }, (_, i) => i + 1).map(page => <PaginationItem key={page}>
+                        <PaginationLink onClick={() => handlePageChange(page)} isActive={currentPage === page} className="cursor-pointer">
                           {page}
                         </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                      </PaginationItem>)}
                     
                     <PaginationItem>
-                      <PaginationNext 
-                        onClick={handleNext}
-                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
+                      <PaginationNext onClick={handleNext} className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
                 
                 {/* Pagination Info */}
-                <div className="text-center mt-2 text-sm text-gray-600">
-                  Showing {startIndex + 1}-{Math.min(endIndex, totalRecords)} of {totalRecords} records
-                </div>
-              </div>
-            )}
+                
+              </div>}
           </div>
         </>}
 

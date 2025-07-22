@@ -1,85 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { Download, Filter, Eye, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { RootState, AppDispatch } from '@/store/store';
+import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
+  
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
   const [filterValues, setFilterValues] = useState({
     group: '',
     subGroup: '',
     criticality: '',
     name: ''
   });
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  useEffect(() => {
+    dispatch(fetchInventoryConsumptionHistory());
+  }, [dispatch]);
   
-  const [consumptionData] = useState([{
-    id: 1,
-    inventory: 'Handwash',
-    stock: '0.0',
-    unit: '',
-    minStockLevel: '2',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 2,
-    inventory: 'Notepad',
-    stock: '3.0',
-    unit: '',
-    minStockLevel: '2',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 3,
-    inventory: 'Pen',
-    stock: '3.0',
-    unit: '',
-    minStockLevel: '3',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 4,
-    inventory: 'Sanitizer',
-    stock: '9.0',
-    unit: '',
-    minStockLevel: '1',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 5,
-    inventory: 'Tissue Paper',
-    stock: '4.0',
-    unit: '',
-    minStockLevel: '5',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 6,
-    inventory: 'Phenyl',
-    stock: '5.0',
-    unit: '',
-    minStockLevel: '1',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }, {
-    id: 7,
-    inventory: 'Toilet Paper',
-    stock: '5.0',
-    unit: '',
-    minStockLevel: '5',
-    group: '-',
-    subGroup: '-',
-    criticality: 'Non-Critical'
-  }]);
+  // Transform API data to match table structure
+  const consumptionData = inventories.map(item => ({
+    id: item.id,
+    inventory: item.name,
+    stock: item.quantity.toString(),
+    unit: item.unit || '',
+    minStockLevel: item.min_stock_level,
+    group: item.group || '-',
+    subGroup: item.sub_group || '-',
+    criticality: item.criticality === 0 ? 'Non-Critical' : 'Critical'
+  }));
+
+  // Calculate pagination
+  const totalPages = Math.ceil(Math.max(consumptionData.length, 1) / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedData = consumptionData.slice(startIndex, startIndex + pageSize);
 
   // Define table columns for drag and drop functionality
   const columns: ColumnConfig[] = [{
@@ -196,9 +171,6 @@ const InventoryConsumptionDashboard = () => {
             <Download className="w-4 h-4" />
             Import
           </Button>
-          <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
-            Export
-          </Button>
           <Button 
             variant="outline" 
             onClick={() => setIsFilterOpen(true)}
@@ -212,7 +184,7 @@ const InventoryConsumptionDashboard = () => {
 
       {/* Enhanced Table with Drag and Drop */}
       <EnhancedTable 
-        data={consumptionData} 
+        data={paginatedData} 
         columns={columns} 
         renderCell={renderCell} 
         renderActions={renderActions} 
@@ -223,7 +195,26 @@ const InventoryConsumptionDashboard = () => {
         hideTableExport={false} 
         hideTableSearch={false} 
         hideColumnsButton={false} 
-        searchPlaceholder="Search inventory items..." 
+        searchPlaceholder="Search inventory items..."
+        loading={loading}
+        pagination={false}
+        selectable={true}
+        selectedItems={selectedItems}
+        onSelectItem={(itemId: string, checked: boolean) => {
+          if (checked) {
+            setSelectedItems(prev => [...prev, itemId]);
+          } else {
+            setSelectedItems(prev => prev.filter(id => id !== itemId));
+          }
+        }}
+        onSelectAll={(checked: boolean) => {
+          if (checked) {
+            setSelectedItems(paginatedData.map(item => item.id.toString()));
+          } else {
+            setSelectedItems([]);
+          }
+        }}
+        getItemId={(item) => item.id.toString()}
       />
 
       {/* Floating Filter Modal */}
@@ -450,7 +441,7 @@ const InventoryConsumptionDashboard = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-4 pt-6">
+              <div className="flex justify-center gap-4 pt-6">
                 <Button 
                   variant="outline" 
                   onClick={handleResetFilter} 
@@ -469,6 +460,38 @@ const InventoryConsumptionDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Pagination */}
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(page)}
+                  isActive={currentPage === page}
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 };

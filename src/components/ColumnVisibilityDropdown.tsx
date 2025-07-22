@@ -96,3 +96,61 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
     </DropdownMenu>
   );
 };
+
+// Legacy interface for backward compatibility
+interface LegacyColumnVisibilityProps {
+  visibleColumns?: Record<string, boolean>;
+  onColumnChange?: (columns: any) => void;
+  columns?: Array<{ key: string; label: string; visible: boolean }>;
+  onColumnToggle?: (columnKey: string, visible: boolean) => void;
+}
+
+// Wrapper component for backward compatibility
+export const ColumnVisibilityDropdown: React.FC<LegacyColumnVisibilityProps> = ({
+  visibleColumns,
+  onColumnChange,
+  columns,
+  onColumnToggle
+}) => {
+  // Transform legacy props to new format
+  const transformedColumns: ColumnConfig[] = columns 
+    ? columns.map(col => ({ key: col.key, label: col.label, hideable: true }))
+    : Object.keys(visibleColumns || {}).map(key => ({ 
+        key, 
+        label: key.charAt(0).toUpperCase() + key.slice(1),
+        hideable: true 
+      }));
+
+  const columnVisibility = visibleColumns || 
+    (columns ? columns.reduce((acc, col) => ({ ...acc, [col.key]: col.visible }), {}) : {});
+
+  const handleToggleVisibility = (columnKey: string) => {
+    if (onColumnToggle) {
+      onColumnToggle(columnKey, !columnVisibility[columnKey]);
+    } else if (onColumnChange) {
+      onColumnChange({
+        ...columnVisibility,
+        [columnKey]: !columnVisibility[columnKey]
+      });
+    }
+  };
+
+  const handleResetToDefaults = () => {
+    if (onColumnChange) {
+      const defaultVisibility = Object.keys(columnVisibility).reduce(
+        (acc, key) => ({ ...acc, [key]: true }), 
+        {}
+      );
+      onColumnChange(defaultVisibility);
+    }
+  };
+
+  return (
+    <ColumnVisibilityMenu
+      columns={transformedColumns}
+      columnVisibility={columnVisibility}
+      onToggleVisibility={handleToggleVisibility}
+      onResetToDefaults={handleResetToDefaults}
+    />
+  );
+};
