@@ -65,40 +65,31 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   console.log('TicketSelectionPanel - Rendering with selected tickets:', selectedTickets);
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 bg-background border border-border shadow-lg rounded-lg z-50">
-      <div className="px-4 py-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background border border-border shadow-lg rounded-lg z-50">
+      <div className="px-6 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Selection</span>
+            </div>
             <div className="flex items-center gap-2">
               <div className="bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium">
                 {selectedTickets.length}
               </div>
-              <span className="text-sm font-medium">
-                Selected
+              <span className="text-xs text-muted-foreground">
+                {selectedTicketObjects.slice(0, 2).map(ticket => ticket.ticket_number).join(', ')}
+                {selectedTicketObjects.length > 2 && ` +${selectedTicketObjects.length - 2} more`}
               </span>
             </div>
-            <Button
-              onClick={handleClearSelection}
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-            >
-              <X className="w-4 h-4" />
-            </Button>
           </div>
           
-          <div className="text-xs text-muted-foreground">
-            {selectedTicketObjects.slice(0, 2).map(ticket => ticket.ticket_number).join(', ')}
-            {selectedTicketObjects.length > 2 && ` +${selectedTicketObjects.length - 2} more`}
-          </div>
-          
-          <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
             <Button
               onClick={handleGoldenTicket}
               disabled={isGoldenLoading}
               variant="outline"
               size="sm"
-              className="justify-start gap-2"
+              className="gap-2"
             >
               {isGoldenLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -113,7 +104,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               disabled={isFlagLoading}
               variant="outline"
               size="sm"
-              className="justify-start gap-2"
+              className="gap-2"
             >
               {isFlagLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -127,10 +118,19 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               onClick={handleExport}
               variant="outline"
               size="sm"
-              className="justify-start gap-2"
+              className="gap-2"
             >
               <Download className="w-4 h-4" />
               Export
+            </Button>
+            
+            <Button
+              onClick={handleClearSelection}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
