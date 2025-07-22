@@ -35,12 +35,12 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
         <Button 
           variant="outline" 
           size="sm"
-          className="h-8 flex items-center"
+          className="h-8 w-8 p-0 flex items-center justify-center"
         >
           <img 
             src="/lovable-uploads/819453c8-fcd9-4080-8a26-422621e5cf51.png" 
             alt="Columns" 
-            className="w-4 h-4"
+            className="w-4 h-4 object-contain"
           />
         </Button>
       </DropdownMenuTrigger>
