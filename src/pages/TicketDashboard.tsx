@@ -998,25 +998,91 @@ export const TicketDashboard = () => {
                     </span>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1 || loading} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in">
-                      Previous
+                  <div className="flex items-center space-x-1">
+                    {/* Previous Button */}
+                    <button 
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                      disabled={currentPage === 1 || loading} 
+                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
                     </button>
                     
-                    <div className="flex space-x-1">
-                      {Array.from({
-                    length: Math.min(5, totalPages)
-                  }, (_, i) => {
-                    const pageNum = currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
-                    if (pageNum < 1 || pageNum > totalPages) return null;
-                    return <button key={pageNum} onClick={() => setCurrentPage(pageNum)} disabled={loading} className={`px-3 py-1 text-sm border rounded-md hover-scale animate-scale-in ${currentPage === pageNum ? 'bg-primary text-white border-primary' : 'bg-white border-gray-300 hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed`}>
+                    {/* Page Numbers */}
+                    <div className="flex items-center space-x-1">
+                      {/* First page */}
+                      {currentPage > 3 && (
+                        <>
+                          <button 
+                            onClick={() => setCurrentPage(1)} 
+                            disabled={loading}
+                            className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                          >
+                            1
+                          </button>
+                          {currentPage > 4 && (
+                            <span className="px-2 text-gray-500">...</span>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Current page and surrounding pages */}
+                      {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (currentPage <= 2) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 1) {
+                          pageNum = totalPages - 2 + i;
+                        } else {
+                          pageNum = currentPage - 1 + i;
+                        }
+                        
+                        if (pageNum < 1 || pageNum > totalPages) return null;
+                        
+                        return (
+                          <button 
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)} 
+                            disabled={loading}
+                            className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${
+                              currentPage === pageNum 
+                                ? 'bg-[#C72030] text-white' 
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
                             {pageNum}
-                          </button>;
-                  })}
+                          </button>
+                        );
+                      })}
+                      
+                      {/* Last page */}
+                      {currentPage < totalPages - 2 && (
+                        <>
+                          {currentPage < totalPages - 3 && (
+                            <span className="px-2 text-gray-500">...</span>
+                          )}
+                          <button 
+                            onClick={() => setCurrentPage(totalPages)} 
+                            disabled={loading}
+                            className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                          >
+                            {totalPages}
+                          </button>
+                        </>
+                      )}
                     </div>
                     
-                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || loading} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed hover-scale animate-scale-in">
-                      Next
+                    {/* Next Button */}
+                    <button 
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                      disabled={currentPage === totalPages || loading} 
+                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </button>
                   </div>
                 </div>
