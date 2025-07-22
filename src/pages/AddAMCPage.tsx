@@ -226,13 +226,13 @@ export const AddAMCPage = () => {
     }
 
     // Add contract files
-    attachments.contracts.forEach((file, index) => {
-      sendData.append(`amc_contract_${index}`, file);
+    attachments.contracts.forEach((file) => {
+      sendData.append('amc_contracts[content][]', file);
     });
 
     // Add invoice files  
-    attachments.invoices.forEach((file, index) => {
-      sendData.append(`amc_invoice_${index}`, file);
+    attachments.invoices.forEach((file) => {
+      sendData.append('amc_invoices[content][]', file);
     });
 
     console.log('Submitting AMC Data via Redux');
@@ -278,13 +278,13 @@ export const AddAMCPage = () => {
     }
 
     // Add contract files
-    attachments.contracts.forEach((file, index) => {
-      sendData.append(`amc_contract_${index}`, file);
+    attachments.contracts.forEach((file) => {
+      sendData.append('amc_contracts[content][]', file);
     });
 
     // Add invoice files  
-    attachments.invoices.forEach((file, index) => {
-      sendData.append(`amc_invoice_${index}`, file);
+    attachments.invoices.forEach((file) => {
+      sendData.append('amc_invoices[content][]', file);
     });
 
     console.log('Save & Schedule AMC via Redux');
