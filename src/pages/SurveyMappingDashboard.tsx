@@ -324,29 +324,6 @@ export const SurveyMappingDashboard = () => {
       </div>
       
       {/* Action Buttons Row - Responsive */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* Left side buttons */}
-        <div className="flex flex-wrap items-center gap-2 md:gap-4">
-          <Button className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80">
-            <Plus className="w-4 h-4" />
-            Add
-          </Button>
-          
-          <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">Import</span>
-          </Button>
-          
-          <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-            <Filter className="w-4 h-4" />
-            <span className="hidden sm:inline">Filter</span>
-          </Button>
-          
-          <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-            <span className="hidden sm:inline">Print QR</span>
-          </Button>
-        </div>
-      </div>
 
       {/* Enhanced Survey Mapping Table */}
       <div>
@@ -364,6 +341,28 @@ export const SurveyMappingDashboard = () => {
           searchPlaceholder="Search mappings..."
           pagination={true}
           pageSize={10}
+          leftActions={
+            <div className="flex flex-wrap items-center gap-2 md:gap-4">
+              <Button className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80">
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+              
+              <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
+                <Upload className="w-4 h-4" />
+                <span className="hidden sm:inline">Import</span>
+              </Button>
+              
+              <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Filter</span>
+              </Button>
+              
+              <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
+                <span className="hidden sm:inline">Print QR</span>
+              </Button>
+            </div>
+          }
         />
       </div>
 
