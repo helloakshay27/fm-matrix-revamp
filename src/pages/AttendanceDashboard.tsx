@@ -505,7 +505,7 @@ export const AttendanceDashboard = () => {
         <TabsContent value="attendancelist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Header */}
           <div className="mb-6">
-            <p className="text-[#1a1a1a] opacity-70 mb-2">Attendance &gt; Attendance List</p>
+            
             <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE LIST</h1>
           </div>
 
