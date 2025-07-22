@@ -48,6 +48,9 @@ export function AreaPage() {
     area.wing?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Limit results based on entries per page selection
+  const displayedAreas = filteredAreas.slice(0, parseInt(entriesPerPage));
+
   const handleBuildingChange = (buildingId: string) => {
     dispatch(setSelectedBuilding(parseInt(buildingId)));
   };
@@ -190,14 +193,14 @@ export function AreaPage() {
                   Loading areas...
                 </TableCell>
               </TableRow>
-            ) : filteredAreas.length === 0 ? (
+            ) : displayedAreas.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-4">
                   No areas found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAreas.map((area, index) => (
+              displayedAreas.map((area, index) => (
                 <TableRow key={area.id}>
                   <TableCell>{area.building?.name || 'N/A'}</TableCell>
                   <TableCell>{area.wing?.name || 'N/A'}</TableCell>
