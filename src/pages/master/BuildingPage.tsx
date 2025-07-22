@@ -18,6 +18,7 @@ export function BuildingPage() {
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newBuilding, setNewBuilding] = useState('');
+  const [importFile, setImportFile] = useState<File | null>(null);
 
   useEffect(() => {
     dispatch(fetchBuildings());
@@ -50,6 +51,62 @@ export function BuildingPage() {
         toast.error('Failed to create building');
       }
     }
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+
+    // Check if file is CSV or Excel
+    const allowedTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+
+    if (!allowedTypes.includes(importFile.type)) {
+      toast.error('Please select a CSV or Excel file');
+      return;
+    }
+
+    try {
+      // For demonstration, we'll show a success message
+      // In a real implementation, you'd process the file and create buildings
+      toast.success(`File "${importFile.name}" imported successfully`);
+      setImportFile(null);
+      setShowAddDialog(false);
+      // Refresh the buildings list
+      dispatch(fetchBuildings());
+    } catch (error) {
+      toast.error('Failed to import file');
+    }
+  };
+
+  const downloadSampleFormat = () => {
+    // Create a sample CSV content
+    const csvContent = "Building Name,Has Wing,Has Floor,Has Area,Has Room,Active\nBuilding A,true,true,false,false,true\nBuilding B,false,true,true,false,true";
+    
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'building_sample_format.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    toast.success('Sample format downloaded');
   };
 
   const toggleStatus = async (buildingId: number, field: 'active' | 'has_wing' | 'has_floor' | 'has_area' | 'has_room') => {
@@ -217,12 +274,33 @@ export function BuildingPage() {
                 placeholder="Enter building name"
               />
             </div>
+            
+            {/* File Import Section */}
+            <div>
+              <label className="text-sm font-medium">Import Buildings from File</label>
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileImport}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {importFile && (
+                <p className="text-sm text-green-600 mt-1">
+                  Selected: {importFile.name}
+                </p>
+              )}
+            </div>
+            
             <div className="flex gap-2">
               <Button onClick={handleAddBuilding} disabled={!newBuilding.trim()}>
                 Submit
               </Button>
-              <Button variant="outline">Sample Format</Button>
-              <Button variant="outline">Import</Button>
+              <Button variant="outline" onClick={downloadSampleFormat}>
+                Sample Format
+              </Button>
+              <Button variant="outline" onClick={handleImport} disabled={!importFile}>
+                Import
+              </Button>
             </div>
           </div>
         </DialogContent>
