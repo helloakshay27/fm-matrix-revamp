@@ -418,11 +418,6 @@ export const InventoryDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6">
       <div className="mb-4 sm:mb-6">
-        <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-4">
-          <span>Inventories</span>
-          <span>&gt;</span>
-          <span>Inventory Dashboard</span>
-        </div>
         <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
       </div>
 

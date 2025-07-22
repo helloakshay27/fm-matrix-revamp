@@ -81,14 +81,10 @@ export const InventoryDetailsPage = () => {
     <div className="p-6 min-h-screen bg-white">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-[#C72030]">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Inventory List</span>
-          </button>
-          <span>&gt;</span>
-          <span>Inventory Details</span>
-        </div>
+        <button onClick={handleBack} className="flex items-center gap-1 hover:text-[#C72030] mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Inventory List</span>
+        </button>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">{inventoryData?.name || 'N/A'}</h1>
           <div className="flex items-center gap-3">
