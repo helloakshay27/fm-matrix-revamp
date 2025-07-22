@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -427,6 +427,30 @@ export const TicketDashboard = () => {
     navigate(`/maintenance/ticket/details/${ticketId}`);
   };
 
+  const handleEditTicket = (ticketNumber: string) => {
+    navigate(`/maintenance/ticket/edit/${ticketNumber}`);
+  };
+
+  const handleDeleteTicket = async (ticketId: number) => {
+    if (window.confirm('Are you sure you want to delete this ticket?')) {
+      try {
+        // Add delete API call here when available
+        toast({
+          title: "Success",
+          description: "Ticket deleted successfully"
+        });
+        await fetchTickets(currentPage);
+      } catch (error) {
+        console.error('Delete ticket failed:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete ticket",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   // Selection handlers
   const handleTicketSelection = (ticketIdString: string, isSelected: boolean) => {
     const ticketId = parseInt(ticketIdString);
@@ -634,14 +658,42 @@ export const TicketDashboard = () => {
     label: 'Resolution Escalation Level',
     sortable: true
   }];
-  const renderCustomActions = () => <div className="flex flex-wrap gap-3">
-      <Button onClick={() => navigate('/maintenance/ticket/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+  const renderCustomActions = () => (
+    <div className="flex gap-3">
+      <Button 
+        onClick={() => navigate('/maintenance/ticket/add')} 
+        style={{ backgroundColor: '#C72030' }}
+        className="text-white hover:bg-[#C72030]/90"
+      >
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
-      <Button variant="outline" onClick={() => setIsFilterOpen(true)}>
-        <Filter className="w-4 h-4 mr-2" /> Filters
+      <Button 
+        style={{ backgroundColor: '#C72030' }}
+        className="text-white hover:bg-[#C72030]/90"
+        onClick={handleExport}
+      >
+        <Upload className="w-4 h-4 mr-2" /> Export
       </Button>
-    </div>;
+    </div>
+  );
+
+  const renderRightActions = () => (
+    <div className="flex gap-2">
+      <Button 
+        variant="outline" 
+        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+        onClick={() => setIsFilterOpen(true)}
+      >
+        <Filter className="w-4 h-4 mr-2" /> Filter
+      </Button>
+      <Button 
+        variant="outline"
+        className="border-gray-300 text-gray-600 hover:bg-gray-50"
+      >
+        <Settings className="w-4 h-4 mr-2" /> Columns
+      </Button>
+    </div>
+  );
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
     const date = new Date(dateString);
@@ -674,9 +726,35 @@ export const TicketDashboard = () => {
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
       return (
-        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.id)}>
-          <Eye className="w-4 h-4" />
-        </Button>
+        <div className="flex gap-2">
+          <div title="View ticket">
+            <Eye 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewDetails(item.ticket_number);
+              }}
+            />
+          </div>
+          <div title="Edit ticket">
+            <Edit 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditTicket(item.ticket_number);
+              }}
+            />
+          </div>
+          <div title="Delete ticket">
+            <Trash2 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteTicket(item.id);
+              }}
+            />
+          </div>
+        </div>
       );
     }
     if (columnKey === 'heading') {
@@ -996,7 +1074,31 @@ export const TicketDashboard = () => {
             {loading ? <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
               </div> : <>
-                <EnhancedTable data={safeTickets} columns={columns} renderCell={renderCell} selectable={true} pagination={false} enableExport={true} exportFileName="tickets" onRowClick={ticket => handleViewDetails(ticket.ticket_number)} storageKey="tickets-table" enableSelection={true} selectedItems={selectedTickets.map(id => id.toString())} onSelectItem={handleTicketSelection} onSelectAll={handleSelectAll} getItemId={ticket => ticket.id.toString()} leftActions={renderCustomActions()} />
+                <EnhancedTable 
+                  data={safeTickets} 
+                  columns={columns} 
+                  renderCell={renderCell} 
+                  selectable={true} 
+                  pagination={false} 
+                  enableExport={true} 
+                  exportFileName="tickets" 
+                  onRowClick={ticket => handleViewDetails(ticket.ticket_number)} 
+                  storageKey="tickets-table" 
+                  enableSelection={true} 
+                  selectedItems={selectedTickets.map(id => id.toString())} 
+                  onSelectItem={handleTicketSelection} 
+                  onSelectAll={handleSelectAll} 
+                  getItemId={ticket => ticket.id.toString()} 
+                  leftActions={renderCustomActions()}
+                  searchPlaceholder="Search Tickets"
+                  hideTableExport={true}
+                  hideColumnsButton={true}
+                />
+                
+                {/* Custom Right Actions */}
+                <div className="flex justify-end gap-2 mt-4">
+                  {renderRightActions()}
+                </div>
                 
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
