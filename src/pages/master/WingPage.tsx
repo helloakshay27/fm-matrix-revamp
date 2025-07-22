@@ -29,10 +29,17 @@ export function WingPage() {
     }
   }, [dispatch, selectedBuilding]);
 
-  const filteredWings = wings.data.filter(wing =>
-    wing.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    wing.building?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredWings = wings.data.filter(wing => {
+    // First filter by selected building
+    const matchesBuilding = !selectedBuilding || wing.building_id === selectedBuilding.toString();
+    
+    // Then filter by search term
+    const matchesSearch = !searchTerm || 
+      wing.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      wing.building?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesBuilding && matchesSearch;
+  });
 
   // Limit results based on entries per page selection
   const displayedWings = filteredWings.slice(0, parseInt(entriesPerPage));
