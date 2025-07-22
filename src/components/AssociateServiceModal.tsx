@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, Button, IconButton } from '@mui/material';
 import { X } from 'lucide-react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
@@ -48,55 +47,46 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-[#C72030]">
-              Associate Services To Asset
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0"
+    <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0' }}>
+        <DialogTitle style={{ padding: 0, fontSize: '1.25rem', fontWeight: 600, color: '#C72030' }}>
+          Associate Services To Asset
+        </DialogTitle>
+        <IconButton onClick={onClose} size="small">
+          <X style={{ width: '16px', height: '16px' }} />
+        </IconButton>
+      </div>
+      
+      <DialogContent style={{ padding: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="asset-select-label" shrink>Asset</InputLabel>
+            <MuiSelect
+              labelId="asset-select-label"
+              label="Asset"
+              displayEmpty
+              value={selectedAsset}
+              onChange={(e) => setSelectedAsset(e.target.value)}
+              sx={fieldStyles}
             >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </DialogHeader>
-        
-        <div className="space-y-6 pt-4">
-          <div>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="asset-select-label" shrink>Asset</InputLabel>
-              <MuiSelect
-                labelId="asset-select-label"
-                label="Asset"
-                displayEmpty
-                value={selectedAsset}
-                onChange={(e) => setSelectedAsset(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Asset</em></MenuItem>
-                <MenuItem value="asset1">Asset 1 - Electrical Panel</MenuItem>
-                <MenuItem value="asset2">Asset 2 - HVAC System</MenuItem>
-                <MenuItem value="asset3">Asset 3 - Fire Safety System</MenuItem>
-                <MenuItem value="asset4">Asset 4 - Water Pump</MenuItem>
-                <MenuItem value="asset5">Asset 5 - Generator</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+              <MenuItem value=""><em>Select Asset</em></MenuItem>
+              <MenuItem value="asset1">Asset 1 - Electrical Panel</MenuItem>
+              <MenuItem value="asset2">Asset 2 - HVAC System</MenuItem>
+              <MenuItem value="asset3">Asset 3 - Fire Safety System</MenuItem>
+              <MenuItem value="asset4">Asset 4 - Water Pump</MenuItem>
+              <MenuItem value="asset5">Asset 5 - Generator</MenuItem>
+            </MuiSelect>
+          </FormControl>
+        </div>
 
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleAssociate}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
-            >
-              Associate Service
-            </Button>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button 
+            variant="contained"
+            onClick={handleAssociate}
+            style={{ backgroundColor: '#C72030', color: 'white' }}
+          >
+            Associate Service
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
