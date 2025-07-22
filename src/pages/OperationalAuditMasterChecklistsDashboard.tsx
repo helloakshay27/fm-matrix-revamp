@@ -57,7 +57,7 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         </div>
       </div>
       
-      <div className="mb-6 flex items-start gap-4">
+      <div className="mb-6 flex items-center gap-6">
         <Button onClick={handleAddMasterChecklist} style={{
         backgroundColor: '#C72030'
       }} className="text-white hover:opacity-90 flex items-center gap-2">
@@ -66,22 +66,21 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         </Button>
 
         {/* File Upload Section */}
-        <div className="flex gap-4 flex-1">
-        <div onDragOver={handleDragOver} onDrop={handleDrop} className="max-w-sm border-2 border-dashed border-[#C72030] rounded-lg p-4 text-center">
+        <div onDragOver={handleDragOver} onDrop={handleDrop} className="border-2 border-dashed border-[#C72030] rounded-lg p-4 text-center min-w-[200px]">
           <div className="flex flex-col items-center">
-            <Upload className="w-6 h-6 text-[#C72030] mb-2" />
-            <p className="text-[#C72030] mb-2 text-sm">Drag & Drop or</p>
+            <Upload className="w-5 h-5 text-[#C72030] mb-1" />
+            <p className="text-[#C72030] mb-1 text-xs">Drag & Drop or</p>
             <input type="file" id="fileInput" className="hidden" onChange={handleFileSelect} accept=".xlsx,.xls,.csv" />
-            <label htmlFor="fileInput" className="text-[#C72030] underline cursor-pointer hover:opacity-75 text-sm">
+            <label htmlFor="fileInput" className="text-[#C72030] underline cursor-pointer hover:opacity-75 text-xs">
               Choose File
             </label>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 mt-1 truncate max-w-[180px]">
               {selectedFile ? selectedFile.name : "No file chosen"}
             </p>
           </div>
         </div>
         
-        <div className="flex flex-col gap-2">
+        <div className="flex gap-3">
           <Button onClick={handleDownloadSampleFormat} style={{
           backgroundColor: '#C72030'
         }} className="text-white hover:opacity-90">
@@ -92,7 +91,6 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         }} className="text-white hover:opacity-90">
             Import Questions
           </Button>
-        </div>
         </div>
       </div>
 
