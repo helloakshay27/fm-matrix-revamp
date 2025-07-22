@@ -15,7 +15,8 @@ import {
   createFloor, 
   setSelectedBuilding, 
   setSelectedWing,
-  setSelectedArea 
+  setSelectedArea,
+  updateFloor
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
@@ -104,8 +105,20 @@ export function FloorPage() {
     }
   };
 
-  const toggleStatus = (index: number) => {
-    console.log(`Toggle status for floor at index ${index}`);
+  const toggleStatus = async (floorId: number) => {
+    try {
+      const floor = floors.data.find(f => f.id === floorId);
+      if (!floor) return;
+
+      await dispatch(updateFloor({
+        id: floorId,
+        updates: { active: !floor.active }
+      }));
+      
+      toast.success('Floor status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update floor status');
+    }
   };
 
   return (
@@ -254,12 +267,12 @@ export function FloorPage() {
                   <TableCell>{floor.area?.name || 'N/A'}</TableCell>
                   <TableCell>{floor.name}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => toggleStatus(index)}
-                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                        floor.active ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                    >
+                     <button
+                       onClick={() => toggleStatus(floor.id)}
+                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                         floor.active ? 'bg-green-500' : 'bg-gray-300'
+                       }`}
+                     >
                       <div
                         className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
                           floor.active ? 'translate-x-7' : 'translate-x-1'
