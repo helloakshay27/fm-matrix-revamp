@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -57,7 +56,6 @@ interface EnhancedTableProps<T> {
   onSelectItem?: (itemId: string, checked: boolean) => void;
   getItemId?: (item: T) => string;
   selectAllLabel?: string;
-  // Enhanced features
   searchTerm?: string;
   onSearchChange?: (searchTerm: string) => void;
   searchPlaceholder?: string;
@@ -74,7 +72,7 @@ interface EnhancedTableProps<T> {
   hideTableExport?: boolean;
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
-  handleExport?: () => void
+  handleExport?: () => void;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -94,7 +92,6 @@ export function EnhancedTable<T extends Record<string, any>>({
   onSelectItem,
   getItemId = (item: T) => item.id,
   selectAllLabel = "Select all",
-  // Enhanced features
   searchTerm: externalSearchTerm,
   onSearchChange,
   searchPlaceholder = 'Search...',
@@ -169,7 +166,7 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
-  // Create column IDs for drag and drop, excluding checkbox column
+  // Create column IDs for drag and drop, excluding checkbox and actions columns
   const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
 
   // Check if all visible items are selected
@@ -247,8 +244,6 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-
-
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
             </div>
@@ -275,11 +270,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-
             </Button>
           )}
-
-
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -302,6 +294,9 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                    {renderActions && (
+                      <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
+                    )}
                     {selectable && (
                       <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
                         <div className="flex justify-center">
@@ -327,9 +322,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                         {column.label}
                       </SortableColumnHeader>
                     ))}
-                    {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center">Actions</TableHead>
-                    )}
                   </SortableContext>
                 </TableRow>
               </TableHeader>
@@ -379,6 +371,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                       )}
                       onClick={(e) => handleRowClick(item, e)}
                     >
+                      {renderActions && (
+                        <TableCell className="p-4 text-center" data-actions>
+                          {renderActions(item)}
+                        </TableCell>
+                      )}
                       {selectable && (
                         <TableCell className="p-4 w-12 text-center" data-checkbox>
                           <div className="flex justify-center">
@@ -400,11 +397,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                           </TableCell>
                         );
                       })}
-                      {renderActions && (
-                        <TableCell className="p-4 text-center" data-actions>
-                          {renderActions(item)}
-                        </TableCell>
-                      )}
                     </TableRow>
                   );
                 })}
