@@ -82,24 +82,6 @@ export function WingPage() {
         <h1 className="text-2xl font-bold">WING</h1>
       </div>
 
-      {/* Building Selection */}
-      <div className="space-y-4">
-        <div className="w-64">
-          <label className="text-sm font-medium">Select Building</label>
-          <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select building" />
-            </SelectTrigger>
-            <SelectContent>
-              {buildings.data.map((building) => (
-                <SelectItem key={building.id} value={building.id.toString()}>
-                  {building.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
@@ -205,12 +187,19 @@ export function WingPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Selected Building</label>
-              <Input
-                value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
-                disabled
-                className="bg-muted"
-              />
+              <label className="text-sm font-medium">Select Building</label>
+              <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select building" />
+                </SelectTrigger>
+                <SelectContent>
+                  {buildings.data.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-sm font-medium">Wing Name</label>
