@@ -13,7 +13,8 @@ import {
   fetchAreas, 
   createArea, 
   setSelectedBuilding, 
-  setSelectedWing 
+  setSelectedWing,
+  updateArea
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
@@ -77,8 +78,20 @@ export function AreaPage() {
     }
   };
 
-  const toggleStatus = (index: number) => {
-    console.log(`Toggle status for area at index ${index}`);
+  const toggleStatus = async (areaId: number) => {
+    try {
+      const area = areas.data.find(a => a.id === areaId);
+      if (!area) return;
+
+      await dispatch(updateArea({
+        id: areaId,
+        updates: { active: !area.active }
+      }));
+      
+      toast.success('Area status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update area status');
+    }
   };
 
   return (
@@ -206,12 +219,12 @@ export function AreaPage() {
                   <TableCell>{area.wing?.name || 'N/A'}</TableCell>
                   <TableCell>{area.name}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => toggleStatus(index)}
-                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                        area.active ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                    >
+                     <button
+                       onClick={() => toggleStatus(area.id)}
+                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                         area.active ? 'bg-green-500' : 'bg-gray-300'
+                       }`}
+                     >
                       <div
                         className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
                           area.active ? 'translate-x-7' : 'translate-x-1'
