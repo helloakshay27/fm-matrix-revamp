@@ -57,17 +57,16 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         </div>
       </div>
       
-      <div className="mb-6">
+      <div className="mb-6 flex items-start gap-4">
         <Button onClick={handleAddMasterChecklist} style={{
         backgroundColor: '#C72030'
       }} className="text-white hover:opacity-90 flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Add
         </Button>
-      </div>
 
-      {/* File Upload Section */}
-      <div className="mb-6 flex gap-4">
+        {/* File Upload Section */}
+        <div className="flex gap-4 flex-1">
         <div onDragOver={handleDragOver} onDrop={handleDrop} className="flex-1 border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center ">
           <div className="flex flex-col items-center">
             <Upload className="w-8 h-8 text-[#C72030] mb-2" />
@@ -93,6 +92,7 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         }} className="text-white hover:opacity-90">
             Import Questions
           </Button>
+        </div>
         </div>
       </div>
 
