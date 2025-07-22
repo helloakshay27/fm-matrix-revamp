@@ -923,8 +923,8 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({ asset, assetId }) =>
       </div>
     </div>
 
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Movement Details */}
+    {/* <div className="flex flex-col lg:flex-row gap-6">
+      
       <div className="w-full lg:w-4/5 bg-white rounded-lg p-6 shadow-sm border">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{
@@ -938,7 +938,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({ asset, assetId }) =>
         </div>
 
         <div className="space-y-6">
-          {/* From Site and To Site */}
+         
           <div className="flex justify-between items-center text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
@@ -957,7 +957,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({ asset, assetId }) =>
         </div>
       </div>
 
-      {/* Vendor Contact Details */}
+      
       <div className="w-full lg:w-1/5 bg-white rounded-lg p-6 shadow-sm border">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{
@@ -988,6 +988,135 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({ asset, assetId }) =>
           </div>
         </div>
       </div>
+    </div> */}
+    <div className="flex flex-col lg:flex-row gap-6">
+  {/* Movement Details */}
+  <div className="w-full lg:w-4/5 bg-white rounded-lg p-6 shadow-sm border">
+    <div className="flex items-center gap-3 mb-8">
+      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
+        <TrendingUp className="w-5 h-5 text-white" />
+      </div>
+      <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Movement Details</h3>
     </div>
+
+    <div className="space-y-6">
+      {/* From Site and To Site */}
+      <div className="flex justify-between items-center text-sm text-gray-600">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          <span>From Site</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          <span>To Site</span>
+        </div>
+      </div>
+
+      <div className="flex justify-between text-lg font-semibold text-gray-800 mb-8">
+        <span>{asset.asset_move_tos?.[0]?.from?.location || '-'}</span>
+        <span>{asset.asset_move_tos?.[0]?.to?.location || '-'}</span>
+      </div>
+
+      {/* Movement Timeline - Horizontal Layout */}
+      <div className="flex justify-between items-center relative">
+        {/* Connecting lines that stop at icon edges */}
+        <div className="absolute top-6 flex justify-between w-full px-6">
+          {/* Line from Requested to Approved */}
+          <div
+            className="h-0.5 ml-6 mr-6"
+            style={{ backgroundColor: '#C72030', width: 'calc(50% - 3rem)' }}
+          ></div>
+          {/* Line from Approved to Received */}
+          <div
+            className="h-0.5 ml-6 mr-6 bg-gray-300"
+            style={{ width: 'calc(50% - 3rem)' }}
+          ></div>
+        </div>
+
+        {/* Requested Stage */}
+        <div className="flex flex-col items-center relative z-10">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#C72030' }}>
+            <FileText className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-center">
+            <div className="text-base font-semibold mb-2" style={{ color: '#C72030' }}>Requested</div>
+            <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+              <Clock className="w-4 h-4" />
+              <span>19/06/2025, 11:00 AM</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <UserIcon className="w-4 h-4" />
+              <span>Abdul Ghaffar</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Approved Stage */}
+        <div className="flex flex-col items-center relative z-10">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#C72030' }}>
+            <CheckCircle className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-center">
+            <div className="text-base font-semibold mb-2" style={{ color: '#C72030' }}>Approved</div>
+            <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+              <Clock className="w-4 h-4" />
+              <span>20/06/2025, 11:10 AM</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <UserIcon className="w-4 h-4" />
+              <span>Chetan Bafna</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Received Stage */}
+        <div className="flex flex-col items-center relative z-10">
+          <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mb-4">
+            <Box className="w-6 h-6 text-gray-500" />
+          </div>
+          <div className="text-center">
+            <div className="text-base font-semibold text-gray-400 mb-2">Received</div>
+            <div className="flex items-center gap-1 text-sm text-gray-400 mb-1">
+              <Clock className="w-4 h-4" />
+              <span>Pending</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm text-gray-400">
+              <UserIcon className="w-4 h-4" />
+              <span>Awaiting</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Vendor Contact Details */}
+  <div className="w-full lg:w-1/5 bg-white rounded-lg p-6 shadow-sm border">
+    <div className="flex items-center gap-3 mb-6">
+      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
+        <User className="w-4 h-4 text-white" />
+      </div>
+      <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Vendor Contact Details</h3>
+    </div>
+
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+        <div>
+          <div className="text-sm text-gray-500 mb-1">Name</div>
+          <div className="font-medium">{asset.supplier_detail?.company_name || '-'}</div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-500 mb-1">Mobile No.</div>
+          <div className="font-medium">{asset.supplier_detail?.mobile1 || '-'}</div>
+        </div>
+      </div>
+
+      <div>
+        <div className="text-sm text-gray-500 mb-1">Email ID</div>
+        <div className="font-medium">{asset.supplier_detail?.email || '-'}</div>
+      </div>
+    </div>
+  </div>
+</div>
   </div>;
 };
