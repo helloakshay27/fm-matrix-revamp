@@ -648,14 +648,6 @@ export const Sidebar = () => {
               if (subItem.href && path.includes(subItem.href)) {
                 itemsToExpand.push(subItem.name);
                 
-                // If this subitem's path is in current path, expand its children
-                if (subItem.subItems) {
-                  subItem.subItems.forEach(nestedItem => {
-                    if (nestedItem.href && path.includes(nestedItem.href)) {
-                      itemsToExpand.push(nestedItem.name);
-                    }
-                  });
-                }
               }
             });
           }
