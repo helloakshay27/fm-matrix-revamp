@@ -250,13 +250,6 @@ export const ServiceDetailsPage = () => {
                 </>
               ) : (
                 <>
-                  <div className="w-48 h-48 bg-gray-100 mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-                    <img
-                      src={qrCodePlaceholder}
-                      alt="QR Code"
-                      className="w-40 h-40 object-contain"
-                    />
-                  </div>
                   <div className="text-sm text-gray-600">No QR code available</div>
                 </>
               )}

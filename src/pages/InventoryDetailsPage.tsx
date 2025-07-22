@@ -38,6 +38,8 @@ export const InventoryDetailsPage = () => {
     fetchInventoryDetails();
   }, [id]);
 
+  console.log('Inventory data:', inventoryData);
+
   const handleBack = () => {
     navigate('/maintenance/inventory');
   };

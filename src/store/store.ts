@@ -34,7 +34,7 @@ import serviceEditReducer from './slices/serviceSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
 import { createMenuReducer, createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteRestaurantStatusReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, editRestaurantStatusReducer, editSubCategoryReducer, exportOrdersReducer, fetchMenuDetailsReducer, fetchMenuReducer, fetchOrderDetailsReducer, fetchRestaurantBookingsReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
 import { fetchMasterUnitsReducer } from './slices/unitMaster'
-import { inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
+import { createInventoryConsumptionReducer, inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
 import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
 import { ecoFriendlyListReducer } from './slices/ecoFriendlyListSlice'
 
@@ -105,6 +105,7 @@ export const store = configureStore({
     inventoryConsumption: inventoryConsumptionReducer,
     inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
     ecoFriendlyList: ecoFriendlyListReducer,
+    createInventoryConsumption: createInventoryConsumptionReducer,
   },
 })
 

@@ -170,20 +170,37 @@ export const AMCDashboard = () => {
 
   const handleExport = async () => {
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/asset_amcs/status_of_amcs.xlsx?site_id=${siteId}&access_token=${token}`);
-      const data = response.data;
-      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+      // Construct the API URL based on whether there are selected items
+      const baseUrl = 'https://fm-uat-api.lockated.com';
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+      let url = `${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+      
+      // Append selected IDs to the URL if there are any
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+  
+      // Make the API request
+      const response = await axios.get(url, {
+        responseType: 'blob', // Important for handling binary data (Excel file)
+      });
+  
+      // Create a blob and trigger download
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = 'amc_data.json';
+      link.href = downloadUrl;
+      link.download = 'amc_export.xlsx'; // Set the file name
       link.click();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(downloadUrl); // Clean up
     } catch (error) {
-      console.log(error)
+      console.error('Export failed:', error);
+      // Optionally, show an error message to the user
+      alert('Failed to export AMC data. Please try again.');
     }
-  }
-
+  };
   // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
