@@ -288,17 +288,6 @@ export function EnhancedTable<T extends Record<string, any>>({
               />
             </div>
           )}
-          {!hideTableExport && enableExport && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExport || handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              
-            </Button>
-          )}
           
           
           {!hideColumnsButton && (
