@@ -89,9 +89,6 @@ export const AddWaterAssetDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
-        <nav className="text-sm text-gray-600 mb-2">
-          Asset List &gt; Create New Asset
-        </nav>
         <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
       </div>
 

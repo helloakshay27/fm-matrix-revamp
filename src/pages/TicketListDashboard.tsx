@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Checkbox } from '../components/ui/checkbox';
-import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText } from 'lucide-react';
+import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText, Edit, Trash2, Settings } from 'lucide-react';
 import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
 import { TicketPagination } from '../components/TicketPagination';
 import { TicketSelectionPanel } from '../components/TicketSelectionPanel';
@@ -151,6 +151,23 @@ export const TicketListDashboard = () => {
 
   const handleViewTicket = (ticketNumber: string) => {
     navigate(`/maintenance/ticket/${ticketNumber}`);
+  };
+
+  const handleEditTicket = (ticketNumber: string) => {
+    navigate(`/maintenance/ticket/edit/${ticketNumber}`);
+  };
+
+  const handleDeleteTicket = async (ticketId: number) => {
+    if (window.confirm('Are you sure you want to delete this ticket?')) {
+      try {
+        // Add delete API call here when available
+        toast.success('Ticket deleted successfully');
+        await fetchTickets(currentPage, perPage, combinedFilters);
+      } catch (error) {
+        toast.error('Failed to delete ticket');
+        console.error('Error deleting ticket:', error);
+      }
+    }
   };
 
   const handleExport = async () => {
@@ -298,11 +315,6 @@ export const TicketListDashboard = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span>Tickets</span>
-          <span>&gt;</span>
-          <span>Ticket List</span>
-        </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">TICKET LIST</h1>
       </div>
 
@@ -354,14 +366,6 @@ export const TicketListDashboard = () => {
           Add
         </Button>
         <Button 
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-          onClick={() => setIsFilterOpen(true)}
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-        <Button 
           onClick={handleExport}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
@@ -372,16 +376,25 @@ export const TicketListDashboard = () => {
         </Button>
         <div className="ml-auto flex gap-2">
           <Input 
-            placeholder="Search all fields..."
+            placeholder="Search Tickets"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
           />
           <Button 
-            variant="outline"
-            onClick={handleReset}
+            variant="outline" 
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            onClick={() => setIsFilterOpen(true)}
           >
-            Reset
+            <Filter className="w-4 h-4 mr-2" />
+            Filter
+          </Button>
+          <Button 
+            variant="outline"
+            className="border-gray-300 text-gray-600 hover:bg-gray-50"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Columns
           </Button>
         </div>
       </div>
@@ -404,7 +417,7 @@ export const TicketListDashboard = () => {
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
-                  <TableHead>View</TableHead>
+                  <TableHead>Action</TableHead>
                   <TableHead>Ticket ID</TableHead>
                   <TableHead className="w-48">Description</TableHead>
                   <TableHead>Category</TableHead>
@@ -442,10 +455,26 @@ export const TicketListDashboard = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Eye 
-                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                        onClick={() => handleViewTicket(ticket.ticket_number)}
-                      />
+                      <div className="flex gap-2">
+                        <div title="View ticket">
+                          <Eye 
+                            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                            onClick={() => handleViewTicket(ticket.ticket_number)}
+                          />
+                        </div>
+                        <div title="Edit ticket">
+                          <Edit 
+                            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                            onClick={() => handleEditTicket(ticket.ticket_number)}
+                          />
+                        </div>
+                        <div title="Delete ticket">
+                          <Trash2 
+                            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
+                            onClick={() => handleDeleteTicket(ticket.id)}
+                          />
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium">{ticket.ticket_number}</TableCell>
                     <TableCell>

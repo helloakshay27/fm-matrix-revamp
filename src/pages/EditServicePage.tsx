@@ -15,7 +15,7 @@ export const EditServicePage = () => {
   const { toast } = useToast();
   const dispatch = useAppDispatch();
   const { loading, error, fetchedService, updatedService } = useAppSelector(state => state.serviceEdit);
-  
+
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
@@ -35,20 +35,21 @@ export const EditServicePage = () => {
     extCode: '',
     rateContractVendorCode: '',
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Fetch existing service data
+  const [selectedFile, setSelectedFile] = useState<File[]>([]);
+  const [existingFiles, setExistingFiles] = useState<
+    { id: number; document: string; doctype: string }[]
+  >([]);
+
   useEffect(() => {
     if (id) {
       dispatch(fetchService(id));
     }
-    
     return () => {
       dispatch(resetServiceState());
     };
   }, [id, dispatch]);
 
-  // Handle fetched service data
   useEffect(() => {
     if (fetchedService) {
       setFormData({
@@ -70,10 +71,22 @@ export const EditServicePage = () => {
         extCode: fetchedService.ext_code || '',
         rateContractVendorCode: fetchedService.rate_contract_vendor_code || '',
       });
+
+
+      if (Array.isArray(fetchedService.documents)) {
+        setExistingFiles(
+          fetchedService.documents.map((doc: any) => ({
+            id: doc.id,
+            document: doc.document,
+            doctype: doc.doctype,
+          }))
+        );
+      }
     }
+
+
   }, [fetchedService]);
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast({
@@ -85,7 +98,6 @@ export const EditServicePage = () => {
     }
   }, [error, toast, dispatch]);
 
-  // Handle successful update
   useEffect(() => {
     if (updatedService) {
       toast({
@@ -124,48 +136,51 @@ export const EditServicePage = () => {
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      console.log('File selected:', file.name);
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setSelectedFile(Array.from(files));
     }
   };
 
   const handleSubmit = async (action: string) => {
     if (!id) return;
+    const sendData = new FormData();
 
-    const serviceData = {
-      service_name: formData.serviceName || "",
-      execution_type: formData.executionType || "",
-      site_id: formData.siteId,
-      building_id: formData.buildingId,
-      wing_id: formData.wingId,
-      area_id: formData.areaId,
-      floor_id: formData.floorId,
-      room_id: formData.roomId,
-      pms_asset_group_id: formData.groupId,
-      pms_asset_sub_group_id: formData.subGroupId,
-      active: true,
-      description: formData.serviceDescription || "",
-      service_category: formData.serviceCategory || "",
-      service_group: formData.serviceGroup || "",
-      service_code: formData.serviceCode || "",
-      ext_code: formData.extCode || "",
-      rate_contract_vendor_code: formData.rateContractVendorCode || ""
-    };
+    try {
+      sendData.append('pms_service[service_name]', formData.serviceName);
+      sendData.append('pms_service[execution_type]', formData.executionType);
+      sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
+      sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
+      sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
+      sendData.append('pms_service[area_id]', formData.areaId?.toString() || '');
+      sendData.append('pms_service[floor_id]', formData.floorId?.toString() || '');
+      sendData.append('pms_service[room_id]', formData.roomId?.toString() || '');
+      sendData.append('pms_service[pms_asset_group_id]', formData.groupId?.toString() || '');
+      sendData.append('pms_service[pms_asset_sub_group_id]', formData.subGroupId?.toString() || '');
+      sendData.append('pms_service[active]', 'true');
+      sendData.append('pms_service[description]', formData.serviceDescription || '');
+      sendData.append('pms_service[service_category]', formData.serviceCategory || '');
+      sendData.append('pms_service[service_group]', formData.serviceGroup || '');
+      sendData.append('pms_service[service_code]', formData.serviceCode || '');
+      sendData.append('pms_service[ext_code]', formData.extCode || '');
+      sendData.append('pms_service[rate_contract_vendor_code]', formData.rateContractVendorCode || '');
+      sendData.append('subaction', "save");
 
-    console.log('=== SERVICE UPDATE PAYLOAD ===');
-    console.log('Action:', action);
-    console.log('Service ID:', id);
-    console.log('Form Data:', formData);
-    console.log('Service Data to be sent:', serviceData);
-    console.log('Full Payload:', { pms_service: serviceData, subaction: "save" });
-    console.log('================================');
+      selectedFile.forEach(file => {
+        sendData.append('attachments[]', file);
+      });
 
-    dispatch(updateService({ id, serviceData }));
+      dispatch(updateService({ id, serviceData: sendData }));
+    } catch (error) {
+      console.error('Error preparing service data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare service data for submission.",
+        variant: "destructive"
+      });
+    }
   };
 
-  // Responsive styles for TextField and Select
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -187,23 +202,19 @@ export const EditServicePage = () => {
     <div className="p-6">
       <div className="mb-6">
         <div className="flex items-center mb-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={() => {
-              console.log('Back button clicked');
-              navigate('/maintenance/service');
-            }}
+            onClick={() => navigate('/maintenance/service')}
             className="p-1 hover:bg-gray-100 mr-2"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <p className="text-[#1a1a1a] opacity-70">Service List &gt; Edit Service</p>
+          
         </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE - ID: {id}</h1>
       </div>
 
-      {/* Basic Details */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -213,59 +224,36 @@ export const EditServicePage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <TextField
-                required
-                label="Service Name"
-                placeholder="Enter Service Name"
-                name="serviceName"
-                value={formData.serviceName}
-                onChange={(e) => handleInputChange('serviceName', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  sx: fieldStyles
-                }}
-              />
-            </div>
-            <div>
-              <FormControl 
-                fullWidth 
-                variant="outlined" 
-                required
-                sx={{
-                  '& .MuiInputBase-root': fieldStyles
-                }}
+            <TextField
+              required
+              label="Service Name"
+              value={formData.serviceName}
+              onChange={(e) => handleInputChange('serviceName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Execution Type</InputLabel>
+              <MuiSelect
+                value={formData.executionType}
+                onChange={(e) => handleInputChange('executionType', e.target.value)}
+                label="Execution Type"
+                notched
+                displayEmpty
               >
-                <InputLabel shrink>Execution Type</InputLabel>
-                <MuiSelect
-                  value={formData.executionType}
-                  onChange={(e) => handleInputChange('executionType', e.target.value)}
-                  label="Execution Type"
-                  notched
-                  displayEmpty
-                >
-                  <MenuItem value="">Select Execution Type</MenuItem>
-                  <MenuItem value="internal">Internal</MenuItem>
-                  <MenuItem value="external">External</MenuItem>
-                  <MenuItem value="both">Both</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+                <MenuItem value="">Select Execution Type</MenuItem>
+                <MenuItem value="internal">Internal</MenuItem>
+                <MenuItem value="external">External</MenuItem>
+                <MenuItem value="both">Both</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
-
-          {/* Dynamic Location Selector */}
-          <LocationSelector 
-            fieldStyles={fieldStyles} 
-            onLocationChange={handleLocationChange}
-          />
+          <LocationSelector fieldStyles={fieldStyles} onLocationChange={handleLocationChange} />
         </CardContent>
       </Card>
 
-      {/* Service Description */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -276,28 +264,20 @@ export const EditServicePage = () => {
         <CardContent>
           <TextField
             label="Service Description"
-            name="serviceDescription"
             value={formData.serviceDescription}
             onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
             fullWidth
             variant="outlined"
             multiline
             rows={4}
-            InputLabelProps={{
-              shrink: true,
-            }}
+            InputLabelProps={{ shrink: true }}
             InputProps={{
-              sx: {
-                '& .MuiInputBase-input': {
-                  padding: '12px',
-                },
-              }
+              sx: { '& .MuiInputBase-input': { padding: '12px' } }
             }}
           />
         </CardContent>
       </Card>
 
-      {/* Files Upload */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -306,41 +286,76 @@ export const EditServicePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8">
-            <div className="text-center">
-              <input 
-                type="file" 
-                className="hidden" 
-                id="file-upload"
-                onChange={handleFileUpload}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
-              >
-                Choose File
-              </Button>
-              <p className="text-sm text-gray-500 mt-2">
-                {selectedFile ? selectedFile.name : 'No file chosen'}
-              </p>
-            </div>
+          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
+            <input
+              type="file"
+              className="hidden"
+              id="file-upload"
+              onChange={handleFileUpload}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              multiple
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => document.getElementById('file-upload')?.click()}
+              className="text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
+            >
+              Choose Files
+            </Button>
+
+
+          </div>
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+            {/* Existing files */}
+            {existingFiles.map((file) => (
+              <div key={file.id}>
+                {file.doctype.startsWith('image') ? (
+                  <img
+                    src={file.document}
+                    alt="Existing"
+                    className="h-32 w-full object-cover border rounded"
+                  />
+                ) : (
+                  <a
+                    href={file.document}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm underline text-blue-600"
+                  >
+                    {file.document.split('/').pop()}
+                  </a>
+                )}
+              </div>
+            ))}
+
+            {/* Selected files */}
+            {selectedFile.map((file, index) => (
+              <div key={index}>
+                {file.type.startsWith('image') ? (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt="Selected"
+                    className="h-32 w-full object-cover border rounded"
+                  />
+                ) : (
+                  <p className="text-sm truncate">{file.name}</p>
+                )}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
       <div className="flex gap-4 flex-wrap justify-center">
-        <Button 
+        <Button
           onClick={() => handleSubmit('updated with details')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
         >
-          Update Save & show details
+          Update Save & Show Details
         </Button>
-        <Button 
+        <Button
           onClick={() => handleSubmit('updated new service')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"

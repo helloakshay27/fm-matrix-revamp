@@ -92,7 +92,7 @@ export const AttendanceDetailsPage = () => {
         }} className="p-1 hover:bg-gray-100 mr-2">
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <p className="text-[#1a1a1a] opacity-70">Attendance &gt; Attendance Details</p>
+          
         </div>
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE DETAILS</h1>

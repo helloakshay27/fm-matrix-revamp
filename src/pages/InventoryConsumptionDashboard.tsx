@@ -7,7 +7,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { RootState, AppDispatch } from '@/store/store';
-import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
+import { fetchInventoryConsumptionHistory, fetchInventoryConsumptionHistoryFilter } from '@/store/slices/inventoryConsumptionSlice';
 import {
   Pagination,
   PaginationContent,
@@ -17,13 +17,22 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { fetchGroups, fetchSubGroups, setSelectedGroup, setSelectedSubGroup } from '@/store/slices/serviceLocationSlice';
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  
+  const {
+    groups,
+    subGroups,
+  } = useSelector((state: RootState) => state.serviceLocation);
+  console.log('Groups:', groups);
+  useEffect(() => {
+    dispatch(fetchGroups());
+  }, [dispatch]);
+
   const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
-  
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 7;
@@ -38,7 +47,12 @@ const InventoryConsumptionDashboard = () => {
   useEffect(() => {
     dispatch(fetchInventoryConsumptionHistory());
   }, [dispatch]);
-  
+
+  const handleApplyFilter = () => {
+    dispatch(fetchInventoryConsumptionHistoryFilter(filterValues))
+    setIsFilterOpen(false);
+  };
+
   // Transform API data to match table structure
   const consumptionData = inventories.map(item => ({
     id: item.id,
@@ -56,8 +70,33 @@ const InventoryConsumptionDashboard = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = consumptionData.slice(startIndex, startIndex + pageSize);
 
+  const handleGroupChange = (groupId: number) => {
+    setFilterValues(prev => ({
+      ...prev,
+      group: groupId.toString()
+    }));
+    dispatch(setSelectedGroup(groupId));
+    if (groupId) {
+      dispatch(fetchSubGroups(groupId));
+    }
+  };
+
+  const handleSubGroupChange = (subGroupId: number) => {
+    setFilterValues(prev => ({
+      ...prev,
+      subGroup: subGroupId.toString()
+    }));
+    dispatch(setSelectedSubGroup(subGroupId));
+  };
+
+
   // Define table columns for drag and drop functionality
   const columns: ColumnConfig[] = [{
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    draggable: true
+  }, {
     key: 'inventory',
     label: 'Inventory',
     sortable: true,
@@ -96,6 +135,15 @@ const InventoryConsumptionDashboard = () => {
 
   // Render cell content
   const renderCell = (item: any, columnKey: string) => {
+    if (columnKey === 'actions') {
+      return (
+        <div className="flex gap-2 justify-center">
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
+            <Eye className="w-4 h-4 text-gray-600" />
+          </Button>
+        </div>
+      );
+    }
     const value = item[columnKey];
     if (columnKey === 'criticality') {
       return <span className="text-sm text-gray-600">{value}</span>;
@@ -123,10 +171,6 @@ const InventoryConsumptionDashboard = () => {
   };
 
   // Apply filters
-  const handleApplyFilter = () => {
-    console.log('Applied filters:', filterValues);
-    setIsFilterOpen(false);
-  };
 
   // Reset filters
   const handleResetFilter = () => {
@@ -143,51 +187,21 @@ const InventoryConsumptionDashboard = () => {
     navigate(`/maintenance/inventory-consumption/view/${item.id}`);
   };
 
-  // Render actions for each row
-  const renderActions = (item: any) => (
-    <div className="flex gap-2 justify-center">
-      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
-        <Eye className="w-4 h-4 text-gray-600" />
-      </Button>
-    </div>
-  );
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-sm text-gray-600">
-        <span>Inventory Consumption</span>
-        <span>{">"}</span>
-        <span className="text-gray-900 font-medium">Consumption List</span>
-      </div>
 
       {/* Header */}
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">Consumption LIST</h1>
         
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Import
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsFilterOpen(true)}
-            className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            Filter
-          </Button>
-        </div>
       </div>
 
       {/* Enhanced Table with Drag and Drop */}
       <EnhancedTable 
         data={paginatedData} 
         columns={columns} 
-        renderCell={renderCell} 
-        renderActions={renderActions} 
+        renderCell={renderCell}
         storageKey="inventory-consumption-table" 
         emptyMessage="No consumption data available" 
         enableExport={true} 
@@ -215,6 +229,22 @@ const InventoryConsumptionDashboard = () => {
           }
         }}
         getItemId={(item) => item.id.toString()}
+        leftActions={
+          <div className="flex gap-3">
+            <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Import
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsFilterOpen(true)}
+              className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Filter
+            </Button>
+          </div>
+        }
       />
 
       {/* Floating Filter Modal */}
@@ -224,10 +254,10 @@ const InventoryConsumptionDashboard = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-lg font-semibold text-gray-900">FILTER BY</h2>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsFilterOpen(false)} 
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFilterOpen(false)}
                 className="h-6 w-6 p-0 hover:bg-gray-100"
               >
                 <X className="h-4 w-4" />
@@ -240,8 +270,8 @@ const InventoryConsumptionDashboard = () => {
               <div className="grid grid-cols-3 gap-6">
                 {/* Group */}
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel 
-                    id="group-label" 
+                  <InputLabel
+                    id="group-label"
                     shrink={true}
                     sx={{
                       color: '#374151',
@@ -257,12 +287,12 @@ const InventoryConsumptionDashboard = () => {
                   >
                     Group
                   </InputLabel>
-                  <Select 
-                    labelId="group-label" 
-                    value={filterValues.group} 
-                    label="Group" 
-                    onChange={handleSelectChange('group')} 
-                    displayEmpty 
+                  <Select
+                    labelId="group-select-label"
+                    label="Group"
+                    displayEmpty
+                    value={filterValues.group || ''}
+                    onChange={(e) => handleGroupChange(Number(e.target.value))}
                     sx={{
                       height: '48px',
                       borderRadius: '8px',
@@ -285,16 +315,18 @@ const InventoryConsumptionDashboard = () => {
                     <MenuItem value="" disabled>
                       <span style={{ color: '#9CA3AF' }}>Select Group</span>
                     </MenuItem>
-                    <MenuItem value="group1">Group 1</MenuItem>
-                    <MenuItem value="group2">Group 2</MenuItem>
-                    <MenuItem value="group3">Group 3</MenuItem>
+                    {Array.isArray(groups) && groups.length > 0 && groups.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>
+                        {group.name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
 
                 {/* Sub Group */}
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel 
-                    id="subgroup-label" 
+                  <InputLabel
+                    id="subgroup-label"
                     shrink={true}
                     sx={{
                       color: '#374151',
@@ -310,15 +342,17 @@ const InventoryConsumptionDashboard = () => {
                   >
                     Sub Group
                   </InputLabel>
-                  <Select 
-                    labelId="subgroup-label" 
-                    value={filterValues.subGroup} 
-                    label="Sub Group" 
-                    onChange={handleSelectChange('subGroup')} 
-                    displayEmpty 
+                  <Select
+                    labelId="subgroup-select-label"
+                    label="Sub-Group"
+                    displayEmpty
+                    value={filterValues.subGroup || ''}
+                    onChange={(e) => handleSubGroupChange(Number(e.target.value))}
+                    disabled={!filterValues.group}
                     sx={{
                       height: '48px',
                       borderRadius: '8px',
+                      backgroundColor: !filterValues.group ? '#F9FAFB' : 'white',
                       '& .MuiOutlinedInput-root': {
                         '& fieldset': {
                           borderColor: '#D1D5DB'
@@ -338,16 +372,19 @@ const InventoryConsumptionDashboard = () => {
                     <MenuItem value="" disabled>
                       <span style={{ color: '#9CA3AF' }}>Select Sub Group</span>
                     </MenuItem>
-                    <MenuItem value="subgroup1">Sub Group 1</MenuItem>
-                    <MenuItem value="subgroup2">Sub Group 2</MenuItem>
-                    <MenuItem value="subgroup3">Sub Group 3</MenuItem>
+                    {Array.isArray(subGroups) && subGroups.map((subGroup) => (
+                      <MenuItem key={subGroup.id} value={subGroup.id}>
+                        {subGroup.name}
+                      </MenuItem>
+                    ))}
                   </Select>
+
                 </FormControl>
 
                 {/* Criticality */}
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel 
-                    id="criticality-label" 
+                  <InputLabel
+                    id="criticality-label"
                     shrink={true}
                     sx={{
                       color: '#374151',
@@ -363,12 +400,12 @@ const InventoryConsumptionDashboard = () => {
                   >
                     Select Criticality
                   </InputLabel>
-                  <Select 
-                    labelId="criticality-label" 
-                    value={filterValues.criticality} 
-                    label="Select Criticality" 
-                    onChange={handleSelectChange('criticality')} 
-                    displayEmpty 
+                  <Select
+                    labelId="criticality-label"
+                    value={filterValues.criticality}
+                    label="Select Criticality"
+                    onChange={handleSelectChange('criticality')}
+                    displayEmpty
                     sx={{
                       height: '48px',
                       borderRadius: '8px',
@@ -391,22 +428,21 @@ const InventoryConsumptionDashboard = () => {
                     <MenuItem value="" disabled>
                       <span style={{ color: '#9CA3AF' }}>Select Criticality</span>
                     </MenuItem>
-                    <MenuItem value="critical">Critical</MenuItem>
-                    <MenuItem value="non-critical">Non-Critical</MenuItem>
-                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="1">Critical</MenuItem>
+                    <MenuItem value="2">Non-Critical</MenuItem>
                   </Select>
                 </FormControl>
               </div>
 
               {/* Second Row - Name Input */}
               <div className="space-y-2">
-                <TextField 
-                  fullWidth 
-                  label="Name" 
-                  placeholder="Enter Name" 
-                  value={filterValues.name} 
-                  onChange={handleTextChange('name')} 
-                  variant="outlined" 
+                <TextField
+                  fullWidth
+                  label="Name"
+                  placeholder="Enter Name"
+                  value={filterValues.name}
+                  onChange={handleTextChange('name')}
+                  variant="outlined"
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       height: '48px',
@@ -436,21 +472,21 @@ const InventoryConsumptionDashboard = () => {
                         color: '#9CA3AF'
                       }
                     }
-                  }} 
+                  }}
                 />
               </div>
 
               {/* Action Buttons */}
               <div className="flex justify-center gap-4 pt-6">
-                <Button 
-                  variant="outline" 
-                  onClick={handleResetFilter} 
+                <Button
+                  variant="outline"
+                  onClick={handleResetFilter}
                   className="px-8 py-3 h-12 border-2 border-gray-800 text-gray-800 hover:bg-gray-50 rounded-lg font-medium"
                 >
                   Reset
                 </Button>
-                <Button 
-                  onClick={handleApplyFilter} 
+                <Button
+                  onClick={handleApplyFilter}
                   className="px-8 py-3 h-12 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-lg font-medium"
                 >
                   Apply
@@ -466,15 +502,15 @@ const InventoryConsumptionDashboard = () => {
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
+              <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
               />
             </PaginationItem>
-            
+
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <PaginationItem key={page}>
-                <PaginationLink 
+                <PaginationLink
                   onClick={() => setCurrentPage(page)}
                   isActive={currentPage === page}
                 >
@@ -482,9 +518,9 @@ const InventoryConsumptionDashboard = () => {
                 </PaginationLink>
               </PaginationItem>
             ))}
-            
+
             <PaginationItem>
-              <PaginationNext 
+              <PaginationNext
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
               />

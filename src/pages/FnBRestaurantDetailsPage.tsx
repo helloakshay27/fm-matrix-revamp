@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -136,6 +136,16 @@ export const FnBRestaurantDetailsPage = () => {
   const [menuImages, setMenuImages] = useState<string[]>([]);
   const [mainImages, setMainImages] = useState<string[]>([]);
   const [blockedDays, setBlockedDays] = useState<BlockedDay[]>([]);
+
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const menuInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileClick = (ref: React.RefObject<HTMLInputElement>) => {
+    if (ref.current) {
+      ref.current.click();
+    }
+  };
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -627,6 +637,18 @@ export const FnBRestaurantDetailsPage = () => {
                   <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
                     Upload Cover Image
                   </Button>
+                  <input
+                    type="file"
+                    ref={coverInputRef}
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // handle upload logic here
+                        console.log('Cover image selected:', file.name);
+                      }
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -644,6 +666,18 @@ export const FnBRestaurantDetailsPage = () => {
                   <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
                     Add Menu Items
                   </Button>
+                  <input
+                    type="file"
+                    ref={coverInputRef}
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // handle upload logic here
+                        console.log('Cover image selected:', file.name);
+                      }
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -661,6 +695,18 @@ export const FnBRestaurantDetailsPage = () => {
                   <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
                     Add Gallery Images
                   </Button>
+                  <input
+                    type="file"
+                    ref={coverInputRef}
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // handle upload logic here
+                        console.log('Cover image selected:', file.name);
+                      }
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>

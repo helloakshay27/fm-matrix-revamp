@@ -23,6 +23,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import axios from 'axios';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -42,10 +43,10 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
       {...listeners}
       className="cursor-move"
     >
@@ -69,6 +70,7 @@ interface AMCRecord {
 const initialAmcData: AMCRecord[] = [];
 
 const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
   { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
   { key: 'resource_type', label: 'Resource Type', sortable: true, defaultVisible: true },
@@ -83,6 +85,10 @@ const columns: ColumnConfig[] = [
 export const AMCDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const siteId = localStorage.getItem('selectedSiteId');
+
   const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -163,6 +169,39 @@ export const AMCDashboard = () => {
     setVisibleSections(selectedSections);
   };
 
+  const handleExport = async () => {
+    try {
+      // Construct the API URL based on whether there are selected items
+      const baseUrl = 'https://fm-uat-api.lockated.com';
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+      let url = `${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+      
+      // Append selected IDs to the URL if there are any
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+  
+      // Make the API request
+      const response = await axios.get(url, {
+        responseType: 'blob', // Important for handling binary data (Excel file)
+      });
+  
+      // Create a blob and trigger download
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'amc_export.xlsx'; // Set the file name
+      link.click();
+      URL.revokeObjectURL(downloadUrl); // Clean up
+    } catch (error) {
+      console.error('Export failed:', error);
+      // Optionally, show an error message to the user
+      alert('Failed to export AMC data. Please try again.');
+    }
+  };
   // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -179,6 +218,16 @@ export const AMCDashboard = () => {
 
   const renderCell = (item: AMCRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleViewDetails(item.id)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
@@ -196,16 +245,14 @@ export const AMCDashboard = () => {
       case 'active':
         return (
           <div className="flex items-center">
-            <div 
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                item.active ? 'bg-green-500' : 'bg-gray-300'
-              }`} 
+            <div
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'
+                }`}
               onClick={() => handleStatusToggle(item.id)}
             >
-              <span 
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                  item.active ? 'translate-x-6' : 'translate-x-1'
-                }`} 
+              <span
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </div>
           </div>
@@ -217,15 +264,6 @@ export const AMCDashboard = () => {
     }
   };
 
-  const renderActions = (item: AMCRecord) => (
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      onClick={() => handleViewDetails(item.id)}
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
-  );
 
   const bulkActions = [
     {
@@ -243,12 +281,12 @@ export const AMCDashboard = () => {
   const renderPaginationItems = () => {
     const items = [];
     const showEllipsis = totalPages > 7;
-    
+
     if (showEllipsis) {
       // Show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink 
+          <PaginationLink
             onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
           >
@@ -268,7 +306,7 @@ export const AMCDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -284,7 +322,7 @@ export const AMCDashboard = () => {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -307,7 +345,7 @@ export const AMCDashboard = () => {
           if (!items.find(item => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink 
+                <PaginationLink
                   onClick={() => setCurrentPage(i)}
                   isActive={currentPage === i}
                 >
@@ -323,7 +361,7 @@ export const AMCDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -337,7 +375,7 @@ export const AMCDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
             >
@@ -354,7 +392,7 @@ export const AMCDashboard = () => {
   // Analytics data calculations
   const activeAMCs = amcData.filter(amc => amc.active).length;
   const inactiveAMCs = amcData.length - activeAMCs;
-  
+
   // Status data for pie chart
   const statusData = [
     { name: 'Active', value: activeAMCs, color: '#c6b692' },
@@ -429,23 +467,23 @@ export const AMCDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-       <div className="mb-6">
-            <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
-            <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
-            {getHeading()}
-            </h1>
-          </div>
+      <div className="mb-6">
+        <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
+          {getHeading()}
+        </h1>
+      </div>
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="analytics" 
+          <TabsTrigger
+            value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
             <BarChart3 className="w-4 h-4" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger 
-            value="amclist" 
+          <TabsTrigger
+            value="amclist"
             className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
             <FileText className="w-4 h-4" />
@@ -464,9 +502,9 @@ export const AMCDashboard = () => {
             {/* Left Section - Charts */}
             <div className="xl:col-span-8 space-y-4 sm:space-y-6">
               {/* All Charts with Drag and Drop */}
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter} 
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
@@ -495,8 +533,8 @@ export const AMCDashboard = () => {
                                         dataKey="value"
                                         label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
                                           return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                            <text
+                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
                                               y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
                                               fill="black"
                                               textAnchor="middle"
@@ -535,7 +573,7 @@ export const AMCDashboard = () => {
                             </SortableChartItem>
                           );
                         }
-                        
+
                         if (chartId === 'typeChart' && visibleSections.includes('typeChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
@@ -557,8 +595,8 @@ export const AMCDashboard = () => {
                                         dataKey="value"
                                         label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
                                           return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                            <text
+                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
                                               y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
                                               fill="black"
                                               textAnchor="middle"
@@ -597,7 +635,7 @@ export const AMCDashboard = () => {
                             </SortableChartItem>
                           );
                         }
-                        
+
                         return null;
                       })}
                     </div>
@@ -616,10 +654,10 @@ export const AMCDashboard = () => {
                                 <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
                                   <BarChart data={resourceChartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                    <XAxis 
-                                      dataKey="name" 
-                                      angle={-45} 
-                                      textAnchor="end" 
+                                    <XAxis
+                                      dataKey="name"
+                                      angle={-45}
+                                      textAnchor="end"
                                       height={80}
                                       tick={{ fill: '#6b7280', fontSize: 10 }}
                                       className="text-xs"
@@ -643,7 +681,7 @@ export const AMCDashboard = () => {
                                 <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>AMCs Ageing Matrix</h3>
                                 <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
                               </div>
-                              
+
                               <div className="space-y-4 sm:space-y-6">
                                 {/* Table - Horizontally scrollable on mobile */}
                                 <div className="overflow-x-auto -mx-3 sm:mx-0">
@@ -699,16 +737,14 @@ export const AMCDashboard = () => {
         </TabsContent>
 
         <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 mb-6">
-            <Button 
-              onClick={handleAddClick} 
-              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
+          {/* Header */}
+          <div className="mb-6">
+            
+            <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
+              AMC LIST
+            </h1>
           </div>
+
 
           {/* Loading State */}
           {loading && (
@@ -727,10 +763,10 @@ export const AMCDashboard = () => {
           {/* Enhanced Table */}
           {!loading && (
             <EnhancedTable
+              handleExport={handleExport}
               data={paginatedData}
               columns={columns}
               renderCell={renderCell}
-              renderActions={renderActions}
               onRowClick={(item) => handleViewDetails(item.id)}
               selectable={true}
               selectedItems={selectedItems}
@@ -745,6 +781,15 @@ export const AMCDashboard = () => {
               bulkActions={bulkActions}
               showBulkActions={true}
               pagination={false}
+              leftActions={
+                <Button 
+                  onClick={handleAddClick} 
+                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+              }
             />
           )}
 
@@ -753,16 +798,16 @@ export const AMCDashboard = () => {
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
+                  <PaginationPrevious
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>
-                
+
                 {renderPaginationItems()}
-                
+
                 <PaginationItem>
-                  <PaginationNext 
+                  <PaginationNext
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                   />

@@ -163,10 +163,6 @@ export const AssetAuditDetailsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
-          Audit List &gt; Audit Details
-        </div>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

@@ -57,32 +57,26 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         </div>
       </div>
       
-      <div className="mb-6">
+      <div className="mb-6 flex items-center gap-6">
         <Button onClick={handleAddMasterChecklist} style={{
         backgroundColor: '#C72030'
       }} className="text-white hover:opacity-90 flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Add
         </Button>
-      </div>
 
-      {/* File Upload Section */}
-      <div className="mb-6 flex gap-4">
-        <div onDragOver={handleDragOver} onDrop={handleDrop} className="flex-1 border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center ">
-          <div className="flex flex-col items-center">
-            <Upload className="w-8 h-8 text-[#C72030] mb-2" />
-            <p className="text-[#C72030] mb-2">Drag & Drop or</p>
+        {/* File Upload Section */}
+        <div onDragOver={handleDragOver} onDrop={handleDrop} className="border-2 border-dashed border-[#C72030] rounded-lg px-4 py-2 text-center h-10 flex items-center min-w-[150px]">
+          <div className="flex items-center justify-center w-full">
+            <Upload className="w-4 h-4 text-[#C72030] mr-2" />
             <input type="file" id="fileInput" className="hidden" onChange={handleFileSelect} accept=".xlsx,.xls,.csv" />
-            <label htmlFor="fileInput" className="text-[#C72030] underline cursor-pointer hover:opacity-75">
-              Choose File
+            <label htmlFor="fileInput" className="text-[#C72030] cursor-pointer hover:opacity-75 text-sm">
+              {selectedFile ? selectedFile.name.substring(0, 15) + (selectedFile.name.length > 15 ? '...' : '') : 'Choose File'}
             </label>
-            <p className="text-sm text-gray-500 mt-2">
-              {selectedFile ? selectedFile.name : "No file chosen"}
-            </p>
           </div>
         </div>
         
-        <div className="flex flex-col gap-2">
+        <div className="flex gap-3">
           <Button onClick={handleDownloadSampleFormat} style={{
           backgroundColor: '#C72030'
         }} className="text-white hover:opacity-90">

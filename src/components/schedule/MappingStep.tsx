@@ -15,6 +15,7 @@ import {
   CircularProgress,
   styled
 } from '@mui/material';
+import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
 const SectionCard = styled(Paper)(({ theme }) => ({
   padding: '24px',
@@ -56,12 +57,12 @@ export const MappingStep: React.FC<MappingStepProps> = ({
   isCompleted,
   isCollapsed
 }) => {
-  const [mappings, setMappings] = useState<{[key: string]: number | null}>({});
+  const [mappings, setMappings] = useState<{ [key: string]: number | null }>({});
 
-  // Initialize mappings from data
+  // Initialize mappings from props
   useEffect(() => {
-    if (data && data.assets && data.assets.length > 0) {
-      const initialMappings: {[key: string]: number | null} = {};
+    if (data && data.assets?.length > 0) {
+      const initialMappings: { [key: string]: number | null } = {};
       data.assets.forEach(asset => {
         asset.inputs.forEach(input => {
           initialMappings[input.field_name] = input.selected_measure_id;
@@ -71,13 +72,33 @@ export const MappingStep: React.FC<MappingStepProps> = ({
     }
   }, [data]);
 
-  const handleMappingChange = (fieldName: string, measureId: number | null) => {
+  const handleMappingChange = async (
+    fieldName: string,
+    measureId: number | null,
+    assetId: number,
+    formId: number
+  ) => {
     const newMappings = {
       ...mappings,
       [fieldName]: measureId
     };
     setMappings(newMappings);
     onChange(newMappings);
+
+    if (measureId) {
+      try {
+        const url = `${API_CONFIG.BASE_URL}/pms/pms_asset_q_map.json?asset_msr_id=${measureId}&form_id=${formId}&assetid=${assetId}&inputname=${fieldName}`;
+        const response = await fetch(url, getAuthenticatedFetchOptions('POST'));
+
+        if (!response.ok) {
+          throw new Error('API Error');
+        }
+
+        console.log('Mapping updated successfully');
+      } catch (error) {
+        console.error('Error updating mapping:', error);
+      }
+    }
   };
 
   if (loading) {
@@ -91,7 +112,7 @@ export const MappingStep: React.FC<MappingStepProps> = ({
     );
   }
 
-  if (!data || !data.assets || data.assets.length === 0) {
+  if (!data || !data.assets?.length) {
     return (
       <SectionCard>
         <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -108,12 +129,12 @@ export const MappingStep: React.FC<MappingStepProps> = ({
 
   return (
     <Box>
-      {data.assets.map((asset, assetIndex) => (
+      {data.assets.map((asset) => (
         <SectionCard key={asset.id}>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: '#C72030' }}>
-            {asset.name} - Field Mapping
+            {asset.name.trim()} - Field Mapping
           </Typography>
-          
+
           <TableContainer component={Paper} sx={{ border: '1px solid #E0E0E0' }}>
             <Table>
               <TableHead>
@@ -121,73 +142,52 @@ export const MappingStep: React.FC<MappingStepProps> = ({
                   <TableCell sx={{ fontWeight: 600, color: '#333', minWidth: 150 }}>
                     Asset
                   </TableCell>
-                  {asset.measures.map((measure) => (
-                    <TableCell 
-                      key={measure.id} 
+                  {asset.inputs.map((input) => (
+                    <TableCell
+                      key={input.field_name}
                       align="center"
                       sx={{ fontWeight: 600, color: '#333', minWidth: 150 }}
                     >
-                      {measure.name}
+                      {input.field_label}
                     </TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {asset.inputs.map((input) => (
-                  <TableRow key={input.field_name}>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {input.field_label}
-                    </TableCell>
-                    {asset.measures.map((measure) => (
-                      <TableCell key={measure.id} align="center">
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value={mappings[input.field_name] === measure.id ? measure.id : ''}
-                            onChange={(e) => {
-                              const selectedValue = e.target.value;
-                              // Clear any existing mapping for this field first
-                              const newMappings = { ...mappings };
-                              if (selectedValue === '') {
-                                newMappings[input.field_name] = null;
-                              } else {
-                                newMappings[input.field_name] = Number(selectedValue);
-                              }
-                              setMappings(newMappings);
-                              onChange(newMappings);
-                            }}
-                            displayEmpty
-                            sx={{
-                              '& .MuiSelect-select': {
-                                backgroundColor: mappings[input.field_name] === measure.id ? '#E8F5E8' : 'white',
-                                border: mappings[input.field_name] === measure.id ? '1px solid #4CAF50' : '1px solid #E0E0E0',
-                              }
-                            }}
-                          >
-                            <MenuItem value="">Select</MenuItem>
-                            <MenuItem value={measure.id}>
-                              Map
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 500 }}>{asset.name.trim()}</TableCell>
+                  {asset.inputs.map((input) => (
+                    <TableCell key={input.field_name} align="center">
+                      <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <Select
+                          value={mappings[input.field_name] || ''}
+                          onChange={(e) =>
+                            handleMappingChange(
+                              input.field_name,
+                              e.target.value === '' ? null : Number(e.target.value),
+                              asset.id,
+                              data.form_id
+                            )
+                          }
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select</MenuItem>
+                          {asset.measures.map((measure) => (
+                            <MenuItem key={measure.id} value={measure.id}>
+                              {measure.name.trim()}
                             </MenuItem>
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </TableCell>
+                  ))}
+                </TableRow>
               </TableBody>
             </Table>
           </TableContainer>
-          
-          {/* Summary */}
-          <Box sx={{ mt: 3, p: 2, backgroundColor: '#F9F9F9', borderRadius: '8px' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-              Mapping Summary:
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#666' }}>
-              {Object.values(mappings).filter(v => v !== null).length} of {asset.inputs.length} fields mapped
-            </Typography>
-          </Box>
         </SectionCard>
       ))}
     </Box>
   );
 };
+

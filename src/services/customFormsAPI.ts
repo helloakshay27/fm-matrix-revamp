@@ -1,5 +1,5 @@
-
 import { apiClient } from '@/utils/apiClient';
+import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
 export interface CustomForm {
   id: number;
@@ -40,9 +40,24 @@ export interface TransformedScheduleData {
   createdOn: string;
 }
 
-export const fetchCustomForms = async (): Promise<CustomFormsResponse> => {
-  const response = await apiClient.get('/pms/custom_forms.json');
-  return response.data;
+export const fetchCustomForms = async (queryParams?: Record<string, string>): Promise<CustomFormsResponse> => {
+  const baseUrl = `${API_CONFIG.BASE_URL}/pms/custom_forms.json`;
+  
+  // Build URL with query parameters
+  const url = new URL(baseUrl);
+  if (queryParams) {
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value) {
+        url.searchParams.append(key, value);
+      }
+    });
+  }
+  
+  const response = await fetch(url.toString(), getAuthenticatedFetchOptions('GET'));
+  if (!response.ok) {
+    throw new Error('Failed to fetch custom forms');
+  }
+  return response.json();
 };
 
 export const transformCustomFormsData = (forms: CustomForm[]): TransformedScheduleData[] => {

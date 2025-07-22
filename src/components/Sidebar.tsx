@@ -254,8 +254,7 @@ const modulesByPackage = {
       icon: Trash2,
       href: '/maintenance/waste',
       subItems: [
-        { name: 'Waste Generation', href: '/maintenance/waste/generation', color: 'text-[#1a1a1a]' },
-        { name: 'Setup', href: '/maintenance/waste/setup', color: 'text-[#1a1a1a]' }
+        { name: 'Waste Generation', href: '/maintenance/waste/generation', color: 'text-[#1a1a1a]' }
       ]
     },
     {

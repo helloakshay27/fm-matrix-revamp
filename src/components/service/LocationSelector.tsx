@@ -57,6 +57,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
     loading,
   } = useSelector((state: RootState) => state.serviceLocation);
 
+
+
   // Load sites and groups on component mount
   useEffect(() => {
     dispatch(fetchSites());
@@ -133,6 +135,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
   };
 
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
+  console.log(selectedSiteId)
 
   return (
     <>
@@ -145,11 +148,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
             <MuiSelect
               labelId="site-select-label"
               label="Site"
-              displayEmpty
               value={selectedSiteId || ''}
               onChange={(e) => handleSiteChange(Number(e.target.value))}
               sx={fieldStyles}
               disabled={loading.sites}
+              displayEmpty
             >
               <MenuItem value="">
                 <em>Select Site</em>

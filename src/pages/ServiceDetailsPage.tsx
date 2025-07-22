@@ -27,7 +27,7 @@ interface ServiceDetailsData {
   created_at: string;
   created_by: string | null;
   documents?: Array<{ filename: string; url: string }>;
-  qr_code_url?: string | null;
+  qr_code?: string | null;
   associated_assets?: Array<{ name: string; tag: string }>;
 }
 
@@ -51,7 +51,7 @@ export const ServiceDetailsPage = () => {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-GB', {
         day: '2-digit',
-        month: '2-digit', 
+        month: '2-digit',
         year: 'numeric'
       });
     } catch {
@@ -83,6 +83,7 @@ export const ServiceDetailsPage = () => {
 
   // Extract data from API response
   const details: ServiceDetailsData | null = serviceData as ServiceDetailsData;
+  console.log(details)
 
   if (!details) {
     return (
@@ -100,8 +101,8 @@ export const ServiceDetailsPage = () => {
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => navigate('/maintenance/service')}
           className="mb-4"
         >
@@ -111,22 +112,19 @@ export const ServiceDetailsPage = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="text-sm text-[#1a1a1a] opacity-70 mb-1">
-              Service List &gt; Service Detail
-            </p>
             <h1 className="text-2xl font-bold text-[#1a1a1a]">
               {details.service_name || '—'} ({details.service_code || '—'})
             </h1>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button 
+            <Button
               variant="outline"
               onClick={handleEditClick}
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
             >
               Edit
             </Button>
-            <Button 
+            <Button
               onClick={handleAssociateServiceClick}
               className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
             >
@@ -203,7 +201,7 @@ export const ServiceDetailsPage = () => {
                 details.documents.map((doc, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                     <span className="text-sm truncate">{doc.filename}</span>
-                    <Button 
+                    <Button
                       size="sm"
                       className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
                       onClick={() => window.open(doc.url, '_blank')}
@@ -230,17 +228,17 @@ export const ServiceDetailsPage = () => {
               <h2 className="text-lg font-semibold text-[#C72030]">QR CODE</h2>
             </div>
             <div className="text-center">
-              {details.qr_code_url ? (
+              {details.qr_code ? (
                 <>
                   <div className="w-48 h-48 bg-gray-200 mx-auto mb-4 flex items-center justify-center">
-                    <img 
-                      src={details.qr_code_url} 
-                      alt="QR Code" 
+                    <img
+                      src={details.qr_code}
+                      alt="QR Code"
                       className="w-40 h-40 object-contain"
                     />
                   </div>
-                  <Button 
-                    onClick={() => window.open(details.qr_code_url, '_blank')}
+                  <Button
+                    onClick={() => window.open(details.qr_code, '_blank')}
                     className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
                   >
                     <Download className="w-4 h-4 mr-1" />
@@ -249,13 +247,6 @@ export const ServiceDetailsPage = () => {
                 </>
               ) : (
                 <>
-                  <div className="w-48 h-48 bg-gray-100 mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-                    <img 
-                      src={qrCodePlaceholder} 
-                      alt="QR Code" 
-                      className="w-40 h-40 object-contain"
-                    />
-                  </div>
                   <div className="text-sm text-gray-600">No QR code available</div>
                 </>
               )}
@@ -289,7 +280,7 @@ export const ServiceDetailsPage = () => {
 
 
       {/* Modal */}
-      <AssociateServiceModal 
+      <AssociateServiceModal
         isOpen={showAssociateModal}
         onClose={() => setShowAssociateModal(false)}
       />
