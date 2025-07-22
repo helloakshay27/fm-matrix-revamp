@@ -1,7 +1,8 @@
+
 import React from 'react';
-import { Input } from '@/components/ui/input';
+import { EnhancedInput } from '@/components/ui/enhanced-input';
+import { EnhancedSelect } from '@/components/ui/enhanced-select';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { FieldConfig } from '@/config/assetFieldsConfig';
 
@@ -20,63 +21,65 @@ export const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
     switch (field.type) {
       case 'select':
         return (
-          <Select value={value} onValueChange={onChange}>
-            <SelectTrigger>
-              <SelectValue placeholder={field.placeholder || `Select ${field.label}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <EnhancedSelect
+            label={field.label}
+            value={value}
+            onChange={(e) => onChange(e.target.value as string)}
+            options={field.options || []}
+            placeholder={field.placeholder || `Select ${field.label}`}
+            required={field.required}
+          />
         );
       case 'textarea':
         return (
-          <Textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={field.placeholder || `Enter ${field.label}`}
-          />
+          <div>
+            <Label htmlFor={field.name}>
+              {field.label}
+              {field.required && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Textarea
+              id={field.name}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={field.placeholder || `Enter ${field.label}`}
+              className="mt-1"
+            />
+          </div>
         );
       case 'date':
         return (
-          <Input
+          <EnhancedInput
+            label={field.label}
             type="date"
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            required={field.required}
           />
         );
       case 'number':
         return (
-          <Input
+          <EnhancedInput
+            label={field.label}
             type="number"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder || `Enter ${field.label}`}
+            required={field.required}
           />
         );
       default:
         return (
-          <Input
+          <EnhancedInput
+            label={field.label}
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder || `Enter ${field.label}`}
+            required={field.required}
           />
         );
     }
   };
 
-  return (
-    <div>
-      <Label htmlFor={field.name}>
-        {field.label}
-        {field.required && <span className="text-destructive ml-1">*</span>}
-      </Label>
-      {renderField()}
-    </div>
-  );
+  return <div className="w-full">{renderField()}</div>;
 };
