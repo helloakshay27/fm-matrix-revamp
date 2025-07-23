@@ -207,11 +207,41 @@ export function EnhancedTable<T extends Record<string, any>>({
     setSearchInput(value);
   };
 
-  const handleSearchGo = () => {
-    setInternalSearchTerm(searchInput);
-    setCurrentPage(1);
-    if (onSearchChange) {
-      onSearchChange(searchInput);
+  const handleSearchGo = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+      
+      if (!token) {
+        alert('Authentication token not found. Please login first.');
+        return;
+      }
+
+      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchInput}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update the data with search results - this would need to be passed up to parent component
+        console.log('Search results:', data.complaints);
+        // For now, just update the internal search term
+        setInternalSearchTerm(searchInput);
+        setCurrentPage(1);
+        if (onSearchChange) {
+          onSearchChange(searchInput);
+        }
+      } else if (response.status === 401) {
+        alert('Unauthorized: Please check your authentication token or login again.');
+      } else {
+        alert(`Failed to search: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error searching:', error);
+      alert('An error occurred while searching. Please try again.');
     }
   };
 
