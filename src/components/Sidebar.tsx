@@ -181,49 +181,49 @@ const navigationStructure = {
 
 const modulesByPackage = {
   'Master': [
-   {
-    name: 'Location Master',
-    icon: MapPin,
-    href: '/master/location',
-    subItems: [
-      { name: 'Account', href: '/master/location/account', color: 'text-[#1a1a1a]' },
-      { name: 'Building', href: '/master/location/building', color: 'text-[#1a1a1a]' },
-      { name: 'Wing', href: '/master/location/wing', color: 'text-[#1a1a1a]' },
-      { name: 'Area', href: '/master/location/area', color: 'text-[#1a1a1a]' },
-      { name: 'Floor', href: '/master/location/floor', color: 'text-[#1a1a1a]' },
-      { name: 'Unit', href: '/master/location/unit', color: 'text-[#1a1a1a]' },
-      { name: 'Room', href: '/master/location/room', color: 'text-[#1a1a1a]' }
-    ]
-  },
-  {
-    name: 'User Master',
-    icon: Users,
-    href: '/master/user',
-    subItems: [
-      { name: 'FM User', href: '/master/user/fm-users', color: 'text-[#1a1a1a]' },
-      { name: 'OCCUPANT USERS', href: '/master/user/occupant-users', color: 'text-[#1a1a1a]' }
-    ]
-  },
-  {
-    name: 'Checklist Master',
-    icon: CheckSquare,
-    href: '/master/checklist'
-  },
-  {
-    name: 'Address Master',
-    icon: MapPin,
-    href: '/master/address'
-  },
-  {
-    name: 'Unit Master (By Default)',
-    icon: Package,
-    href: '/master/unit-default'
-  },
-  {
-    name: 'Material Master -> EBom',
-    icon: FileText,
-    href: '/master/material-ebom'
-  },
+    {
+      name: 'Location Master',
+      icon: MapPin,
+      href: '/master/location',
+      subItems: [
+        { name: 'Account', href: '/master/location/account', color: 'text-[#1a1a1a]' },
+        { name: 'Building', href: '/master/location/building', color: 'text-[#1a1a1a]' },
+        { name: 'Wing', href: '/master/location/wing', color: 'text-[#1a1a1a]' },
+        { name: 'Area', href: '/master/location/area', color: 'text-[#1a1a1a]' },
+        { name: 'Floor', href: '/master/location/floor', color: 'text-[#1a1a1a]' },
+        { name: 'Unit', href: '/master/location/unit', color: 'text-[#1a1a1a]' },
+        { name: 'Room', href: '/master/location/room', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'User Master',
+      icon: Users,
+      href: '/master/user',
+      subItems: [
+        { name: 'FM User', href: '/master/user/fm-users', color: 'text-[#1a1a1a]' },
+        { name: 'OCCUPANT USERS', href: '/master/user/occupant-users', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Checklist Master',
+      icon: CheckSquare,
+      href: '/master/checklist'
+    },
+    {
+      name: 'Address Master',
+      icon: MapPin,
+      href: '/master/address'
+    },
+    {
+      name: 'Unit Master (By Default)',
+      icon: Package,
+      href: '/master/unit-default'
+    },
+    {
+      name: 'Material Master -> EBom',
+      icon: FileText,
+      href: '/master/material-ebom'
+    },
   ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
@@ -254,9 +254,9 @@ const modulesByPackage = {
     { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
     { name: 'Services', icon: Wrench, href: '/maintenance/service' },
     { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
-    { 
-      name: 'Inventory', 
-      icon: Package, 
+    {
+      name: 'Inventory',
+      icon: Package,
       href: '/maintenance/inventory',
       subItems: [
         { name: 'Inventory', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
@@ -440,11 +440,11 @@ const modulesByPackage = {
     {
       name: 'Booking',
       icon: Calendar,
-      href: '/vas/booking',
-      subItems: [
-        { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
-        { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
-      ]
+      href: '/vas/booking/list',
+      // subItems: [
+      //   { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
+      //   { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
+      // ]
     },
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
@@ -621,7 +621,7 @@ export const Sidebar = () => {
         : [...prev, itemName]
     );
   };
-  
+
   // Close all expanded items when sidebar is collapsed
   React.useEffect(() => {
     if (isSidebarCollapsed) {
@@ -678,24 +678,24 @@ export const Sidebar = () => {
       const path = location.pathname;
       const settingsItems = modulesByPackage['Settings'];
       const itemsToExpand = [];
-      
+
       // Add all main categories to expanded items
       settingsItems.forEach(item => {
         itemsToExpand.push(item.name);
-        
+
         // If this category's path is in the current path, expand its children
         if (item.href && path.includes(item.href)) {
           if (item.subItems) {
             item.subItems.forEach(subItem => {
               if (subItem.href && path.includes(subItem.href)) {
                 itemsToExpand.push(subItem.name);
-                
+
               }
             });
           }
         }
       });
-      
+
       // Update expanded items state
       setExpandedItems(prev => {
         const newItems = [...prev];
@@ -850,15 +850,15 @@ export const Sidebar = () => {
       style={{ top: '4rem', height: '91vh' }}
     >
       <div className={`${isSidebarCollapsed ? 'px-2 py-2' : 'p-2'}`}>
-        <button 
+        <button
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           className="absolute right-2 top-2 p-1 rounded-md hover:bg-[#DBC2A9] z-10"
         >
-          {isSidebarCollapsed ? 
+          {isSidebarCollapsed ?
             <div className="flex justify-center items-center w-8 h-8 bg-[#f6f4ee] border border-[#e5e1d8] mx-auto">
               <ChevronRight className="w-4 h-4" />
             </div>
-            : 
+            :
             <ChevronLeft className="w-4 h-4" />
           }
         </button>
@@ -882,11 +882,10 @@ export const Sidebar = () => {
                   <button
                     key={module.name}
                     onClick={() => module.href && handleNavigation(module.href, currentSection)}
-                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-                      isActiveRoute(module.href) 
-                        ? 'bg-[#f0e8dc] shadow-inner' 
-                        : 'hover:bg-[#DBC2A9]'
-                    }`}
+                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
+                      ? 'bg-[#f0e8dc] shadow-inner'
+                      : 'hover:bg-[#DBC2A9]'
+                      }`}
                     title={module.name}
                   >
                     {isActiveRoute(module.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
@@ -907,8 +906,8 @@ export const Sidebar = () => {
                         <module.icon className="w-4 h-4" />
                         {!isSidebarCollapsed && <span className="font-semibold text-[#1a1a1a] text-sm">{module.name}</span>}
                       </div>
-                      {!isSidebarCollapsed && (expandedItems.includes(module.name) ? 
-                        <ChevronDown className="w-4 h-4" /> : 
+                      {!isSidebarCollapsed && (expandedItems.includes(module.name) ?
+                        <ChevronDown className="w-4 h-4" /> :
                         <ChevronRight className="w-4 h-4" />
                       )}
                     </button>
@@ -925,8 +924,8 @@ export const Sidebar = () => {
                                   <span className={isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
                                     {subItem.name}
                                   </span>
-                                  {expandedItems.includes(subItem.name) ? 
-                                    <ChevronDown className="w-3 h-3" /> : 
+                                  {expandedItems.includes(subItem.name) ?
+                                    <ChevronDown className="w-3 h-3" /> :
                                     <ChevronRight className="w-3 h-3" />
                                   }
                                 </button>
@@ -943,8 +942,8 @@ export const Sidebar = () => {
                                               <span className={isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
                                                 {nestedItem.name}
                                               </span>
-                                              {expandedItems.includes(nestedItem.name) ? 
-                                                <ChevronDown className="w-3 h-3" /> : 
+                                              {expandedItems.includes(nestedItem.name) ?
+                                                <ChevronDown className="w-3 h-3" /> :
                                                 <ChevronRight className="w-3 h-3" />
                                               }
                                             </button>
@@ -954,9 +953,8 @@ export const Sidebar = () => {
                                                   <button
                                                     key={item.name}
                                                     onClick={() => handleNavigation(item.href, currentSection)}
-                                                    className={`block w-full text-left px-2 py-1 text-sm ${
-                                                      isActiveRoute(item.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                                    }`}
+                                                    className={`block w-full text-left px-2 py-1 text-sm ${isActiveRoute(item.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                                                      }`}
                                                   >
                                                     {item.name}
                                                   </button>
@@ -967,9 +965,8 @@ export const Sidebar = () => {
                                         ) : (
                                           <button
                                             onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                                            className={`block w-full text-left px-2 py-1 text-sm ${
-                                              isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                            }`}
+                                            className={`block w-full text-left px-2 py-1 text-sm ${isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                                              }`}
                                           >
                                             {nestedItem.name}
                                           </button>
@@ -982,11 +979,10 @@ export const Sidebar = () => {
                             ) : (
                               <button
                                 onClick={() => handleNavigation(subItem.href, currentSection)}
-                                className={`block w-full text-left px-2 py-1 text-sm font-medium rounded-md ${
-                                  isActiveRoute(subItem.href) 
-                                    ? 'text-[#C72030] bg-[#f0e8dc] shadow-inner relative pl-3' 
-                                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9]/50'
-                                }`}
+                                className={`block w-full text-left px-2 py-1 text-sm font-medium rounded-md ${isActiveRoute(subItem.href)
+                                  ? 'text-[#C72030] bg-[#f0e8dc] shadow-inner relative pl-3'
+                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9]/50'
+                                  }`}
                               >
                                 {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
                                 {subItem.name}
@@ -1007,11 +1003,10 @@ export const Sidebar = () => {
                   <button
                     key={module.name}
                     onClick={() => module.href && handleNavigation(module.href, currentSection)}
-                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-                      isActiveRoute(module.href) 
-                        ? 'bg-[#f0e8dc] shadow-inner' 
-                        : 'hover:bg-[#DBC2A9]'
-                    }`}
+                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
+                      ? 'bg-[#f0e8dc] shadow-inner'
+                      : 'hover:bg-[#DBC2A9]'
+                      }`}
                     title={module.name}
                   >
                     {isActiveRoute(module.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}

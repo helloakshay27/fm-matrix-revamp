@@ -176,7 +176,6 @@ export const AssetDetailsPage = () => {
         <Tabs defaultValue="asset-info" className="w-full">
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-11 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
             <TabsTrigger value="asset-info">Asset Info</TabsTrigger>
-            <TabsTrigger value="asset-analytics">Analytics</TabsTrigger>
             <TabsTrigger value="amc-details">AMC Details</TabsTrigger>
             <TabsTrigger value="ppm">PPM</TabsTrigger>
             <TabsTrigger value="e-bom">E-BOM</TabsTrigger>
@@ -189,9 +188,6 @@ export const AssetDetailsPage = () => {
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
             <AssetInfoTab asset={assetData} assetId={assetData.id} />
-          </TabsContent>
-          <TabsContent value="asset-analytics" className="p-4 sm:p-6">
-            <AssetAnalyticsTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab asset={assetData} assetId={assetData.id} />
