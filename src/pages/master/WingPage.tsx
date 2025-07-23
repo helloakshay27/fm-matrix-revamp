@@ -25,7 +25,7 @@ export function WingPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingWing, setEditingWing] = useState<any>(null);
-  const [selectedBuildingFilter, setSelectedBuildingFilter] = useState<string>('');
+  const [selectedBuildingFilter, setSelectedBuildingFilter] = useState<string>('all');
 
   const createForm = useForm<WingFormData>({
     resolver: zodResolver(wingSchema),
@@ -54,7 +54,7 @@ export function WingPage() {
     return wings.data.filter((wing) => {
       const matchesSearch = wing.name.toLowerCase().includes(search.toLowerCase()) ||
                            wing.building?.name?.toLowerCase().includes(search.toLowerCase());
-      const matchesBuilding = !selectedBuildingFilter || wing.building_id === selectedBuildingFilter;
+      const matchesBuilding = selectedBuildingFilter === 'all' || wing.building_id === selectedBuildingFilter;
       return matchesSearch && matchesBuilding;
     });
   }, [wings.data, search, selectedBuildingFilter]);
@@ -233,7 +233,7 @@ export function WingPage() {
                 <SelectValue placeholder="Filter by building" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Buildings</SelectItem>
+                <SelectItem value="all">All Buildings</SelectItem>
                 {buildings.data.map((building) => (
                   <SelectItem key={building.id} value={building.id.toString()}>
                     {building.name}
