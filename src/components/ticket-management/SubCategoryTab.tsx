@@ -177,9 +177,13 @@ export const SubCategoryTab: React.FC = () => {
       ]);
 
       console.log('Raw categories response:', categoriesResponse);
-      // Process categories - includes name and icon_url
-      setCategories(categoriesResponse?.helpdesk_categories || []);
-      console.log('Processed categories:', categoriesResponse?.helpdesk_categories || []);
+      // Process categories - extract id and name for dropdown
+      const processedCategories = categoriesResponse?.helpdesk_categories?.map(cat => ({
+        id: cat.id,
+        name: cat.name
+      })) || [];
+      setCategories(processedCategories);
+      console.log('Processed categories:', processedCategories);
 
       // Process engineers - extract from fm_users array
       const formattedEngineers = engineersResponse?.fm_users?.map(user => ({
