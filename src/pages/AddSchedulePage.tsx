@@ -3244,9 +3244,6 @@ export const AddSchedulePage = () => {
                     </Box>
                   </Box>
                 )}
-
-                
-                
                 {section.tasks && section.tasks.map((task, taskIndex) => (
                   <Box key={task.id} sx={{ mb: 3 }}>
                     

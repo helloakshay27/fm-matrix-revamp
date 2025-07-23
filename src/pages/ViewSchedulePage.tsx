@@ -177,13 +177,13 @@ export const ViewSchedulePage = () => {
             </RadioGroup>
           </div>
 
-          <Button 
+          {/* <Button 
             onClick={handleSetApproval}
             style={{ backgroundColor: '#C72030' }} 
             className="text-white"
           >
             Set Approval
-          </Button>
+          </Button> */}
           <Button 
             onClick={handleViewPerformance}
             variant="outline" 
