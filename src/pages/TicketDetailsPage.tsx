@@ -84,7 +84,7 @@ export const TicketDetailsPage = () => {
   const complaintLogs = ticketData.complaint_logs || [];
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
@@ -112,119 +112,113 @@ export const TicketDetailsPage = () => {
       </div>
 
       {/* Section 1: Ticket Details */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-sm">
         <CardHeader className="border-b bg-white">
           <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
             <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>1</div>
             TICKET DETAILS
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 gap-8">
-            <div className="space-y-4">
-              {hasData(ticketData.heading) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Title</label>
-                  <p className="font-medium">{ticketData.heading}</p>
-                </div>
-              )}
-              {hasData(ticketData.issue_status) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Status</label>
+        <CardContent className="p-0">
+          <div className="grid grid-cols-2">
+            {hasData(ticketData.heading) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Title</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.heading}</div>
+              </div>
+            )}
+            {hasData(ticketData.ticket_number) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Ticket Number</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.ticket_number}</div>
+              </div>
+            )}
+            {hasData(ticketData.issue_status) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Status</div>
+                <div className="w-1/2 p-4 text-sm">
                   <Badge className="bg-yellow-100 text-yellow-700">{ticketData.issue_status}</Badge>
                 </div>
-              )}
-              {hasData(ticketData.sub_category_type) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">SubCategory</label>
-                  <p className="font-medium">{ticketData.sub_category_type}</p>
-                </div>
-              )}
-              {hasData(ticketData.created_by_name) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Created By</label>
-                  <p className="font-medium">{ticketData.created_by_name}</p>
-                </div>
-              )}
-              {hasData(ticketData.assigned_to) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Assigned To</label>
-                  <p className="font-medium">{ticketData.assigned_to}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {(hasData(ticketData.created_date) || hasData(ticketData.created_time)) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Created On</label>
-                  <p className="font-medium">{`${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()}</p>
-                </div>
-              )}
-              {hasData(ticketData.category_type) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Category</label>
-                  <p className="font-medium">{ticketData.category_type}</p>
-                </div>
-              )}
-              {hasData(ticketData.updated_by) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Updated By</label>
-                  <p className="font-medium">{ticketData.updated_by}</p>
-                </div>
-              )}
-              {hasData(ticketData.complaint_mode) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Complaint Mode</label>
-                  <p className="font-medium">{ticketData.complaint_mode}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {hasData(ticketData.ticket_number) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Ticket Number</label>
-                  <p className="font-medium">{ticketData.ticket_number}</p>
-                </div>
-              )}
-              {hasData(ticketData.priority || ticketData.external_priority) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Priority</label>
-                  <p className="font-medium">{ticketData.priority || ticketData.external_priority}</p>
-                </div>
-              )}
-              {hasData(ticketData.priority_status || ticketData.effective_priority) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Admin Priority</label>
-                  <p className="font-medium">{ticketData.priority_status || ticketData.effective_priority}</p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+            {hasData(ticketData.category_type) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Category</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.category_type}</div>
+              </div>
+            )}
+            {hasData(ticketData.sub_category_type) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">SubCategory</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.sub_category_type}</div>
+              </div>
+            )}
+            {hasData(ticketData.priority || ticketData.external_priority) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Priority</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.priority || ticketData.external_priority}</div>
+              </div>
+            )}
+            {hasData(ticketData.created_by_name) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Created By</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.created_by_name}</div>
+              </div>
+            )}
+            {(hasData(ticketData.created_date) || hasData(ticketData.created_time)) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Created On</div>
+                <div className="w-1/2 p-4 text-sm">{`${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()}</div>
+              </div>
+            )}
+            {hasData(ticketData.assigned_to) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Assigned To</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.assigned_to}</div>
+              </div>
+            )}
+            {hasData(ticketData.updated_by) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Updated By</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.updated_by}</div>
+              </div>
+            )}
+            {hasData(ticketData.complaint_mode) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Complaint Mode</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.complaint_mode}</div>
+              </div>
+            )}
+            {hasData(ticketData.priority_status || ticketData.effective_priority) && (
+              <div className="flex">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Admin Priority</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.priority_status || ticketData.effective_priority}</div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Section 2: Creator's Information */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-sm">
         <CardHeader className="border-b bg-white">
           <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
             <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>2</div>
             CREATOR'S INFORMATION
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 gap-8">
+        <CardContent className="p-0">
+          <div className="grid grid-cols-2">
             {hasData(ticketData.posted_by) && (
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Posted By</label>
-                <p className="font-medium">{ticketData.posted_by}</p>
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Posted By</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.posted_by}</div>
               </div>
             )}
             {hasData(ticketData.id_society) && (
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Society</label>
-                <p className="font-medium">{ticketData.id_society}</p>
+              <div className="flex">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Society</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.id_society}</div>
               </div>
             )}
           </div>
@@ -232,125 +226,117 @@ export const TicketDetailsPage = () => {
       </Card>
 
       {/* Section 3: Location Information */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-sm">
         <CardHeader className="border-b bg-white">
           <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
             <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>3</div>
             LOCATION INFORMATION
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 gap-8">
-            <div className="space-y-4">
-              {hasData(ticketData.region) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Region</label>
-                  <p className="font-medium">{ticketData.region}</p>
-                </div>
-              )}
-              {hasData(ticketData.building_name) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Building</label>
-                  <p className="font-medium">{ticketData.building_name}</p>
-                </div>
-              )}
-              {hasData(ticketData.floor_name) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Floor</label>
-                  <p className="font-medium">{ticketData.floor_name}</p>
-                </div>
-              )}
-              {hasData(ticketData.flat_number || ticketData.unit_name) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Flat Number / Unit Name</label>
-                  <p className="font-medium">{ticketData.flat_number || ticketData.unit_name}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {hasData(ticketData.zone) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Zone</label>
-                  <p className="font-medium">{ticketData.zone}</p>
-                </div>
-              )}
-              {hasData(ticketData.district) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">District</label>
-                  <p className="font-medium">{ticketData.district}</p>
-                </div>
-              )}
-              {hasData(ticketData.room_name) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Room</label>
-                  <p className="font-medium">{ticketData.room_name}</p>
-                </div>
-              )}
-              {hasData(ticketData.area_name || ticketData.site_name) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Area Name / Site Name</label>
-                  <p className="font-medium">{ticketData.area_name || ticketData.site_name}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {hasData(ticketData.city) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">City</label>
-                  <p className="font-medium">{ticketData.city}</p>
-                </div>
-              )}
-              {hasData(ticketData.state) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">State</label>
-                  <p className="font-medium">{ticketData.state}</p>
-                </div>
-              )}
-              {hasData(ticketData.address) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Address</label>
-                  <p className="font-medium">{ticketData.address}</p>
-                </div>
-              )}
-              {hasData(ticketData.wing_name) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Wing</label>
-                  <p className="font-medium">{ticketData.wing_name}</p>
-                </div>
-              )}
-            </div>
+        <CardContent className="p-0">
+          <div className="grid grid-cols-2">
+            {hasData(ticketData.region) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Region</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.region}</div>
+              </div>
+            )}
+            {hasData(ticketData.zone) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Zone</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.zone}</div>
+              </div>
+            )}
+            {hasData(ticketData.building_name) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Building</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.building_name}</div>
+              </div>
+            )}
+            {hasData(ticketData.district) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">District</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.district}</div>
+              </div>
+            )}
+            {hasData(ticketData.floor_name) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Floor</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.floor_name}</div>
+              </div>
+            )}
+            {hasData(ticketData.room_name) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Room</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.room_name}</div>
+              </div>
+            )}
+            {hasData(ticketData.flat_number || ticketData.unit_name) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Flat Number / Unit Name</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.flat_number || ticketData.unit_name}</div>
+              </div>
+            )}
+            {hasData(ticketData.area_name || ticketData.site_name) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Area Name / Site Name</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.area_name || ticketData.site_name}</div>
+              </div>
+            )}
+            {hasData(ticketData.city) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">City</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.city}</div>
+              </div>
+            )}
+            {hasData(ticketData.state) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">State</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.state}</div>
+              </div>
+            )}
+            {hasData(ticketData.address) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Address</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.address}</div>
+              </div>
+            )}
+            {hasData(ticketData.wing_name) && (
+              <div className="flex">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Wing</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.wing_name}</div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Section 4: Survey Information */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-sm">
         <CardHeader className="border-b bg-white">
           <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
             <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>4</div>
             SURVEY INFORMATION
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 gap-8">
+        <CardContent className="p-0">
+          <div className="grid grid-cols-2">
             {hasData(ticketData.survey_id) && (
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Survey ID</label>
-                <p className="font-medium">{ticketData.survey_id}</p>
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Survey ID</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.survey_id}</div>
               </div>
             )}
             {hasData(ticketData.survey_name) && (
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Survey Name</label>
-                <p className="font-medium">{ticketData.survey_name}</p>
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Survey Name</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.survey_name}</div>
               </div>
             )}
             {hasData(ticketData.survey_location) && (
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Survey Location</label>
-                <p className="font-medium">{ticketData.survey_location}</p>
+              <div className="flex">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Survey Location</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.survey_location}</div>
               </div>
             )}
           </div>
@@ -358,95 +344,87 @@ export const TicketDetailsPage = () => {
       </Card>
 
       {/* Section 5: Additional Information */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-sm">
         <CardHeader className="border-b bg-white">
           <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
             <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>5</div>
             ADDITIONAL INFORMATION
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 gap-8">
-            <div className="space-y-4">
-              {hasData(ticketData.corrective_action) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Corrective Action</label>
-                  <p className="font-medium">{ticketData.corrective_action}</p>
-                </div>
-              )}
-              {hasData(ticketData.preventive_action) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Preventive Action</label>
-                  <p className="font-medium">{ticketData.preventive_action}</p>
-                </div>
-              )}
-              {hasData(ticketData.root_cause) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Root Cause</label>
-                  <p className="font-medium">{ticketData.root_cause}</p>
-                </div>
-              )}
-              {hasData(ticketData.response_tat) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Response TAT</label>
-                  <p className="font-medium">{ticketData.response_tat}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {hasData(ticketData.ticket_urgency) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Ticket Urgency</label>
-                  <p className="font-medium">{ticketData.ticket_urgency}</p>
-                </div>
-              )}
-              {hasData(ticketData.responsible_person) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Responsible Person</label>
-                  <p className="font-medium">{ticketData.responsible_person}</p>
-                </div>
-              )}
-              {hasData(ticketData.asset_service) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Asset Service</label>
-                  <p className="font-medium">{ticketData.asset_service}</p>
-                </div>
-              )}
-              {hasData(ticketData.resolution_tat) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Resolution TAT</label>
-                  <p className="font-medium">{ticketData.resolution_tat}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {hasData(ticketData.task_id) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Task ID</label>
-                  <p className="font-medium">{ticketData.task_id}</p>
-                </div>
-              )}
-              {hasData(ticketData.asset_service_location) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Asset/Service Location</label>
-                  <p className="font-medium">{ticketData.asset_service_location}</p>
-                </div>
-              )}
-              {hasData(ticketData.resolution_time) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Resolution Time</label>
-                  <p className="font-medium">{ticketData.resolution_time}</p>
-                </div>
-              )}
-              {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Escalation Tracking</label>
-                  <p className="font-medium">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</p>
-                </div>
-              )}
-            </div>
+        <CardContent className="p-0">
+          <div className="grid grid-cols-2">
+            {hasData(ticketData.corrective_action) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Corrective Action</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.corrective_action}</div>
+              </div>
+            )}
+            {hasData(ticketData.ticket_urgency) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Ticket Urgency</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.ticket_urgency}</div>
+              </div>
+            )}
+            {hasData(ticketData.preventive_action) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Preventive Action</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.preventive_action}</div>
+              </div>
+            )}
+            {hasData(ticketData.responsible_person) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Responsible Person</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.responsible_person}</div>
+              </div>
+            )}
+            {hasData(ticketData.root_cause) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Root Cause</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.root_cause}</div>
+              </div>
+            )}
+            {hasData(ticketData.asset_service) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Asset Service</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.asset_service}</div>
+              </div>
+            )}
+            {hasData(ticketData.response_tat) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Response TAT</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.response_tat}</div>
+              </div>
+            )}
+            {hasData(ticketData.resolution_tat) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Resolution TAT</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.resolution_tat}</div>
+              </div>
+            )}
+            {hasData(ticketData.task_id) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Task ID</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.task_id}</div>
+              </div>
+            )}
+            {hasData(ticketData.asset_service_location) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Asset/Service Location</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.asset_service_location}</div>
+              </div>
+            )}
+            {hasData(ticketData.resolution_time) && (
+              <div className="flex border-b">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Resolution Time</div>
+                <div className="w-1/2 p-4 text-sm">{ticketData.resolution_time}</div>
+              </div>
+            )}
+            {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
+              <div className="flex">
+                <div className="w-1/2 p-4 bg-gray-50 text-sm text-gray-600 font-medium border-r">Escalation Tracking</div>
+                <div className="w-1/2 p-4 text-sm">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
