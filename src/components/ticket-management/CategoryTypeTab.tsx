@@ -84,6 +84,8 @@ export const CategoryTypeTab: React.FC = () => {
   const [vendorEmails, setVendorEmails] = useState<string[]>(['']);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
+  const [accountData, setAccountData] = useState<any>(null);
+  const [selectedSite, setSelectedSite] = useState<Site | null>(null);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -97,8 +99,51 @@ export const CategoryTypeTab: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-    fetchSites();
+    fetchAccountData();
   }, []);
+
+  const fetchAccountData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const response = await fetch(`https://${baseUrl}/api/users/account.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAccountData(data);
+        
+        // Auto-populate form with company_id as society_id
+        form.setValue('siteId', data.company_id?.toString() || '');
+        
+        // Fetch allowed sites for the user
+        const sitesResponse = await fetch(`https://${baseUrl}/pms/sites/allowed_sites.json?user_id=${data.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (sitesResponse.ok) {
+          const sitesData = await sitesResponse.json();
+          if (sitesData.sites && Array.isArray(sitesData.sites)) {
+            setSites(sitesData.sites);
+          }
+          if (sitesData.selected_site) {
+            setSelectedSite(sitesData.selected_site);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching account data:', error);
+      toast.error('Failed to fetch account data');
+    }
+  };
 
   const fetchCategories = async () => {
     setIsLoading(true);
@@ -142,36 +187,69 @@ export const CategoryTypeTab: React.FC = () => {
   const handleSubmit = async (data: CategoryFormData) => {
     setIsSubmitting(true);
     try {
-      const categoryData = {
-        name: data.categoryName,
-        tat: data.responseTime,
-        customer_enabled: data.customerEnabled,
-        society_id: data.siteId,
-        icon: iconFile,
-        complaint_faqs_attributes: faqItems
-          .filter(item => item.question.trim() && item.answer.trim())
-          .map(item => ({
-            question: item.question,
-            answer: item.answer,
-            _destroy: false,
-          })),
-      };
-
-      const emailData = {
-        email: vendorEmailEnabled ? vendorEmails.filter(email => email.trim()) : [],
-      };
-
-      await ticketManagementAPI.createCategory(categoryData, emailData);
-      toast.success('Category created successfully!');
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
       
-      // Reset form
-      form.reset();
-      setFaqItems([{ question: '', answer: '' }]);
-      setVendorEmails(['']);
-      setIconFile(null);
-      setVendorEmailEnabled(false);
+      const formData = new FormData();
       
-      fetchCategories();
+      // Helpdesk category data
+      formData.append('helpdesk_category[society_id]', accountData?.company_id?.toString() || '');
+      formData.append('helpdesk_category[of_phase]', 'pms');
+      formData.append('helpdesk_category[name]', data.categoryName);
+      formData.append('helpdesk_category[tat]', data.responseTime);
+      formData.append('helpdesk_category[customer_enabled]', data.customerEnabled ? '1' : '0');
+      
+      if (iconFile) {
+        formData.append('helpdesk_category[icon]', iconFile);
+      }
+      
+      // FAQ attributes
+      faqItems.forEach((item, index) => {
+        if (item.question.trim() || item.answer.trim()) {
+          formData.append(`helpdesk_category[complaint_faqs_attributes][${index}][question]`, item.question);
+          formData.append(`helpdesk_category[complaint_faqs_attributes][${index}][answer]`, item.answer);
+          formData.append(`helpdesk_category[complaint_faqs_attributes][${index}][_destroy]`, 'false');
+        }
+      });
+      
+      // Vendor email
+      if (vendorEmailEnabled && vendorEmails.length > 0) {
+        const validEmails = vendorEmails.filter(email => email.trim());
+        validEmails.forEach(email => {
+          formData.append('category_email[email]', email);
+        });
+      }
+      
+      // Location data (site_ids from account data)
+      if (accountData?.site_id) {
+        formData.append('location_data[site_ids][]', accountData.site_id.toString());
+      }
+
+      const response = await fetch(`https://${baseUrl}/pms/admin/helpdesk_categories.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast.success('Category created successfully!');
+        
+        // Reset form
+        form.reset();
+        setFaqItems([{ question: '', answer: '' }]);
+        setVendorEmails(['']);
+        setIconFile(null);
+        setVendorEmailEnabled(false);
+        
+        // Auto-populate form with company_id again
+        form.setValue('siteId', accountData?.company_id?.toString() || '');
+        
+        fetchCategories();
+      } else {
+        throw new Error('Failed to create category');
+      }
     } catch (error) {
       toast.error('Failed to create category');
       console.error('Error creating category:', error);
@@ -382,20 +460,14 @@ export const CategoryTypeTab: React.FC = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Enable Sites</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select site" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {sites.map((site) => (
-                            <SelectItem key={site.id} value={site.id.toString()}>
-                              {site.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input 
+                          value={selectedSite?.name || ''} 
+                          placeholder={selectedSite?.name || 'Loading site...'} 
+                          disabled 
+                          readOnly
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
