@@ -171,7 +171,7 @@ export const AMCDashboard = () => {
 
   const handleExport = async () => {
     try {
-      const baseUrl = 'https://fm-uat-api.lockated.com';
+      const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       const siteId = localStorage.getItem('selectedSiteId');
   
