@@ -130,7 +130,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
         toast.success('Visit added successfully');
         setFormData({ vendor: '', startDate: '', technician: '' });
         dispatch(fetchAMCDetails(amcId)); // ✅ Re-fetch updated data
-        onClose();
+        handleClose();
       })
       .catch((error) => {
         console.log(error);
@@ -144,13 +144,18 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     },
   };
 
+  const handleClose = () => {
+    setFormData({ vendor: '', startDate: '', technician: '' });
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-md">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-[#1a1a1a]">ADD VISIT</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X className="w-5 h-5" />

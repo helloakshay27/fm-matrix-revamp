@@ -30,6 +30,10 @@ interface ServiceRecord {
   room: string;
   created_at: string;
   qr_code?: string;
+  group_name?: string;
+  sub_group_name?: string;
+  base_uom?: string;
+  active?: boolean;
 }
 
 const initialServiceData: ServiceRecord[] = [];
@@ -128,6 +132,7 @@ export const ServiceDashboard = () => {
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
     { key: 'category', label: 'Category', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
+    { key: 'subGroup', label: 'Sub Group', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
     { key: 'building', label: 'Building', sortable: true },
     { key: 'wing', label: 'Wing', sortable: true },
@@ -182,9 +187,9 @@ export const ServiceDashboard = () => {
       case 'category':
         return '-'; // Not available in API
       case 'group':
-        return '-'; // Not available in API
+        return item.group_name || '-';
       case 'uom':
-        return '-'; // Not available in API
+        return item.base_uom || '-'; // Not available in API
       case 'building':
         return item.building || '-';
       case 'wing':
@@ -195,14 +200,21 @@ export const ServiceDashboard = () => {
         return item.floor || '-';
       case 'room':
         return item.room || '-';
+      case 'SubGroup':
+        return item.sub_group_name || '-';
       case 'status':
+        const isActive = item.active === true;
         return (
           <div className="flex items-center">
             <div
               onClick={() => handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors bg-green-500`}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-400'
+                }`}
             >
-              <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-6`} />
+              <span
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+              />
             </div>
           </div>
         );

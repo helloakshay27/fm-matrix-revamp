@@ -24,6 +24,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import axios from 'axios';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -98,6 +99,8 @@ export const AMCDashboard = () => {
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'typeChart', 'resourceChart', 'agingMatrix']);
   const pageSize = 7;
   const [activeTab, setActiveTab] = useState<string>("amclist");
+  const [showActionPanel, setShowActionPanel] = useState(false);
+
 
 
   // Drag and drop sensors
@@ -477,6 +480,35 @@ export const AMCDashboard = () => {
     return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
   }).length;
 
+  const selectionActions = [
+    {
+      label: 'Export',
+      icon: Download,
+      onClick: handleExport,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Update',
+      icon: Clock,
+      // onClick: handleUpdateSelected,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Flag',
+      icon: AlertCircle,
+      // onClick: handleFlagSelected,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Delete',
+      icon: Trash2,
+      // onClick: () => handleBulkDelete(selectedAMCObjects),
+      variant: 'destructive' as const,
+    },
+  ];
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
@@ -818,6 +850,15 @@ export const AMCDashboard = () => {
               </div>
             </div>
 
+            {showActionPanel && (
+            <SelectionPanel
+              actions={selectionActions}
+              onAdd={handleAddClick}
+              onClearSelection={()=> setShowActionPanel(false)}
+             
+            />
+          )}
+
             {/* Enhanced Table */}
             {!loading && (
               <EnhancedTable
@@ -841,11 +882,11 @@ export const AMCDashboard = () => {
                 pagination={false}
                 leftActions={
                   <Button
-                    onClick={handleAddClick}
+                    onClick={handleActionClick}
                     className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add
+                    Action
                   </Button>
                 }
               />

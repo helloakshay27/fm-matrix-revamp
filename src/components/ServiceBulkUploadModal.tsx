@@ -33,17 +33,42 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
     event.preventDefault();
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!selectedFile) {
       alert('Please select a file first');
       return;
     }
-    console.log('Importing file:', selectedFile);
-    console.log('Upload type:', uploadType);
-    // Handle import logic here
-    alert(`${uploadType === 'upload' ? 'Bulk Upload' : 'Bulk Update'} completed successfully!`);
-    onClose();
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('type', uploadType); // 'upload' or 'update'
+
+    const yourToken = localStorage.getItem('token'); // or however you're storing your token
+
+    try {
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/services/upload_services.json', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${yourToken}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server responded with ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Upload successful:', data);
+      alert(`${uploadType === 'upload' ? 'Bulk Upload' : 'Bulk Update'} completed successfully!`);
+      onClose();
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Upload failed. Please check the file format or try again.');
+    }
   };
+
 
   const handleDownloadSample = () => {
     console.log('Downloading sample format');
@@ -68,7 +93,7 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Bulk Upload</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Radio buttons for upload type */}
           <div className="flex gap-6">
@@ -99,7 +124,7 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
           </div>
 
           {/* File upload area */}
-          <div 
+          <div
             className="border-2 border-dashed border-[#C72030] rounded-lg p-12 text-center"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -113,8 +138,8 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
             />
             <div className="mb-4">
               <span className="text-gray-600">Drag & Drop or </span>
-              <label 
-                htmlFor="file-upload" 
+              <label
+                htmlFor="file-upload"
                 className="text-[#C72030] cursor-pointer underline"
               >
                 Choose File
@@ -127,14 +152,14 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
 
           {/* Action buttons */}
           <div className="flex justify-between">
-            <Button 
+            <Button
               variant="outline"
               onClick={handleDownloadSample}
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
             >
               Download Sample Format
             </Button>
-            <Button 
+            <Button
               onClick={handleImport}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"

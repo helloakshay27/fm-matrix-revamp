@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const checklistData = [
   {
     id: 440,
-    activityName: 'qawertyu',
+    activityName: 'qawertyhuhjkjkjjkjjkju',
     meterCategory: '',
     numberOfQuestions: 1,
     scheduledFor: 'Asset'

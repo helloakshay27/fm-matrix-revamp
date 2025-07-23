@@ -63,7 +63,14 @@ export const ScheduleListDashboard = () => {
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
-  const handleViewSchedule = (item: TransformedScheduleData) => navigate(`/maintenance/schedule/view/${item.id}`);
+  const handleViewSchedule = (item: TransformedScheduleData) => {
+    // Get the form_code from the original custom forms data
+    const customForm = customFormsData?.custom_forms.find(form => form.id.toString() === item.id);
+    const formCode = customForm?.custom_form_code;
+    navigate(`/maintenance/schedule/view/${item.id}`, { 
+      state: { formCode } 
+    });
+  };
   const columns = [{
     key: 'actions',
     label: 'Actions',

@@ -452,33 +452,33 @@ export const ticketManagementAPI = {
       formData.append('helpdesk_sub_category[icon]', data.icon);
     }
     
-    // Add tags
-    data.sub_category_tags.forEach((tag, index) => {
-      formData.append(`sub_category_tags[${index}]`, tag);
+    // Add tags - use array format as specified in API
+    data.sub_category_tags.forEach((tag) => {
+      formData.append('sub_category_tags[]', tag);
     });
     
     // Add location enabled flags
     Object.entries(data.location_enabled).forEach(([key, value]) => {
-      formData.append(`location_enabled[${key}]`, value ? 'true' : 'false');
+      if (value !== undefined) {
+        formData.append(`location_enabled[${key}]`, value ? 'true' : 'false');
+      }
     });
     
-    // Add location data
+    // Add location data - use array format as specified in API
     Object.entries(data.location_data).forEach(([key, ids]) => {
       if (ids && ids.length > 0) {
-        ids.forEach((id, index) => {
-          formData.append(`location_data[${key}][${index}]`, id.toString());
+        ids.forEach((id) => {
+          formData.append(`location_data[${key}][]`, id.toString());
         });
       }
     });
     
-    // Add engineer assignments
-    data.complaint_worker.assign_to.forEach((id, index) => {
-      formData.append(`complaint_worker[assign_to][${index}]`, id.toString());
+    // Add engineer assignments - use array format as specified in API
+    data.complaint_worker.assign_to.forEach((id) => {
+      formData.append('complaint_worker[assign_to][]', id.toString());
     });
     
-    const response = await apiClient.post('/pms/admin/create_helpdesk_sub_category.json', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const response = await apiClient.post('/pms/admin/create_helpdesk_sub_category.json', formData);
     return response.data;
   },
 

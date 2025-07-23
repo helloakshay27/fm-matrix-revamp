@@ -12,11 +12,20 @@ import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { fetchServicesData } from '@/store/slices/servicesSlice';
 import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
 import { apiClient } from '@/utils/apiClient';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
+import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
+import { Autocomplete, Checkbox, CircularProgress } from '@mui/material';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+
+
 export const AddAMCPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   // Redux state
+  const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
   const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
   const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
@@ -46,12 +55,14 @@ export const AddAMCPage = () => {
 
   const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
+  const { assets, loading: AssetsLoading } = inventoryAssetsState as unknown as { assets: Array<{ id: number; name: string }> | null, loading: boolean };
   const [loading, setLoading] = useState(false);
-
   // Extract data from Redux state
-  const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
   const services = Array.isArray(servicesData) ? servicesData : [];
+  const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
+  const checkedIcon = <CheckBoxIcon fontSize="small" />;
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       // Clear the assetName when switching between Asset and Service
@@ -100,6 +111,7 @@ export const AddAMCPage = () => {
   useEffect(() => {
     // Dispatch Redux actions
     dispatch(fetchAssetsData({ page: 1 }));
+    dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
     dispatch(fetchServicesData());
 
@@ -160,10 +172,6 @@ export const AddAMCPage = () => {
       setLoading(true);
       try {
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
-        console.log('SubGroup API Response - Full response:', response);
-        console.log('SubGroup API Response - Data only:', response.data);
-        console.log('SubGroup API Response - Data type:', typeof response.data);
-        console.log('SubGroup API Response - Is Array?', Array.isArray(response.data));
 
         // Handle different possible response structures for subgroups
         if (Array.isArray(response.data)) {
@@ -370,46 +378,65 @@ export const AddAMCPage = () => {
           {formData.type === 'Individual' ? (
             <>
               {formData.details === 'Asset' ? (
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
-                  <MuiSelect
-                    labelId="asset-select-label"
-                    label="Assets"
-                    multiple
-                    displayEmpty
-                    value={formData.asset_ids}
-                    onChange={e => {
-                      const value = e.target.value;
-                      setFormData(prev => ({
-                        ...prev,
-                        asset_ids: typeof value === 'string' ? value.split(',') : value
-                      }));
-                    }}
-                    sx={fieldStyles}
-                    disabled={loading || assetsLoading || amcCreateLoading}
-                    renderValue={(selected) => {
-                      if (selected.length === 0) {
-                        return <em>Select Assets...</em>;
-                      }
-                      return selected.map(id => {
-                        const asset = assets.find(a => a.id.toString() === id);
-                        return asset?.name;
-                      }).join(', ');
-                    }}
-                  >
-                    {Array.isArray(assets) && assets.map((asset) => (
-                      <MenuItem key={asset.id} value={asset.id.toString()}>
-                        <input
-                          type="checkbox"
-                          checked={formData.asset_ids.includes(asset.id.toString())}
-                          readOnly
-                          style={{ marginRight: '8px', accentColor: '#C72030' }}
-                        />
-                        {asset.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                <Autocomplete
+                  multiple
+                  size="small"
+                  disableCloseOnSelect
+                  options={assets}
+                  loading={AssetsLoading}
+                  getOptionLabel={(option) => option.name}
+                  value={assets.filter(asset => formData.asset_ids.includes(asset.id.toString()))}
+                  onChange={(event, newValue) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      asset_ids: newValue.map(asset => asset.id.toString())
+                    }));
+                  }}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox
+                        icon={icon}
+                        checkedIcon={checkedIcon}
+                        style={{ marginRight: 8 }}
+                        checked={selected}
+                      />
+                      {option.name}
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="Assets"
+                      placeholder="Search Assets..."
+                      fullWidth
+                      size="small"
+                      InputLabelProps={{ shrink: true }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: '45px',
+                          minHeight: '45px',
+                          alignItems: 'center',
+                        },
+                        '& .MuiInputBase-input': {
+                          paddingTop: '0px',
+                          paddingBottom: '0px',
+                        },
+                      }}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {AssetsLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  disabled={loading || AssetsLoading || amcCreateLoading}
+                />
               ) : (
                 <FormControl fullWidth variant="outlined">
                   <InputLabel id="service-select-label" shrink>Service</InputLabel>
@@ -693,14 +720,44 @@ export const AddAMCPage = () => {
                 </Button>
 
               </div>
-              {attachments.contracts.length > 0 && <div className="mt-2 space-y-1">
-                {attachments.contracts.map((file, index) => <div key={index} className="flex items-center justify-between text-sm p-2 rounded" style={{ backgroundColor: '#f6f4ee' }}>
-                  <span>{file.name}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeFile('contracts', index)}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>)}
-              </div>}
+              {attachments.contracts.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                  {attachments.contracts.map((file, index) => {
+                    const isImage = file.type.startsWith('image/');
+                    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+
+                    return (
+                      <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
+                        {isImage ? (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="h-32 w-full object-contain rounded"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-32 w-full">
+                            <div className="text-gray-600 text-5xl">📄</div>
+                            <div className="mt-2 text-xs break-words">{file.name}</div>
+                          </div>
+                        )}
+                        {isExcel && (
+                          <p className="text-green-700 text-xs mt-1">Excel file</p>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-1 right-1"
+                          onClick={() => removeFile('contracts', index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
             </div>
 
             {/* AMC Invoice */}
@@ -726,14 +783,44 @@ export const AddAMCPage = () => {
                 </Button>
 
               </div>
-              {attachments.invoices.length > 0 && <div className="mt-2 space-y-1">
-                {attachments.invoices.map((file, index) => <div key={index} className="flex items-center justify-between text-sm p-2 rounded" style={{ backgroundColor: '#f6f4ee' }}>
-                  <span>{file.name}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeFile('invoices', index)}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>)}
-              </div>}
+              {attachments.invoices.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                  {attachments.invoices.map((file, index) => {
+                    const isImage = file.type.startsWith('image/');
+                    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+
+                    return (
+                      <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
+                        {isImage ? (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="h-32 w-full object-contain rounded"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-32 w-full">
+                            <div className="text-gray-600 text-5xl">📄</div>
+                            <div className="mt-2 text-xs break-words">{file.name}</div>
+                          </div>
+                        )}
+                        {isExcel && (
+                          <p className="text-green-700 text-xs mt-1">Excel file</p>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-1 right-1"
+                          onClick={() => removeFile('invoices', index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
             </div>
           </div>
         </CardContent>

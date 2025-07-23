@@ -500,11 +500,20 @@ export const TicketDashboard = () => {
   };
   const handleFlag = async () => {
     console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
+    if (selectedTickets.length === 0) {
+      toast({
+        title: "No tickets selected",
+        description: "Please select tickets to flag",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       await ticketManagementAPI.markAsFlagged(selectedTickets);
       toast({
         title: "Success",
-        description: "Tickets flagged successfully"
+        description: `${selectedTickets.length} ticket(s) flagged successfully`
       });
       await fetchTickets(currentPage);
       setSelectedTickets([]);
@@ -513,6 +522,62 @@ export const TicketDashboard = () => {
       toast({
         title: "Error",
         description: "Failed to flag tickets",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSingleTicketFlag = async (ticketId: number, currentFlagStatus: boolean) => {
+    console.log('TicketDashboard - Single flag action for ticket:', ticketId);
+    try {
+      const response = await ticketManagementAPI.markAsFlagged([ticketId]);
+      
+      // Update the ticket locally without refetching
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, is_flagged: !currentFlagStatus }
+            : ticket
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: response.message || "Ticket(s) flagged successfully"
+      });
+    } catch (error) {
+      console.error('Single flag action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to flag ticket",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSingleTicketGoldenTicket = async (ticketId: number, currentGoldenStatus: boolean) => {
+    console.log('TicketDashboard - Single golden ticket action for ticket:', ticketId);
+    try {
+      const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
+      
+      // Update the ticket locally without refetching
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, is_golden_ticket: !currentGoldenStatus }
+            : ticket
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: response.message || "Golden Ticket Flagged successfully!"
+      });
+    } catch (error) {
+      console.error('Single golden ticket action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark as golden ticket",
         variant: "destructive"
       });
     }
@@ -741,7 +806,7 @@ export const TicketDashboard = () => {
               }`}
               onClick={(e) => {
                 e.stopPropagation();
-                handleFlag();
+                handleSingleTicketFlag(item.id, item.is_flagged);
               }}
             />
           </div>
@@ -754,7 +819,7 @@ export const TicketDashboard = () => {
               }`}
               onClick={(e) => {
                 e.stopPropagation();
-                handleGoldenTicket();
+                handleSingleTicketGoldenTicket(item.id, item.is_golden_ticket);
               }}
             />
           </div>
@@ -1109,15 +1174,8 @@ export const TicketDashboard = () => {
                       {renderCustomActions()}
                     </div>
                   }
-                  rightActions={
-                    <Button 
-                      variant="outline" 
-                      className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                      onClick={() => setIsFilterOpen(true)}
-                    >
-                      <Filter className="w-4 h-4" />
-                    </Button>
-                  }
+                  onFilterClick={() => setIsFilterOpen(true)}
+                  rightActions={null}
                   searchPlaceholder="Search Tickets"
                   hideTableExport={false}
                   hideColumnsButton={false}

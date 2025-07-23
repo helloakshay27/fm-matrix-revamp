@@ -33,16 +33,10 @@ export const AddInventoryPage = () => {
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
 
   useEffect(() => {
-    console.log('Dispatching fetchInventoryAssets...');
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
   }, [dispatch]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Assets state:', { assets, loading, inventoryAssetsState });
-    console.log('Suppliers state:', { suppliers, suppliersLoading, suppliersState });
-  }, [assets, loading, inventoryAssetsState, suppliers, suppliersLoading, suppliersState]);
 
   const [formData, setFormData] = useState({
     assetName: '',

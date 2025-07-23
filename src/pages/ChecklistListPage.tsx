@@ -5,14 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Eye, Edit, Trash2, Download, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
-
-interface ChecklistItem {
-  id: number;
-  activityName: string;
-  meterCategory: string;
-  numberOfQuestions: number;
-  scheduledFor: string;
-}
+import { useQuery } from '@tanstack/react-query';
+import { fetchChecklistMaster, transformChecklistData, TransformedChecklistData } from '@/services/customFormsAPI';
 
 export const ChecklistListPage = () => {
   const navigate = useNavigate();
@@ -22,36 +16,28 @@ export const ChecklistListPage = () => {
     setCurrentSection('Master');
   }, [setCurrentSection]);
 
-  const [checklists] = useState<ChecklistItem[]>([
-    {
-      id: 440,
-      activityName: 'qswertyh',
-      meterCategory: 'Asset',
-      numberOfQuestions: 1,
-      scheduledFor: 'Asset'
-    },
-    {
-      id: 435,
-      activityName: 'VI Retails Preparedness Checklist',
-      meterCategory: 'Service',
-      numberOfQuestions: 5,
-      scheduledFor: 'Service'
-    },
-    {
-      id: 329,
-      activityName: 'Daily Meeting Room Readiness Checklist',
-      meterCategory: 'Service',
-      numberOfQuestions: 21,
-      scheduledFor: 'Service'
-    }
-  ]);
+  // Fetch checklist master data from API
+  const {
+    data: checklistData,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['checklist-master'],
+    queryFn: fetchChecklistMaster
+  });
+
+  // Transform the data
+  const checklists = checklistData ? transformChecklistData(checklistData) : [];
 
   const handleAddChecklist = () => {
     navigate('/master/checklist/create');
   };
 
-  const handleViewChecklist = (id: number) => {
-    console.log('View checklist:', id);
+  const handleViewChecklist = (checklist: TransformedChecklistData) => {
+    // Navigate to view checklist page with checklist data
+    navigate(`/master/checklist/view/${checklist.id}`, {
+      state: { checklist }
+    });
   };
 
   const handleEditChecklist = (id: number) => {
@@ -148,45 +134,68 @@ export const ChecklistListPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {checklists.map((checklist) => (
-                    <TableRow key={checklist.id} className="hover:bg-gray-50">
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditChecklist(checklist.id)}
-                            className="p-1 h-8 w-8"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteChecklist(checklist.id)}
-                            className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                          <span className="ml-2">Loading checklists...</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewChecklist(checklist.id)}
-                          className="p-1 h-8 w-8"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                      <TableCell className="font-medium">{checklist.id}</TableCell>
-                      <TableCell>{checklist.activityName}</TableCell>
-                      <TableCell>{checklist.meterCategory}</TableCell>
-                      <TableCell className="text-center">{checklist.numberOfQuestions}</TableCell>
-                      <TableCell>{checklist.scheduledFor}</TableCell>
                     </TableRow>
-                  ))}
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <span className="text-red-600">Error loading checklists. Please try again.</span>
+                      </TableCell>
+                    </TableRow>
+                  ) : checklists.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <span className="text-gray-500">No checklists found.</span>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    checklists.map((checklist) => (
+                      <TableRow key={checklist.id} className="hover:bg-gray-50">
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditChecklist(checklist.id)}
+                              className="p-1 h-8 w-8"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteChecklist(checklist.id)}
+                              className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewChecklist(checklist)}
+                            className="p-1 h-8 w-8"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                        <TableCell className="font-medium">{checklist.id}</TableCell>
+                        <TableCell>{checklist.activityName}</TableCell>
+                        <TableCell>{checklist.meterCategory}</TableCell>
+                        <TableCell className="text-center">{checklist.numberOfQuestions}</TableCell>
+                        <TableCell>{checklist.scheduledFor}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
