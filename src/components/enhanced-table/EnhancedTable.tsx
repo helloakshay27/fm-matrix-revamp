@@ -122,7 +122,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [isSearching, setIsSearching] = useState(false);
   
   // Debounce the search input to avoid excessive API calls
-  const debouncedSearchInput = useDebounce(searchInput, 300);
+  const debouncedSearchInput = useDebounce(searchInput, 100);
   
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
@@ -351,12 +351,8 @@ export function EnhancedTable<T extends Record<string, any>>({
 
         <div className="flex items-center gap-2">
            {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
-            <div className="relative max-w-sm">
-              {isSearching ? (
-                <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
-              ) : (
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              )}
+             <div className="relative max-w-sm">
+               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
                 value={searchInput}
