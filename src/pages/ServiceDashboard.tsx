@@ -473,7 +473,7 @@ export const ServiceDashboard = () => {
             getItemId={(item) => item.id.toString()}
             storageKey="services-table"
             leftActions={renderCustomActions()}
-            searchPlaceholder="Search Services..."
+            searchPlaceholder="Search..."
           />
         </>
 

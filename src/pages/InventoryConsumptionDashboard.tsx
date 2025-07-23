@@ -253,7 +253,7 @@ const InventoryConsumptionDashboard = () => {
         hideTableExport={false}
         hideTableSearch={false}
         hideColumnsButton={false}
-        searchPlaceholder="Search inventory items..."
+        searchPlaceholder="Search..."
         loading={loading}
         pagination={false}
         selectable={true}

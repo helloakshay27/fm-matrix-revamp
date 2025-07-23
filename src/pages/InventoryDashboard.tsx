@@ -445,6 +445,15 @@ export const InventoryDashboard = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
 
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+        <TabsTrigger
+            value="list"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125" stroke="#C72030" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>            <span className="hidden sm:inline">Inventory List</span>
+            <span className="sm:hidden">List</span>
+          </TabsTrigger>
           <TabsTrigger
             value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
@@ -453,14 +462,7 @@ export const InventoryDashboard = () => {
             <span className="hidden sm:inline">Analytics</span>
             <span className="sm:hidden">Charts</span>
           </TabsTrigger>
-          <TabsTrigger
-            value="list"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <Package className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Inventory List</span>
-            <span className="sm:hidden">List</span>
-          </TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
