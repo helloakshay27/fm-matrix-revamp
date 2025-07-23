@@ -329,7 +329,7 @@ export const ServiceDashboard = () => {
       {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading services data...</div>
+          <div className="text-gray-600">Loading Services data...</div>
         </div>
       )}
 
@@ -364,6 +364,7 @@ export const ServiceDashboard = () => {
       )}
 
       {/* Custom Pagination - Always show for debugging */}
+      {!loading && (
       <div className="flex justify-center mt-6">
         <Pagination>
           <PaginationContent>
@@ -385,7 +386,7 @@ export const ServiceDashboard = () => {
           </PaginationContent>
         </Pagination>
       </div>
-
+      )}
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />
       <ServiceFilterModal isOpen={showFilterModal} onClose={handleCloseFilter} onApply={handleApplyFilters} />

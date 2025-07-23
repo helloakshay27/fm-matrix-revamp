@@ -176,18 +176,18 @@ export const AMCDashboard = () => {
       const token = localStorage.getItem('token');
       const siteId = localStorage.getItem('selectedSiteId');
       let url = `${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
-      
+
       // Append selected IDs to the URL if there are any
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
       }
-  
+
       // Make the API request
       const response = await axios.get(url, {
         responseType: 'blob', // Important for handling binary data (Excel file)
       });
-  
+
       // Create a blob and trigger download
       const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const downloadUrl = URL.createObjectURL(blob);
@@ -220,9 +220,9 @@ export const AMCDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => handleViewDetails(item.id)}
           >
             <Eye className="w-4 h-4" />
@@ -463,163 +463,261 @@ export const AMCDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger
-            value="analytics"
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger
-            value="amclist"
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
-            <FileText className="w-4 h-4" />
-            AMC List
-          </TabsTrigger>
-        </TabsList>
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">Loading AMC data...</div>
+        </div>
+      )}
+      {/* Error State */}
+      {error && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-600">Error: {error}</div>
+        </div>
+      )}
+      {!loading && (
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+            <TabsTrigger
+              value="analytics"
+              className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger
+              value="amclist"
+              className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+            >
+              <FileText className="w-4 h-4" />
+              AMC List
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Header with AMC Selector */}
-          <div className="flex justify-end">
-            <AMCSelector onSelectionChange={handleSelectionChange} />
-          </div>
+          <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+            {/* Header with AMC Selector */}
+            <div className="flex justify-end">
+              <AMCSelector onSelectionChange={handleSelectionChange} />
+            </div>
 
-          {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
-            {/* Left Section - Charts */}
-            <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-              {/* All Charts with Drag and Drop */}
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Two Donut Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder.filter(id => ['statusChart', 'typeChart'].includes(id)).map((chartId) => {
-                        if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMCs</h3>
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                                </div>
-                                <div className="relative flex items-center justify-center">
-                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                    <PieChart>
-                                      <Pie
-                                        data={statusData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={80}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                        label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                          return (
-                                            <text
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
-                                              y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                              fill="black"
-                                              textAnchor="middle"
-                                              dominantBaseline="middle"
-                                              fontSize="14"
-                                              fontWeight="bold"
-                                            >
-                                              {value}
-                                            </text>
-                                          );
-                                        }}
-                                        labelLine={false}
-                                      >
-                                        {statusData.map((entry, index) => (
-                                          <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                      </Pie>
-                                      <Tooltip />
-                                    </PieChart>
-                                  </ResponsiveContainer>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+            {/* Main Analytics Layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
+              {/* Left Section - Charts */}
+              <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+                {/* All Charts with Drag and Drop */}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                    <div className="space-y-4 sm:space-y-6">
+                      {/* Top Row - Two Donut Charts */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                        {chartOrder.filter(id => ['statusChart', 'typeChart'].includes(id)).map((chartId) => {
+                          if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
+                            return (
+                              <SortableChartItem key={chartId} id={chartId}>
+                                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMCs</h3>
+                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                  </div>
+                                  <div className="relative flex items-center justify-center">
+                                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                      <PieChart>
+                                        <Pie
+                                          data={statusData}
+                                          cx="50%"
+                                          cy="50%"
+                                          innerRadius={40}
+                                          outerRadius={80}
+                                          paddingAngle={2}
+                                          dataKey="value"
+                                          label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                                            return (
+                                              <text
+                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
+                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                                fill="black"
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                fontSize="14"
+                                                fontWeight="bold"
+                                              >
+                                                {value}
+                                              </text>
+                                            );
+                                          }}
+                                          labelLine={false}
+                                        >
+                                          {statusData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                          ))}
+                                        </Pie>
+                                        <Tooltip />
+                                      </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="text-center">
+                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+                                      </div>
                                     </div>
                                   </div>
+                                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                    {statusData.map((item, index) => (
+                                      <div key={index} className="flex items-center gap-2">
+                                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {statusData.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                              </SortableChartItem>
+                            );
+                          }
+
+                          if (chartId === 'typeChart' && visibleSections.includes('typeChart')) {
+                            return (
+                              <SortableChartItem key={chartId} id={chartId}>
+                                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                    <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive AMCs</h3>
+                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                  </div>
+                                  <div className="relative flex items-center justify-center">
+                                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                      <PieChart>
+                                        <Pie
+                                          data={typeData}
+                                          cx="50%"
+                                          cy="50%"
+                                          innerRadius={40}
+                                          outerRadius={80}
+                                          paddingAngle={2}
+                                          dataKey="value"
+                                          label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                                            return (
+                                              <text
+                                                x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
+                                                y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
+                                                fill="black"
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                fontSize="14"
+                                                fontWeight="bold"
+                                              >
+                                                {value}
+                                              </text>
+                                            );
+                                          }}
+                                          labelLine={false}
+                                        >
+                                          {typeData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                          ))}
+                                        </Pie>
+                                        <Tooltip />
+                                      </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="text-center">
+                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+                                      </div>
                                     </div>
-                                  ))}
+                                  </div>
+                                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                    {typeData.map((item, index) => (
+                                      <div key={index} className="flex items-center gap-2">
+                                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                        <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </SortableChartItem>
+                            );
+                          }
+
+                          return null;
+                        })}
+                      </div>
+
+                      {/* Bottom Charts - Resource Type and Aging Matrix */}
+                      {chartOrder.filter(id => ['resourceChart', 'agingMatrix'].includes(id)).map((chartId) => {
+                        if (chartId === 'resourceChart' && visibleSections.includes('resourceChart')) {
+                          return (
+                            <SortableChartItem key={chartId} id={chartId}>
+                              <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
+                                <div className="flex items-center justify-between mb-4">
+                                  <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Resource-wise AMCs</h3>
+                                  <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
+                                </div>
+                                <div className="w-full overflow-x-auto">
+                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
+                                    <BarChart data={resourceChartData}>
+                                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                      <XAxis
+                                        dataKey="name"
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={80}
+                                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                                        className="text-xs"
+                                      />
+                                      <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
+                                      <Tooltip />
+                                      <Bar dataKey="value" fill="#c6b692" />
+                                    </BarChart>
+                                  </ResponsiveContainer>
                                 </div>
                               </div>
                             </SortableChartItem>
                           );
                         }
 
-                        if (chartId === 'typeChart' && visibleSections.includes('typeChart')) {
+                        if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                              <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
                                 <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive AMCs</h3>
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                  <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>AMCs Ageing Matrix</h3>
+                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
                                 </div>
-                                <div className="relative flex items-center justify-center">
-                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                    <PieChart>
-                                      <Pie
-                                        data={typeData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={80}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                        label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                          return (
-                                            <text
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
-                                              y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                              fill="black"
-                                              textAnchor="middle"
-                                              dominantBaseline="middle"
-                                              fontSize="14"
-                                              fontWeight="bold"
-                                            >
-                                              {value}
-                                            </text>
-                                          );
-                                        }}
-                                        labelLine={false}
-                                      >
-                                        {typeData.map((entry, index) => (
-                                          <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                      </Pie>
-                                      <Tooltip />
-                                    </PieChart>
-                                  </ResponsiveContainer>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+
+                                <div className="space-y-4 sm:space-y-6">
+                                  {/* Table - Horizontally scrollable on mobile */}
+                                  <div className="overflow-x-auto -mx-3 sm:mx-0">
+                                    <div className="min-w-[500px] px-3 sm:px-0">
+                                      <table className="w-full border-collapse border border-gray-300">
+                                        <thead>
+                                          <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                            <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
+                                            <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days Since Last Service</th>
+                                          </tr>
+                                          <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                            <th className="border border-gray-300 p-2 sm:p-3"></th>
+                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-30</th>
+                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-60</th>
+                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">61-90</th>
+                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">91-180</th>
+                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">180+</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {agingMatrixData.map((row, index) => (
+                                            <tr key={index} className="bg-white">
+                                              <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-30']}</td>
+                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-60']}</td>
+                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['61-90']}</td>
+                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['91-180']}</td>
+                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['180+']}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
                                     </div>
                                   </div>
-                                </div>
-                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {typeData.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                    </div>
-                                  ))}
                                 </div>
                               </div>
                             </SortableChartItem>
@@ -629,176 +727,78 @@ export const AMCDashboard = () => {
                         return null;
                       })}
                     </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
 
-                    {/* Bottom Charts - Resource Type and Aging Matrix */}
-                    {chartOrder.filter(id => ['resourceChart', 'agingMatrix'].includes(id)).map((chartId) => {
-                      if (chartId === 'resourceChart' && visibleSections.includes('resourceChart')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
-                              <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Resource-wise AMCs</h3>
-                                <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
-                              </div>
-                              <div className="w-full overflow-x-auto">
-                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
-                                  <BarChart data={resourceChartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                    <XAxis
-                                      dataKey="name"
-                                      angle={-45}
-                                      textAnchor="end"
-                                      height={80}
-                                      tick={{ fill: '#6b7280', fontSize: 10 }}
-                                      className="text-xs"
-                                    />
-                                    <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
-                                    <Tooltip />
-                                    <Bar dataKey="value" fill="#c6b692" />
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
-
-                      if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
-                              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>AMCs Ageing Matrix</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
-                              </div>
-
-                              <div className="space-y-4 sm:space-y-6">
-                                {/* Table - Horizontally scrollable on mobile */}
-                                <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                  <div className="min-w-[500px] px-3 sm:px-0">
-                                    <table className="w-full border-collapse border border-gray-300">
-                                      <thead>
-                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
-                                          <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days Since Last Service</th>
-                                        </tr>
-                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
-                                          <th className="border border-gray-300 p-2 sm:p-3"></th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-30</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-60</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">61-90</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">91-180</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">180+</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {agingMatrixData.map((row, index) => (
-                                          <tr key={index} className="bg-white">
-                                            <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-30']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-60']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['61-90']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['91-180']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['180+']}</td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
-
-                      return null;
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              {/* Right Sidebar - Recent AMCs */}
+              <div className="xl:col-span-4 order-first xl:order-last">
+                <RecentAMCSidebar />
+              </div>
             </div>
+          </TabsContent>
 
-            {/* Right Sidebar - Recent AMCs */}
-            <div className="xl:col-span-4 order-first xl:order-last">
-              <RecentAMCSidebar />
+          <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+            {/* Enhanced Table */}
+            {!loading && (
+              <EnhancedTable
+                handleExport={handleExport}
+                data={paginatedData}
+                columns={columns}
+                renderCell={renderCell}
+                onRowClick={(item) => handleViewDetails(item.id)}
+                selectable={true}
+                selectedItems={selectedItems}
+                onSelectAll={handleSelectAll}
+                onSelectItem={handleSelectItem}
+                getItemId={(item) => item.id.toString()}
+                storageKey="amc-dashboard-table"
+                emptyMessage="No AMC records found"
+                searchPlaceholder="Search AMC records..."
+                enableExport={true}
+                exportFileName="amc-records"
+                bulkActions={bulkActions}
+                showBulkActions={true}
+                pagination={false}
+                leftActions={
+                  <Button
+                    onClick={handleAddClick}
+                    className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                  </Button>
+                }
+              />
+            )}
+
+            {/* Custom Pagination */}
+            <div className="flex justify-center mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+
+                  {renderPaginationItems()}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        </Tabs>
+      )}
 
-        <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Header */}
-          {/* Loading State */}
-          {loading && (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-gray-600">Loading AMC data...</div>
-            </div>
-          )}
 
-          {/* Error State */}
-          {error && (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-red-600">Error: {error}</div>
-            </div>
-          )}
-
-          {/* Enhanced Table */}
-          {!loading && (
-            <EnhancedTable
-              handleExport={handleExport}
-              data={paginatedData}
-              columns={columns}
-              renderCell={renderCell}
-              onRowClick={(item) => handleViewDetails(item.id)}
-              selectable={true}
-              selectedItems={selectedItems}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
-              getItemId={(item) => item.id.toString()}
-              storageKey="amc-dashboard-table"
-              emptyMessage="No AMC records found"
-              searchPlaceholder="Search AMC records..."
-              enableExport={true}
-              exportFileName="amc-records"
-              bulkActions={bulkActions}
-              showBulkActions={true}
-              pagination={false}
-              leftActions={
-                <Button 
-                  onClick={handleAddClick} 
-                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add
-                </Button>
-              }
-            />
-          )}
-
-          {/* Custom Pagination */}
-          <div className="flex justify-center mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-
-                {renderPaginationItems()}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
