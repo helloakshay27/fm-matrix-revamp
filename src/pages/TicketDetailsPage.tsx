@@ -120,7 +120,7 @@ export const TicketDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-8">
             <div className="space-y-4">
               {hasData(ticketData.heading) && (
                 <div>
@@ -214,7 +214,7 @@ export const TicketDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-8">
             {hasData(ticketData.posted_by) && (
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Posted By</label>
@@ -240,7 +240,7 @@ export const TicketDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-8">
             <div className="space-y-4">
               {hasData(ticketData.region) && (
                 <div>
@@ -334,7 +334,7 @@ export const TicketDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-8">
             {hasData(ticketData.survey_id) && (
               <div>
                 <label className="text-sm text-gray-600 block mb-1">Survey ID</label>
@@ -366,7 +366,7 @@ export const TicketDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-8">
             <div className="space-y-4">
               {hasData(ticketData.corrective_action) && (
                 <div>
