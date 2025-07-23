@@ -453,19 +453,19 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Table className={className}>
               <TableHeader>
                  <TableRow className="h-[28px]">
+                   {selectable && (
+                     <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white" data-checkbox>
+                       <div className="flex justify-center">
+                         <Checkbox
+                           checked={isAllSelected}
+                           onCheckedChange={handleSelectAllChange}
+                           aria-label={selectAllLabel}
+                           {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                         />
+                       </div>
+                     </TableHead>
+                   )}
                    <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-                      {selectable && (
-                      <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white" data-checkbox>
-                        <div className="flex justify-start">
-                          <Checkbox
-                            checked={isAllSelected}
-                            onCheckedChange={handleSelectAllChange}
-                            aria-label={selectAllLabel}
-                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                          />
-                        </div>
-                      </TableHead>
-                    )}
                     {visibleColumns.map((column) => (
                       <SortableColumnHeader
                         key={column.key}
@@ -533,7 +533,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                     >
                       {selectable && (
                         <TableCell className="w-[8px] px-[8px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
-                          <div className="flex justify-start">
+                          <div className="flex justify-center">
                             <Checkbox
                               checked={isSelected}
                               onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
