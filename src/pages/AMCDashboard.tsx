@@ -131,6 +131,11 @@ export const AMCDashboard = () => {
     navigate('/maintenance/amc/add');
   };
 
+  const handleImportClick = () => {
+    console.log('Import clicked');
+    // Add import functionality here
+  };
+
   const handleViewDetails = (id: number) => {
     navigate(`/maintenance/amc/details/${id}`);
   };
@@ -822,6 +827,7 @@ export const AMCDashboard = () => {
               selectedItems={selectedAMCObjects}
               actions={selectionActions}
               onAdd={handleAddClick}
+              onImport={handleImportClick}
               onClearSelection={handleClearSelection}
             />
           )}
