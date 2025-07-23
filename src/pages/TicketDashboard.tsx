@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -729,6 +729,24 @@ export const TicketDashboard = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 handleViewDetails(item.id);
+              }}
+            />
+          </div>
+          <div title="Flag ticket">
+            <Flag 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleFlag();
+              }}
+            />
+          </div>
+          <div title="Star ticket">
+            <Star 
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGoldenTicket();
               }}
             />
           </div>
