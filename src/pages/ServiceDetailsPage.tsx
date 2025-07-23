@@ -100,7 +100,7 @@ export const ServiceDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <Button
           variant="ghost"
           onClick={() => navigate('/maintenance/service')}
@@ -109,13 +109,6 @@ export const ServiceDetailsPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Service List
         </Button>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">
-              {details.service_name || '—'} ({details.service_code || '—'})
-            </h1>
-          </div>
           <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
@@ -133,7 +126,6 @@ export const ServiceDetailsPage = () => {
             </Button>
           </div>
         </div>
-      </div>
 
       {/* LOCATION DETAIL */}
       <div className="bg-white rounded-lg border mb-6">

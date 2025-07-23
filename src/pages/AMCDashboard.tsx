@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Trash2, BarChart3, FileText, Download, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Eye, Trash2, BarChart3, FileText, Download, Calendar, AlertCircle, CheckCircle, Clock, Settings } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -479,14 +479,14 @@ export const AMCDashboard = () => {
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
             <TabsTrigger
               value="analytics"
-              className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <BarChart3 className="w-4 h-4" />
               Analytics
             </TabsTrigger>
             <TabsTrigger
               value="amclist"
-              className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <FileText className="w-4 h-4" />
               AMC List
@@ -739,6 +739,68 @@ export const AMCDashboard = () => {
           </TabsContent>
 
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {11}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {22}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {4}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {2}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
+                </div>
+              </div>
+            </div>
+
             {/* Enhanced Table */}
             {!loading && (
               <EnhancedTable

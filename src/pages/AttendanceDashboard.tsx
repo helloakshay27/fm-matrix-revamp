@@ -296,14 +296,14 @@ export const AttendanceDashboard = () => {
             <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
               <TabsTrigger
                 value="analytics"
-                className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+                className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
               >
                 <BarChart3 className="w-4 h-4" />
                 Analytics
               </TabsTrigger>
               <TabsTrigger
                 value="attendancelist"
-                className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+                className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
               >
                 <Users className="w-4 h-4" />
                 Attendance List
