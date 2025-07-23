@@ -1138,7 +1138,7 @@ export const TicketDashboard = () => {
                     <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-black mb-1">{item.value}</div>
+                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">{item.value}</div>
                     <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
                   </div>
                 </div>;
