@@ -84,16 +84,16 @@ export const EditStatusDialog = ({
 
     setLoading(true);
     try {
-      // Create FormData for the PATCH request
-      const formData = new FormData();
-      formData.append('complaint[issue_status]', selectedStatus);
-      formData.append('complaint[root_cause]', rootCause);
-      formData.append('complaint[corrective_action]', correctiveAction);
-      formData.append('complaint[preventive_action]', preventiveAction);
+      // Create URL-encoded data for the PATCH request
+      const params = new URLSearchParams();
+      params.append('complaint[issue_status]', selectedStatus);
+      params.append('complaint[root_cause]', rootCause);
+      params.append('complaint[corrective_action]', correctiveAction);
+      params.append('complaint[preventive_action]', preventiveAction);
 
-      await apiClient.patch(`/pms/admin/complaints/${complaintId}.json`, formData, {
+      await apiClient.patch(`/pms/admin/complaints/${complaintId}.json`, params, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
 
