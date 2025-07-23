@@ -109,8 +109,12 @@ export const fetchBuildings = createAsyncThunk(
 
 export const fetchWings = createAsyncThunk(
   'location/fetchWings',
-  async (buildingId: number) => {
-    const response = await apiClient.get(`/pms/wings.json?building_id=${buildingId}`);
+  async (buildingId?: number) => {
+    let url = '/pms/wings.json';
+    if (buildingId) {
+      url += `?building_id=${buildingId}`;
+    }
+    const response = await apiClient.get(url);
     return response.data.wings || [];
   }
 );

@@ -498,6 +498,20 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
+  async createWing(wingData: { name: string; building_id: string; active: boolean }) {
+    const response = await apiClient.post('/pms/wings.json', {
+      pms_wing: wingData
+    });
+    return response.data;
+  },
+
+  async updateWing(wingId: number, wingData: { name: string; building_id: string; active: boolean }) {
+    const response = await apiClient.put(`/pms/wings/${wingId}.json`, {
+      pms_wing: wingData
+    });
+    return response.data;
+  },
+
   async getZones() {
     const response = await apiClient.get('/pms/zones.json');
     return response.data;
