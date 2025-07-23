@@ -327,13 +327,32 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = 'https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx';
-                link.download = 'complaints.xlsx';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem('authToken'); // You can set this token in localStorage
+                  const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx', {
+                    method: 'GET',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                    },
+                  });
+                  
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'complaints.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } else {
+                    console.error('Failed to download file:', response.statusText);
+                  }
+                } catch (error) {
+                  console.error('Error downloading file:', error);
+                }
               }}
               className="flex items-center gap-2"
             >
