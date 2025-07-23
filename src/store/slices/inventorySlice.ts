@@ -99,7 +99,6 @@ const inventorySlice = createSlice({
       })
       .addCase(fetchInventoryData.fulfilled, (state, action) => {
         state.loading = false
-        console.log('API Response:', action.payload)
         
         // Extract inventory data
         state.items = action.payload.inventories || []
@@ -110,15 +109,7 @@ const inventorySlice = createSlice({
         state.totalCount = pagination?.total_count || 0
         state.currentPage = pagination?.current_page || 1
         state.totalPages = pagination?.total_pages || 0
-                           
-        console.log('Pagination extracted:', {
-          totalCount: state.totalCount,
-          currentPage: state.currentPage,
-          totalPages: state.totalPages,
-          itemsLength: state.items.length,
-          hasMore: pagination?.has_more
-        })
-      })
+      })                     
       .addCase(fetchInventoryData.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Failed to fetch inventory data'

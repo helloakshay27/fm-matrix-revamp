@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, FileText, Filter, Eye, Settings } from 'lucide-react';
+import { Plus, Upload, FileText, Filter, Eye, Settings, AlertCircle, Trash2, Clock, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
@@ -17,6 +17,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 interface ServiceRecord {
   id: number;
@@ -47,6 +48,7 @@ export const ServiceDashboard = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   const pageSize = 7;
 
   // Use API data if available, otherwise fallback to initial data
@@ -74,9 +76,16 @@ export const ServiceDashboard = () => {
   };
 
   const handleAddClick = () => navigate('/maintenance/service/add');
-  const handleImportClick = () => setShowBulkUploadModal(true);
+  const handleImportClick = () => {
+    setShowBulkUploadModal(true);
+    setShowActionPanel(false);
+  }
   const handleImportLocationsClick = () => setShowImportLocationsModal(true);
-  const handleFiltersClick = () => setShowFilterModal(true);
+  const handleFiltersClick = () => {
+    setShowFilterModal(true);
+    setShowActionPanel(false);
+
+  }
 
   const handleApplyFilters = filters => {
     setShowFilterModal(false);
@@ -150,25 +159,6 @@ export const ServiceDashboard = () => {
       onClick: () => handleQRDownload()
     }
   ];
-
-
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-3">
-      <Button onClick={handleAddClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Plus className="w-4 h-4 mr-2" /> Add
-      </Button>
-      <Button onClick={handleImportClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Upload className="w-4 h-4 mr-2" /> Import
-      </Button>
-      <Button onClick={handleFiltersClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Filter className="w-4 h-4 mr-2" /> Filters
-      </Button>
-      <Button onClick={handleQRDownload} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <FileText className="w-4 h-4 mr-2" /> Print QR
-      </Button>
-    </div>
-  );
-
 
   const renderCell = (item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
@@ -336,6 +326,46 @@ export const ServiceDashboard = () => {
     return items;
   };
 
+  const selectionActions = [
+    {
+      label: 'Filter',
+      icon: Filter,
+      onClick: handleFiltersClick,
+      // onClick: handleUpdateSelected,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Flag',
+      icon: AlertCircle,
+      // onClick: handleFlagSelected,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Delete',
+      icon: Trash2,
+      // onClick: () => handleBulkDelete(selectedAMCObjects),
+      variant: 'destructive' as const,
+    },
+    {
+      label: "Print",
+      icon: FileText,
+      onClick: handleQRDownload,
+      variant: 'destructive' as const,
+    }
+  ];
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+
+
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Plus className="w-4 h-4" /> Action
+      </Button>
+    </div>
+  );
+
   return (
     <div className="p-4 sm:p-6">
       {loading && (
@@ -416,6 +446,16 @@ export const ServiceDashboard = () => {
               </div>
             </div>
           </div>
+
+          {showActionPanel && (
+            <SelectionPanel
+              actions={selectionActions}
+              onAdd={handleAddClick}
+              onImport={handleImportClick}
+              onClearSelection={() => setShowActionPanel(false)}
+
+            />
+          )}
           <EnhancedTable
             data={paginatedServices}
             columns={columns}
@@ -433,7 +473,6 @@ export const ServiceDashboard = () => {
             getItemId={(item) => item.id.toString()}
             storageKey="services-table"
             leftActions={renderCustomActions()}
-            searchByIdOnly={false}
             searchPlaceholder="Search Services..."
           />
         </>

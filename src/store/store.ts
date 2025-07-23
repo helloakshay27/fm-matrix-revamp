@@ -88,8 +88,5 @@ export const store = configureStore({
   rooms: roomsReducer,
   },
 })
-
-console.log('Store configured with reducers:', Object.keys(store.getState()));
-
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch

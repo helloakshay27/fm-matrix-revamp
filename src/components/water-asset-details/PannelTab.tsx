@@ -58,7 +58,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
           {/* Import button */}
           {onImport && (
             <Button
-              variant="outline"
+              variant="destructive"
               onClick={onImport}
               size="lg"
               className="flex items-center gap-2"

@@ -4,23 +4,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchInventoryData } from '@/store/slices/inventorySlice';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight, Settings } from 'lucide-react';
+import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight, Settings, AlertCircle, Trash2 } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { InventoryFilterDialog } from '@/components/InventoryFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InventorySelector } from '@/components/InventorySelector';
-import { RecentInventorySidebar } from '@/components/RecentInventorySidebar';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 
 import {
@@ -32,31 +25,35 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
-  return apiData.map(item => ({
-    id: item.id?.toString() || '',
-    name: item.name || '',
-    referenceNumber: item.reference_number || '',
-    code: item.code || '',
-    serialNumber: item.serial_number || '',
-    type: item.inventory_type || '',
-    group: item.pms_asset_group || '',
-    subGroup: item.sub_group || '',
-    category: item.category || '',
-    manufacturer: item.manufacturer || '',
-    criticality: item.criticality || '',
-    quantity: item.quantity?.toString() || '0',
-    active: item.active ? 'Active' : 'Inactive',
-    unit: item.unit || '',
-    cost: item.cost?.toString() || '',
-    sacHsnCode: item.hsc_hsn_code || '',
-    maxStockLevel: item.max_stock_level?.toString() || '',
-    minStockLevel: item.min_stock_level?.toString() || '',
-    minOrderLevel: item.min_order_level?.toString() || ''
-  }))
-}
+  return apiData.map(item => {
+    const itemId = typeof item.id === 'string' ? item.id : (item.id?.value || String(item.id || '')); // Handle nested ID or fallback
+    return {
+      id: itemId,
+      name: item.name || '',
+      referenceNumber: item.reference_number || '',
+      code: item.code || '',
+      serialNumber: item.serial_number || '',
+      type: item.inventory_type || '',
+      group: item.pms_asset_group || '',
+      subGroup: item.sub_group || '',
+      category: item.category || '',
+      manufacturer: item.manufacturer || '',
+      criticality: item.criticality || '',
+      quantity: item.quantity?.toString() || '0',
+      active: item.active ? 'Active' : 'Inactive',
+      unit: item.unit || '',
+      cost: item.cost?.toString() || '',
+      sacHsnCode: item.hsc_hsn_code || '',
+      maxStockLevel: item.max_stock_level?.toString() || '',
+      minStockLevel: item.min_stock_level?.toString() || '',
+      minOrderLevel: item.min_order_level?.toString() || ''
+    };
+  });
+};
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -103,6 +100,7 @@ export const InventoryDashboard = () => {
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix'
   ]);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'criticalityChart', 'categoryChart', 'agingMatrix']);
   const [activeTab, setActiveTab] = useState<string>("list");
 
@@ -209,6 +207,9 @@ export const InventoryDashboard = () => {
   };
 
   const handleViewItem = (itemId: string) => {
+    if (!itemId || typeof itemId !== 'string' || itemId === '[object Object]') {
+      return;
+    }
     navigate(`/maintenance/inventory/details/${itemId}`);
   };
 
@@ -263,25 +264,14 @@ export const InventoryDashboard = () => {
     }
   ];
 
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-3">
-      <Button onClick={handleAddInventory} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Plus className="w-4 h-4 mr-2" /> Add
-      </Button>
-      <Button onClick={() => setShowBulkUpload(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Upload className="w-4 h-4 mr-2" /> Import
-      </Button>
-      <Button onClick={() => setShowFilter(true)} variant="outline">
-        <Filter className="w-4 h-4 mr-2" /> Filters
-      </Button>
-    </div>
-  );
 
 
-  const renderCell = (item, columnKey) => {
+
+  const renderCell = (item: any, columnKey: string) => {
     if (columnKey === 'actions') {
+      const itemId = typeof item.id === 'string' ? item.id : String(item.id || ''); // Ensure ID is a string
       return (
-        <Button variant="ghost" size="sm" onClick={() => handleViewItem(item.id)}>
+        <Button variant="ghost" size="sm" onClick={() => handleViewItem(itemId)}>
           <Eye className="w-4 h-4" />
         </Button>
       );
@@ -414,10 +404,40 @@ export const InventoryDashboard = () => {
 
     return items;
   };
-
-  const getHeading = () => {
-    return activeTab === "analytics" ? "Inventory Analytics" : "Inventory List";
+  const handleFiltersClick = () => {
+    setShowFilter(true);
+  }
+  const selectionActions = [
+    {
+      label: 'Filter',
+      icon: Filter,
+      onClick: handleFiltersClick,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Flag',
+      icon: AlertCircle,
+      // onClick: handleFlagSelected,
+      variant: 'outline' as const,
+    },
+  ];
+  const handleActionClick = () => {
+    setShowActionPanel(true);
   };
+
+  const handleImportClick = () => {
+    setShowBulkUpload(true);
+  };
+
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Plus className="w-4 h-4" /> Action
+      </Button>
+    </div>
+  );
+
+
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
@@ -428,7 +448,7 @@ export const InventoryDashboard = () => {
           <TabsTrigger
             value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-            >
+          >
             <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Analytics</span>
             <span className="sm:hidden">Charts</span>
@@ -436,7 +456,7 @@ export const InventoryDashboard = () => {
           <TabsTrigger
             value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-            >
+          >
             <Package className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Inventory List</span>
             <span className="sm:hidden">List</span>
@@ -903,6 +923,16 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {showActionPanel && (
+              <SelectionPanel
+                actions={selectionActions}
+                onAdd={handleAddInventory}
+                onImport={handleImportClick}
+                onClearSelection={() => setShowActionPanel(false)}
+
+              />
+            )}
             <EnhancedTable
               data={paginatedData}
               columns={columns}

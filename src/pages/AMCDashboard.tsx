@@ -183,7 +183,7 @@ export const AMCDashboard = () => {
         return;
       }
   
-      let url = `${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+      let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
   
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
@@ -481,12 +481,6 @@ export const AMCDashboard = () => {
   }).length;
 
   const selectionActions = [
-    {
-      label: 'Export',
-      icon: Download,
-      onClick: handleExport,
-      variant: 'outline' as const,
-    },
     {
       label: 'Update',
       icon: Clock,
@@ -885,7 +879,7 @@ export const AMCDashboard = () => {
                     onClick={handleActionClick}
                     className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4" />
                     Action
                   </Button>
                 }

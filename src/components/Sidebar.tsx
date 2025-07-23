@@ -668,18 +668,6 @@ export const Sidebar = () => {
   const isActiveRoute = (href: string) => {
     const currentPath = location.pathname;
     const isActive = currentPath === href || currentPath.startsWith(href + '/');
-    
-    // Debug logging for Services
-    if (href === '/maintenance/service') {
-      console.log('Services route check:', {
-        currentPath,
-        href,
-        exactMatch: currentPath === href,
-        prefixMatch: currentPath.startsWith(href + '/'),
-        isActive
-      });
-    }
-    
     return isActive;
   };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Edit, Download } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Truck, Boxes, Wrench, History, FileTextIcon, Paperclip } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddVisitModal } from '@/components/AddVisitModal';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -107,7 +107,7 @@ export const AMCDetailsPage = () => {
   // Extract data from API response
 
   const hanldeClose = () => {
-    setShowAddVisitModal(false);        
+    setShowAddVisitModal(false);
   }
 
   if (!amcDetails) {
@@ -155,10 +155,12 @@ export const AMCDetailsPage = () => {
       </div>
 
       {/* Supplier Information */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">S</span>
+      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-6'>
+          <CardTitle className="text-lg flex items-center ">
+          <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+          <Truck className="h-4 w-4" />
+          </div>
             SUPPLIER INFORMATION
           </CardTitle>
         </CardHeader>
@@ -174,11 +176,12 @@ export const AMCDetailsPage = () => {
       </Card>
 
       {/* Asset Information */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-6'>
           <CardTitle className="text-lg flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">A</span>
-            ASSET INFORMATION
+          <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+          <Boxes className="h-4 w-4" />
+          </div>            ASSET INFORMATION
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -192,7 +195,7 @@ export const AMCDetailsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
+              <TableRow className='bg-white'>
                 <TableCell>{amcDetails.asset_id ? `Asset ${amcDetails.asset_id}` : '—'}</TableCell>
                 <TableCell>—</TableCell>
                 <TableCell>No</TableCell>
@@ -211,11 +214,12 @@ export const AMCDetailsPage = () => {
       </Card>
 
       {/* AMC Information */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-6'>
           <CardTitle className="text-lg flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">A</span>
-            AMC INFORMATION
+          <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+          <FileTextIcon className="h-4 w-4" />
+          </div>            AMC INFORMATION
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -233,11 +237,12 @@ export const AMCDetailsPage = () => {
       </Card>
 
       {/* Attachments */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-6'>
           <CardTitle className="text-lg flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">A</span>
-            ATTACHMENTS
+          <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+          <Paperclip className="h-4 w-4" />
+          </div>                  ATTACHMENTS
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -269,11 +274,12 @@ export const AMCDetailsPage = () => {
       </Card>
 
       {/* AMC Data Logs */}
-      <Card>
-        <CardHeader>
+      <Card className='border border-[#D9D9D9] bg-[#F6F7F7]'>
+        <CardHeader className='bg-[#F6F4EE] mb-6 '>
           <CardTitle className="text-lg flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">A</span>
-            AMC DATA LOGS
+          <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+          <FileTextIcon className="h-4 w-4" />
+          </div>                  AMC DATA LOGS
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -286,10 +292,10 @@ export const AMCDetailsPage = () => {
                 <TableHead>Technician</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className='bg-white'>
               {amcVisitData.length > 0 ? (
                 amcVisitData.map((visit: any, index: number) => (
-                  <TableRow key={visit.id || index}>
+                  <TableRow key={visit.id || index} >
                     <TableCell>{visit.asset_period}</TableCell>
                     <TableCell>{visit.visit_number}</TableCell>
                     <TableCell>

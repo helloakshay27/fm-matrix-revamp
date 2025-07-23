@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { Download, Filter, Eye, X } from 'lucide-react';
+import { Download, Filter, Eye, X, AlertCircle, Plus } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
@@ -18,6 +18,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { fetchGroups, fetchSubGroups, setSelectedGroup, setSelectedSubGroup } from '@/store/slices/serviceLocationSlice';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const InventoryConsumptionDashboard = () => {
   const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 7;
   const [filterValues, setFilterValues] = useState({
@@ -193,21 +195,64 @@ const InventoryConsumptionDashboard = () => {
     navigate(`/maintenance/inventory-consumption/view/${item.id}`);
   };
 
+  const handleFiltersClick = () => {
+    setIsFilterOpen(true);
+    setShowActionPanel(false);
+  };
+
+  const selectionActions = [
+    {
+      label: 'Filter',
+      icon: Filter,
+      onClick: handleFiltersClick,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Flag',
+      icon: AlertCircle,
+      // onClick: handleFlagSelected,
+      variant: 'outline' as const,
+    },
+  ];
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+
+  const handleImportClick = () => {
+    console.log('Import clicked');
+    setShowActionPanel(false);
+  };
+
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Plus className="w-4 h-4" /> Action
+      </Button>
+    </div>
+  );
+
 
   return (
     <div className="p-6 space-y-6">
       {/* Enhanced Table with Drag and Drop */}
-      <EnhancedTable 
-        data={paginatedData} 
-        columns={columns} 
+      {showActionPanel && (
+        <SelectionPanel
+          actions={selectionActions}
+          onImport={handleImportClick}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+      <EnhancedTable
+        data={paginatedData}
+        columns={columns}
         renderCell={renderCell}
-        storageKey="inventory-consumption-table" 
-        emptyMessage="No consumption data available" 
-        enableExport={true} 
-        exportFileName="inventory-consumption" 
-        hideTableExport={false} 
-        hideTableSearch={false} 
-        hideColumnsButton={false} 
+        storageKey="inventory-consumption-table"
+        emptyMessage="No consumption data available"
+        enableExport={true}
+        exportFileName="inventory-consumption"
+        hideTableExport={false}
+        hideTableSearch={false}
+        hideColumnsButton={false}
         searchPlaceholder="Search inventory items..."
         loading={loading}
         pagination={false}
@@ -228,22 +273,7 @@ const InventoryConsumptionDashboard = () => {
           }
         }}
         getItemId={(item) => item.id.toString()}
-        leftActions={
-          <div className="flex gap-3">
-            <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Import
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsFilterOpen(true)}
-              className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-              Filter
-            </Button>
-          </div>
-        }
+        leftActions={renderCustomActions()}
       />
 
       {/* Floating Filter Modal */}
