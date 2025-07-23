@@ -329,11 +329,18 @@ export function EnhancedTable<T extends Record<string, any>>({
               size="sm"
               onClick={async () => {
                 try {
-                  const token = localStorage.getItem('authToken'); // You can set this token in localStorage
+                  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+                  
+                  if (!token) {
+                    alert('Authentication token not found. Please login first.');
+                    return;
+                  }
+
                   const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx', {
                     method: 'GET',
                     headers: {
                       'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
                     },
                   });
                   
@@ -347,11 +354,14 @@ export function EnhancedTable<T extends Record<string, any>>({
                     link.click();
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(url);
+                  } else if (response.status === 401) {
+                    alert('Unauthorized: Please check your authentication token or login again.');
                   } else {
-                    console.error('Failed to download file:', response.statusText);
+                    alert(`Failed to download file: ${response.status} ${response.statusText}`);
                   }
                 } catch (error) {
                   console.error('Error downloading file:', error);
+                  alert('An error occurred while downloading the file. Please try again.');
                 }
               }}
               className="flex items-center gap-2"
