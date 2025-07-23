@@ -11,7 +11,6 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 // Import existing pages
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
-import { LoginPage } from './pages/LoginPage';
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
@@ -466,8 +465,9 @@ import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
 // Import Setup pages
 import { PermitSetupDashboard } from './pages/PermitSetupDashboard';
 import { IncidentSetupDashboard } from './pages/IncidentSetupDashboard';
-import { BookingDetailsPage } from './pages/BookingDetailsPage';
-mport { LoginPage } from '@/pages/LoginPage';
+
+import { SpaceManagementBookingDetailsPage } from '@/pages/SpaceManagementBookingDetailsPage';
+import { LoginPage } from '@/pages/LoginPage';
 import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ForgotPasswordOTPPage } from '@/pages/ForgotPasswordOTPPage';
@@ -848,7 +848,7 @@ function App() {
                 {/* VAS Booking Routes */}
                 <Route path="/vas/booking/list" element={<BookingListDashboard />} />
                 <Route path="/vas/booking/add" element={<AddFacilityBookingPage />} />
-                <Route path="/vas/bookings/details/:id" element={<BookingDetailsPage />} />
+                <Route path="/vas/bookings/details/:id" element={<SpaceManagementBookingDetailsPage />} />
                 <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
 
