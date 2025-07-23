@@ -17,6 +17,9 @@ import {
 } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField, MenuItem } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -77,8 +80,8 @@ const BookingListDashboard = () => {
   const [filters, setFilters] = useState({
     facilityName: '',
     status: '',
-    scheduledDate: '',
-    createdOn: ''
+    scheduledDate: null as Date | null,
+    createdOn: null as Date | null
   });
 
   const itemsPerPage = 5;
@@ -137,6 +140,13 @@ const BookingListDashboard = () => {
     }));
   };
 
+  const handleDateChange = (field: string, value: Date | null) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleApplyFilters = () => {
     console.log('Applying filters:', filters);
     setIsFilterModalOpen(false);
@@ -146,8 +156,8 @@ const BookingListDashboard = () => {
     setFilters({
       facilityName: '',
       status: '',
-      scheduledDate: '',
-      createdOn: ''
+      scheduledDate: null,
+      createdOn: null
     });
   };
 
@@ -403,41 +413,45 @@ const BookingListDashboard = () => {
               </TextField>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <TextField
-                type="date"
-                label="Booked Scheduled Date"
-                value={filters.scheduledDate}
-                onChange={(e) => handleFilterChange('scheduledDate', e.target.value)}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                placeholder="Scheduled on"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '6px',
-                    height: { xs: '36px', sm: '45px' }
-                  }
-                }}
-              />
-
-              <TextField
-                type="date"
-                label="Created On"
-                value={filters.createdOn}
-                onChange={(e) => handleFilterChange('createdOn', e.target.value)}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                placeholder="Booked on"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '6px',
-                    height: { xs: '36px', sm: '45px' }
-                  }
-                }}
-              />
-            </div>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <div className="grid grid-cols-2 gap-4">
+                <DatePicker
+                  label="Booked Scheduled Date"
+                  value={filters.scheduledDate}
+                  onChange={(date) => handleDateChange('scheduledDate', date)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '6px',
+                      height: { xs: '36px', sm: '45px' }
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: '#000000'
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#000000'
+                    }
+                  }}
+                />
+                
+                <DatePicker
+                  label="Created On"
+                  value={filters.createdOn}
+                  onChange={(date) => handleDateChange('createdOn', date)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '6px',
+                      height: { xs: '36px', sm: '45px' }
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: '#000000'
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#000000'
+                    }
+                  }}
+                />
+              </div>
+            </LocalizationProvider>
           </div>
 
           <div className="flex gap-3 pt-4">

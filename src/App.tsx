@@ -425,6 +425,7 @@ import { AreaPage } from './pages/master/AreaPage';
 import { FloorPage } from './pages/master/FloorPage';
 import { UnitPage } from './pages/master/UnitPage';
 import { RoomPage } from './pages/master/RoomPage';
+import { LocationAccountPage } from './pages/master/LocationAccountPage';
 
 // Import Address Master page
 import { AddressMasterPage } from './pages/AddressMasterPage';
@@ -831,13 +832,14 @@ function App() {
                 <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
 
-                {/* Master Location Routes */}
-                <Route path="/master/location/building" element={<BuildingPage />} />
-                <Route path="/master/location/wing" element={<WingPage />} />
-                <Route path="/master/location/area" element={<AreaPage />} />
-                <Route path="/master/location/floor" element={<FloorPage />} />
-                <Route path="/master/location/unit" element={<UnitPage />} />
-                <Route path="/master/location/room" element={<RoomPage />} />
+               {/* Master Location Routes */}
+               <Route path="/master/location/building" element={<BuildingPage />} />
+               <Route path="/master/location/wing" element={<WingPage />} />
+               <Route path="/master/location/area" element={<AreaPage />} />
+               <Route path="/master/location/floor" element={<FloorPage />} />
+               <Route path="/master/location/unit" element={<UnitPage />} />
+               <Route path="/master/location/room" element={<RoomPage />} />
+               <Route path="/master/location/account" element={<LocationAccountPage />} />
 
                 {/* Master User Routes */}
                 <Route path="/master/user/fm-users" element={<FMUserMasterDashboard />} />
