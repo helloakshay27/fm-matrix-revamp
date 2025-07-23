@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface EditStatusDialogProps {
   open: boolean;
@@ -31,6 +32,8 @@ export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDi
   const [rootCause, setRootCause] = useState('');
   const [correctiveAction, setCorrectiveAction] = useState('');
   const [preventiveAction, setPreventiveAction] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchStatuses = async () => {
@@ -54,8 +57,16 @@ export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDi
   }, [complaint, open]);
 
   const handleApply = async () => {
-    if (!complaint || !selectedStatus) return;
+    if (!complaint || !selectedStatus) {
+      toast({
+        title: "Error",
+        description: "Please select a status before applying changes.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setIsLoading(true);
     try {
       const formData = new FormData();
       formData.append('complaint[issue_status]', selectedStatus);
@@ -69,10 +80,25 @@ export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDi
         },
       });
 
-      console.log('Status updated successfully');
+      toast({
+        title: "Success",
+        description: "Status updated successfully.",
+      });
+      
       onOpenChange(false);
+      // Reset form after successful update
+      setRootCause('');
+      setCorrectiveAction('');
+      setPreventiveAction('');
     } catch (error) {
       console.error('Failed to update status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -159,9 +185,10 @@ export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDi
           <div className="flex gap-3 pt-4">
             <Button 
               onClick={handleApply}
-              className="bg-[#8B4B8C] hover:bg-[#7A427B] text-white flex-1"
+              disabled={isLoading}
+              className="bg-[#8B4B8C] hover:bg-[#7A427B] text-white flex-1 disabled:opacity-50"
             >
-              Apply
+              {isLoading ? 'Updating...' : 'Apply'}
             </Button>
             <Button 
               onClick={handleReset}
