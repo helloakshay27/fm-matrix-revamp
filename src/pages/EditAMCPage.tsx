@@ -53,6 +53,8 @@ export const EditAMCPage = () => {
     invoices: [] as Array<{ document_url: string, document_name: string, attachment_id: number }>
   });
 
+  console.log(existingFiles)
+
   const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const [loading, setLoading] = useState(false);
@@ -322,13 +324,13 @@ export const EditAMCPage = () => {
       payload.pms_asset_amc.service_id = formData.assetName;
     }
 
-      // Add vendor information if available
-      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-      if (selectedSupplier) {
-        payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
-        payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
-        payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
-      }
+    // Add vendor information if available
+    const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
+    if (selectedSupplier) {
+      payload.pms_asset_amc.amc_vendor_name = selectedSupplier.company_name;
+      payload.pms_asset_amc.amc_vendor_mobile = selectedSupplier.mobile || null;
+      payload.pms_asset_amc.amc_vendor_email = selectedSupplier.email || null;
+    }
 
     return payload;
   };
@@ -987,6 +989,7 @@ export const EditAMCPage = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* AMC Contracts */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
 
@@ -1020,57 +1023,88 @@ export const EditAMCPage = () => {
                   </Button>
                 </div>
 
+                {/* New Files Preview */}
                 {attachments.contracts.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    {attachments.contracts.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-green-50 p-2 rounded border">
-                        <span>{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile('contracts', index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Existing Files */}
-                {existingFiles.contracts.length > 0 && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
-                    <div className="space-y-2">
-                      {existingFiles.contracts.map((file, index) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {attachments.contracts.map((file, index) => {
+                        const isImage = file.type.startsWith('image/');
+                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+
                         return (
-                          <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{ backgroundColor: '#f6f4ee' }}>
+                          <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
                             {isImage ? (
-                              <div className="flex items-center space-x-3 flex-1">
-                                <img
-                                  src={file.document_url}
-                                  alt={file.document_name}
-                                  className="w-16 h-16 object-cover rounded border"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                                <span className="flex-1">{file.document_name}</span>
-                              </div>
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={file.name}
+                                className="h-32 w-full object-contain rounded"
+                              />
                             ) : (
-                              <span className="flex-1">{file.document_name}</span>
+                              <div className="flex flex-col items-center justify-center h-32 w-full">
+                                <div className="text-gray-600 text-5xl">📄</div>
+                                <div className="mt-2 text-xs break-words">{file.name}</div>
+                              </div>
+                            )}
+                            {isExcel && (
+                              <p className="text-green-700 text-xs mt-1">Excel file</p>
                             )}
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => window.open(file.document_url, '_blank')}
-                              className="text-red-600 hover:text-red-800"
+                              className="absolute top-1 right-1"
+                              onClick={() => removeFile('contracts', index)}
                             >
-                              View/Download
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Files Preview */}
+                {existingFiles.contracts.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {existingFiles.contracts.map((file, index) => {
+                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                        const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
+
+                        return (
+                          <div key={`${file.document_name}-${file.attachment_id}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
+                            {isImage ? (
+                              <img
+                                src={file.document_url}
+                                alt={file.document_name}
+                                className="h-32 w-full object-contain rounded"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  if (e.currentTarget.nextSibling instanceof HTMLElement) {
+                                    e.currentTarget.nextSibling.style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-32 w-full">
+                                <div className="text-gray-600 text-5xl">📄</div>
+                                <div className="mt-2 text-xs break-words">{file.document_name}</div>
+                              </div>
+                            )}
+                            {isExcel && (
+                              <p className="text-green-700 text-xs mt-1">Excel file</p>
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
+                              onClick={() => window.open(file.document_url, '_blank')}
+                            >
+                              View
                             </Button>
                           </div>
                         );
@@ -1080,6 +1114,7 @@ export const EditAMCPage = () => {
                 )}
               </div>
 
+              {/* AMC Invoices */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Invoice</label>
 
@@ -1113,57 +1148,88 @@ export const EditAMCPage = () => {
                   </Button>
                 </div>
 
+                {/* New Files Preview */}
                 {attachments.invoices.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    {attachments.invoices.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-green-50 p-2 rounded border">
-                        <span>{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile('invoices', index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Existing Files */}
-                {existingFiles.invoices.length > 0 && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
-                    <div className="space-y-2">
-                      {existingFiles.invoices.map((file, index) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {attachments.invoices.map((file, index) => {
+                        const isImage = file.type.startsWith('image/');
+                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+
                         return (
-                          <div key={index} className="flex items-center justify-between text-sm p-2 rounded border" style={{ backgroundColor: '#f6f4ee' }}>
+                          <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
                             {isImage ? (
-                              <div className="flex items-center space-x-3 flex-1">
-                                <img
-                                  src={file.document_url}
-                                  alt={file.document_name}
-                                  className="w-16 h-16 object-cover rounded border"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                                <span className="flex-1">{file.document_name}</span>
-                              </div>
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={file.name}
+                                className="h-32 w-full object-contain rounded"
+                              />
                             ) : (
-                              <span className="flex-1">{file.document_name}</span>
+                              <div className="flex flex-col items-center justify-center h-32 w-full">
+                                <div className="text-gray-600 text-5xl">📄</div>
+                                <div className="mt-2 text-xs break-words">{file.name}</div>
+                              </div>
+                            )}
+                            {isExcel && (
+                              <p className="text-green-700 text-xs mt-1">Excel file</p>
                             )}
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => window.open(file.document_url, '_blank')}
-                              className="text-red-600 hover:text-red-800"
+                              className="absolute top-1 right-1"
+                              onClick={() => removeFile('invoices', index)}
                             >
-                              View/Download
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Files Preview */}
+                {existingFiles.invoices.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {existingFiles.invoices.map((file, index) => {
+                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                        const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
+
+                        return (
+                          <div key={`${file.document_name}-${file.attachment_id}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
+                            {isImage ? (
+                              <img
+                                src={file.document_url}
+                                alt={file.document_name}
+                                className="h-32 w-full object-contain rounded"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  if (e.currentTarget.nextSibling instanceof HTMLElement) {
+                                    e.currentTarget.nextSibling.style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-32 w-full">
+                                <div className="text-gray-600 text-5xl">📄</div>
+                                <div className="mt-2 text-xs break-words">{file.document_name}</div>
+                              </div>
+                            )}
+                            {isExcel && (
+                              <p className="text-green-700 text-xs mt-1">Excel file</p>
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
+                              onClick={() => window.open(file.document_url, '_blank')}
+                            >
+                              View
                             </Button>
                           </div>
                         );
