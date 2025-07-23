@@ -77,6 +77,7 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
+  handleExport?: () => void;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -121,10 +122,10 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   // Debounce the search input to avoid excessive API calls
   const debouncedSearchInput = useDebounce(searchInput, 100);
-  
+
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   const {
@@ -148,9 +149,9 @@ export function EnhancedTable<T extends Record<string, any>>({
     if (apiSearchResults) {
       return apiSearchResults;
     }
-    
+
     if (!searchTerm) return baseSortedData;
-    
+
     return baseSortedData.filter(item =>
       Object.values(item).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
@@ -232,7 +233,7 @@ export function EnhancedTable<T extends Record<string, any>>({
     try {
       setIsSearching(true);
       const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-      
+
       if (!token) {
         alert('Authentication token not found. Please login first.');
         return;
@@ -322,7 +323,7 @@ export function EnhancedTable<T extends Record<string, any>>({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
           {leftActions}
-          
+
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
             </div>
@@ -330,9 +331,9 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-           {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
-             <div className="relative max-w-sm">
-               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
                 value={searchInput}
@@ -349,17 +350,17 @@ export function EnhancedTable<T extends Record<string, any>>({
               )}
             </div>
           )}
-          
+
           {onFilterClick && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
             </Button>
           )}
-          
+
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -368,54 +369,18 @@ export function EnhancedTable<T extends Record<string, any>>({
               onResetToDefaults={resetToDefaults}
             />
           )}
-          
+
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                try {
-                  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-                  
-                  if (!token) {
-                    alert('Authentication token not found. Please login first.');
-                    return;
-                  }
-
-                  const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx', {
-                    method: 'GET',
-                    headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                  });
-                  
-                  if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'complaints.xlsx';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                  } else if (response.status === 401) {
-                    alert('Unauthorized: Please check your authentication token or login again.');
-                  } else {
-                    alert(`Failed to download file: ${response.status} ${response.statusText}`);
-                  }
-                } catch (error) {
-                  console.error('Error downloading file:', error);
-                  alert('An error occurred while downloading the file. Please try again.');
-                }
-              }}
+              onClick={handleExport}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
             </Button>
           )}
-          
+
           {rightActions}
         </div>
       </div>
