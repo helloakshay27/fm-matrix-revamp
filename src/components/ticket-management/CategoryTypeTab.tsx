@@ -46,7 +46,7 @@ interface CategoryApiResponse {
     icon_url: string;
     doc_type: string;
     selected_icon_url: string;
-    response_tat: Record<string, any>;
+    tat: string;
     category_email: string[];
   }>;
   statuses: Array<{
@@ -317,7 +317,7 @@ export const CategoryTypeTab: React.FC = () => {
   const columns = [
     { key: 'srno', label: 'S.No.', sortable: false },
     { key: 'name', label: 'Category Type', sortable: true },
-    { key: 'response_tat', label: 'Response Time', sortable: false },
+    { key: 'tat', label: 'Response Time', sortable: false },
     { key: 'category_email', label: 'Vendor Email', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
     { key: 'selected_icon_url', label: 'Selected Icon', sortable: false },
@@ -331,9 +331,8 @@ export const CategoryTypeTab: React.FC = () => {
         return index + 1;
       case 'name':
         return item.name;
-      case 'response_tat':
-        return Object.keys(item.response_tat).length ? 
-          JSON.stringify(item.response_tat) : '--';
+      case 'tat':
+        return item.tat || '--';
       case 'category_email':
         return item.category_email?.length ? 
           item.category_email.join(', ') : '--';
