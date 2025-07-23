@@ -51,7 +51,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-50 flex items-end justify-center pb-32 pointer-events-none">
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 pointer-events-auto w-fit mx-4">
         <div className="flex items-center justify-center gap-2">
           {/* Add button */}
