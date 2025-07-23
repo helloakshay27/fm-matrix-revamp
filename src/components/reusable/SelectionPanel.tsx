@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Upload } from 'lucide-react';
 
 interface SelectionAction {
   label: string;
@@ -16,6 +16,7 @@ interface SelectionPanelProps {
   selectedItems: any[];
   actions: SelectionAction[];
   onAdd: () => void;
+  onImport?: () => void;
   onClearSelection: () => void;
 }
 
@@ -25,6 +26,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   selectedItems,
   actions,
   onAdd,
+  onImport,
   onClearSelection,
 }) => {
   const getDisplayText = () => {
@@ -61,6 +63,18 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
             <Plus className="w-4 h-4" />
             Add
           </Button>
+
+          {/* Import button */}
+          {onImport && (
+            <Button
+              variant="outline"
+              onClick={onImport}
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Import
+            </Button>
+          )}
 
           {/* Dynamic actions */}
           {actions.map((action, index) => {
