@@ -149,10 +149,6 @@ export const TicketDetailsPage = () => {
                 <p className="font-medium">{displayValue(ticketData.category_type)}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Reference Number</label>
-                <p className="font-medium">{displayValue(ticketData.reference_number)}</p>
-              </div>
-              <div>
                 <label className="text-sm text-gray-600 block mb-1">Updated By</label>
                 <p className="font-medium">{displayValue(ticketData.updated_by)}</p>
               </div>
