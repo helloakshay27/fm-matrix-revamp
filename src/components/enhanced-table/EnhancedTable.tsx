@@ -453,9 +453,9 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-                    {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
-                        <div className="flex justify-center">
+                     {selectable && (
+                      <TableHead className="bg-[#f6f4ee] w-12 text-left pl-4" data-checkbox>
+                        <div className="flex justify-start">
                           <Checkbox
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAllChange}
@@ -473,13 +473,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee] text-center"
+                        className="bg-[#f6f4ee] text-left"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center">Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-left">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
@@ -531,8 +531,8 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="p-4 w-12 text-center" data-checkbox>
-                          <div className="flex justify-center">
+                        <TableCell className="p-4 w-12 text-left" data-checkbox>
+                          <div className="flex justify-start">
                             <Checkbox
                               checked={isSelected}
                               onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
@@ -546,13 +546,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4 text-center">
+                          <TableCell key={column.key} className="p-4 text-left">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="p-4 text-center" data-actions>
+                        <TableCell className="p-4 text-left" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
