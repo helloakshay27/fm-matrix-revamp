@@ -762,7 +762,7 @@ export const TicketDashboard = () => {
   };
   const TruncatedDescription = ({
     text,
-    maxLength = 50
+    maxLength = 15
   }: {
     text: string;
     maxLength?: number;
@@ -772,15 +772,15 @@ export const TicketDashboard = () => {
     if (text.length <= maxLength) {
       return <span>{text}</span>;
     }
-    return <div className="w-48">
-        <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
+    return <div className="w-32">
+        <span className={`${isExpanded ? '' : 'line-clamp-1'}`}>
           {isExpanded ? text : `${text.substring(0, maxLength)}...`}
         </span>
         <button onClick={e => {
         e.stopPropagation();
         setIsExpanded(!isExpanded);
       }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in">
-          {isExpanded ? 'Show less' : 'Show more'}
+          {isExpanded ? "Show less" : "Show more"}
         </button>
       </div>;
   };
