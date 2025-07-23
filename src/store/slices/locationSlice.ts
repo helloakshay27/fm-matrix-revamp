@@ -216,6 +216,62 @@ export const createUnit = createAsyncThunk(
   }
 );
 
+// Update operations
+export const updateBuilding = createAsyncThunk(
+  'location/updateBuilding',
+  async ({ id, updates }: { id: number; updates: Partial<Building> }) => {
+    const payload = {
+      building: updates
+    };
+    const response = await apiClient.put(`/buildings/${id}.json`, payload);
+    return { id, updates };
+  }
+);
+
+export const updateWing = createAsyncThunk(
+  'location/updateWing',
+  async ({ id, updates }: { id: number; updates: Partial<Wing> }) => {
+    const payload = {
+      pms_wing: updates
+    };
+    const response = await apiClient.put(`/pms/wings/${id}.json`, payload);
+    return { id, updates };
+  }
+);
+
+export const updateArea = createAsyncThunk(
+  'location/updateArea',
+  async ({ id, updates }: { id: number; updates: Partial<Area> }) => {
+    const payload = {
+      pms_area: updates
+    };
+    const response = await apiClient.put(`/pms/areas/${id}.json`, payload);
+    return { id, updates };
+  }
+);
+
+export const updateFloor = createAsyncThunk(
+  'location/updateFloor',
+  async ({ id, updates }: { id: number; updates: Partial<Floor> }) => {
+    const payload = {
+      pms_floor: updates
+    };
+    const response = await apiClient.put(`/pms/floors/${id}.json`, payload);
+    return { id, updates };
+  }
+);
+
+export const updateUnit = createAsyncThunk(
+  'location/updateUnit',
+  async ({ id, updates }: { id: number; updates: Partial<Unit> }) => {
+    const payload = {
+      pms_unit: updates
+    };
+    const response = await apiClient.put(`/pms/units/${id}.json`, payload);
+    return { id, updates };
+  }
+);
+
 const initialState: LocationState = {
   buildings: { data: [], loading: false, error: null },
   wings: { data: [], loading: false, error: null },
@@ -337,6 +393,46 @@ const locationSlice = createSlice({
       .addCase(fetchUnits.rejected, (state, action) => {
         state.units.loading = false;
         state.units.error = action.error.message || 'Failed to fetch units';
+      })
+      // Update Building
+      .addCase(updateBuilding.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const buildingIndex = state.buildings.data.findIndex(building => building.id === id);
+        if (buildingIndex !== -1) {
+          state.buildings.data[buildingIndex] = { ...state.buildings.data[buildingIndex], ...updates };
+        }
+      })
+      // Update Wing
+      .addCase(updateWing.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const wingIndex = state.wings.data.findIndex(wing => wing.id === id);
+        if (wingIndex !== -1) {
+          state.wings.data[wingIndex] = { ...state.wings.data[wingIndex], ...updates };
+        }
+      })
+      // Update Area
+      .addCase(updateArea.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const areaIndex = state.areas.data.findIndex(area => area.id === id);
+        if (areaIndex !== -1) {
+          state.areas.data[areaIndex] = { ...state.areas.data[areaIndex], ...updates };
+        }
+      })
+      // Update Floor
+      .addCase(updateFloor.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const floorIndex = state.floors.data.findIndex(floor => floor.id === id);
+        if (floorIndex !== -1) {
+          state.floors.data[floorIndex] = { ...state.floors.data[floorIndex], ...updates };
+        }
+      })
+      // Update Unit
+      .addCase(updateUnit.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const unitIndex = state.units.data.findIndex(unit => unit.id === id);
+        if (unitIndex !== -1) {
+          state.units.data[unitIndex] = { ...state.units.data[unitIndex], ...updates };
+        }
       });
   },
 });

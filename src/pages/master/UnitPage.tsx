@@ -19,7 +19,8 @@ import {
   setSelectedBuilding, 
   setSelectedWing,
   setSelectedArea,
-  setSelectedFloor
+  setSelectedFloor,
+  updateUnit
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
@@ -86,6 +87,9 @@ export const UnitPage = () => {
     unit.unit_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Limit results based on entries per page selection
+  const displayedUnits = filteredUnits.slice(0, parseInt(entriesPerPage));
+
   const handleBuildingChange = (buildingId: string) => {
     dispatch(setSelectedBuilding(parseInt(buildingId)));
   };
@@ -128,8 +132,20 @@ export const UnitPage = () => {
     }
   };
 
-  const toggleActiveStatus = (id: number) => {
-    console.log(`Toggle active status for unit ${id}`);
+  const toggleActiveStatus = async (unitId: number) => {
+    try {
+      const unit = units.data.find(u => u.id === unitId);
+      if (!unit) return;
+
+      await dispatch(updateUnit({
+        id: unitId,
+        updates: { active: !unit.active }
+      }));
+      
+      toast.success('Unit status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update unit status');
+    }
   };
 
   return (
@@ -370,14 +386,14 @@ export const UnitPage = () => {
                       Loading units...
                     </TableCell>
                   </TableRow>
-                ) : filteredUnits.length === 0 ? (
+                ) : displayedUnits.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-4">
                       No units found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUnits.map((unit) => (
+                  displayedUnits.map((unit) => (
                     <TableRow key={unit.id}>
                       <TableCell>
                         <Button variant="ghost" size="sm">
@@ -405,7 +421,7 @@ export const UnitPage = () => {
           {/* Pagination info */}
           <div className="flex items-center justify-between mt-4">
             <span className="text-sm text-gray-600">
-              Showing 1 to {Math.min(parseInt(entriesPerPage), filteredUnits.length)} of {filteredUnits.length} entries
+              Showing 1 to {Math.min(parseInt(entriesPerPage), displayedUnits.length)} of {filteredUnits.length} entries
             </span>
           </div>
         </div>
