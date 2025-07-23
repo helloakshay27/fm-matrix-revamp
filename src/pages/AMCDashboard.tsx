@@ -14,6 +14,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AMCSelector } from '@/components/AMCSelector';
 import { RecentAMCSidebar } from '@/components/RecentAMCSidebar';
+import { SelectionPanel } from '@/components/reusable/SelectionPanel';
 import {
   Pagination,
   PaginationContent,
@@ -157,6 +158,58 @@ export const AMCDashboard = () => {
     setSelectedItems([]);
     // In a real implementation, you would make an API call to delete the selected items
   };
+
+  const handleClearSelection = () => {
+    setSelectedItems([]);
+  };
+
+  const handleExportSelected = () => {
+    console.log('Export selected AMCs:', selectedItems);
+    // Implement export functionality
+  };
+
+  const handleUpdateSelected = () => {
+    console.log('Update selected AMCs:', selectedItems);
+    // Implement bulk update functionality
+  };
+
+  const handleFlagSelected = () => {
+    console.log('Flag selected AMCs:', selectedItems);
+    // Implement flag functionality
+  };
+
+  // Get selected AMC objects
+  const selectedAMCObjects = amcData.filter(amc => 
+    selectedItems.includes(amc.id.toString())
+  );
+
+  // Selection panel actions
+  const selectionActions = [
+    {
+      label: 'Export',
+      icon: Download,
+      onClick: handleExportSelected,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Update',
+      icon: Clock,
+      onClick: handleUpdateSelected,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Flag',
+      icon: AlertCircle,
+      onClick: handleFlagSelected,
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Delete',
+      icon: Trash2,
+      onClick: () => handleBulkDelete(selectedAMCObjects),
+      variant: 'destructive' as const,
+    },
+  ];
 
   const handleSelectionChange = (selectedSections: string[]) => {
     setVisibleSections(selectedSections);
@@ -742,6 +795,16 @@ export const AMCDashboard = () => {
               }
             />
           )}
+
+          {/* Selection Panel */}
+          <SelectionPanel
+            selectedCount={selectedItems.length}
+            entityName="AMC"
+            selectedItems={selectedAMCObjects}
+            actions={selectionActions}
+            onAdd={handleAddClick}
+            onClearSelection={handleClearSelection}
+          />
 
           {/* Custom Pagination */}
           <div className="flex justify-center mt-6">
