@@ -370,6 +370,15 @@ export function EnhancedTable<T extends Record<string, any>>({
             </div>
           )}
           
+          {!hideColumnsButton && (
+            <ColumnVisibilityMenu
+              columns={columns}
+              columnVisibility={columnVisibility}
+              onToggleVisibility={toggleColumnVisibility}
+              onResetToDefaults={resetToDefaults}
+            />
+          )}
+          
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
@@ -415,15 +424,6 @@ export function EnhancedTable<T extends Record<string, any>>({
             >
               <Download className="w-4 h-4" />
             </Button>
-          )}
-          
-          {!hideColumnsButton && (
-            <ColumnVisibilityMenu
-              columns={columns}
-              columnVisibility={columnVisibility}
-              onToggleVisibility={toggleColumnVisibility}
-              onResetToDefaults={resetToDefaults}
-            />
           )}
           
           {rightActions}
