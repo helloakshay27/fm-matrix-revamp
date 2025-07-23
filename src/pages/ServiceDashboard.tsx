@@ -422,6 +422,7 @@ export const ServiceDashboard = () => {
             storageKey="services-table"
             leftActions={renderCustomActions()}
             searchByIdOnly={false}
+            searchPlaceholder="Search Services..."
           />
         </>
 

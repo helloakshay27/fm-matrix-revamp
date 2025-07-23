@@ -171,37 +171,54 @@ export const AMCDashboard = () => {
 
   const handleExport = async () => {
     try {
-      // Construct the API URL based on whether there are selected items
       const baseUrl = 'https://fm-uat-api.lockated.com';
       const token = localStorage.getItem('token');
       const siteId = localStorage.getItem('selectedSiteId');
+  
+      if (!token || !siteId) {
+        alert('Missing token or site ID');
+        return;
+      }
+  
       let url = `${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
-
-      // Append selected IDs to the URL if there are any
+  
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
       }
-
-      // Make the API request
+  
+      console.log('Exporting from URL:', url);
+  
       const response = await axios.get(url, {
-        responseType: 'blob', // Important for handling binary data (Excel file)
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-
-      // Create a blob and trigger download
-      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  
+      if (!response.data || response.data.size === 0) {
+        alert('Empty file received from server.');
+        return;
+      }
+  
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+  
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = 'amc_export.xlsx'; // Set the file name
+      link.download = 'amc_export.xlsx';
+      document.body.appendChild(link); // ✅ Required for some browsers
       link.click();
-      URL.revokeObjectURL(downloadUrl); // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Export failed:', error);
-      // Optionally, show an error message to the user
       alert('Failed to export AMC data. Please try again.');
     }
   };
+  
   // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
