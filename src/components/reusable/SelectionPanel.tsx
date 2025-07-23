@@ -51,58 +51,40 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 pointer-events-auto max-w-4xl w-full mx-4">
-        <div className="flex items-center justify-between">
-          {/* Left section - Selection info */}
-          <div className="flex items-center gap-4">
-            <div className="bg-[#C72030] text-white px-3 py-2 rounded-lg font-bold text-lg min-w-[3rem] text-center">
-              {selectedCount}
-            </div>
-            <div>
-              <div className="font-semibold text-gray-900">
-                {selectedCount} {entityName}{selectedCount !== 1 ? 's' : ''} Selected
-              </div>
-              <div className="text-sm text-gray-600">
-                {getDisplayText()}
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center justify-center gap-2">
+          {/* Add button */}
+          <Button
+            variant="outline"
+            onClick={onAdd}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </Button>
 
-          {/* Middle section - Actions */}
-          <div className="flex items-center gap-2">
-            {/* Add button */}
-            <Button
-              variant="outline"
-              onClick={onAdd}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
+          {/* Dynamic actions */}
+          {actions.map((action, index) => {
+            const Icon = action.icon;
+            return (
+              <Button
+                key={index}
+                variant={action.variant || 'outline'}
+                onClick={action.onClick}
+                disabled={action.loading}
+                className="flex items-center gap-2"
+              >
+                <Icon className="w-4 h-4" />
+                {action.label}
+              </Button>
+            );
+          })}
 
-            {/* Dynamic actions */}
-            {actions.map((action, index) => {
-              const Icon = action.icon;
-              return (
-                <Button
-                  key={index}
-                  variant={action.variant || 'outline'}
-                  onClick={action.onClick}
-                  disabled={action.loading}
-                  className="flex items-center gap-2"
-                >
-                  <Icon className="w-4 h-4" />
-                  {action.label}
-                </Button>
-              );
-            })}
-          </div>
-
-          {/* Right section - Close button */}
+          {/* Close button */}
           <Button
             variant="ghost"
             size="sm"
             onClick={onClearSelection}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 ml-2"
           >
             <X className="w-5 h-5" />
           </Button>
