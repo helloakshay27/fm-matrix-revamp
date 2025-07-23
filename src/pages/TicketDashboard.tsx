@@ -743,7 +743,11 @@ export const TicketDashboard = () => {
           </div>
           <div title="Star ticket">
             <Star 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
+                item.is_golden_ticket 
+                  ? 'text-yellow-500 fill-yellow-500' 
+                  : 'text-gray-600'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleGoldenTicket();
