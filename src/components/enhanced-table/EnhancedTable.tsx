@@ -526,13 +526,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                       key={index}
                       className={cn(
                         onRowClick && "cursor-pointer",
-                        "hover:bg-gray-50 h-[20px]",
+                        "hover:bg-gray-50 h-[32px] border-b border-gray-100",
                         isSelected && "bg-blue-50"
                       )}
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="w-[8px] px-[8px] py-[8px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[20px]" data-checkbox>
+                        <TableCell className="w-[8px] px-[8px] py-[10px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[32px]" data-checkbox>
                           <div className="flex justify-start">
                             <Checkbox
                               checked={isSelected}
@@ -547,13 +547,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="px-[18px] py-[8px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[20px]">
+                          <TableCell key={column.key} className="px-[18px] py-[10px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[32px]">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="px-[18px] py-[8px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[20px]" data-actions>
+                        <TableCell className="px-[18px] py-[10px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[32px]" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
