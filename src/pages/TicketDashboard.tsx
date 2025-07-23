@@ -772,7 +772,7 @@ export const TicketDashboard = () => {
     
     const words = text.split(' ');
     if (words.length <= maxWords) {
-      return <span>{text}</span>;
+      return <span className="ml-2">{text}</span>;
     }
     
     const truncated = words.slice(0, maxWords).join(' ');
