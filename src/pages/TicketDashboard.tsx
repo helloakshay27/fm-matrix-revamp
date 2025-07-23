@@ -1109,15 +1109,8 @@ export const TicketDashboard = () => {
                       {renderCustomActions()}
                     </div>
                   }
-                  rightActions={
-                    <Button 
-                      variant="outline" 
-                      className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                      onClick={() => setIsFilterOpen(true)}
-                    >
-                      <Filter className="w-4 h-4" />
-                    </Button>
-                  }
+                  onFilterClick={() => setIsFilterOpen(true)}
+                  rightActions={null}
                   searchPlaceholder="Search Tickets"
                   hideTableExport={false}
                   hideColumnsButton={false}

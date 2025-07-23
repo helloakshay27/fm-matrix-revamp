@@ -32,7 +32,7 @@ import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Download, Loader2, Grid3x3, Plus, X } from 'lucide-react';
+import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -77,6 +77,7 @@ interface EnhancedTableProps<T> {
   hideColumnsButton?: boolean;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
+  onFilterClick?: () => void;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -114,6 +115,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideColumnsButton = false,
   leftActions,
   rightActions,
+  onFilterClick,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -368,6 +370,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                 </button>
               )}
             </div>
+          )}
+          
+          {onFilterClick && (
+            <Button 
+              variant="outline" 
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              onClick={onFilterClick}
+            >
+              <Filter className="w-4 h-4" />
+            </Button>
           )}
           
           {!hideColumnsButton && (
