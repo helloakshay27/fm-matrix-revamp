@@ -45,7 +45,7 @@ import {
   AttachFile,
   ArrowBack
 } from '@mui/icons-material';
-import { Cog } from 'lucide-react';
+import { Cog, ArrowLeft } from 'lucide-react';
 import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User, Supplier } from '../services/assetService';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { MuiSearchableDropdown } from '@/components/MuiSearchableDropdown';
@@ -61,46 +61,51 @@ const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
 
 const CustomStep = styled(Step)(({ theme }) => ({
   '& .MuiStepLabel-root .Mui-completed': {
-    color: '#D42F2F',
+    color: '#C72030',
   },
   '& .MuiStepLabel-root .Mui-active': {
-    color: '#D42F2F',
+    color: '#C72030',
   },
   '& .MuiStepLabel-label': {
     fontSize: '14px',
     fontWeight: 500,
+    fontFamily: 'Work Sans, sans-serif',
   },
 }));
 
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#D42F2F',
+  backgroundColor: '#C72030',
   color: 'white',
   borderRadius: '8px',
   textTransform: 'none',
   padding: '8px 16px',
-  boxShadow: '0 2px 4px rgba(212, 47, 47, 0.2)',
+  fontFamily: 'Work Sans, sans-serif',
+  fontWeight: 500,
+  boxShadow: '0 2px 4px rgba(199, 32, 48, 0.2)',
   '&:hover': {
     backgroundColor: '#B8252F',
-    boxShadow: '0 4px 8px rgba(212, 47, 47, 0.3)',
+    boxShadow: '0 4px 8px rgba(199, 32, 48, 0.3)',
   },
 }));
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#F5F1E8',
-  color: '#8B7355',
+  backgroundColor: '#f6f4ee',
+  color: '#C72030',
   borderRadius: '8px',
   textTransform: 'none',
   padding: '8px 16px',
+  fontFamily: 'Work Sans, sans-serif',
+  fontWeight: 500,
   '&:hover': {
-    backgroundColor: '#EDE6D8',
+    backgroundColor: '#f0ebe0',
   },
 }));
 
 const SectionCard = styled(Paper)(({ theme }) => ({
-  padding: '24px',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  border: '1px solid #F0F0F0',
+  backgroundColor: 'white',
+  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+  borderRadius: '8px',
+  overflow: 'hidden',
   marginBottom: '24px',
 }));
 
@@ -2025,7 +2030,7 @@ export const AddSchedulePage = () => {
             </Box>
 
             {/* Main Content in White Box */}
-            <SectionCard>
+            <SectionCard style={{ padding: '24px' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
@@ -2170,8 +2175,8 @@ export const AddSchedulePage = () => {
             </Box>
 
             {/* Main Content in White Box */}
-            <SectionCard>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <SectionCard style={{ padding: '24px' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3,  }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
                 {stepIndex < activeStep && (
                   <MuiButton
@@ -2299,16 +2304,17 @@ export const AddSchedulePage = () => {
                 )}
 
                 {/* Assign To Type Selection */}
-                <FormControl fullWidth>
-                  <InputLabel>Assign To</InputLabel>
-                  <Select 
-                    value={formData.assignToType} 
-                    onChange={(e) => setFormData({...formData, assignToType: e.target.value, selectedUsers: [], selectedGroups: []})}
-                  >
-                    <MenuItem value="user">User</MenuItem>
-                    <MenuItem value="group">Group</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Assign To"
+                  value={formData.assignToType}
+                  onChange={(value) => setFormData({...formData, assignToType: value.toString(), selectedUsers: [], selectedGroups: []})}
+                  options={[
+                    { id: 'user', label: 'User', value: 'user' },
+                    { id: 'group', label: 'Group', value: 'group' }
+                  ]}
+                  placeholder="Select Assign To"
+                  fullWidth
+                />
 
                 {/* Multi-select Users - Show when assignToType is 'user' */}
                 {formData.assignToType === 'user' && (
@@ -2392,20 +2398,20 @@ export const AddSchedulePage = () => {
                 />
                 
                 {/* Plan Duration with conditional input */}
-                <FormControl fullWidth>
-                  <InputLabel>Plan Duration</InputLabel>
-                  <Select 
-                    value={formData.planDuration} 
-                    onChange={(e) => setFormData({...formData, planDuration: e.target.value, planDurationValue: ''})}
-                  >
-                    <MenuItem value="">Select Plan Duration</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                    <MenuItem value="month">Month</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Plan Duration"
+                  value={formData.planDuration}
+                  onChange={(value) => setFormData({...formData, planDuration: value.toString(), planDurationValue: ''})}
+                  options={[
+                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                    { id: 'hour', label: 'Hour', value: 'hour' },
+                    { id: 'day', label: 'Day', value: 'day' },
+                    { id: 'week', label: 'Week', value: 'week' },
+                    { id: 'month', label: 'Month', value: 'month' }
+                  ]}
+                  placeholder="Select Plan Duration"
+                  fullWidth
+                />
 
                 {/* Plan Duration Value Input - Show when duration type is selected */}
                 {needsValueInput(formData.planDuration) && (
@@ -2435,41 +2441,44 @@ export const AddSchedulePage = () => {
                   fullWidth
                 />
                 
-                <FormControl fullWidth>
-                  <InputLabel>Scan Type</InputLabel>
-                  <Select value={formData.scanType} onChange={(e) => setFormData({...formData, scanType: e.target.value})}>
-                    <MenuItem value="">Select Scan Type</MenuItem>
-                    <MenuItem value="qr">QR</MenuItem>
-                    <MenuItem value="nfc">NFC</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Scan Type"
+                  value={formData.scanType}
+                  onChange={(value) => setFormData({...formData, scanType: value.toString()})}
+                  options={[
+                    { id: 'qr', label: 'QR', value: 'qr' },
+                    { id: 'nfc', label: 'NFC', value: 'nfc' }
+                  ]}
+                  placeholder="Select Scan Type"
+                  fullWidth
+                />
                 
-                <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
-                  <Select 
-                    value={formData.category} 
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  >
-                    <MenuItem value="">Select Category</MenuItem>
-                    <MenuItem value="technical">Technical</MenuItem>
-                    <MenuItem value="non-technical">Non-Technical</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Category"
+                  value={formData.category}
+                  onChange={(value) => setFormData({...formData, category: value.toString()})}
+                  options={[
+                    { id: 'technical', label: 'Technical', value: 'technical' },
+                    { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                  ]}
+                  placeholder="Select Category"
+                  fullWidth
+                />
                 
                 {/* Submission Time with conditional input */}
-                <FormControl fullWidth>
-                  <InputLabel>Submission Time</InputLabel>
-                  <Select 
-                    value={formData.submissionTime} 
-                    onChange={(e) => setFormData({...formData, submissionTime: e.target.value, submissionTimeValue: ''})}
-                  >
-                    <MenuItem value="">Select Submission Time</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Submission Time"
+                  value={formData.submissionTime}
+                  onChange={(value) => setFormData({...formData, submissionTime: value.toString(), submissionTimeValue: ''})}
+                  options={[
+                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                    { id: 'hour', label: 'Hour', value: 'hour' },
+                    { id: 'day', label: 'Day', value: 'day' },
+                    { id: 'week', label: 'Week', value: 'week' }
+                  ]}
+                  placeholder="Select Submission Time"
+                  fullWidth
+                />
 
                 {/* Submission Time Value Input - Show when time type is selected */}
                 {needsValueInput(formData.submissionTime) && (
@@ -2483,58 +2492,65 @@ export const AddSchedulePage = () => {
                   />
                 )}
                 
-                <FormControl fullWidth>
-                  <InputLabel>Supervisors</InputLabel>
-                  <Select 
-                    value={formData.supervisors} 
-                    onChange={(e) => setFormData({...formData, supervisors: e.target.value})}
-                    disabled={loading.users}
-                  >
-                    <MenuItem value="">Select Supervisors</MenuItem>
-                    {users && users.map((user) => (
-                      <MenuItem key={user.id} value={user.id.toString()}>
-                        {user.full_name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Supervisors"
+                  value={formData.supervisors}
+                  onChange={(value) => setFormData({...formData, supervisors: value.toString()})}
+                  options={users ? users.map(user => ({
+                    id: user.id,
+                    label: user.full_name,
+                    value: user.id.toString()
+                  })) : []}
+                  placeholder="Select Supervisors"
+                  disabled={loading.users}
+                  loading={loading.users}
+                  loadingText="Loading users..."
+                  fullWidth
+                />
                 
-                <FormControl fullWidth>
-                  <InputLabel>Lock Overdue Task</InputLabel>
-                  <Select value={formData.lockOverdueTask} onChange={(e) => setFormData({...formData, lockOverdueTask: e.target.value})}>
-                    <MenuItem value="">Select Lock Status</MenuItem>
-                    <MenuItem value="true">Yes</MenuItem>
-                    <MenuItem value="false">No</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Lock Overdue Task"
+                  value={formData.lockOverdueTask}
+                  onChange={(value) => setFormData({...formData, lockOverdueTask: value.toString()})}
+                  options={[
+                    { id: 'true', label: 'Yes', value: 'true' },
+                    { id: 'false', label: 'No', value: 'false' }
+                  ]}
+                  placeholder="Select Lock Status"
+                  fullWidth
+                />
                 
-                <FormControl fullWidth>
-                  <InputLabel>Frequency</InputLabel>
-                  <Select value={formData.frequency} onChange={(e) => setFormData({...formData, frequency: e.target.value})}>
-                    <MenuItem value="">Select Frequency</MenuItem>
-                    <MenuItem value="Daily">Daily</MenuItem>
-                    <MenuItem value="Weekly">Weekly</MenuItem>
-                    <MenuItem value="Monthly">Monthly</MenuItem>
-                    <MenuItem value="Quarterly">Quarterly</MenuItem>
-                    <MenuItem value="Half Yearly">Half Yearly</MenuItem>
-                    <MenuItem value="Yearly">Yearly</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Frequency"
+                  value={formData.frequency}
+                  onChange={(value) => setFormData({...formData, frequency: value.toString()})}
+                  options={[
+                    { id: 'Daily', label: 'Daily', value: 'Daily' },
+                    { id: 'Weekly', label: 'Weekly', value: 'Weekly' },
+                    { id: 'Monthly', label: 'Monthly', value: 'Monthly' },
+                    { id: 'Quarterly', label: 'Quarterly', value: 'Quarterly' },
+                    { id: 'Half Yearly', label: 'Half Yearly', value: 'Half Yearly' },
+                    { id: 'Yearly', label: 'Yearly', value: 'Yearly' }
+                  ]}
+                  placeholder="Select Frequency"
+                  fullWidth
+                />
                 
                 {/* Grace Time with conditional input */}
-                <FormControl fullWidth>
-                  <InputLabel>Grace Time</InputLabel>
-                  <Select 
-                    value={formData.graceTime} 
-                    onChange={(e) => setFormData({...formData, graceTime: e.target.value, graceTimeValue: ''})}
-                  >
-                    <MenuItem value="">Select Grace Time</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                  </Select>
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Grace Time"
+                  value={formData.graceTime}
+                  onChange={(value) => setFormData({...formData, graceTime: value.toString(), graceTimeValue: ''})}
+                  options={[
+                    { id: '', label: 'Select Grace Time', value: '' },
+                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                    { id: 'hour', label: 'Hour', value: 'hour' },
+                    { id: 'day', label: 'Day', value: 'day' },
+                    { id: 'week', label: 'Week', value: 'week' }
+                  ]}
+                  placeholder="Select Grace Time"
+                  fullWidth
+                />
 
                 {/* Grace Time Value Input - Show when time type is selected */}
                 {needsValueInput(formData.graceTime) && (
@@ -2548,26 +2564,21 @@ export const AddSchedulePage = () => {
                   />
                 )}
                 
-                <FormControl fullWidth>
-                  <InputLabel>Supplier</InputLabel>
-                  <Select 
-                    value={formData.supplier} 
-                    onChange={(e) => setFormData({...formData, supplier: e.target.value})}
-                    disabled={loading.suppliers}
-                  >
-                    <MenuItem value="">Select Supplier</MenuItem>
-                    {suppliers.map((supplier) => (
-                      <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                        {supplier.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {loading.suppliers && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading suppliers...
-                    </Typography>
-                  )}
-                </FormControl>
+                <MuiSearchableDropdown
+                  label="Supplier"
+                  value={formData.supplier}
+                  onChange={(value) => setFormData({...formData, supplier: value.toString()})}
+                  options={suppliers ? suppliers.map(supplier => ({
+                    id: supplier.id,
+                    label: supplier.name,
+                    value: supplier.id.toString()
+                  })) : []}
+                  placeholder="Select Supplier"
+                  disabled={loading.suppliers}
+                  loading={loading.suppliers}
+                  loadingText="Loading suppliers..."
+                  fullWidth
+                />
 
                 <TextField
                   label="Start From"
@@ -2944,127 +2955,102 @@ export const AddSchedulePage = () => {
         }
 
         return (
-          <Box>
+          <div>
             {/* Header Outside the Box */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              mb: 3,
-              px: 1
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{
-                  backgroundColor: '#C72030',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Cog size={16} color="white" />
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                  Question Setup
-                </Typography>
-
-                
-              </Box>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MuiSwitch 
-                    checked={createNew}
-                    onChange={(e) => setCreateNew(e.target.checked)}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ color: '#666' }}>Create New</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MuiSwitch 
-                    checked={weightage}
-                    onChange={(e) => setWeightage(e.target.checked)}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ color: '#666' }}>Weightage</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MuiSwitch 
-                    checked={autoTicket}
-                    onChange={(e) => setAutoTicket(e.target.checked)}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ color: '#666' }}>Auto Ticket</Typography>
-                </Box>
-                <MuiButton
-                  variant="outlined"
-                  startIcon={<Add />}
-                  onClick={addQuestionSection}
-                  sx={{
-                    color: '#C72030',
-                    borderColor: '#C72030',
-                    fontSize: '12px',
-                    padding: '4px 12px',
-                    '&:hover': {
-                      borderColor: '#C72030',
-                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                    }
-                  }}
-                >
-                  Add Section
-                </MuiButton>
-              </Box>
-            </Box>
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+              <div className=" p-4 sm:p-6 bg-white">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                      <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </span>
+                    QUESTION SETUP
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                        <input
+                          type="checkbox"
+                          checked={createNew}
+                          onChange={(e) => setCreateNew(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                      </label>
+                      <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create New</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                        <input
+                          type="checkbox"
+                          checked={weightage}
+                          onChange={(e) => setWeightage(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${weightage ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                      </label>
+                      <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                        <input
+                          type="checkbox"
+                          checked={autoTicket}
+                          onChange={(e) => setAutoTicket(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${autoTicket ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                      </label>
+                      <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
+                    </div>
+                    <button
+                      onClick={addQuestionSection}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                      style={{ fontFamily: 'Work Sans, sans-serif' }}
+                    >
+                      <Add className="w-4 h-4" />
+                      Add Section
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Conditional Sections based on toggles */}
             
             {/* Create New Template Section */}
             {createNew && (
-              <SectionCard sx={{ mb: 2 }}>
+              <SectionCard style={{ padding: '24px' }} sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                   Select Template
                 </Typography>
-                <FormControl fullWidth>
-                  <InputLabel>Template</InputLabel>
-                  <Select 
-                    value={formData.selectedTemplate} 
-                    onChange={(e) => handleTemplateChange(e.target.value)}
-                    disabled={loading.templates}
-                  >
-                    <MenuItem value="">Select Template</MenuItem>
-                    {templates && templates.map((template) => (
-                      <MenuItem key={template.id} value={template.id.toString()}>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {template.form_name}
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {loading.templates && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading templates...
-                    </Typography>
-                  )}
-                </FormControl>
+                <MuiSearchableDropdown
+                  value={formData.selectedTemplate}
+                  onChange={(value) => handleTemplateChange(value.toString())}
+                  options={[
+                    { id: '', label: 'Select Template', value: '' },
+                    ...(templates ? templates.map((template) => ({
+                      id: template.id.toString(),
+                      label: template.form_name,
+                      value: template.id.toString()
+                    })) : [])
+                  ]}
+                  label="Template"
+                  disabled={loading.templates}
+                />
+                {loading.templates && (
+                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                    Loading templates...
+                  </Typography>
+                )}
                 
               </SectionCard>
             )}
 
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
-              <SectionCard sx={{ mb: 2 }}>
+              <SectionCard style={{ padding: '24px' }} sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                   Auto Ticket Configuration
                 </Typography>
@@ -3089,89 +3075,58 @@ export const AddSchedulePage = () => {
                     </RadioGroup>
                   </Box>
                   
-                  <FormControl fullWidth>
-                    <InputLabel>Assigned To</InputLabel>
-                    <Select 
-                      value={formData.ticketAssignedTo} 
-                      onChange={(e) => setFormData({...formData, ticketAssignedTo: e.target.value})}
-                      disabled={loading.users}
-                    >
-                      <MenuItem value="">Select Assigned To</MenuItem>
-                      {users.map((user) => (
-                        <MenuItem key={user.id} value={user.id.toString()}>
-                          {user.full_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <MuiSearchableDropdown
+                    value={formData.ticketAssignedTo}
+                    onChange={(value) => setFormData({...formData, ticketAssignedTo: value.toString()})}
+                    options={[
+                      { id: '', label: 'Select Assigned To', value: '' },
+                      ...users.map((user) => ({
+                        id: user.id.toString(),
+                        label: user.full_name,
+                        value: user.id.toString()
+                      }))
+                    ]}
+                    label="Assigned To"
+                    disabled={loading.users}
+                  />
                   
-                  <FormControl fullWidth>
-                    <InputLabel>Category</InputLabel>
-                    <Select 
-                      
-                      value={formData.ticketCategory} 
-                      onChange={(e) => setFormData({...formData, ticketCategory: e.target.value})}
-                      disabled={loading.helpdeskCategories}
-                    >
-                      <MenuItem value="">Select Category</MenuItem>
-                      {helpdeskCategories.map((category) => (
-                        <MenuItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {loading.helpdeskCategories && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading categories...
-                      </Typography>
-                    )}
-                  </FormControl>
+                  <MuiSearchableDropdown
+                    value={formData.ticketCategory}
+                    onChange={(value) => setFormData({...formData, ticketCategory: value.toString()})}
+                    options={[
+                      { id: '', label: 'Select Category', value: '' },
+                      ...helpdeskCategories.map((category) => ({
+                        id: category.id.toString(),
+                        label: category.name,
+                        value: category.id.toString()
+                      }))
+                    ]}
+                    label="Category"
+                    disabled={loading.helpdeskCategories}
+                  />
+                  {loading.helpdeskCategories && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading categories...
+                    </Typography>
+                  )}
                 </Box>
               </SectionCard>
             )}
 
             {/* Main Content in White Box */}
             {questionSections.map((section, sectionIndex) => (
-              <SectionCard key={section.id}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <TextField
-                    variant="standard"
-                    value={section.title}
-                    onChange={(e) => updateSectionTitle(section.id, e.target.value)}
-                    sx={{
-                      '& .MuiInput-underline:before': { borderBottomColor: '#C72030' },
-                      '& .MuiInput-underline:after': { borderBottomColor: '#C72030' },
-                      '& .MuiInputBase-input': { fontWeight: 600, fontSize: '1rem' }
-                    }}
-                  />
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    {/* Individual Auto Ticket Toggle */}
-                    
-                    {stepIndex < activeStep && (
-                      <MuiButton
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Edit />}
-                        onClick={() => handleStepClick(stepIndex)}
-                        sx={{
-                          color: '#C72030',
-                          borderColor: '#C72030',
-                          fontSize: '12px',
-                          padding: '4px 12px',
-                          minWidth: 'auto',
-                          '&:hover': {
-                            borderColor: '#C72030',
-                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                          }
-                        }}
-                      >
-                        Edit
-                      </MuiButton>
-                    )}
-                  </Box>
-
-                  
-                </Box>
+              <div key={section.id} className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+                <div className=" p-4 sm:p-6 bg-white">
+                  <div className="flex justify-between items-center mb-4">
+                    <input
+                      type="text"
+                      value={section.title}
+                      onChange={(e) => updateSectionTitle(section.id, e.target.value)}
+                      className="text-lg font-semibold text-[#C72030] bg-transparent border-none border-b-2 border-[#C72030] focus:outline-none focus:border-[#C72030] px-0"
+                      style={{ fontFamily: 'Work Sans, sans-serif' }}
+                      placeholder="Section Title"
+                    />
+                  </div>
                 {/* Individual Auto Ticket Configuration Section */}
                 {section.autoTicket && (
                   <Box sx={{ 
@@ -3205,42 +3160,40 @@ export const AddSchedulePage = () => {
                         </RadioGroup>
                       </Box>
                       
-                      <FormControl fullWidth>
-                        <InputLabel>Assigned To</InputLabel>
-                        <Select 
-                          value={section.ticketAssignedTo} 
-                          onChange={(e) => updateSectionProperty(section.id, 'ticketAssignedTo', e.target.value)}
-                          disabled={loading.users}
-                        >
-                          <MenuItem value="">Select Assigned To</MenuItem>
-                          {users.map((user) => (
-                            <MenuItem key={user.id} value={user.id.toString()}>
-                              {user.full_name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                      <MuiSearchableDropdown
+                        value={section.ticketAssignedTo}
+                        onChange={(value) => updateSectionProperty(section.id, 'ticketAssignedTo', value)}
+                        options={[
+                          { id: '', label: 'Select Assigned To', value: '' },
+                          ...users.map((user) => ({
+                            id: user.id.toString(),
+                            label: user.full_name,
+                            value: user.id.toString()
+                          }))
+                        ]}
+                        label="Assigned To"
+                        disabled={loading.users}
+                      />
                       
-                      <FormControl fullWidth>
-                        <InputLabel>Category</InputLabel>
-                        <Select 
-                          value={section.ticketCategory} 
-                          onChange={(e) => updateSectionProperty(section.id, 'ticketCategory', e.target.value)}
-                          disabled={loading.helpdeskCategories}
-                        >
-                          <MenuItem value="">Select Category</MenuItem>
-                          {helpdeskCategories.map((category) => (
-                            <MenuItem key={category.id} value={category.id.toString()}>
-                              {category.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {loading.helpdeskCategories && (
-                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                            Loading categories...
-                          </Typography>
-                        )}
-                      </FormControl>
+                      <MuiSearchableDropdown
+                        value={section.ticketCategory}
+                        onChange={(value) => updateSectionProperty(section.id, 'ticketCategory', value)}
+                        options={[
+                          { id: '', label: 'Select Category', value: '' },
+                          ...helpdeskCategories.map((category) => ({
+                            id: category.id.toString(),
+                            label: category.name,
+                            value: category.id.toString()
+                          }))
+                        ]}
+                        label="Category"
+                        disabled={loading.helpdeskCategories}
+                      />
+                      {loading.helpdeskCategories && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading categories...
+                        </Typography>
+                      )}
                     </Box>
                   </Box>
                 )}
@@ -3252,52 +3205,50 @@ export const AddSchedulePage = () => {
                     </Typography>
                     
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
-                      <FormControl fullWidth>
-                        <InputLabel>Group</InputLabel>
-                        <Select 
-                          value={task.group} 
-                          onChange={(e) => handleTaskGroupChange(section.id, task.id, e.target.value)}
-                          disabled={loading.taskGroups}
-                        >
-                          <MenuItem value="">Select Group</MenuItem>
-                          {taskGroups && taskGroups.map((group) => (
-                            <MenuItem key={group.id} value={group.id.toString()}>
-                              {group.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {loading.taskGroups && (
-                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                            Loading groups...
-                          </Typography>
-                        )}
-                      </FormControl>
+                      <MuiSearchableDropdown
+                        value={task.group}
+                        onChange={(value) => handleTaskGroupChange(section.id, task.id, value.toString())}
+                        options={[
+                          { id: '', label: 'Select Group', value: '' },
+                          ...(taskGroups ? taskGroups.map((group) => ({
+                            id: group.id.toString(),
+                            label: group.name,
+                            value: group.id.toString()
+                          })) : [])
+                        ]}
+                        label="Group"
+                        disabled={loading.taskGroups}
+                      />
+                      {loading.taskGroups && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading groups...
+                        </Typography>
+                      )}
                       
-                      <FormControl fullWidth>
-                        <InputLabel>Sub-Group</InputLabel>
-                        <Select 
-                          value={task.subGroup} 
-                          onChange={(e) => updateTaskInSection(section.id, task.id, 'subGroup', e.target.value)}
-                          disabled={loading.taskSubGroups || !task.group}
-                        >
-                          <MenuItem value="">Select Sub-Group</MenuItem>
-                          {task.group && taskSubGroups[task.group] && taskSubGroups[task.group].map((subGroup) => (
-                            <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
-                              {subGroup.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {loading.taskSubGroups && (
-                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                            Loading sub-groups...
-                          </Typography>
-                        )}
-                        {!task.group && (
-                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                            Please select a group first
-                          </Typography>
-                        )}
-                      </FormControl>
+                      <MuiSearchableDropdown
+                        value={task.subGroup}
+                        onChange={(value) => updateTaskInSection(section.id, task.id, 'subGroup', value)}
+                        options={[
+                          { id: '', label: 'Select Sub-Group', value: '' },
+                          ...(task.group && taskSubGroups[task.group] ? taskSubGroups[task.group].map((subGroup) => ({
+                            id: subGroup.id.toString(),
+                            label: subGroup.name,
+                            value: subGroup.id.toString()
+                          })) : [])
+                        ]}
+                        label="Sub-Group"
+                        disabled={loading.taskSubGroups || !task.group}
+                      />
+                      {loading.taskSubGroups && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading sub-groups...
+                        </Typography>
+                      )}
+                      {!task.group && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Please select a group first
+                        </Typography>
+                      )}
                     </Box>
                     
                     {/* Dashed Border Section */}
@@ -3363,37 +3314,36 @@ export const AddSchedulePage = () => {
                           onChange={(e) => updateTaskInSection(section.id, task.id, 'task', e.target.value)}
                         />
                         
-                        <FormControl fullWidth>
-                          <InputLabel>Input Type</InputLabel>
-                          <Select 
-                            value={task.inputType} 
-                            onChange={(e) => {
-                              updateTaskInSection(section.id, task.id, 'inputType', e.target.value);
-                              // Reset values when changing input type
-                              if (e.target.value !== 'dropdown') {
-                                updateTaskInSection(section.id, task.id, 'dropdownValues', [{label: '', type: 'positive'}]);
-                              }
-                              if (e.target.value !== 'radio') {
-                                updateTaskInSection(section.id, task.id, 'radioValues', [{label: '', type: 'positive'}]);
-                              }
-                              if (e.target.value !== 'checkbox') {
-                                updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
-                                updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
-                              }
-                              if (e.target.value !== 'options-inputs') {
-                                updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
-                              }
-                            }}
-                          >
-                            <MenuItem value="">Select Input Type</MenuItem>
-                            <MenuItem value="text">Text</MenuItem>
-                            <MenuItem value="number">Number</MenuItem>
-                            <MenuItem value="dropdown">Dropdown</MenuItem>
-                            <MenuItem value="checkbox">Checkbox</MenuItem>
-                            <MenuItem value="radio">Radio</MenuItem>
-                            <MenuItem value="options-inputs">Options & Inputs</MenuItem>
-                          </Select>
-                        </FormControl>
+                        <MuiSearchableDropdown
+                          value={task.inputType}
+                          onChange={(value) => {
+                            updateTaskInSection(section.id, task.id, 'inputType', value);
+                            // Reset values when changing input type
+                            if (value !== 'dropdown') {
+                              updateTaskInSection(section.id, task.id, 'dropdownValues', [{label: '', type: 'positive'}]);
+                            }
+                            if (value !== 'radio') {
+                              updateTaskInSection(section.id, task.id, 'radioValues', [{label: '', type: 'positive'}]);
+                            }
+                            if (value !== 'checkbox') {
+                              updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
+                              updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
+                            }
+                            if (value !== 'options-inputs') {
+                              updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
+                            }
+                          }}
+                          options={[
+                            { id: '', label: 'Select Input Type', value: '' },
+                            { id: 'text', label: 'Text', value: 'text' },
+                            { id: 'number', label: 'Number', value: 'number' },
+                            { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
+                            { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
+                            { id: 'radio', label: 'Radio', value: 'radio' },
+                            { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                          ]}
+                          label="Input Type"
+                        />
 
                         {weightage && (
                           <TextField
@@ -3447,22 +3397,15 @@ export const AddSchedulePage = () => {
                                   }}
                                 />
                                 
-                                <FormControl size="small" sx={{ minWidth: 80 }}>
-                                  <InputLabel>Type</InputLabel>
-                                  <Select
-                                    value={value.type}
-                                    onChange={(e) => updateDropdownType(section.id, task.id, valueIndex, e.target.value)}
-                                    sx={{
-                                      backgroundColor: 'white',
-                                      '& .MuiSelect-select': {
-                                        color: '#666'
-                                      }
-                                    }}
-                                  >
-                                    <MenuItem value="positive">P</MenuItem>
-                                    <MenuItem value="negative">N</MenuItem>
-                                  </Select>
-                                </FormControl>
+                                <MuiSearchableDropdown
+                                  value={value.type}
+                                  onChange={(newValue) => updateDropdownType(section.id, task.id, valueIndex, String(newValue))}
+                                  options={[
+                                    { id: 'positive', label: 'P', value: 'positive' },
+                                    { id: 'negative', label: 'N', value: 'negative' }
+                                  ]}
+                                  label="Type"
+                                />
                                 
                                 {task.dropdownValues.length > 1 && (
                                   <IconButton 
@@ -3737,26 +3680,18 @@ export const AddSchedulePage = () => {
                   </Box>
                 ))}
                 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <MuiButton
-                    variant="outlined"
-                    startIcon={<Add />}
-                    onClick={() => addTaskToSection(section.id)}
-                    sx={{
-                      color: '#C72030',
-                      borderColor: '#C72030',
-                      fontSize: '12px',
-                      padding: '4px 12px',
-                      '&:hover': {
-                        borderColor: '#C72030',
-                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                      }
-                    }}
-                  >
-                    Add Question
-                  </MuiButton>
-                </Box>
-              </SectionCard>
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => addTaskToSection(section.id)}
+                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                      style={{ fontFamily: 'Work Sans, sans-serif' }}
+                    >
+                      <Add className="w-4 h-4" />
+                      Add Question
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
 
             <TimeSetupStep
@@ -3768,84 +3703,56 @@ export const AddSchedulePage = () => {
               isCompleted={false}
               isCollapsed={false}
             />
-          </Box>
+          </div>
         );
         
       case 3: // Time Setup
         return (
-          <Box>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 2,
-              mb: 3,
-              px: 1
-            }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Time Setup
-              </Typography>
-            </Box>
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
+                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                TIME SETUP
+              </div>
 
-            <TimeSetupStep
-              data={timeSetupData}
-              onChange={(field, value) => {
-                console.log('Time setup change:', field, value);
-                setTimeSetupData(prev => ({ ...prev, [field]: value }));
-              }}
-              isCompleted={false}
-              isCollapsed={false}
-            />
-          </Box>
+              <TimeSetupStep
+                data={timeSetupData}
+                onChange={(field, value) => {
+                  console.log('Time setup change:', field, value);
+                  setTimeSetupData(prev => ({ ...prev, [field]: value }));
+                }}
+                isCompleted={false}
+                isCollapsed={false}
+              />
+            </div>
+          </div>
         );
 
       case 4: // Mapping
         return (
-          <Box>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 2,
-              mb: 3,
-              px: 1
-            }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Mapping
-              </Typography>
-            </Box>
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
+                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                MAPPING
+              </div>
 
-            <MappingStep
-              data={checklistMappings}
-              loading={loadingMappings}
-              onChange={(mappingData) => {
-                console.log('Mapping data changed:', mappingData);
-                // Handle mapping data changes if needed
-              }}
-              isCompleted={false}
-              isCollapsed={false}
-            />
-          </Box>
+              <MappingStep
+                data={checklistMappings}
+                loading={loadingMappings}
+                onChange={(mappingData) => {
+                  console.log('Mapping data changed:', mappingData);
+                  // Handle mapping data changes if needed
+                }}
+                isCompleted={false}
+                isCollapsed={false}
+              />
+            </div>
+          </div>
         );
         
       default:
@@ -3854,10 +3761,14 @@ export const AddSchedulePage = () => {
   };
 
   const renderStepContent = () => {
-    // Only show the current active step
+    // Show all steps up to and including the current active step
     return (
       <Box>
-        {renderSingleStep(activeStep)}
+        {Array.from({ length: activeStep + 1 }, (_, index) => (
+          <Box key={`step-content-${index}`} sx={{ mb: 3 }}>
+            {renderSingleStep(index)}
+          </Box>
+        ))}
       </Box>
     );
   };
@@ -3896,18 +3807,23 @@ export const AddSchedulePage = () => {
   };
 
   return (
-    <Box sx={{ padding: 3, maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <IconButton onClick={() => navigate('/maintenance/schedule')}>
-            <ArrowBack sx={{ color: '#D42F2F' }} />
-          </IconButton>
-        </Box>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
-          ADD SCHEDULE
-        </Typography>
-           </Box>
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={() => navigate('/maintenance/schedule')}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Schedule List</span>
+          <span>{'>'}</span>
+          <span className="text-gray-900 font-medium">Create New Schedule</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
+      </div>
 
       {/* Custom Stepper - Bordered Box Design */}
       <Box sx={{ mb: 4 }}>
@@ -3937,6 +3853,7 @@ export const AddSchedulePage = () => {
                   justifyContent: 'center',
                   boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
                   transition: 'all 0.2s ease',
+                  fontFamily: 'Work Sans, sans-serif',
                   '&:hover': {
                     opacity: 0.9
                   }
@@ -3948,17 +3865,9 @@ export const AddSchedulePage = () => {
                 <Box
                   sx={{
                     width: '60px',
-                    height: '1px',
-                    position: 'relative',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '1px',
-                      backgroundImage: 'repeating-linear-gradient(to right, #C4B89D 0px, #C4B89D 6px, transparent 6px, transparent 12px)',
-                    }
+                    height: '2px',
+                    backgroundImage: 'repeating-linear-gradient(to right, #C4B89D 0px, #C4B89D 8px, transparent 8px, transparent 16px)',
+                    margin: '0 0px'
                   }}
                 />
               )}
@@ -3968,88 +3877,75 @@ export const AddSchedulePage = () => {
       </Box>
 
       {/* Step Content */}
-      {renderStepContent()}
+      <div className="space-y-4 sm:space-y-6">
+        {renderStepContent()}
+      </div>
 
       {/* Navigation Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
-        <Box>
+      <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
+        <div>
           {activeStep > 0 && (
-            <MuiButton
-              variant="outlined"
+            <button
               onClick={handleBack}
-              sx={{
-                color: '#C72030',
-                borderColor: '#C72030',
-                '&:hover': {
-                  borderColor: '#C72030',
-                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                }
-              }}
+              className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif' }}
             >
               Back
-            </MuiButton>
+            </button>
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <div className="flex gap-4">
           {activeStep < steps.length - 1 ? (
             <>
               {activeStep === 3 ? ( // Time Setup step
-                <RedButton 
-                  onClick={
-                    handleSave
-                  }
+                <button
+                  onClick={handleSave}
                   disabled={isSubmitting || validationErrors[activeStep]?.length > 0}
+                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif' }}
                 >
                   {isSubmitting ? 'Saving...' : 'Save & Continue'}
-                </RedButton>
+                </button>
               ) : (
-                <MuiButton
-                  variant="contained"
+                <button
                   onClick={handleNext}
                   disabled={validationErrors[activeStep]?.length > 0}
-                  sx={{
-                    backgroundColor: '#C72030',
-                    '&:hover': { backgroundColor: '#B8252F' },
-                    '&:disabled': {
-                      backgroundColor: '#ccc',
-                      color: '#666'
-                    }
-                  }}
+                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif' }}
                 >
                   Next
-                </MuiButton>
+                </button>
               )}
             </>
           ) : (
-            <RedButton onClick={handleFinish}>
+            <button
+              onClick={handleFinish}
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif' }}
+            >
               Finish
-            </RedButton>
+            </button>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Validation Errors Display */}
       {validationErrors[activeStep]?.length > 0 && (
-        <Box sx={{ 
-          mt: 2, 
-          p: 2, 
-          backgroundColor: '#ffebee', 
-          borderRadius: '4px',
-          border: '1px solid #f44336'
-        }}>
-          <Typography variant="subtitle2" sx={{ color: '#d32f2f', fontWeight: 600, mb: 1 }}>
+        <div className="bg-red-50 border border-red-300 rounded-md p-3 mt-4">
+          <h4 className="text-red-800 font-semibold text-sm mb-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>
             Please fix the following errors:
-          </Typography>
-          <ul style={{ margin: 0, paddingLeft: '20px' }}>
+          </h4>
+          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
             {validationErrors[activeStep].map((error, index) => (
-              <li key={index} style={{ color: '#d32f2f', fontSize: '14px' }}>
+              <li key={index} style={{ fontFamily: 'Work Sans, sans-serif' }}>
                 {error}
               </li>
             ))}
           </ul>
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
+
 };
