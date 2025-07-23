@@ -316,7 +316,7 @@ export const ticketManagementAPI = {
   },
 
   async getCategories() {
-    const response = await apiClient.get('/pms/admin/helpdesk_categories.json');
+    const response = await apiClient.get('/pms/helpdesk_categories.json');
     return response.data;
   },
 
