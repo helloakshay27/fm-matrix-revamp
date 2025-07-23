@@ -1,22 +1,47 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
+import { apiClient } from '@/utils/apiClient';
 
 interface EditStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+interface Status {
+  id: number;
+  name: string;
+  color_code: string;
+  fixed_state: string;
+  active: number;
+}
+
 export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) => {
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [statuses, setStatuses] = useState<Status[]>([]);
   const [rootCause, setRootCause] = useState('');
   const [correctiveAction, setCorrectiveAction] = useState('');
   const [preventiveAction, setPreventiveAction] = useState('');
+
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      try {
+        const response = await apiClient.get('/pms/admin/complaint_statuses.json');
+        setStatuses(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch statuses:', error);
+      }
+    };
+
+    if (open) {
+      fetchStatuses();
+    }
+  }, [open]);
 
   const handleApply = () => {
     console.log('Status updated:', { selectedStatus, rootCause, correctiveAction, preventiveAction });
@@ -54,13 +79,11 @@ export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) 
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="on-hold">On Hold</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                {statuses.map((status) => (
+                  <SelectItem key={status.id} value={status.id.toString()}>
+                    {status.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
