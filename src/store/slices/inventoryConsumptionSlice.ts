@@ -50,13 +50,28 @@ export const fetchInventoryConsumptionHistoryFilter = createAsyncThunk(
     try {
       const params = new URLSearchParams();
 
-      if (filters.group) params.append('group_id', filters.group);
-      if (filters.subGroup) params.append('sub_group_id', filters.subGroup);
-      if (filters.criticality) params.append('criticality', filters.criticality);
-      if (filters.name) params.append('name', filters.name); // only if supported
+      if (filters.criticality) {
+        const critValues = filters.criticality.split(',').map(c => c.trim()).filter(Boolean);
+        critValues.forEach(val => params.append('q[criticality_in][]', val));
+      }
+
+      if (filters.group) {
+        params.append('q[asset_group_id_eq]', filters.group);
+      }
+
+      if (filters.subGroup) {
+        params.append('q[asset_sub_group_id_eq]', filters.subGroup);
+      }
+
+      if (filters.name) {
+        const trimmedName = filters.name.trim();
+        if (trimmedName) {
+          params.append('q[name_cont]', trimmedName);
+        }
+      }
 
       const response = await apiClient.get(
-        `/pms/inventories/inventory_assets_consumption_details.json?${params.toString()}`
+        `/pms/inventories/inventory_consumption_history.json?${params.toString()}`
       );
 
       return response.data;
@@ -65,6 +80,8 @@ export const fetchInventoryConsumptionHistoryFilter = createAsyncThunk(
     }
   }
 );
+
+
 export const createInventoryConsumption = createAsyncThunk(
   'createInventoryConsumption',
   async (
@@ -124,6 +141,6 @@ const inventoryConsumptionSlice = createSlice({
 export const { clearError } = inventoryConsumptionSlice.actions
 export const inventoryConsumptionReducer = inventoryConsumptionSlice.reducer
 
-export const createInventoryConsumptionSlice = createApiSlice("createInventoryConsumption",createInventoryConsumption )
+export const createInventoryConsumptionSlice = createApiSlice("createInventoryConsumption", createInventoryConsumption)
 export const createInventoryConsumptionReducer = createInventoryConsumptionSlice.reducer;
 

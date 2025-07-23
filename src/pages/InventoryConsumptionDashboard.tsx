@@ -50,6 +50,12 @@ const InventoryConsumptionDashboard = () => {
 
   const handleApplyFilter = () => {
     dispatch(fetchInventoryConsumptionHistoryFilter(filterValues))
+    setFilterValues({
+      group: '',
+      subGroup: '',
+      criticality: '',
+      name: ''
+    })
     setIsFilterOpen(false);
   };
 
@@ -190,13 +196,6 @@ const InventoryConsumptionDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-
-      {/* Header */}
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Consumption LIST</h1>
-        
-      </div>
-
       {/* Enhanced Table with Drag and Drop */}
       <EnhancedTable 
         data={paginatedData} 

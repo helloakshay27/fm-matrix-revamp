@@ -19,6 +19,7 @@ import {
   setSelectedRoom,
   setSelectedGroup,
   setSelectedSubGroup,
+  clearAllSelections,
 } from '@/store/slices/serviceLocationSlice';
 
 interface LocationSelectorProps {
@@ -33,9 +34,11 @@ interface LocationSelectorProps {
     groupId: number | null;
     subGroupId: number | null;
   }) => void;
+  resetTrigger?: boolean;
 }
 
-export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles, onLocationChange }) => {
+
+export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles, onLocationChange, resetTrigger }) => {
   const dispatch = useDispatch<AppDispatch>();
   const {
     sites,
@@ -58,12 +61,19 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ fieldStyles,
   } = useSelector((state: RootState) => state.serviceLocation);
 
 
-
   // Load sites and groups on component mount
   useEffect(() => {
     dispatch(fetchSites());
     dispatch(fetchGroups());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (resetTrigger) {
+      dispatch(clearAllSelections());
+      dispatch(fetchSites());
+      dispatch(fetchGroups());
+    }
+  }, [resetTrigger, dispatch]);
 
   // Trigger location change callback when selections change
   useEffect(() => {

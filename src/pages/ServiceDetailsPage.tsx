@@ -100,7 +100,7 @@ export const ServiceDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <Button
           variant="ghost"
           onClick={() => navigate('/maintenance/service')}
@@ -109,13 +109,6 @@ export const ServiceDetailsPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Service List
         </Button>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">
-              {details.service_name || '—'} ({details.service_code || '—'})
-            </h1>
-          </div>
           <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
@@ -133,7 +126,6 @@ export const ServiceDetailsPage = () => {
             </Button>
           </div>
         </div>
-      </div>
 
       {/* LOCATION DETAIL */}
       <div className="bg-white rounded-lg border mb-6">
@@ -196,25 +188,50 @@ export const ServiceDetailsPage = () => {
               </div>
               <h2 className="text-lg font-semibold text-[#C72030]">DOCUMENTS</h2>
             </div>
-            <div className="space-y-2">
-              {details.documents && details.documents.length > 0 ? (
-                details.documents.map((doc, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                    <span className="text-sm truncate">{doc.filename}</span>
-                    <Button
-                      size="sm"
-                      className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                      onClick={() => window.open(doc.url, '_blank')}
-                    >
-                      <Download className="w-4 h-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                ))
-              ) : (
-                <div className="text-sm text-gray-600">No documents</div>
-              )}
-            </div>
+            {details?.documents?.map((doc: any) => (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded gap-4"
+              >
+                <div className="flex items-center gap-3 overflow-hidden">
+                  {/* Thumbnail Preview */}
+                  {doc.doctype.startsWith('image/') ? (
+                    <img
+                      src={doc.document}
+                      alt="Preview"
+                      className="w-10 h-10 object-cover rounded border"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 flex items-center justify-center bg-white border rounded text-gray-500 text-xl">
+                      📄
+                    </div>
+                  )}
+
+                  {/* File Name (fallback generated) */}
+                  <span className="text-sm truncate max-w-[180px]">
+                    {`Document_${doc.id}.${doc.doctype.split('/')[1] || 'file'}`}
+                  </span>
+                </div>
+
+                {/* Download Button */}
+                <Button
+                  size="sm"
+                  className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = doc.document;
+                    link.download = 'filename.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Download
+                </Button>
+              </div>
+            ))}
+
           </div>
         </div>
 

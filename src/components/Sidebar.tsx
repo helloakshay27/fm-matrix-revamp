@@ -9,7 +9,7 @@ import {
   Database, Zap, Droplets, Trash2, Sun, Battery, Gauge,
   Video, Lock, Key, Eye, ShieldCheck, Headphones, Gift,
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
-  ChevronRight, Plus, Search, Filter, Download, Upload,
+  ChevronRight, ChevronLeft, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
   Archive, TreePine, FlaskConical, Mail, ClipboardList
 } from 'lucide-react';
@@ -180,6 +180,51 @@ const navigationStructure = {
 };
 
 const modulesByPackage = {
+  'Master': [
+   {
+    name: 'Location Master',
+    icon: MapPin,
+    href: '/master/location',
+    subItems: [
+      { name: 'Account', href: '/master/location/account', color: 'text-[#1a1a1a]' },
+      { name: 'Building', href: '/master/location/building', color: 'text-[#1a1a1a]' },
+      { name: 'Wing', href: '/master/location/wing', color: 'text-[#1a1a1a]' },
+      { name: 'Area', href: '/master/location/area', color: 'text-[#1a1a1a]' },
+      { name: 'Floor', href: '/master/location/floor', color: 'text-[#1a1a1a]' },
+      { name: 'Unit', href: '/master/location/unit', color: 'text-[#1a1a1a]' },
+      { name: 'Room', href: '/master/location/room', color: 'text-[#1a1a1a]' }
+    ]
+  },
+  {
+    name: 'User Master',
+    icon: Users,
+    href: '/master/user',
+    subItems: [
+      { name: 'FM User', href: '/master/user/fm-users', color: 'text-[#1a1a1a]' },
+      { name: 'OCCUPANT USERS', href: '/master/user/occupant-users', color: 'text-[#1a1a1a]' }
+    ]
+  },
+  {
+    name: 'Checklist Master',
+    icon: CheckSquare,
+    href: '/master/checklist'
+  },
+  {
+    name: 'Address Master',
+    icon: MapPin,
+    href: '/master/address'
+  },
+  {
+    name: 'Unit Master (By Default)',
+    icon: Package,
+    href: '/master/unit-default'
+  },
+  {
+    name: 'Material Master -> EBom',
+    icon: FileText,
+    href: '/master/material-ebom'
+  },
+  ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
     {
@@ -564,7 +609,7 @@ const modulesByPackage = {
 export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentSection, setCurrentSection } = useLayout();
+  const { currentSection, setCurrentSection, isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState('');
   const [selectedRole, setSelectedDepartment] = useState('');
@@ -576,6 +621,13 @@ export const Sidebar = () => {
         : [...prev, itemName]
     );
   };
+  
+  // Close all expanded items when sidebar is collapsed
+  React.useEffect(() => {
+    if (isSidebarCollapsed) {
+      setExpandedItems([]);
+    }
+  }, [isSidebarCollapsed]);
 
   const handleNavigation = (href: string, section?: string) => {
     if (section && section !== currentSection) {
@@ -604,6 +656,8 @@ export const Sidebar = () => {
       setCurrentSection('CRM');
     } else if (path.startsWith('/market-place')) {
       setCurrentSection('Market Place');
+    } else if (path.startsWith('/master')) {
+      setCurrentSection('Master');
     } else if (path.startsWith('/settings')) {
       setCurrentSection('Settings');
     }
@@ -804,129 +858,182 @@ export const Sidebar = () => {
 
   return (
     <div
-      className="w-64 bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto"
+      className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: '4rem', height: '91vh' }}
     >
-      <div className="p-2">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">FM</span>
-          </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">Facility Management</span>
-        </div>
+      <div className={`${isSidebarCollapsed ? 'px-2 py-2' : 'p-2'}`}>
+        <button 
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="absolute right-2 top-2 p-1 rounded-md hover:bg-[#DBC2A9] z-10"
+        >
+          {isSidebarCollapsed ? 
+            <div className="flex justify-center items-center w-8 h-8 bg-[#f6f4ee] border border-[#e5e1d8] mx-auto">
+              <ChevronRight className="w-4 h-4" />
+            </div>
+            : 
+            <ChevronLeft className="w-4 h-4" />
+          }
+        </button>
+        {/* Add background and border below the collapse button */}
+        <div className="w-full h-4 bg-[#f6f4ee]  border-[#e5e1d8] mb-2"></div>
 
         {currentSection && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-[#1a1a1a] opacity-70 uppercase tracking-wide">
-              {currentSection}
+          <div className={`mb-4 ${isSidebarCollapsed ? 'text-center' : ''}`}>
+            <h3 className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? 'text-center' : 'tracking-wide'}`}>
+              {isSidebarCollapsed ? '' : currentSection}
             </h3>
           </div>
         )}
 
         <nav className="space-y-2">
           {currentSection === 'Settings' ? (
-            <div className="space-y-1">
-              {currentModules.map((module) => (
-                <div key={module.name} className="mb-3">
+            isSidebarCollapsed ? (
+              // Collapsed Settings: show only icons, centered, with tooltip
+              <div className="flex flex-col items-center space-y-5 pt-4">
+                {currentModules.map((module) => (
                   <button
-                    onClick={() => toggleExpanded(module.name)}
-                    className="flex items-center justify-between w-full py-2 px-3 border-b border-gray-300"
+                    key={module.name}
+                    onClick={() => module.href && handleNavigation(module.href, currentSection)}
+                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                      isActiveRoute(module.href) 
+                        ? 'bg-[#f0e8dc] shadow-inner' 
+                        : 'hover:bg-[#DBC2A9]'
+                    }`}
+                    title={module.name}
                   >
-                    <div className="flex items-center gap-2">
-                      <module.icon className="w-4 h-4" />
-                      <span className="font-semibold text-[#1a1a1a] text-sm">{module.name}</span>
-                    </div>
-                    {expandedItems.includes(module.name) ? 
-                      <ChevronDown className="w-4 h-4" /> : 
-                      <ChevronRight className="w-4 h-4" />
-                    }
+                    {isActiveRoute(module.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
+                    <module.icon className={`w-5 h-5 ${isActiveRoute(module.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}`} />
                   </button>
-                  {expandedItems.includes(module.name) && module.subItems && (
-                    <div className="pl-3 pt-1 space-y-1">
-                      {module.subItems.map((subItem) => (
-                        <div key={subItem.name} className="pl-4">
-                          {subItem.subItems ? (
-                            <div>
-                              <button
-                                onClick={() => toggleExpanded(subItem.name)}
-                                className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium"
-                              >
-                                <span className={isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
-                                  {subItem.name}
-                                </span>
-                                {expandedItems.includes(subItem.name) ? 
-                                  <ChevronDown className="w-3 h-3" /> : 
-                                  <ChevronRight className="w-3 h-3" />
-                                }
-                              </button>
-                              {expandedItems.includes(subItem.name) && subItem.subItems && (
-                                <div className="pl-3 pt-1">
-                                  {subItem.subItems.map((nestedItem) => (
-                                    <div key={nestedItem.name} className="py-1">
-                                      {nestedItem.subItems ? (
-                                        <div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {currentModules.map((module) => (
+                  <div key={module.name} className="mb-3">
+                    <button
+                      onClick={() => isSidebarCollapsed ? handleNavigation(module.href || '/settings') : toggleExpanded(module.name)}
+                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'} w-full py-2 ${isSidebarCollapsed ? 'px-1' : 'px-3'} ${!isSidebarCollapsed && 'border-b border-gray-300'}`}
+                      title={isSidebarCollapsed ? module.name : ''}
+                    >
+                      <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-2'}`}>
+                        <module.icon className="w-4 h-4" />
+                        {!isSidebarCollapsed && <span className="font-semibold text-[#1a1a1a] text-sm">{module.name}</span>}
+                      </div>
+                      {!isSidebarCollapsed && (expandedItems.includes(module.name) ? 
+                        <ChevronDown className="w-4 h-4" /> : 
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                    {expandedItems.includes(module.name) && module.subItems && (
+                      <div className="pl-3 pt-1 space-y-1">
+                        {module.subItems.map((subItem) => (
+                          <div key={subItem.name} className="pl-4">
+                            {subItem.subItems ? (
+                              <div>
+                                <button
+                                  onClick={() => toggleExpanded(subItem.name)}
+                                  className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium"
+                                >
+                                  <span className={isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
+                                    {subItem.name}
+                                  </span>
+                                  {expandedItems.includes(subItem.name) ? 
+                                    <ChevronDown className="w-3 h-3" /> : 
+                                    <ChevronRight className="w-3 h-3" />
+                                  }
+                                </button>
+                                {expandedItems.includes(subItem.name) && subItem.subItems && (
+                                  <div className="pl-3 pt-1">
+                                    {subItem.subItems.map((nestedItem) => (
+                                      <div key={nestedItem.name} className="py-1">
+                                        {nestedItem.subItems ? (
+                                          <div>
+                                            <button
+                                              onClick={() => toggleExpanded(nestedItem.name)}
+                                              className="flex items-center justify-between w-full px-2 text-sm"
+                                            >
+                                              <span className={isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
+                                                {nestedItem.name}
+                                              </span>
+                                              {expandedItems.includes(nestedItem.name) ? 
+                                                <ChevronDown className="w-3 h-3" /> : 
+                                                <ChevronRight className="w-3 h-3" />
+                                              }
+                                            </button>
+                                            {expandedItems.includes(nestedItem.name) && nestedItem.subItems && (
+                                              <div className="pl-3 pt-1">
+                                                {nestedItem.subItems.map((item) => (
+                                                  <button
+                                                    key={item.name}
+                                                    onClick={() => handleNavigation(item.href, currentSection)}
+                                                    className={`block w-full text-left px-2 py-1 text-sm ${
+                                                      isActiveRoute(item.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                                                    }`}
+                                                  >
+                                                    {item.name}
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
                                           <button
-                                            onClick={() => toggleExpanded(nestedItem.name)}
-                                            className="flex items-center justify-between w-full px-2 text-sm"
+                                            onClick={() => handleNavigation(nestedItem.href, currentSection)}
+                                            className={`block w-full text-left px-2 py-1 text-sm ${
+                                              isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                                            }`}
                                           >
-                                            <span className={isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
-                                              {nestedItem.name}
-                                            </span>
-                                            {expandedItems.includes(nestedItem.name) ? 
-                                              <ChevronDown className="w-3 h-3" /> : 
-                                              <ChevronRight className="w-3 h-3" />
-                                            }
+                                            {nestedItem.name}
                                           </button>
-                                          {expandedItems.includes(nestedItem.name) && nestedItem.subItems && (
-                                            <div className="pl-3 pt-1">
-                                              {nestedItem.subItems.map((item) => (
-                                                <button
-                                                  key={item.name}
-                                                  onClick={() => handleNavigation(item.href, currentSection)}
-                                                  className={`block w-full text-left px-2 py-1 text-sm ${
-                                                    isActiveRoute(item.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                                  }`}
-                                                >
-                                                  {item.name}
-                                                </button>
-                                              ))}
-                                            </div>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <button
-                                          onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                                          className={`block w-full text-left px-2 py-1 text-sm ${
-                                            isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                          }`}
-                                        >
-                                          {nestedItem.name}
-                                        </button>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => handleNavigation(subItem.href, currentSection)}
-                              className={`block w-full text-left px-2 py-1 text-sm font-medium ${
-                                isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                              }`}
-                            >
-                              {subItem.name}
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleNavigation(subItem.href, currentSection)}
+                                className={`block w-full text-left px-2 py-1 text-sm font-medium rounded-md ${
+                                  isActiveRoute(subItem.href) 
+                                    ? 'text-[#C72030] bg-[#f0e8dc] shadow-inner relative pl-3' 
+                                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9]/50'
+                                }`}
+                              >
+                                {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
+                                {subItem.name}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
-            currentModules.map((module) => renderMenuItem(module))
+            isSidebarCollapsed ? (
+              <div className="flex flex-col items-center space-y-5 pt-4">
+                {currentModules.map((module) => (
+                  <button
+                    key={module.name}
+                    onClick={() => module.href && handleNavigation(module.href, currentSection)}
+                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                      isActiveRoute(module.href) 
+                        ? 'bg-[#f0e8dc] shadow-inner' 
+                        : 'hover:bg-[#DBC2A9]'
+                    }`}
+                    title={module.name}
+                  >
+                    {isActiveRoute(module.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
+                    <module.icon className={`w-5 h-5 ${isActiveRoute(module.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}`} />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              currentModules.map((module) => renderMenuItem(module))
+            )
           )}
         </nav>
       </div>

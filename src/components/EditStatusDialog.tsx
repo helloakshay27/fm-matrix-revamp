@@ -1,26 +1,121 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
+import { apiClient } from '@/utils/apiClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface EditStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  complaintId?: number;
+  currentStatusId?: number;
+  currentStatus?: string;
+  onSuccess?: () => void;
 }
 
-export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) => {
+interface Status {
+  id: number;
+  name: string;
+  color_code: string;
+  fixed_state: string;
+  active: number;
+}
+
+interface Complaint {
+  id: number;
+  complaint_status_id: number;
+  issue_status: string;
+}
+
+export const EditStatusDialog = ({ 
+  open, 
+  onOpenChange, 
+  complaintId,
+  currentStatusId,
+  currentStatus,
+  onSuccess 
+}: EditStatusDialogProps) => {
+  const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [statuses, setStatuses] = useState<Status[]>([]);
   const [rootCause, setRootCause] = useState('');
   const [correctiveAction, setCorrectiveAction] = useState('');
   const [preventiveAction, setPreventiveAction] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleApply = () => {
-    console.log('Status updated:', { selectedStatus, rootCause, correctiveAction, preventiveAction });
-    onOpenChange(false);
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      try {
+        const response = await apiClient.get('/pms/admin/complaint_statuses.json');
+        setStatuses(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch statuses:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch status options",
+          variant: "destructive"
+        });
+      }
+    };
+
+    if (open) {
+      fetchStatuses();
+      // Set initial status if provided
+      if (currentStatusId) {
+        setSelectedStatus(currentStatusId.toString());
+      }
+    }
+  }, [open, currentStatusId, toast]);
+
+  const handleApply = async () => {
+    if (!complaintId || !selectedStatus) {
+      toast({
+        title: "Error",
+        description: "Please select a status",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create URL-encoded data for the PATCH request
+      const params = new URLSearchParams();
+      params.append('complaint[issue_status]', selectedStatus);
+      params.append('complaint[root_cause]', rootCause);
+      params.append('complaint[corrective_action]', correctiveAction);
+      params.append('complaint[preventive_action]', preventiveAction);
+
+      await apiClient.patch(`/pms/admin/complaints/${complaintId}.json`, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      toast({
+        title: "Success",
+        description: "Status updated successfully"
+      });
+
+      onOpenChange(false);
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -54,13 +149,11 @@ export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) 
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="on-hold">On Hold</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                {statuses.map((status) => (
+                  <SelectItem key={status.id} value={status.id.toString()}>
+                    {status.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

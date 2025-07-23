@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchInventoryData } from '@/store/slices/inventorySlice';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight } from 'lucide-react';
+import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight, Settings } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { InventoryFilterDialog } from '@/components/InventoryFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -76,10 +76,10 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
       {...listeners}
       className="cursor-move"
     >
@@ -91,10 +91,10 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 export const InventoryDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   // Redux state
   const { items: inventoryItems, loading, error, totalPages: reduxTotalPages } = useSelector((state: RootState) => state.inventory);
-  
+
   // Local state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
@@ -288,9 +288,8 @@ export const InventoryDashboard = () => {
     }
     if (columnKey === 'criticality') {
       return (
-        <span className={`px-2 py-1 rounded text-xs ${
-          item.criticality === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
-        }`}>
+        <span className={`px-2 py-1 rounded text-xs ${item.criticality === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+          }`}>
           {item.criticality}
         </span>
       );
@@ -308,12 +307,12 @@ export const InventoryDashboard = () => {
   const renderPaginationItems = () => {
     const items = [];
     const showEllipsis = totalPages > 7;
-    
+
     if (showEllipsis) {
       // Show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink 
+          <PaginationLink
             onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
           >
@@ -333,7 +332,7 @@ export const InventoryDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -349,7 +348,7 @@ export const InventoryDashboard = () => {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -372,7 +371,7 @@ export const InventoryDashboard = () => {
           if (!items.find(item => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink 
+                <PaginationLink
                   onClick={() => setCurrentPage(i)}
                   isActive={currentPage === i}
                 >
@@ -388,7 +387,7 @@ export const InventoryDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -402,7 +401,7 @@ export const InventoryDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
             >
@@ -422,24 +421,22 @@ export const InventoryDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
-      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
+
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="analytics" 
-            className="flex items-center gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
+          <TabsTrigger
+            value="analytics"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
             <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Analytics</span>
             <span className="sm:hidden">Charts</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="list" 
-            className="flex items-center gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
+          <TabsTrigger
+            value="list"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
             <Package className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Inventory List</span>
             <span className="sm:hidden">List</span>
@@ -455,9 +452,9 @@ export const InventoryDashboard = () => {
             {/* Main Content */}
             <div className="flex-1 order-2 xl:order-1">
               {/* All Charts with Drag and Drop */}
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter} 
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
@@ -486,8 +483,8 @@ export const InventoryDashboard = () => {
                                         dataKey="value"
                                         label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
                                           return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                            <text
+                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
                                               y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
                                               fill="black"
                                               textAnchor="middle"
@@ -548,8 +545,8 @@ export const InventoryDashboard = () => {
                                         dataKey="value"
                                         label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
                                           return (
-                                            <text 
-                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} 
+                                            <text
+                                              x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
                                               y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
                                               fill="black"
                                               textAnchor="middle"
@@ -588,7 +585,7 @@ export const InventoryDashboard = () => {
                             </SortableChartItem>
                           );
                         }
-                        
+
                         return null;
                       })}
                     </div>
@@ -605,7 +602,7 @@ export const InventoryDashboard = () => {
                               </div>
                               <div className="h-48 sm:h-64">
                                 <ResponsiveContainer width="100%" height="100%">
-                                  <BarChart 
+                                  <BarChart
                                     data={groupChartData}
                                     margin={{
                                       top: 20,
@@ -615,8 +612,8 @@ export const InventoryDashboard = () => {
                                     }}
                                   >
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis 
-                                      dataKey="name" 
+                                    <XAxis
+                                      dataKey="name"
                                       axisLine={false}
                                       tickLine={false}
                                       tick={{ fontSize: 10, fill: '#666' }}
@@ -625,14 +622,14 @@ export const InventoryDashboard = () => {
                                       height={60}
                                       className="sm:text-xs"
                                     />
-                                    <YAxis 
-                                      axisLine={false} 
-                                      tickLine={false} 
+                                    <YAxis
+                                      axisLine={false}
+                                      tickLine={false}
                                       tick={{ fontSize: 10, fill: '#666' }}
                                       domain={[0, 'dataMax + 1']}
                                       className="sm:text-xs"
                                     />
-                                    <Tooltip 
+                                    <Tooltip
                                       contentStyle={{
                                         backgroundColor: '#fff',
                                         border: '1px solid #ccc',
@@ -641,9 +638,9 @@ export const InventoryDashboard = () => {
                                       }}
                                       labelStyle={{ color: '#333' }}
                                     />
-                                    <Bar 
-                                      dataKey="value" 
-                                      fill="#C7B894" 
+                                    <Bar
+                                      dataKey="value"
+                                      fill="#C7B894"
                                       radius={[4, 4, 0, 0]}
                                       name="Items Count"
                                     />
@@ -663,7 +660,7 @@ export const InventoryDashboard = () => {
                                 <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Items Ageing Matrix</h3>
                                 <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
                               </div>
-                              
+
                               <div className="space-y-4 sm:space-y-6">
                                 {/* Table - Horizontally scrollable on mobile */}
                                 <div className="overflow-x-auto -mx-3 sm:mx-0">
@@ -731,7 +728,7 @@ export const InventoryDashboard = () => {
                     16/07/2025
                   </div>
                 </div>
-                
+
                 {/* Items List */}
                 <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 max-h-96 xl:max-h-none">
                   {recentItems.map((item, index) => (
@@ -746,7 +743,7 @@ export const InventoryDashboard = () => {
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Title and TAT */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                         <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{item.title}</h3>
@@ -755,7 +752,7 @@ export const InventoryDashboard = () => {
                           <span className="text-xs sm:text-sm font-bold text-blue-600">{item.tat}</span>
                         </div>
                       </div>
-                      
+
                       {/* Details */}
                       <div className="space-y-2 sm:space-y-3 mb-4">
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
@@ -764,28 +761,28 @@ export const InventoryDashboard = () => {
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.subtitle.replace('Category: ', '')}</span>
                         </div>
-                        
+
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <Package className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Sub-Category</span>
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.subcategory.replace('Sub-Category: ', '')}</span>
                         </div>
-                        
+
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-orange-400 mt-0.5 sm:mt-0"></div>
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Assignee Name</span>
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.assignee.replace('Manager: ', '')}</span>
                         </div>
-                        
+
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-400 mt-0.5 sm:mt-0"></div>
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Site</span>
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.site.replace('Site: ', '')}</span>
                         </div>
-                        
+
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Update</span>
@@ -796,31 +793,31 @@ export const InventoryDashboard = () => {
                             <span className="italic text-gray-600">Processed</span>
                           </div>
                         </div>
-                        
+
                         <div className="text-xs sm:text-sm text-gray-600 ml-5 sm:ml-7">
                           (Handled By Manager)
                         </div>
                       </div>
-                      
+
                       {/* Action Buttons */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                          <button 
+                          <button
                             className="flex items-center gap-1 sm:gap-2 text-black text-xs sm:text-sm font-medium hover:opacity-80"
                           >
                             <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                             Add Comment
                           </button>
-                          
-                          <button 
+
+                          <button
                             className="flex items-center gap-1 sm:gap-2 text-black text-xs sm:text-sm font-medium hover:opacity-80"
                           >
                             <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                             Flag Issue
                           </button>
                         </div>
-                        
-                        <button 
+
+                        <button
                           className="text-blue-600 text-xs sm:text-sm font-medium underline hover:text-blue-800 self-start sm:self-auto"
                           onClick={() => handleViewItem(item.id)}
                         >
@@ -845,6 +842,67 @@ export const InventoryDashboard = () => {
           )}
 
           <div className="overflow-x-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-3">
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {11}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {22}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {4}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
+                </div>
+              </div>
+
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {2}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
+                </div>
+              </div>
+            </div>
             <EnhancedTable
               data={paginatedData}
               columns={columns}
@@ -872,16 +930,16 @@ export const InventoryDashboard = () => {
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious 
+                    <PaginationPrevious
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                     />
                   </PaginationItem>
-                  
+
                   {renderPaginationItems()}
-                  
+
                   <PaginationItem>
-                    <PaginationNext 
+                    <PaginationNext
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                     />
