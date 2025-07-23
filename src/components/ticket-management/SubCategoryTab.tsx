@@ -203,8 +203,12 @@ export const SubCategoryTab: React.FC = () => {
       })) || [];
       setWings(wingsList);
 
-      // Process zones (if available)
-      setZones(zonesResponse || []);
+      // Process zones
+      const zonesList = zonesResponse?.zones?.map(zone => ({
+        id: zone.id,
+        name: zone.name
+      })) || [];
+      setZones(zonesList);
 
       // Process floors
       const floorsList = floorsResponse?.floors?.map(floor => ({
@@ -587,7 +591,6 @@ export const SubCategoryTab: React.FC = () => {
                   </div>
                 )}
 
-                {/* Similar sections for wing, zone, floor, room */}
                 {form.watch('wing') && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Select Wings</label>
@@ -601,6 +604,63 @@ export const SubCategoryTab: React.FC = () => {
                             }
                           />
                           <label className="text-sm">{wing.name}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {form.watch('zone') && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Select Zones</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
+                      {zones.map((zone) => (
+                        <div key={zone.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={selectedZones.includes(zone.id)}
+                            onCheckedChange={() => 
+                              handleMultiSelect(zone.id.toString(), selectedZones, setSelectedZones)
+                            }
+                          />
+                          <label className="text-sm">{zone.name}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {form.watch('floor') && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Select Floors</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
+                      {floors.map((floor) => (
+                        <div key={floor.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={selectedFloors.includes(floor.id)}
+                            onCheckedChange={() => 
+                              handleMultiSelect(floor.id.toString(), selectedFloors, setSelectedFloors)
+                            }
+                          />
+                          <label className="text-sm">{floor.name}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {form.watch('room') && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Select Rooms</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
+                      {rooms.map((room) => (
+                        <div key={room.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={selectedRooms.includes(room.id)}
+                            onCheckedChange={() => 
+                              handleMultiSelect(room.id.toString(), selectedRooms, setSelectedRooms)
+                            }
+                          />
+                          <label className="text-sm">{room.name}</label>
                         </div>
                       ))}
                     </div>
