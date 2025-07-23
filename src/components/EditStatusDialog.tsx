@@ -7,15 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
-import { useToast } from '@/hooks/use-toast';
 
 interface EditStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  complaint?: {
-    id: number;
-    complaint_status_id: number;
-  };
 }
 
 interface Status {
@@ -26,14 +21,12 @@ interface Status {
   active: number;
 }
 
-export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDialogProps) => {
+export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) => {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [rootCause, setRootCause] = useState('');
   const [correctiveAction, setCorrectiveAction] = useState('');
   const [preventiveAction, setPreventiveAction] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchStatuses = async () => {
@@ -50,56 +43,9 @@ export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDi
     }
   }, [open]);
 
-  useEffect(() => {
-    if (complaint && open) {
-      setSelectedStatus(complaint.complaint_status_id.toString());
-    }
-  }, [complaint, open]);
-
-  const handleApply = async () => {
-    if (!complaint || !selectedStatus) {
-      toast({
-        title: "Error",
-        description: "Please select a status before applying changes.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('complaint[issue_status]', selectedStatus);
-      formData.append('complaint[root_cause]', rootCause);
-      formData.append('complaint[corrective_action]', correctiveAction);
-      formData.append('complaint[preventive_action]', preventiveAction);
-
-      await apiClient.patch(`/pms/admin/complaints/${complaint.id}.json`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      toast({
-        title: "Success",
-        description: "Status updated successfully.",
-      });
-      
-      onOpenChange(false);
-      // Reset form after successful update
-      setRootCause('');
-      setCorrectiveAction('');
-      setPreventiveAction('');
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update status. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleApply = () => {
+    console.log('Status updated:', { selectedStatus, rootCause, correctiveAction, preventiveAction });
+    onOpenChange(false);
   };
 
   const handleReset = () => {
@@ -185,10 +131,9 @@ export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDi
           <div className="flex gap-3 pt-4">
             <Button 
               onClick={handleApply}
-              disabled={isLoading}
-              className="bg-[#8B4B8C] hover:bg-[#7A427B] text-white flex-1 disabled:opacity-50"
+              className="bg-[#8B4B8C] hover:bg-[#7A427B] text-white flex-1"
             >
-              {isLoading ? 'Updating...' : 'Apply'}
+              Apply
             </Button>
             <Button 
               onClick={handleReset}
