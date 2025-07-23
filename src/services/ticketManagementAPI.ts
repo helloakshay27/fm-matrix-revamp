@@ -316,8 +316,15 @@ export const ticketManagementAPI = {
   },
 
   async getCategories() {
-    const response = await apiClient.get('/pms/admin/helpdesk_categories.json');
-    return response.data;
+    try {
+      console.log('Fetching categories from:', '/pms/admin/helpdesk_categories.json');
+      const response = await apiClient.get('/pms/admin/helpdesk_categories.json');
+      console.log('Categories response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
   },
 
   async getSites(userId: string) {
