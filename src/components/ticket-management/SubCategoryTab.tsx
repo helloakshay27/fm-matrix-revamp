@@ -28,6 +28,11 @@ import { toast } from 'sonner';
 import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
+import { fetchBuildings } from '@/store/slices/buildingsSlice';
+import { fetchWings } from '@/store/slices/wingsSlice';
+import { fetchFloors } from '@/store/slices/floorsSlice';
+import { fetchZones } from '@/store/slices/zonesSlice';
+import { fetchRooms } from '@/store/slices/roomsSlice';
 
 const subCategorySchema = z.object({
   category: z.string().min(1, 'Category selection is required'),
@@ -117,17 +122,29 @@ interface FloorsResponse {
 
 export const SubCategoryTab: React.FC = () => {
   const dispatch = useAppDispatch();
+  
+  // Redux selectors
   const { data: helpdeskCategoriesData, loading: categoriesLoading } = useAppSelector(
     (state) => state.helpdeskCategories
+  );
+  const { data: buildingsData, loading: buildingsLoading } = useAppSelector(
+    (state) => state.buildings
+  );
+  const { data: wingsData, loading: wingsLoading } = useAppSelector(
+    (state) => state.wings
+  );
+  const { data: floorsData, loading: floorsLoading } = useAppSelector(
+    (state) => state.floors
+  );
+  const { data: zonesData, loading: zonesLoading } = useAppSelector(
+    (state) => state.zones
+  );
+  const { data: roomsData, loading: roomsLoading } = useAppSelector(
+    (state) => state.rooms
   );
 
   const [subCategories, setSubCategories] = useState<SubCategoryType[]>([]);
   const [engineers, setEngineers] = useState<Engineer[]>([]);
-  const [buildings, setBuildings] = useState<LocationOption[]>([]);
-  const [wings, setWings] = useState<LocationOption[]>([]);
-  const [zones, setZones] = useState<LocationOption[]>([]);
-  const [floors, setFloors] = useState<LocationOption[]>([]);
-  const [rooms, setRooms] = useState<LocationOption[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -142,8 +159,13 @@ export const SubCategoryTab: React.FC = () => {
   const [selectedFloors, setSelectedFloors] = useState<number[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
 
-  // Get categories from Redux state
+  // Get data from Redux state
   const availableCategories = helpdeskCategoriesData?.helpdesk_categories || [];
+  const availableBuildings = buildingsData?.buildings || [];
+  const availableWings = wingsData?.wings || [];
+  const availableFloors = floorsData?.floors || [];
+  const availableZones = zonesData?.zones || [];
+  const availableRooms = roomsData?.rooms || [];
 
   const getCategoryName = (categoryId: number) => {
     const category = availableCategories.find(cat => cat.id === categoryId);
@@ -166,6 +188,11 @@ export const SubCategoryTab: React.FC = () => {
   useEffect(() => {
     console.log('SubCategoryTab mounted, fetching data...');
     dispatch(fetchHelpdeskCategories());
+    dispatch(fetchBuildings());
+    dispatch(fetchWings());
+    dispatch(fetchFloors());
+    dispatch(fetchZones());
+    dispatch(fetchRooms());
     fetchData();
   }, [dispatch]);
 
@@ -175,20 +202,10 @@ export const SubCategoryTab: React.FC = () => {
     try {
       const [
         engineersResponse,
-        subCategoriesResponse,
-        buildingsResponse,
-        wingsResponse,
-        zonesResponse,
-        floorsResponse,
-        roomsResponse
+        subCategoriesResponse
       ] = await Promise.all([
         ticketManagementAPI.getEngineers(),
-        ticketManagementAPI.getSubCategories(),
-        ticketManagementAPI.getBuildings(),
-        ticketManagementAPI.getWings(),
-        ticketManagementAPI.getFloors(),
-        ticketManagementAPI.getZones(),
-        ticketManagementAPI.getRooms(),
+        ticketManagementAPI.getSubCategories()
       ]);
 
       // Process engineers - extract from fm_users array
@@ -201,37 +218,6 @@ export const SubCategoryTab: React.FC = () => {
 
       // Process sub-categories
       setSubCategories(subCategoriesResponse?.sub_categories || []);
-
-      // Process buildings - handle single building or array
-      const buildingsList = Array.isArray(buildingsResponse) 
-        ? buildingsResponse 
-        : buildingsResponse ? [buildingsResponse] : [];
-      setBuildings(buildingsList);
-
-      // Process wings
-      const wingsList = wingsResponse?.wings?.map(wing => ({
-        id: wing.id,
-        name: wing.name
-      })) || [];
-      setWings(wingsList);
-
-      // Process zones
-      const zonesList = zonesResponse?.zones?.map(zone => ({
-        id: zone.id,
-        name: zone.name
-      })) || [];
-      setZones(zonesList);
-
-      // Process floors
-      const floorsList = floorsResponse?.floors?.map(floor => ({
-        id: floor.id,
-        name: floor.name
-      })) || [];
-      setFloors(floorsList);
-
-      // Process rooms - handle array response
-      const roomsList = Array.isArray(roomsResponse) ? roomsResponse : [];
-      setRooms(roomsList);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -597,7 +583,7 @@ export const SubCategoryTab: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">Select Buildings</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                      {buildings.map((building) => (
+                      {availableBuildings.map((building) => (
                         <div key={building.id} className="flex items-center space-x-2">
                           <Checkbox
                             checked={selectedBuildings.includes(building.id)}
@@ -616,7 +602,7 @@ export const SubCategoryTab: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">Select Wings</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                      {wings.map((wing) => (
+                      {availableWings.map((wing) => (
                         <div key={wing.id} className="flex items-center space-x-2">
                           <Checkbox
                             checked={selectedWings.includes(wing.id)}
@@ -635,7 +621,7 @@ export const SubCategoryTab: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">Select Zones</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                      {zones.map((zone) => (
+                      {availableZones.map((zone) => (
                         <div key={zone.id} className="flex items-center space-x-2">
                           <Checkbox
                             checked={selectedZones.includes(zone.id)}
@@ -654,7 +640,7 @@ export const SubCategoryTab: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">Select Floors</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                      {floors.map((floor) => (
+                       {availableFloors.map((floor) => (
                         <div key={floor.id} className="flex items-center space-x-2">
                           <Checkbox
                             checked={selectedFloors.includes(floor.id)}
@@ -673,7 +659,7 @@ export const SubCategoryTab: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">Select Rooms</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                      {rooms.map((room) => (
+                      {availableRooms.map((room) => (
                         <div key={room.id} className="flex items-center space-x-2">
                           <Checkbox
                             checked={selectedRooms.includes(room.id)}

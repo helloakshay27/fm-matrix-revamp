@@ -35,6 +35,11 @@ import serviceFilterReducer from './slices/serviceFilterSlice'
 import { inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
 import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
 import { ecoFriendlyListReducer } from './slices/ecoFriendlyListSlice'
+import buildingsReducer from './slices/buildingsSlice'
+import wingsReducer from './slices/wingsSlice'
+import floorsReducer from './slices/floorsSlice'
+import zonesReducer from './slices/zonesSlice'
+import roomsReducer from './slices/roomsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -74,6 +79,11 @@ export const store = configureStore({
   inventoryConsumption: inventoryConsumptionReducer,
   inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
   ecoFriendlyList: ecoFriendlyListReducer,
+  buildings: buildingsReducer,
+  wings: wingsReducer,
+  floors: floorsReducer,
+  zones: zonesReducer,
+  rooms: roomsReducer,
   },
 })
 
