@@ -117,6 +117,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
   
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
@@ -135,8 +136,13 @@ export function EnhancedTable<T extends Record<string, any>>({
     storageKey
   });
 
-  // Filter data based on search term
+  // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
+    // If we have API search results, use them instead of filtering original data
+    if (apiSearchResults) {
+      return apiSearchResults;
+    }
+    
     if (!searchTerm) return baseSortedData;
     
     return baseSortedData.filter(item =>
@@ -144,7 +150,7 @@ export function EnhancedTable<T extends Record<string, any>>({
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [baseSortedData, searchTerm]);
+  }, [baseSortedData, searchTerm, apiSearchResults]);
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
@@ -226,11 +232,10 @@ export function EnhancedTable<T extends Record<string, any>>({
 
       if (response.ok) {
         const data = await response.json();
-        // Update the data with search results - this would need to be passed up to parent component
-        console.log('Search results:', data.complaints);
-        // For now, just update the internal search term
-        setInternalSearchTerm(searchInput);
+        // Set the API search results to be used by the table
+        setApiSearchResults(data.complaints || []);
         setCurrentPage(1);
+        setInternalSearchTerm(searchInput);
         if (onSearchChange) {
           onSearchChange(searchInput);
         }
@@ -248,6 +253,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const handleClearSearch = () => {
     setSearchInput('');
     setInternalSearchTerm('');
+    setApiSearchResults(null);
     setCurrentPage(1);
     if (onSearchChange) {
       onSearchChange('');
