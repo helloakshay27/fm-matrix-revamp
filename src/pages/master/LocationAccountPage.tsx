@@ -62,12 +62,14 @@ export const LocationAccountPage = () => {
   ]);
 
   const [userCategories, setUserCategories] = useState([
-    { name: 'Admin', status: true },
-    { name: 'Manager', status: true },
-    { name: 'Employee', status: true },
-    { name: 'Contractor', status: false },
-    { name: 'Visitor', status: false },
+    { id: 1, name: 'Admin', category: 'Management' },
+    { id: 2, name: 'Manager', category: 'Management' },
+    { id: 3, name: 'Employee', category: 'Staff' },
+    { id: 4, name: 'Contractor', category: 'External' },
+    { id: 5, name: 'Visitor', category: 'Guest' },
   ]);
+  const [isEditUserCategoryOpen, setIsEditUserCategoryOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<{id: number, name: string, category: string} | null>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -127,10 +129,23 @@ export const LocationAccountPage = () => {
     setEntities(updatedEntities);
   };
 
-  const handleUserCategoryStatusChange = (index: number, checked: boolean) => {
-    const updatedCategories = [...userCategories];
-    updatedCategories[index].status = checked;
+  const handleEditUserCategory = (category: any) => {
+    setEditingCategory(category);
+    setIsEditUserCategoryOpen(true);
+  };
+
+  const handleUpdateUserCategory = () => {
+    if (!editingCategory || !editingCategory.name.trim()) {
+      toast.error('Please enter a user category name');
+      return;
+    }
+    const updatedCategories = userCategories.map(cat => 
+      cat.id === editingCategory.id ? {...editingCategory} : cat
+    );
     setUserCategories(updatedCategories);
+    toast.success('User category updated successfully');
+    setEditingCategory(null);
+    setIsEditUserCategoryOpen(false);
   };
 
   const handleSubmitUserCategory = () => {
@@ -138,7 +153,11 @@ export const LocationAccountPage = () => {
       toast.error('Please enter a user category name');
       return;
     }
-    const newCategory = { name: userCategoryName, status: true };
+    const newCategory = { 
+      id: userCategories.length + 1, 
+      name: userCategoryName, 
+      category: 'General' 
+    };
     setUserCategories([...userCategories, newCategory]);
     toast.success('User category added successfully');
     setUserCategoryName('');
@@ -790,19 +809,24 @@ export const LocationAccountPage = () => {
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-semibold">User Category Name</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Category</TableHead>
+                    <TableHead className="font-semibold">Edit</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {userCategories.map((category, index) => (
                     <TableRow key={index}>
                       <TableCell>{category.name}</TableCell>
+                      <TableCell>{category.category}</TableCell>
                       <TableCell>
-                        <Switch 
-                          checked={category.status} 
-                          onCheckedChange={(checked) => handleUserCategoryStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-                        />
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleEditUserCategory(category)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -810,6 +834,52 @@ export const LocationAccountPage = () => {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Edit User Category Dialog */}
+          <Dialog open={isEditUserCategoryOpen} onOpenChange={setIsEditUserCategoryOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit User Category</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    User Category Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCategory?.name || ''}
+                    onChange={(e) => setEditingCategory(editingCategory ? {...editingCategory, name: e.target.value} : null)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    placeholder="Enter user category name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCategory?.category || ''}
+                    onChange={(e) => setEditingCategory(editingCategory ? {...editingCategory, category: e.target.value} : null)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    placeholder="Enter category"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsEditUserCategoryOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={handleUpdateUserCategory}
+                  >
+                    Update User Category
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
       </Tabs>
     </div>
