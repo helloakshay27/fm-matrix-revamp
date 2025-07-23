@@ -422,10 +422,6 @@ export const InventoryDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">INVENTORY DASHBOARD</h1>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 

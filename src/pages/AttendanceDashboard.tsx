@@ -277,16 +277,9 @@ export const AttendanceDashboard = () => {
     }
     return items;
   };
-  const getHeading = () => {
-    if (activeTab === "analytics") return "Attendance Analytics";
-    return "Attendance List";
-  };
+
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-        <div className="mb-6">
-            <p className="text-[#1a1a1a] opacity-70 mb-2">Attendance &gt; Attendance List</p>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">{getHeading().toUpperCase()}</h1>
-          </div>
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="attendancelist" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 
@@ -520,13 +513,7 @@ export const AttendanceDashboard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="attendancelist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Header */}
-          <div className="mb-6">
-            
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE LIST</h1>
-          </div>
-
+        <TabsContent value="attendancelist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">         
           {/* Enhanced Table */}
           <EnhancedTable 
             data={paginatedData} 

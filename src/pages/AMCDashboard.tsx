@@ -460,19 +460,9 @@ export const AMCDashboard = () => {
     return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
   }).length;
 
-  const getHeading = () => {
-    if (activeTab === "analytics") return "AMC ANALYTICS";
-    return "AMC LIST";
-  };
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      <div className="mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
-          {getHeading()}
-        </h1>
-      </div>
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
@@ -738,14 +728,6 @@ export const AMCDashboard = () => {
 
         <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Header */}
-          <div className="mb-6">
-            
-            <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">
-              AMC LIST
-            </h1>
-          </div>
-
-
           {/* Loading State */}
           {loading && (
             <div className="flex justify-center items-center py-8">

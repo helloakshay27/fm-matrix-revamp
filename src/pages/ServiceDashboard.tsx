@@ -326,12 +326,6 @@ export const ServiceDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        
-        <h1 className="font-semibold text-lg sm:text-2xl">SERVICE LIST</h1>
-      </div>
-
-
       {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center py-8">
