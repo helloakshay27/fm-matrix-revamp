@@ -46,7 +46,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
       .join(', ')} and ${selectedCount - 2} more`;
   };
 
-  if (selectedCount === 0) return null;
+  
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
