@@ -531,11 +531,20 @@ export const TicketDashboard = () => {
     console.log('TicketDashboard - Single flag action for ticket:', ticketId);
     try {
       await ticketManagementAPI.markAsFlagged([ticketId]);
+      
+      // Update the ticket locally without refetching
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, is_flagged: !currentFlagStatus }
+            : ticket
+        )
+      );
+      
       toast({
         title: "Success",
-        description: currentFlagStatus ? "Ticket unflagged successfully" : "Ticket flagged successfully"
+        description: "Ticket Flagged successfully!"
       });
-      await fetchTickets(currentPage);
     } catch (error) {
       console.error('Single flag action failed:', error);
       toast({
