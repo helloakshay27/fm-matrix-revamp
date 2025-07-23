@@ -237,6 +237,7 @@ export const CategoryTypeTab: React.FC = () => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          // Don't set Content-Type header when using FormData with files
         },
         body: formData,
       });
