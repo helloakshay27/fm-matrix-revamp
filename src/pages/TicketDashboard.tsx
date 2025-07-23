@@ -554,6 +554,34 @@ export const TicketDashboard = () => {
       });
     }
   };
+
+  const handleSingleTicketGoldenTicket = async (ticketId: number, currentGoldenStatus: boolean) => {
+    console.log('TicketDashboard - Single golden ticket action for ticket:', ticketId);
+    try {
+      const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
+      
+      // Update the ticket locally without refetching
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, is_golden_ticket: !currentGoldenStatus }
+            : ticket
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: response.message || "Golden Ticket Flagged successfully!"
+      });
+    } catch (error) {
+      console.error('Single golden ticket action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark as golden ticket",
+        variant: "destructive"
+      });
+    }
+  };
   const handleExport = async () => {
     console.log('TicketDashboard - Export action for tickets:', selectedTickets);
     try {
@@ -791,7 +819,7 @@ export const TicketDashboard = () => {
               }`}
               onClick={(e) => {
                 e.stopPropagation();
-                handleGoldenTicket();
+                handleSingleTicketGoldenTicket(item.id, item.is_golden_ticket);
               }}
             />
           </div>
