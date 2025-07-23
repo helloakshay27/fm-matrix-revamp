@@ -101,9 +101,9 @@ export const TicketDetailsPage = () => {
             <Button onClick={handleFeeds} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               Feeds
             </Button>
-            <Button onClick={handleTagVendor} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+            {/* <Button onClick={handleTagVendor} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               Tag Vendor
-            </Button>
+            </Button> */}
             <Button onClick={handleCreateTask} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               Create Task
             </Button>
