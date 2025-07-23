@@ -14,7 +14,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AMCSelector } from '@/components/AMCSelector';
 import { RecentAMCSidebar } from '@/components/RecentAMCSidebar';
-import { SelectionPanel } from '@/components/reusable/SelectionPanel';
 import {
   Pagination,
   PaginationContent,
@@ -88,7 +87,6 @@ export const AMCDashboard = () => {
   const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showActionPanel, setShowActionPanel] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
   ]);
@@ -123,17 +121,8 @@ export const AMCDashboard = () => {
     paginatedDataLength: paginatedData.length
   });
 
-  const handleActionClick = () => {
-    setShowActionPanel(true);
-  };
-
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
-  };
-
-  const handleImportClick = () => {
-    console.log('Import clicked');
-    // Add import functionality here
   };
 
   const handleViewDetails = (id: number) => {
@@ -149,28 +138,16 @@ export const AMCDashboard = () => {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(amcData.map(item => item.id.toString()));
-      setShowActionPanel(true);
     } else {
       setSelectedItems([]);
-      setShowActionPanel(false);
     }
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
-      setSelectedItems(prev => {
-        const newSelection = [...prev, itemId];
-        setShowActionPanel(true);
-        return newSelection;
-      });
+      setSelectedItems(prev => [...prev, itemId]);
     } else {
-      setSelectedItems(prev => {
-        const newSelection = prev.filter(id => id !== itemId);
-        if (newSelection.length === 0) {
-          setShowActionPanel(false);
-        }
-        return newSelection;
-      });
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
     }
   };
 
@@ -180,59 +157,6 @@ export const AMCDashboard = () => {
     setSelectedItems([]);
     // In a real implementation, you would make an API call to delete the selected items
   };
-
-  const handleClearSelection = () => {
-    setSelectedItems([]);
-    setShowActionPanel(false);
-  };
-
-  const handleExportSelected = () => {
-    console.log('Export selected AMCs:', selectedItems);
-    // Implement export functionality
-  };
-
-  const handleUpdateSelected = () => {
-    console.log('Update selected AMCs:', selectedItems);
-    // Implement bulk update functionality
-  };
-
-  const handleFlagSelected = () => {
-    console.log('Flag selected AMCs:', selectedItems);
-    // Implement flag functionality
-  };
-
-  // Get selected AMC objects
-  const selectedAMCObjects = amcData.filter(amc => 
-    selectedItems.includes(amc.id.toString())
-  );
-
-  // Selection panel actions
-  const selectionActions = [
-    {
-      label: 'Export',
-      icon: Download,
-      onClick: handleExportSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Update',
-      icon: Clock,
-      onClick: handleUpdateSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Flag',
-      icon: AlertCircle,
-      onClick: handleFlagSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Delete',
-      icon: Trash2,
-      onClick: () => handleBulkDelete(selectedAMCObjects),
-      variant: 'destructive' as const,
-    },
-  ];
 
   const handleSelectionChange = (selectedSections: string[]) => {
     setVisibleSections(selectedSections);
@@ -809,26 +733,13 @@ export const AMCDashboard = () => {
               pagination={false}
               leftActions={
                 <Button 
-                  onClick={handleActionClick} 
+                  onClick={handleAddClick} 
                   className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Action
+                  Add
                 </Button>
               }
-            />
-          )}
-
-          {/* Selection Panel */}
-          {showActionPanel && (
-            <SelectionPanel
-              selectedCount={selectedItems.length}
-              entityName="AMC"
-              selectedItems={selectedAMCObjects}
-              actions={selectionActions}
-              onAdd={handleAddClick}
-              onImport={handleImportClick}
-              onClearSelection={handleClearSelection}
             />
           )}
 
