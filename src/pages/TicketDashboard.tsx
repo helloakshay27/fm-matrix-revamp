@@ -728,7 +728,7 @@ export const TicketDashboard = () => {
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
               onClick={(e) => {
                 e.stopPropagation();
-                handleViewDetails(item.ticket_number);
+                handleViewDetails(item.id);
               }}
             />
           </div>
@@ -1071,7 +1071,7 @@ export const TicketDashboard = () => {
                   pagination={false} 
                   enableExport={true} 
                   exportFileName="tickets" 
-                  onRowClick={ticket => handleViewDetails(ticket.ticket_number)} 
+                  onRowClick={ticket => handleViewDetails(ticket.id)} 
                   storageKey="tickets-table" 
                   enableSelection={true} 
                   selectedItems={selectedTickets.map(id => id.toString())} 
