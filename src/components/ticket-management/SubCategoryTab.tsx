@@ -150,10 +150,12 @@ export const SubCategoryTab: React.FC = () => {
   });
 
   useEffect(() => {
+    console.log('SubCategoryTab mounted, fetching data...');
     fetchData();
   }, []);
 
   const fetchData = async () => {
+    console.log('Starting fetchData...');
     setIsLoading(true);
     try {
       const [
@@ -390,11 +392,20 @@ export const SubCategoryTab: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
+                          {(() => {
+                            console.log('Rendering categories in dropdown:', categories);
+                            return categories.length === 0 ? (
+                              <SelectItem value="no-categories" disabled>
+                                No categories available
+                              </SelectItem>
+                            ) : (
+                              categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id.toString()}>
+                                  {category.name}
+                                </SelectItem>
+                              ))
+                            );
+                          })()}
                         </SelectContent>
                       </Select>
                       <FormMessage />
