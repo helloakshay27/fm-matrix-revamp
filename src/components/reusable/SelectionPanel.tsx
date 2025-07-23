@@ -52,15 +52,16 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center pb-32 pointer-events-none">
-      <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 pointer-events-auto w-fit mx-4">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-6 pointer-events-auto w-fit mx-4">
         <div className="flex items-center justify-center gap-2">
           {/* Add button */}
           <Button
             variant="outline"
+            size="lg"
             onClick={onAdd}
             className="flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             Add
           </Button>
 
@@ -68,10 +69,11 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
           {onImport && (
             <Button
               variant="outline"
+              size="lg"
               onClick={onImport}
               className="flex items-center gap-2"
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-5 h-5" />
               Import
             </Button>
           )}
@@ -83,11 +85,12 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
               <Button
                 key={index}
                 variant={action.variant || 'outline'}
+                size="lg"
                 onClick={action.onClick}
                 disabled={action.loading}
                 className="flex items-center gap-2"
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-5 h-5" />
                 {action.label}
               </Button>
             );
