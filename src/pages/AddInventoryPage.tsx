@@ -20,11 +20,11 @@ export const AddInventoryPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
   const { assets = [], loading = false } = inventoryAssetsState || {};
-  
+
   const suppliersState = useSelector((state: RootState) => state.suppliers);
   const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
   const suppliersLoading = suppliersState?.loading || false;
-  
+
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
   const [taxApplicable, setTaxApplicable] = useState(false);
@@ -97,9 +97,9 @@ export const AddInventoryPage = () => {
       },
       tax_applicable: taxApplicable ? 1 : 0
     };
-    
+
     console.log('Submitting inventory payload:', payload);
-    
+
     try {
       const response = await fetch(getFullUrl('/pms/inventories.json'), {
         method: 'POST',
@@ -113,18 +113,18 @@ export const AddInventoryPage = () => {
       if (response.ok) {
         const result = await response.json();
         console.log('Inventory created successfully:', result);
-        
+
         toast({
           title: "Inventory Created",
           description: "Inventory has been successfully created."
         });
-        
+
         navigate(-1);
       } else {
         console.error('Failed to create inventory:', response.status, response.statusText);
         const errorData = await response.text();
         console.error('Error response:', errorData);
-        
+
         toast({
           title: "Error",
           description: "Failed to create inventory. Please try again.",
@@ -133,7 +133,7 @@ export const AddInventoryPage = () => {
       }
     } catch (error) {
       console.error('Error creating inventory:', error);
-      
+
       toast({
         title: "Error",
         description: "Failed to create inventory. Please try again.",
@@ -216,7 +216,7 @@ export const AddInventoryPage = () => {
             </div>
             {inventoryDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
-          
+
           {inventoryDetailsExpanded && (
             <div className="p-6 pt-0 space-y-6">
               {/* Inventory Type */}
@@ -272,6 +272,18 @@ export const AddInventoryPage = () => {
                   <FormControlLabel value="non-critical" control={<Radio />} label="Non-Critical" />
                 </RadioGroup>
               </div>
+
+              <div className="flex items-center space-x-2">
+                <label htmlFor="eco-friendly" className="text-sm font-medium text-black">
+                  Eco-friendly Inventory
+                </label>
+                <Checkbox
+                  id="eco-friendly"
+                  checked={ecoFriendly}
+                  onCheckedChange={(checked) => setEcoFriendly(checked === true)}
+                />
+              </div>
+
 
 
               {/* Form Grid - First Row */}
@@ -526,12 +538,12 @@ export const AddInventoryPage = () => {
             </div>
             {taxDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
-          
+
           {taxDetailsExpanded && (
             <div className="p-6 pt-0 space-y-6">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="tax-applicable" 
+                <Checkbox
+                  id="tax-applicable"
                   checked={taxApplicable}
                   onCheckedChange={(checked) => setTaxApplicable(checked === true)}
                 />
@@ -606,7 +618,7 @@ export const AddInventoryPage = () => {
 
         {/* Submit Button */}
         <div className="p-6">
-          <Button 
+          <Button
             onClick={handleSubmit}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
           >
