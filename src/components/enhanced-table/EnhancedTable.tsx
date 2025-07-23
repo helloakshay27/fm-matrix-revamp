@@ -531,7 +531,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="px-6 py-4 w-12 text-left" data-checkbox>
+                        <TableCell className="w-12 px-6 py-4 text-left align-middle" data-checkbox>
                           <div className="flex justify-start">
                             <Checkbox
                               checked={isSelected}
@@ -546,13 +546,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="px-6 py-4 text-left whitespace-nowrap">
+                          <TableCell key={column.key} className="px-6 py-4 text-left align-middle whitespace-nowrap">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="px-6 py-4 text-left" data-actions>
+                        <TableCell className="px-6 py-4 text-left align-middle" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
