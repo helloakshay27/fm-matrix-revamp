@@ -64,6 +64,7 @@ export function BuildingPage() {
   }, [dispatch]);
 
   const filteredBuildings = useMemo(() => {
+    if (!buildings.data || !Array.isArray(buildings.data)) return [];
     return buildings.data.filter((building) => {
       const matchesSearch = building.name.toLowerCase().includes(search.toLowerCase()) ||
                            building.site_id.toLowerCase().includes(search.toLowerCase());
@@ -156,6 +157,7 @@ export function BuildingPage() {
   };
 
   const getSiteName = (siteId: string) => {
+    if (!sites.data || !Array.isArray(sites.data)) return siteId;
     const site = sites.data.find(s => s.id.toString() === siteId);
     return site ? site.site_name : siteId;
   };
@@ -195,7 +197,7 @@ export function BuildingPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sites.data.map((site) => (
+                          {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
                             <SelectItem key={site.id} value={site.id.toString()}>
                               {site.site_name}
                             </SelectItem>
@@ -348,7 +350,7 @@ export function BuildingPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sites</SelectItem>
-                {sites.data.map((site) => (
+                {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
                   <SelectItem key={site.id} value={site.id.toString()}>
                     {site.site_name}
                   </SelectItem>
@@ -489,7 +491,7 @@ export function BuildingPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {sites.data.map((site) => (
+                        {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
                           <SelectItem key={site.id} value={site.id.toString()}>
                             {site.site_name}
                           </SelectItem>
