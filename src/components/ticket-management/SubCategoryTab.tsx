@@ -26,6 +26,13 @@ import { EditSubCategoryModal } from './modals/EditSubCategoryModal';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
+import { fetchBuildings } from '@/store/slices/buildingsSlice';
+import { fetchWings } from '@/store/slices/wingsSlice';
+import { fetchFloors } from '@/store/slices/floorsSlice';
+import { fetchZones } from '@/store/slices/zonesSlice';
+import { fetchRooms } from '@/store/slices/roomsSlice';
 
 const subCategorySchema = z.object({
   category: z.string().min(1, 'Category selection is required'),
@@ -114,14 +121,30 @@ interface FloorsResponse {
 }
 
 export const SubCategoryTab: React.FC = () => {
+  const dispatch = useAppDispatch();
+  
+  // Redux selectors
+  const { data: helpdeskCategoriesData, loading: categoriesLoading } = useAppSelector(
+    (state) => state.helpdeskCategories
+  );
+  const { data: buildingsData, loading: buildingsLoading } = useAppSelector(
+    (state) => state.buildings
+  );
+  const { data: wingsData, loading: wingsLoading } = useAppSelector(
+    (state) => state.wings
+  );
+  const { data: floorsData, loading: floorsLoading } = useAppSelector(
+    (state) => state.floors
+  );
+  const { data: zonesData, loading: zonesLoading } = useAppSelector(
+    (state) => state.zones
+  );
+  const { data: roomsData, loading: roomsLoading } = useAppSelector(
+    (state) => state.rooms
+  );
+
   const [subCategories, setSubCategories] = useState<SubCategoryType[]>([]);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [engineers, setEngineers] = useState<Engineer[]>([]);
-  const [buildings, setBuildings] = useState<LocationOption[]>([]);
-  const [wings, setWings] = useState<LocationOption[]>([]);
-  const [zones, setZones] = useState<LocationOption[]>([]);
-  const [floors, setFloors] = useState<LocationOption[]>([]);
-  const [rooms, setRooms] = useState<LocationOption[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -135,6 +158,19 @@ export const SubCategoryTab: React.FC = () => {
   const [selectedZones, setSelectedZones] = useState<number[]>([]);
   const [selectedFloors, setSelectedFloors] = useState<number[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
+
+  // Get data from Redux state
+  const availableCategories = helpdeskCategoriesData?.helpdesk_categories || [];
+  const availableBuildings = buildingsData?.buildings || [];
+  const availableWings = wingsData?.wings || [];
+  const availableFloors = floorsData?.floors || [];
+  const availableZones = zonesData?.zones || [];
+  const availableRooms = roomsData?.rooms || [];
+
+  const getCategoryName = (categoryId: number) => {
+    const category = availableCategories.find(cat => cat.id === categoryId);
+    return category?.name || 'Unknown Category';
+  };
 
   const form = useForm<SubCategoryFormData>({
     resolver: zodResolver(subCategorySchema),
@@ -150,34 +186,27 @@ export const SubCategoryTab: React.FC = () => {
   });
 
   useEffect(() => {
+    console.log('SubCategoryTab mounted, fetching data...');
+    dispatch(fetchHelpdeskCategories());
+    dispatch(fetchBuildings());
+    dispatch(fetchWings());
+    dispatch(fetchFloors());
+    dispatch(fetchZones());
+    dispatch(fetchRooms());
     fetchData();
-  }, []);
+  }, [dispatch]);
 
   const fetchData = async () => {
+    console.log('Starting fetchData...');
     setIsLoading(true);
     try {
       const [
-        categoriesResponse,
         engineersResponse,
-        subCategoriesResponse,
-        buildingsResponse,
-        wingsResponse,
-        zonesResponse,
-        floorsResponse,
-        roomsResponse
+        subCategoriesResponse
       ] = await Promise.all([
-        ticketManagementAPI.getCategories(),
         ticketManagementAPI.getEngineers(),
-        ticketManagementAPI.getSubCategories(),
-        ticketManagementAPI.getBuildings(),
-        ticketManagementAPI.getWings(),
-        ticketManagementAPI.getFloors(),
-        ticketManagementAPI.getZones(),
-        ticketManagementAPI.getRooms(),
+        ticketManagementAPI.getSubCategories()
       ]);
-
-      // Process categories - includes name and icon_url
-      setCategories(categoriesResponse?.helpdesk_categories || []);
 
       // Process engineers - extract from fm_users array
       const formattedEngineers = engineersResponse?.fm_users?.map(user => ({
@@ -189,33 +218,6 @@ export const SubCategoryTab: React.FC = () => {
 
       // Process sub-categories
       setSubCategories(subCategoriesResponse?.sub_categories || []);
-
-      // Process buildings - handle single building or array
-      const buildingsList = Array.isArray(buildingsResponse) 
-        ? buildingsResponse 
-        : buildingsResponse ? [buildingsResponse] : [];
-      setBuildings(buildingsList);
-
-      // Process wings
-      const wingsList = wingsResponse?.wings?.map(wing => ({
-        id: wing.id,
-        name: wing.name
-      })) || [];
-      setWings(wingsList);
-
-      // Process zones (if available)
-      setZones(zonesResponse || []);
-
-      // Process floors
-      const floorsList = floorsResponse?.floors?.map(floor => ({
-        id: floor.id,
-        name: floor.name
-      })) || [];
-      setFloors(floorsList);
-
-      // Process rooms - handle array response
-      const roomsList = Array.isArray(roomsResponse) ? roomsResponse : [];
-      setRooms(roomsList);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -380,11 +382,20 @@ export const SubCategoryTab: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
+                          {(() => {
+                            console.log('Rendering categories in dropdown:', availableCategories);
+                            return availableCategories.length === 0 ? (
+                              <SelectItem value="no-categories" disabled>
+                                {categoriesLoading ? "Loading categories..." : "No categories available"}
+                              </SelectItem>
+                            ) : (
+                              availableCategories.map((category) => (
+                                <SelectItem key={category.id} value={category.id.toString()}>
+                                  {category.name}
+                                </SelectItem>
+                              ))
+                            );
+                          })()}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -448,27 +459,61 @@ export const SubCategoryTab: React.FC = () => {
               {/* Engineer Assignment */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">Engineer Assignment</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {engineers.map((engineer) => (
-                    <div key={engineer.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        checked={selectedEngineers.includes(engineer.id)}
-                        onCheckedChange={() => 
-                          handleMultiSelect(engineer.id.toString(), selectedEngineers, setSelectedEngineers)
-                        }
-                      />
-                      <label className="text-sm">
-                        {engineer.firstname} {engineer.lastname}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                <Select
+                  onValueChange={(value) => {
+                    const engineerId = parseInt(value);
+                    if (selectedEngineers.includes(engineerId)) {
+                      setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId));
+                    } else {
+                      setSelectedEngineers([...selectedEngineers, engineerId]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={
+                      selectedEngineers.length === 0 
+                        ? "Select engineers" 
+                        : `${selectedEngineers.length} engineer(s) selected`
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {engineers.map((engineer) => (
+                      <SelectItem key={engineer.id} value={engineer.id.toString()}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{engineer.firstname} {engineer.lastname}</span>
+                          {selectedEngineers.includes(engineer.id) && (
+                            <span className="ml-2 text-primary">✓</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Show selected engineers */}
+                {selectedEngineers.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedEngineers.map((engineerId) => {
+                      const engineer = engineers.find(e => e.id === engineerId);
+                      return engineer ? (
+                        <div key={engineerId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                          {engineer.firstname} {engineer.lastname}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={() => setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId))}
+                          />
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Location Configuration */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Location Configuration</h3>
                 
+                {/* Location Enable/Disable Checkboxes */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
@@ -566,44 +611,279 @@ export const SubCategoryTab: React.FC = () => {
                     )}
                   />
                 </div>
-
-                {/* Location Multi-selects */}
+                
+                {/* Buildings Dropdown - Only show when building checkbox is checked */}
                 {form.watch('building') && (
                   <div>
-                    <label className="block text-sm font-medium mb-2">Select Buildings</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                      {buildings.map((building) => (
-                        <div key={building.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={selectedBuildings.includes(building.id)}
-                            onCheckedChange={() => 
-                              handleMultiSelect(building.id.toString(), selectedBuildings, setSelectedBuildings)
-                            }
-                          />
-                          <label className="text-sm">{building.name}</label>
-                        </div>
-                      ))}
-                    </div>
+                    <label className="block text-sm font-medium mb-2">Buildings</label>
+                    <Select
+                      onValueChange={(value) => {
+                        const buildingId = parseInt(value);
+                        if (selectedBuildings.includes(buildingId)) {
+                          setSelectedBuildings(selectedBuildings.filter(id => id !== buildingId));
+                        } else {
+                          setSelectedBuildings([...selectedBuildings, buildingId]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={
+                          selectedBuildings.length === 0 
+                            ? "Select buildings" 
+                            : `${selectedBuildings.length} building(s) selected`
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableBuildings.map((building) => (
+                          <SelectItem key={building.id} value={building.id.toString()}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{building.name}</span>
+                              {selectedBuildings.includes(building.id) && (
+                                <span className="ml-2 text-primary">✓</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Show selected buildings */}
+                    {selectedBuildings.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedBuildings.map((buildingId) => {
+                          const building = availableBuildings.find(b => b.id === buildingId);
+                          return building ? (
+                            <div key={buildingId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                              {building.name}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setSelectedBuildings(selectedBuildings.filter(id => id !== buildingId))}
+                              />
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Similar sections for wing, zone, floor, room */}
+                {/* Wings Dropdown - Only show when wing checkbox is checked */}
                 {form.watch('wing') && (
                   <div>
-                    <label className="block text-sm font-medium mb-2">Select Wings</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                      {wings.map((wing) => (
-                        <div key={wing.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={selectedWings.includes(wing.id)}
-                            onCheckedChange={() => 
-                              handleMultiSelect(wing.id.toString(), selectedWings, setSelectedWings)
-                            }
-                          />
-                          <label className="text-sm">{wing.name}</label>
-                        </div>
-                      ))}
-                    </div>
+                    <label className="block text-sm font-medium mb-2">Wings</label>
+                    <Select
+                      onValueChange={(value) => {
+                        const wingId = parseInt(value);
+                        if (selectedWings.includes(wingId)) {
+                          setSelectedWings(selectedWings.filter(id => id !== wingId));
+                        } else {
+                          setSelectedWings([...selectedWings, wingId]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={
+                          selectedWings.length === 0 
+                            ? "Select wings" 
+                            : `${selectedWings.length} wing(s) selected`
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableWings.map((wing) => (
+                          <SelectItem key={wing.id} value={wing.id.toString()}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{wing.name}</span>
+                              {selectedWings.includes(wing.id) && (
+                                <span className="ml-2 text-primary">✓</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Show selected wings */}
+                    {selectedWings.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedWings.map((wingId) => {
+                          const wing = availableWings.find(w => w.id === wingId);
+                          return wing ? (
+                            <div key={wingId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                              {wing.name}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setSelectedWings(selectedWings.filter(id => id !== wingId))}
+                              />
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Floors Dropdown - Only show when floor checkbox is checked */}
+                {form.watch('floor') && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Floors</label>
+                    <Select
+                      onValueChange={(value) => {
+                        const floorId = parseInt(value);
+                        if (selectedFloors.includes(floorId)) {
+                          setSelectedFloors(selectedFloors.filter(id => id !== floorId));
+                        } else {
+                          setSelectedFloors([...selectedFloors, floorId]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={
+                          selectedFloors.length === 0 
+                            ? "Select floors" 
+                            : `${selectedFloors.length} floor(s) selected`
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableFloors.map((floor) => (
+                          <SelectItem key={floor.id} value={floor.id.toString()}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{floor.name}</span>
+                              {selectedFloors.includes(floor.id) && (
+                                <span className="ml-2 text-primary">✓</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Show selected floors */}
+                    {selectedFloors.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedFloors.map((floorId) => {
+                          const floor = availableFloors.find(f => f.id === floorId);
+                          return floor ? (
+                            <div key={floorId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                              {floor.name}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setSelectedFloors(selectedFloors.filter(id => id !== floorId))}
+                              />
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Zones Dropdown - Only show when zone checkbox is checked */}
+                {form.watch('zone') && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Zones</label>
+                    <Select
+                      onValueChange={(value) => {
+                        const zoneId = parseInt(value);
+                        if (selectedZones.includes(zoneId)) {
+                          setSelectedZones(selectedZones.filter(id => id !== zoneId));
+                        } else {
+                          setSelectedZones([...selectedZones, zoneId]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={
+                          selectedZones.length === 0 
+                            ? "Select zones" 
+                            : `${selectedZones.length} zone(s) selected`
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableZones.map((zone) => (
+                          <SelectItem key={zone.id} value={zone.id.toString()}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{zone.name}</span>
+                              {selectedZones.includes(zone.id) && (
+                                <span className="ml-2 text-primary">✓</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Show selected zones */}
+                    {selectedZones.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedZones.map((zoneId) => {
+                          const zone = availableZones.find(z => z.id === zoneId);
+                          return zone ? (
+                            <div key={zoneId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                              {zone.name}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setSelectedZones(selectedZones.filter(id => id !== zoneId))}
+                              />
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Rooms Dropdown - Only show when room checkbox is checked */}
+                {form.watch('room') && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Rooms</label>
+                    <Select
+                      onValueChange={(value) => {
+                        const roomId = parseInt(value);
+                        if (selectedRooms.includes(roomId)) {
+                          setSelectedRooms(selectedRooms.filter(id => id !== roomId));
+                        } else {
+                          setSelectedRooms([...selectedRooms, roomId]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={
+                          selectedRooms.length === 0 
+                            ? "Select rooms" 
+                            : `${selectedRooms.length} room(s) selected`
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableRooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id.toString()}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{room.name}</span>
+                              {selectedRooms.includes(room.id) && (
+                                <span className="ml-2 text-primary">✓</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Show selected rooms */}
+                    {selectedRooms.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedRooms.map((roomId) => {
+                          const room = availableRooms.find(r => r.id === roomId);
+                          return room ? (
+                            <div key={roomId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                              {room.name}
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => setSelectedRooms(selectedRooms.filter(id => id !== roomId))}
+                              />
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
