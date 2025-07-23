@@ -375,7 +375,8 @@ export function EnhancedTable<T extends Record<string, any>>({
           {onFilterClick && (
             <Button 
               variant="outline" 
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              size="sm"
+              className="h-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
