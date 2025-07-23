@@ -96,7 +96,7 @@ export const TicketDetailsPage = () => {
         
         
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">TICKET DETAILS</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">Summary</h1>
           <div className="flex gap-3">
             <Button onClick={handleFeeds} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               Feeds
