@@ -47,7 +47,15 @@ interface CategoryApiResponse {
     doc_type: string;
     selected_icon_url: string;
     tat: string;
-    category_email: string[];
+    category_email: Array<{
+      id: number;
+      cat_id: number;
+      site_id: number;
+      email: string;
+      active: number | null;
+      created_at: string;
+      updated_at: string;
+    }>;
   }>;
   statuses: Array<{
     id: number;
@@ -335,7 +343,7 @@ export const CategoryTypeTab: React.FC = () => {
         return item.tat || '--';
       case 'category_email':
         return item.category_email?.length ? 
-          item.category_email.join(', ') : '--';
+          item.category_email.map(emailObj => emailObj.email).join(', ') : '--';
       case 'icon_url':
         return item.icon_url ? (
           <img 
