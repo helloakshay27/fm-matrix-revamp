@@ -453,19 +453,19 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Table className={className}>
               <TableHeader>
                  <TableRow className="h-[28px]">
+                   {selectable && (
+                     <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white" data-checkbox>
+                       <div className="flex justify-start pl-2">
+                         <Checkbox
+                           checked={isAllSelected}
+                           onCheckedChange={handleSelectAllChange}
+                           aria-label={selectAllLabel}
+                           {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                         />
+                       </div>
+                     </TableHead>
+                   )}
                    <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-                      {selectable && (
-                      <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white" data-checkbox>
-                        <div className="flex justify-start">
-                          <Checkbox
-                            checked={isAllSelected}
-                            onCheckedChange={handleSelectAllChange}
-                            aria-label={selectAllLabel}
-                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                          />
-                        </div>
-                      </TableHead>
-                    )}
                     {visibleColumns.map((column) => (
                       <SortableColumnHeader
                         key={column.key}
