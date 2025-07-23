@@ -27,7 +27,7 @@ import { SnaggingDashboard } from './pages/SnaggingDashboard';
 import { SnaggingDetailsPage } from './pages/SnaggingDetailsPage';
 
 // Import Ticket pages
-import TicketDashboard from './pages/TicketDashboard';
+import { TicketDashboard } from './pages/TicketDashboard';
 import { AddTicketDashboard } from './pages/AddTicketDashboard';
 import { TicketDetailsPage } from './pages/TicketDetailsPage';
 import { TicketFeedsPage } from './pages/TicketFeedsPage';
