@@ -1,18 +1,17 @@
-
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { LocationSelector } from '@/components/service/LocationSelector';
-import axios from 'axios';
-import { TOKEN } from '@/config/apiConfig';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { createService } from '@/store/slices/serviceSlice';
 
 export const AddServicePage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
@@ -26,101 +25,207 @@ export const AddServicePage = () => {
     groupId: null as number | null,
     subGroupId: null as number | null,
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [resetLocationFields, setResetLocationFields] = useState(false);
+
+  const dispatch = useAppDispatch();
+
+  const [errors, setErrors] = useState({
+    serviceName: false,
+  });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'serviceName' && value.trim() !== '') {
+      setErrors(prev => ({ ...prev, serviceName: false }));
+    }
   };
 
-  const handleLocationChange = useCallback((location: {
-    siteId: number | null;
-    buildingId: number | null;
-    wingId: number | null;
-    areaId: number | null;
-    floorId: number | null;
-    roomId: number | null;
-    groupId: number | null;
-    subGroupId: number | null;
-  }) => {
+  const handleLocationChange = useCallback((location: typeof formData) => {
     setFormData(prev => ({
       ...prev,
-      siteId: location.siteId,
-      buildingId: location.buildingId,
-      wingId: location.wingId,
-      areaId: location.areaId,
-      floorId: location.floorId,
-      roomId: location.roomId,
-      groupId: location.groupId,
-      subGroupId: location.subGroupId,
+      ...location
     }));
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      console.log('File selected:', file.name);
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+
+      setSelectedFiles(prevFiles => {
+        const existingNames = new Set(prevFiles.map(f => f.name));
+        const filteredNewFiles = newFiles.filter(f => !existingNames.has(f.name));
+        return [...prevFiles, ...filteredNewFiles];
+      });
+
+      event.target.value = '';
     }
   };
 
-  const handleSubmit = async (action: string) => {
+
+  // const handleSubmit = async (action: 'show' | 'new') => {
+  //   const hasServiceNameError = formData.serviceName.trim() === '';
+
+  //   if (hasServiceNameError) {
+  //     setErrors({ serviceName: true });
+  //     toast.info("Please enter Service Name before submitting");
+  //     return;
+  //   }
+
+  //   setErrors({ serviceName: false });
+  //   const sendData = new FormData();
+
+  //   try {
+  //     sendData.append('pms_service[service_name]', formData.serviceName);
+  //     sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
+  //     sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
+  //     sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
+  //     sendData.append('pms_service[area_id]', formData.areaId?.toString() || '');
+  //     sendData.append('pms_service[floor_id]', formData.floorId?.toString() || '');
+  //     sendData.append('pms_service[room_id]', formData.roomId?.toString() || '');
+  //     sendData.append('pms_service[pms_asset_group_id]', formData.groupId?.toString() || '');
+  //     sendData.append('pms_service[pms_asset_sub_group_id]', formData.subGroupId?.toString() || '');
+  //     sendData.append('pms_service[active]', 'true');
+  //     sendData.append('pms_service[description]', formData.serviceDescription || '');
+  //     sendData.append('pms_service[execution_type]', formData.executionType || '');
+  //     sendData.append('pms_service[service_category]', '');
+  //     sendData.append('pms_service[service_group]', '');
+  //     sendData.append('pms_service[service_code]', '');
+  //     sendData.append('pms_service[ext_code]', '');
+  //     sendData.append('pms_service[rate_contract_vendor_code]', '');
+  //     sendData.append('subaction', 'save');
+
+  //     selectedFiles.forEach(file => {
+  //       sendData.append('attachments[]', file);
+  //     });
+
+  //     const response = await dispatch(createService(sendData)).unwrap();
+
+  //     if (action === 'show') {
+  //       toast.success('Service has been created and saved with details.');
+  //       setFormData({
+  //         serviceName: '',
+  //         executionType: '',
+  //         serviceDescription: '',
+  //         siteId: null,
+  //         buildingId: null,
+  //         wingId: null,
+  //         areaId: null,
+  //         floorId: null,
+  //         roomId: null,
+  //         groupId: null,
+  //         subGroupId: null,
+  //       });
+  //       setSelectedFiles([]);
+  //       setResetLocationFields(true);
+  //       navigate('/maintenance/service/details/' + response.id);
+
+  //     } else if (action === 'new') {
+  //       toast.success('Service has been created. You can now add a new one.');
+  //       setFormData({
+  //         serviceName: '',
+  //         executionType: '',
+  //         serviceDescription: '',
+  //         siteId: null,
+  //         buildingId: null,
+  //         wingId: null,
+  //         areaId: null,
+  //         floorId: null,
+  //         roomId: null,
+  //         groupId: null,
+  //         subGroupId: null,
+  //       });
+  //       setSelectedFiles([]);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating service:', error);
+  //     toast.error('Failed to create service. Please try again.');
+  //   }
+  // };
+  const handleSubmit = async (action: 'show' | 'new') => {
+    const hasServiceNameError = formData.serviceName.trim() === '';
+
+    if (hasServiceNameError) {
+      setErrors({ serviceName: true });
+      toast.info("Please enter Service Name before submitting");
+      return;
+    }
+
+    setErrors({ serviceName: false });
+    const sendData = new FormData();
+
     try {
-      const payload = {
-        pms_service: {
-          service_name: formData.serviceName || "",
-          site_id: formData.siteId || "",
-          building_id: formData.buildingId || "",
-          wing_id: formData.wingId || "",
-          area_id: formData.areaId || "",
-          floor_id: formData.floorId || "",
-          room_id: formData.roomId || "",
-          pms_asset_group_id: formData.groupId || "",
-          pms_asset_sub_group_id: formData.subGroupId || "",
-          active: true,
-          description: formData.serviceDescription || "",
-          service_category: "",
-          service_group: "",
-          service_code: "",
-          ext_code: "",
-          rate_contract_vendor_code: ""
-        },
-        subaction: "save"
-      };
+      sendData.append('pms_service[service_name]', formData.serviceName);
+      sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
+      sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
+      sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
+      sendData.append('pms_service[area_id]', formData.areaId?.toString() || '');
+      sendData.append('pms_service[floor_id]', formData.floorId?.toString() || '');
+      sendData.append('pms_service[room_id]', formData.roomId?.toString() || '');
+      sendData.append('pms_service[pms_asset_group_id]', formData.groupId?.toString() || '');
+      sendData.append('pms_service[pms_asset_sub_group_id]', formData.subGroupId?.toString() || '');
+      sendData.append('pms_service[active]', 'true');
+      sendData.append('pms_service[description]', formData.serviceDescription || '');
+      sendData.append('pms_service[execution_type]', formData.executionType || '');
+      sendData.append('pms_service[service_category]', '');
+      sendData.append('pms_service[service_group]', '');
+      sendData.append('pms_service[service_code]', '');
+      sendData.append('pms_service[ext_code]', '');
+      sendData.append('pms_service[rate_contract_vendor_code]', '');
+      sendData.append('subaction', 'save');
 
-      console.log('Service Payload:', payload);
-
-      const response = await axios.post(
-        'https://fm-uat-api.lockated.com/pms/services.json',
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${TOKEN}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('Service Created Successfully:', response.data);
-      
-      toast({
-        title: "Service Created",
-        description: `Service has been ${action} successfully. Do you want to schedule new checklist? Already one scheduled under this group.`,
+      selectedFiles.forEach(file => {
+        sendData.append('attachments[]', file);
       });
-      
-      // Navigate to service list page after success
-      navigate('/maintenance/service');
-      
+
+      const response = await dispatch(createService(sendData)).unwrap();
+
+      if (action === 'show') {
+        toast.success('Service has been created and saved with details.');
+        setFormData({
+          serviceName: '',
+          executionType: '',
+          serviceDescription: '',
+          siteId: null,
+          buildingId: null,
+          wingId: null,
+          areaId: null,
+          floorId: null,
+          roomId: null,
+          groupId: null,
+          subGroupId: null,
+        });
+        setSelectedFiles([]);
+        setResetLocationFields(true);
+        navigate('/maintenance/service/details/' + response.id);
+      } else if (action === 'new') {
+        toast.success('Service has been created. You can now add a new one.');
+        setFormData({
+          serviceName: '',
+          executionType: '',
+          serviceDescription: '',
+          siteId: null,
+          buildingId: null,
+          wingId: null,
+          areaId: null,
+          floorId: null,
+          roomId: null,
+          groupId: null,
+          subGroupId: null,
+        });
+        setSelectedFiles([]);
+        setResetLocationFields(true);
+        // Reset resetLocationFields after a short delay to allow the reset to process
+        setTimeout(() => setResetLocationFields(false), 0);
+      }
     } catch (error) {
       console.error('Error creating service:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create service. Please try again.",
-        variant: "destructive"
-      });
+      toast.error('Failed to create service. Please try again.');
     }
   };
 
-  // Responsive styles for TextField and Select
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -129,26 +234,22 @@ export const AddServicePage = () => {
   };
 
   return (
-    <div className="p-6">{/* Service creation form */}
+    <div className="p-6">
       <div className="mb-6">
         <div className="flex items-center mb-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={() => {
-              console.log('Back button clicked');
-              navigate('/maintenance/service');
-            }}
+            onClick={() => navigate('/maintenance/service')}
             className="p-1 hover:bg-gray-100 mr-2"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <p className="text-[#1a1a1a] opacity-70">Services &gt; Service List &gt; Add Page</p>
+
         </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 
-      {/* Basic Details */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -158,59 +259,50 @@ export const AddServicePage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <TextField
-                required
-                label="Service Name"
-                placeholder="Enter Service Name"
-                name="serviceName"
-                value={formData.serviceName}
-                onChange={(e) => handleInputChange('serviceName', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
+            <TextField
+              required
+              label="Service Name"
+              placeholder="Enter Service Name"
+              value={formData.serviceName}
+              onChange={(e) => handleInputChange('serviceName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              error={errors.serviceName}
+              helperText={errors.serviceName ? 'Service Name is required' : ''}
+              slotProps={{
+                inputLabel: {
                   shrink: true,
-                }}
-                InputProps={{
-                  sx: fieldStyles
-                }}
-              />
-            </div>
-            <div>
-              <FormControl 
-                fullWidth 
-                variant="outlined" 
-                required
-                sx={{
-                  '& .MuiInputBase-root': fieldStyles
-                }}
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+            >
+              <InputLabel shrink>Execution Type</InputLabel>
+              <MuiSelect
+                value={formData.executionType}
+                onChange={(e) => handleInputChange('executionType', e.target.value)}
+                label="Execution Type"
+                notched
+                displayEmpty
               >
-                <InputLabel shrink>Execution Type</InputLabel>
-                <MuiSelect
-                  value={formData.executionType}
-                  onChange={(e) => handleInputChange('executionType', e.target.value)}
-                  label="Execution Type"
-                  notched
-                  displayEmpty
-                >
-                  <MenuItem value="">Select Execution Type</MenuItem>
-                  <MenuItem value="internal">Internal</MenuItem>
-                  <MenuItem value="external">External</MenuItem>
-                  <MenuItem value="both">Both</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+                <MenuItem value="">Select Execution Type</MenuItem>
+                <MenuItem value="internal">Internal</MenuItem>
+                <MenuItem value="external">External</MenuItem>
+                <MenuItem value="both">Both</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
-
-          {/* Dynamic Location Selector */}
-          <LocationSelector 
-            fieldStyles={fieldStyles} 
-            onLocationChange={handleLocationChange}
-          />
+          <LocationSelector fieldStyles={fieldStyles} onLocationChange={handleLocationChange} resetTrigger={resetLocationFields} />
         </CardContent>
       </Card>
 
-      {/* Service Description */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -221,16 +313,13 @@ export const AddServicePage = () => {
         <CardContent>
           <TextField
             label="Service Description"
-            name="serviceDescription"
             value={formData.serviceDescription}
             onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
             fullWidth
             variant="outlined"
             multiline
             rows={4}
-            InputLabelProps={{
-              shrink: true,
-            }}
+            InputLabelProps={{ shrink: true }}
             InputProps={{
               sx: {
                 '& .MuiInputBase-input': {
@@ -242,7 +331,6 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      {/* Files Upload */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -251,49 +339,85 @@ export const AddServicePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
             <div className="text-center">
-              <input 
-                type="file" 
-                className="hidden" 
+              <input
+                type="file"
+                multiple
+                className="hidden"
                 id="file-upload"
                 onChange={handleFileUpload}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
               />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
+
+              <label
+                htmlFor="file-upload"
+                className="text-[#C72030] cursor-pointer"
               >
                 Choose File
-              </Button>
-              <p className="text-sm text-gray-500 mt-2">
-                {selectedFile ? selectedFile.name : 'No file chosen'}
-              </p>
+              </label>
+
+              <span className="ml-2 text-gray-500">
+                {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No file chosen'}
+              </span>
+
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  className="bg-[#f6f4ee] text-[#C72030] px-6 py-2 rounded  flex items-center justify-center mx-auto"
+                >
+                  <span className="text-lg mr-2">+</span> Upload Files
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+            {selectedFiles.map((file, index) => {
+              const isImage = file.type.startsWith('image/');
+              const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+
+              return (
+                <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50">
+                  {isImage ? (
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="h-32 w-full object-contain rounded"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-32 w-full">
+                      <div className="text-gray-600 text-5xl">📄</div>
+                      <div className="mt-2 text-xs break-words">{file.name}</div>
+                    </div>
+                  )}
+                  {isExcel && (
+                    <p className="text-green-700 text-xs mt-1">Excel file</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
       <div className="flex gap-4 flex-wrap justify-center">
-        <Button 
-          onClick={() => handleSubmit('saved with details')}
+        <Button
+          onClick={() => handleSubmit('show')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
         >
           Save & show details
         </Button>
-        <Button 
-          onClick={() => handleSubmit('created new service')}
+        <Button
+          onClick={() => handleSubmit('new')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
         >
           Save & Create New Service
         </Button>
       </div>
-
     </div>
   );
 };

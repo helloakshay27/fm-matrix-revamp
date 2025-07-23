@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, FileText, Filter, Eye } from 'lucide-react';
+import { Plus, Upload, FileText, Filter, Eye, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
@@ -29,6 +29,7 @@ interface ServiceRecord {
   floor: string;
   room: string;
   created_at: string;
+  qr_code?: string;
 }
 
 const initialServiceData: ServiceRecord[] = [];
@@ -72,11 +73,16 @@ export const ServiceDashboard = () => {
   const handleImportClick = () => setShowBulkUploadModal(true);
   const handleImportLocationsClick = () => setShowImportLocationsModal(true);
   const handleFiltersClick = () => setShowFilterModal(true);
-  
+
   const handleApplyFilters = filters => {
+    setShowFilterModal(false);
     console.log('Applied filters:', filters);
   };
 
+  const handleCloseFilter = () => {
+    setShowFilterModal(false);         // Just close the modal
+    setSelectedItems([]);              // Also clear selected items
+  };
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
       setSelectedItems(prev => [...prev, itemId]);
@@ -94,41 +100,29 @@ export const ServiceDashboard = () => {
   };
 
   const handleQRDownload = () => {
-    const selectedServices = paginatedServices.filter(service => 
+    const selectedServices = paginatedServices.filter(service =>
       selectedItems.includes(service.id.toString())
     );
-    
+
     selectedServices.forEach((service, index) => {
-      setTimeout(() => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 200;
-        canvas.height = 200;
-        if (ctx) {
-          ctx.fillStyle = '#000';
-          for (let i = 0; i < 20; i++) {
-            for (let j = 0; j < 20; j++) {
-              if (Math.random() > 0.5) ctx.fillRect(i * 10, j * 10, 10, 10);
-            }
-          }
-        }
-        canvas.toBlob(blob => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `service_${service.id}_qr.png`;
-            link.click();
-            URL.revokeObjectURL(url);
-          }
-        });
-      }, index * 100);
+      const qrUrl = (service as any).qr_code;
+      if (qrUrl) {
+        const link = document.createElement('a');
+        link.href = qrUrl;
+        link.download = `${service.service_name || 'service'}_${service.id}_qr.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        console.warn(`QR code not available for service ID ${service.id}`);
+      }
     });
   };
 
   const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
 
   const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
@@ -148,37 +142,10 @@ export const ServiceDashboard = () => {
     {
       label: 'Print QR Codes',
       icon: FileText,
-      onClick: (selectedItems) => {
-        selectedItems.forEach((service, index) => {
-          setTimeout(() => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 200;
-            canvas.height = 200;
-            if (ctx) {
-              ctx.fillStyle = '#000';
-              for (let i = 0; i < 20; i++) {
-                for (let j = 0; j < 20; j++) {
-                  if (Math.random() > 0.5) ctx.fillRect(i * 10, j * 10, 10, 10);
-                }
-              }
-            }
-            canvas.toBlob(blob => {
-              if (blob) {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `service_${service.id}_qr.png`;
-                link.click();
-                URL.revokeObjectURL(url);
-              }
-            });
-          }, index * 100);
-        });
-        alert(`Downloading QR codes for ${selectedItems.length} services`);
-      }
+      onClick: () => handleQRDownload()
     }
   ];
+
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-3">
@@ -191,22 +158,21 @@ export const ServiceDashboard = () => {
       <Button onClick={handleFiltersClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
-      {selectedItems.length > 0 && (
-        <Button onClick={handleQRDownload} className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <FileText className="w-4 h-4 mr-2" /> QR Download
-        </Button>
-      )}
+      <Button onClick={handleQRDownload} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <FileText className="w-4 h-4 mr-2" /> Print QR
+      </Button>
     </div>
   );
 
-  const renderRowActions = (service: ServiceRecord) => (
-    <Button variant="ghost" size="sm" onClick={() => handleViewService(service.id)}>
-      <Eye className="w-4 h-4" />
-    </Button>
-  );
 
   const renderCell = (item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'serviceName':
         return item.service_name || '-';
       case 'id':
@@ -232,8 +198,8 @@ export const ServiceDashboard = () => {
       case 'status':
         return (
           <div className="flex items-center">
-            <div 
-              onClick={() => handleStatusToggle(item.id)} 
+            <div
+              onClick={() => handleStatusToggle(item.id)}
               className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors bg-green-500`}
             >
               <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-6`} />
@@ -250,12 +216,12 @@ export const ServiceDashboard = () => {
   const renderPaginationItems = () => {
     const items = [];
     const showEllipsis = totalPages > 7;
-    
+
     if (showEllipsis) {
       // Show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink 
+          <PaginationLink
             onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
           >
@@ -275,7 +241,7 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -291,7 +257,7 @@ export const ServiceDashboard = () => {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -314,7 +280,7 @@ export const ServiceDashboard = () => {
           if (!items.find(item => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink 
+                <PaginationLink
                   onClick={() => setCurrentPage(i)}
                   isActive={currentPage === i}
                 >
@@ -330,7 +296,7 @@ export const ServiceDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -344,7 +310,7 @@ export const ServiceDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
             >
@@ -360,19 +326,9 @@ export const ServiceDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <p className="text-muted-foreground mb-2">Services &gt; Service List</p>
-        <h1 className="font-semibold text-lg sm:text-2xl">SERVICE LIST</h1>
-      </div>
-
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
-
-      {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading services data...</div>
+          <div className="text-gray-600">Loading Services data...</div>
         </div>
       )}
 
@@ -383,54 +339,122 @@ export const ServiceDashboard = () => {
         </div>
       )}
 
+
       {/* Enhanced Table */}
       {!loading && (
-        <EnhancedTable
-          data={paginatedServices}
-          columns={columns}
-          renderCell={renderCell}
-          renderActions={renderRowActions}
-          bulkActions={bulkActions}
-          showBulkActions={true}
-          selectable={true}
-          selectedItems={selectedItems}
-          onSelectItem={handleSelectItem}
-          onSelectAll={handleSelectAll}
-          pagination={false}
-          enableExport={true}
-          exportFileName="services"
-          onRowClick={(service) => handleViewService(service.id)}
-          getItemId={(item) => item.id.toString()}
-          storageKey="services-table"
-        />
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-3">
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  {11}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
+              </div>
+            </div>
+
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                  {22}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
+              </div>
+            </div>
+
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                  {0}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
+              </div>
+            </div>
+
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                  {4}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
+              </div>
+            </div>
+
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                  {2}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
+              </div>
+            </div>
+          </div>
+          <EnhancedTable
+            data={paginatedServices}
+            columns={columns}
+            renderCell={renderCell}
+            bulkActions={bulkActions}
+            showBulkActions={true}
+            selectable={true}
+            selectedItems={selectedItems}
+            onSelectItem={handleSelectItem}
+            onSelectAll={handleSelectAll}
+            pagination={false}
+            enableExport={true}
+            exportFileName="services"
+            onRowClick={(service) => handleViewService(service.id)}
+            getItemId={(item) => item.id.toString()}
+            storageKey="services-table"
+            leftActions={renderCustomActions()}
+            searchByIdOnly={false}
+            searchPlaceholder="Search Services..."
+          />
+        </>
+
       )}
 
       {/* Custom Pagination - Always show for debugging */}
-      <div className="flex justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-            
-            {renderPaginationItems()}
-            
-            <PaginationItem>
-              <PaginationNext 
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      {!loading && (
+        <div className="flex justify-center mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
 
+              {renderPaginationItems()}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />
-      <ServiceFilterModal isOpen={showFilterModal} onClose={() => setShowFilterModal(false)} onApply={handleApplyFilters} />
+      <ServiceFilterModal isOpen={showFilterModal} onClose={handleCloseFilter} onApply={handleApplyFilters} />
     </div>
   );
 };

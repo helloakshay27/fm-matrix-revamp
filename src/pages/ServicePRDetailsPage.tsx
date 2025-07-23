@@ -94,7 +94,7 @@ export const ServicePRDetailsPage = () => {
         </Button>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600 mb-2">Service PR &gt; Service PR Details</p>
+            
             <h1 className="text-2xl font-bold">SERVICE PR DETAILS</h1>
           </div>
           <div className="flex gap-2">

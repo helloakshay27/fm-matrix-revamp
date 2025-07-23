@@ -67,8 +67,9 @@ export const AssetDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   // Redux state
-  const { items: assets, loading, error, totalCount, totalPages, filters,totalValue } = useSelector((state: RootState) => state.assets);
+  const { data, items: assets, loading, error, totalCount, totalPages, filters, totalValue } = useSelector((state: RootState) => state.assets);
 
+  console.log(data)
   // Local state
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
@@ -207,10 +208,12 @@ export const AssetDashboard = () => {
 
   // Calculate stats from currently displayed assets (this updates with filters)
   // const stats = calculateStats(displayAssets);
-const stats = {
-  ...calculateStats(displayAssets),
-  total_value: totalValue !== undefined && totalValue !== null ? String(totalValue) : "₹0.00"
-};
+  const stats = {
+    ...calculateStats(displayAssets),
+    total_value: totalValue !== undefined && totalValue !== null ? String(totalValue) : "₹0.00"
+  };
+
+  console.log('Final stats object:', stats);
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -596,7 +599,7 @@ const stats = {
             </div>
           ) : (
             <>
-              <AssetStats stats={stats} />
+              <AssetStats stats={data} />
 
               <AssetActions
                 searchTerm={searchTerm}

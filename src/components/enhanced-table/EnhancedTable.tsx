@@ -30,7 +30,7 @@ import {
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Search, Download, Loader2 } from 'lucide-react';
+import { Search, Download, Loader2, Grid3x3, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -72,7 +72,10 @@ interface EnhancedTableProps<T> {
   hideTableExport?: boolean;
   hideTableSearch?: boolean;
   hideColumnsButton?: boolean;
+  leftActions?: React.ReactNode;
+  rightActions?: React.ReactNode;
   handleExport?: () => void;
+  searchByIdOnly?: boolean;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -108,10 +111,15 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideTableExport = false,
   hideTableSearch = false,
   hideColumnsButton = false,
+  leftActions,
+  rightActions,
+  searchByIdOnly
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
+  
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   const {
@@ -129,16 +137,21 @@ export function EnhancedTable<T extends Record<string, any>>({
     storageKey
   });
 
-  // Filter data based on search term
+  // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
+    // If we have API search results, use them instead of filtering original data
+    if (apiSearchResults) {
+      return apiSearchResults;
+    }
+    
     if (!searchTerm) return baseSortedData;
-
+    
     return baseSortedData.filter(item =>
       Object.values(item).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [baseSortedData, searchTerm]);
+  }, [baseSortedData, searchTerm, apiSearchResults]);
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
@@ -197,11 +210,54 @@ export function EnhancedTable<T extends Record<string, any>>({
     onRowClick?.(item);
   };
 
-  const handleInternalSearchChange = (value: string) => {
-    setInternalSearchTerm(value);
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const handleSearchGo = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+      
+      if (!token) {
+        alert('Authentication token not found. Please login first.');
+        return;
+      }
+
+      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchInput}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Set the API search results to be used by the table
+        setApiSearchResults(data.complaints || []);
+        setCurrentPage(1);
+        setInternalSearchTerm(searchInput);
+        if (onSearchChange) {
+          onSearchChange(searchInput);
+        }
+      } else if (response.status === 401) {
+        alert('Unauthorized: Please check your authentication token or login again.');
+      } else {
+        alert(`Failed to search: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error searching:', error);
+      alert('An error occurred while searching. Please try again.');
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setInternalSearchTerm('');
+    setApiSearchResults(null);
     setCurrentPage(1);
     if (onSearchChange) {
-      onSearchChange(value);
+      onSearchChange('');
     }
   };
 
@@ -244,6 +300,8 @@ export function EnhancedTable<T extends Record<string, any>>({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
+          {leftActions}
+          
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
             </div>
@@ -256,22 +314,78 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => handleInternalSearchChange(e.target.value)}
-                className="pl-10"
+                value={searchInput}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                className="pl-10 pr-10"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearchGo()}
               />
+              {searchInput && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSearchGo}
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          >
+            Go!
+          </Button>
+          
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onExport || handleExport}
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+                  
+                  if (!token) {
+                    alert('Authentication token not found. Please login first.');
+                    return;
+                  }
+
+                  const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx', {
+                    method: 'GET',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                  });
+                  
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'complaints.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } else if (response.status === 401) {
+                    alert('Unauthorized: Please check your authentication token or login again.');
+                  } else {
+                    alert(`Failed to download file: ${response.status} ${response.statusText}`);
+                  }
+                } catch (error) {
+                  console.error('Error downloading file:', error);
+                  alert('An error occurred while downloading the file. Please try again.');
+                }
+              }}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
             </Button>
           )}
+          
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -280,6 +394,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               onResetToDefaults={resetToDefaults}
             />
           )}
+          
+          {rightActions}
         </div>
       </div>
 
@@ -317,7 +433,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee] text-center"
+                        className="bg-[#f6f4ee] text-center text-black"
                       >
                         {column.label}
                       </SortableColumnHeader>

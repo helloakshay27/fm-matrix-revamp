@@ -47,9 +47,6 @@ const AddSTPAssetDashboard = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <nav className="text-sm text-gray-600 mb-1">
-            Asset List &gt; Create New Asset
-          </nav>
           <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
         </div>
       </div>

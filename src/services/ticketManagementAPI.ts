@@ -68,6 +68,12 @@ export interface UserOption {
   name: string;
 }
 
+export interface SupplierOption {
+  id: number;
+  name: string;
+  supplier_name?: string;
+}
+
 // Subcategory Types
 export interface SubCategoryFormData {
   helpdesk_category_id: number;
@@ -157,6 +163,7 @@ export interface TicketResponse {
   resolution_tat: number | null;
   resolution_time: string | null;
   escalation_resolution_name: string | null;
+  complaint_status_id: number;
 }
 
 export interface TicketListResponse {
@@ -279,6 +286,11 @@ export const ticketManagementAPI = {
   async getFMUsers(): Promise<UserOption[]> {
     const response = await apiClient.get(ENDPOINTS.FM_USERS);
     return response.data.fm_users || [];
+  },
+
+  async getSuppliers(): Promise<SupplierOption[]> {
+    const response = await apiClient.get('/pms/suppliers.json');
+    return response.data.suppliers || response.data || [];
   },
 
   // Categories
@@ -680,5 +692,42 @@ export const ticketManagementAPI = {
   async exportTickets(ticketIds: number[]) {
     // Implementation for CSV export if needed
     return null;
+  },
+
+  // Tag vendor to ticket
+  async tagVendor(data: { ticket_id: string; vendor_id: number; comments?: string }) {
+    const response = await apiClient.post(`/pms/admin/complaints/${data.ticket_id}/tag_vendor.json`, {
+      vendor_id: data.vendor_id,
+      comments: data.comments || '',
+    });
+    return response.data;
+  },
+
+  // Tag multiple vendors to complaint
+  async tagVendorsToComplaint(data: { complaint_id: string; vendor_ids: string[] }) {
+    const formData = new FormData();
+    formData.append('complaint_id', data.complaint_id);
+    
+    // Add vendor IDs as array
+    data.vendor_ids.forEach((vendorId) => {
+      formData.append('vendor_ids[]', vendorId);
+    });
+
+    const response = await apiClient.post('/pms/admin/complaint_vendors', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  // Get complaint vendors
+  async getComplaintVendors(complaintId: string) {
+    const response = await apiClient.get(`/pms/admin/complaint_vendors.json?complaint_id=${complaintId}`);
+    return response.data;
+  },
+
+  // Get create task data
+  async getCreateTaskData(complaintId: string) {
+    const response = await apiClient.get(`/pms/admin/complaints/${complaintId}/create_task.json`);
+    return response.data;
   },
 };

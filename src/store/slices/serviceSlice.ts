@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiClient } from '@/utils/apiClient';
+import createApiSlice from '../api/apiSlice';
 
 interface ServiceData {
   service_name: string;
@@ -22,8 +23,9 @@ interface ServiceData {
 
 interface UpdateServicePayload {
   id: string;
-  serviceData: ServiceData;
+  serviceData: ServiceData | FormData;
 }
+
 
 interface ServiceState {
   loading: boolean;
@@ -41,7 +43,7 @@ const initialState: ServiceState = {
 
 // Async thunk for fetching service data
 export const fetchService = createAsyncThunk(
-  'service/fetchService',
+  'fetchService',
   async (id: string, { rejectWithValue }) => {
     try {
       const response = await apiClient.get(`/pms/services/${id}.json`);
@@ -52,23 +54,40 @@ export const fetchService = createAsyncThunk(
   }
 );
 
+
+export const createService = createAsyncThunk(
+  'createService',
+  async (serviceData: ServiceData | FormData, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post('/pms/services.json', serviceData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create service');
+    }
+  }
+);
+
 // Async thunk for updating service data
 export const updateService = createAsyncThunk(
-  'service/updateService',
+  'updateService',
   async ({ id, serviceData }: UpdateServicePayload, { rejectWithValue }) => {
     try {
-      const payload = {
-        pms_service: serviceData,
-        subaction: "save"
-      };
-
-      const response = await apiClient.put(`/pms/services/${id}.json`, payload);
+      const response = await apiClient.put(`/pms/services/${id}.json`, serviceData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update service');
     }
   }
 );
+
 
 const serviceSlice = createSlice({
   name: 'service',
@@ -116,5 +135,12 @@ const serviceSlice = createSlice({
   },
 });
 
+export const fetchServiceSlice = createApiSlice("fetchService", fetchService)
+export const createServiceSlice = createApiSlice("createService", createService)
+export const updateServiceSlice = createApiSlice("updateService", updateService)
 export const { clearError, resetServiceState } = serviceSlice.actions;
 export default serviceSlice.reducer;
+
+export const fetchServiceReducer = fetchServiceSlice.reducer;
+export const createServiceReducer = createServiceSlice.reducer;
+export const updateServiceReducer = updateServiceSlice.reducer;

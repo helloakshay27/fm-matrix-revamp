@@ -82,14 +82,10 @@ export const EditEnergyAssetPage = () => {
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4" />
-            Asset List
-          </button>
-          <span>&gt;</span>
-          <span>Create New Asset</span>
-        </div>
+        <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Asset List
+        </button>
         
         <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW ASSET</h1>
       </div>

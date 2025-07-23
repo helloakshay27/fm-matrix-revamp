@@ -35,10 +35,10 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
       {...listeners}
       className="cursor-move"
     >
@@ -47,6 +47,11 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   );
 };
 const columns: ColumnConfig[] = [{
+  key: 'actions',
+  label: 'Actions',
+  sortable: false,
+  defaultVisible: true
+}, {
   key: 'name',
   label: 'Name',
   sortable: true,
@@ -60,10 +65,10 @@ const columns: ColumnConfig[] = [{
 export const AttendanceDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  
+
   // Redux state
   const { data: attendance, loading, error } = useAppSelector(state => state.attendance);
-  
+
   // Local state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -112,7 +117,6 @@ export const AttendanceDashboard = () => {
   const handleBulkDelete = (selectedItems: AttendanceRecord[]) => {
     // Note: This would need to be implemented as a Redux action
     // For now, we'll just clear the selection since we can't modify Redux state directly
-    console.log('Bulk delete action would be implemented here:', selectedItems);
     setSelectedItems([]);
   };
 
@@ -178,6 +182,12 @@ export const AttendanceDashboard = () => {
   };
   const renderCell = (item: AttendanceRecord, columnKey: string) => {
     switch (columnKey) {
+      case 'actions':
+        return (
+          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.user_id)} className="hover:bg-gray-100">
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       case 'name':
         return <span className="font-medium text-center block">{item.name}</span>;
       case 'department':
@@ -186,9 +196,6 @@ export const AttendanceDashboard = () => {
         return '-';
     }
   };
-  const renderActions = (item: AttendanceRecord) => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.user_id)} className="hover:bg-gray-100">
-      <Eye className="w-4 h-4" />
-    </Button>;
   const bulkActions = [{
     label: 'Delete Selected',
     icon: Trash2,
@@ -201,23 +208,23 @@ export const AttendanceDashboard = () => {
     if (showEllipsis) {
       // Show first page
       items.push(<PaginationItem key={1}>
-          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
-            1
-          </PaginationLink>
-        </PaginationItem>);
+        <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
+          1
+        </PaginationLink>
+      </PaginationItem>);
 
       // Show ellipsis or pages 2-3
       if (currentPage > 4) {
         items.push(<PaginationItem key="ellipsis1">
-            <PaginationEllipsis />
-          </PaginationItem>);
+          <PaginationEllipsis />
+        </PaginationItem>);
       } else {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(<PaginationItem key={i}>
-              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-                {i}
-              </PaginationLink>
-            </PaginationItem>);
+            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              {i}
+            </PaginationLink>
+          </PaginationItem>);
         }
       }
 
@@ -225,26 +232,26 @@ export const AttendanceDashboard = () => {
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(<PaginationItem key={i}>
-              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-                {i}
-              </PaginationLink>
-            </PaginationItem>);
+            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              {i}
+            </PaginationLink>
+          </PaginationItem>);
         }
       }
 
       // Show ellipsis or pages before last
       if (currentPage < totalPages - 3) {
         items.push(<PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>);
+          <PaginationEllipsis />
+        </PaginationItem>);
       } else {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
           if (!items.find(item => item.key === i)) {
             items.push(<PaginationItem key={i}>
-                <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-                  {i}
-                </PaginationLink>
-              </PaginationItem>);
+              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+                {i}
+              </PaginationLink>
+            </PaginationItem>);
           }
         }
       }
@@ -252,325 +259,329 @@ export const AttendanceDashboard = () => {
       // Show last page
       if (totalPages > 1) {
         items.push(<PaginationItem key={totalPages}>
-            <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>);
+          <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>);
       }
     } else {
       // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         items.push(<PaginationItem key={i}>
-            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-              {i}
-            </PaginationLink>
-          </PaginationItem>);
+          <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>);
       }
     }
     return items;
   };
-  const getHeading = () => {
-    if (activeTab === "analytics") return "Attendance Analytics";
-    return "Attendance List";
-  };
+
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-        <div className="mb-6">
-            <p className="text-[#1a1a1a] opacity-70 mb-2">Attendance &gt; Attendance List</p>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">{getHeading().toUpperCase()}</h1>
-          </div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="attendancelist" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="analytics" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger 
-            value="attendancelist" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
-          >
-            <Users className="w-4 h-4" />
-            Attendance List
-          </TabsTrigger>
-        </TabsList>
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-600">Loading Attendance data...</div>
+        </div>
+      )}
+      {error && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-600">Error: {error}</div>
+        </div>
+      )}
 
-        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Header with Attendance Selector */}
-          <div className="flex justify-end">
-            <AttendanceSelector onSelectionChange={handleSelectionChange} />
-          </div>
-
-          {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
-            {/* Left Section - Charts */}
-            <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-              {/* All Charts with Drag and Drop */}
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter} 
-                onDragEnd={handleDragEnd}
+      {!loading && (
+        <>
+          <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="attendancelist" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+              <TabsTrigger
+                value="analytics"
+                className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
               >
-                <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Two Donut Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder.filter(id => ['statusChart', 'trendsChart'].includes(id)).map((chartId) => {
-                        if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Attendance Status</h3>
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                <BarChart3 className="w-4 h-4" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger
+                value="attendancelist"
+                className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+              >
+                <Users className="w-4 h-4" />
+                Attendance List
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+              {/* Header with Attendance Selector */}
+              <div className="flex justify-end">
+                <AttendanceSelector onSelectionChange={handleSelectionChange} />
+              </div>
+
+              {/* Main Analytics Layout */}
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
+                {/* Left Section - Charts */}
+                <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+                  {/* All Charts with Drag and Drop */}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                      <div className="space-y-4 sm:space-y-6">
+                        {/* Top Row - Two Donut Charts */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                          {chartOrder.filter(id => ['statusChart', 'trendsChart'].includes(id)).map((chartId) => {
+                            if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
+                              return (
+                                <SortableChartItem key={chartId} id={chartId}>
+                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                      <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Attendance Status</h3>
+                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                    </div>
+                                    <div className="relative flex items-center justify-center">
+                                      <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                        <PieChart>
+                                          <Pie
+                                            data={statusData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={40}
+                                            outerRadius={80}
+                                            paddingAngle={2}
+                                            dataKey="value"
+                                            label={({ value }) => value}
+                                            labelLine={false}
+                                          >
+                                            {statusData.map((entry, index) => (
+                                              <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                          </Pie>
+                                          <Tooltip />
+                                        </PieChart>
+                                      </ResponsiveContainer>
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="text-center">
+                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {attendance.length}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                      {statusData.map((item, index) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                          <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </SortableChartItem>
+                              );
+                            }
+
+                            if (chartId === 'trendsChart' && visibleSections.includes('trendsChart')) {
+                              return (
+                                <SortableChartItem key={chartId} id={chartId}>
+                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                      <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Regular vs Overtime</h3>
+                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                    </div>
+                                    <div className="relative flex items-center justify-center">
+                                      <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                        <PieChart>
+                                          <Pie
+                                            data={trendsData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={40}
+                                            outerRadius={80}
+                                            paddingAngle={2}
+                                            dataKey="value"
+                                            label={({ value }) => value}
+                                            labelLine={false}
+                                          >
+                                            {trendsData.map((entry, index) => (
+                                              <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                          </Pie>
+                                          <Tooltip />
+                                        </PieChart>
+                                      </ResponsiveContainer>
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="text-center">
+                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {attendance.length}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                      {trendsData.map((item, index) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                                          <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </SortableChartItem>
+                              );
+                            }
+
+                            return null;
+                          })}
+                        </div>
+
+                        {/* Bottom Charts - Department and Matrix */}
+                        {chartOrder.filter(id => ['departmentChart', 'matrixChart'].includes(id)).map((chartId) => {
+                          if (chartId === 'departmentChart' && visibleSections.includes('departmentChart')) {
+                            return (
+                              <SortableChartItem key={chartId} id={chartId}>
+                                <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Department-wise Attendance</h3>
+                                    <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
+                                  </div>
+                                  <div className="w-full overflow-x-auto">
+                                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
+                                      <BarChart data={departmentChartData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                        <XAxis
+                                          dataKey="name"
+                                          angle={-45}
+                                          textAnchor="end"
+                                          height={80}
+                                          tick={{ fill: '#6b7280', fontSize: 10 }}
+                                          className="text-xs"
+                                        />
+                                        <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="value" fill="#c6b692" />
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </div>
                                 </div>
-                                <div className="relative flex items-center justify-center">
-                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                    <PieChart>
-                                      <Pie
-                                        data={statusData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={80}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                        label={({ value }) => value}
-                                        labelLine={false}
-                                      >
-                                        {statusData.map((entry, index) => (
-                                          <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                      </Pie>
-                                      <Tooltip />
-                                    </PieChart>
-                                  </ResponsiveContainer>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {attendance.length}</div>
+                              </SortableChartItem>
+                            );
+                          }
+
+                          if (chartId === 'matrixChart' && visibleSections.includes('matrixChart')) {
+                            return (
+                              <SortableChartItem key={chartId} id={chartId}>
+                                <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
+                                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                    <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Attendance Matrix</h3>
+                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
+                                  </div>
+
+                                  <div className="space-y-4 sm:space-y-6">
+                                    {/* Table - Horizontally scrollable on mobile */}
+                                    <div className="overflow-x-auto -mx-3 sm:mx-0">
+                                      <div className="min-w-[500px] px-3 sm:px-0">
+                                        <table className="w-full border-collapse border border-gray-300">
+                                          <thead>
+                                            <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                              <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Shift</th>
+                                              <th colSpan={4} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Attendance Status</th>
+                                            </tr>
+                                            <tr style={{ backgroundColor: '#EDE4D8' }}>
+                                              <th className="border border-gray-300 p-2 sm:p-3"></th>
+                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Present</th>
+                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Late</th>
+                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Absent</th>
+                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Leave</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {matrixData.map((row, index) => (
+                                              <tr key={index} className="bg-white">
+                                                <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.shift}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Present}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Late}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Absent}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Leave}</td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {statusData.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </SortableChartItem>
-                          );
-                        }
-                        
-                        if (chartId === 'trendsChart' && visibleSections.includes('trendsChart')) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Regular vs Overtime</h3>
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                                </div>
-                                <div className="relative flex items-center justify-center">
-                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                    <PieChart>
-                                      <Pie
-                                        data={trendsData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={80}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                        label={({ value }) => value}
-                                        labelLine={false}
-                                      >
-                                        {trendsData.map((entry, index) => (
-                                          <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                      </Pie>
-                                      <Tooltip />
-                                    </PieChart>
-                                  </ResponsiveContainer>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {attendance.length}</div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {trendsData.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </SortableChartItem>
-                          );
-                        }
-                        
-                        return null;
-                      })}
-                    </div>
+                              </SortableChartItem>
+                            );
+                          }
 
-                    {/* Bottom Charts - Department and Matrix */}
-                    {chartOrder.filter(id => ['departmentChart', 'matrixChart'].includes(id)).map((chartId) => {
-                      if (chartId === 'departmentChart' && visibleSections.includes('departmentChart')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
-                              <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Department-wise Attendance</h3>
-                                <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
-                              </div>
-                              <div className="w-full overflow-x-auto">
-                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
-                                  <BarChart data={departmentChartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                    <XAxis 
-                                      dataKey="name" 
-                                      angle={-45} 
-                                      textAnchor="end" 
-                                      height={80}
-                                      tick={{ fill: '#6b7280', fontSize: 10 }}
-                                      className="text-xs"
-                                    />
-                                    <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
-                                    <Tooltip />
-                                    <Bar dataKey="value" fill="#c6b692" />
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
+                          return null;
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                </div>
 
-                      if (chartId === 'matrixChart' && visibleSections.includes('matrixChart')) {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
-                              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Attendance Matrix</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
-                              </div>
-                              
-                              <div className="space-y-4 sm:space-y-6">
-                                {/* Table - Horizontally scrollable on mobile */}
-                                <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                  <div className="min-w-[500px] px-3 sm:px-0">
-                                    <table className="w-full border-collapse border border-gray-300">
-                                      <thead>
-                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Shift</th>
-                                          <th colSpan={4} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Attendance Status</th>
-                                        </tr>
-                                        <tr style={{ backgroundColor: '#EDE4D8' }}>
-                                          <th className="border border-gray-300 p-2 sm:p-3"></th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Present</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Late</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Absent</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">Leave</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {matrixData.map((row, index) => (
-                                          <tr key={index} className="bg-white">
-                                            <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.shift}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Present}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Late}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Absent}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Leave}</td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
+                {/* Right Sidebar - Recent Attendance */}
+                <div className="xl:col-span-4 order-first xl:order-last">
+                  <RecentAttendanceSidebar />
+                </div>
+              </div>
+            </TabsContent>
 
-                      return null;
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
+            <TabsContent value="attendancelist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+              {/* Enhanced Table */}
+              <EnhancedTable
+                data={paginatedData}
+                columns={columns}
+                renderCell={renderCell}
+                onRowClick={item => handleViewDetails(item.id)}
+                selectable={true}
+                selectedItems={selectedItems}
+                onSelectAll={handleSelectAll}
+                onSelectItem={handleSelectItem}
+                getItemId={item => String(item.id)}
+                storageKey="attendance-dashboard-table"
+                emptyMessage="No attendance records found"
+                searchPlaceholder="Search attendance records..."
+                enableExport={true}
+                exportFileName="attendance-records"
+                bulkActions={bulkActions}
+                showBulkActions={true}
+                pagination={false}
+                loading={loading}
+                onExport={handleExport}
+              />
 
-            {/* Right Sidebar - Recent Attendance */}
-            <div className="xl:col-span-4 order-first xl:order-last">
-              <RecentAttendanceSidebar />
-            </div>
-          </div>
-        </TabsContent>
+              {/* Custom Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                        />
+                      </PaginationItem>
 
-        <TabsContent value="attendancelist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Header */}
+                      {renderPaginationItems()}
 
-          {/* Enhanced Table */}
-          <EnhancedTable 
-            data={paginatedData} 
-            columns={columns} 
-            renderCell={renderCell} 
-            renderActions={renderActions} 
-            onRowClick={item => handleViewDetails(item.id)} 
-            selectable={true} 
-            selectedItems={selectedItems} 
-            onSelectAll={handleSelectAll} 
-            onSelectItem={handleSelectItem} 
-            getItemId={item => String(item.id)} 
-            storageKey="attendance-dashboard-table" 
-            emptyMessage="No attendance records found" 
-            searchPlaceholder="Search attendance records..." 
-            enableExport={true} 
-            exportFileName="attendance-records" 
-            bulkActions={bulkActions} 
-            showBulkActions={true} 
-            pagination={false}
-            loading={loading}
-            onExport={handleExport}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+          <AttendanceExportModal
+            open={exportModalOpen}
+            onClose={() => setExportModalOpen(false)}
           />
+        </>
+      )}
 
-          {/* Custom Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} 
-                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''} 
-                    />
-                  </PaginationItem>
-                  
-                  {renderPaginationItems()}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} 
-                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''} 
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Custom Export Modal */}
-      <AttendanceExportModal 
-        open={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
-      />
     </div>
   );
 };

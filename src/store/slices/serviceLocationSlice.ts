@@ -133,7 +133,7 @@ export const fetchFloors = createAsyncThunk<Floor[], number>(
 export const fetchGroups = createAsyncThunk<Group[]>(
   'serviceLocation/fetchGroups',
   async () => {
-    const response = await axios.get(`https://fm-uat-api.lockated.com/pms/assets/get_asset_group_sub_group.json`, {
+    const response = await axios.get(`${BASE_URL}/pms/assets/get_asset_group_sub_group.json`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     console.log('Groups API Response:', response.data);
@@ -145,7 +145,7 @@ export const fetchGroups = createAsyncThunk<Group[]>(
 export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
   'serviceLocation/fetchSubGroups',
   async (groupId: number) => {
-    const response = await axios.get(`https://fm-uat-api.lockated.com/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`, {
+    const response = await axios.get(`${BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     console.log('SubGroups API Response:', response.data);
@@ -200,7 +200,6 @@ const serviceLocationSlice = createSlice({
   reducers: {
     setSelectedSite: (state, action: PayloadAction<number | null>) => {
       state.selectedSiteId = action.payload;
-      // Reset dependent selections
       state.selectedBuildingId = null;
       state.selectedWingId = null;
       state.selectedAreaId = null;
@@ -212,6 +211,7 @@ const serviceLocationSlice = createSlice({
       state.floors = [];
       state.rooms = [];
     },
+
     setSelectedBuilding: (state, action: PayloadAction<number | null>) => {
       state.selectedBuildingId = action.payload;
       // Reset dependent selections

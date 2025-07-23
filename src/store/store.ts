@@ -18,7 +18,7 @@ import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
 import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
-import { exportReportReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
+import { exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer, { fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
@@ -30,11 +30,11 @@ import serviceLocationReducer from './slices/serviceLocationSlice'
 import { attendanceReducer } from './slices/attendanceSlice'
 import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 import inventoryEditReducer from './slices/inventoryEditSlice'
-import serviceEditReducer from './slices/serviceSlice'
+import serviceEditReducer, { createServiceReducer, fetchServiceReducer, updateServiceReducer } from './slices/serviceSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
 import { createMenuReducer, createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteRestaurantStatusReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, editRestaurantStatusReducer, editSubCategoryReducer, exportOrdersReducer, fetchMenuDetailsReducer, fetchMenuReducer, fetchOrderDetailsReducer, fetchRestaurantBookingsReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
 import { fetchMasterUnitsReducer } from './slices/unitMaster'
-import { inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
+import { createInventoryConsumptionReducer, inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
 import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
 import { ecoFriendlyListReducer } from './slices/ecoFriendlyListSlice'
 
@@ -105,6 +105,13 @@ export const store = configureStore({
     inventoryConsumption: inventoryConsumptionReducer,
     inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
     ecoFriendlyList: ecoFriendlyListReducer,
+    createInventoryConsumption: createInventoryConsumptionReducer,
+    facilityBookingSetupDetails: facilityBookingSetupDetailsReducer,
+
+    // Service Slices
+    fetchService: fetchServiceReducer,
+    createService: createServiceReducer,
+    updateService: updateServiceReducer,
   },
 })
 

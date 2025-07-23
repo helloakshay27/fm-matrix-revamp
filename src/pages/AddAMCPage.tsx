@@ -315,7 +315,7 @@ export const AddAMCPage = () => {
     <div className="mb-6">
       <Button variant="ghost" onClick={() => navigate('/maintenance/amc')} className="mb-4">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        AMC &gt; AMC List &gt; Add
+        Back to AMC List
       </Button>
       <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW AMC</h1>
     </div>
@@ -621,14 +621,41 @@ export const AddAMCPage = () => {
                 sx: fieldStyles
               }} />
             </div>
-
-            {/* Remarks Field - full width in grid */}
             <div className="md:col-span-3">
-              <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
-                Remarks
-              </label>
-              <textarea id="remarks" name="remarks" value={formData.remarks} onChange={e => handleInputChange('remarks', e.target.value)} placeholder="Enter Remarks" rows={3} className="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] resize-none" />
+              <TextField
+                id="remarks"
+                name="remarks"
+                label="Remarks"
+                placeholder="Enter Remarks"
+                value={formData.remarks}
+                onChange={(e) => handleInputChange('remarks', e.target.value)}
+                multiline
+                rows={4}
+                fullWidth
+                size="small"
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '6px',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#D1D5DB',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                }}
+              />
             </div>
+
           </div>
         </CardContent>
       </Card>

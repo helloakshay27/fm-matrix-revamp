@@ -15,7 +15,8 @@ import {
   createFloor, 
   setSelectedBuilding, 
   setSelectedWing,
-  setSelectedArea 
+  setSelectedArea,
+  updateFloor
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
@@ -66,6 +67,9 @@ export function FloorPage() {
     floor.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Limit results based on entries per page selection
+  const displayedFloors = filteredFloors.slice(0, parseInt(entriesPerPage));
+
   const handleBuildingChange = (buildingId: string) => {
     dispatch(setSelectedBuilding(parseInt(buildingId)));
   };
@@ -101,8 +105,20 @@ export function FloorPage() {
     }
   };
 
-  const toggleStatus = (index: number) => {
-    console.log(`Toggle status for floor at index ${index}`);
+  const toggleStatus = async (floorId: number) => {
+    try {
+      const floor = floors.data.find(f => f.id === floorId);
+      if (!floor) return;
+
+      await dispatch(updateFloor({
+        id: floorId,
+        updates: { active: !floor.active }
+      }));
+      
+      toast.success('Floor status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update floor status');
+    }
   };
 
   return (
@@ -237,26 +253,26 @@ export function FloorPage() {
                   Loading floors...
                 </TableCell>
               </TableRow>
-            ) : filteredFloors.length === 0 ? (
+            ) : displayedFloors.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-4">
                   No floors found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredFloors.map((floor, index) => (
+              displayedFloors.map((floor, index) => (
                 <TableRow key={floor.id}>
                   <TableCell>{floor.building?.name || 'N/A'}</TableCell>
                   <TableCell>{floor.wing?.name || 'N/A'}</TableCell>
                   <TableCell>{floor.area?.name || 'N/A'}</TableCell>
                   <TableCell>{floor.name}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => toggleStatus(index)}
-                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                        floor.active ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                    >
+                     <button
+                       onClick={() => toggleStatus(floor.id)}
+                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                         floor.active ? 'bg-green-500' : 'bg-gray-300'
+                       }`}
+                     >
                       <div
                         className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
                           floor.active ? 'translate-x-7' : 'translate-x-1'

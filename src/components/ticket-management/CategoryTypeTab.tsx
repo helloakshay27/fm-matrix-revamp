@@ -36,17 +36,26 @@ const categorySchema = z.object({
 type CategoryFormData = z.infer<typeof categorySchema>;
 
 interface CategoryApiResponse {
-  id: number;
-  society_id: number;
-  name: string;
-  tat?: string;
-  position: number | null;
-  created_at: string;
-  updated_at: string;
-  icon_url: string;
-  doc_type: string | null;
-  selected_icon_url: string;
-  vendor_emails?: string[];
+  helpdesk_categories: Array<{
+    id: number;
+    society_id: number;
+    name: string;
+    position: number | null;
+    created_at: string;
+    updated_at: string;
+    icon_url: string;
+    doc_type: string;
+    selected_icon_url: string;
+    response_tat: Record<string, any>;
+    category_email: string[];
+  }>;
+  statuses: Array<{
+    id: number;
+    society_id: number;
+    name: string;
+    active: number;
+    color_code: string;
+  }>;
 }
 
 interface Site {
@@ -59,8 +68,15 @@ interface FAQ {
   answer: string;
 }
 
+interface SitesApiResponse {
+  message: string;
+  code: number;
+  sites: Site[];
+  selected_site: Site;
+}
+
 export const CategoryTypeTab: React.FC = () => {
-  const [categories, setCategories] = useState<CategoryApiResponse[]>([]);
+  const [categories, setCategories] = useState<CategoryApiResponse['helpdesk_categories']>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -87,8 +103,8 @@ export const CategoryTypeTab: React.FC = () => {
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
-      const data = await ticketManagementAPI.getCategories();
-      setCategories(Array.isArray(data) ? data : []);
+      const response = await ticketManagementAPI.getCategories();
+      setCategories(response.helpdesk_categories || []);
     } catch (error) {
       toast.error('Failed to fetch categories');
       console.error('Error fetching categories:', error);
@@ -99,7 +115,6 @@ export const CategoryTypeTab: React.FC = () => {
 
   const fetchSites = async () => {
     try {
-      // Get userId from localStorage
       const userData = localStorage.getItem('user');
       let userId = '12437'; // default fallback
       
@@ -112,8 +127,12 @@ export const CategoryTypeTab: React.FC = () => {
         }
       }
 
-      const data = await ticketManagementAPI.getSites(userId);
-      setSites(Array.isArray(data) ? data : []);
+      const response = await ticketManagementAPI.getSites(userId);
+      if (response.sites && Array.isArray(response.sites)) {
+        setSites(response.sites);
+      } else {
+        setSites([]);
+      }
     } catch (error) {
       console.error('Error fetching sites:', error);
       toast.error('Failed to fetch sites');
@@ -195,12 +214,12 @@ export const CategoryTypeTab: React.FC = () => {
     }
   };
 
-  const handleEdit = (category: CategoryApiResponse) => {
+  const handleEdit = (category: CategoryApiResponse['helpdesk_categories'][0]) => {
     // TODO: Implement edit functionality
     console.log('Edit category:', category);
   };
 
-  const handleDelete = async (category: CategoryApiResponse) => {
+  const handleDelete = async (category: CategoryApiResponse['helpdesk_categories'][0]) => {
     try {
       // TODO: Implement delete API call
       setCategories(categories.filter(cat => cat.id !== category.id));
@@ -220,29 +239,32 @@ export const CategoryTypeTab: React.FC = () => {
   const columns = [
     { key: 'srno', label: 'S.No.', sortable: false },
     { key: 'name', label: 'Category Type', sortable: true },
-    { key: 'tat', label: 'Response Time (Min)', sortable: false },
-    { key: 'vendor_emails', label: 'Vendor Email', sortable: false },
+    { key: 'response_tat', label: 'Response Time', sortable: false },
+    { key: 'category_email', label: 'Vendor Email', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
     { key: 'selected_icon_url', label: 'Selected Icon', sortable: false },
   ];
 
-  const renderCell = (item: CategoryApiResponse, columnKey: string) => {
+  const renderCell = (item: CategoryApiResponse['helpdesk_categories'][0], columnKey: string) => {
     const index = categories.findIndex(cat => cat.id === item.id);
+    
     switch (columnKey) {
       case 'srno':
         return index + 1;
       case 'name':
         return item.name;
-      case 'tat':
-        return item.tat || '--';
-      case 'vendor_emails':
-        return item.vendor_emails?.join(', ') || '--';
+      case 'response_tat':
+        return Object.keys(item.response_tat).length ? 
+          JSON.stringify(item.response_tat) : '--';
+      case 'category_email':
+        return item.category_email?.length ? 
+          item.category_email.join(', ') : '--';
       case 'icon_url':
         return item.icon_url ? (
           <img 
             src={item.icon_url} 
             alt="Icon" 
-            className="w-8 h-8 object-cover rounded" 
+            className="w-8 h-8 object-cover rounded mx-auto" 
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -255,7 +277,7 @@ export const CategoryTypeTab: React.FC = () => {
           <img 
             src={item.selected_icon_url} 
             alt="Selected Icon" 
-            className="w-8 h-8 object-cover rounded"
+            className="w-8 h-8 object-cover rounded mx-auto"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -268,8 +290,8 @@ export const CategoryTypeTab: React.FC = () => {
     }
   };
 
-  const renderActions = (item: CategoryApiResponse) => (
-    <div className="flex items-center gap-2">
+  const renderActions = (item: CategoryApiResponse['helpdesk_categories'][0]) => (
+    <div className="flex gap-2">
       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
       </Button>

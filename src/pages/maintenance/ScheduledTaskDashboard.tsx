@@ -75,11 +75,6 @@ export const ScheduledTaskDashboard = () => {
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <span>Scheduled Task</span>
-            <span>&gt;</span>
-            <span>Scheduled Task List</span>
-          </div>
           <h1 className="text-2xl font-bold text-foreground uppercase">SCHEDULED TASK</h1>
         </div>
       </div>

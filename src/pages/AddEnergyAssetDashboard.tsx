@@ -71,7 +71,7 @@ export const AddEnergyAssetDashboard = () => {
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-gray-600 text-sm mb-1">Asset List &gt; Create New Asset</p>
+            
             <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
           </div>
           <Button

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { fetchBuildings, fetchWings, createWing, setSelectedBuilding } from '@/store/slices/locationSlice';
+import { fetchBuildings, fetchWings, createWing, setSelectedBuilding, updateWing } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 
 export function WingPage() {
@@ -30,8 +30,12 @@ export function WingPage() {
   }, [dispatch, selectedBuilding]);
 
   const filteredWings = wings.data.filter(wing =>
-    wing.name.toLowerCase().includes(searchTerm.toLowerCase())
+    wing.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    wing.building?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Limit results based on entries per page selection
+  const displayedWings = filteredWings.slice(0, parseInt(entriesPerPage));
 
   const handleBuildingChange = (buildingId: string) => {
     dispatch(setSelectedBuilding(parseInt(buildingId)));
@@ -54,9 +58,20 @@ export function WingPage() {
     }
   };
 
-  const toggleStatus = (index: number) => {
-    // This would require an update API call - placeholder for now
-    console.log(`Toggle status for wing at index ${index}`);
+  const toggleStatus = async (wingId: number) => {
+    try {
+      const wing = wings.data.find(w => w.id === wingId);
+      if (!wing) return;
+
+      await dispatch(updateWing({
+        id: wingId,
+        updates: { active: !wing.active }
+      }));
+      
+      toast.success('Wing status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update wing status');
+    }
   };
 
   return (
@@ -67,24 +82,6 @@ export function WingPage() {
         <h1 className="text-2xl font-bold">WING</h1>
       </div>
 
-      {/* Building Selection */}
-      <div className="space-y-4">
-        <div className="w-64">
-          <label className="text-sm font-medium">Select Building</label>
-          <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select building" />
-            </SelectTrigger>
-            <SelectContent>
-              {buildings.data.map((building) => (
-                <SelectItem key={building.id} value={building.id.toString()}>
-                  {building.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
@@ -150,24 +147,24 @@ export function WingPage() {
                   Loading wings...
                 </TableCell>
               </TableRow>
-            ) : filteredWings.length === 0 ? (
+            ) : displayedWings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-4">
                   No wings found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredWings.map((wing, index) => (
+              displayedWings.map((wing, index) => (
                 <TableRow key={wing.id}>
                   <TableCell>{wing.building?.name || 'N/A'}</TableCell>
                   <TableCell>{wing.name}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => toggleStatus(index)}
-                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                        wing.active ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                    >
+                     <button
+                       onClick={() => toggleStatus(wing.id)}
+                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                         wing.active ? 'bg-green-500' : 'bg-gray-300'
+                       }`}
+                     >
                       <div
                         className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
                           wing.active ? 'translate-x-7' : 'translate-x-1'
@@ -190,12 +187,19 @@ export function WingPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Selected Building</label>
-              <Input
-                value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
-                disabled
-                className="bg-muted"
-              />
+              <label className="text-sm font-medium">Select Building</label>
+              <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select building" />
+                </SelectTrigger>
+                <SelectContent>
+                  {buildings.data.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-sm font-medium">Wing Name</label>

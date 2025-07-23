@@ -33,11 +33,6 @@ export const InActiveAssetsDashboard = () => {
   return (
     <div className="p-4 sm:p-6 bg-white min-h-screen">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Assets</span>
-          <span>&gt;</span>
-          <span>Asset List</span>
-        </div>
         <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a] uppercase">IN-ACTIVE ASSET LIST</h1>
       </div>
       
