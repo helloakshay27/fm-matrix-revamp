@@ -26,6 +26,8 @@ import { EditSubCategoryModal } from './modals/EditSubCategoryModal';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 
 const subCategorySchema = z.object({
   category: z.string().min(1, 'Category selection is required'),
@@ -114,8 +116,12 @@ interface FloorsResponse {
 }
 
 export const SubCategoryTab: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { data: helpdeskCategoriesData, loading: categoriesLoading } = useAppSelector(
+    (state) => state.helpdeskCategories
+  );
+
   const [subCategories, setSubCategories] = useState<SubCategoryType[]>([]);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [engineers, setEngineers] = useState<Engineer[]>([]);
   const [buildings, setBuildings] = useState<LocationOption[]>([]);
   const [wings, setWings] = useState<LocationOption[]>([]);
@@ -136,6 +142,14 @@ export const SubCategoryTab: React.FC = () => {
   const [selectedFloors, setSelectedFloors] = useState<number[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
 
+  // Get categories from Redux state
+  const availableCategories = helpdeskCategoriesData?.helpdesk_categories || [];
+
+  const getCategoryName = (categoryId: number) => {
+    const category = availableCategories.find(cat => cat.id === categoryId);
+    return category?.name || 'Unknown Category';
+  };
+
   const form = useForm<SubCategoryFormData>({
     resolver: zodResolver(subCategorySchema),
     defaultValues: {
@@ -151,15 +165,15 @@ export const SubCategoryTab: React.FC = () => {
 
   useEffect(() => {
     console.log('SubCategoryTab mounted, fetching data...');
+    dispatch(fetchHelpdeskCategories());
     fetchData();
-  }, []);
+  }, [dispatch]);
 
   const fetchData = async () => {
     console.log('Starting fetchData...');
     setIsLoading(true);
     try {
       const [
-        categoriesResponse,
         engineersResponse,
         subCategoriesResponse,
         buildingsResponse,
@@ -168,7 +182,6 @@ export const SubCategoryTab: React.FC = () => {
         floorsResponse,
         roomsResponse
       ] = await Promise.all([
-        ticketManagementAPI.getCategories(),
         ticketManagementAPI.getEngineers(),
         ticketManagementAPI.getSubCategories(),
         ticketManagementAPI.getBuildings(),
@@ -177,15 +190,6 @@ export const SubCategoryTab: React.FC = () => {
         ticketManagementAPI.getZones(),
         ticketManagementAPI.getRooms(),
       ]);
-
-      console.log('Raw categories response:', categoriesResponse);
-      // Process categories - extract id and name for dropdown
-      const processedCategories = categoriesResponse?.helpdesk_categories?.map(cat => ({
-        id: cat.id,
-        name: cat.name
-      })) || [];
-      setCategories(processedCategories);
-      console.log('Processed categories:', processedCategories);
 
       // Process engineers - extract from fm_users array
       const formattedEngineers = engineersResponse?.fm_users?.map(user => ({
@@ -393,13 +397,13 @@ export const SubCategoryTab: React.FC = () => {
                         </FormControl>
                         <SelectContent>
                           {(() => {
-                            console.log('Rendering categories in dropdown:', categories);
-                            return categories.length === 0 ? (
+                            console.log('Rendering categories in dropdown:', availableCategories);
+                            return availableCategories.length === 0 ? (
                               <SelectItem value="no-categories" disabled>
-                                No categories available
+                                {categoriesLoading ? "Loading categories..." : "No categories available"}
                               </SelectItem>
                             ) : (
-                              categories.map((category) => (
+                              availableCategories.map((category) => (
                                 <SelectItem key={category.id} value={category.id.toString()}>
                                   {category.name}
                                 </SelectItem>
