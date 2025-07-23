@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 
 interface VendorBid {
-  vendorName: string;
-  biddingCost: string;
+  vendor_name: string;
+  bidding_cost: string;
 }
 
 interface VendorBiddingSectionProps {
@@ -17,8 +18,9 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
   vendorBids,
   onVendorBidsChange
 }) => {
+
   const addVendorBid = () => {
-    const newBids = [...vendorBids, { vendorName: '', biddingCost: '' }];
+    const newBids = [...vendorBids, { vendor_name: '', bidding_cost: '' }];
     onVendorBidsChange(newBids);
   };
 
@@ -27,8 +29,9 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
     onVendorBidsChange(newBids);
   };
 
+
   const updateVendorBid = (index: number, field: keyof VendorBid, value: string) => {
-    const newBids = vendorBids.map((bid, i) => 
+    const newBids = vendorBids.map((bid, i) =>
       i === index ? { ...bid, [field]: value } : bid
     );
     onVendorBidsChange(newBids);
@@ -37,14 +40,14 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-medium text-gray-700">Vendor Bidding</h3>
-      
+
       {vendorBids.map((bid, index) => (
         <div key={index} className="flex items-end gap-4">
           <div className="flex-1">
             <TextField
               label="Vendor Name"
-              value={bid.vendorName}
-              onChange={(e) => updateVendorBid(index, 'vendorName', e.target.value)}
+              value={typeof bid.vendor_name === 'string' ? bid.vendor_name : ''}
+              onChange={(e) => updateVendorBid(index, 'vendor_name', e.target.value)}
               variant="outlined"
               size="small"
               fullWidth
@@ -53,8 +56,8 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
           <div className="flex-1">
             <TextField
               label="₹ Bidding Cost"
-              value={bid.biddingCost}
-              onChange={(e) => updateVendorBid(index, 'biddingCost', e.target.value)}
+              value={typeof bid.bidding_cost === 'string' || typeof bid.bidding_cost === 'number' ? bid.bidding_cost : ''}
+              onChange={(e) => updateVendorBid(index, 'bidding_cost', e.target.value)}
               variant="outlined"
               size="small"
               fullWidth

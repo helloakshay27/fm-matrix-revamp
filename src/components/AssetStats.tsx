@@ -21,14 +21,14 @@ export const AssetStats = ({ stats }) => {
       {statData.map((item, i) => (
         <div
           key={i}
-          className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
+          className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
         >
-          <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+          <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
             {item.icon}
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#C72030]">{item.value}</div>
-            <div className="text-sm font-medium text-gray-600">{item.label}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{item.value}</div>
+            <div className="text-sm font-medium text-[#1A1A1A]">{item.label}</div>
           </div>
         </div>
       ))}

@@ -383,13 +383,13 @@ export const AssetDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
             {/* Total Assets Available */}
             <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: '#f6f4ee' }}>
-              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-[#FCE8E8]  flex items-center justify-center">
                 <Package className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-[#C72030]">{stats.total}</div>
                 <div className="text-sm text-gray-600">Total Assets</div>
-                <div className="text-sm text-gray-600">Total Value: {stats.total_value}</div>
+               
 
               </div>
             </div>
