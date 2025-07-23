@@ -33,6 +33,8 @@ import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Search, Download, Loader2, Grid3x3, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useEffect } from 'react';
 
 interface BulkAction<T> {
   label: string;
@@ -118,6 +120,9 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
+  
+  // Use debounced search input for API calls
+  const debouncedSearchInput = useDebounce(searchInput, 500);
   
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
@@ -213,16 +218,25 @@ export function EnhancedTable<T extends Record<string, any>>({
     setSearchInput(value);
   };
 
-  const handleSearchGo = async () => {
+  const handleSearchAPI = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setApiSearchResults(null);
+      setInternalSearchTerm('');
+      if (onSearchChange) {
+        onSearchChange('');
+      }
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
       
       if (!token) {
-        alert('Authentication token not found. Please login first.');
+        console.error('Authentication token not found');
         return;
       }
 
-      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchInput}`, {
+      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchTerm}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -232,23 +246,24 @@ export function EnhancedTable<T extends Record<string, any>>({
 
       if (response.ok) {
         const data = await response.json();
-        // Set the API search results to be used by the table
         setApiSearchResults(data.complaints || []);
         setCurrentPage(1);
-        setInternalSearchTerm(searchInput);
+        setInternalSearchTerm(searchTerm);
         if (onSearchChange) {
-          onSearchChange(searchInput);
+          onSearchChange(searchTerm);
         }
-      } else if (response.status === 401) {
-        alert('Unauthorized: Please check your authentication token or login again.');
       } else {
-        alert(`Failed to search: ${response.status} ${response.statusText}`);
+        console.error('Search failed:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error searching:', error);
-      alert('An error occurred while searching. Please try again.');
     }
   };
+
+  // Effect to handle debounced search
+  useEffect(() => {
+    handleSearchAPI(debouncedSearchInput);
+  }, [debouncedSearchInput]);
 
   const handleClearSearch = () => {
     setSearchInput('');
@@ -337,7 +352,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                 value={searchInput}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 className="pl-10 pr-10"
-                onKeyDown={(e) => e.key === 'Enter' && handleSearchGo()}
               />
               {searchInput && (
                 <button
@@ -350,14 +364,6 @@ export function EnhancedTable<T extends Record<string, any>>({
             </div>
           )}
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSearchGo}
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-          >
-            Go!
-          </Button>
           
           {!hideTableExport && enableExport && (
             <Button
