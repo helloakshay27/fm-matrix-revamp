@@ -500,11 +500,20 @@ export const TicketDashboard = () => {
   };
   const handleFlag = async () => {
     console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
+    if (selectedTickets.length === 0) {
+      toast({
+        title: "No tickets selected",
+        description: "Please select tickets to flag",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       await ticketManagementAPI.markAsFlagged(selectedTickets);
       toast({
         title: "Success",
-        description: "Tickets flagged successfully"
+        description: `${selectedTickets.length} ticket(s) flagged successfully`
       });
       await fetchTickets(currentPage);
       setSelectedTickets([]);
@@ -513,6 +522,25 @@ export const TicketDashboard = () => {
       toast({
         title: "Error",
         description: "Failed to flag tickets",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSingleTicketFlag = async (ticketId: number, currentFlagStatus: boolean) => {
+    console.log('TicketDashboard - Single flag action for ticket:', ticketId);
+    try {
+      await ticketManagementAPI.markAsFlagged([ticketId]);
+      toast({
+        title: "Success",
+        description: currentFlagStatus ? "Ticket unflagged successfully" : "Ticket flagged successfully"
+      });
+      await fetchTickets(currentPage);
+    } catch (error) {
+      console.error('Single flag action failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to flag ticket",
         variant: "destructive"
       });
     }
@@ -741,7 +769,7 @@ export const TicketDashboard = () => {
               }`}
               onClick={(e) => {
                 e.stopPropagation();
-                handleFlag();
+                handleSingleTicketFlag(item.id, item.is_flagged);
               }}
             />
           </div>
