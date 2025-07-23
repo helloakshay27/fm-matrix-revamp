@@ -456,7 +456,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                    <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                       {selectable && (
                       <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white" data-checkbox>
-                        <div className="flex justify-start pl-1">
+                        <div className="flex justify-start pl-2">
                           <Checkbox
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAllChange}
