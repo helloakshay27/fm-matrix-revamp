@@ -454,7 +454,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                      {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12 text-left pl-4" data-checkbox>
+                      <TableHead className="bg-[#f6f4ee] w-12 text-left px-6 py-4" data-checkbox>
                         <div className="flex justify-start">
                           <Checkbox
                             checked={isAllSelected}
@@ -479,7 +479,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-left">Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-left px-6 py-4">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
@@ -531,7 +531,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="p-4 w-12 text-left" data-checkbox>
+                        <TableCell className="px-6 py-4 w-12 text-left" data-checkbox>
                           <div className="flex justify-start">
                             <Checkbox
                               checked={isSelected}
@@ -546,13 +546,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4 text-left">
+                          <TableCell key={column.key} className="px-6 py-4 text-left whitespace-nowrap">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="p-4 text-left" data-actions>
+                        <TableCell className="px-6 py-4 text-left" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
