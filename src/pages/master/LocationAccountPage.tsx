@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,8 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Upload, X, Edit, File } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useApiConfig } from '@/hooks/useApiConfig';
 
 export const LocationAccountPage = () => {
+  const { getFullUrl, getAuthHeader } = useApiConfig();
   const [activeTab, setActiveTab] = useState('organization');
   const [searchQuery, setSearchQuery] = useState('');
   const [companyName, setCompanyName] = useState('Lockated HO');
@@ -23,6 +25,7 @@ export const LocationAccountPage = () => {
   const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
   const [isAddEntityOpen, setIsAddEntityOpen] = useState(false);
   const [isAddUserCategoryOpen, setIsAddUserCategoryOpen] = useState(false);
+  const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(false);
 
   // Sample data with state management
   const [countries, setCountries] = useState([
@@ -61,15 +64,40 @@ export const LocationAccountPage = () => {
     { entity: 'Sohail Ansari', status: true },
   ]);
 
-  const [userCategories, setUserCategories] = useState([
-    { id: 1, name: 'Admin', category: 'Management' },
-    { id: 2, name: 'Manager', category: 'Management' },
-    { id: 3, name: 'Employee', category: 'Staff' },
-    { id: 4, name: 'Contractor', category: 'External' },
-    { id: 5, name: 'Visitor', category: 'Guest' },
-  ]);
+  const [userCategories, setUserCategories] = useState<any[]>([]);
   const [isEditUserCategoryOpen, setIsEditUserCategoryOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<{id: number, name: string, category: string} | null>(null);
+  const [editingCategory, setEditingCategory] = useState<{id: number, name: string, resource_type?: string, resource_id?: number} | null>(null);
+
+  // Fetch user categories from API
+  useEffect(() => {
+    if (activeTab === 'user-category') {
+      fetchUserCategories();
+    }
+  }, [activeTab]);
+
+  const fetchUserCategories = async () => {
+    setIsLoadingUserCategories(true);
+    try {
+      const response = await fetch(getFullUrl('/pms/admin/user_categories.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserCategories(data);
+      } else {
+        toast.error('Failed to fetch user categories');
+      }
+    } catch (error) {
+      console.error('Error fetching user categories:', error);
+      toast.error('Error fetching user categories');
+    } finally {
+      setIsLoadingUserCategories(false);
+    }
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -130,38 +158,76 @@ export const LocationAccountPage = () => {
   };
 
   const handleEditUserCategory = (category: any) => {
-    setEditingCategory(category);
+    setEditingCategory({
+      id: category.id,
+      name: category.name,
+      resource_type: category.resource_type,
+      resource_id: category.resource_id
+    });
     setIsEditUserCategoryOpen(true);
   };
 
-  const handleUpdateUserCategory = () => {
+  const handleUpdateUserCategory = async () => {
     if (!editingCategory || !editingCategory.name.trim()) {
       toast.error('Please enter a user category name');
       return;
     }
-    const updatedCategories = userCategories.map(cat => 
-      cat.id === editingCategory.id ? {...editingCategory} : cat
-    );
-    setUserCategories(updatedCategories);
-    toast.success('User category updated successfully');
-    setEditingCategory(null);
-    setIsEditUserCategoryOpen(false);
+
+    try {
+      const response = await fetch(getFullUrl(`/pms/admin/user_categories/${editingCategory.id}.json?user_category[name]=${encodeURIComponent(editingCategory.name)}`), {
+        method: 'PUT',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast.success('User category updated successfully');
+        fetchUserCategories(); // Refresh the list
+        setEditingCategory(null);
+        setIsEditUserCategoryOpen(false);
+      } else {
+        toast.error('Failed to update user category');
+      }
+    } catch (error) {
+      console.error('Error updating user category:', error);
+      toast.error('Error updating user category');
+    }
   };
 
-  const handleSubmitUserCategory = () => {
+  const handleSubmitUserCategory = async () => {
     if (!userCategoryName.trim()) {
       toast.error('Please enter a user category name');
       return;
     }
-    const newCategory = { 
-      id: userCategories.length + 1, 
-      name: userCategoryName, 
-      category: 'General' 
-    };
-    setUserCategories([...userCategories, newCategory]);
-    toast.success('User category added successfully');
-    setUserCategoryName('');
-    setIsAddUserCategoryOpen(false);
+
+    try {
+      const response = await fetch(getFullUrl('/pms/admin/user_categories'), {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_category: {
+            name: userCategoryName
+          }
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('User category added successfully');
+        fetchUserCategories(); // Refresh the list
+        setUserCategoryName('');
+        setIsAddUserCategoryOpen(false);
+      } else {
+        toast.error('Failed to add user category');
+      }
+    } catch (error) {
+      console.error('Error adding user category:', error);
+      toast.error('Error adding user category');
+    }
   };
 
   return (
@@ -808,28 +874,46 @@ export const LocationAccountPage = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">User Category Name</TableHead>
-                    <TableHead className="font-semibold">Category</TableHead>
+                    <TableHead className="font-semibold">ID</TableHead>
+                    <TableHead className="font-semibold">Name</TableHead>
+                    <TableHead className="font-semibold">Resource Type</TableHead>
+                    <TableHead className="font-semibold">Created At</TableHead>
                     <TableHead className="font-semibold">Edit</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {userCategories.map((category, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{category.name}</TableCell>
-                      <TableCell>{category.category}</TableCell>
-                      <TableCell>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleEditUserCategory(category)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                  {isLoadingUserCategories ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        Loading user categories...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : userCategories.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        No user categories found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    userCategories.map((category, index) => (
+                      <TableRow key={category.id || index}>
+                        <TableCell>{category.id}</TableCell>
+                        <TableCell>{category.name}</TableCell>
+                        <TableCell>{category.resource_type}</TableCell>
+                        <TableCell>{new Date(category.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleEditUserCategory(category)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -852,18 +936,6 @@ export const LocationAccountPage = () => {
                     onChange={(e) => setEditingCategory(editingCategory ? {...editingCategory, name: e.target.value} : null)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                     placeholder="Enter user category name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <input
-                    type="text"
-                    value={editingCategory?.category || ''}
-                    onChange={(e) => setEditingCategory(editingCategory ? {...editingCategory, category: e.target.value} : null)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                    placeholder="Enter category"
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
