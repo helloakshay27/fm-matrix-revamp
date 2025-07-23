@@ -218,7 +218,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
       className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
       style={{ top: "477px", left: "629px", width: "863px", height: "105px" }}
     >
-      <div className="flex items-center justify-between w-full h-full px-6">
+      <div className="flex items-center justify-between w-full h-full pr-6">
         <div className="flex items-center gap-2">
           <div className="text-[#C72030] bg-[#C4B89D] rounded-lg w-[44px] h-[105px] flex items-center justify-center text-xs font-bold">
             {selectedCount}

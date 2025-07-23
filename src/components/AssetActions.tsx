@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,8 +8,12 @@ import {
   Search,
   RotateCcw,
   ExternalLink,
+  Clock,
+  AlertCircle,
+  Trash2,
 } from "lucide-react";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
+import { SelectionPanel } from "./water-asset-details/PannelTab";
 
 interface AssetActionsProps {
   searchTerm: string;
@@ -34,25 +38,61 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
   visibleColumns,
   onColumnChange,
 }) => {
-  return (
+    const [showActionPanel, setShowActionPanel] = useState(false);
+  
+   const selectionActions = [
+    
+      {
+        label: 'Update',
+        icon: Clock,
+        // onClick: handleUpdateSelected,
+        variant: 'outline' as const,
+      },
+      
+      {
+        label: 'Flag',
+        icon: AlertCircle,
+        // onClick: handleFlagSelected,
+        variant: 'outline' as const,
+      },
+      {
+        label: 'Delete',
+        icon: Trash2,
+        // onClick: () => handleBulkDelete(selectedAMCObjects),
+        variant: 'destructive' as const,
+      },
+
+    ];
+
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+  return (<>
+     {showActionPanel && (
+                <SelectionPanel
+                  actions={selectionActions}
+                  onAdd={onAddAsset}
+                  onClearSelection={()=> setShowActionPanel(false)}
+                  onImport={onImport}
+                 
+                />
+              )}
     <div className="flex flex-wrap items-center gap-3 mb-4">
       <Button
-        onClick={onAddAsset}
+        onClick={handleActionClick}
         className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-6"
       >
         <Plus className="w-4 h-4 mr-2" />
-        Add
+        Action
       </Button>
 
-      <Button
+      {/* <Button
         onClick={onImport}
         className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4"
       >
         <Upload className="w-4 h-4 mr-2" />
         Import
-      </Button>
-
-      
+      </Button> */}
 
       <div className="flex items-center gap-2 ml-auto">
         <div className="relative">
@@ -65,13 +105,12 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
           />
         </div>
         <Button
-        onClick={onFilterOpen}
-        variant="outline"
-        className="border-gray-600 text-gray-800 bg-white hover:bg-gray-50 px-2"
-      >
-        <Filter className="w-4 h-4 " />
-        
-      </Button>
+          onClick={onFilterOpen}
+          variant="outline"
+          className="border-gray-600 text-gray-800 bg-white hover:bg-gray-50 px-2"
+        >
+          <Filter className="w-4 h-4 " />
+        </Button>
 
         {/* <Button 
           variant="outline" 
@@ -109,5 +148,6 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
         </Button>
       </div>
     </div>
+    </>
   );
 };

@@ -93,21 +93,25 @@ export const AssetDetailsPage = () => {
                 {assetData.name} (#{assetData.id})
               </h1>
 
-              <div className="relative">
-                <select className="appearance-none bg-green-500 text-white px-4 py-2 pr-8 rounded font-medium text-sm cursor-pointer">
-                  <option>In Use</option>
-                  <option>Breakdown</option>
-                  <option>Under Maintenance</option>
-                  <option>Retired</option>
+              <div className="relative inline-block">
+                <select
+                  className="appearance-none bg-[#EDEAE3] text-[#C72030] px-4 py-2 pr-8 rounded font-medium text-sm cursor-pointer"
+                  defaultValue="In Use"
+                >
+                  <option className="text-[#C72030]">In Use</option>
+                  <option className="text-[#C72030]">Breakdown</option>
+                  <option className="text-[#C72030]">Under Maintenance</option>
+                  <option className="text-[#C72030]">Retired</option>
                 </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#C72030] pointer-events-none" />
               </div>
             </div>
 
             <div className="text-sm text-gray-600">
-              Created by {assetData.created_by} • Last updated by Rakesh on 06/01/2022, 12:22pm
+              Created by {assetData.created_by} • Last updated by Rakesh on
+              06/01/2022, 12:22pm
             </div>
-          </div>created_by
+          </div>
 
           <div className="flex items-center gap-3">
             <Button

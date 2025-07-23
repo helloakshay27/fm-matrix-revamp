@@ -319,20 +319,22 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
 
         {/* 6th Card - Recent Updates */}
         <div
-          className="rounded-xl p-4 border shadow-lg bg-[#FDFBF6] flex flex-col justify-between"
-          style={{ height: "132px" }}
+          className="border bg-[#F6F4EE] flex items-center p-4"
+          style={{ height: "132px", width: "488px" }}
         >
-          <div>
-            <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2">
-              Recent Updates
-            </h3>
-            <p className="text-sm text-[#1A1A1A] font-normal">
-              Aman Created a new Checklist.
-            </p>
+          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+            {/* Info SVG icon */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="#C72030" strokeWidth="1.5" />
+              <rect x="11" y="10" width="2" height="7" rx="1" fill="#C72030" />
+              <rect x="11" y="7" width="2" height="2" rx="1" fill="#C72030" />
+            </svg>
           </div>
-          <p className="text-[12px] text-[#9CA3AF] text-right mt-4">
-            Created on: 23/07/2025 – 12:23 PM
-          </p>
+          <div className="flex flex-col justify-center">
+            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>Recent Updates</span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>Aman Created a new Checklist.</span>
+            <span className="text-[12px] text-[#9CA3AF] mt-2">Created on: 23/07/2025 – 12:23 PM</span>
+          </div>
         </div>
       </div>
     </div>
