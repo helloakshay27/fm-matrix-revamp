@@ -1133,17 +1133,13 @@ export const TicketDashboard = () => {
             icon: Settings
           }].map((item, i) => {
             const IconComponent = item.icon;
-            return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
-                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" style={{
-                  color: '#C72030'
-                }} />
+            return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] h-[100px] sm:h-[132px] flex items-center gap-3 sm:gap-4 bg-[#f6f4ee]">
+                  <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
+                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate" style={{
-                  color: '#C72030'
-                }}>{item.value}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{item.label}</div>
+                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-[#C72030] mb-1">{item.value}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
                   </div>
                 </div>;
           })}
