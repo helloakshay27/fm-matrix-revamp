@@ -100,22 +100,6 @@ export const CategoryTypeTab: React.FC = () => {
     fetchSites();
   }, []);
 
-  useEffect(() => {
-    // Auto-capture current user's site ID
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        const currentSiteId = parsedUser.site_id || parsedUser.selected_site_id;
-        if (currentSiteId) {
-          form.setValue('siteId', currentSiteId.toString());
-        }
-      } catch (e) {
-        console.warn('Could not parse user data for site auto-selection');
-      }
-    }
-  }, [form]);
-
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
