@@ -29,6 +29,7 @@ interface ServiceRecord {
   floor: string;
   room: string;
   created_at: string;
+  qr_code?: string; 
 }
 
 const initialServiceData: ServiceRecord[] = [];
@@ -72,11 +73,16 @@ export const ServiceDashboard = () => {
   const handleImportClick = () => setShowBulkUploadModal(true);
   const handleImportLocationsClick = () => setShowImportLocationsModal(true);
   const handleFiltersClick = () => setShowFilterModal(true);
-  
+
   const handleApplyFilters = filters => {
+    setShowFilterModal(false);
     console.log('Applied filters:', filters);
   };
 
+  const handleCloseFilter = () => {
+    setShowFilterModal(false);         // Just close the modal
+    setSelectedItems([]);              // Also clear selected items
+  };
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
       setSelectedItems(prev => [...prev, itemId]);
@@ -94,35 +100,22 @@ export const ServiceDashboard = () => {
   };
 
   const handleQRDownload = () => {
-    const selectedServices = paginatedServices.filter(service => 
+    const selectedServices = paginatedServices.filter(service =>
       selectedItems.includes(service.id.toString())
     );
-    
+
     selectedServices.forEach((service, index) => {
-      setTimeout(() => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 200;
-        canvas.height = 200;
-        if (ctx) {
-          ctx.fillStyle = '#000';
-          for (let i = 0; i < 20; i++) {
-            for (let j = 0; j < 20; j++) {
-              if (Math.random() > 0.5) ctx.fillRect(i * 10, j * 10, 10, 10);
-            }
-          }
-        }
-        canvas.toBlob(blob => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `service_${service.id}_qr.png`;
-            link.click();
-            URL.revokeObjectURL(url);
-          }
-        });
-      }, index * 100);
+      const qrUrl = (service as any).qr_code;
+      if (qrUrl) {
+        const link = document.createElement('a');
+        link.href = qrUrl;
+        link.download = `${service.service_name || 'service'}_${service.id}_qr.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        console.warn(`QR code not available for service ID ${service.id}`);
+      }
     });
   };
 
@@ -149,37 +142,10 @@ export const ServiceDashboard = () => {
     {
       label: 'Print QR Codes',
       icon: FileText,
-      onClick: (selectedItems) => {
-        selectedItems.forEach((service, index) => {
-          setTimeout(() => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 200;
-            canvas.height = 200;
-            if (ctx) {
-              ctx.fillStyle = '#000';
-              for (let i = 0; i < 20; i++) {
-                for (let j = 0; j < 20; j++) {
-                  if (Math.random() > 0.5) ctx.fillRect(i * 10, j * 10, 10, 10);
-                }
-              }
-            }
-            canvas.toBlob(blob => {
-              if (blob) {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `service_${service.id}_qr.png`;
-                link.click();
-                URL.revokeObjectURL(url);
-              }
-            });
-          }, index * 100);
-        });
-        alert(`Downloading QR codes for ${selectedItems.length} services`);
-      }
+      onClick: () => handleQRDownload()
     }
   ];
+
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-3">
@@ -192,11 +158,9 @@ export const ServiceDashboard = () => {
       <Button onClick={handleFiltersClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Filter className="w-4 h-4 mr-2" /> Filters
       </Button>
-      {selectedItems.length > 0 && (
         <Button onClick={handleQRDownload} className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <FileText className="w-4 h-4 mr-2" /> QR Download
+          <FileText className="w-4 h-4 mr-2" /> Print QR
         </Button>
-      )}
     </div>
   );
 
@@ -234,8 +198,8 @@ export const ServiceDashboard = () => {
       case 'status':
         return (
           <div className="flex items-center">
-            <div 
-              onClick={() => handleStatusToggle(item.id)} 
+            <div
+              onClick={() => handleStatusToggle(item.id)}
               className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors bg-green-500`}
             >
               <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-6`} />
@@ -252,12 +216,12 @@ export const ServiceDashboard = () => {
   const renderPaginationItems = () => {
     const items = [];
     const showEllipsis = totalPages > 7;
-    
+
     if (showEllipsis) {
       // Show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink 
+          <PaginationLink
             onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
           >
@@ -277,7 +241,7 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -293,7 +257,7 @@ export const ServiceDashboard = () => {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -316,7 +280,7 @@ export const ServiceDashboard = () => {
           if (!items.find(item => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink 
+                <PaginationLink
                   onClick={() => setCurrentPage(i)}
                   isActive={currentPage === i}
                 >
@@ -332,7 +296,7 @@ export const ServiceDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -346,7 +310,7 @@ export const ServiceDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
             >
@@ -401,6 +365,7 @@ export const ServiceDashboard = () => {
           getItemId={(item) => item.id.toString()}
           storageKey="services-table"
           leftActions={renderCustomActions()}
+          searchByIdOnly={false}
         />
       )}
 
@@ -409,16 +374,16 @@ export const ServiceDashboard = () => {
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
+              <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
               />
             </PaginationItem>
-            
+
             {renderPaginationItems()}
-            
+
             <PaginationItem>
-              <PaginationNext 
+              <PaginationNext
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
               />
@@ -429,7 +394,7 @@ export const ServiceDashboard = () => {
 
       <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
       <ImportLocationsModal isOpen={showImportLocationsModal} onClose={() => setShowImportLocationsModal(false)} />
-      <ServiceFilterModal isOpen={showFilterModal} onClose={() => setShowFilterModal(false)} onApply={handleApplyFilters} />
+      <ServiceFilterModal isOpen={showFilterModal} onClose={handleCloseFilter} onApply={handleApplyFilters} />
     </div>
   );
 };

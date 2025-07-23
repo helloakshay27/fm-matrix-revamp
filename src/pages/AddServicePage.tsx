@@ -43,9 +43,18 @@ export const AddServicePage = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      setSelectedFiles(Array.from(files));
+      const newFiles = Array.from(files);
+
+      setSelectedFiles(prevFiles => {
+        const existingNames = new Set(prevFiles.map(f => f.name));
+        const filteredNewFiles = newFiles.filter(f => !existingNames.has(f.name));
+        return [...prevFiles, ...filteredNewFiles];
+      });
+
+      event.target.value = '';
     }
   };
+
 
   const handleSubmit = async (action: string) => {
     const sendData = new FormData();
@@ -88,8 +97,9 @@ export const AddServicePage = () => {
         title: "Service Created",
         description: `Service has been ${action} successfully.`,
       });
+      // console.log('Service created:', response.data.id);
 
-      navigate('/maintenance/service');
+      navigate('/maintenance/service/details/' + response.data.id);
     } catch (error) {
       console.error('Error creating service:', error);
       toast({
@@ -205,7 +215,7 @@ export const AddServicePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
             <div className="text-center">
               <input
                 type="file"
@@ -213,22 +223,57 @@ export const AddServicePage = () => {
                 className="hidden"
                 id="file-upload"
                 onChange={handleFileUpload}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
+
+              <label
+                htmlFor="file-upload"
+                className="text-[#C72030] cursor-pointer"
               >
-                Choose Files
-              </Button>
-              <p className="text-sm text-gray-500 mt-2">
-                {selectedFiles.length > 0
-                  ? selectedFiles.map(file => file.name).join(', ')
-                  : 'No files chosen'}
-              </p>
+                Choose File
+              </label>
+
+              <span className="ml-2 text-gray-500">
+                {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No file chosen'}
+              </span>
+
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  className="bg-[#f6f4ee] text-[#C72030] px-6 py-2 rounded  flex items-center justify-center mx-auto"
+                >
+                  <span className="text-lg mr-2">+</span> Upload Files
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+            {selectedFiles.map((file, index) => {
+              const isImage = file.type.startsWith('image/');
+              const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+
+              return (
+                <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50">
+                  {isImage ? (
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="h-32 w-full object-contain rounded"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-32 w-full">
+                      <div className="text-gray-600 text-5xl">📄</div>
+                      <div className="mt-2 text-xs break-words">{file.name}</div>
+                    </div>
+                  )}
+                  {isExcel && (
+                    <p className="text-green-700 text-xs mt-1">Excel file</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

@@ -16,9 +16,6 @@ interface ServiceFilterModalProps {
 export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterModalProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const serviceFilterState = useSelector((state: RootState) => state.serviceFilter);
-  console.log('ServiceFilter state:', serviceFilterState);
-  
-  // Fallback to empty state if serviceFilter is undefined
   const { buildings = [], areas = [], loading = { buildings: false, areas: false }, error = { buildings: null, areas: null } } = serviceFilterState || {};
   
   const [filters, setFilters] = useState({
@@ -27,28 +24,25 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     area: ''
   });
 
-  // Load buildings on modal open (using siteId = 1 as default)
+  const [errors, setErrors] = useState({
+    serviceName: false
+  });
+
   useEffect(() => {
     if (isOpen && buildings.length === 0) {
-      dispatch(fetchBuildings(1));
+      dispatch(fetchBuildings(1)); // Load buildings on modal open (default siteId = 1)
     }
   }, [isOpen, dispatch, buildings.length]);
 
-  console.log('ServiceFilterModal rendered with filters:', filters);
-  console.log('Modal isOpen:', isOpen);
-
   const handleInputChange = (field: string, value: string) => {
-    console.log(`Updating ${field} to:`, value);
     setFilters(prev => {
       const updated = { ...prev, [field]: value };
-      console.log('Updated filters:', updated);
       
       // Clear areas when building changes
       if (field === 'building') {
         updated.area = '';
         dispatch(clearAreas());
         
-        // Fetch areas for the selected building (using wingId = building value for now)
         if (value) {
           const wingId = parseInt(value);
           if (!isNaN(wingId)) {
@@ -56,15 +50,17 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
           }
         }
       }
-      
       return updated;
     });
   };
 
   const handleApply = () => {
-    console.log('Applying filters:', filters);
-    onApply(filters);
-    onClose();
+    if (filters.serviceName.trim() === '') {
+      setErrors({ serviceName: true });
+    } else {
+      onApply(filters);
+      onClose();
+    }
   };
 
   const handleReset = () => {
@@ -76,7 +72,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     onApply({});
   };
 
-  // Responsive styles for TextField and Select
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     backgroundColor: 'white',
@@ -98,11 +93,11 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       },
     },
-    // Prevent focus conflicts with Dialog
     disablePortal: false,
     disableAutoFocus: true,
     disableEnforceFocus: true,
   };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent className="max-w-2xl" aria-describedby="filter-dialog-description">
@@ -117,9 +112,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             >
               <X className="h-4 w-4" />
             </Button>
-          </div>
-          <div id="filter-dialog-description" className="sr-only">
-            Filter services by name, building, and area
           </div>
         </DialogHeader>
         
@@ -143,6 +135,8 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                   InputProps={{
                     sx: fieldStyles
                   }}
+                  error={errors.serviceName}
+                  helperText={errors.serviceName && "Service Name is required"}
                 />
               </div>
             </div>
@@ -161,7 +155,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     displayEmpty
                     value={filters.building}
                     onChange={(e) => {
-                      console.log('Building dropdown onChange triggered with value:', e.target.value);
                       handleInputChange('building', e.target.value as string);
                     }}
                     sx={fieldStyles}
@@ -193,7 +186,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     displayEmpty
                     value={filters.area}
                     onChange={(e) => {
-                      console.log('Area dropdown onChange triggered with value:', e.target.value);
                       handleInputChange('area', e.target.value as string);
                     }}
                     sx={fieldStyles}

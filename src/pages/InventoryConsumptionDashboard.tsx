@@ -50,6 +50,12 @@ const InventoryConsumptionDashboard = () => {
 
   const handleApplyFilter = () => {
     dispatch(fetchInventoryConsumptionHistoryFilter(filterValues))
+    setFilterValues({
+      group: '',
+      subGroup: '',
+      criticality: '',
+      name: ''
+    })
     setIsFilterOpen(false);
   };
 

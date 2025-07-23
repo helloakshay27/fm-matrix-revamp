@@ -74,6 +74,8 @@ interface EnhancedTableProps<T> {
   hideColumnsButton?: boolean;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
+  handleExport?: () => void;
+  searchByIdOnly?: boolean;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -111,6 +113,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideColumnsButton = false,
   leftActions,
   rightActions,
+  searchByIdOnly
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -136,13 +139,22 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Filter data based on search term
   const filteredData = useMemo(() => {
     if (!searchTerm) return baseSortedData;
-
-    return baseSortedData.filter(item =>
-      Object.values(item).some(value =>
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [baseSortedData, searchTerm]);
+  
+    return baseSortedData.filter(item => {
+      const row = renderRow ? renderRow(item) : item;
+  
+      if (searchByIdOnly === true) {
+        const idValue = row?.id ?? row?.['#'] ?? '';
+        return String(idValue).toLowerCase().includes(searchTerm.toLowerCase());
+      }
+  
+      // Fallback: full row search
+      return Object.values(row).some(value =>
+        String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+  }, [baseSortedData, searchTerm, renderRow, searchByIdOnly]);
+  
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
