@@ -17,10 +17,12 @@ export const LocationAccountPage = () => {
   const [dailyReport, setDailyReport] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [entityName, setEntityName] = useState('');
+  const [userCategoryName, setUserCategoryName] = useState('');
   const [isAddCountryOpen, setIsAddCountryOpen] = useState(false);
   const [isAddRegionOpen, setIsAddRegionOpen] = useState(false);
   const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
   const [isAddEntityOpen, setIsAddEntityOpen] = useState(false);
+  const [isAddUserCategoryOpen, setIsAddUserCategoryOpen] = useState(false);
 
   // Sample data with state management
   const [countries, setCountries] = useState([
@@ -57,6 +59,14 @@ export const LocationAccountPage = () => {
     { entity: 'lockated', status: true },
     { entity: 'demo', status: false },
     { entity: 'Sohail Ansari', status: true },
+  ]);
+
+  const [userCategories, setUserCategories] = useState([
+    { name: 'Admin', status: true },
+    { name: 'Manager', status: true },
+    { name: 'Employee', status: true },
+    { name: 'Contractor', status: false },
+    { name: 'Visitor', status: false },
   ]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +127,24 @@ export const LocationAccountPage = () => {
     setEntities(updatedEntities);
   };
 
+  const handleUserCategoryStatusChange = (index: number, checked: boolean) => {
+    const updatedCategories = [...userCategories];
+    updatedCategories[index].status = checked;
+    setUserCategories(updatedCategories);
+  };
+
+  const handleSubmitUserCategory = () => {
+    if (!userCategoryName.trim()) {
+      toast.error('Please enter a user category name');
+      return;
+    }
+    const newCategory = { name: userCategoryName, status: true };
+    setUserCategories([...userCategories, newCategory]);
+    toast.success('User category added successfully');
+    setUserCategoryName('');
+    setIsAddUserCategoryOpen(false);
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
@@ -124,7 +152,7 @@ export const LocationAccountPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7 mb-6">
+        <TabsList className="grid w-full grid-cols-8 mb-6">
           <TabsTrigger value="organization">Organization</TabsTrigger>
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="country">Country</TabsTrigger>
@@ -132,6 +160,7 @@ export const LocationAccountPage = () => {
           <TabsTrigger value="zone">Zone</TabsTrigger>
           <TabsTrigger value="site">Site</TabsTrigger>
           <TabsTrigger value="entity">Entity</TabsTrigger>
+          <TabsTrigger value="user-category">User Category</TabsTrigger>
         </TabsList>
 
         <TabsContent value="organization" className="space-y-4">
@@ -683,6 +712,98 @@ export const LocationAccountPage = () => {
                         />
                       </TableCell>
                       <TableCell>{entity.entity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="user-category" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog open={isAddUserCategoryOpen} onOpenChange={setIsAddUserCategoryOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add User Category
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add User Category</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      User Category Name
+                    </label>
+                    <input
+                      type="text"
+                      value={userCategoryName}
+                      onChange={(e) => setUserCategoryName(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      placeholder="Enter user category name"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsAddUserCategoryOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      onClick={handleSubmitUserCategory}
+                    >
+                      Add User Category
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <div className="flex items-center gap-4">
+              <select
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="text-sm text-gray-600">entries per page</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+                <Button size="sm" variant="outline">Search</Button>
+              </div>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">User Category Name</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userCategories.map((category, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{category.name}</TableCell>
+                      <TableCell>
+                        <Switch 
+                          checked={category.status} 
+                          onCheckedChange={(checked) => handleUserCategoryStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
