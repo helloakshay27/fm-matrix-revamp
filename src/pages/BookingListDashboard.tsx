@@ -77,8 +77,10 @@ const BookingListDashboard = () => {
   const [filters, setFilters] = useState({
     facilityName: '',
     status: '',
-    scheduledDate: null as Date | null,
-    createdOn: null as Date | null
+    scheduledDateFrom: null as Date | null,
+    scheduledDateTo: null as Date | null,
+    createdOnFrom: null as Date | null,
+    createdOnTo: null as Date | null
   });
   
   const itemsPerPage = 5;
@@ -153,8 +155,10 @@ const BookingListDashboard = () => {
     setFilters({
       facilityName: '',
       status: '',
-      scheduledDate: null,
-      createdOn: null
+      scheduledDateFrom: null,
+      scheduledDateTo: null,
+      createdOnFrom: null,
+      createdOnTo: null
     });
   };
 
@@ -398,42 +402,90 @@ const BookingListDashboard = () => {
             </div>
 
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <div className="grid grid-cols-2 gap-4">
-                <DatePicker
-                  label="Booked Scheduled Date"
-                  value={filters.scheduledDate}
-                  onChange={(date) => handleDateChange('scheduledDate', date)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '6px',
-                      height: { xs: '36px', sm: '45px' }
-                    },
-                    '& .MuiInputLabel-root': {
-                      color: '#000000'
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#000000'
-                    }
-                  }}
-                />
-                
-                <DatePicker
-                  label="Created On"
-                  value={filters.createdOn}
-                  onChange={(date) => handleDateChange('createdOn', date)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '6px',
-                      height: { xs: '36px', sm: '45px' }
-                    },
-                    '& .MuiInputLabel-root': {
-                      color: '#000000'
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#000000'
-                    }
-                  }}
-                />
+              <div className="space-y-4">
+                {/* Scheduled Date Range */}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-gray-700">Booked Scheduled Date Range</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <DatePicker
+                      label="From Date"
+                      value={filters.scheduledDateFrom}
+                      onChange={(date) => handleDateChange('scheduledDateFrom', date)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '6px',
+                          height: { xs: '36px', sm: '45px' }
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: '#000000'
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#000000'
+                        }
+                      }}
+                    />
+                    
+                    <DatePicker
+                      label="To Date"
+                      value={filters.scheduledDateTo}
+                      onChange={(date) => handleDateChange('scheduledDateTo', date)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '6px',
+                          height: { xs: '36px', sm: '45px' }
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: '#000000'
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#000000'
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Created On Date Range */}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-gray-700">Created On Date Range</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <DatePicker
+                      label="From Date"
+                      value={filters.createdOnFrom}
+                      onChange={(date) => handleDateChange('createdOnFrom', date)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '6px',
+                          height: { xs: '36px', sm: '45px' }
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: '#000000'
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#000000'
+                        }
+                      }}
+                    />
+                    
+                    <DatePicker
+                      label="To Date"
+                      value={filters.createdOnTo}
+                      onChange={(date) => handleDateChange('createdOnTo', date)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '6px',
+                          height: { xs: '36px', sm: '45px' }
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: '#000000'
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#000000'
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </LocalizationProvider>
           </div>
