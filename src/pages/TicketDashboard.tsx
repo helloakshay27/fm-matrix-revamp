@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -260,6 +260,7 @@ export const TicketDashboard = () => {
   });
   const [filters, setFilters] = useState<TicketFilters>({});
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
+  const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
   const perPage = 20;
 
   // Drag and drop sensors
@@ -721,22 +722,39 @@ export const TicketDashboard = () => {
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
       return (
-        <div className="flex gap-2">
+        <div className="flex items-center justify-center gap-2">
           <div title="View ticket">
             <Eye 
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
               onClick={(e) => {
                 e.stopPropagation();
-                handleViewDetails(item.ticket_number);
+                handleViewDetails(item.id);
               }}
             />
           </div>
-          <div title="Edit ticket">
-            <Edit 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+          <div title="Flag ticket">
+            <Flag 
+              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
+                item.is_flagged 
+                  ? 'text-red-500 fill-red-500' 
+                  : 'text-gray-600'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/maintenance/ticket/edit/${item.ticket_number}`);
+                handleFlag();
+              }}
+            />
+          </div>
+          <div title="Star ticket">
+            <Star 
+              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
+                item.is_golden_ticket 
+                  ? 'text-yellow-500 fill-yellow-500' 
+                  : 'text-gray-600'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGoldenTicket();
               }}
             />
           </div>
@@ -751,6 +769,7 @@ export const TicketDashboard = () => {
         className={`px-2 py-1 rounded text-xs animate-scale-in cursor-pointer hover:opacity-80 transition-opacity ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}
         onClick={(e) => {
           e.stopPropagation();
+          setSelectedTicketForEdit(item);
           setIsEditStatusOpen(true);
         }}
       >
@@ -1078,7 +1097,7 @@ export const TicketDashboard = () => {
                   pagination={false} 
                   enableExport={true} 
                   exportFileName="tickets" 
-                  onRowClick={ticket => handleViewDetails(ticket.ticket_number)} 
+                  onRowClick={ticket => handleViewDetails(ticket.id)} 
                   storageKey="tickets-table" 
                   enableSelection={true} 
                   selectedItems={selectedTickets.map(id => id.toString())} 
@@ -1205,7 +1224,14 @@ export const TicketDashboard = () => {
       {/* Edit Status Dialog */}
       <EditStatusDialog 
         open={isEditStatusOpen} 
-        onOpenChange={setIsEditStatusOpen} 
+        onOpenChange={setIsEditStatusOpen}
+        complaintId={selectedTicketForEdit?.id}
+        currentStatusId={selectedTicketForEdit?.complaint_status_id}
+        currentStatus={selectedTicketForEdit?.issue_status}
+        onSuccess={() => {
+          fetchTickets(currentPage);
+          setSelectedTicketForEdit(null);
+        }}
       />
 
       {/* Ticket Selection Panel */}

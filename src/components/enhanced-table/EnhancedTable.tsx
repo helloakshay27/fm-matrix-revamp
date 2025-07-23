@@ -118,7 +118,8 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
+  
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   const {
@@ -136,25 +137,21 @@ export function EnhancedTable<T extends Record<string, any>>({
     storageKey
   });
 
-  // Filter data based on search term
+  // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
+    // If we have API search results, use them instead of filtering original data
+    if (apiSearchResults) {
+      return apiSearchResults;
+    }
+    
     if (!searchTerm) return baseSortedData;
-  
-    return baseSortedData.filter(item => {
-      const row = renderRow ? renderRow(item) : item;
-  
-      if (searchByIdOnly === true) {
-        const idValue = row?.id ?? row?.['#'] ?? '';
-        return String(idValue).toLowerCase().includes(searchTerm.toLowerCase());
-      }
-  
-      // Fallback: full row search
-      return Object.values(row).some(value =>
-        String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
-  }, [baseSortedData, searchTerm, renderRow, searchByIdOnly]);
-  
+    
+    return baseSortedData.filter(item =>
+      Object.values(item).some(value =>
+        String(value).toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [baseSortedData, searchTerm, apiSearchResults]);
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
@@ -217,17 +214,47 @@ export function EnhancedTable<T extends Record<string, any>>({
     setSearchInput(value);
   };
 
-  const handleSearchGo = () => {
-    setInternalSearchTerm(searchInput);
-    setCurrentPage(1);
-    if (onSearchChange) {
-      onSearchChange(searchInput);
+  const handleSearchGo = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+      
+      if (!token) {
+        alert('Authentication token not found. Please login first.');
+        return;
+      }
+
+      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchInput}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Set the API search results to be used by the table
+        setApiSearchResults(data.complaints || []);
+        setCurrentPage(1);
+        setInternalSearchTerm(searchInput);
+        if (onSearchChange) {
+          onSearchChange(searchInput);
+        }
+      } else if (response.status === 401) {
+        alert('Unauthorized: Please check your authentication token or login again.');
+      } else {
+        alert(`Failed to search: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error searching:', error);
+      alert('An error occurred while searching. Please try again.');
     }
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
     setInternalSearchTerm('');
+    setApiSearchResults(null);
     setCurrentPage(1);
     if (onSearchChange) {
       onSearchChange('');
@@ -316,7 +343,43 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={onExport || handleExport}
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+                  
+                  if (!token) {
+                    alert('Authentication token not found. Please login first.');
+                    return;
+                  }
+
+                  const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx', {
+                    method: 'GET',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                  });
+                  
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'complaints.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } else if (response.status === 401) {
+                    alert('Unauthorized: Please check your authentication token or login again.');
+                  } else {
+                    alert(`Failed to download file: ${response.status} ${response.statusText}`);
+                  }
+                } catch (error) {
+                  console.error('Error downloading file:', error);
+                  alert('An error occurred while downloading the file. Please try again.');
+                }
+              }}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
