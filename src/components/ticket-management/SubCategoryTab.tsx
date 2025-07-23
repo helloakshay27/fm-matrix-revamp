@@ -459,21 +459,54 @@ export const SubCategoryTab: React.FC = () => {
               {/* Engineer Assignment */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">Engineer Assignment</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {engineers.map((engineer) => (
-                    <div key={engineer.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        checked={selectedEngineers.includes(engineer.id)}
-                        onCheckedChange={() => 
-                          handleMultiSelect(engineer.id.toString(), selectedEngineers, setSelectedEngineers)
-                        }
-                      />
-                      <label className="text-sm">
-                        {engineer.firstname} {engineer.lastname}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                <Select
+                  onValueChange={(value) => {
+                    const engineerId = parseInt(value);
+                    if (selectedEngineers.includes(engineerId)) {
+                      setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId));
+                    } else {
+                      setSelectedEngineers([...selectedEngineers, engineerId]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={
+                      selectedEngineers.length === 0 
+                        ? "Select engineers" 
+                        : `${selectedEngineers.length} engineer(s) selected`
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {engineers.map((engineer) => (
+                      <SelectItem key={engineer.id} value={engineer.id.toString()}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{engineer.firstname} {engineer.lastname}</span>
+                          {selectedEngineers.includes(engineer.id) && (
+                            <span className="ml-2 text-primary">✓</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Show selected engineers */}
+                {selectedEngineers.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedEngineers.map((engineerId) => {
+                      const engineer = engineers.find(e => e.id === engineerId);
+                      return engineer ? (
+                        <div key={engineerId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                          {engineer.firstname} {engineer.lastname}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={() => setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId))}
+                          />
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Location Configuration */}
