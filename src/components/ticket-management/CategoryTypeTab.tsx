@@ -78,7 +78,6 @@ interface SitesApiResponse {
 export const CategoryTypeTab: React.FC = () => {
   const [categories, setCategories] = useState<CategoryApiResponse['helpdesk_categories']>([]);
   const [sites, setSites] = useState<Site[]>([]);
-  const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [faqItems, setFaqItems] = useState<FAQ[]>([{ question: '', answer: '' }]);
@@ -133,13 +132,6 @@ export const CategoryTypeTab: React.FC = () => {
         setSites(response.sites);
       } else {
         setSites([]);
-      }
-
-      // Set selected site if available
-      if (response.selected_site) {
-        setSelectedSite(response.selected_site);
-        // Set the selected site as default value in the form
-        form.setValue('siteId', response.selected_site.id.toString());
       }
     } catch (error) {
       console.error('Error fetching sites:', error);
@@ -393,9 +385,7 @@ export const CategoryTypeTab: React.FC = () => {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue 
-                              placeholder={selectedSite ? selectedSite.name : "Select site"} 
-                            />
+                            <SelectValue placeholder="Select site" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
