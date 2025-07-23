@@ -57,7 +57,7 @@ export const AMCDetailsPage = () => {
   const { data: amcData, loading, error } = useAppSelector(
     (state) => state.amcDetails as { data: AMCDetailsDataWithVisits; loading: boolean; error: any }
   ); const [showAddVisitModal, setShowAddVisitModal] = useState(false);
-
+  const amcDetails: AMCDetailsData | null = amcData as AMCDetailsData;
   const amcVisitData = amcData?.amc_visit_logs?.map((visit) => visit) ?? [];
 
 
@@ -105,7 +105,10 @@ export const AMCDetailsPage = () => {
   }
 
   // Extract data from API response
-  const amcDetails: AMCDetailsData | null = amcData as AMCDetailsData;
+
+  const hanldeClose = () => {
+    setShowAddVisitModal(false);        
+  }
 
   if (!amcDetails) {
     return (
@@ -116,6 +119,7 @@ export const AMCDetailsPage = () => {
       </div>
     );
   }
+
 
   return (
     <div className="p-6">
@@ -311,7 +315,7 @@ export const AMCDetailsPage = () => {
 
       <AddVisitModal
         isOpen={showAddVisitModal}
-        onClose={() => setShowAddVisitModal(false)}
+        onClose={hanldeClose}
         amcId={amcDetails?.id?.toString() || id || ''}
       />
     </div>

@@ -433,7 +433,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee] text-center"
+                        className="bg-[#f6f4ee] text-center text-black"
                       >
                         {column.label}
                       </SortableColumnHeader>
