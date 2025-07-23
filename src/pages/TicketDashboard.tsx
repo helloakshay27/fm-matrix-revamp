@@ -734,7 +734,11 @@ export const TicketDashboard = () => {
           </div>
           <div title="Flag ticket">
             <Flag 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
+                item.is_flagged 
+                  ? 'text-red-500 fill-red-500' 
+                  : 'text-gray-600'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleFlag();
