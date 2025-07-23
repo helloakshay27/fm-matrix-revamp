@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
 import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import { fetchCustomFormDetails } from '@/services/customFormsAPI';
 
 const muiFieldStyles = {
   width: '100%',
@@ -63,76 +65,83 @@ const multilineFieldStyles = {
 export const ViewSchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the form_code from navigation state
+  const formCode = location.state?.formCode;
 
   // Modal states
   const [showSetApprovalModal, setShowSetApprovalModal] = useState(false);
 
-  // Toggle states for Create Ticket and Weightage
-  const [createTicketEnabled, setCreateTicketEnabled] = useState(false);
-  const [weightageEnabled, setWeightageEnabled] = useState(false);
+  // Fetch custom form details
+  const {
+    data: formDetailsData,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['custom-form-details', formCode],
+    queryFn: () => fetchCustomFormDetails(formCode),
+    enabled: !!formCode
+  });
 
-  // Static data for viewing
-  const scheduleData = {
-    type: 'PPM',
-    activityName: 'meter reading',
-    description: '',
-    scheduleFor: 'Asset',
-    checklistType: 'Individual',
-    asset: 'Energy Meter 1[584931186764c2f8b565]',
-    assignTo: 'Ashiq Rasul',
-    scanType: 'Select Scan Type',
-    planDurationType: 'Day',
-    planValue: '1',
-    priority: 'Select Priority',
-    emailTriggerRule: '',
-    supervisors: 'Select Supervisors',
-    category: 'Technical',
-    submissionType: '',
-    submissionTimeValue: '',
-    graceTime: 'Day',
-    graceTimeValue: '3',
-    lockOverdueTask: 'Select Lock Status',
-    frequency: 'Select Frequency',
-    cronExpression: '0 0 * * *',
-    startTime: '01/05/2025',
-    endAt: '31/05/2025',
-    selectSupplier: 'Select Supplier'
+  // Extract data from API response
+  const customForm = formDetailsData?.custom_form;
+  const assetTask = formDetailsData?.asset_task;
+  const emailRules = formDetailsData?.email_rules || [];
+
+  // Toggle states for Create Ticket and Weightage
+  const createTicketEnabled = customForm?.create_ticket || false;
+  const weightageEnabled = customForm?.weightage_enabled || false;
+
+  // Format date function
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
-  // Association data
-  const associationData = [
-    {
-      assetName: 'Energy Meter 1',
-      assetCode: '584931186764c2f8b565',
-      modelNumber: '',
-      purchaseDate: '14/02/2022, 04:54 PM',
-      purchaseCost: '',
-      createdOn: ''
-    },
-    {
-      assetName: 'Energy Meter 23',
-      assetCode: '03835269926136105d:1',
-      modelNumber: 'EM-001',
-      purchaseDate: '31/05/2023, 06:18 PM',
-      purchaseCost: '',
-      createdOn: ''
-    }
-  ];
+  // Format date with time
+  const formatDateTime = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
 
-  // Email trigger rules data
-  const emailTriggerRules = [];
+  if (isLoading) {
+    return (
+      <div className="p-6 mx-auto">
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Loading schedule details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Asset mapping data
-  const assetMappingData = [
-    {
-      assetName: 'Energy Meter 1',
-      kwah: 'Electric Meter'
-    },
-    {
-      assetName: 'Energy Meter 23',
-      kwah: 'Start Reading'
-    }
-  ];
+  if (error || !formCode) {
+    return (
+      <div className="p-6 mx-auto">
+        <div className="flex items-center justify-center h-32">
+          <p className="text-sm text-red-600">
+            {error ? 'Error loading schedule details. Please try again.' : 'Invalid schedule ID or missing form code.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSetApproval = () => {
     setShowSetApprovalModal(true);
@@ -198,7 +207,7 @@ export const ViewSchedulePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <RadioGroup value={scheduleData.type} className="grid grid-cols-2 gap-4">
+                <RadioGroup value={customForm?.schedule_type || 'PPM'} className="grid grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="PPM" id="type-ppm" />
                     <Label htmlFor="type-ppm">PPM</Label>
@@ -227,7 +236,7 @@ export const ViewSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <Label>Schedule for</Label>
-                <RadioGroup value={scheduleData.scheduleFor} className="flex gap-4">
+                <RadioGroup value={customForm?.sch_type || 'Asset'} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="Asset" id="schedule-asset" />
                     <Label htmlFor="schedule-asset">Asset</Label>
@@ -246,7 +255,7 @@ export const ViewSchedulePage = () => {
             <div className="space-y-2">
               <TextField
                 label="Activity Name"
-                value={scheduleData.activityName}
+                value={customForm?.form_name || ''}
                 InputProps={{ readOnly: true }}
                 fullWidth
                 variant="outlined"
@@ -259,7 +268,7 @@ export const ViewSchedulePage = () => {
             <div className="space-y-2">
               <TextField
                 label="Description"
-                value={scheduleData.description}
+                value={customForm?.description || ''}
                 InputProps={{ readOnly: true }}
                 fullWidth
                 multiline
@@ -313,52 +322,62 @@ export const ViewSchedulePage = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <TextField
-                  label="Task"
-                  value="Kwah"
-                  InputProps={{ readOnly: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={muiFieldStyles}
-                />
+            {/* Dynamic Task Content */}
+            {customForm?.content && customForm.content.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-700">Tasks:</h4>
+                {customForm.content.map((task, index) => (
+                  <div key={index} className="grid grid-cols-3 gap-4 p-4 border rounded-lg bg-gray-50">
+                    <div className="space-y-2">
+                      <TextField
+                        label={`Task ${index + 1}`}
+                        value={task.label}
+                        InputProps={{ readOnly: true }}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        sx={muiFieldStyles}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Input Type</InputLabel>
+                        <Select
+                          value={task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}
+                          label="Input Type"
+                          readOnly
+                          sx={muiFieldStyles}
+                        >
+                          <MenuItem value={task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}>
+                            {task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <div className="space-y-2 flex items-center gap-4 pt-6">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          checked={task.required === 'true'} 
+                          disabled 
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
+                        />
+                        <Label>Mandatory</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          checked={task.is_reading === 'true'} 
+                          disabled 
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
+                        />
+                        <Label>Reading</Label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Input Type</InputLabel>
-                  <Select
-                    value="Numeric"
-                    label="Input Type"
-                    readOnly
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value="Numeric">Numeric</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="space-y-2 flex items-center gap-4 pt-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    checked 
-                    disabled 
-                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
-                  />
-                  <Label>Mandatory</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    checked 
-                    disabled 
-                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
-                  />
-                  <Label>Reading</Label>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -373,7 +392,7 @@ export const ViewSchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Checklist Type</Label>
-              <RadioGroup value={scheduleData.checklistType} className="flex gap-4">
+              <RadioGroup value={assetTask?.assignment_type === 'people' ? 'Individual' : 'Asset Group'} className="flex gap-4">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="Individual" id="checklist-individual" />
                   <Label htmlFor="checklist-individual">Individual</Label>
@@ -385,11 +404,27 @@ export const ViewSchedulePage = () => {
               </RadioGroup>
             </div>
 
+            {/* Dynamic Asset/Service Display */}
             <div className="space-y-2">
-              <Label>Asset</Label>
+              <Label>{customForm?.sch_type === 'Service' ? 'Services' : 'Assets'}</Label>
               <div className="bg-red-50 p-2 rounded border border-red-200">
-                <div className="text-red-600 text-sm mb-2">Energy Meter 1[584931186764c2f8b565]</div>
-                <div className="text-red-600 text-sm">Energy Meter 23[03835269926136105d:1]</div>
+                {customForm?.sch_type === 'Service' ? (
+                  assetTask?.services?.map((service, index) => (
+                    <div key={index} className="text-red-600 text-sm mb-2">
+                      {service.service_name}[{service.service_code}]
+                    </div>
+                  ))
+                ) : (
+                  assetTask?.assets?.map((asset, index) => (
+                    <div key={index} className="text-red-600 text-sm mb-2">
+                      {asset.asset_name}[{asset.asset_code}]
+                    </div>
+                  ))
+                )}
+                {(!assetTask?.services || assetTask.services.length === 0) && 
+                 (!assetTask?.assets || assetTask.assets.length === 0) && (
+                  <div className="text-red-600 text-sm">No assets or services assigned</div>
+                )}
               </div>
             </div>
 
@@ -397,7 +432,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="Assign to"
-                  value={scheduleData.assignTo}
+                  value={customForm?.supervisors?.[0] || 'Not assigned'}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -411,12 +446,14 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Scan Type</InputLabel>
                   <Select
-                    value={scheduleData.scanType}
+                    value={assetTask?.scan_type || 'Select Scan Type'}
                     label="Scan Type"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.scanType}>{scheduleData.scanType}</MenuItem>
+                    <MenuItem value={assetTask?.scan_type || 'Select Scan Type'}>
+                      {assetTask?.scan_type || 'Select Scan Type'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -424,12 +461,14 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Plan Duration Type</InputLabel>
                   <Select
-                    value={scheduleData.planDurationType}
+                    value={assetTask?.plan_type || 'Day'}
                     label="Plan Duration Type"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.planDurationType}>{scheduleData.planDurationType}</MenuItem>
+                    <MenuItem value={assetTask?.plan_type || 'Day'}>
+                      {assetTask?.plan_type || 'Day'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -439,7 +478,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="Plan value"
-                  value={scheduleData.planValue}
+                  value={assetTask?.plan_value || '1'}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -452,7 +491,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="Email Trigger Rule"
-                  value={scheduleData.emailTriggerRule}
+                  value={customForm?.rule_ids?.[0] || 'No rules'}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -466,12 +505,14 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Supervisors</InputLabel>
                   <Select
-                    value={scheduleData.supervisors}
+                    value={customForm?.supervisors?.join(', ') || 'Select Supervisors'}
                     label="Supervisors"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.supervisors}>{scheduleData.supervisors}</MenuItem>
+                    <MenuItem value={customForm?.supervisors?.join(', ') || 'Select Supervisors'}>
+                      {customForm?.supervisors?.join(', ') || 'Select Supervisors'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -482,19 +523,21 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Priority</InputLabel>
                   <Select
-                    value={scheduleData.priority}
+                    value={assetTask?.priority || 'Select Priority'}
                     label="Priority"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.priority}>{scheduleData.priority}</MenuItem>
+                    <MenuItem value={assetTask?.priority || 'Select Priority'}>
+                      {assetTask?.priority || 'Select Priority'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
               <div className="space-y-2">
                 <TextField
                   label="Submission Type"
-                  value={scheduleData.submissionType}
+                  value={customForm?.submission_time_type || ''}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -507,7 +550,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="Submission Time Value"
-                  value={scheduleData.submissionTimeValue}
+                  value={customForm?.submission_time_value?.toString() || ''}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -524,19 +567,21 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Category</InputLabel>
                   <Select
-                    value={scheduleData.category}
+                    value={assetTask?.category || 'Technical'}
                     label="Category"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.category}>{scheduleData.category}</MenuItem>
+                    <MenuItem value={assetTask?.category || 'Technical'}>
+                      {assetTask?.category || 'Technical'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
               <div className="space-y-2">
                 <TextField
                   label="Grace Time Value"
-                  value={scheduleData.graceTimeValue}
+                  value={assetTask?.grace_time_value || '3'}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -550,12 +595,14 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Lock Overdue Task</InputLabel>
                   <Select
-                    value={scheduleData.lockOverdueTask}
+                    value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
                     label="Lock Overdue Task"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.lockOverdueTask}>{scheduleData.lockOverdueTask}</MenuItem>
+                    <MenuItem value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}>
+                      {assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -566,12 +613,14 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Grace Time</InputLabel>
                   <Select
-                    value={scheduleData.graceTime}
+                    value={assetTask?.grace_time_type || 'Hour'}
                     label="Grace Time"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.graceTime}>{scheduleData.graceTime}</MenuItem>
+                    <MenuItem value={assetTask?.grace_time_type || 'Hour'}>
+                      {assetTask?.grace_time_type || 'Hour'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -579,19 +628,21 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Frequency</InputLabel>
                   <Select
-                    value={scheduleData.frequency}
+                    value={assetTask?.frequency || 'Select Frequency'}
                     label="Frequency"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.frequency}>{scheduleData.frequency}</MenuItem>
+                    <MenuItem value={assetTask?.frequency || 'Select Frequency'}>
+                      {assetTask?.frequency || 'Select Frequency'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
               <div className="space-y-2">
                 <TextField
                   label="Start Time"
-                  value={scheduleData.startTime}
+                  value={formatDate(assetTask?.start_date)}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -607,7 +658,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="End At"
-                  value={scheduleData.endAt}
+                  value={formatDate(assetTask?.end_date)}
                   InputProps={{ readOnly: true }}
                   fullWidth
                   variant="outlined"
@@ -621,12 +672,14 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Select Supplier</InputLabel>
                   <Select
-                    value={scheduleData.selectSupplier}
+                    value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}
                     label="Select Supplier"
                     readOnly
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={scheduleData.selectSupplier}>{scheduleData.selectSupplier}</MenuItem>
+                    <MenuItem value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}>
+                      {customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -643,30 +696,67 @@ export const ViewSchedulePage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Asset Name</TableHead>
-                  <TableHead>Asset Code</TableHead>
-                  <TableHead>Model Number</TableHead>
-                  <TableHead>Purchase Date</TableHead>
-                  <TableHead>Purchase Cost</TableHead>
-                  <TableHead>Created on</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {associationData.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.assetName}</TableCell>
-                    <TableCell>{item.assetCode}</TableCell>
-                    <TableCell>{item.modelNumber}</TableCell>
-                    <TableCell>{item.purchaseDate}</TableCell>
-                    <TableCell>{item.purchaseCost}</TableCell>
-                    <TableCell>{item.createdOn}</TableCell>
+            {customForm?.sch_type === 'Service' ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service Name</TableHead>
+                    <TableHead>Service Code</TableHead>
+                    <TableHead>Created on</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {assetTask?.services && assetTask.services.length > 0 ? (
+                    assetTask.services.map((service, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{service.service_name}</TableCell>
+                        <TableCell>{service.service_code}</TableCell>
+                        <TableCell>{formatDateTime(assetTask.start_date)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-gray-500">
+                        No services associated
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset Name</TableHead>
+                    <TableHead>Asset Code</TableHead>
+                    <TableHead>Model Number</TableHead>
+                    <TableHead>Purchase Date</TableHead>
+                    <TableHead>Purchase Cost</TableHead>
+                    <TableHead>Created on</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {assetTask?.assets && assetTask.assets.length > 0 ? (
+                    assetTask.assets.map((asset, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{asset.asset_name || 'N/A'}</TableCell>
+                        <TableCell>{asset.asset_code || 'N/A'}</TableCell>
+                        <TableCell>{asset.model_number || 'N/A'}</TableCell>
+                        <TableCell>{asset.purchase_date ? formatDateTime(asset.purchase_date) : 'N/A'}</TableCell>
+                        <TableCell>{asset.purchase_cost || 'N/A'}</TableCell>
+                        <TableCell>{asset.created_on ? formatDateTime(asset.created_on) : 'N/A'}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-gray-500">
+                        No assets associated
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -693,7 +783,20 @@ export const ViewSchedulePage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {emailTriggerRules.length === 0 && (
+                {emailRules && emailRules.length > 0 ? (
+                  emailRules.map((rule, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{rule.rule_name || 'N/A'}</TableCell>
+                      <TableCell>{rule.trigger_type || 'N/A'}</TableCell>
+                      <TableCell>{rule.trigger_to || 'N/A'}</TableCell>
+                      <TableCell>{rule.role || 'N/A'}</TableCell>
+                      <TableCell>{rule.period_value || 'N/A'}</TableCell>
+                      <TableCell>{rule.period_type || 'N/A'}</TableCell>
+                      <TableCell>{rule.created_on ? formatDateTime(rule.created_on) : 'N/A'}</TableCell>
+                      <TableCell>{rule.created_by || 'N/A'}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center text-gray-500">
                       No email trigger rules found
@@ -717,17 +820,54 @@ export const ViewSchedulePage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Asset Name</TableHead>
-                  <TableHead>Kwah</TableHead>
+                  <TableHead>{customForm?.sch_type === 'Service' ? 'Service Name' : 'Asset Name'}</TableHead>
+                  <TableHead>Tasks</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {assetMappingData.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.assetName}</TableCell>
-                    <TableCell>{item.kwah}</TableCell>
-                  </TableRow>
-                ))}
+                {customForm?.sch_type === 'Service' ? (
+                  assetTask?.services && assetTask.services.length > 0 ? (
+                    assetTask.services.map((service, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{service.service_name}</TableCell>
+                        <TableCell>
+                          {customForm?.content?.map((task, taskIndex) => (
+                            <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
+                              {task.label}
+                            </span>
+                          ))}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center text-gray-500">
+                        No service mappings found
+                      </TableCell>
+                    </TableRow>
+                  )
+                ) : (
+                  assetTask?.assets && assetTask.assets.length > 0 ? (
+                    assetTask.assets.map((asset, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{asset.asset_name || 'N/A'}</TableCell>
+                        <TableCell>
+                          {customForm?.content?.map((task, taskIndex) => (
+                            <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
+                              {task.label}
+                            </span>
+                          ))}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center text-gray-500">
+                        No asset mappings found
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
               </TableBody>
             </Table>
           </CardContent>

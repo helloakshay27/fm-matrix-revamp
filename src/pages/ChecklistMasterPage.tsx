@@ -9,6 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
+import { useMutation } from '@tanstack/react-query';
+import { createChecklistMaster, ChecklistCreateRequest } from '@/services/customFormsAPI';
+import { toast } from 'sonner';
 
 interface Task {
   id: string;
@@ -17,6 +20,15 @@ interface Task {
   mandatory: boolean;
   reading: boolean;
   helpText: string;
+  values: Array<{
+    label: string;
+    type: string;
+    value: string;
+  }>;
+  consumption_type: string;
+  consumption_unit_type: string;
+  weightage: string;
+  rating_enabled: boolean;
 }
 
 interface TaskSection {
@@ -32,12 +44,15 @@ export const ChecklistMasterPage = () => {
   useEffect(() => {
     setCurrentSection('Master');
   }, [setCurrentSection]);
+  
   const [formData, setFormData] = useState({
     type: 'PPM',
     scheduleFor: 'Asset',
     activityName: '',
     description: '',
-    assetType: ''
+    assetType: '',
+    groupId: '55',
+    subGroupId: '160'
   });
 
   const [sections, setSections] = useState<TaskSection[]>([
@@ -52,11 +67,28 @@ export const ChecklistMasterPage = () => {
           inputType: 'text',
           mandatory: true,
           reading: false,
-          helpText: 'Inspect for any visible damage or wear'
+          helpText: 'Inspect for any visible damage or wear',
+          values: [],
+          consumption_type: '',
+          consumption_unit_type: '',
+          weightage: '',
+          rating_enabled: false
         }
       ]
     }
   ]);
+
+  const createChecklistMutation = useMutation({
+    mutationFn: createChecklistMaster,
+    onSuccess: (data) => {
+      toast.success('Checklist created successfully!');
+      console.log('Checklist created:', data);
+    },
+    onError: (error) => {
+      toast.error('Failed to create checklist');
+      console.error('Error creating checklist:', error);
+    },
+  });
 
   const addSection = () => {
     const newSection: TaskSection = {
@@ -75,7 +107,12 @@ export const ChecklistMasterPage = () => {
       inputType: 'text',
       mandatory: false,
       reading: false,
-      helpText: ''
+      helpText: '',
+      values: [],
+      consumption_type: '',
+      consumption_unit_type: '',
+      weightage: '',
+      rating_enabled: false
     };
 
     setSections(sections.map(section => 
@@ -108,12 +145,94 @@ export const ChecklistMasterPage = () => {
     ));
   };
 
+  const updateTaskValues = (sectionId: string, taskId: string, values: Array<{label: string; type: string; value: string}>) => {
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            tasks: section.tasks.map(task => 
+              task.id === taskId 
+                ? { ...task, values }
+                : task
+            )
+          }
+        : section
+    ));
+  };
+
   const toggleSection = (sectionId: string) => {
     setSections(sections.map(section => 
       section.id === sectionId 
         ? { ...section, isExpanded: !section.isExpanded }
         : section
     ));
+  };
+
+  const handleSubmit = () => {
+    // Validate required fields
+    if (!formData.activityName || !formData.assetType) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate that all tasks have questions
+    const hasEmptyQuestions = sections.some(section => 
+      section.tasks.some(task => !task.question.trim())
+    );
+
+    if (hasEmptyQuestions) {
+      toast.error('Please provide questions for all tasks');
+      return;
+    }
+
+    // Transform form data to API payload format
+    const content = sections.flatMap(section => 
+      section.tasks.map(task => ({
+        label: task.question,
+        name: `qnm_${task.id}`,
+        className: "form-control",
+        group_id: formData.groupId,
+        sub_group_id: formData.subGroupId,
+        type: task.inputType.toLowerCase().replace(' ', '-'),
+        subtype: "",
+        required: task.mandatory.toString(),
+        is_reading: task.reading.toString(),
+        hint: task.helpText,
+        values: task.inputType === 'radio-group' || task.inputType === 'dropdown' 
+          ? task.values.length > 0 
+            ? task.values 
+            : [
+                { label: "Yes", type: "positive", value: "Yes" },
+                { label: "No", type: "negative", value: "No" }
+              ]
+          : task.values,
+        consumption_type: task.consumption_type,
+        consumption_unit_type: task.consumption_unit_type,
+        weightage: task.weightage,
+        rating_enabled: task.rating_enabled.toString()
+      }))
+    );
+
+    const payload: ChecklistCreateRequest = {
+      source: "form",
+      schedule_type: formData.type.toLowerCase(),
+      sch_type: formData.type.toLowerCase(),
+      checklist_type: formData.scheduleFor,
+      group_id: formData.groupId,
+      sub_group_id: formData.subGroupId,
+      tmp_custom_form: {
+        ticket_level: "question",
+        helpdesk_category_id: "",
+        schedule_type: formData.type,
+        organization_id: "1",
+        form_name: formData.activityName,
+        description: formData.description,
+        asset_meter_type_id: 1
+      },
+      content
+    };
+
+    createChecklistMutation.mutate(payload);
   };
 
   return (
@@ -184,6 +303,26 @@ export const ChecklistMasterPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="groupId">Group ID</Label>
+                <Input
+                  id="groupId"
+                  value={formData.groupId}
+                  onChange={(e) => setFormData({...formData, groupId: e.target.value})}
+                  placeholder="Enter group ID"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subGroupId">Sub Group ID</Label>
+                <Input
+                  id="subGroupId"
+                  value={formData.subGroupId}
+                  onChange={(e) => setFormData({...formData, subGroupId: e.target.value})}
+                  placeholder="Enter sub group ID"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -252,19 +391,30 @@ export const ChecklistMasterPage = () => {
                                 <Label>Input Type*</Label>
                                 <Select 
                                   value={task.inputType} 
-                                  onValueChange={(value) => updateTask(section.id, task.id, 'inputType', value)}
+                                  onValueChange={(value) => {
+                                    updateTask(section.id, task.id, 'inputType', value);
+                                    // Set default values for radio-group and dropdown
+                                    if (value === 'radio-group' || value === 'dropdown') {
+                                      updateTaskValues(section.id, task.id, [
+                                        { label: "Yes", type: "positive", value: "Yes" },
+                                        { label: "No", type: "negative", value: "No" }
+                                      ]);
+                                    } else {
+                                      updateTaskValues(section.id, task.id, []);
+                                    }
+                                  }}
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select input type" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="Text">Text</SelectItem>
-                                    <SelectItem value="Number">Number</SelectItem>
-                                    <SelectItem value="Dropdown">Dropdown</SelectItem>
-                                    <SelectItem value="Checkbox">Checkbox</SelectItem>
-                                    <SelectItem value="Radio">Radio</SelectItem>
-                                    <SelectItem value="Date">Date</SelectItem>
-                                    <SelectItem value="File">File Upload</SelectItem>
+                                    <SelectItem value="text">Text</SelectItem>
+                                    <SelectItem value="number">Number</SelectItem>
+                                    <SelectItem value="dropdown">Dropdown</SelectItem>
+                                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                                    <SelectItem value="radio-group">Radio</SelectItem>
+                                    <SelectItem value="date">Date</SelectItem>
+                                    <SelectItem value="file">File Upload</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -278,6 +428,70 @@ export const ChecklistMasterPage = () => {
                                 />
                               </div>
                             </div>
+
+                            {/* Values section for radio-group and dropdown */}
+                            {(task.inputType === 'radio-group' || task.inputType === 'dropdown') && (
+                              <div className="space-y-2">
+                                <Label>Options</Label>
+                                <div className="space-y-2">
+                                  {task.values.map((value, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                      <Input
+                                        value={value.label}
+                                        onChange={(e) => {
+                                          const newValues = [...task.values];
+                                          newValues[index] = { ...value, label: e.target.value, value: e.target.value };
+                                          updateTaskValues(section.id, task.id, newValues);
+                                        }}
+                                        placeholder="Option label"
+                                        className="flex-1"
+                                      />
+                                      <Select
+                                        value={value.type}
+                                        onValueChange={(newType) => {
+                                          const newValues = [...task.values];
+                                          newValues[index] = { ...value, type: newType };
+                                          updateTaskValues(section.id, task.id, newValues);
+                                        }}
+                                      >
+                                        <SelectTrigger className="w-32">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="positive">Positive</SelectItem>
+                                          <SelectItem value="negative">Negative</SelectItem>
+                                          <SelectItem value="neutral">Neutral</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          const newValues = task.values.filter((_, i) => i !== index);
+                                          updateTaskValues(section.id, task.id, newValues);
+                                        }}
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newValues = [...task.values, { label: "", type: "neutral", value: "" }];
+                                      updateTaskValues(section.id, task.id, newValues);
+                                    }}
+                                  >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    Add Option
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
 
                             <div className="flex items-center gap-6">
                               <div className="flex items-center space-x-2">
@@ -296,6 +510,46 @@ export const ChecklistMasterPage = () => {
                                   onCheckedChange={(checked) => updateTask(section.id, task.id, 'reading', checked)}
                                 />
                                 <Label htmlFor={`reading-${task.id}`}>Reading</Label>
+                              </div>
+
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`rating-${task.id}`}
+                                  checked={task.rating_enabled}
+                                  onCheckedChange={(checked) => updateTask(section.id, task.id, 'rating_enabled', checked)}
+                                />
+                                <Label htmlFor={`rating-${task.id}`}>Rating Enabled</Label>
+                              </div>
+                            </div>
+
+                            {/* Additional fields */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <Label>Weightage</Label>
+                                <Input
+                                  value={task.weightage}
+                                  onChange={(e) => updateTask(section.id, task.id, 'weightage', e.target.value)}
+                                  placeholder="Enter weightage"
+                                  type="number"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Consumption Type</Label>
+                                <Input
+                                  value={task.consumption_type}
+                                  onChange={(e) => updateTask(section.id, task.id, 'consumption_type', e.target.value)}
+                                  placeholder="Enter consumption type"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Consumption Unit Type</Label>
+                                <Input
+                                  value={task.consumption_unit_type}
+                                  onChange={(e) => updateTask(section.id, task.id, 'consumption_unit_type', e.target.value)}
+                                  placeholder="Enter consumption unit type"
+                                />
                               </div>
                             </div>
                           </div>
@@ -337,8 +591,13 @@ export const ChecklistMasterPage = () => {
           <Button type="button" variant="outline">
             Cancel
           </Button>
-          <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90">
-            Save Checklist
+          <Button 
+            type="button" 
+            className="bg-[#C72030] hover:bg-[#C72030]/90"
+            onClick={handleSubmit}
+            disabled={createChecklistMutation.isPending}
+          >
+            {createChecklistMutation.isPending ? 'Saving...' : 'Save Checklist'}
           </Button>
         </div>
       </div>
