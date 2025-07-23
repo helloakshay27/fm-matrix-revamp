@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -30,7 +31,8 @@ import {
 import { SortableColumnHeader } from './SortableColumnHeader';
 import { ColumnVisibilityMenu } from './ColumnVisibilityMenu';
 import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Search, Download, Loader2, Grid3x3, Plus, X } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkAction<T> {
@@ -74,8 +76,7 @@ interface EnhancedTableProps<T> {
   hideColumnsButton?: boolean;
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
-  handleExport?: () => void;
-  searchByIdOnly?: boolean;
+  onFilterClick?: () => void;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -113,12 +114,16 @@ export function EnhancedTable<T extends Record<string, any>>({
   hideColumnsButton = false,
   leftActions,
   rightActions,
-  searchByIdOnly
+  onFilterClick,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Debounce the search input to avoid excessive API calls
+  const debouncedSearchInput = useDebounce(searchInput, 100);
   
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
@@ -214,8 +219,18 @@ export function EnhancedTable<T extends Record<string, any>>({
     setSearchInput(value);
   };
 
-  const handleSearchGo = async () => {
+  const performSearch = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setApiSearchResults(null);
+      setInternalSearchTerm('');
+      if (onSearchChange) {
+        onSearchChange('');
+      }
+      return;
+    }
+
     try {
+      setIsSearching(true);
       const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
       
       if (!token) {
@@ -223,7 +238,7 @@ export function EnhancedTable<T extends Record<string, any>>({
         return;
       }
 
-      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchInput}`, {
+      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchTerm}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -233,12 +248,11 @@ export function EnhancedTable<T extends Record<string, any>>({
 
       if (response.ok) {
         const data = await response.json();
-        // Set the API search results to be used by the table
         setApiSearchResults(data.complaints || []);
         setCurrentPage(1);
-        setInternalSearchTerm(searchInput);
+        setInternalSearchTerm(searchTerm);
         if (onSearchChange) {
-          onSearchChange(searchInput);
+          onSearchChange(searchTerm);
         }
       } else if (response.status === 401) {
         alert('Unauthorized: Please check your authentication token or login again.');
@@ -248,8 +262,15 @@ export function EnhancedTable<T extends Record<string, any>>({
     } catch (error) {
       console.error('Error searching:', error);
       alert('An error occurred while searching. Please try again.');
+    } finally {
+      setIsSearching(false);
     }
   };
+
+  // Trigger search when debounced input changes
+  useEffect(() => {
+    performSearch(debouncedSearchInput);
+  }, [debouncedSearchInput]);
 
   const handleClearSearch = () => {
     setSearchInput('');
@@ -309,15 +330,14 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+           {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
+             <div className="relative max-w-sm">
+               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
                 value={searchInput}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 className="pl-10 pr-10"
-                onKeyDown={(e) => e.key === 'Enter' && handleSearchGo()}
               />
               {searchInput && (
                 <button
@@ -330,14 +350,24 @@ export function EnhancedTable<T extends Record<string, any>>({
             </div>
           )}
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSearchGo}
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-          >
-            Go!
-          </Button>
+          {onFilterClick && (
+            <Button 
+              variant="outline" 
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              onClick={onFilterClick}
+            >
+              <Filter className="w-4 h-4" />
+            </Button>
+          )}
+          
+          {!hideColumnsButton && (
+            <ColumnVisibilityMenu
+              columns={columns}
+              columnVisibility={columnVisibility}
+              onToggleVisibility={toggleColumnVisibility}
+              onResetToDefaults={resetToDefaults}
+            />
+          )}
           
           {!hideTableExport && enableExport && (
             <Button
@@ -384,15 +414,6 @@ export function EnhancedTable<T extends Record<string, any>>({
             >
               <Download className="w-4 h-4" />
             </Button>
-          )}
-          
-          {!hideColumnsButton && (
-            <ColumnVisibilityMenu
-              columns={columns}
-              columnVisibility={columnVisibility}
-              onToggleVisibility={toggleColumnVisibility}
-              onResetToDefaults={resetToDefaults}
-            />
           )}
           
           {rightActions}
