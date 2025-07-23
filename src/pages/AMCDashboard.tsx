@@ -88,6 +88,7 @@ export const AMCDashboard = () => {
   const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
   ]);
@@ -122,6 +123,10 @@ export const AMCDashboard = () => {
     paginatedDataLength: paginatedData.length
   });
 
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
   };
@@ -139,16 +144,28 @@ export const AMCDashboard = () => {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(amcData.map(item => item.id.toString()));
+      setShowActionPanel(true);
     } else {
       setSelectedItems([]);
+      setShowActionPanel(false);
     }
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
+      setSelectedItems(prev => {
+        const newSelection = [...prev, itemId];
+        setShowActionPanel(true);
+        return newSelection;
+      });
     } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
+      setSelectedItems(prev => {
+        const newSelection = prev.filter(id => id !== itemId);
+        if (newSelection.length === 0) {
+          setShowActionPanel(false);
+        }
+        return newSelection;
+      });
     }
   };
 
@@ -161,6 +178,7 @@ export const AMCDashboard = () => {
 
   const handleClearSelection = () => {
     setSelectedItems([]);
+    setShowActionPanel(false);
   };
 
   const handleExportSelected = () => {
@@ -786,25 +804,27 @@ export const AMCDashboard = () => {
               pagination={false}
               leftActions={
                 <Button 
-                  onClick={handleAddClick} 
+                  onClick={handleActionClick} 
                   className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add
+                  Action
                 </Button>
               }
             />
           )}
 
           {/* Selection Panel */}
-          <SelectionPanel
-            selectedCount={selectedItems.length}
-            entityName="AMC"
-            selectedItems={selectedAMCObjects}
-            actions={selectionActions}
-            onAdd={handleAddClick}
-            onClearSelection={handleClearSelection}
-          />
+          {showActionPanel && (
+            <SelectionPanel
+              selectedCount={selectedItems.length}
+              entityName="AMC"
+              selectedItems={selectedAMCObjects}
+              actions={selectionActions}
+              onAdd={handleAddClick}
+              onClearSelection={handleClearSelection}
+            />
+          )}
 
           {/* Custom Pagination */}
           <div className="flex justify-center mt-6">
