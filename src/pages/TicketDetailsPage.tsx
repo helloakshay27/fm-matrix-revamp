@@ -70,6 +70,11 @@ export const TicketDetailsPage = () => {
     );
   }
 
+  // Helper function to check if value has data
+  const hasData = (value) => {
+    return value && value !== null && value !== undefined && value !== '';
+  };
+
   // Helper function to display value or "Not Provided"
   const displayValue = (value) => {
     return value && value !== null && value !== undefined && value !== '' ? value : 'Not Provided';
@@ -117,60 +122,84 @@ export const TicketDetailsPage = () => {
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-8">
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Title</label>
-                <p className="font-medium">{displayValue(ticketData.heading)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Status</label>
-                <Badge className="bg-yellow-100 text-yellow-700">{displayValue(ticketData.issue_status)}</Badge>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">SubCategory</label>
-                <p className="font-medium">{displayValue(ticketData.sub_category_type)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Created By</label>
-                <p className="font-medium">{displayValue(ticketData.created_by_name)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Assigned To</label>
-                <p className="font-medium">{displayValue(ticketData.assigned_to)}</p>
-              </div>
+              {hasData(ticketData.heading) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Title</label>
+                  <p className="font-medium">{ticketData.heading}</p>
+                </div>
+              )}
+              {hasData(ticketData.issue_status) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Status</label>
+                  <Badge className="bg-yellow-100 text-yellow-700">{ticketData.issue_status}</Badge>
+                </div>
+              )}
+              {hasData(ticketData.sub_category_type) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">SubCategory</label>
+                  <p className="font-medium">{ticketData.sub_category_type}</p>
+                </div>
+              )}
+              {hasData(ticketData.created_by_name) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Created By</label>
+                  <p className="font-medium">{ticketData.created_by_name}</p>
+                </div>
+              )}
+              {hasData(ticketData.assigned_to) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Assigned To</label>
+                  <p className="font-medium">{ticketData.assigned_to}</p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Created On</label>
-                <p className="font-medium">{displayValue(`${ticketData.created_date} ${ticketData.created_time}`)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Category</label>
-                <p className="font-medium">{displayValue(ticketData.category_type)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Updated By</label>
-                <p className="font-medium">{displayValue(ticketData.updated_by)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Complaint Mode</label>
-                <p className="font-medium">{displayValue(ticketData.complaint_mode)}</p>
-              </div>
+              {(hasData(ticketData.created_date) || hasData(ticketData.created_time)) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Created On</label>
+                  <p className="font-medium">{`${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()}</p>
+                </div>
+              )}
+              {hasData(ticketData.category_type) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Category</label>
+                  <p className="font-medium">{ticketData.category_type}</p>
+                </div>
+              )}
+              {hasData(ticketData.updated_by) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Updated By</label>
+                  <p className="font-medium">{ticketData.updated_by}</p>
+                </div>
+              )}
+              {hasData(ticketData.complaint_mode) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Complaint Mode</label>
+                  <p className="font-medium">{ticketData.complaint_mode}</p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Ticket Number</label>
-                <p className="font-medium">{displayValue(ticketData.ticket_number)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Priority</label>
-                <p className="font-medium">{displayValue(ticketData.priority || ticketData.external_priority)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Admin Priority</label>
-                <p className="font-medium">{displayValue(ticketData.priority_status || ticketData.effective_priority)}</p>
-              </div>
+              {hasData(ticketData.ticket_number) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Ticket Number</label>
+                  <p className="font-medium">{ticketData.ticket_number}</p>
+                </div>
+              )}
+              {hasData(ticketData.priority || ticketData.external_priority) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Priority</label>
+                  <p className="font-medium">{ticketData.priority || ticketData.external_priority}</p>
+                </div>
+              )}
+              {hasData(ticketData.priority_status || ticketData.effective_priority) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Admin Priority</label>
+                  <p className="font-medium">{ticketData.priority_status || ticketData.effective_priority}</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -186,14 +215,18 @@ export const TicketDetailsPage = () => {
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-8">
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Posted By</label>
-              <p className="font-medium">{displayValue(ticketData.posted_by)}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Society</label>
-              <p className="font-medium">{displayValue(ticketData.id_society)}</p>
-            </div>
+            {hasData(ticketData.posted_by) && (
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Posted By</label>
+                <p className="font-medium">{ticketData.posted_by}</p>
+              </div>
+            )}
+            {hasData(ticketData.id_society) && (
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Society</label>
+                <p className="font-medium">{ticketData.id_society}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -209,60 +242,84 @@ export const TicketDetailsPage = () => {
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-8">
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Region</label>
-                <p className="font-medium">{displayValue(ticketData.region)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Building</label>
-                <p className="font-medium">{displayValue(ticketData.building_name)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Floor</label>
-                <p className="font-medium">{displayValue(ticketData.floor_name)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Flat Number / Unit Name</label>
-                <p className="font-medium">{displayValue(ticketData.flat_number || ticketData.unit_name)}</p>
-              </div>
+              {hasData(ticketData.region) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Region</label>
+                  <p className="font-medium">{ticketData.region}</p>
+                </div>
+              )}
+              {hasData(ticketData.building_name) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Building</label>
+                  <p className="font-medium">{ticketData.building_name}</p>
+                </div>
+              )}
+              {hasData(ticketData.floor_name) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Floor</label>
+                  <p className="font-medium">{ticketData.floor_name}</p>
+                </div>
+              )}
+              {hasData(ticketData.flat_number || ticketData.unit_name) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Flat Number / Unit Name</label>
+                  <p className="font-medium">{ticketData.flat_number || ticketData.unit_name}</p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Zone</label>
-                <p className="font-medium">{displayValue(ticketData.zone)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">District</label>
-                <p className="font-medium">{displayValue(ticketData.district)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Room</label>
-                <p className="font-medium">{displayValue(ticketData.room_name)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Area Name / Site Name</label>
-                <p className="font-medium">{displayValue(ticketData.area_name || ticketData.site_name)}</p>
-              </div>
+              {hasData(ticketData.zone) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Zone</label>
+                  <p className="font-medium">{ticketData.zone}</p>
+                </div>
+              )}
+              {hasData(ticketData.district) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">District</label>
+                  <p className="font-medium">{ticketData.district}</p>
+                </div>
+              )}
+              {hasData(ticketData.room_name) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Room</label>
+                  <p className="font-medium">{ticketData.room_name}</p>
+                </div>
+              )}
+              {hasData(ticketData.area_name || ticketData.site_name) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Area Name / Site Name</label>
+                  <p className="font-medium">{ticketData.area_name || ticketData.site_name}</p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">City</label>
-                <p className="font-medium">{displayValue(ticketData.city)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">State</label>
-                <p className="font-medium">{displayValue(ticketData.state)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Address</label>
-                <p className="font-medium">{displayValue(ticketData.address)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Wing</label>
-                <p className="font-medium">{displayValue(ticketData.wing_name)}</p>
-              </div>
+              {hasData(ticketData.city) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">City</label>
+                  <p className="font-medium">{ticketData.city}</p>
+                </div>
+              )}
+              {hasData(ticketData.state) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">State</label>
+                  <p className="font-medium">{ticketData.state}</p>
+                </div>
+              )}
+              {hasData(ticketData.address) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Address</label>
+                  <p className="font-medium">{ticketData.address}</p>
+                </div>
+              )}
+              {hasData(ticketData.wing_name) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Wing</label>
+                  <p className="font-medium">{ticketData.wing_name}</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -278,18 +335,24 @@ export const TicketDetailsPage = () => {
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-8">
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Survey ID</label>
-              <p className="font-medium">{displayValue(ticketData.survey_id)}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Survey Name</label>
-              <p className="font-medium">{displayValue(ticketData.survey_name)}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Survey Location</label>
-              <p className="font-medium">{displayValue(ticketData.survey_location)}</p>
-            </div>
+            {hasData(ticketData.survey_id) && (
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Survey ID</label>
+                <p className="font-medium">{ticketData.survey_id}</p>
+              </div>
+            )}
+            {hasData(ticketData.survey_name) && (
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Survey Name</label>
+                <p className="font-medium">{ticketData.survey_name}</p>
+              </div>
+            )}
+            {hasData(ticketData.survey_location) && (
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Survey Location</label>
+                <p className="font-medium">{ticketData.survey_location}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -305,60 +368,84 @@ export const TicketDetailsPage = () => {
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-8">
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Corrective Action</label>
-                <p className="font-medium">{displayValue(ticketData.corrective_action)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Preventive Action</label>
-                <p className="font-medium">{displayValue(ticketData.preventive_action)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Root Cause</label>
-                <p className="font-medium">{displayValue(ticketData.root_cause)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Response TAT</label>
-                <p className="font-medium">{displayValue(ticketData.response_tat)}</p>
-              </div>
+              {hasData(ticketData.corrective_action) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Corrective Action</label>
+                  <p className="font-medium">{ticketData.corrective_action}</p>
+                </div>
+              )}
+              {hasData(ticketData.preventive_action) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Preventive Action</label>
+                  <p className="font-medium">{ticketData.preventive_action}</p>
+                </div>
+              )}
+              {hasData(ticketData.root_cause) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Root Cause</label>
+                  <p className="font-medium">{ticketData.root_cause}</p>
+                </div>
+              )}
+              {hasData(ticketData.response_tat) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Response TAT</label>
+                  <p className="font-medium">{ticketData.response_tat}</p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Ticket Urgency</label>
-                <p className="font-medium">{displayValue(ticketData.ticket_urgency)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Responsible Person</label>
-                <p className="font-medium">{displayValue(ticketData.responsible_person)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Asset Service</label>
-                <p className="font-medium">{displayValue(ticketData.asset_service)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Resolution TAT</label>
-                <p className="font-medium">{displayValue(ticketData.resolution_tat)}</p>
-              </div>
+              {hasData(ticketData.ticket_urgency) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Ticket Urgency</label>
+                  <p className="font-medium">{ticketData.ticket_urgency}</p>
+                </div>
+              )}
+              {hasData(ticketData.responsible_person) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Responsible Person</label>
+                  <p className="font-medium">{ticketData.responsible_person}</p>
+                </div>
+              )}
+              {hasData(ticketData.asset_service) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Asset Service</label>
+                  <p className="font-medium">{ticketData.asset_service}</p>
+                </div>
+              )}
+              {hasData(ticketData.resolution_tat) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Resolution TAT</label>
+                  <p className="font-medium">{ticketData.resolution_tat}</p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Task ID</label>
-                <p className="font-medium">{displayValue(ticketData.task_id)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Asset/Service Location</label>
-                <p className="font-medium">{displayValue(ticketData.asset_service_location)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Resolution Time</label>
-                <p className="font-medium">{displayValue(ticketData.resolution_time)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 block mb-1">Escalation Tracking</label>
-                <p className="font-medium">{displayValue(`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`)}</p>
-              </div>
+              {hasData(ticketData.task_id) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Task ID</label>
+                  <p className="font-medium">{ticketData.task_id}</p>
+                </div>
+              )}
+              {hasData(ticketData.asset_service_location) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Asset/Service Location</label>
+                  <p className="font-medium">{ticketData.asset_service_location}</p>
+                </div>
+              )}
+              {hasData(ticketData.resolution_time) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Resolution Time</label>
+                  <p className="font-medium">{ticketData.resolution_time}</p>
+                </div>
+              )}
+              {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
+                <div>
+                  <label className="text-sm text-gray-600 block mb-1">Escalation Tracking</label>
+                  <p className="font-medium">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
