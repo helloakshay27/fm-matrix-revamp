@@ -762,19 +762,23 @@ export const TicketDashboard = () => {
   };
   const TruncatedDescription = ({
     text,
-    maxLength = 50
+    maxWords = 2
   }: {
     text: string;
-    maxLength?: number;
+    maxWords?: number;
   }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     if (!text) return <span>--</span>;
-    if (text.length <= maxLength) {
+    
+    const words = text.split(' ');
+    if (words.length <= maxWords) {
       return <span>{text}</span>;
     }
+    
+    const truncated = words.slice(0, maxWords).join(' ');
     return <div className="w-48">
         <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
-          {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+          {isExpanded ? text : `${truncated}...`}
         </span>
         <button onClick={e => {
         e.stopPropagation();
