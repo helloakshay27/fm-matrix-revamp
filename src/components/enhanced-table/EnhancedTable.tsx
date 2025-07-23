@@ -455,7 +455,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <TableRow className="h-[28px]">
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                      {selectable && (
-                      <TableHead className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]" data-checkbox>
+                      <TableHead className="bg-[#C4B89D]/35 w-[8px] text-left px-[8px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]" data-checkbox>
                         <div className="flex justify-start">
                           <Checkbox
                             checked={isAllSelected}
