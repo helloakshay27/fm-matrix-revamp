@@ -11,6 +11,10 @@ import { apiClient } from '@/utils/apiClient';
 interface EditStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  complaint?: {
+    id: number;
+    complaint_status_id: number;
+  };
 }
 
 interface Status {
@@ -21,7 +25,7 @@ interface Status {
   active: number;
 }
 
-export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) => {
+export const EditStatusDialog = ({ open, onOpenChange, complaint }: EditStatusDialogProps) => {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [rootCause, setRootCause] = useState('');
@@ -43,9 +47,33 @@ export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) 
     }
   }, [open]);
 
-  const handleApply = () => {
-    console.log('Status updated:', { selectedStatus, rootCause, correctiveAction, preventiveAction });
-    onOpenChange(false);
+  useEffect(() => {
+    if (complaint && open) {
+      setSelectedStatus(complaint.complaint_status_id.toString());
+    }
+  }, [complaint, open]);
+
+  const handleApply = async () => {
+    if (!complaint || !selectedStatus) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('complaint[issue_status]', selectedStatus);
+      formData.append('complaint[root_cause]', rootCause);
+      formData.append('complaint[corrective_action]', correctiveAction);
+      formData.append('complaint[preventive_action]', preventiveAction);
+
+      await apiClient.patch(`/pms/admin/complaints/${complaint.id}.json`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('Status updated successfully');
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
   };
 
   const handleReset = () => {
