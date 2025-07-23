@@ -327,7 +327,14 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={onExport || handleExport}
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = 'https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx';
+                link.download = 'complaints.xlsx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
