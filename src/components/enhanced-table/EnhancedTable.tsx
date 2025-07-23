@@ -122,7 +122,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [isSearching, setIsSearching] = useState(false);
   
   // Debounce the search input to avoid excessive API calls
-  const debouncedSearchInput = useDebounce(searchInput, 500);
+  const debouncedSearchInput = useDebounce(searchInput, 300);
   
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
