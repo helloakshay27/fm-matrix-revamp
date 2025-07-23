@@ -260,6 +260,7 @@ export const TicketDashboard = () => {
   });
   const [filters, setFilters] = useState<TicketFilters>({});
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
+  const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
   const perPage = 20;
 
   // Drag and drop sensors
@@ -751,6 +752,7 @@ export const TicketDashboard = () => {
         className={`px-2 py-1 rounded text-xs animate-scale-in cursor-pointer hover:opacity-80 transition-opacity ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}
         onClick={(e) => {
           e.stopPropagation();
+          setSelectedTicketForEdit(item);
           setIsEditStatusOpen(true);
         }}
       >
@@ -1205,7 +1207,14 @@ export const TicketDashboard = () => {
       {/* Edit Status Dialog */}
       <EditStatusDialog 
         open={isEditStatusOpen} 
-        onOpenChange={setIsEditStatusOpen} 
+        onOpenChange={setIsEditStatusOpen}
+        complaintId={selectedTicketForEdit?.id}
+        currentStatusId={selectedTicketForEdit?.complaint_status_id}
+        currentStatus={selectedTicketForEdit?.issue_status}
+        onSuccess={() => {
+          fetchTickets(currentPage);
+          setSelectedTicketForEdit(null);
+        }}
       />
 
       {/* Ticket Selection Panel */}

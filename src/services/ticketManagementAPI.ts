@@ -157,6 +157,7 @@ export interface TicketResponse {
   resolution_tat: number | null;
   resolution_time: string | null;
   escalation_resolution_name: string | null;
+  complaint_status_id: number;
 }
 
 export interface TicketListResponse {

@@ -7,10 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface EditStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  complaintId?: number;
+  currentStatusId?: number;
+  currentStatus?: string;
+  onSuccess?: () => void;
 }
 
 interface Status {
@@ -21,12 +26,27 @@ interface Status {
   active: number;
 }
 
-export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) => {
+interface Complaint {
+  id: number;
+  complaint_status_id: number;
+  issue_status: string;
+}
+
+export const EditStatusDialog = ({ 
+  open, 
+  onOpenChange, 
+  complaintId,
+  currentStatusId,
+  currentStatus,
+  onSuccess 
+}: EditStatusDialogProps) => {
+  const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState('');
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [rootCause, setRootCause] = useState('');
   const [correctiveAction, setCorrectiveAction] = useState('');
   const [preventiveAction, setPreventiveAction] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchStatuses = async () => {
@@ -35,17 +55,67 @@ export const EditStatusDialog = ({ open, onOpenChange }: EditStatusDialogProps) 
         setStatuses(response.data || []);
       } catch (error) {
         console.error('Failed to fetch statuses:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch status options",
+          variant: "destructive"
+        });
       }
     };
 
     if (open) {
       fetchStatuses();
+      // Set initial status if provided
+      if (currentStatusId) {
+        setSelectedStatus(currentStatusId.toString());
+      }
     }
-  }, [open]);
+  }, [open, currentStatusId, toast]);
 
-  const handleApply = () => {
-    console.log('Status updated:', { selectedStatus, rootCause, correctiveAction, preventiveAction });
-    onOpenChange(false);
+  const handleApply = async () => {
+    if (!complaintId || !selectedStatus) {
+      toast({
+        title: "Error",
+        description: "Please select a status",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create FormData for the PATCH request
+      const formData = new FormData();
+      formData.append('complaint[issue_status]', selectedStatus);
+      formData.append('complaint[root_cause]', rootCause);
+      formData.append('complaint[corrective_action]', correctiveAction);
+      formData.append('complaint[preventive_action]', preventiveAction);
+
+      await apiClient.patch(`/pms/admin/complaints/${complaintId}.json`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast({
+        title: "Success",
+        description: "Status updated successfully"
+      });
+
+      onOpenChange(false);
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
