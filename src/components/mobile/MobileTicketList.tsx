@@ -16,8 +16,6 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
   const [activeFilter, setActiveFilter] = useState<'all' | 'approaching' | 'within'>('all');
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [starredTickets, setStarredTickets] = useState<Set<number>>(new Set());
-  const [flaggedTickets, setFlaggedTickets] = useState<Set<number>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchTickets = async () => {
@@ -41,34 +39,34 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
     fetchTickets();
   }, []);
 
-  const handleStarToggle = (ticketId: number) => {
-    setStarredTickets(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ticketId)) {
-        newSet.delete(ticketId);
-      } else {
-        newSet.add(ticketId);
-      }
-      return newSet;
-    });
+  const handleStarToggle = async (ticketId: number) => {
+    try {
+      await ticketManagementAPI.markAsGoldenTicket([ticketId]);
+      toast({
+        title: "Success",
+        description: "Ticket marked as golden successfully",
+      });
+      // Refresh tickets to get updated data
+      fetchTickets();
+    } catch (error) {
+      console.error('Error marking ticket as golden:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark ticket as golden",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleFlagToggle = async (ticketId: number) => {
     try {
       await ticketManagementAPI.markAsFlagged([ticketId]);
-      setFlaggedTickets(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(ticketId)) {
-          newSet.delete(ticketId);
-        } else {
-          newSet.add(ticketId);
-        }
-        return newSet;
-      });
       toast({
         title: "Success",
         description: "Ticket flagged successfully",
       });
+      // Refresh tickets to get updated data
+      fetchTickets();
     } catch (error) {
       console.error('Error flagging ticket:', error);
       toast({
@@ -111,10 +109,10 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
         tabFilter = true; // Show all for now
         break;
       case 'golden':
-        tabFilter = starredTickets.has(ticket.id) || ticket.priority === 'High';
+        tabFilter = ticket.priority === 'High'; // Using priority as proxy for golden status
         break;
       case 'flagged':
-        tabFilter = ticket.priority === 'Critical' || ticket.issue_status === 'Open';
+        tabFilter = ticket.priority === 'Critical'; // Using priority as proxy for flagged status
         break;
       case 'all':
       default:
@@ -295,9 +293,9 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                 >
                   <Star 
                     className={`h-6 w-6 ${
-                      starredTickets.has(ticket.id) 
+                      ticket.priority === 'High'
                         ? 'text-yellow-500 fill-current' 
-                        : 'text-yellow-500 fill-current'
+                        : 'text-gray-400'
                     }`}
                   />
                 </button>
@@ -323,7 +321,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                 >
                   <Flag 
                     className={`h-4 w-4 ${
-                      flaggedTickets.has(ticket.id) 
+                      ticket.priority === 'Critical'
                         ? 'text-red-500 fill-current' 
                         : 'text-gray-500'
                     }`}
