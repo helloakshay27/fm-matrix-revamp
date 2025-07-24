@@ -86,64 +86,69 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80')`,
-        }}
-      />
+    <div className="min-h-screen flex">
+      {/* Left Side - Background Image */}
+      <div className="flex-1 relative">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('/lovable-uploads/02d5802a-cd33-44e2-a858-a1e149cace5f.png')`,
+          }}
+        />
+      </div>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
-
-      {/* Login Card */}
-      <div className="relative z-10 bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl">
+      {/* Right Side - Login Form */}
+      <div className="w-full max-w-lg bg-white bg-opacity-90 flex flex-col justify-center px-12 py-12">
         {/* Logo and Branding */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">goPhygital.work</h1>
-          <p className="text-gray-600">Sign in to your account</p>
+        <div className="mb-12">
+          <h1 className="text-3xl font-bold">
+            <span className="text-red-600">go</span>
+            <span className="text-black">Phygital.work</span>
+          </h1>
         </div>
 
-        {/* Login Method Toggle */}
-        <div className="mb-6">
-          <div className="flex bg-gray-100 p-1 rounded-lg">
-            <button
-              type="button"
-              onClick={() => setLoginMethod('email')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                loginMethod === 'email'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
+        {/* Login Method Radio Buttons */}
+        <div className="mb-8 space-y-4">
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="email"
+              name="loginMethod"
+              value="email"
+              checked={loginMethod === 'email'}
+              onChange={() => setLoginMethod('email')}
+              className="w-5 h-5 text-red-600 border-gray-400 focus:ring-red-500"
+            />
+            <label htmlFor="email" className="ml-3 text-base font-medium text-gray-900">
               Login with Email
-            </button>
-            <button
-              type="button"
-              onClick={() => setLoginMethod('phone')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                loginMethod === 'phone'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="phone"
+              name="loginMethod"
+              value="phone"
+              checked={loginMethod === 'phone'}
+              onChange={() => setLoginMethod('phone')}
+              className="w-5 h-5 text-red-600 border-gray-400 focus:ring-red-500"
+            />
+            <label htmlFor="phone" className="ml-3 text-base font-medium text-gray-900">
               Login with Phone no.
-            </button>
+            </label>
           </div>
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-6">
           {loginMethod === 'email' ? (
             <div>
               <Input
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Enter your Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full"
+                className="w-full h-14 px-4 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
                 required
               />
             </div>
@@ -151,10 +156,10 @@ export const LoginPage = () => {
             <div>
               <Input
                 type="tel"
-                placeholder="Enter your phone number"
+                placeholder="Enter your Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full"
+                className="w-full h-14 px-4 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
                 required
               />
             </div>
@@ -163,16 +168,16 @@ export const LoginPage = () => {
           <div className="relative">
             <Input
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder="Enter your Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pr-10"
+              className="w-full h-14 px-4 pr-12 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -181,27 +186,37 @@ export const LoginPage = () => {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium"
+            className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
-                Signing in...
+                Logging in...
               </div>
             ) : (
-              'Sign in'
+              'Login'
             )}
           </Button>
         </form>
 
         {/* Forgot Password Link */}
-        <div className="text-center mt-4">
+        <div className="text-center mt-8">
           <button
             type="button"
             onClick={() => navigate('/forgot-password')}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            className="text-gray-700 hover:text-gray-900 text-base font-medium"
           >
-            Forgot your password?
+            Forgot Password ?
+          </button>
+        </div>
+
+        {/* Terms & Condition Link */}
+        <div className="text-center mt-8">
+          <button
+            type="button"
+            className="text-blue-500 hover:text-blue-700 text-base"
+          >
+            <span className="text-blue-500">Terms</span> <span className="text-gray-700">&</span> <span className="text-blue-500">Condition</span>
           </button>
         </div>
       </div>

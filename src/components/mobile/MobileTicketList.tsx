@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Clock, Filter, History, Plus, Flag } from 'lucide-react';
+import { Star, Clock, Filter, History, Plus, Flag, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
-import { MobileCreateTicketModal } from './MobileCreateTicketModal';
+import { MobileDynamicCreateTicketModal } from './MobileDynamicCreateTicketModal';
 
 interface MobileTicketListProps {
   onTicketSelect: (ticket: TicketResponse) => void;
@@ -13,10 +13,9 @@ interface MobileTicketListProps {
 export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSelect }) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'my' | 'golden' | 'flagged' | 'all'>('all');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'approaching' | 'within'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'approaching' | 'within' | 'breach'>('all');
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [starredTickets, setStarredTickets] = useState<Set<number>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchTickets = async () => {
@@ -40,16 +39,58 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
     fetchTickets();
   }, []);
 
-  const handleStarToggle = (ticketId: number) => {
-    setStarredTickets(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ticketId)) {
-        newSet.delete(ticketId);
-      } else {
-        newSet.add(ticketId);
-      }
-      return newSet;
-    });
+  const handleStarToggle = async (ticketId: number) => {
+    try {
+      await ticketManagementAPI.markAsGoldenTicket([ticketId]);
+      
+      // Update local state instead of reloading
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, is_golden_ticket: !ticket.is_golden_ticket }
+            : ticket
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: "Ticket marked as golden successfully",
+      });
+    } catch (error) {
+      console.error('Error marking ticket as golden:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark ticket as golden",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFlagToggle = async (ticketId: number) => {
+    try {
+      await ticketManagementAPI.markAsFlagged([ticketId]);
+      
+      // Update local state instead of reloading
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, is_flagged: !ticket.is_flagged }
+            : ticket
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: "Ticket flagged successfully",
+      });
+    } catch (error) {
+      console.error('Error flagging ticket:', error);
+      toast({
+        title: "Error",
+        description: "Failed to flag ticket",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -75,6 +116,12 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
     }
   };
 
+  const getTATStatus = (ticket: TicketResponse) => {
+    if (ticket.response_escalation === 'Breached') return 'breach';
+    if (ticket.response_escalation === 'Approaching') return 'approaching';
+    return 'within';
+  };
+
   const filteredTickets = tickets.filter(ticket => {
     let tabFilter = true;
     
@@ -84,10 +131,10 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
         tabFilter = true; // Show all for now
         break;
       case 'golden':
-        tabFilter = starredTickets.has(ticket.id) || ticket.priority === 'High';
+        tabFilter = ticket.is_golden_ticket === true;
         break;
       case 'flagged':
-        tabFilter = ticket.priority === 'Critical' || ticket.issue_status === 'Open';
+        tabFilter = ticket.is_flagged === true;
         break;
       case 'all':
       default:
@@ -98,10 +145,13 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
     let statusFilter = true;
     switch (activeFilter) {
       case 'approaching':
-        statusFilter = ticket.issue_status === 'Approaching TAT';
+        statusFilter = ticket.response_escalation === 'Approaching';
         break;
       case 'within':
-        statusFilter = ticket.issue_status === 'Within TAT';
+        statusFilter = ticket.response_escalation === 'Within TAT' || ticket.response_escalation === 'Achieved';
+        break;
+      case 'breach':
+        statusFilter = ticket.response_escalation === 'Breached';
         break;
       case 'all':
       default:
@@ -131,20 +181,29 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
         {/* Tab Navigation */}
         <div className="flex space-x-1 mb-4">
           {[
-            { key: 'my' as const, label: 'My' },
-            { key: 'golden' as const, label: 'Golden' },
-            { key: 'flagged' as const, label: 'Flagged' },
-            { key: 'all' as const, label: 'All' }
+            { key: 'my' as const, label: 'My', icon: null },
+            { key: 'golden' as const, label: 'Golden', icon: Star },
+            { key: 'flagged' as const, label: 'Flagged', icon: Flag },
+            { key: 'all' as const, label: 'All', icon: null }
           ].map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 text-sm font-medium rounded-none border-b-2 transition-colors
+              className={`px-4 py-2 text-sm font-medium rounded-none border-b-2 transition-colors flex items-center gap-1
                 ${activeTab === tab.key 
                   ? 'text-red-600 border-red-600' 
                   : 'text-gray-600 border-transparent hover:text-gray-900'
                 }`}
             >
+              {tab.icon && (
+                <tab.icon 
+                  className={`h-4 w-4 ${
+                    tab.key === 'golden' 
+                      ? (activeTab === tab.key ? 'text-yellow-500' : 'text-gray-400')
+                      : activeTab === tab.key ? 'text-red-600' : 'text-gray-400'
+                  }`}
+                />
+              )}
               {tab.label}
             </button>
           ))}
@@ -155,7 +214,8 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
           {[
             { key: 'all' as const, label: 'All' },
             { key: 'approaching' as const, label: 'Approaching TAT' },
-            { key: 'within' as const, label: 'Within TAT' }
+            { key: 'within' as const, label: 'Within TAT' },
+            { key: 'breach' as const, label: 'TAT Breach' }
           ].map(filter => (
             <Button
               key={filter.key}
@@ -164,7 +224,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               onClick={() => setActiveFilter(filter.key)}
               className={`text-xs h-8 ${
                 activeFilter === filter.key 
-                  ? 'bg-orange-400 text-white border-orange-400' 
+                  ? (filter.key === 'breach' ? 'bg-red-500 text-white border-red-500' : 'bg-orange-400 text-white border-orange-400')
                   : 'bg-white text-gray-700 border-gray-300'
               }`}
             >
@@ -201,25 +261,61 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
           filteredTickets.map((ticket) => (
             <div
               key={ticket.id}
-              className="bg-stone-100 rounded-lg p-4 shadow-sm border border-stone-200 relative"
+              className="rounded-lg p-4 shadow-sm border border-stone-200 relative"
+              style={{ backgroundColor: '#E5DFD2' }}
               onClick={() => onTicketSelect(ticket)}
             >
-              {/* Ticket Header */}
+              {/* Top Row: Ticket ID, Timer with Time, Status */}
               <div className="flex justify-between items-start mb-3">
+                <span className="text-sm font-medium text-gray-700">
+                  {ticket.ticket_number}
+                </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    #{ticket.ticket_number || ticket.id}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-gray-500" />
-                    <span className="text-xs text-gray-500">09:06</span>
+                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                    <Timer className="h-4 w-4 text-gray-800" />
+                    <span className="text-sm font-medium text-gray-800">
+                      {new Date(ticket.created_at).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
                   </div>
                   <Badge 
-                    className={`text-xs px-2 py-1 ${getStatusColor(ticket.issue_status)} text-white`}
+                    className={`text-white text-xs px-3 py-1 rounded-lg font-medium`}
+                    style={{ 
+                      backgroundColor: ticket.color_code || getStatusColor(ticket.issue_status).replace('bg-', '#'),
+                      color: 'white'
+                    }}
                   >
-                    {ticket.issue_status || 'Open'}
+                    {ticket.issue_status}
                   </Badge>
                 </div>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 pr-20 break-words line-clamp-2">
+                {ticket.heading}
+              </h3>
+
+              {/* Category */}
+              <p className="text-sm text-gray-700 mb-2">
+                {ticket.category_type}
+              </p>
+
+              {/* Assigned to */}
+              <p className="text-sm text-gray-700 mb-4">
+                Assigned to: {ticket.assigned_to || 'Unassigned'}
+              </p>
+
+              {/* Date in top right corner */}
+              <div className="absolute top-16 right-4">
+                <span className="text-sm text-gray-600">
+                  {formatDate(ticket.created_at)}
+                </span>
+              </div>
+
+              {/* Bottom Row: Star, View Details Button, Icon */}
+              <div className="flex justify-between items-center">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -228,37 +324,18 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                   className="p-1"
                 >
                   <Star 
-                    className={`h-5 w-5 ${
-                      starredTickets.has(ticket.id) 
-                        ? 'text-yellow-400 fill-current' 
-                        : 'text-gray-300'
+                    className={`h-6 w-6 ${
+                      ticket.is_golden_ticket
+                        ? 'text-yellow-500 fill-current' 
+                        : 'text-gray-400'
                     }`}
                   />
                 </button>
-              </div>
-
-              {/* Ticket Content */}
-              <div className="space-y-2">
-                <h3 className="font-medium text-gray-900 text-base leading-tight">
-                  {ticket.heading || 'Ticket Title'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {ticket.category_type || 'Category'} / {ticket.sub_category_type || 'Sub-Category'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Assigned to:</span> {ticket.assigned_to || 'Unassigned'}
-                </p>
-              </div>
-
-              {/* Ticket Footer */}
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-xs text-gray-500">
-                  {formatDate(ticket.created_at)}
-                </span>
+                
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-7 px-3 border-red-300 text-red-600 hover:bg-red-50"
+                  className="text-sm h-8 px-4 border-red-400 text-red-600 hover:bg-red-50 bg-white"
                   onClick={(e) => {
                     e.stopPropagation();
                     onTicketSelect(ticket);
@@ -266,13 +343,22 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                 >
                   View Details
                 </Button>
-              </div>
 
-              {/* Action Icons */}
-              <div className="absolute bottom-4 right-16">
-                <div className="w-6 h-6 border border-gray-300 rounded flex items-center justify-center">
-                  <div className="w-3 h-3 border border-gray-400"></div>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFlagToggle(ticket.id);
+                  }}
+                  className="w-6 h-6 flex items-center justify-center p-1"
+                >
+                  <Flag 
+                    className={`h-4 w-4 ${
+                      ticket.is_flagged
+                        ? 'text-red-500 fill-current' 
+                        : 'text-gray-500'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
           ))
@@ -280,7 +366,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       </div>
 
       {/* Create Ticket Modal */}
-      <MobileCreateTicketModal
+      <MobileDynamicCreateTicketModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {

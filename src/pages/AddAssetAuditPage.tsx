@@ -76,7 +76,7 @@ export const AddAssetAuditPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 md:p-8 mx-auto">
         {/* Breadcrumb */}
         <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
           <button

@@ -379,7 +379,7 @@ export const EditAssetDetailsPage = () => {
     console.log('Save and create new asset');
     navigate('/maintenance/asset/add');
   };
-  return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
+  return <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">

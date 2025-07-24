@@ -1402,28 +1402,23 @@ const hasFiles = () => {
       }
     }
   };
-  useEffect(() => {
-    if (selectedAssetCategory) {
-      handleExtraFieldChange('asset_category', selectedAssetCategory, 'text', 'assetCategory', 'Asset Category');
-    }
-  }, [selectedAssetCategory]);
-  return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
-    {/* Header */}
-    <div className="mb-4 sm:mb-6">
-      <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-        <button
-          onClick={handleGoBack}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
-        </button>
-        <span>Asset List</span>
-        <span>{'>'}</span>
-        <span className="text-gray-900 font-medium">Create New Asset</span>
+  return <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button 
+            onClick={handleGoBack}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Asset List</span>
+          <span>{'>'}</span>
+          <span className="text-gray-900 font-medium">Create New Asset</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW ASSET</h1>
       </div>
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW ASSET</h1>
-    </div>
 
     <div className="space-y-4 sm:space-y-6">
       {/* Asset Category Selection */}

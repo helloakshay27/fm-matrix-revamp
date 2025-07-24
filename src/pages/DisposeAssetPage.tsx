@@ -334,7 +334,7 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="shadow-sm bg-transparent">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
@@ -349,7 +349,7 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="mx-auto px-4 sm:px-6 py-6">
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 space-y-8">
               {/* Assets Table */}

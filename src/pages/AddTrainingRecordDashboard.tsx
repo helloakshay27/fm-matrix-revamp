@@ -50,7 +50,7 @@ export const AddTrainingRecordDashboard = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 mx-auto">
       {/* Breadcrumb */}
       <div className="mb-4 text-sm text-gray-600">
         Safety &gt; Training List &gt; Add Training Record
