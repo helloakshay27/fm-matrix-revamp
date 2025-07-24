@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Settings2, Eye, EyeOff, RotateCcw } from 'lucide-react';
+import { Grid3x3, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 interface ColumnVisibilityMenuProps {
@@ -37,7 +37,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
           size="sm"
           className="h-8 flex items-center gap-2"
         >
-          <Settings2 className="w-4 h-4" />
+          <Grid3x3 className="w-4 h-4" />
           
         </Button>
       </DropdownMenuTrigger>

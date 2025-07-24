@@ -262,15 +262,16 @@ export const UnitMasterByDefaultPage = () => {
             <TableBody>
               {meters.map((meter) => (
                 <TableRow key={meter.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{meter.name}</TableCell>
-                  <TableCell>{meter.unit_name.join(', ')}</TableCell>
-                  <TableCell>{meter.meter_type}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={meter.active}
-                      onCheckedChange={() => handleStatusToggle(meter.id)}
-                    />
-                  </TableCell>
+                  <TableCell className="font-medium">{meter.meterCategory}</TableCell>
+                  <TableCell>{meter.unitName}</TableCell>
+                  <TableCell>{meter.meterType}</TableCell>
+                   <TableCell>
+                     <Switch
+                       checked={meter.status}
+                       onCheckedChange={() => handleStatusToggle(meter.id)}
+                       className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                     />
+                   </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"

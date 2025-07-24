@@ -504,8 +504,37 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
+  async getAllowedSites(userId: string) {
+    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
+    return response.data;
+  },
+
+  async createBuilding(buildingData: any) {
+    const response = await apiClient.post('/buildings.json', { building: buildingData });
+    return response.data;
+  },
+
+  async updateBuilding(id: number, buildingData: any) {
+    const response = await apiClient.put(`/buildings/${id}.json`, { building: buildingData });
+    return response.data;
+  },
+
   async getWings() {
     const response = await apiClient.get('/pms/wings.json');
+    return response.data;
+  },
+
+  async createWing(wingData: { name: string; building_id: string; active: boolean }) {
+    const response = await apiClient.post('/pms/wings.json', {
+      pms_wing: wingData
+    });
+    return response.data;
+  },
+
+  async updateWing(wingId: number, wingData: { name: string; building_id: string; active: boolean }) {
+    const response = await apiClient.put(`/pms/wings/${wingId}.json`, {
+      pms_wing: wingData
+    });
     return response.data;
   },
 

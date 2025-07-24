@@ -3,7 +3,16 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiClient } from '@/utils/apiClient';
 
 // Types
-interface Building {
+export interface Site {
+  id: number;
+  site_name: string;
+  site_code?: string;
+  active?: boolean;
+  company_id?: string;
+  address?: string;
+}
+
+export interface Building {
   id: number;
   name: string;
   site_id: string;
@@ -13,9 +22,18 @@ interface Building {
   has_room: boolean;
   active: boolean;
   other_detail?: string;
+  company_id?: string;
+  user_id?: number;
+  cloned_by?: number;
+  cloned_at?: string;
+  code?: string;
+  created_at?: string;
+  updated_at?: string;
+  url?: string;
+  site?: Site;
 }
 
-interface Wing {
+export interface Wing {
   id: number;
   name: string;
   building_id: string;
@@ -23,7 +41,7 @@ interface Wing {
   building?: Building;
 }
 
-interface Area {
+export interface Area {
   id: number;
   name: string;
   building_id: string;
@@ -33,7 +51,7 @@ interface Area {
   building?: Building;
 }
 
-interface Floor {
+export interface Floor {
   id: number;
   name: string;
   building_id: string;
@@ -45,7 +63,7 @@ interface Floor {
   building?: Building;
 }
 
-interface Unit {
+export interface Unit {
   id: number;
   unit_name: string;
   building_id: number;
@@ -60,7 +78,12 @@ interface Unit {
   area_obj?: Area;
 }
 
-interface LocationState {
+export interface LocationState {
+  sites: {
+    data: Site[];
+    loading: boolean;
+    error: string | null;
+  };
   buildings: {
     data: Building[];
     loading: boolean;
@@ -98,19 +121,30 @@ const getSelectedSiteId = () => {
 };
 
 // Async Thunks
+export const fetchSites = createAsyncThunk(
+  'location/fetchSites',
+  async (userId: string) => {
+    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
+    return response.data;
+  }
+);
+
 export const fetchBuildings = createAsyncThunk(
   'location/fetchBuildings',
   async () => {
-    const siteId = getSelectedSiteId();
-    const response = await apiClient.get(`/buildings.json?site_id=${siteId}`);
+    const response = await apiClient.get('/buildings.json');
     return response.data;
   }
 );
 
 export const fetchWings = createAsyncThunk(
   'location/fetchWings',
-  async (buildingId: number) => {
-    const response = await apiClient.get(`/pms/wings.json?building_id=${buildingId}`);
+  async (buildingId?: number) => {
+    let url = '/pms/wings.json';
+    if (buildingId) {
+      url += `?building_id=${buildingId}`;
+    }
+    const response = await apiClient.get(url);
     return response.data.wings || [];
   }
 );
@@ -142,13 +176,9 @@ export const fetchUnits = createAsyncThunk(
 // Create operations
 export const createBuilding = createAsyncThunk(
   'location/createBuilding',
-  async (buildingData: Partial<Building>) => {
-    const siteId = getSelectedSiteId();
+  async (buildingData: any) => {
     const payload = {
-      building: {
-        ...buildingData,
-        site_id: parseInt(siteId)
-      }
+      building: buildingData
     };
     const response = await apiClient.post('/buildings.json', payload);
     return response.data;
@@ -219,7 +249,7 @@ export const createUnit = createAsyncThunk(
 // Update operations
 export const updateBuilding = createAsyncThunk(
   'location/updateBuilding',
-  async ({ id, updates }: { id: number; updates: Partial<Building> }) => {
+  async ({ id, updates }: { id: number; updates: any }) => {
     const payload = {
       building: updates
     };
@@ -273,6 +303,7 @@ export const updateUnit = createAsyncThunk(
 );
 
 const initialState: LocationState = {
+  sites: { data: [], loading: false, error: null },
   buildings: { data: [], loading: false, error: null },
   wings: { data: [], loading: false, error: null },
   areas: { data: [], loading: false, error: null },
@@ -328,8 +359,21 @@ const locationSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
-    // Buildings
+    // Sites
     builder
+      .addCase(fetchSites.pending, (state) => {
+        state.sites.loading = true;
+        state.sites.error = null;
+      })
+      .addCase(fetchSites.fulfilled, (state, action) => {
+        state.sites.loading = false;
+        state.sites.data = action.payload;
+      })
+      .addCase(fetchSites.rejected, (state, action) => {
+        state.sites.loading = false;
+        state.sites.error = action.error.message || 'Failed to fetch sites';
+      })
+      // Buildings
       .addCase(fetchBuildings.pending, (state) => {
         state.buildings.loading = true;
         state.buildings.error = null;

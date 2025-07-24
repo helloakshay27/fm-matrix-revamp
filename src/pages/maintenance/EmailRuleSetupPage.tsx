@@ -147,7 +147,10 @@ export const EmailRuleSetupPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleEditClick(rule)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditClick(rule);
+            }}
             className="p-1 h-8 w-8"
           >
             <Edit className="w-4 h-4" />
@@ -214,7 +217,6 @@ export const EmailRuleSetupPage: React.FC = () => {
           data={emailRules}
           columns={columns}
           renderCell={renderCell}
-          onRowClick={(rule) => handleEditClick(rule)}
           storageKey="email-rule-setup-table"
           emptyMessage="No email rules found"
           selectable={true}

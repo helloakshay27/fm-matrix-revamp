@@ -11,7 +11,6 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 // Import existing pages
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
-import { LoginPage } from './pages/LoginPage';
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
@@ -242,6 +241,7 @@ import { FMUserMasterDashboard } from './pages/master/FMUserMasterDashboard';
 import { OccupantUserMasterDashboard } from './pages/master/OccupantUserMasterDashboard';
 import { AddFMUserPage } from './pages/master/AddFMUserPage';
 import { EditFMUserPage } from './pages/master/EditFMUserPage';
+import { ViewFMUserPage } from './pages/master/ViewFMUserPage';
 
 // Import Material Master page
 import { MaterialMasterPage } from './pages/MaterialMasterPage';
@@ -466,7 +466,16 @@ import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
 // Import Setup pages
 import { PermitSetupDashboard } from './pages/PermitSetupDashboard';
 import { IncidentSetupDashboard } from './pages/IncidentSetupDashboard';
-import { BookingDetailsPage } from './pages/BookingDetailsPage';
+
+import { SpaceManagementBookingDetailsPage } from '@/pages/SpaceManagementBookingDetailsPage';
+import { LoginPage } from '@/pages/LoginPage';
+import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
+import { ForgotPasswordOTPPage } from '@/pages/ForgotPasswordOTPPage';
+import { NewPasswordPage } from '@/pages/NewPasswordPage';
+import { LoginSuccessPage } from '@/pages/LoginSuccessPage';
+import { PasswordResetSuccessPage } from '@/pages/PasswordResetSuccessPage';
+import { isAuthenticated } from '@/utils/auth';
 
 const queryClient = new QueryClient();
 
@@ -478,7 +487,19 @@ function App() {
           <LayoutProvider>
             <Routes>
               {/* Login Route */}
-              <Route path="/login" element={<LoginPage />} />
+
+                <Route 
+              path="/login" 
+              element={
+                isAuthenticated() ? <Navigate to="/" replace /> : <LoginPage />
+              } 
+            />
+            <Route path="/otp-verification" element={<OTPVerificationPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/forgot-password-otp" element={<ForgotPasswordOTPPage />} />
+            <Route path="/new-password" element={<NewPasswordPage />} />
+            <Route path="/login-success" element={<LoginSuccessPage />} />
+            <Route path="/password-reset-success" element={<PasswordResetSuccessPage />} />
 
               <Route path="/" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
                 <Route index element={<Index />} />
@@ -828,7 +849,7 @@ function App() {
                 {/* VAS Booking Routes */}
                 <Route path="/vas/booking/list" element={<BookingListDashboard />} />
                 <Route path="/vas/booking/add" element={<AddFacilityBookingPage />} />
-                <Route path="/vas/bookings/details/:id" element={<BookingDetailsPage />} />
+                <Route path="/vas/bookings/details/:id" element={<SpaceManagementBookingDetailsPage />} />
                 <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
 
@@ -844,7 +865,8 @@ function App() {
                 {/* Master User Routes */}
                 <Route path="/master/user/fm-users" element={<FMUserMasterDashboard />} />
                 <Route path="/master/user/fm-users/add" element={<AddFMUserPage />} />
-                <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
+                 <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
+                 <Route path="/master/user/fm-users/view/:id" element={<ViewFMUserPage />} />
                 <Route path="/master/user/occupant-users" element={<OccupantUserMasterDashboard />} />
 
                 {/* Material Master Route */}

@@ -65,18 +65,18 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   console.log('TicketSelectionPanel - Rendering with selected tickets:', selectedTickets);
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background border border-border shadow-lg rounded-lg z-50">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#f6f4ee] border border-[#D5DbDB] shadow-[0px_2px_18px_rgba(45,45,45,0.1)] rounded-lg z-50">
       <div className="px-6 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Selection</span>
+              <span className="text-sm font-medium text-[#1a1a1a]">Selection</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium">
+              <div className="bg-[#C72030] text-white px-2 py-1 rounded text-xs font-medium">
                 {selectedTickets.length}
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-gray-600">
                 {selectedTicketObjects.slice(0, 2).map(ticket => ticket.ticket_number).join(', ')}
                 {selectedTicketObjects.length > 2 && ` +${selectedTicketObjects.length - 2} more`}
               </span>
@@ -89,7 +89,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               disabled={isGoldenLoading}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
             >
               {isGoldenLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -104,7 +104,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               disabled={isFlagLoading}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
             >
               {isFlagLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -118,7 +118,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               onClick={handleExport}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
             >
               <Download className="w-4 h-4" />
               Export
@@ -128,7 +128,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               onClick={handleClearSelection}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
             >
               <X className="w-4 h-4" />
             </Button>

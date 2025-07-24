@@ -10,6 +10,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
 
+// List of all world countries
+const worldCountries = [
+  'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
+  'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
+  'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia',
+  'Cameroon', 'Canada', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Congo', 'Costa Rica',
+  'Croatia', 'Cuba', 'Cyprus', 'Czech Republic', 'Democratic Republic of the Congo', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador',
+  'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France',
+  'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau',
+  'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland',
+  'Israel', 'Italy', 'Ivory Coast', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kuwait',
+  'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg',
+  'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico',
+  'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru',
+  'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman',
+  'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal',
+  'Qatar', 'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe',
+  'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia',
+  'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria',
+  'Taiwan', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey',
+  'Turkmenistan', 'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu',
+  'Vatican City', 'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'
+];
+
 export const LocationAccountPage = () => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [activeTab, setActiveTab] = useState('organization');
@@ -25,6 +49,25 @@ export const LocationAccountPage = () => {
   const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
   const [isAddEntityOpen, setIsAddEntityOpen] = useState(false);
   const [isAddUserCategoryOpen, setIsAddUserCategoryOpen] = useState(false);
+  const [isEditZoneOpen, setIsEditZoneOpen] = useState(false);
+  const [selectedZonesForEdit, setSelectedZonesForEdit] = useState<string[]>([]);
+  const [isEditZoneFormOpen, setIsEditZoneFormOpen] = useState(false);
+  const [editZoneData, setEditZoneData] = useState({
+    zoneName: '',
+    headquarter: '',
+    region: ''
+  });
+  const [newRegionData, setNewRegionData] = useState({
+    country: '',
+    regionName: ''
+  });
+  const [showEntityForm, setShowEntityForm] = useState(false);
+  const [selectedCountryToAdd, setSelectedCountryToAdd] = useState('');
+  const [newZoneData, setNewZoneData] = useState({
+    country: '',
+    region: '',
+    zoneName: ''
+  });
   const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(false);
 
   // Sample data with state management
@@ -115,8 +158,26 @@ export const LocationAccountPage = () => {
       toast.error('Please enter an entity name');
       return;
     }
-    toast.success('Entity added successfully');
+
+    // Check if entity already exists
+    const entityExists = entities.some(entity => entity.entity.toLowerCase() === entityName.toLowerCase());
+    if (entityExists) {
+      toast.error('This entity already exists');
+      return;
+    }
+
+    // Add the new entity to the entities array
+    const newEntity = {
+      entity: entityName,
+      status: true
+    };
+
+    setEntities([...entities, newEntity]);
+    toast.success(`Entity "${entityName}" added successfully`);
+    
+    // Reset form and close the form section
     setEntityName('');
+    setShowEntityForm(false);
   };
 
   const handleImportEntity = () => {
@@ -228,6 +289,134 @@ export const LocationAccountPage = () => {
       console.error('Error adding user category:', error);
       toast.error('Error adding user category');
     }
+  };
+
+  const handleZoneSelection = (zoneName: string, checked: boolean) => {
+    if (checked) {
+      setSelectedZonesForEdit([...selectedZonesForEdit, zoneName]);
+    } else {
+      setSelectedZonesForEdit(selectedZonesForEdit.filter(name => name !== zoneName));
+    }
+  };
+
+  const handleEditSelectedZones = () => {
+    if (selectedZonesForEdit.length === 0) {
+      toast.error('Please select at least one zone to edit');
+      return;
+    }
+    
+    // Pre-fill form with data from the first selected zone
+    const firstSelectedZone = selectedZonesForEdit[0];
+    setEditZoneData({
+      zoneName: firstSelectedZone,
+      headquarter: 'India', // Default value
+      region: 'west' // Default value
+    });
+    
+    setIsEditZoneOpen(false);
+    setIsEditZoneFormOpen(true);
+  };
+
+  const handleSaveZoneChanges = () => {
+    if (!editZoneData.zoneName.trim() || !editZoneData.headquarter.trim() || !editZoneData.region.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
+    toast.success(`Zone "${editZoneData.zoneName}" updated successfully`);
+    setIsEditZoneFormOpen(false);
+    setSelectedZonesForEdit([]);
+    setEditZoneData({ zoneName: '', headquarter: '', region: '' });
+  };
+
+  const handleZoneFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      toast.success('Zone image uploaded successfully');
+    }
+  };
+
+  const handleAddRegion = () => {
+    if (!newRegionData.country || !newRegionData.regionName.trim()) {
+      toast.error('Please select a country and enter a region name');
+      return;
+    }
+
+    // Add the new region to the regions array
+    const newRegion = {
+      country: newRegionData.country,
+      region: newRegionData.regionName,
+      status: true
+    };
+
+    setRegions([...regions, newRegion]);
+    toast.success(`Region "${newRegionData.regionName}" added successfully`);
+    
+    // Reset form and close dialog
+    setNewRegionData({ country: '', regionName: '' });
+    setIsAddRegionOpen(false);
+  };
+
+  const handleAddCountry = () => {
+    if (!selectedCountryToAdd) {
+      toast.error('Please select a country to add');
+      return;
+    }
+
+    // Check if country already exists
+    const countryExists = countries.some(country => country.name === selectedCountryToAdd);
+    if (countryExists) {
+      toast.error('This country already exists in the list');
+      return;
+    }
+
+    // Add the new country to the countries array
+    const newCountry = {
+      name: selectedCountryToAdd,
+      status: true
+    };
+
+    setCountries([...countries, newCountry]);
+    toast.success(`Country "${selectedCountryToAdd}" added successfully`);
+    
+    // Reset form and close dialog
+    setSelectedCountryToAdd('');
+    setIsAddCountryOpen(false);
+  };
+
+  const handleAddZone = () => {
+    if (!newZoneData.country || !newZoneData.region || !newZoneData.zoneName.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Check if zone already exists
+    const zoneExists = zones.some(zone => 
+      zone.country === newZoneData.country && 
+      zone.region === newZoneData.region && 
+      zone.zone === newZoneData.zoneName
+    );
+    
+    if (zoneExists) {
+      toast.error('This zone already exists in the selected country and region');
+      return;
+    }
+
+    // Add the new zone to the zones array
+    const newZone = {
+      country: newZoneData.country,
+      region: newZoneData.region,
+      zone: newZoneData.zoneName,
+      status: true,
+      icon: '/placeholder.svg'
+    };
+
+    setZones([...zones, newZone]);
+    toast.success(`Zone "${newZoneData.zoneName}" added successfully`);
+    
+    // Reset form and close dialog
+    setNewZoneData({ country: '', region: '', zoneName: '' });
+    setIsAddZoneOpen(false);
   };
 
   return (
@@ -345,23 +534,39 @@ export const LocationAccountPage = () => {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Country</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-4"
+                    onClick={() => setIsAddCountryOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Country Name
                     </label>
-                    <input
-                      type="text"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                      placeholder="Enter country name"
-                    />
+                    <select 
+                      value={selectedCountryToAdd}
+                      onChange={(e) => setSelectedCountryToAdd(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                    >
+                      <option value="">Select Country</option>
+                      {worldCountries.map((countryName, index) => (
+                        <option key={index} value={countryName}>{countryName}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
                       Cancel
                     </Button>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                    <Button 
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      onClick={handleAddCountry}
+                    >
                       Add Country
                     </Button>
                   </div>
@@ -387,7 +592,6 @@ export const LocationAccountPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
-                <Button size="sm" variant="outline">Search</Button>
               </div>
             </div>
           </div>
@@ -402,7 +606,9 @@ export const LocationAccountPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {countries.map((country, index) => (
+                  {countries.filter(country => 
+                    country.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).map((country, index) => (
                     <TableRow key={index}>
                       <TableCell>{country.name}</TableCell>
                       <TableCell>
@@ -431,13 +637,25 @@ export const LocationAccountPage = () => {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Region</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-4"
+                    onClick={() => setIsAddRegionOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Country
                     </label>
-                    <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                    <select 
+                      value={newRegionData.country}
+                      onChange={(e) => setNewRegionData({...newRegionData, country: e.target.value})}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    >
                       <option value="">Select Country</option>
                       {countries.map((country, index) => (
                         <option key={index} value={country.name}>{country.name}</option>
@@ -450,6 +668,8 @@ export const LocationAccountPage = () => {
                     </label>
                     <input
                       type="text"
+                      value={newRegionData.regionName}
+                      onChange={(e) => setNewRegionData({...newRegionData, regionName: e.target.value})}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       placeholder="Enter region name"
                     />
@@ -458,7 +678,10 @@ export const LocationAccountPage = () => {
                     <Button variant="outline" onClick={() => setIsAddRegionOpen(false)}>
                       Cancel
                     </Button>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                    <Button 
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      onClick={handleAddRegion}
+                    >
                       Add Region
                     </Button>
                   </div>
@@ -484,7 +707,6 @@ export const LocationAccountPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
-                <Button size="sm" variant="outline">Search</Button>
               </div>
             </div>
           </div>
@@ -531,13 +753,25 @@ export const LocationAccountPage = () => {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Add Zone</DialogTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-4 top-4"
+                      onClick={() => setIsAddZoneOpen(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Country
                       </label>
-                      <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                      <select 
+                        value={newZoneData.country}
+                        onChange={(e) => setNewZoneData({...newZoneData, country: e.target.value})}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      >
                         <option value="">Select Country</option>
                         {countries.map((country, index) => (
                           <option key={index} value={country.name}>{country.name}</option>
@@ -548,9 +782,13 @@ export const LocationAccountPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Region
                       </label>
-                      <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                      <select 
+                        value={newZoneData.region}
+                        onChange={(e) => setNewZoneData({...newZoneData, region: e.target.value})}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      >
                         <option value="">Select Region</option>
-                        {regions.map((region, index) => (
+                        {regions.filter(region => !newZoneData.country || region.country === newZoneData.country).map((region, index) => (
                           <option key={index} value={region.region}>{region.region}</option>
                         ))}
                       </select>
@@ -561,6 +799,8 @@ export const LocationAccountPage = () => {
                       </label>
                       <input
                         type="text"
+                        value={newZoneData.zoneName}
+                        onChange={(e) => setNewZoneData({...newZoneData, zoneName: e.target.value})}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                         placeholder="Enter zone name"
                       />
@@ -569,16 +809,62 @@ export const LocationAccountPage = () => {
                       <Button variant="outline" onClick={() => setIsAddZoneOpen(false)}>
                         Cancel
                       </Button>
-                      <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                      <Button 
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        onClick={handleAddZone}
+                      >
                         Add Zone
                       </Button>
                     </div>
                   </div>
                 </DialogContent>
               </Dialog>
-              <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                Edit Zone
-              </Button>
+              <Dialog open={isEditZoneOpen} onOpenChange={setIsEditZoneOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                    Edit Zone
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Select Zone to Edit</DialogTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-4 top-4"
+                      onClick={() => setIsEditZoneOpen(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {['Mumbai', 'Madhya Pradesh', 'Bali', 'Delhi', 'Hyderabad', 'Kolkata', 'NCR', 'Pune'].map((zoneName) => (
+                        <div key={zoneName} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`zone-${zoneName}`}
+                            checked={selectedZonesForEdit.includes(zoneName)}
+                            onChange={(e) => handleZoneSelection(zoneName, e.target.checked)}
+                            className="rounded border-gray-300 text-[#C72030] focus:ring-[#C72030]"
+                          />
+                          <label htmlFor={`zone-${zoneName}`} className="text-sm text-gray-700 cursor-pointer">
+                            {zoneName}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-end pt-4">
+                      <Button 
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                        onClick={handleEditSelectedZones}
+                      >
+                        Edit Selected Zone
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
             <div className="flex items-center gap-4">
               <select
@@ -599,7 +885,6 @@ export const LocationAccountPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
-                <Button size="sm" variant="outline">Search</Button>
               </div>
             </div>
           </div>
@@ -617,7 +902,9 @@ export const LocationAccountPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {zones.map((zone, index) => (
+                  {zones.filter(zone => 
+                    zone.country.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).map((zone, index) => (
                     <TableRow key={index}>
                       <TableCell>{zone.country}</TableCell>
                       <TableCell>{zone.region}</TableCell>
@@ -689,87 +976,50 @@ export const LocationAccountPage = () => {
 
         <TabsContent value="entity" className="space-y-4">
           <div className="flex items-center justify-between mb-4">
-            <Dialog open={isAddEntityOpen} onOpenChange={setIsAddEntityOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                  <File className="w-4 h-4 mr-2" />
-                  Add Entity
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Entity</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Entity Name
-                    </label>
-                    <input
-                      type="text"
-                      value={entityName}
-                      onChange={(e) => setEntityName(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                      placeholder="Enter entity name"
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddEntityOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                      onClick={handleSubmitEntity}
-                    >
-                      Add Entity
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              onClick={() => setShowEntityForm(!showEntityForm)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Entity
+            </Button>
           </div>
 
-          <Card>
-            <CardContent className="p-6 space-y-6">
-              {/* Entity Name Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Entity Name
-                </label>
-                <input
-                  type="text"
-                  value={entityName}
-                  onChange={(e) => setEntityName(e.target.value)}
-                  className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                  placeholder="Enter entity name"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSubmitEntity}
-                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                >
-                  Submit
-                </Button>
-                <Button
-                  onClick={handleSampleFormat}
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                >
-                  Sample Format
-                </Button>
-                <Button
-                  onClick={handleImportEntity}
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                >
-                  Import
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Toggle Form Section */}
+          {showEntityForm && (
+            <Card className="mb-4">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <input
+                    type="text"
+                    value={entityName}
+                    onChange={(e) => setEntityName(e.target.value)}
+                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    placeholder="Enter Entity Name"
+                  />
+                  <Button
+                    onClick={handleSubmitEntity}
+                    className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
+                  >
+                    Submit
+                  </Button>
+                  <Button
+                    onClick={handleSampleFormat}
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+                  >
+                    📁 Sample Format
+                  </Button>
+                  <Button
+                    onClick={handleImportEntity}
+                    className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
+                  >
+                    + Import
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardContent className="p-0">
@@ -954,6 +1204,94 @@ export const LocationAccountPage = () => {
           </Dialog>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Zone Form Dialog */}
+      <Dialog open={isEditZoneFormOpen} onOpenChange={setIsEditZoneFormOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Zone</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => setIsEditZoneFormOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          <div className="space-y-4 p-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Zone Name
+              </label>
+              <input
+                type="text"
+                value={editZoneData.zoneName}
+                onChange={(e) => setEditZoneData({...editZoneData, zoneName: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                placeholder="Enter zone name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Headquarter
+              </label>
+              <input
+                type="text"
+                value={editZoneData.headquarter}
+                onChange={(e) => setEditZoneData({...editZoneData, headquarter: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                placeholder="Enter headquarter"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Region
+              </label>
+              <input
+                type="text"
+                value={editZoneData.region}
+                onChange={(e) => setEditZoneData({...editZoneData, region: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                placeholder="Enter region"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Upload Image
+              </label>
+              <div className="flex items-center">
+                <input
+                  type="file"
+                  id="zoneImageUpload"
+                  accept="image/*"
+                  onChange={handleZoneFileUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="zoneImageUpload"
+                  className="cursor-pointer bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+                >
+                  Choose File
+                </label>
+                <span className="ml-3 text-sm text-gray-500">No file chosen</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-end pt-4">
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+                onClick={handleSaveZoneChanges}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

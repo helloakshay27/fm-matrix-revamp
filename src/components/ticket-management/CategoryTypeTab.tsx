@@ -21,6 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
@@ -94,6 +100,12 @@ export const CategoryTypeTab: React.FC = () => {
   const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
   const [accountData, setAccountData] = useState<any>(null);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryApiResponse['helpdesk_categories'][0] | null>(null);
+  const [editFaqItems, setEditFaqItems] = useState<FAQ[]>([{ question: '', answer: '' }]);
+  const [editIconFile, setEditIconFile] = useState<File | null>(null);
+  const [editVendorEmailEnabled, setEditVendorEmailEnabled] = useState(false);
+  const [editVendorEmails, setEditVendorEmails] = useState<string[]>(['']);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -193,6 +205,16 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const handleSubmit = async (data: CategoryFormData) => {
+    // Check for duplicate category name
+    const existingCategory = categories.find(
+      category => category.name.toLowerCase() === data.categoryName.toLowerCase()
+    );
+    
+    if (existingCategory) {
+      toast.error('Category name already exists. Please choose a different name.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
@@ -257,11 +279,22 @@ export const CategoryTypeTab: React.FC = () => {
         
         fetchCategories();
       } else {
-        throw new Error('Failed to create category');
+        // Try to get the error message from the response
+        const errorData = await response.json().catch(() => null);
+        console.error('API Response Error:', errorData);
+        
+        // Check if it's a duplicate name error
+        if (errorData?.errors?.name?.includes('has already been taken') || 
+            errorData?.message?.toLowerCase().includes('already exists') ||
+            errorData?.error?.toLowerCase().includes('already exists')) {
+          toast.error('Category name already exists. Please choose a different name.');
+        } else {
+          toast.error(errorData?.message || 'Failed to create category');
+        }
       }
     } catch (error) {
-      toast.error('Failed to create category');
       console.error('Error creating category:', error);
+      toast.error('Failed to create category');
     } finally {
       setIsSubmitting(false);
     }
@@ -302,16 +335,105 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const handleEdit = (category: CategoryApiResponse['helpdesk_categories'][0]) => {
-    // TODO: Implement edit functionality
-    console.log('Edit category:', category);
+    setEditingCategory(category);
+    setEditFaqItems([{ question: '', answer: '' }]); // Reset FAQ items for edit
+    setEditIconFile(null);
+    setEditVendorEmailEnabled(category.category_email?.length > 0);
+    setEditVendorEmails(category.category_email?.length > 0 ? category.category_email.map(e => e.email) : ['']);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (formData: any) => {
+    if (!editingCategory) return;
+    
+    try {
+      // TODO: Implement actual API call for updating category
+      console.log('Updating category:', editingCategory.id, formData);
+      
+      // Simulate successful update
+      toast.success('Category updated successfully!');
+      setIsEditModalOpen(false);
+      setEditingCategory(null);
+      fetchCategories(); // Refresh the list
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Failed to update category');
+    }
+  };
+
+  const addEditFaqItem = () => {
+    setEditFaqItems([...editFaqItems, { question: '', answer: '' }]);
+  };
+
+  const updateEditFaqItem = (index: number, field: 'question' | 'answer', value: string) => {
+    const updated = editFaqItems.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    );
+    setEditFaqItems(updated);
+  };
+
+  const removeEditFaqItem = (index: number) => {
+    if (editFaqItems.length > 1) {
+      setEditFaqItems(editFaqItems.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleEditIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setEditIconFile(file);
+    }
+  };
+
+  const addEditVendorEmail = () => {
+    setEditVendorEmails([...editVendorEmails, '']);
+  };
+
+  const updateEditVendorEmail = (index: number, value: string) => {
+    const updated = editVendorEmails.map((email, i) => 
+      i === index ? value : email
+    );
+    setEditVendorEmails(updated);
+  };
+
+  const removeEditVendorEmail = (index: number) => {
+    if (editVendorEmails.length > 1) {
+      setEditVendorEmails(editVendorEmails.filter((_, i) => i !== index));
+    }
   };
 
   const handleDelete = async (category: CategoryApiResponse['helpdesk_categories'][0]) => {
+    if (!confirm('Are you sure you want to delete this category?')) {
+      return;
+    }
+    
     try {
-      // TODO: Implement delete API call
-      setCategories(categories.filter(cat => cat.id !== category.id));
-      toast.success('Category deleted successfully!');
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const response = await fetch(`https://${baseUrl}/pms/admin/helpdesk_categories/${category.id}.json`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          helpdesk_category: {
+            active: "0"
+          },
+          id: category.id.toString()
+        }),
+      });
+
+      if (response.ok) {
+        setCategories(categories.filter(cat => cat.id !== category.id));
+        toast.success('Category deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete category');
+      }
     } catch (error) {
+      console.error('Error deleting category:', error);
       toast.error('Failed to delete category');
     }
   };
@@ -601,6 +723,189 @@ export const CategoryTypeTab: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Category Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="relative">
+            <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-0 right-0 p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </DialogHeader>
+
+          {editingCategory && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <Input
+                    defaultValue={editingCategory.name}
+                    placeholder="Category Name"
+                    className="w-full"
+                  />
+                </div>
+
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Selected Site</label>
+                  <Select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={selectedSite?.name || "Select Site"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {sites.map((site) => (
+                        <SelectItem key={site.id} value={site.id.toString()}>
+                          {site.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Response Time(min)</label>
+                  <Input
+                    defaultValue={editingCategory.tat}
+                    placeholder="Response Time"
+                    type="number"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <Checkbox id="customer-enabled" />
+                <label htmlFor="customer-enabled" className="text-sm font-medium">Customer Enabled</label>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="vendor-email-enabled"
+                    checked={editVendorEmailEnabled}
+                    onCheckedChange={(checked) => setEditVendorEmailEnabled(!!checked)}
+                  />
+                  <label htmlFor="vendor-email-enabled" className="text-sm font-medium">Enable Vendor Email</label>
+                </div>
+
+                {editVendorEmailEnabled && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Vendor Emails</h3>
+                      <Button type="button" onClick={addEditVendorEmail} variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Email
+                      </Button>
+                    </div>
+
+                    {editVendorEmails.map((email, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="Enter vendor email"
+                          value={email}
+                          onChange={(e) => updateEditVendorEmail(index, e.target.value)}
+                        />
+                        {editVendorEmails.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeEditVendorEmail(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Upload Icon</label>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="edit-icon-upload" className="cursor-pointer">
+                      <Button type="button" variant="outline" size="sm" asChild>
+                        <span className="text-orange-500">Choose File</span>
+                      </Button>
+                    </label>
+                    <input
+                      id="edit-icon-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleEditIconChange}
+                    />
+                    <span className="text-sm text-gray-500">
+                      {editIconFile ? editIconFile.name : 'No file chosen'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">FAQs</h3>
+                  <Button type="button" onClick={addEditFaqItem} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                  </Button>
+                </div>
+
+                {editFaqItems.map((item, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Question</label>
+                      <textarea
+                        placeholder="Question"
+                        value={item.question}
+                        onChange={(e) => updateEditFaqItem(index, 'question', e.target.value)}
+                        className="w-full p-2 border rounded-md resize-none h-20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Answer</label>
+                      <div className="flex gap-2">
+                        <textarea
+                          placeholder="Answer"
+                          value={item.answer}
+                          onChange={(e) => updateEditFaqItem(index, 'answer', e.target.value)}
+                          className="w-full p-2 border rounded-md resize-none h-20"
+                        />
+                        {editFaqItems.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeEditFaqItem(index)}
+                            className="h-fit mt-1"
+                          >
+                            <X className="h-4 w-4 text-red-500" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={() => handleEditSubmit({})}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

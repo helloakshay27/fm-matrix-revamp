@@ -41,35 +41,21 @@ export const SubCategoriesSetupTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
 
-  const fetchData = async () => {
-    try {
-      const response = await dispatch(fetchSubcategory({ baseUrl, token, id: Number(id) })).unwrap();
-      setSubCategories(response);
-    } catch (error) {
-      console.log(error)
-    }
-  }
+  const handleAddSubCategory = (subCategoryData: { category: string; subCategory: string; description: string; icon?: File }) => {
+    const newSubCategory: SubCategory = {
+      id: Math.max(...subCategories.map(c => c.id), 0) + 1,
+      category: subCategoryData.category,
+      subCategory: subCategoryData.subCategory,
+      description: subCategoryData.description,
+      active: true
+    };
+    setSubCategories([...subCategories, newSubCategory]);
+  };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleAddSubCategory = async (subCategoryData: { category: string; subCategory: string; description: string }) => {
-    const payload = {
-      spree_manage_restaurant_sub_category: {
-        category_id: Number(subCategoryData.category),
-        name: subCategoryData.subCategory,
-        description: subCategoryData.description
-      },
-      restaurant_id: Number(id)
-    }
-    try {
-      await dispatch(createSubcategory({ baseUrl, token, id: Number(id), data: payload })).unwrap();
-      fetchData();
-      toast.success('Subcategory added successfully');
-    } catch (error) {
-      console.log(error)
-    }
+  const handleEditSubCategory = (updatedSubCategory: SubCategory) => {
+    setSubCategories(subCategories.map(cat => 
+      cat.id === updatedSubCategory.id ? updatedSubCategory : cat
+    ));
   };
 
   const handleDeleteSubCategory = async () => {

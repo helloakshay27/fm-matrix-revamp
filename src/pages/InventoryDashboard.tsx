@@ -264,10 +264,22 @@ export const InventoryDashboard = () => {
     }
   ];
 
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={handleAddInventory} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium">
+        <Plus className="w-4 h-4 mr-2" /> Action
+      </Button>
+      <Button onClick={() => setShowBulkUpload(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Upload className="w-4 h-4 mr-2" /> Import
+      </Button>
+      <Button onClick={() => setShowFilter(true)} variant="outline">
+        <Filter className="w-4 h-4 mr-2" /> Filters
+      </Button>
+    </div>
+  );
 
 
-
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
       const itemId = typeof item.id === 'string' ? item.id : String(item.id || ''); // Ensure ID is a string
       return (

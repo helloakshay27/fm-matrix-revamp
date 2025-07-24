@@ -145,7 +145,10 @@ export const AssetAuditDashboard = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleAuditNameClick(item.auditId)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAuditNameClick(item.auditId);
+            }}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -153,7 +156,10 @@ export const AssetAuditDashboard = () => {
       case 'auditName':
         return (
           <button
-            onClick={() => handleAuditNameClick(item.auditId)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAuditNameClick(item.auditId);
+            }}
             className="text-black hover:underline font-medium"
           >
             {item.auditName}
@@ -287,7 +293,6 @@ export const AssetAuditDashboard = () => {
           data={audits}
           columns={columns}
           renderCell={renderCell}
-          onRowClick={(item) => handleAuditNameClick(item.auditId)}
           selectable={true}
           selectedItems={selectedItems}
           onSelectAll={handleSelectAll}
@@ -305,10 +310,10 @@ export const AssetAuditDashboard = () => {
           leftActions={
             <Button 
               onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add Audit
+              Action Audit
             </Button>
           }
         />

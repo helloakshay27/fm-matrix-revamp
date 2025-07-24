@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { MoreVertical, Plus, Upload, Download, Filter, Eye, Search, Users, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Pagination,
   PaginationContent,
@@ -33,6 +34,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TextField,
   Button as MuiButton,
@@ -66,9 +69,17 @@ export const FMUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: fmUsersResponse, loading, error } = useSelector((state: RootState) => state.fmUsers);
   const { data: userCounts, loading: countsLoading } = useSelector((state: RootState) => state.userCounts);
+  const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [cloneRoleDialogOpen, setCloneRoleDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [activeTab, setActiveTab] = useState('handover');
+  const [fromUser, setFromUser] = useState('');
+  const [toUser, setToUser] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
   const [filters, setFilters] = useState({
@@ -77,7 +88,13 @@ export const FMUserMasterDashboard = () => {
   });
 
   // Transform API data to table format
-  const fmUsersData = fmUsersResponse?.fm_users ? fmUsersResponse.fm_users.map(transformFMUserData) : [];
+  const [fmUsersData, setFmUsersData] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (fmUsersResponse?.fm_users) {
+      setFmUsersData(fmUsersResponse.fm_users.map(transformFMUserData));
+    }
+  }, [fmUsersResponse]);
 
   useEffect(() => {
     setCurrentSection('Master');
@@ -120,6 +137,120 @@ export const FMUserMasterDashboard = () => {
 
   const handleViewUser = (id: string) => {
     navigate(`/master/user/fm-users/view/${id}`);
+  };
+
+  const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
+    try {
+      // Update local state immediately for responsive UI
+      setFmUsersData(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId 
+            ? { ...user, active: isActive, status: isActive ? 'Active' : 'Inactive' }
+            : user
+        )
+      );
+
+      // Show toast message
+      toast({
+        title: "Status Updated",
+        description: `User ${isActive ? 'activated' : 'deactivated'} successfully!`,
+      });
+      
+      // TODO: Replace with actual API call to update user status
+      // await apiClient.put(`/users/${userId}/status`, { active: isActive });
+      
+    } catch (error) {
+      // Revert local state on error
+      setFmUsersData(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId 
+            ? { ...user, active: !isActive, status: !isActive ? 'Active' : 'Inactive' }
+            : user
+        )
+      );
+      
+      toast({
+        title: "Error",
+        description: "Failed to update user status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusClick = (user: any) => {
+    setSelectedUser(user);
+    setSelectedStatus(user.status);
+    setStatusDialogOpen(true);
+  };
+
+  const handleStatusUpdate = async () => {
+    try {
+      // TODO: Replace with actual API call to update user status
+      toast({
+        title: "Status Updated",
+        description: `User status updated to ${selectedStatus} successfully!`,
+      });
+      
+      setStatusDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedStatus('');
+      
+      // Refresh the data to reflect changes
+      dispatch(fetchFMUsers());
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCloneRoleSubmit = async () => {
+    try {
+      if (activeTab === 'handover') {
+        toast({
+          title: "Handover Successful",
+          description: `Role handover from ${fromUser} to ${toUser} completed successfully!`,
+        });
+      } else {
+        toast({
+          title: "Clone Successful",
+          description: `Role cloned to ${toUser} successfully!`,
+        });
+      }
+      
+      setCloneRoleDialogOpen(false);
+      setFromUser('');
+      setToUser('');
+      setActiveTab('handover');
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusBadgeProps = (status: string) => {
+    if (status === 'Active' || status === 'Approved') {
+      return {
+        className: 'bg-green-600 text-white hover:bg-green-700 cursor-pointer',
+        children: 'Approved'
+      };
+    } else if (status === 'Pending') {
+      return {
+        className: 'bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer',
+        children: 'Pending'
+      };
+    } else {
+      return {
+        className: 'bg-red-600 text-white hover:bg-red-700 cursor-pointer',
+        children: 'Rejected'
+      };
+    }
   };
 
   const handleApplyFilters = () => {
@@ -277,10 +408,6 @@ export const FMUserMasterDashboard = () => {
 
   return (
     <div className="w-full p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Master &gt; User Master &gt; FM User
-      </div>
 
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -338,7 +465,11 @@ export const FMUserMasterDashboard = () => {
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+        <Button 
+          variant="outline" 
+          className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          onClick={() => setCloneRoleDialogOpen(true)}
+        >
           Clone Role
         </Button>
         
@@ -384,29 +515,22 @@ export const FMUserMasterDashboard = () => {
               {paginatedUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-gray-50">
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="bg-white">
-                        <DropdownMenuItem onClick={() => handleViewUser(user.id)}>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditUser(user.id)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewUser(user.id)}
+                      className="hover:bg-gray-100"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                   </TableCell>
-                  <TableCell>
-                    <Switch checked={user.active} />
-                  </TableCell>
+                   <TableCell>
+                     <Switch 
+                       checked={user.active} 
+                       onCheckedChange={(checked) => handleToggleUserStatus(user.id, checked)}
+                       className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                     />
+                   </TableCell>
                   <TableCell className="font-medium">{user.id}</TableCell>
                   <TableCell>{user.userName}</TableCell>
                   <TableCell>{user.gender}</TableCell>
@@ -424,11 +548,12 @@ export const FMUserMasterDashboard = () => {
                       {user.type}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === 'Active' ? 'default' : 'secondary'}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
+                   <TableCell>
+                     <Badge 
+                       {...getStatusBadgeProps(user.status)}
+                       onClick={() => handleStatusClick(user)}
+                     />
+                   </TableCell>
                   <TableCell>
                     <Badge variant={user.faceRecognition ? 'default' : 'secondary'}>
                       {user.faceRecognition ? 'Yes' : 'No'}
@@ -527,6 +652,247 @@ export const FMUserMasterDashboard = () => {
             >
               Apply
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Update Dialog */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] p-0 bg-white">
+          <DialogHeader className="p-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">Update</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setStatusDialogOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="p-6 space-y-6">
+            <Select 
+              value={selectedStatus} 
+              onValueChange={setSelectedStatus}
+            >
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue placeholder="Select Status" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-lg z-50">
+                <SelectItem value="Select Status" disabled className="text-gray-400">
+                  Select Status
+                </SelectItem>
+                <SelectItem value="Approved" className="hover:bg-blue-50">
+                  Approved
+                </SelectItem>
+                <SelectItem value="Rejected" className="hover:bg-blue-50">
+                  Rejected
+                </SelectItem>
+                <SelectItem value="Pending" className="hover:bg-blue-50">
+                  Pending
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={handleStatusUpdate}
+                className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
+                disabled={!selectedStatus || selectedStatus === 'Select Status'}
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clone Role Dialog */}
+      <Dialog open={cloneRoleDialogOpen} onOpenChange={setCloneRoleDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] p-0 bg-white">
+          <DialogHeader className="p-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">Clone Role</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCloneRoleDialogOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="p-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger 
+                  value="handover" 
+                  className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
+                >
+                  Handover To
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="clone"
+                  className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
+                >
+                  Clone To
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="handover" className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">From User</label>
+                  <Select value={fromUser} onValueChange={setFromUser}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
+                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
+                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
+                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
+                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
+                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
+                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
+                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
+                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
+                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
+                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
+                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
+                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
+                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
+                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
+                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
+                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
+                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
+                      <SelectItem value="dev-j">Dev J</SelectItem>
+                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
+                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
+                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
+                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
+                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
+                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
+                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
+                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
+                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
+                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
+                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
+                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
+                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
+                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
+                      <SelectItem value="demo-user">Demo User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
+                  <Select value={toUser} onValueChange={setToUser}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
+                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
+                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
+                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
+                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
+                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
+                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
+                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
+                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
+                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
+                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
+                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
+                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
+                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
+                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
+                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
+                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
+                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
+                      <SelectItem value="dev-j">Dev J</SelectItem>
+                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
+                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
+                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
+                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
+                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
+                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
+                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
+                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
+                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
+                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
+                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
+                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
+                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
+                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
+                      <SelectItem value="demo-user">Demo User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="clone" className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
+                  <Select value={toUser} onValueChange={setToUser}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
+                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
+                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
+                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
+                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
+                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
+                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
+                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
+                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
+                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
+                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
+                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
+                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
+                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
+                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
+                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
+                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
+                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
+                      <SelectItem value="dev-j">Dev J</SelectItem>
+                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
+                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
+                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
+                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
+                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
+                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
+                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
+                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
+                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
+                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
+                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
+                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
+                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
+                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
+                      <SelectItem value="demo-user">Demo User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-center pt-6">
+              <Button
+                onClick={handleCloneRoleSubmit}
+                className="bg-[#C72030] hover:bg-[#a91b29] text-white px-8 py-2 rounded-md"
+                disabled={!toUser || (activeTab === 'handover' && !fromUser)}
+              >
+                Submit
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

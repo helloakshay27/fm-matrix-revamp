@@ -277,10 +277,13 @@ export const AMCDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleViewDetails(item.id)}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewDetails(item.id);
+            }}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -906,37 +909,36 @@ export const AMCDashboard = () => {
               />
             )}
 
-            {/* Enhanced Table */}
-            {!loading && (
-              <EnhancedTable
-                handleExport={handleExport}
-                data={paginatedData}
-                columns={columns}
-                renderCell={renderCell}
-                selectable={true}
-                selectedItems={selectedItems}
-                onSelectAll={handleSelectAll}
-                onSelectItem={handleSelectItem}
-                getItemId={(item) => item.id.toString()}
-                storageKey="amc-dashboard-table"
-                emptyMessage="No AMC records found"
-                searchPlaceholder="Search..."
-                enableExport={true}
-                exportFileName="amc-records"
-                bulkActions={bulkActions}
-                showBulkActions={true}
-                pagination={false}
-                leftActions={
-                  <Button
-                    onClick={handleActionClick}
-                    className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Action
-                  </Button>
-                }
-              />
-            )}
+          {/* Enhanced Table */}
+          {!loading && (
+            <EnhancedTable
+              data={paginatedData}
+              columns={columns}
+              renderCell={renderCell}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
+              getItemId={(item) => item.id.toString()}
+              storageKey="amc-dashboard-table"
+              emptyMessage="No AMC records found"
+              searchPlaceholder="Search AMC records..."
+              enableExport={true}
+              exportFileName="amc-records"
+              bulkActions={bulkActions}
+              showBulkActions={true}
+              pagination={false}
+              leftActions={
+                <Button 
+                  onClick={handleAddClick} 
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Action
+                </Button>
+              }
+            />
+          )}
 
             {/* Custom Pagination */}
             <div className="flex justify-center mt-6">

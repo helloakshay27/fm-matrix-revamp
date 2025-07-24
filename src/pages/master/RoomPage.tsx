@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Check, Plus, FileDown } from 'lucide-react';
+import { Edit, Square, Check, Plus, FileDown, X } from 'lucide-react';
 
 interface RoomData {
   id: number;
@@ -35,6 +35,8 @@ export const RoomPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<RoomData | null>(null);
   const [newRoom, setNewRoom] = useState({
     building: '',
     wing: '',
@@ -43,6 +45,15 @@ export const RoomPage = () => {
     unit: '',
     roomName: '',
     createQrCode: false
+  });
+  const [editRoom, setEditRoom] = useState({
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    unit: '',
+    roomName: '',
+    active: true
   });
 
   const filteredRooms = rooms.filter(room =>
@@ -82,14 +93,52 @@ export const RoomPage = () => {
     console.log('Printing all QR codes...');
   };
 
+  const handleEditRoom = (room: RoomData) => {
+    setEditingRoom(room);
+    setEditRoom({
+      building: room.building,
+      wing: room.wing,
+      area: room.area,
+      floor: room.floor,
+      unit: room.unit,
+      roomName: room.room,
+      active: room.status
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateRoom = () => {
+    if (editingRoom) {
+      const updatedRooms = rooms.map(room => 
+        room.id === editingRoom.id 
+          ? {
+              ...room,
+              building: editRoom.building,
+              wing: editRoom.wing,
+              area: editRoom.area,
+              floor: editRoom.floor,
+              unit: editRoom.unit,
+              room: editRoom.roomName,
+              status: editRoom.active
+            }
+          : room
+      );
+      setRooms(updatedRooms);
+      setIsEditDialogOpen(false);
+      setEditingRoom(null);
+    }
+  };
+
+  const toggleRoomStatus = (roomId: number) => {
+    setRooms(prev => prev.map(room => 
+      room.id === roomId ? { ...room, status: !room.status } : room
+    ));
+  };
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       <div className="w-full">
         <div className="p-6">
-          {/* Breadcrumb */}
-          <div className="mb-4">
-            <span className="text-sm text-gray-600">Account &gt; Room</span>
-          </div>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -104,11 +153,17 @@ export const RoomPage = () => {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
-                  <DialogHeader>
+                  <DialogHeader className="flex flex-row items-center justify-between pb-0">
                     <DialogTitle className="flex items-center gap-2">
                       <Square className="w-5 h-5" />
                       Add Room
                     </DialogTitle>
+                    <button
+                      onClick={() => setIsAddDialogOpen(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </DialogHeader>
                   <div className="grid grid-cols-2 gap-4 py-4">
                     <div className="space-y-2">
@@ -281,11 +336,11 @@ export const RoomPage = () => {
               <TableBody>
                 {filteredRooms.map((room) => (
                   <TableRow key={room.id}>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4 text-[#C72030]" />
-                      </Button>
-                    </TableCell>
+                     <TableCell>
+                       <Button variant="ghost" size="sm" onClick={() => handleEditRoom(room)}>
+                         <Edit className="w-4 h-4 text-[#C72030]" />
+                       </Button>
+                     </TableCell>
                     <TableCell>{room.site}</TableCell>
                     <TableCell>{room.building}</TableCell>
                     <TableCell>{room.wing}</TableCell>
@@ -293,13 +348,19 @@ export const RoomPage = () => {
                     <TableCell>{room.floor}</TableCell>
                     <TableCell>{room.unit || '-'}</TableCell>
                     <TableCell>{room.room}</TableCell>
-                    <TableCell>
-                      {room.status ? (
-                        <Check className="w-5 h-5 text-green-600" />
-                      ) : (
-                        <span className="text-red-600">✗</span>
-                      )}
-                    </TableCell>
+                     <TableCell>
+                       <button onClick={() => toggleRoomStatus(room.id)} className="cursor-pointer">
+                         {room.status ? (
+                           <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                             <Check className="w-3 h-3 text-white" />
+                           </div>
+                         ) : (
+                           <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                             <span className="text-white text-xs">✗</span>
+                           </div>
+                         )}
+                       </button>
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -312,6 +373,103 @@ export const RoomPage = () => {
               Showing 1 to {Math.min(parseInt(entriesPerPage), filteredRooms.length)} of {filteredRooms.length} entries
             </span>
           </div>
+
+          {/* Edit Room Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader className="flex flex-row items-center justify-between pb-0">
+                <DialogTitle>Edit Room</DialogTitle>
+                <button
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Building</Label>
+                  <Input
+                    value={editRoom.building}
+                    onChange={(e) => setEditRoom(prev => ({ ...prev, building: e.target.value }))}
+                    placeholder="Building"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Wing</Label>
+                  <Input
+                    value={editRoom.wing}
+                    onChange={(e) => setEditRoom(prev => ({ ...prev, wing: e.target.value }))}
+                    placeholder="Wing"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Area</Label>
+                  <Select 
+                    value={editRoom.area} 
+                    onValueChange={(value) => setEditRoom(prev => ({ ...prev, area: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Area" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      <SelectItem value="Common Area">Common Area</SelectItem>
+                      <SelectItem value="Service Area">Service Area</SelectItem>
+                      <SelectItem value="Lobby">Lobby</SelectItem>
+                      <SelectItem value="Workstation Area">Workstation Area</SelectItem>
+                      <SelectItem value="Staircase">Staircase</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Floor</Label>
+                  <Input
+                    value={editRoom.floor}
+                    onChange={(e) => setEditRoom(prev => ({ ...prev, floor: e.target.value }))}
+                    placeholder="Floor"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Room Name</Label>
+                  <Input
+                    value={editRoom.roomName}
+                    onChange={(e) => setEditRoom(prev => ({ ...prev, roomName: e.target.value }))}
+                    placeholder="Room Name"
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="editActive"
+                    checked={editRoom.active}
+                    onCheckedChange={(checked) => setEditRoom(prev => ({ ...prev, active: !!checked }))}
+                  />
+                  <Label htmlFor="editActive">Active</Label>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  onClick={handleUpdateRoom} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={!editRoom.roomName.trim()}
+                >
+                  Save Changes
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="bg-gray-500 hover:bg-gray-600 text-white"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

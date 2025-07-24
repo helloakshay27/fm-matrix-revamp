@@ -61,10 +61,6 @@ export const AddFMUserPage = () => {
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Master &gt; User Master &gt; FM User &gt; Add FM User
-      </div>
 
       {/* Header */}
       <div className="flex items-center gap-4">

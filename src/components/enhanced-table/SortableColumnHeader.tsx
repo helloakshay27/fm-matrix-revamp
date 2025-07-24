@@ -50,8 +50,8 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap relative group",
-        sortable && "cursor-pointer hover:bg-gray-50",
+        "h-12 px-6 py-4 text-left align-middle font-medium text-gray-700 border-b border-gray-300 whitespace-nowrap relative group bg-[#f5f5dc]",
+        sortable && "cursor-pointer hover:bg-[#f0f0d8]",
         isDragging && "opacity-50 z-50",
         className
       )}

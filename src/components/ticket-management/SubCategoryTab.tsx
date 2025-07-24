@@ -233,7 +233,7 @@ export const SubCategoryTab: React.FC = () => {
       const subCategoryData = {
         helpdesk_category_id: parseInt(data.category),
         customer_enabled: data.customerEnabled,
-        icon: iconFile,
+        icon: iconFile, // This will be properly handled by the API service as helpdesk_sub_category[icon]
         sub_category_tags: tags.filter(tag => tag.trim()),
         location_enabled: {
           building: data.building,
@@ -292,6 +292,7 @@ export const SubCategoryTab: React.FC = () => {
   const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('Icon file selected:', file.name, file.type, file.size);
       setIconFile(file);
     }
   };
@@ -345,7 +346,10 @@ export const SubCategoryTab: React.FC = () => {
 
   const renderActions = (item: SubCategoryType) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={() => setEditingSubCategory(item)}>
+      <Button variant="ghost" size="sm" onClick={() => {
+        setEditingSubCategory(item);
+        setEditModalOpen(true);
+      }}>
         <Edit className="h-4 w-4" />
       </Button>
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
@@ -354,9 +358,38 @@ export const SubCategoryTab: React.FC = () => {
     </div>
   );
 
-  const handleDelete = (subCategory: SubCategoryType) => {
-    setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
-    toast.success('Sub-category deleted successfully!');
+  const handleDelete = async (subCategory: SubCategoryType) => {
+    if (!confirm('Are you sure you want to delete this sub-category?')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const response = await fetch(`https://${baseUrl}/pms/admin/modify_helpdesk_sub_category.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: subCategory.id.toString(),
+          active: "0"
+        }),
+      });
+
+      if (response.ok) {
+        setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
+        toast.success('Sub-category deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete sub-category');
+      }
+    } catch (error) {
+      console.error('Error deleting sub-category:', error);
+      toast.error('Failed to delete sub-category');
+    }
   };
 
   return (
@@ -403,25 +436,30 @@ export const SubCategoryTab: React.FC = () => {
                   )}
                 />
 
-                <div className="flex items-center gap-2">
-                  <label htmlFor="subcategory-icon-upload" className="cursor-pointer">
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <span>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Icon
-                      </span>
-                    </Button>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Icon
                   </label>
-                  <input
-                    id="subcategory-icon-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleIconChange}
-                  />
-                  {iconFile && (
-                    <span className="text-sm text-gray-600">{iconFile.name}</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="subcategory-icon-upload" className="cursor-pointer">
+                      <Button type="button" variant="outline" size="sm" asChild>
+                        <span>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Icon
+                        </span>
+                      </Button>
+                    </label>
+                    <input
+                      id="subcategory-icon-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleIconChange}
+                    />
+                    {iconFile && (
+                      <span className="text-sm text-gray-600">{iconFile.name}</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -922,18 +960,7 @@ export const SubCategoryTab: React.FC = () => {
       <EditSubCategoryModal
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        subCategory={editingSubCategory ? {
-          id: editingSubCategory.id.toString(),
-          srNo: parseInt(editingSubCategory.id),
-          category: editingSubCategory.helpdesk_category_name || '',
-          subCategory: editingSubCategory.name || '',
-          building: editingSubCategory.location_config?.building_enabled || false,
-          wing: editingSubCategory.location_config?.wing_enabled || false,
-          floor: editingSubCategory.location_config?.floor_enabled || false,
-          zone: editingSubCategory.location_config?.zone_enabled || false,
-          room: editingSubCategory.location_config?.room_enabled || false,
-          customerEnabled: editingSubCategory.customer_enabled || false
-        } : null}
+        subCategory={editingSubCategory}
         onUpdate={() => fetchData()}
       />
     </div>

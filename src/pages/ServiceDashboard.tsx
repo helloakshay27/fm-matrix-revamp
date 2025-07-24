@@ -160,11 +160,34 @@ export const ServiceDashboard = () => {
     }
   ];
 
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={handleAddClick} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium">
+        <Plus className="w-4 h-4 mr-2" /> Action
+      </Button>
+      <Button onClick={handleImportClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Upload className="w-4 h-4 mr-2" /> Import
+      </Button>
+      <Button onClick={handleFiltersClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Filter className="w-4 h-4 mr-2" /> Filters
+      </Button>
+      {selectedItems.length > 0 && (
+        <Button onClick={handleQRDownload} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <FileText className="w-4 h-4 mr-2" /> QR Download
+        </Button>
+      )}
+    </div>
+  );
+
+
   const renderCell = (item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
-          <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
+          <Button variant="ghost" size="sm" onClick={(e) => {
+            e.stopPropagation();
+            handleViewService(item.id);
+          }}>
             <Eye className="w-4 h-4" />
           </Button>
         );
@@ -378,99 +401,23 @@ export const ServiceDashboard = () => {
 
       {/* Enhanced Table */}
       {!loading && (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-3">
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {11}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {22}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {0}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {4}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {2}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
-              </div>
-            </div>
-          </div>
-
-          {showActionPanel && (
-            <SelectionPanel
-              actions={selectionActions}
-              onAdd={handleAddClick}
-              onImport={handleImportClick}
-              onClearSelection={() => setShowActionPanel(false)}
-
-            />
-          )}
-          <EnhancedTable
-            data={paginatedServices}
-            columns={columns}
-            renderCell={renderCell}
-            bulkActions={bulkActions}
-            showBulkActions={true}
-            selectable={true}
-            selectedItems={selectedItems}
-            onSelectItem={handleSelectItem}
-            onSelectAll={handleSelectAll}
-            pagination={false}
-            enableExport={true}
-            exportFileName="services"
-            onRowClick={(service) => handleViewService(service.id)}
-            getItemId={(item) => item.id.toString()}
-            storageKey="services-table"
-            leftActions={renderCustomActions()}
-            searchPlaceholder="Search..."
-          />
-        </>
-
+        <EnhancedTable
+          data={paginatedServices}
+          columns={columns}
+          renderCell={renderCell}
+          bulkActions={bulkActions}
+          showBulkActions={true}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectItem={handleSelectItem}
+          onSelectAll={handleSelectAll}
+          pagination={false}
+          enableExport={true}
+          exportFileName="services"
+          getItemId={(item) => item.id.toString()}
+          storageKey="services-table"
+          leftActions={renderCustomActions()}
+        />
       )}
 
       {/* Custom Pagination - Always show for debugging */}

@@ -103,52 +103,43 @@ export const ComplaintModeTab: React.FC = () => {
     setEditModalOpen(true);
   };
 
-  const currentSiteId =
-    accounts && accounts.length > 0
-      ? accounts[0].site_id || accounts[0].society_id || '111'
-      : '111';
-
-  // Handle update
-  const handleUpdate = async (updatedComplaintMode: any) => {
-    try {
-      const payload = {
-        id: updatedComplaintMode.id,
-        name: updatedComplaintMode.name,
-        of_phase: 'pms',
-        society_id: currentSiteId,
-      };
-      const resultAction = await dispatch(updateComplaintMode(payload));
-      if (updateComplaintMode.fulfilled.match(resultAction)) {
-        toast.success('Complaint mode updated successfully!');
-        dispatch(fetchComplaintModes());
-      } else {
-        toast.error(
-          (resultAction.payload as any)?.message || 'Failed to update complaint mode'
-        );
-      }
-    } catch {
-      toast.error('Failed to update complaint mode');
-    }
+  const handleUpdate = (updatedComplaintMode: ComplaintModeType) => {
+    setComplaintModes(complaintModes.map(mode => 
+      mode.id === updatedComplaintMode.id ? updatedComplaintMode : mode
+    ));
   };
 
-  // Handle delete
-  const handleDelete = async (complaintMode: any) => {
+  const handleDelete = async (complaintMode: ComplaintModeType) => {
+    if (!confirm('Are you sure you want to delete this complaint mode?')) {
+      return;
+    }
+    
     try {
-      const resultAction = await dispatch(deleteComplaintMode(complaintMode.id));
-      if (deleteComplaintMode.fulfilled.match(resultAction)) {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const response = await fetch(`https://${baseUrl}/pms/admin/delete_complaint_mode.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: complaintMode.id
+        }),
+      });
+
+      if (response.ok) {
+        setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
         toast.success('Complaint mode deleted successfully!');
-        dispatch(fetchComplaintModes());
       } else {
-        toast.error(
-          (resultAction.payload as any)?.message || 'Failed to delete complaint mode'
-        );
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete complaint mode');
       }
-    } catch {
+    } catch (error) {
+      console.error('Error deleting complaint mode:', error);
       toast.error('Failed to delete complaint mode');
     }
-  };
-  const getComplaintModeName = (id: number) => {
-    return complaintModes?.find(mode => mode.id === id)?.name || 'Unknown Mode';
   };
 
   const columns = [

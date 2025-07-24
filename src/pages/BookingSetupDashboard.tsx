@@ -141,171 +141,84 @@ export const BookingSetupDashboard = () => {
   const handleViewDetails = (id: string) => {
     navigate(`/vas/booking/setup/details/${id}`);
   };
-
-  const columns: ColumnConfig[] = [
-    {
-      key: 'id',
-      label: 'ID',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'name',
-      label: 'Name',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'type',
-      label: 'Type',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'department',
-      label: 'Department',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'bookBy',
-      label: 'Book by',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'bookBefore',
-      label: 'Book before',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'advanceBooking',
-      label: 'Advance Booking',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'createdOn',
-      label: 'Created On',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'createdBy',
-      label: 'Created by',
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      draggable: true,
-    },
-  ];
-
-  const renderCell = (item: BookingSetup, columnKey: string) => {
-    switch (columnKey) {
-      case 'id':
-        return item.id || '';
-      case 'name':
-        return item.name || '';
-      case 'type':
-        return item.type || '';
-      case 'department':
-        return item.department || '';
-      case 'bookBy':
-        return item.bookBy || '';
-      case 'bookBefore':
-        return item.bookBefore || '';
-      case 'advanceBooking':
-        return item.advanceBooking || '';
-      case 'createdOn':
-        return item.createdOn || '';
-      case 'createdBy':
-        return item.createdBy || '';
-      case 'status':
-        return (
-          <div className="flex items-center">
-            <div
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-              onClick={() => handleStatusToggle(item.id)}
-            >
-              <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.status ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-              />
-            </div>
-          </div>
-        );
-      default:
-        return item[columnKey as keyof BookingSetup]?.toString() || '';
-    }
-  };
-
-  const renderActions = (booking: BookingSetup) => (
-    <div className="flex items-center gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => handleViewDetails(booking.id)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => handleViewDetails(booking.id)}
-      >
-        <Pencil className="w-4 h-4" />
-      </Button>
-    </div>
-  );
-
-  const leftActions = (
-    <div className="flex items-center gap-2">
-      <Button
-        onClick={handleAddBooking}
-        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        Add
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => setIsFilterOpen(true)}
-        className="flex items-center gap-2"
-      >
-        <Filter className="w-4 h-4" />
-        Filter
-      </Button>
-    </div>
-  );
-
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+  return <div className="p-6 bg-gray-50 min-h-screen">
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
-        <EnhancedTable
-          data={bookingSetupData}
-          columns={columns}
-          renderCell={renderCell}
-          renderActions={renderActions}
-          storageKey="booking-setup-table"
-          className="min-w-full"
-          emptyMessage={loading ? "Loading booking data..." : "No booking data found"}
-          leftActions={leftActions}
-          enableSearch={true}
-          enableSelection={false}
-          hideTableExport={true}
-        />
 
-        <BookingSetupFilterModal
-          open={isFilterOpen}
-          onOpenChange={setIsFilterOpen}
-          onApply={handleFilterApply}
-        />
+        <div className="flex items-center gap-2 mb-6">
+          <Button onClick={handleAddBooking} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Action
+          </Button>
+          <Button variant="outline" onClick={() => setIsFilterOpen(true)} className="flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            Filter
+          </Button>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+                <TableHead className="font-semibold text-gray-700">ID</TableHead>
+                <TableHead className="font-semibold text-gray-700">Name</TableHead>
+                <TableHead className="font-semibold text-gray-700">Type</TableHead>
+                <TableHead className="font-semibold text-gray-700">Department</TableHead>
+                <TableHead className="font-semibold text-gray-700">Book by</TableHead>
+                <TableHead className="font-semibold text-gray-700">Book before</TableHead>
+                <TableHead className="font-semibold text-gray-700">Advance Booking</TableHead>
+                <TableHead className="font-semibold text-gray-700">Created On</TableHead>
+                <TableHead className="font-semibold text-gray-700">Created by</TableHead>
+                <TableHead className="font-semibold text-gray-700">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8">
+                    Loading booking data...
+                  </TableCell>
+                </TableRow>
+              ) : bookingSetupData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8">
+                    No booking data found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                bookingSetupData.map((booking, index) => (
+                  <TableRow key={booking.id}>
+                    <TableCell>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => handleViewDetails(booking.id)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-black font-medium">{booking.id}</TableCell>
+                    <TableCell className="text-black">{booking.name}</TableCell>
+                    <TableCell>{booking.type}</TableCell>
+                    <TableCell>{booking.department}</TableCell>
+                    <TableCell>{booking.bookBy}</TableCell>
+                    <TableCell>{booking.bookBefore}</TableCell>
+                    <TableCell>{booking.advanceBooking}</TableCell>
+                    <TableCell>{booking.createdOn}</TableCell>
+                    <TableCell>{booking.createdBy}</TableCell>
+                    <TableCell>
+                      <Switch checked={booking.status} onCheckedChange={() => handleStatusToggle(booking.id)} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Filter Modal */}
+        <BookingSetupFilterModal open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleFilterApply} />
       </div>
     </div>
   );

@@ -117,8 +117,8 @@ export const ScheduleListDashboard = () => {
     sortable: true
   }];
   const renderCustomActions = () => <div className="flex flex-wrap gap-2 sm:gap-3">
-      <Button onClick={handleAddSchedule} className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm">
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Add
+      <Button onClick={handleAddSchedule} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium">
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Action
       </Button>
       <Button onClick={() => setShowImportModal(true)} variant="outline" className="text-sm">
         <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Import

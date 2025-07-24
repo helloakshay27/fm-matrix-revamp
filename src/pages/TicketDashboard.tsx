@@ -730,10 +730,9 @@ export const TicketDashboard = () => {
     <div className="flex gap-3">
       <Button 
         onClick={() => navigate('/maintenance/ticket/add')} 
-        style={{ backgroundColor: '#C72030' }}
-        className="text-white hover:bg-[#C72030]/90"
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-4 h-4 mr-2" /> Add
+        <Plus className="w-4 h-4 mr-2" /> Action
       </Button>
     </div>
   );
@@ -762,24 +761,28 @@ export const TicketDashboard = () => {
   };
   const TruncatedDescription = ({
     text,
-    maxLength = 50
+    maxWords = 2
   }: {
     text: string;
-    maxLength?: number;
+    maxWords?: number;
   }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     if (!text) return <span>--</span>;
-    if (text.length <= maxLength) {
-      return <span>{text}</span>;
+    
+    const words = text.split(' ');
+    if (words.length <= maxWords) {
+      return <span className="ml-2">{text}</span>;
     }
-    return <div className="w-48">
-        <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
-          {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+    
+    const truncated = words.slice(0, maxWords).join(' ');
+    return <div className="w-48 max-w-[200px]">
+        <span className={`${isExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'} block`}>
+          {isExpanded ? text : `${truncated}...`}
         </span>
         <button onClick={e => {
         e.stopPropagation();
         setIsExpanded(!isExpanded);
-      }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in">
+      }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in inline-block mt-1">
           {isExpanded ? 'Show less' : 'Show more'}
         </button>
       </div>;
@@ -1129,17 +1132,13 @@ export const TicketDashboard = () => {
             icon: Settings
           }].map((item, i) => {
             const IconComponent = item.icon;
-            return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
-                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" style={{
-                  color: '#C72030'
-                }} />
+            return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] h-[100px] sm:h-[132px] flex items-center gap-3 sm:gap-4 bg-[#f6f4ee]">
+                  <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
+                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate" style={{
-                  color: '#C72030'
-                }}>{item.value}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{item.label}</div>
+                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">{item.value}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
                   </div>
                 </div>;
           })}
@@ -1162,8 +1161,7 @@ export const TicketDashboard = () => {
                   pagination={false} 
                   enableExport={true} 
                   exportFileName="tickets" 
-                  onRowClick={ticket => handleViewDetails(ticket.id)} 
-                  storageKey="tickets-table" 
+                  storageKey="tickets-table"
                   enableSelection={true} 
                   selectedItems={selectedTickets.map(id => id.toString())} 
                   onSelectItem={handleTicketSelection} 

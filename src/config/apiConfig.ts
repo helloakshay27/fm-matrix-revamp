@@ -1,13 +1,12 @@
-import { getBaseUrl, getToken } from '@/utils/auth';
+import { getToken } from '@/utils/auth';
 
 // API Configuration - Central place for managing API endpoints and tokens
 const getApiConfig = () => {
-  const savedBaseUrl = getBaseUrl();
   const savedToken = getToken();
 
   return {
-    BASE_URL: savedBaseUrl,
-    TOKEN: savedToken,
+    BASE_URL: 'https://fm-uat-api.lockated.com',
+    TOKEN: savedToken || 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
   };
 };
 
@@ -45,16 +44,18 @@ export const API_CONFIG = {
     RESPONSE_ESCALATION: '/pms/admin/response_escalation',
     RESOLUTION_ESCALATION: '/pms/admin/resolution_escalation',
     UPDATE_COMPLAINT_WORKER: '/pms/admin/update_complaint_worker.json',
-    DELETE_COMPLAINT_WORKER: '/pms/admin/delete_complaint_worker',
+    DELETE_COMPLAINT_WORKER: '/pms/admin/delete_complaint_worker.json',
     FACILITY_BOOKINGS: '/pms/admin/facility_bookings.json',
     ENTITIES: '/entities.json',
     FACILITY_SETUPS: '/pms/admin/facility_setups.json',
     COMPLAINT_MODES: '/pms/admin/create_complaint_modes.json',
     COMPLAINT_MODE_LIST: '/pms/admin/complaint_modes.json',
+    DELETE_COMPLAINT_MODE: '/pms/admin/delete_complaint_mode.json',
     ACCOUNTS: '/api/users/account.json',
     STATUSES: '/pms/admin/create_complaint_statuses.json',
     STATUSES_LIST: '/pms/admin/complaint_statuses.json',
     STATUSES_UPDATE: '/pms/admin/modify_complaint_status.json',
+    MODIFY_COMPLAINT_STATUS: '/pms/admin/modify_complaint_status.json',
     // New endpoints for ticket creation
     CREATE_TICKET: '/pms/admin/complaints.json',
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
@@ -66,6 +67,10 @@ export const API_CONFIG = {
     USER_GROUPS: '/pms/usergroups.json',
     // Add escalation users endpoint
     ESCALATION_USERS: '/pms/users/get_escalate_to_users.json',
+    // Add modify helpdesk category endpoint
+    MODIFY_HELPDESK_SUB_CATEGORY: '/pms/admin/modify_helpdesk_sub_category.json',
+    // Add helpdesk category delete endpoint
+    DELETE_HELPDESK_CATEGORY: '/pms/admin/helpdesk_categories', // Base path, will append /{id}.json
     // Add task group endpoints
     TASK_GROUPS: '/pms/asset_groups.json?type=checklist',
     TASK_SUB_GROUPS: '/pms/assets/get_asset_group_sub_group.json', // Will append ?group_id=
