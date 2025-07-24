@@ -358,9 +358,38 @@ export const SubCategoryTab: React.FC = () => {
     </div>
   );
 
-  const handleDelete = (subCategory: SubCategoryType) => {
-    setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
-    toast.success('Sub-category deleted successfully!');
+  const handleDelete = async (subCategory: SubCategoryType) => {
+    if (!confirm('Are you sure you want to delete this sub-category?')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const response = await fetch(`https://${baseUrl}/pms/admin/modify_helpdesk_sub_category.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: subCategory.id.toString(),
+          active: "0"
+        }),
+      });
+
+      if (response.ok) {
+        setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
+        toast.success('Sub-category deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete sub-category');
+      }
+    } catch (error) {
+      console.error('Error deleting sub-category:', error);
+      toast.error('Failed to delete sub-category');
+    }
   };
 
   return (

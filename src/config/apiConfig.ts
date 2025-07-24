@@ -66,7 +66,7 @@ export const API_CONFIG = {
     // Add escalation users endpoint
     ESCALATION_USERS: '/pms/users/get_escalate_to_users.json',
     // Add modify helpdesk category endpoint
-    MODIFY_HELPDESK_CATEGORY: '/pms/admin/modify_helpdesk_sub_category.json',
+    MODIFY_HELPDESK_SUB_CATEGORY: '/pms/admin/modify_helpdesk_sub_category.json',
     // Add helpdesk category delete endpoint
     DELETE_HELPDESK_CATEGORY: '/pms/admin/helpdesk_categories', // Base path, will append /{id}.json
     // Add task group endpoints
