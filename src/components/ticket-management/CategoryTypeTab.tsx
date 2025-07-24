@@ -735,6 +735,11 @@ export const CategoryTypeTab: React.FC = () => {
                 <label htmlFor="customer-enabled" className="text-sm font-medium">Customer Enabled</label>
               </div>
 
+              <div className="flex items-center space-x-3">
+                <Checkbox id="vendor-email-enabled" />
+                <label htmlFor="vendor-email-enabled" className="text-sm font-medium">Enable Vendor Email</label>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Upload Icon</label>
