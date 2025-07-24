@@ -349,7 +349,7 @@ export const OccupantUserMasterDashboard = () => {
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
@@ -365,7 +365,7 @@ export const OccupantUserMasterDashboard = () => {
                     <SelectValue placeholder="Select Entity" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="">All Entities</SelectItem>
+                    <SelectItem value="all">All Entities</SelectItem>
                     <SelectItem value="entity1">Entity 1</SelectItem>
                     <SelectItem value="entity2">Entity 2</SelectItem>
                     <SelectItem value="entity3">Entity 3</SelectItem>
