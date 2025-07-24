@@ -267,11 +267,22 @@ export const CategoryTypeTab: React.FC = () => {
         
         fetchCategories();
       } else {
-        throw new Error('Failed to create category');
+        // Try to get the error message from the response
+        const errorData = await response.json().catch(() => null);
+        console.error('API Response Error:', errorData);
+        
+        // Check if it's a duplicate name error
+        if (errorData?.errors?.name?.includes('has already been taken') || 
+            errorData?.message?.toLowerCase().includes('already exists') ||
+            errorData?.error?.toLowerCase().includes('already exists')) {
+          toast.error('Category name already exists. Please choose a different name.');
+        } else {
+          toast.error(errorData?.message || 'Failed to create category');
+        }
       }
     } catch (error) {
-      toast.error('Failed to create category');
       console.error('Error creating category:', error);
+      toast.error('Failed to create category');
     } finally {
       setIsSubmitting(false);
     }
