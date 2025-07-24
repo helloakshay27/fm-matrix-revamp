@@ -50,7 +50,7 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0' }}>
-        <DialogTitle style={{ padding: 0, fontSize: '1.25rem', fontWeight: 600, color: '#C72030' }}>
+        <DialogTitle style={{ padding: 0, fontSize: '1.2rem', fontWeight: 600 }}>
           Associate Services To Asset
         </DialogTitle>
         <IconButton onClick={onClose} size="small">

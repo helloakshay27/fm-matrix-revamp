@@ -40,15 +40,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
           <Grid3x3 className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Show Columns</span>
-          <span className="text-xs text-gray-500">
-            {visibleCount} of {columns.length}
-          </span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        
+      <DropdownMenuContent align="end" className="w-80 h-[368px] overflow-y-auto">        
         {hideableColumns.map((column) => {
           const isVisible = columnVisibility[column.key];
           const isLastVisible = visibleCount === 1 && isVisible;
@@ -67,7 +59,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
               <Checkbox
                 checked={isVisible}
                 disabled={isLastVisible}
-                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                className="border-gray-[#4B4B4B] data-[state=checked]:bg-transparent data-[state=checked]:border-gray-[#4B4B4B] [&>*]:data-[state=checked]:text-red-500"
               />
               <div className="flex items-center gap-2 flex-1">
                 <span className={isLastVisible ? "text-gray-400" : ""}>
@@ -77,16 +69,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
             </DropdownMenuItem>
           );
         })}
-        
-        <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          onClick={onResetToDefaults}
-          className="flex items-center gap-2 cursor-pointer text-gray-600"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reset to Default
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
