@@ -37,14 +37,6 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
-
-      <Button 
-        onClick={onImport}
-        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4"
-      >
-        <Upload className="w-4 h-4 mr-2" />
-        Import
-      </Button>
       
       <div className="flex items-center gap-2 ml-auto">
         <div className="relative">
@@ -79,6 +71,15 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
           visibleColumns={visibleColumns}
           onColumnChange={onColumnChange}
         />
+        
+        <Button 
+          onClick={onImport}
+          variant="outline" 
+          size="icon"
+          className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
+        >
+          <Upload className="w-4 h-4" />
+        </Button>
         
         <Button 
           variant="outline" 
