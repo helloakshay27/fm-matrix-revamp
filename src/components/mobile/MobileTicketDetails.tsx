@@ -219,13 +219,15 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
                 </SelectTrigger>
                 <SelectContent>
                   {fmUsersLoading ? (
-                    <SelectItem value="" disabled>Loading...</SelectItem>
-                  ) : (
-                    fmUsersData?.fm_users?.map((user) => (
+                    <SelectItem value="loading" disabled>Loading...</SelectItem>
+                  ) : fmUsersData?.fm_users?.length > 0 ? (
+                    fmUsersData.fm_users.map((user) => (
                       <SelectItem key={user.id} value={`${user.firstname} ${user.lastname}`}>
                         {user.firstname} {user.lastname} - {user.designation}
                       </SelectItem>
                     ))
+                  ) : (
+                    <SelectItem value="no-users" disabled>No users available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
