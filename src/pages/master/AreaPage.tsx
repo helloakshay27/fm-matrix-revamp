@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit } from 'lucide-react';
+import { Search, Plus, Edit, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -246,41 +246,85 @@ export function AreaPage() {
 
       {/* Add Area Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>ADD AREA</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => setShowAddDialog(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Selected Building</label>
-              <Input
-                value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
-                disabled
-                className="bg-muted"
-              />
+          <div className="space-y-6 p-6">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Building</label>
+                <Select value={selectedBuilding?.toString() || ''} onValueChange={(value) => dispatch(setSelectedBuilding(parseInt(value)))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Building" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.data.map((building) => (
+                      <SelectItem key={building.id} value={building.id.toString()}>
+                        {building.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Wing</label>
+                <Select value={selectedWing?.toString() || ''} onValueChange={(value) => dispatch(setSelectedWing(parseInt(value)))} disabled={!selectedBuilding}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Wing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {wings.data.map((wing) => (
+                      <SelectItem key={wing.id} value={wing.id.toString()}>
+                        {wing.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Area Name</label>
+                <Input
+                  value={newAreaName}
+                  onChange={(e) => setNewAreaName(e.target.value)}
+                  placeholder="Enter Area Name"
+                  className="w-full"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium">Selected Wing</label>
-              <Input
-                value={wings.data.find(w => w.id === selectedWing)?.name || ''}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Area Name</label>
-              <Input
-                value={newAreaName}
-                onChange={(e) => setNewAreaName(e.target.value)}
-                placeholder="Enter area name"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={handleAddArea} disabled={!newAreaName.trim()}>
+            
+            <div className="flex justify-end gap-3 pt-4">
+              <Button 
+                onClick={handleAddArea} 
+                disabled={!selectedBuilding || !selectedWing || !newAreaName.trim()}
+                className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
+              >
                 Submit
               </Button>
-              <Button variant="outline">Sample Format</Button>
-              <Button variant="outline">Import</Button>
+              <Button 
+                variant="outline" 
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+                onClick={() => toast.info('Sample format functionality')}
+              >
+                Sample Format
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+                onClick={() => toast.info('Import functionality')}
+              >
+                Import
+              </Button>
             </div>
           </div>
         </DialogContent>
