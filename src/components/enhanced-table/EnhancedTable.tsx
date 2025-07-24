@@ -35,6 +35,46 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Excel export utility function
+const exportToExcel = <T extends Record<string, any>>(
+  data: T[],
+  columns: ColumnConfig[],
+  fileName: string = 'table-export'
+) => {
+  if (data.length === 0) {
+    alert('No data to export');
+    return;
+  }
+
+  // Create CSV content
+  const headers = columns.map(col => col.label).join(',');
+  const csvContent = [
+    headers,
+    ...data.map(row => 
+      columns.map(col => {
+        const value = row[col.key];
+        // Handle values that might contain commas or quotes
+        const stringValue = String(value || '').replace(/"/g, '""');
+        return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
+          ? `"${stringValue}"`
+          : stringValue;
+      }).join(',')
+    )
+  ].join('\n');
+
+  // Create and trigger download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${fileName}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 interface BulkAction<T> {
   label: string;
   icon?: React.ComponentType<any>;
@@ -58,7 +98,6 @@ interface EnhancedTableProps<T> {
   onSelectItem?: (itemId: string, checked: boolean) => void;
   getItemId?: (item: T) => string;
   selectAllLabel?: string;
-  // Enhanced features
   searchTerm?: string;
   onSearchChange?: (searchTerm: string) => void;
   searchPlaceholder?: string;
@@ -78,9 +117,11 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
+  handleExport?: () => void;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
+  handleExport,
   data,
   columns,
   renderCell,
@@ -96,7 +137,6 @@ export function EnhancedTable<T extends Record<string, any>>({
   onSelectItem,
   getItemId = (item: T) => item.id,
   selectAllLabel = "Select all",
-  // Enhanced features
   searchTerm: externalSearchTerm,
   onSearchChange,
   searchPlaceholder = 'Search...',
@@ -122,10 +162,10 @@ export function EnhancedTable<T extends Record<string, any>>({
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   // Debounce the search input to avoid excessive API calls
   const debouncedSearchInput = useDebounce(searchInput, 100);
-  
+
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   const {
@@ -149,9 +189,9 @@ export function EnhancedTable<T extends Record<string, any>>({
     if (apiSearchResults) {
       return apiSearchResults;
     }
-    
+
     if (!searchTerm) return baseSortedData;
-    
+
     return baseSortedData.filter(item =>
       Object.values(item).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
@@ -162,7 +202,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
     if (!pagination) return filteredData;
-    
+
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [filteredData, currentPage, pageSize, pagination]);
@@ -185,11 +225,11 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
-  // Create column IDs for drag and drop, excluding checkbox column
+  // Create column IDs for drag and drop, excluding checkbox and actions columns
   const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
 
   // Check if all visible items are selected
-  const isAllSelected = selectable && sortedData.length > 0 && 
+  const isAllSelected = selectable && sortedData.length > 0 &&
     sortedData.every(item => selectedItems.includes(getItemId(item)));
 
   // Check if some (but not all) items are selected
@@ -218,60 +258,8 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   const handleSearchInputChange = (value: string) => {
     setSearchInput(value);
+    onSearchChange?.(value);
   };
-
-  const performSearch = async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setApiSearchResults(null);
-      setInternalSearchTerm('');
-      if (onSearchChange) {
-        onSearchChange('');
-      }
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-      
-      if (!token) {
-        alert('Authentication token not found. Please login first.');
-        return;
-      }
-
-      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchTerm}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setApiSearchResults(data.complaints || []);
-        setCurrentPage(1);
-        setInternalSearchTerm(searchTerm);
-        if (onSearchChange) {
-          onSearchChange(searchTerm);
-        }
-      } else if (response.status === 401) {
-        alert('Unauthorized: Please check your authentication token or login again.');
-      } else {
-        alert(`Failed to search: ${response.status} ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
-      alert('An error occurred while searching. Please try again.');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Trigger search when debounced input changes
-  useEffect(() => {
-    performSearch(debouncedSearchInput);
-  }, [debouncedSearchInput]);
 
   const handleClearSearch = () => {
     setSearchInput('');
@@ -283,27 +271,6 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
-  const handleExport = () => {
-    const csvContent = [
-      visibleColumns.map(col => col.label).join(','),
-      ...filteredData.map(item => 
-        visibleColumns.map(col => {
-          const renderedRow = renderRow ? renderRow(item) : item;
-          const value = renderRow ? renderedRow[col.key] : renderCell?.(item, col.key);
-          return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : `"${value}"`;
-        }).join(',')
-      )
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${exportFileName}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-  };
-
   const selectedItemObjects = useMemo(() => {
     return filteredData.filter(item => selectedItems.includes(getItemId(item)));
   }, [filteredData, selectedItems, getItemId]);
@@ -312,7 +279,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   const generatePageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -320,22 +287,22 @@ export function EnhancedTable<T extends Record<string, any>>({
     } else {
       const startPage = Math.max(1, currentPage - 2);
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-      
+
       if (startPage > 1) {
         pages.push(1);
         if (startPage > 2) pages.push('ellipsis-start');
       }
-      
+
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
-      
+
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) pages.push('ellipsis-end');
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -344,7 +311,7 @@ export function EnhancedTable<T extends Record<string, any>>({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
           {leftActions}
-          
+
           {showBulkActions && selectedItems.length > 0 && (
             <div className="flex items-center gap-2">
             </div>
@@ -352,9 +319,9 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-           {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
-             <div className="relative max-w-sm">
-               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
                 value={searchInput}
@@ -371,18 +338,17 @@ export function EnhancedTable<T extends Record<string, any>>({
               )}
             </div>
           )}
-          
+
           {onFilterClick && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="h-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            <Button
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
             </Button>
           )}
-          
+
           {!hideColumnsButton && (
             <ColumnVisibilityMenu
               columns={columns}
@@ -391,59 +357,23 @@ export function EnhancedTable<T extends Record<string, any>>({
               onResetToDefaults={resetToDefaults}
             />
           )}
-          
+
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                try {
-                  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-                  
-                  if (!token) {
-                    alert('Authentication token not found. Please login first.');
-                    return;
-                  }
-
-                  const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaints.xlsx', {
-                    method: 'GET',
-                    headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                  });
-                  
-                  if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'complaints.xlsx';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                  } else if (response.status === 401) {
-                    alert('Unauthorized: Please check your authentication token or login again.');
-                  } else {
-                    alert(`Failed to download file: ${response.status} ${response.statusText}`);
-                  }
-                } catch (error) {
-                  console.error('Error downloading file:', error);
-                  alert('An error occurred while downloading the file. Please try again.');
-                }
-              }}
+              onClick={handleExport || (() => exportToExcel(filteredData, visibleColumns, exportFileName))}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
             </Button>
           )}
-          
+
           {rightActions}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden font-['Work_Sans']">
+      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
           <DndContext
             sensors={sensors}
@@ -452,10 +382,14 @@ export function EnhancedTable<T extends Record<string, any>>({
           >
             <Table className={className}>
               <TableHeader>
-                 <TableRow className="h-[28px]">
-                   {selectable && (
-                      <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-center py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
-                        <div className="flex items-center justify-center h-full w-full">
+                <TableRow>
+                  <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                    {renderActions && (
+                      <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
+                    )}
+                    {selectable && (
+                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
+                        <div className="flex justify-center">
                           <Checkbox
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAllChange}
@@ -463,9 +397,8 @@ export function EnhancedTable<T extends Record<string, any>>({
                             {...(isIndeterminate && { 'data-state': 'indeterminate' })}
                           />
                         </div>
-                     </TableHead>
-                   )}
-                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                      </TableHead>
+                    )}
                     {visibleColumns.map((column) => (
                       <SortableColumnHeader
                         key={column.key}
@@ -474,26 +407,23 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white"
+                        className="bg-[#f6f4ee] text-center text-black"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
-                    {renderActions && (
-                      <TableHead className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]">Actions</TableHead>
-                    )}
                   </SortableContext>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell 
+                    <TableCell
                       colSpan={
-                        visibleColumns.length + 
-                        (renderActions ? 1 : 0) + 
+                        visibleColumns.length +
+                        (renderActions ? 1 : 0) +
                         (selectable ? 1 : 0)
-                      } 
+                      }
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center">
@@ -505,12 +435,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                 )}
                 {!loading && sortedData.length === 0 && (
                   <TableRow>
-                    <TableCell 
+                    <TableCell
                       colSpan={
-                        visibleColumns.length + 
-                        (renderActions ? 1 : 0) + 
+                        visibleColumns.length +
+                        (renderActions ? 1 : 0) +
                         (selectable ? 1 : 0)
-                      } 
+                      }
                       className="text-center py-8 text-gray-500"
                     >
                       {emptyMessage}
@@ -520,19 +450,24 @@ export function EnhancedTable<T extends Record<string, any>>({
                 {!loading && sortedData.map((item, index) => {
                   const itemId = getItemId(item);
                   const isSelected = selectedItems.includes(itemId);
-                  
+
                   return (
-                    <TableRow 
+                    <TableRow
                       key={index}
                       className={cn(
                         onRowClick && "cursor-pointer",
-                        "hover:bg-gray-50 h-[40px] border-b border-gray-100",
+                        "hover:bg-gray-50",
                         isSelected && "bg-blue-50"
                       )}
                       onClick={(e) => handleRowClick(item, e)}
                     >
+                      {renderActions && (
+                        <TableCell className="p-4 text-center" data-actions>
+                          {renderActions(item)}
+                        </TableCell>
+                      )}
                       {selectable && (
-                        <TableCell className="w-[8px] px-[8px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
+                        <TableCell className="p-4 w-12 text-center" data-checkbox>
                           <div className="flex justify-center">
                             <Checkbox
                               checked={isSelected}
@@ -547,16 +482,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="px-[18px] py-[12px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[40px]">
+                          <TableCell key={column.key} className="p-4 text-center">
                             {cellContent}
                           </TableCell>
                         );
                       })}
-                      {renderActions && (
-                        <TableCell className="px-[18px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-actions>
-                          {renderActions(item)}
-                        </TableCell>
-                      )}
                     </TableRow>
                   );
                 })}
@@ -571,12 +501,12 @@ export function EnhancedTable<T extends Record<string, any>>({
         <Pagination className="mt-6">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
+              <PaginationPrevious
                 onClick={() => setCurrentPage(prev => prev - 1)}
                 className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
-            
+
             {generatePageNumbers().map((page, index) => (
               <PaginationItem key={index}>
                 {page === 'ellipsis-start' || page === 'ellipsis-end' ? (
@@ -592,9 +522,9 @@ export function EnhancedTable<T extends Record<string, any>>({
                 )}
               </PaginationItem>
             ))}
-            
+
             <PaginationItem>
-              <PaginationNext 
+              <PaginationNext
                 onClick={() => setCurrentPage(prev => prev + 1)}
                 className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
