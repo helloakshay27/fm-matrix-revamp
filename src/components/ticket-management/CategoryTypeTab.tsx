@@ -418,7 +418,10 @@ export const CategoryTypeTab: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // Add any required data for the PATCH request
+          helpdesk_category: {
+            active: "0"
+          },
+          id: category.id.toString()
         }),
       });
 
