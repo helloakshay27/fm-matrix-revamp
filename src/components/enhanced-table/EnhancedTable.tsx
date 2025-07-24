@@ -452,19 +452,18 @@ export function EnhancedTable<T extends Record<string, any>>({
           >
             <Table className={className}>
               <TableHeader>
-                 <TableRow className="h-[32px]">
+                 <TableRow className="h-[28px]">
                    {selectable && (
-                   <TableHead className="bg-[#F9F8F5] px-[16px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white w-[50px]" data-checkbox>
-                         <div className="flex items-center justify-center w-full h-full">
-                           <Checkbox
-                             checked={isAllSelected}
-                             onCheckedChange={handleSelectAllChange}
-                             aria-label={selectAllLabel}
-                             {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                             className="w-[12px] h-[12px] border border-[#C72030]"
-                           />
-                         </div>
-                      </TableHead>
+                      <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-center py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
+                        <div className="flex items-center justify-center h-full w-full">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAllChange}
+                            aria-label={selectAllLabel}
+                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                          />
+                        </div>
+                     </TableHead>
                    )}
                    <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {visibleColumns.map((column) => (
@@ -475,13 +474,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#F9F8F5] text-left px-[16px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white"
+                        className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#F9F8F5] text-left px-[16px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[32px]">Actions</TableHead>
+                      <TableHead className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
@@ -533,29 +532,28 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="w-[50px] px-[16px] py-[8px] align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
-                           <div className="flex items-center justify-center w-full h-full">
-                             <Checkbox
-                               checked={isSelected}
-                               onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
-                               aria-label={`Select row ${index + 1}`}
-                               onClick={(e) => e.stopPropagation()}
-                               className="w-[12px] h-[12px] border border-[#C72030]"
-                             />
-                           </div>
-                         </TableCell>
-                       )}
+                        <TableCell className="w-[8px] px-[8px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
+                          <div className="flex justify-center">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                              aria-label={`Select row ${index + 1}`}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </TableCell>
+                      )}
                       {visibleColumns.map((column) => {
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="px-[16px] py-[8px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[40px]">
+                          <TableCell key={column.key} className="px-[18px] py-[12px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[40px]">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="px-[16px] py-[8px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-actions>
+                        <TableCell className="px-[18px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}

@@ -4,13 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Adjust checkbox alignment */
-input[type="checkbox"] {
-    vertical-align: middle;  /* Aligns checkbox vertically with other elements */
-    margin-top: 0;           /* Adjusts margin if needed */
-    margin-bottom: 0;        /* Adjusts margin if needed */
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
