@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, ClipboardList, File } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -120,8 +120,6 @@ export const AddAMCPage = () => {
       setLoading(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
-        console.log('API Response:', response.data);
-
         // Ensure we always set an array
         if (Array.isArray(response.data)) {
           setAssetGroups(response.data);
@@ -162,9 +160,6 @@ export const AddAMCPage = () => {
 
   // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
-    console.log('=== GROUP CHANGED ===');
-    console.log('Selected Group ID:', groupId);
-
     handleInputChange('group', groupId);
     handleInputChange('subgroup', ''); // Clear subgroup selection
 
@@ -175,20 +170,14 @@ export const AddAMCPage = () => {
 
         // Handle different possible response structures for subgroups
         if (Array.isArray(response.data)) {
-          console.log('Setting subgroups - Direct array:', response.data);
           setSubGroups(response.data);
         } else if (response.data && Array.isArray(response.data.asset_groups)) {
-          console.log('Setting subgroups - asset_groups property:', response.data.asset_groups);
           setSubGroups(response.data.asset_groups);
         } else if (response.data && Array.isArray(response.data.sub_groups)) {
-          console.log('Setting subgroups - sub_groups property:', response.data.sub_groups);
           setSubGroups(response.data.sub_groups);
         } else if (response.data && Array.isArray(response.data.asset_sub_groups)) {
-          console.log('Setting subgroups - asset_sub_groups property:', response.data.asset_sub_groups);
           setSubGroups(response.data.asset_sub_groups);
         } else {
-          console.warn('SubGroup API response structure unknown:', response.data);
-          console.log('Available keys in response.data:', Object.keys(response.data || {}));
           setSubGroups([]);
         }
       } catch (error) {
@@ -243,14 +232,6 @@ export const AddAMCPage = () => {
     attachments.invoices.forEach((file) => {
       sendData.append('amc_invoices[content][]', file);
     });
-
-    console.log('=== Submit Payload ===');
-    console.log('formData:', formData);
-    for (let [key, value] of sendData.entries()) {
-      console.log(`${key}:`, value);
-    }
-    console.log('=====================');
-
     dispatch(createAMC(sendData));
   };
 
@@ -293,14 +274,6 @@ export const AddAMCPage = () => {
     attachments.invoices.forEach((file) => {
       sendData.append('amc_invoices[content][]', file);
     });
-
-    console.log('=== Save & Schedule Payload ===');
-    console.log('formData:', formData);
-    for (let [key, value] of sendData.entries()) {
-      console.log(`${key}:`, value);
-    }
-    console.log('=====================');
-
     dispatch(createAMC(sendData));
   };
 
@@ -720,35 +693,57 @@ export const AddAMCPage = () => {
                 </Button>
 
               </div>
+
               {attachments.contracts.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                <div className="flex flex-wrap gap-3 mt-3">
                   {attachments.contracts.map((file, index) => {
                     const isImage = file.type.startsWith('image/');
-                    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                    const isPdf = file.type === 'application/pdf';
+                    const isExcel =
+                      file.name.endsWith('.xlsx') ||
+                      file.name.endsWith('.xls') ||
+                      file.name.endsWith('.csv');
+
+                    const fileURL = URL.createObjectURL(file);
 
                     return (
-                      <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
+                      <div
+                        key={`${file.name}-${file.lastModified}`}
+                        className="flex relative flex-col items-center border rounded pt-6 p-3 w-[120px] bg-[#F9F8F4] shadow-sm"
+                      >
+                        {/* Preview */}
                         {isImage ? (
                           <img
-                            src={URL.createObjectURL(file)}
+                            src={fileURL}
                             alt={file.name}
-                            className="h-32 w-full object-contain rounded"
+                            className="w-10 h-10 object-cover rounded border mb-1"
                           />
+                        ) : isPdf ? (
+                          <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                        ) : isExcel ? (
+                          <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                            <FileSpreadsheet className="w-4 h-4" />
+                          </div>
                         ) : (
-                          <div className="flex flex-col items-center justify-center h-32 w-full">
-                            <div className="text-gray-600 text-5xl">📄</div>
-                            <div className="mt-2 text-xs break-words">{file.name}</div>
+                          <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
+                            <File className="w-4 h-4" />
                           </div>
                         )}
-                        {isExcel && (
-                          <p className="text-green-700 text-xs mt-1">Excel file</p>
-                        )}
+
+                        {/* File Name */}
+                        <span className="text-[10px] text-center truncate max-w-[90px] mb-1">
+                          {file.name}
+                        </span>
+
+                        {/* Remove Button */}
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute top-1 right-1"
-                          onClick={() => removeFile('contracts', index)}
+                          className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-500"
+                          onClick={() => removeFile("invoices", index)}
                         >
                           <X className="w-3 h-3" />
                         </Button>
@@ -757,6 +752,7 @@ export const AddAMCPage = () => {
                   })}
                 </div>
               )}
+
 
             </div>
 
@@ -784,34 +780,55 @@ export const AddAMCPage = () => {
 
               </div>
               {attachments.invoices.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {attachments.invoices.map((file, index) => {
-                    const isImage = file.type.startsWith('image/');
-                    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                    const isImage = file.type.startsWith("image/");
+                    const isPdf = file.type === "application/pdf";
+                    const isExcel =
+                      file.name.endsWith(".xlsx") ||
+                      file.name.endsWith(".xls") ||
+                      file.name.endsWith(".csv");
+
+                    const fileURL = URL.createObjectURL(file);
 
                     return (
-                      <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
+                      <div
+                        key={`${file.name}-${file.lastModified}`}
+                        className="flex relative flex-col items-center border rounded pt-6 p-3 w-[120px] bg-[#F9F8F4] shadow-sm"
+                      >
+                        {/* Preview */}
                         {isImage ? (
                           <img
-                            src={URL.createObjectURL(file)}
+                            src={fileURL}
                             alt={file.name}
-                            className="h-32 w-full object-contain rounded"
+                            className="w-10 h-10 object-cover rounded border mb-1"
                           />
+                        ) : isPdf ? (
+                          <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                        ) : isExcel ? (
+                          <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                            <FileSpreadsheet className="w-4 h-4" />
+                          </div>
                         ) : (
-                          <div className="flex flex-col items-center justify-center h-32 w-full">
-                            <div className="text-gray-600 text-5xl">📄</div>
-                            <div className="mt-2 text-xs break-words">{file.name}</div>
+                          <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
+                            <File className="w-4 h-4" />
                           </div>
                         )}
-                        {isExcel && (
-                          <p className="text-green-700 text-xs mt-1">Excel file</p>
-                        )}
+
+                        {/* File Name */}
+                        <span className="text-[10px] text-center truncate max-w-[90px] mb-1">
+                          {file.name}
+                        </span>
+
+                        {/* Remove Button */}
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute top-1 right-1"
-                          onClick={() => removeFile('invoices', index)}
+                          className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-500"
+                          onClick={() => removeFile("invoices", index)}
                         >
                           <X className="w-3 h-3" />
                         </Button>
@@ -820,6 +837,7 @@ export const AddAMCPage = () => {
                   })}
                 </div>
               )}
+
 
             </div>
           </div>

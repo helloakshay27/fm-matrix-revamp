@@ -239,7 +239,7 @@ export const ServiceDetailsPage = () => {
         </div>
 
         {/* QR Code */}
-        <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg border">
+        <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
           <div >
             <div className="flex items-center mb-4 bg-[#F6F4EE] p-4 ">
               <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -276,7 +276,7 @@ export const ServiceDetailsPage = () => {
       </div>
 
       {/* Associated Assets */}
-      <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg border mb-6">
+      <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg mb-6">
         <div>
           <div className="flex items-center mb-2 bg-[#F6F4EE] p-4">
             <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
