@@ -36,6 +36,7 @@ import { fetchRooms } from '@/store/slices/roomsSlice';
 
 const subCategorySchema = z.object({
   category: z.string().min(1, 'Category selection is required'),
+  subCategoryName: z.string().min(1, 'Sub-category name is required'),
   customerEnabled: z.boolean(),
   building: z.boolean(),
   wing: z.boolean(),
@@ -230,8 +231,13 @@ export const SubCategoryTab: React.FC = () => {
   const handleSubmit = async (data: SubCategoryFormData) => {
     setIsSubmitting(true);
     try {
+      console.log('Form submission started');
+      console.log('Form data:', data);
+      console.log('Icon file before submission:', iconFile);
+      
       const subCategoryData = {
         helpdesk_category_id: parseInt(data.category),
+        name: data.subCategoryName, // Add the subcategory name
         customer_enabled: data.customerEnabled,
         icon: iconFile, // This will be properly handled by the API service as helpdesk_sub_category[icon]
         sub_category_tags: tags.filter(tag => tag.trim()),
@@ -253,6 +259,8 @@ export const SubCategoryTab: React.FC = () => {
           assign_to: selectedEngineers,
         },
       };
+
+      console.log('Submitting data to API:', subCategoryData);
 
       await ticketManagementAPI.createSubCategory(subCategoryData);
       toast.success('Sub-category created successfully!');
@@ -294,6 +302,9 @@ export const SubCategoryTab: React.FC = () => {
     if (file) {
       console.log('Icon file selected:', file.name, file.type, file.size);
       setIconFile(file);
+    } else {
+      console.log('No file selected');
+      setIconFile(null);
     }
   };
 
@@ -402,32 +413,46 @@ export const SubCategoryTab: React.FC = () => {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                 />
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Icon
+                <FormField
+                  control={form.control}
+                  name="subCategoryName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sub-Category Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter sub-category name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Icon
+                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="subcategory-icon-upload" className="cursor-pointer">
+                    <Button type="button" variant="outline" size="sm" asChild>
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Icon
+                      </span>
+                    </Button>
                   </label>
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="subcategory-icon-upload" className="cursor-pointer">
-                      <Button type="button" variant="outline" size="sm" asChild>
-                        <span>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Icon
-                        </span>
-                      </Button>
-                    </label>
-                    <input
-                      id="subcategory-icon-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleIconChange}
-                    />
-                    {iconFile && (
-                      <span className="text-sm text-gray-600">{iconFile.name}</span>
-                    )}
-                  </div>
+                  <input
+                    id="subcategory-icon-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleIconChange}
+                  />
+                  {iconFile && (
+                    <span className="text-sm text-gray-600">{iconFile.name}</span>
+                  )}
                 </div>
               </div>
 
