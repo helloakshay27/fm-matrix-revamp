@@ -355,20 +355,20 @@ export const AssetDashboard = () => {
       
 
       <Tabs defaultValue="list" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-[#f8f8f8] border border-gray-300">
-          <TabsTrigger 
-            value="list" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=active]:border-none data-[state=inactive]:bg-[#f8f8f8] data-[state=inactive]:text-[#C72030] border-none !important"
-          >
-            <Package className="w-4 h-4" />
-            List
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger 
             value="analytics" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=active]:border-none data-[state=inactive]:bg-[#f8f8f8] data-[state=inactive]:text-[#C72030] border-none !important"
+            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
           >
             <BarChart3 className="w-4 h-4" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger 
+            value="list" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none"
+          >
+            <Package className="w-4 h-4" />
+            Asset List
           </TabsTrigger>
         </TabsList>
 
