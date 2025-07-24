@@ -281,8 +281,8 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                   View Details
                 </Button>
 
-                <div className="w-6 h-6 border border-gray-400 rounded flex items-center justify-center">
-                  <div className="w-3 h-3 border border-gray-500"></div>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <Flag className="h-4 w-4 text-gray-500" />
                 </div>
               </div>
             </div>
