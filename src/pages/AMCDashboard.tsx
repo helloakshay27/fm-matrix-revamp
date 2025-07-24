@@ -183,7 +183,10 @@ export const AMCDashboard = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => handleViewDetails(item.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewDetails(item.id);
+            }}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -717,7 +720,6 @@ export const AMCDashboard = () => {
               data={paginatedData}
               columns={columns}
               renderCell={renderCell}
-              onRowClick={(item) => handleViewDetails(item.id)}
               selectable={true}
               selectedItems={selectedItems}
               onSelectAll={handleSelectAll}

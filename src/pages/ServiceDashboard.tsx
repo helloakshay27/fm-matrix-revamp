@@ -205,7 +205,10 @@ export const ServiceDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
+          <Button variant="ghost" size="sm" onClick={(e) => {
+            e.stopPropagation();
+            handleViewService(item.id);
+          }}>
             <Eye className="w-4 h-4" />
           </Button>
         );
@@ -397,7 +400,6 @@ export const ServiceDashboard = () => {
           pagination={false}
           enableExport={true}
           exportFileName="services"
-          onRowClick={(service) => handleViewService(service.id)}
           getItemId={(item) => item.id.toString()}
           storageKey="services-table"
           leftActions={renderCustomActions()}
