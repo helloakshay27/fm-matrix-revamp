@@ -213,22 +213,46 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               className="bg-stone-100 rounded-lg p-4 shadow-sm border border-stone-200 relative"
               onClick={() => onTicketSelect(ticket)}
             >
-              {/* Ticket Header */}
+              {/* Top Row: Ticket ID, Time, Status */}
               <div className="flex justify-between items-start mb-3">
+                <span className="text-sm font-medium text-gray-700">
+                  Ticket ID
+                </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    #{ticket.ticket_number || ticket.id}
-                  </span>
                   <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-gray-500" />
-                    <span className="text-xs text-gray-500">09:06</span>
+                    <Clock className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">09:06</span>
                   </div>
-                  <Badge 
-                    className={`text-xs px-2 py-1 ${getStatusColor(ticket.issue_status)} text-white`}
-                  >
-                    {ticket.issue_status || 'Open'}
+                  <Badge className="bg-green-600 text-white text-xs px-2 py-1">
+                    Open
                   </Badge>
                 </div>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Title
+              </h3>
+
+              {/* Category */}
+              <p className="text-sm text-gray-700 mb-2">
+                Category
+              </p>
+
+              {/* Assigned to */}
+              <p className="text-sm text-gray-700 mb-4">
+                Assigned to:
+              </p>
+
+              {/* Date in top right corner */}
+              <div className="absolute top-16 right-4">
+                <span className="text-sm text-gray-600">
+                  24 May 2025
+                </span>
+              </div>
+
+              {/* Bottom Row: Star, View Details Button, Icon */}
+              <div className="flex justify-between items-center">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -237,37 +261,18 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                   className="p-1"
                 >
                   <Star 
-                    className={`h-5 w-5 ${
+                    className={`h-6 w-6 ${
                       starredTickets.has(ticket.id) 
-                        ? 'text-yellow-400 fill-current' 
-                        : 'text-gray-300'
+                        ? 'text-yellow-500 fill-current' 
+                        : 'text-yellow-500 fill-current'
                     }`}
                   />
                 </button>
-              </div>
-
-              {/* Ticket Content */}
-              <div className="space-y-2">
-                <h3 className="font-medium text-gray-900 text-base leading-tight">
-                  {ticket.heading || 'Ticket Title'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {ticket.category_type || 'Category'} / {ticket.sub_category_type || 'Sub-Category'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Assigned to:</span> {ticket.assigned_to || 'Unassigned'}
-                </p>
-              </div>
-
-              {/* Ticket Footer */}
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-xs text-gray-500">
-                  {formatDate(ticket.created_at)}
-                </span>
+                
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-7 px-3 border-red-300 text-red-600 hover:bg-red-50"
+                  className="text-sm h-8 px-4 border-red-400 text-red-600 hover:bg-red-50 bg-white"
                   onClick={(e) => {
                     e.stopPropagation();
                     onTicketSelect(ticket);
@@ -275,12 +280,9 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                 >
                   View Details
                 </Button>
-              </div>
 
-              {/* Action Icons */}
-              <div className="absolute bottom-4 right-16">
-                <div className="w-6 h-6 border border-gray-300 rounded flex items-center justify-center">
-                  <div className="w-3 h-3 border border-gray-400"></div>
+                <div className="w-6 h-6 border border-gray-400 rounded flex items-center justify-center">
+                  <div className="w-3 h-3 border border-gray-500"></div>
                 </div>
               </div>
             </div>
