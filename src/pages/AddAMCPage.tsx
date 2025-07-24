@@ -709,31 +709,32 @@ export const AddAMCPage = () => {
                     return (
                       <div
                         key={`${file.name}-${file.lastModified}`}
-                        className="flex relative flex-col items-center border rounded pt-6 p-3 w-[120px] bg-[#F9F8F4] shadow-sm"
+                        className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
                       >
                         {/* Preview */}
                         {isImage ? (
                           <img
                             src={fileURL}
                             alt={file.name}
-                            className="w-10 h-10 object-cover rounded border mb-1"
+                            className="w-[40px] h-[40px] object-cover rounded border mb-1"
                           />
                         ) : isPdf ? (
                           <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
                             <FileText className="w-4 h-4" />
                           </div>
+
                         ) : isExcel ? (
                           <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
                             <FileSpreadsheet className="w-4 h-4" />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
-                            <File className="w-4 h-4" />
+                          <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-500 mb-1">
+                            <FileText className="w-4 h-4" />
                           </div>
                         )}
 
                         {/* File Name */}
-                        <span className="text-[10px] text-center truncate max-w-[90px] mb-1">
+                        <span className="text-[10px] text-center truncate max-w-[100px] mb-1">
                           {file.name}
                         </span>
 
@@ -742,8 +743,8 @@ export const AddAMCPage = () => {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-500"
-                          onClick={() => removeFile("invoices", index)}
+                          className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600"
+                          onClick={() => removeFile('contracts', index)}
                         >
                           <X className="w-3 h-3" />
                         </Button>

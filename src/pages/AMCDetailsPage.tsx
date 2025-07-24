@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Edit, Download, Truck, Boxes, Wrench, History, FileTextIcon, Paperclip } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Truck, Boxes, Wrench, History, FileTextIcon, Paperclip, FileText, FileSpreadsheet, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddVisitModal } from '@/components/AddVisitModal';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 
 interface AMCDetailsData {
   id: number;
@@ -59,6 +61,8 @@ export const AMCDetailsPage = () => {
   ); const [showAddVisitModal, setShowAddVisitModal] = useState(false);
   const amcDetails: AMCDetailsData | null = amcData as AMCDetailsData;
   const amcVisitData = amcData?.amc_visit_logs?.map((visit) => visit) ?? [];
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -248,79 +252,138 @@ export const AMCDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Reusable Function to Render Documents */}
-          {['amc_contracts', 'amc_invoices'].map((sectionKey) => {
-            const sectionTitle =
-              sectionKey === 'amc_contracts' ? 'AMC Contract' : 'AMC Invoice';
-            const sectionData = (amcData as any)?.[sectionKey] || [];
+          <div className="flex flex-wrap gap-6">
+            {['amc_contracts', 'amc_invoices'].map((sectionKey) => {
+              const sectionTitle = sectionKey === 'amc_contracts' ? 'AMC Contract:' : 'AMC Invoice:';
+              const sectionData = (amcData as any)?.[sectionKey] || [];
 
-            return (
-              <div key={sectionKey}>
-                <h2 className="font-semibold text-base mb-2">{sectionTitle}</h2>
-                <div className="flex flex-wrap gap-4">
-                  {sectionData?.flatMap((item: any) =>
-                    item.documents?.map((doc: any) => (
-                      <div
-                        key={doc.id}
-                        className="flex relative flex-col items-center border rounded pt-10 p-4 w-[180px] bg-[#F6F4EE] shadow-sm"
-                      >
-                        {/* Preview Section */}
-                        {/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(doc.document_url) ? (
-                          <img
-                            src={doc.document_url}
-                            alt={doc.document_name}
-                            className="w-22 h-22 object-cover rounded border mb-2"
-                          />
-                        ) : /\.pdf$/i.test(doc.document_url) ? (
-                          <iframe
-                            src={doc.document_url}
-                            title={doc.document_name}
-                            className="w-20 h-24 border rounded mb-2"
-                          />
-                        ) : /\.(xls|xlsx)$/i.test(doc.document_url) ? (
-                          <div className="w-16 h-16 flex items-center justify-center bg-green-100 border rounded text-green-600 text-2xl mb-2">
-                            📊
+              return (
+                <div key={sectionKey} className="flex-1 min-w-[300px] bg-white rounded-md shadow px-6 py-4">
+                  <h2 className="font-semibold text-base mb-4">{sectionTitle}</h2>
+                  <div className="flex flex-wrap gap-4">
+                    {sectionData?.flatMap((item: any) =>
+                      item.documents?.map((doc: any) => {
+                        const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(doc.document_url);
+                        const isPdf = /\.pdf$/i.test(doc.document_url);
+                        const isExcel = /\.(xls|xlsx|csv)$/i.test(doc.document_url);
+
+                        return (
+                          <div
+                            key={doc.id}
+                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-[150px] bg-[#F6F4EE] shadow-md"
+                          >
+                            {/* Preview */}
+                            {isImage ? (
+                              <img
+                                src={doc.document_url}
+                                alt={doc.document_name}
+                                className="w-14 h-14 object-cover rounded-md border mb-2"
+                              />
+                            ) : isPdf ? (
+                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                <FileText className="w-6 h-6" />
+                              </div>
+                            ) : isExcel ? (
+                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                <FileSpreadsheet className="w-6 h-6" />
+                              </div>
+                            ) : (
+                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                <FileText className="w-6 h-6" />
+                              </div>
+                            )}
+
+                            {/* File Name */}
+                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                              {doc.document_name || `Document_${doc.id}`}
+                            </span>
+
+                            {/* Download / Open Modal */}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                              onClick={() => {
+                                if (isExcel) {
+                                  // Direct download for Excel
+                                  const link = document.createElement('a');
+                                  link.href = doc.document_url;
+                                  link.download = doc.document_name || 'document';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                } else {
+                                  // Open modal for PDF/Image
+                                  setSelectedDoc(doc);
+                                  setIsModalOpen(true);
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
                           </div>
-                        ) : (
-                          <div className="w-16 h-16 flex items-center justify-center bg-gray-100 border rounded text-gray-500 text-2xl mb-2">
-                            📄
-                          </div>
-                        )}
+                        );
+                      }) ?? []
+                    )}
 
-                        {/* Document Name */}
-                        <span className="text-sm text-center truncate max-w-[160px] mb-2">
-                          {doc.document_name || `Document_${doc.id}`}
-                        </span>
-
-                        {/* Download Button */}
-                        <Button
-                          size="sm"
-                          className="absolute top-0 right-0 mr-2 !bg-transparent !text-white"
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = doc.document_url;
-                            link.download = doc.document_name || 'document';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          }}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
+                    {!sectionData?.length && (
+                      <div className="p-2 text-gray-500 text-sm">
+                        No {sectionTitle.toLowerCase()} attachments available.
                       </div>
-                    )) ?? []
-                  )}
-
-                  {/* Empty State */}
-                  {!sectionData?.length && (
-                    <div className="p-3 text-gray-600">
-                      No {sectionTitle.toLowerCase()} attachments available.
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Modal for PDF and Images */}
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogContent className="max-w-2xl">
+              <button
+                className="absolute top-3 right-3 text-gray-500 hover:text-black"
+                aria-label="Close"
+                onClick={() => setIsModalOpen(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <DialogHeader>
+                <DialogTitle className="text-center">{selectedDoc?.document_name}</DialogTitle>
+              </DialogHeader>
+
+              <div className="flex flex-col items-center justify-center gap-4">
+                {selectedDoc?.document_url &&
+                  /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(selectedDoc.document_url) ? (
+                  <img
+                    src={selectedDoc.document_url}
+                    alt={selectedDoc.document_name}
+                    className="max-w-full max-h-[400px] rounded-md border"
+                  />
+                ) : selectedDoc?.document_url && /\.pdf$/i.test(selectedDoc.document_url) ? (
+                  <iframe
+                    src={selectedDoc.document_url}
+                    className="w-full h-[500px] rounded border"
+                    title={selectedDoc.document_name}
+                  ></iframe>
+                ) : null}
+
+                <Button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = selectedDoc?.document_url;
+                    link.download = selectedDoc?.document_name || 'document';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setIsModalOpen(false);
+                  }}
+                >
+                  <Download className="mr-2 w-4 h-4" />
+                  Download
+                </Button>
               </div>
-            );
-          })}
+            </DialogContent>
+          </Dialog>
         </CardContent>
 
       </Card>

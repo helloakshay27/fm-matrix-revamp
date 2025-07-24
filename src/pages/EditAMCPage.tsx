@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -830,251 +830,191 @@ export const EditAMCPage = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* AMC Contracts */}
+              {/* ------------------- AMC Contracts ------------------- */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    id="contracts-upload"
-                    onChange={e => handleFileUpload('contracts', e.target.files)}
-                  />
+                  <input type="file" multiple className="hidden" id="contracts-upload" onChange={e => handleFileUpload('contracts', e.target.files)} />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span
-                      className="text-[#C72030] font-medium cursor-pointer"
-                      style={{ fontSize: '14px' }}
-                      onClick={() => document.getElementById('contracts-upload')?.click()}
-                    >
+                    <span className="text-[#C72030] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('contracts-upload')?.click()}>
                       Choose File
                     </span>
-                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} new file(s) selected` : 'No new file chosen'}
+                    <span className="text-gray-500 text-sm">
+                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={() => document.getElementById('contracts-upload')?.click()}
-                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
-                  >
+                  <Button type="button" onClick={() => document.getElementById('contracts-upload')?.click()} className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center">
                     <Plus className="w-4 h-4 mr-1" />
-                    Upload New Files
+                    Upload Files
                   </Button>
                 </div>
 
+                {/* New Files */}
                 {attachments.contracts.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {attachments.contracts.map((file, index) => {
-                        const isImage = file.type.startsWith('image/');
-                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {attachments.contracts.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      const isPdf = file.type === 'application/pdf';
+                      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                      const fileURL = URL.createObjectURL(file);
 
-                        return (
-                          <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={file.name}
-                                className="h-32 w-full object-contain rounded"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1"
-                              onClick={() => removeFile('contracts', index)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={`${file.name}-${file.lastModified}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600" onClick={() => removeFile('contracts', index)}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
+                {/* Existing Files */}
                 {existingFiles.contracts.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {existingFiles.contracts.map((file, index) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
-                        const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    {existingFiles.contracts.map((file) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                      const isPdf = file.document_name.endsWith('.pdf');
+                      const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
 
-                        return (
-                          <div key={`${file.document_name}-${file.attachment_id}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={file.document_url}
-                                alt={file.document_name}
-                                className="h-32 w-full object-contain rounded"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.nextSibling instanceof HTMLElement) {
-                                    e.currentTarget.nextSibling.style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.document_name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
-                              onClick={() => window.open(file.document_url, '_blank')}
-                            >
-                              View
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={`${file.document_name}-${file.attachment_id}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={file.document_url} alt={file.document_name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => window.open(file.document_url, '_blank')}>
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
-              {/* AMC Invoices */}
+              {/* ------------------- AMC Invoices ------------------- */}
               <div>
-                <label className="block text-sm font-medium mb-2">AMC Invoice</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    id="invoices-upload"
-                    onChange={e => handleFileUpload('invoices', e.target.files)}
-                  />
+                <label className="block text-sm font-medium mb-2">AMC Invoices</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
+                  <input type="file" multiple className="hidden" id="invoices-upload" onChange={e => handleFileUpload('invoices', e.target.files)} />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span
-                      className="text-[#C72030] font-medium cursor-pointer"
-                      style={{ fontSize: '14px' }}
-                      onClick={() => document.getElementById('invoices-upload')?.click()}
-                    >
+                    <span className="text-[#C72030] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('invoices-upload')?.click()}>
                       Choose File
                     </span>
-                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} new file(s) selected` : 'No new file chosen'}
+                    <span className="text-gray-500 text-sm">
+                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={() => document.getElementById('invoices-upload')?.click()}
-                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
-                  >
+                  <Button type="button" onClick={() => document.getElementById('invoices-upload')?.click()} className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center">
                     <Plus className="w-4 h-4 mr-1" />
-                    Upload New Files
+                    Upload Files
                   </Button>
                 </div>
 
+                {/* New Files */}
                 {attachments.invoices.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {attachments.invoices.map((file, index) => {
-                        const isImage = file.type.startsWith('image/');
-                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {attachments.invoices.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      const isPdf = file.type === 'application/pdf';
+                      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                      const fileURL = URL.createObjectURL(file);
 
-                        return (
-                          <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={file.name}
-                                className="h-32 w-full object-contain rounded"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1"
-                              onClick={() => removeFile('invoices', index)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={`${file.name}-${file.lastModified}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600" onClick={() => removeFile('invoices', index)}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
+                {/* Existing Files */}
                 {existingFiles.invoices.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {existingFiles.invoices.map((file, index) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
-                        const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    {existingFiles.invoices.map((file) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                      const isPdf = file.document_name.endsWith('.pdf');
+                      const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
 
-                        return (
-                          <div key={`${file.document_name}-${file.attachment_id}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={file.document_url}
-                                alt={file.document_name}
-                                className="h-32 w-full object-contain rounded"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.nextSibling instanceof HTMLElement) {
-                                    e.currentTarget.nextSibling.style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.document_name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
-                              onClick={() => window.open(file.document_url, '_blank')}
-                            >
-                              View
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={`${file.document_name}-${file.attachment_id}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={file.document_url} alt={file.document_name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => window.open(file.document_url, '_blank')}>
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
             </div>
           </CardContent>
+
+
         </Card>
 
         <div className="flex gap-4 justify-center">
