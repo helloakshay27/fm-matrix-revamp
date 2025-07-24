@@ -335,12 +335,6 @@ export const ServiceDashboard = () => {
       variant: 'outline' as const,
     },
     {
-      label: 'Flag',
-      icon: AlertCircle,
-      // onClick: handleFlagSelected,
-      variant: 'outline' as const,
-    },
-    {
       label: 'Delete',
       icon: Trash2,
       // onClick: () => handleBulkDelete(selectedAMCObjects),

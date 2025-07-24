@@ -123,13 +123,6 @@ export const AMCDashboard = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = amcData.slice(startIndex, startIndex + pageSize);
 
-  console.log('AMC Pagination Debug:', {
-    totalItems: amcData.length,
-    pageSize,
-    totalPages,
-    currentPage,
-    paginatedDataLength: paginatedData.length
-  });
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
@@ -139,10 +132,55 @@ export const AMCDashboard = () => {
     navigate(`/maintenance/amc/details/${id}`);
   };
 
-  const handleStatusToggle = (id: number) => {
-    // For now, just log the status toggle since we're using API data
-    console.log('Status toggle for AMC ID:', id);
-    // In a real implementation, you would make an API call to update the status
+  const handleStatusToggle = async (id: number) => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+  
+      if (!baseUrl || !token || !siteId) {
+        alert('Missing base URL, token, or site ID');
+        return;
+      }
+  
+      // Find the current AMC record to determine the current status
+      const amcRecord = amcData.find((item) => item.id === id);
+      if (!amcRecord) {
+        alert('AMC record not found');
+        return;
+      }
+  
+      // Toggle the active status
+      const updatedStatus = !amcRecord.active;
+  
+      // Make the PUT request to update only the active status
+      const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
+      const response = await axios.put(
+        url,
+        {
+          pms_asset_amc:{
+            active: updatedStatus
+          }
+         
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        // Refresh the table by fetching updated data
+        dispatch(fetchAMCData());
+        console.log(`Successfully updated AMC ID ${id} to active: ${updatedStatus}`);
+      } else {
+        alert('Failed to update AMC status');
+      }
+    } catch (error) {
+      console.error('Error updating AMC status:', error);
+      alert('Failed to update AMC status. Please try again.');
+    }
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -163,7 +201,6 @@ export const AMCDashboard = () => {
 
   const handleBulkDelete = (selectedItems: AMCRecord[]) => {
     const selectedIds = selectedItems.map(item => item.id);
-    console.log('Bulk delete for AMC IDs:', selectedIds);
     setSelectedItems([]);
     // In a real implementation, you would make an API call to delete the selected items
   };
@@ -212,7 +249,7 @@ export const AMCDashboard = () => {
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = 'amc_export.xlsx';
-      document.body.appendChild(link); // ✅ Required for some browsers
+      document.body.appendChild(link); 
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
@@ -876,7 +913,6 @@ export const AMCDashboard = () => {
                 data={paginatedData}
                 columns={columns}
                 renderCell={renderCell}
-                onRowClick={(item) => handleViewDetails(item.id)}
                 selectable={true}
                 selectedItems={selectedItems}
                 onSelectAll={handleSelectAll}
