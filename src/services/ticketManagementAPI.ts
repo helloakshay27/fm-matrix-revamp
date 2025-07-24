@@ -639,8 +639,26 @@ export const ticketManagementAPI = {
     comment?: string;
   }) {
     try {
-      const response = await apiClient.put(`/pms/admin/complaints/${ticketId}.json`, {
-        complaint: updateData
+      // Create URL-encoded data for the PATCH request (matching EditStatusDialog pattern)
+      const params = new URLSearchParams();
+      
+      if (updateData.priority) {
+        params.append('complaint[priority]', updateData.priority);
+      }
+      if (updateData.issue_status) {
+        params.append('complaint[issue_status]', updateData.issue_status);
+      }
+      if (updateData.assigned_to) {
+        params.append('complaint[assigned_to]', updateData.assigned_to);
+      }
+      if (updateData.comment) {
+        params.append('complaint[comment]', updateData.comment);
+      }
+
+      const response = await apiClient.patch(`/pms/admin/complaints/${ticketId}.json`, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
       return response.data;
     } catch (error) {
