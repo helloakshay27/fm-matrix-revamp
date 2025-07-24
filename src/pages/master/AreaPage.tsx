@@ -102,43 +102,6 @@ export function AreaPage() {
         <h1 className="text-2xl font-bold">AREA</h1>
       </div>
 
-      {/* Selection Controls */}
-      <div className="grid grid-cols-2 gap-4 max-w-2xl">
-        <div>
-          <label className="text-sm font-medium">Select Building</label>
-          <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select building" />
-            </SelectTrigger>
-            <SelectContent>
-              {buildings.data.map((building) => (
-                <SelectItem key={building.id} value={building.id.toString()}>
-                  {building.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="text-sm font-medium">Select Wing</label>
-          <Select 
-            value={selectedWing?.toString() || ''} 
-            onValueChange={handleWingChange}
-            disabled={!selectedBuilding}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select wing" />
-            </SelectTrigger>
-            <SelectContent>
-              {wings.data.map((wing) => (
-                <SelectItem key={wing.id} value={wing.id.toString()}>
-                  {wing.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
