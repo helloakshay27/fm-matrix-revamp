@@ -84,7 +84,7 @@ export const AddEnergyAssetDashboard = () => {
         </div>
       </div>
 
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 mx-auto">
         {/* Location Details Section */}
         <div className="mb-6">
           <div 
