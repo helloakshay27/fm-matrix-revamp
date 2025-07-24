@@ -196,7 +196,7 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md mx-0 my-0 w-full h-full max-h-full rounded-none border-0 p-0 overflow-hidden">
         {/* Mobile Header */}
-        <div className="bg-white shadow-sm p-4 flex items-center">
+        <div className="bg-gray-100 shadow-sm p-4 flex items-center">
           <Button
             variant="ghost"
             size="sm"
@@ -205,11 +205,11 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
           >
             <ArrowLeft className="h-6 w-6 text-gray-700" />
           </Button>
-          <h1 className="text-lg font-semibold text-gray-900 text-center flex-1">Tickets</h1>
+          <h1 className="text-lg font-semibold text-gray-700 text-center flex-1">Tickets</h1>
         </div>
 
         {/* Tab Navigation */}
-        <div className="bg-white px-4 pb-4">
+        <div className="bg-gray-100 px-4 pb-4">
           <div className="flex space-x-8">
             <button className="px-0 py-2 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
               My Tickets
@@ -222,160 +222,162 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
         
         {currentStep === 'form' ? (
           /* Form Content */
-          <div className="flex-1 bg-white p-6 space-y-6 overflow-y-auto">
-            {/* Issue Type */}
-            <div>
-              <Label className="text-base font-semibold text-gray-900 mb-3 block">Issue Type</Label>
-              <Select value={formData.issueType} onValueChange={(value) => handleInputChange('issueType', value)}>
-                <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
-                  <SelectValue placeholder="Request" />
-                  <ChevronDown className="h-5 w-5 text-red-500" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg z-50">
-                  <SelectItem value="request" className="text-base py-3">Request</SelectItem>
-                  <SelectItem value="complaint" className="text-base py-3">Complaint</SelectItem>
-                  <SelectItem value="suggestion" className="text-base py-3">Suggestion</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg p-6 shadow-sm space-y-6">
+              {/* Issue Type */}
+              <div>
+                <Label className="text-lg font-semibold text-black mb-4 block">Issue Type</Label>
+                <Select value={formData.issueType} onValueChange={(value) => handleInputChange('issueType', value)}>
+                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
+                    <SelectValue placeholder="Request" />
+                    <ChevronDown className="h-5 w-5 text-red-500" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
+                    <SelectItem value="request" className="text-base py-3">Request</SelectItem>
+                    <SelectItem value="complaint" className="text-base py-3">Complaint</SelectItem>
+                    <SelectItem value="suggestion" className="text-base py-3">Suggestion</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Category */}
-            <div>
-              <Label className="text-base font-semibold text-gray-900 mb-3 block">Category</Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(value) => handleInputChange('category', value)}
-                disabled={loadingCategories}
-              >
-                <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
-                  <SelectValue placeholder={loadingCategories ? "Loading..." : "Request"} />
-                  <ChevronDown className="h-5 w-5 text-red-500" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg z-50">
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()} className="text-base py-3">
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Category */}
+              <div>
+                <Label className="text-lg font-semibold text-black mb-4 block">Category</Label>
+                <Select 
+                  value={formData.category} 
+                  onValueChange={(value) => handleInputChange('category', value)}
+                  disabled={loadingCategories}
+                >
+                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
+                    <SelectValue placeholder={loadingCategories ? "Loading..." : "Request"} />
+                    <ChevronDown className="h-5 w-5 text-red-500" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id.toString()} className="text-base py-3">
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Sub-category */}
-            <div>
-              <Label className="text-base font-semibold text-gray-900 mb-3 block">Sub-category</Label>
-              <Select 
-                value={formData.subCategory} 
-                onValueChange={(value) => handleInputChange('subCategory', value)}
-                disabled={loadingSubcategories || !formData.category}
-              >
-                <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
-                  <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Request"} />
-                  <ChevronDown className="h-5 w-5 text-red-500" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg z-50">
-                  {subcategories.map((subcategory) => (
-                    <SelectItem key={subcategory.id} value={subcategory.id.toString()} className="text-base py-3">
-                      {subcategory.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Sub-category */}
+              <div>
+                <Label className="text-lg font-semibold text-black mb-4 block">Sub-category</Label>
+                <Select 
+                  value={formData.subCategory} 
+                  onValueChange={(value) => handleInputChange('subCategory', value)}
+                  disabled={loadingSubcategories || !formData.category}
+                >
+                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
+                    <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Request"} />
+                    <ChevronDown className="h-5 w-5 text-red-500" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
+                    {subcategories.map((subcategory) => (
+                      <SelectItem key={subcategory.id} value={subcategory.id.toString()} className="text-base py-3">
+                        {subcategory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Location */}
-            <div>
-              <Label className="text-base font-semibold text-gray-900 mb-3 block">Location</Label>
-              <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
-                <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
-                  <SelectValue placeholder="Select Building" />
-                  <ChevronDown className="h-5 w-5 text-red-500" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg z-50">
-                  {BUILDINGS.map((building) => (
-                    <SelectItem key={building.value} value={building.value} className="text-base py-3">
-                      {building.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Location */}
+              <div>
+                <Label className="text-lg font-semibold text-black mb-4 block">Location</Label>
+                <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
+                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
+                    <SelectValue placeholder="Select Building" />
+                    <ChevronDown className="h-5 w-5 text-red-500" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
+                    {BUILDINGS.map((building) => (
+                      <SelectItem key={building.value} value={building.value} className="text-base py-3">
+                        {building.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Description */}
-            <div>
-              <Label className="text-base font-semibold text-gray-900 mb-3 block">Description</Label>
-              <Textarea
-                placeholder="Enter description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                className="min-h-24 bg-white border-2 border-gray-300 rounded-lg resize-none text-base p-4"
-                rows={4}
-              />
-            </div>
+              {/* Description */}
+              <div>
+                <Label className="text-lg font-semibold text-black mb-4 block">Description</Label>
+                <Textarea
+                  placeholder="Enter description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  className="min-h-20 bg-white border-2 border-gray-400 rounded-xl resize-none text-base p-4"
+                  rows={3}
+                />
+              </div>
 
-            {/* Next Button */}
-            <div className="pt-4">
-              <Button
-                onClick={handleNext}
-                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-base rounded-lg"
-              >
-                Next
-              </Button>
+              {/* Next Button */}
+              <div className="pt-6">
+                <Button
+                  onClick={handleNext}
+                  className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-xl"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         ) : (
           /* Overview Content */
-          <div className="flex-1 bg-gray-50 p-6 overflow-y-auto">
+          <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
             <div className="bg-white rounded-lg p-6 shadow-sm">
               {/* Overview Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Overview</h2>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-bold text-black">Overview</h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setCurrentStep('form')}
                   className="p-2 h-auto"
                 >
-                  <svg className="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                   </svg>
                 </Button>
               </div>
 
               {/* Overview Fields */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Issue Type</h3>
-                  <p className="text-gray-600 capitalize">{formData.issueType || 'Request'}</p>
+                  <h3 className="text-lg font-semibold text-black mb-3">Issue Type</h3>
+                  <p className="text-gray-600 text-base capitalize">{formData.issueType || 'Request'}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Category</h3>
-                  <p className="text-gray-600">{formData.category ? getCategoryName(formData.category) : 'Request'}</p>
+                  <h3 className="text-lg font-semibold text-black mb-3">Category</h3>
+                  <p className="text-gray-600 text-base">{formData.category ? getCategoryName(formData.category) : 'Request'}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Sub-category</h3>
-                  <p className="text-gray-600">{formData.subCategory ? getSubCategoryName(formData.subCategory) : 'Request'}</p>
+                  <h3 className="text-lg font-semibold text-black mb-3">Sub-category</h3>
+                  <p className="text-gray-600 text-base">{formData.subCategory ? getSubCategoryName(formData.subCategory) : 'Request'}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Location</h3>
-                  <p className="text-gray-500">{formData.location ? getBuildingName(formData.location) : 'Select Building'}</p>
+                  <h3 className="text-lg font-semibold text-black mb-3">Location</h3>
+                  <p className="text-gray-500 text-base">{formData.location ? getBuildingName(formData.location) : 'Select Building'}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Description</h3>
-                  <p className="text-gray-500">{formData.description || 'Enter description'}</p>
+                  <h3 className="text-lg font-semibold text-black mb-3">Description</h3>
+                  <p className="text-gray-500 text-base">{formData.description || 'Enter description'}</p>
                 </div>
               </div>
 
               {/* Create Ticket Button */}
-              <div className="mt-8">
+              <div className="mt-10">
                 <Button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-base rounded-lg"
+                  className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-xl"
                 >
                   {loading ? 'Creating...' : 'Create Ticket'}
                 </Button>
