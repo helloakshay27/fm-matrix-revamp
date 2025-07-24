@@ -61,6 +61,7 @@ export const LocationAccountPage = () => {
     country: '',
     regionName: ''
   });
+  const [selectedCountryToAdd, setSelectedCountryToAdd] = useState('');
   const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(false);
 
   // Sample data with state management
@@ -332,6 +333,41 @@ export const LocationAccountPage = () => {
     setIsAddRegionOpen(false);
   };
 
+  const handleAddCountry = () => {
+    if (!selectedCountryToAdd) {
+      toast.error('Please select a country to add');
+      return;
+    }
+
+    // Check if country already exists
+    const countryExists = countries.some(country => country.name === selectedCountryToAdd);
+    if (countryExists) {
+      toast.error('This country already exists in the list');
+      return;
+    }
+
+    // Add the new country to the countries array
+    const newCountry = {
+      name: selectedCountryToAdd,
+      status: true
+    };
+
+    setCountries([...countries, newCountry]);
+    toast.success(`Country "${selectedCountryToAdd}" added successfully`);
+    
+    // Reset form and close dialog
+    setSelectedCountryToAdd('');
+    setIsAddCountryOpen(false);
+  };
+
+    setRegions([...regions, newRegion]);
+    toast.success(`Region "${newRegionData.regionName}" added successfully`);
+    
+    // Reset form and close dialog
+    setNewRegionData({ country: '', regionName: '' });
+    setIsAddRegionOpen(false);
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
@@ -462,6 +498,8 @@ export const LocationAccountPage = () => {
                       Country Name
                     </label>
                     <select 
+                      value={selectedCountryToAdd}
+                      onChange={(e) => setSelectedCountryToAdd(e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
                     >
                       <option value="">Select Country</option>
@@ -474,7 +512,10 @@ export const LocationAccountPage = () => {
                     <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
                       Cancel
                     </Button>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                    <Button 
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      onClick={handleAddCountry}
+                    >
                       Add Country
                     </Button>
                   </div>
