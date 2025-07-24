@@ -275,10 +275,10 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
             <div>
               <Label className="text-base font-medium text-black mb-2 block">Location</Label>
               <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
-                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-lg text-base">
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-lg text-base [&>svg]:hidden">
                   <SelectValue placeholder="Select Building" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                   {BUILDINGS.map((building) => (
                     <SelectItem key={building.value} value={building.value} className="text-base py-2">
                       {building.label}
