@@ -454,14 +454,14 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                  <TableRow className="h-[28px]">
                    {selectable && (
-                   <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
-                         <div className="flex items-center justify-center h-full w-full">
+                   <TableHead className="bg-[#C4B89D]/35 py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px] text-center" data-checkbox>
+                         <div className="flex items-center justify-center w-full h-full">
                            <Checkbox
                              checked={isAllSelected}
                              onCheckedChange={handleSelectAllChange}
                              aria-label={selectAllLabel}
                              {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                             className="w-[12px] h-[12px]"
+                             className="w-[12px] h-[12px] border border-[#C72030]"
                            />
                          </div>
                       </TableHead>
@@ -533,14 +533,14 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="w-[50px] py-[12px] align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
-                           <div className="flex items-center justify-center h-full w-full">
+                        <TableCell className="w-[50px] py-[12px] align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px] text-center" data-checkbox>
+                           <div className="flex items-center justify-center w-full h-full">
                              <Checkbox
                                checked={isSelected}
                                onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
                                aria-label={`Select row ${index + 1}`}
                                onClick={(e) => e.stopPropagation()}
-                               className="w-[12px] h-[12px]"
+                               className="w-[12px] h-[12px] border border-[#C72030]"
                              />
                            </div>
                          </TableCell>
