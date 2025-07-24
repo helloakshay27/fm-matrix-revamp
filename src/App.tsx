@@ -460,6 +460,7 @@ import AddApprovalMatrixPage from './pages/settings/AddApprovalMatrixPage';
 import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
 import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
 import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
+import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
 
 import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
 
@@ -910,7 +911,10 @@ function App() {
               <Route path="/setup/occupant-users" element={<ProtectedRoute><OccupantUsersDashboard /></ProtectedRoute>} />
               <Route path="/setup/occupant-users/add" element={<ProtectedRoute><AddOccupantUserDashboard /></ProtectedRoute>} />
 
-            </Routes>
+                
+                {/* Mobile Routes */}
+                <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
+              </Routes>
             <Toaster />
           </LayoutProvider>
         </QueryClientProvider>
