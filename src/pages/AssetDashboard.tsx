@@ -869,8 +869,8 @@ export const AssetDashboard = () => {
                   onViewAsset={handleViewAsset}
                   handleAddAsset={handleAddAsset}
                   handleImport={handleImport}
-                   onFilterOpen={() => setIsFilterOpen(true)}
-                   onSearch={handleSearch}
+                  onFilterOpen={() => setIsFilterOpen(true)}
+                  onSearch={handleSearch}
                 />
 
                 {/* Empty state when no data and filters are applied */}

@@ -260,21 +260,43 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   };
 
   return (
-    <EnhancedTable
-      data={assets}
-      columns={columns}
-      renderCell={renderCell}
-      storageKey="asset-data-table"
-      emptyMessage="No assets found"
-      selectable={true}
-      selectedItems={selectedAssets}
-      onSelectAll={onSelectAll}
-      onSelectItem={onSelectAsset}
-      getItemId={(asset) => asset.id}
-      selectAllLabel="Select all assets"
-      hideTableSearch={true}
-      hideTableExport={true}
-      hideColumnsButton={true}
-    />
+    <>
+      {showActionPanel && (
+        <SelectionPanel
+          actions={selectionActions}
+          onAdd={handleAddAsset}
+          onClearSelection={() => setShowActionPanel(false)}
+          onImport={handleImport}
+        // onChecklist={onChecklist}
+        />
+      )}
+      <EnhancedTable
+        data={assets}
+        columns={columns}
+        renderCell={renderCell}
+        onRowClick={(asset) => onViewAsset(asset.id)}
+        storageKey="asset-data-table"
+        emptyMessage="No assets found"
+        selectable={true}
+        selectedItems={selectedAssets}
+        onSelectAll={onSelectAll}
+        onSelectItem={onSelectAsset}
+        getItemId={(asset) => asset.id}
+        selectAllLabel="Select all assets"
+        onFilterClick={onFilterOpen}
+        enableExport={true}
+        onSearchChange={onSearch}
+        leftActions={
+          <Button
+            size="sm"
+            className="mr-2"
+            onClick={handleActionClick}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Action
+          </Button>
+        }
+      />
+    </>
   );
 };
