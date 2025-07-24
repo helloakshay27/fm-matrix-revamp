@@ -51,7 +51,10 @@ export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask }) => {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => onViewTask(task.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewTask(task.id);
+        }}
         className="p-2 h-8 w-8 hover:bg-accent"
       >
         <Eye className="w-4 h-4 text-muted-foreground" />
