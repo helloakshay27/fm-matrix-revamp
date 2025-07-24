@@ -73,54 +73,51 @@ export const OTPVerificationPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80')`,
-        }}
-      />
+    <div className="min-h-screen flex">
+      {/* Left Side - Background Image */}
+      <div className="flex-1 relative">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('/lovable-uploads/c92dc81e-bd73-46fb-8828-e69c77712a6f.png')`,
+          }}
+        />
+      </div>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
-
-      {/* OTP Card */}
-      <div className="relative z-10 bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/login')}
-            className="p-2 -ml-2"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <h1 className="text-xl font-bold text-gray-900 ml-2">Verify OTP</h1>
+      {/* Right Side - OTP Verification Form */}
+      <div className="w-full max-w-lg bg-white bg-opacity-90 flex flex-col justify-center px-12 py-12">
+        {/* Logo and Branding */}
+        <div className="mb-12">
+          <h1 className="text-3xl font-bold">
+            <span className="text-red-600">go</span>
+            <span className="text-black">Phygital.work</span>
+          </h1>
         </div>
 
-        {/* Description */}
-        <div className="text-center mb-8">
-          <p className="text-gray-600 mb-4">
-            Enter the 6-digit code sent to your phone number
+        {/* Title and Description */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">OTP Verification</h2>
+          <p className="text-gray-600 leading-relaxed">
+            We've sent a 6-digit confirmation code on your email id. 
+            Make sure you enter the correct code.
           </p>
         </div>
 
         {/* OTP Input */}
-        <div className="flex justify-center mb-6">
+        <div className="mb-6">
           <InputOTP
             maxLength={6}
             value={otp}
             onChange={setOtp}
+            className="w-full"
           >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
+            <InputOTPGroup className="w-full justify-center gap-3">
+              <InputOTPSlot index={0} className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg" />
+              <InputOTPSlot index={1} className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg" />
+              <InputOTPSlot index={2} className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg" />
+              <InputOTPSlot index={3} className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg" />
+              <InputOTPSlot index={4} className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg" />
+              <InputOTPSlot index={5} className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg" />
             </InputOTPGroup>
           </InputOTP>
         </div>
@@ -129,7 +126,7 @@ export const OTPVerificationPage = () => {
         <Button
           onClick={handleVerifyOTP}
           disabled={isLoading || otp.length !== 6}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium mb-4"
+          className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
@@ -142,19 +139,26 @@ export const OTPVerificationPage = () => {
         </Button>
 
         {/* Resend OTP */}
-        <div className="text-center">
-          {canResend ? (
-            <button
-              onClick={handleResendOTP}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Resend OTP
-            </button>
-          ) : (
-            <p className="text-gray-500 text-sm">
-              Resend OTP in {timeLeft} seconds
-            </p>
-          )}
+        <div className="text-center mt-6">
+          <p className="text-gray-600 text-sm mb-2">
+            {canResend ? (
+              <button
+                onClick={handleResendOTP}
+                className="text-gray-700 hover:text-gray-900 font-medium"
+              >
+                Resend code in 0:45
+              </button>
+            ) : (
+              `Resend code in 0:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`
+            )}
+          </p>
+        </div>
+
+        {/* Error Message */}
+        <div className="text-center mt-4">
+          <p className="text-red-600 text-sm">
+            Entered wrong email id? <button onClick={() => navigate('/forgot-password')} className="font-medium underline">GO BACK</button>
+          </p>
         </div>
       </div>
     </div>

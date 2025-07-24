@@ -51,49 +51,44 @@ export const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80')`,
-        }}
-      />
+    <div className="min-h-screen flex">
+      {/* Left Side - Background Image */}
+      <div className="flex-1 relative">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('/lovable-uploads/09814696-9f90-4795-b7b2-628695467e9e.png')`,
+          }}
+        />
+      </div>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
-
-      {/* Forgot Password Card */}
-      <div className="relative z-10 bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/login')}
-            className="p-2 -ml-2"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <h1 className="text-xl font-bold text-gray-900 ml-2">Forgot Password</h1>
+      {/* Right Side - Forgot Password Form */}
+      <div className="w-full max-w-lg bg-white bg-opacity-90 flex flex-col justify-center px-12 py-12">
+        {/* Logo and Branding */}
+        <div className="mb-12">
+          <h1 className="text-3xl font-bold">
+            <span className="text-red-600">go</span>
+            <span className="text-black">Phygital.work</span>
+          </h1>
         </div>
 
-        {/* Description */}
-        <div className="text-center mb-8">
-          <p className="text-gray-600">
-            Enter your email or phone number and we'll send you an OTP to reset your password.
+        {/* Title and Description */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Forgot Password</h2>
+          <p className="text-gray-600 leading-relaxed">
+            Enter your registered email or mobile and we'll send you an OTP to reset your password.
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSendOTP} className="space-y-4">
+        <form onSubmit={handleSendOTP} className="space-y-6">
           <div>
             <Input
               type="text"
-              placeholder="Enter your email or phone number"
+              placeholder="Enter Your Email Id or Mobile No."
               value={emailOrPhone}
               onChange={(e) => setEmailOrPhone(e.target.value)}
-              className="w-full"
+              className="w-full h-14 px-4 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
               required
             />
           </div>
@@ -101,18 +96,29 @@ export const ForgotPasswordPage = () => {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium"
+            className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
-                Sending OTP...
+                Sending...
               </div>
             ) : (
-              'Send OTP'
+              'Login'
             )}
           </Button>
         </form>
+
+        {/* Back to Login Link */}
+        <div className="text-center mt-8">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-gray-700 hover:text-gray-900 text-base font-medium"
+          >
+            BACK TO LOGIN
+          </button>
+        </div>
       </div>
     </div>
   );

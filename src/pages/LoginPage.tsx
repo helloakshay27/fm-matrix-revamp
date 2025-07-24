@@ -92,23 +92,23 @@ export const LoginPage = () => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/lovable-uploads/11b4a556-f799-4dd3-b7d0-4bb5647d5b90.png')`,
+            backgroundImage: `url('/lovable-uploads/44a1bf2e-5f89-4408-91c4-421c8734246d.png')`,
           }}
         />
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full max-w-md bg-white flex flex-col justify-center px-8 py-12">
+      <div className="w-full max-w-lg bg-white bg-opacity-90 flex flex-col justify-center px-12 py-12">
         {/* Logo and Branding */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-8">
+        <div className="mb-12">
+          <h1 className="text-3xl font-bold">
             <span className="text-red-600">go</span>
             <span className="text-black">Phygital.work</span>
           </h1>
         </div>
 
         {/* Login Method Radio Buttons */}
-        <div className="mb-6 space-y-3">
+        <div className="mb-8 space-y-4">
           <div className="flex items-center">
             <input
               type="radio"
@@ -117,9 +117,9 @@ export const LoginPage = () => {
               value="email"
               checked={loginMethod === 'email'}
               onChange={() => setLoginMethod('email')}
-              className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+              className="w-5 h-5 text-red-600 border-gray-400 focus:ring-red-500"
             />
-            <label htmlFor="email" className="ml-3 text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="ml-3 text-base font-medium text-gray-900">
               Login with Email
             </label>
           </div>
@@ -131,16 +131,16 @@ export const LoginPage = () => {
               value="phone"
               checked={loginMethod === 'phone'}
               onChange={() => setLoginMethod('phone')}
-              className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+              className="w-5 h-5 text-red-600 border-gray-400 focus:ring-red-500"
             />
-            <label htmlFor="phone" className="ml-3 text-sm font-medium text-gray-700">
+            <label htmlFor="phone" className="ml-3 text-base font-medium text-gray-900">
               Login with Phone no.
             </label>
           </div>
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-6">
           {loginMethod === 'email' ? (
             <div>
               <Input
@@ -148,7 +148,7 @@ export const LoginPage = () => {
                 placeholder="Enter your Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full h-14 px-4 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
                 required
               />
             </div>
@@ -156,10 +156,10 @@ export const LoginPage = () => {
             <div>
               <Input
                 type="tel"
-                placeholder="Enter your Phone Number"
+                placeholder="Enter your Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                className="w-full h-14 px-4 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
                 required
               />
             </div>
@@ -171,7 +171,7 @@ export const LoginPage = () => {
               placeholder="Enter your Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-12 px-4 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full h-14 px-4 pr-12 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
               required
             />
             <button
@@ -186,7 +186,7 @@ export const LoginPage = () => {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-12 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-6"
+            className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
@@ -200,11 +200,11 @@ export const LoginPage = () => {
         </form>
 
         {/* Forgot Password Link */}
-        <div className="text-center mt-6">
+        <div className="text-center mt-8">
           <button
             type="button"
             onClick={() => navigate('/forgot-password')}
-            className="text-gray-700 hover:text-gray-900 text-sm font-medium"
+            className="text-gray-700 hover:text-gray-900 text-base font-medium"
           >
             Forgot Password ?
           </button>
@@ -214,9 +214,9 @@ export const LoginPage = () => {
         <div className="text-center mt-8">
           <button
             type="button"
-            className="text-blue-500 hover:text-blue-700 text-sm"
+            className="text-blue-500 hover:text-blue-700 text-base"
           >
-            Terms & Condition
+            <span className="text-blue-500">Terms</span> <span className="text-gray-700">&</span> <span className="text-blue-500">Condition</span>
           </button>
         </div>
       </div>
