@@ -61,6 +61,7 @@ export const LocationAccountPage = () => {
     country: '',
     regionName: ''
   });
+  const [showEntityForm, setShowEntityForm] = useState(false);
   const [selectedCountryToAdd, setSelectedCountryToAdd] = useState('');
   const [newZoneData, setNewZoneData] = useState({
     country: '',
@@ -957,87 +958,50 @@ export const LocationAccountPage = () => {
 
         <TabsContent value="entity" className="space-y-4">
           <div className="flex items-center justify-between mb-4">
-            <Dialog open={isAddEntityOpen} onOpenChange={setIsAddEntityOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                  <File className="w-4 h-4 mr-2" />
-                  Add Entity
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Entity</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Entity Name
-                    </label>
-                    <input
-                      type="text"
-                      value={entityName}
-                      onChange={(e) => setEntityName(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                      placeholder="Enter entity name"
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddEntityOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                      onClick={handleSubmitEntity}
-                    >
-                      Add Entity
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              onClick={() => setShowEntityForm(!showEntityForm)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Entity
+            </Button>
           </div>
 
-          <Card>
-            <CardContent className="p-6 space-y-6">
-              {/* Entity Name Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Entity Name
-                </label>
-                <input
-                  type="text"
-                  value={entityName}
-                  onChange={(e) => setEntityName(e.target.value)}
-                  className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                  placeholder="Enter entity name"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSubmitEntity}
-                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                >
-                  Submit
-                </Button>
-                <Button
-                  onClick={handleSampleFormat}
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                >
-                  Sample Format
-                </Button>
-                <Button
-                  onClick={handleImportEntity}
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                >
-                  Import
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Toggle Form Section */}
+          {showEntityForm && (
+            <Card className="mb-4">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <input
+                    type="text"
+                    value={entityName}
+                    onChange={(e) => setEntityName(e.target.value)}
+                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    placeholder="Enter Entity Name"
+                  />
+                  <Button
+                    onClick={handleSubmitEntity}
+                    className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
+                  >
+                    Submit
+                  </Button>
+                  <Button
+                    onClick={handleSampleFormat}
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+                  >
+                    📁 Sample Format
+                  </Button>
+                  <Button
+                    onClick={handleImportEntity}
+                    className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
+                  >
+                    + Import
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardContent className="p-0">
