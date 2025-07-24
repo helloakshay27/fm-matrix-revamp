@@ -10,6 +10,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { TicketSelector } from '@/components/TicketSelector';
 import { RecentTicketsSidebar } from '@/components/RecentTicketsSidebar';
 import { TicketSelectionPanel } from '@/components/TicketSelectionPanel';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -732,7 +733,21 @@ export const TicketDashboard = () => {
         onClick={() => navigate('/maintenance/ticket/add')} 
         className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-4 h-4 mr-2" /> Action
+        <Plus className="w-4 h-4 mr-2" /> Add Ticket
+      </Button>
+      <Button 
+        variant="outline" 
+        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white h-9 px-4 text-sm font-medium"
+        onClick={() => setIsFilterOpen(true)}
+      >
+        <Filter className="w-4 h-4 mr-2" /> Filter
+      </Button>
+      <Button 
+        variant="outline" 
+        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white h-9 px-4 text-sm font-medium"
+        onClick={handleExport}
+      >
+        <Download className="w-4 h-4 mr-2" /> Export
       </Button>
     </div>
   );
@@ -1166,7 +1181,7 @@ export const TicketDashboard = () => {
 
 
           {/* Tickets Table */}
-          <div className="overflow-x-auto animate-fade-in">
+          <div className="relative overflow-x-auto animate-fade-in">
             {loading ? (
               <div className="flex items-center justify-center p-8">
                 <div className="text-muted-foreground">Loading tickets...</div>
@@ -1289,6 +1304,30 @@ export const TicketDashboard = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* Selection Panel - positioned as overlay within table container */}
+                {selectedTickets.length > 0 && (
+                  <SelectionPanel
+                    actions={[
+                      {
+                        label: 'Flag',
+                        icon: Flag,
+                        onClick: handleFlag,
+                      },
+                      {
+                        label: 'Golden Ticket',
+                        icon: Star,
+                        onClick: handleGoldenTicket,
+                      },
+                      {
+                        label: 'Export Selected',
+                        icon: Download,
+                        onClick: handleExport,
+                      },
+                    ]}
+                    onClearSelection={handleClearSelection}
+                  />
+                )}
               </>
             )}
           </div>
