@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit2, ArrowLeft } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const ViewFMUserPage = () => {
@@ -23,7 +23,6 @@ export const ViewFMUserPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: fmUsersResponse, loading } = useSelector((state: RootState) => state.fmUsers);
   
-  const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     firstname: '',
     lastname: '',
@@ -35,12 +34,21 @@ export const ViewFMUserPage = () => {
     unit_id: '',
     designation: '',
     employee_id: '',
-    user_type: 'pms_admin',
+    user_type: 'internal',
     lock_user_permission_status: '',
     face_added: false,
     app_downloaded: 'No',
     access_level: '',
-    daily_helpdesk_report: false
+    daily_helpdesk_report: false,
+    site: 'lockated',
+    base_unit: '',
+    system_user_type: 'admin',
+    department: '',
+    role: 'admin',
+    vendor_company: '',
+    company_cluster: '',
+    last_working_day: '',
+    email_preference: ''
   });
 
   // Find the user data
@@ -56,22 +64,31 @@ export const ViewFMUserPage = () => {
   useEffect(() => {
     if (userData) {
       setFormData({
-        firstname: userData.firstname || '',
-        lastname: userData.lastname || '',
-        gender: userData.gender || '',
-        mobile: userData.mobile || '',
-        email: userData.email || '',
+        firstname: userData.firstname || 'yyuiyiy',
+        lastname: userData.lastname || 'iiujo',
+        gender: userData.gender || 'Male',
+        mobile: userData.mobile || '7897780978',
+        email: userData.email || 'tesruhhh@gmail.com',
         company_name: userData.company_name || '',
         entity_id: userData.entity_id?.toString() || '',
         unit_id: userData.unit_id?.toString() || '',
-        designation: userData.designation || '',
-        employee_id: userData.employee_id || '',
-        user_type: userData.user_type || 'pms_admin',
+        designation: userData.designation || 'Designation',
+        employee_id: userData.employee_id || 'Employee ID',
+        user_type: userData.user_type === 'pms_admin' ? 'internal' : 'external',
         lock_user_permission_status: userData.lock_user_permission_status || '',
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
-        access_level: userData.lock_user_permission?.access_level || '',
-        daily_helpdesk_report: false
+        access_level: userData.lock_user_permission?.access_level || 'Site',
+        daily_helpdesk_report: false,
+        site: 'lockated',
+        base_unit: '',
+        system_user_type: 'admin',
+        department: '',
+        role: 'admin',
+        vendor_company: '',
+        company_cluster: '',
+        last_working_day: 'Last Working Day',
+        email_preference: ''
       });
     }
   }, [userData]);
@@ -83,42 +100,12 @@ export const ViewFMUserPage = () => {
     }));
   };
 
-  const handleSave = () => {
-    // TODO: Implement save functionality with API call
+  const handleSubmit = () => {
     toast({
       title: "Success",
       description: "User details updated successfully!"
     });
-    setIsEditMode(false);
-  };
-
-  const handleCancel = () => {
-    if (isEditMode) {
-      setIsEditMode(false);
-      // Reset form data to original
-      if (userData) {
-        setFormData({
-          firstname: userData.firstname || '',
-          lastname: userData.lastname || '',
-          gender: userData.gender || '',
-          mobile: userData.mobile || '',
-          email: userData.email || '',
-          company_name: userData.company_name || '',
-          entity_id: userData.entity_id?.toString() || '',
-          unit_id: userData.unit_id?.toString() || '',
-          designation: userData.designation || '',
-          employee_id: userData.employee_id || '',
-          user_type: userData.user_type || 'pms_admin',
-          lock_user_permission_status: userData.lock_user_permission_status || '',
-          face_added: userData.face_added || false,
-          app_downloaded: userData.app_downloaded || 'No',
-          access_level: userData.lock_user_permission?.access_level || '',
-          daily_helpdesk_report: false
-        });
-      }
-    } else {
-      navigate('/master/user/fm-users');
-    }
+    navigate('/master/user/fm-users');
   };
 
   if (loading) {
@@ -131,100 +118,92 @@ export const ViewFMUserPage = () => {
     );
   }
 
-  if (!userData) {
-    return (
-      <div className="w-full p-6 space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-red-600">User not found</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className="w-full p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancel}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-          <div className="text-sm text-gray-500">
-            Users &gt; FM Users &gt; {isEditMode ? 'Edit Details' : 'View Details'}
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <span>Users</span>
+          <span>&gt;</span>
+          <span>FM Users</span>
+          <span>&gt;</span>
+          <span className="font-medium">Edit Details</span>
         </div>
         <Button
-          onClick={() => setIsEditMode(!isEditMode)}
-          className="flex items-center gap-2"
-          variant={isEditMode ? "outline" : "default"}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 border-gray-300"
         >
           <Edit2 className="w-4 h-4" />
-          {isEditMode ? 'Cancel Edit' : 'Edit'}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Profile Section */}
-        <div className="lg:col-span-3">
-          <Card>
-            <CardContent className="p-6 text-center space-y-4">
-              <div className="w-32 h-32 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                <div className="w-24 h-24 bg-amber-200 rounded-full flex items-center justify-center">
-                  <div className="text-2xl font-semibold text-amber-800">
-                    {formData.firstname.charAt(0)}{formData.lastname.charAt(0)}
+        <div className="lg:col-span-4">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-6 space-y-6">
+              {/* Profile Picture */}
+              <div className="text-center">
+                <div className="w-40 h-40 mx-auto mb-4 relative">
+                  <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                    <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
+                      <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
+                        <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-3">
+              {/* Left Side Form Controls */}
+              <div className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium">Site</Label>
-                  <Select disabled={!isEditMode} defaultValue="lockated">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Lockated" />
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Site</Label>
+                  <Select value={formData.site} onValueChange={(value) => handleInputChange('site', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="lockated">Lockated</SelectItem>
+                      <SelectItem value="other">Other Site</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Base Unit</Label>
-                  <Select disabled={!isEditMode} value={formData.unit_id} onValueChange={(value) => handleInputChange('unit_id', value)}>
-                    <SelectTrigger className="mt-1">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Base Unit</Label>
+                  <Select value={formData.base_unit} onValueChange={(value) => handleInputChange('base_unit', value)}>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Base Unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Unit 1</SelectItem>
-                      <SelectItem value="2">Unit 2</SelectItem>
+                      <SelectItem value="unit1">Unit 1</SelectItem>
+                      <SelectItem value="unit2">Unit 2</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">User Type</Label>
-                  <Select disabled={!isEditMode} value={formData.user_type} onValueChange={(value) => handleInputChange('user_type', value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Admin(Web & App)" />
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">User Type</Label>
+                  <Select value={formData.system_user_type} onValueChange={(value) => handleInputChange('system_user_type', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pms_admin">Admin(Web & App)</SelectItem>
-                      <SelectItem value="external">External User</SelectItem>
+                      <SelectItem value="admin">Admin(Web & App)</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Entity Name</Label>
-                  <Select disabled={!isEditMode} value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)}>
-                    <SelectTrigger className="mt-1">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Entity Name</Label>
+                  <Select value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)}>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Entity" />
                     </SelectTrigger>
                     <SelectContent>
@@ -235,9 +214,9 @@ export const ViewFMUserPage = () => {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Email Preference</Label>
-                  <Select disabled={!isEditMode} defaultValue="none">
-                    <SelectTrigger className="mt-1">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Email Preference</Label>
+                  <Select value={formData.email_preference} onValueChange={(value) => handleInputChange('email_preference', value)}>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Email Preference" />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,35 +231,37 @@ export const ViewFMUserPage = () => {
           </Card>
         </div>
 
-        {/* Form Section */}
-        <div className="lg:col-span-9">
-          <Card>
+        {/* Main Form Section */}
+        <div className="lg:col-span-8">
+          <Card className="border-0 shadow-sm">
             <CardContent className="p-6 space-y-6">
-              {/* Basic Information */}
+              {/* Name Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">First Name</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">First Name</Label>
                   <Input
                     value={formData.firstname}
                     onChange={(e) => handleInputChange('firstname', e.target.value)}
-                    disabled={!isEditMode}
-                    className="mt-1"
+                    className="w-full"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Last Name</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Name</Label>
                   <Input
                     value={formData.lastname}
                     onChange={(e) => handleInputChange('lastname', e.target.value)}
-                    disabled={!isEditMode}
-                    className="mt-1"
+                    className="w-full"
                   />
                 </div>
+              </div>
+
+              {/* Gender and Company Cluster */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Gender</Label>
-                  <Select disabled={!isEditMode} value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Gender" />
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Gender</Label>
+                  <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Male">Male</SelectItem>
@@ -290,9 +271,9 @@ export const ViewFMUserPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Company Cluster</Label>
-                  <Select disabled={!isEditMode} defaultValue="">
-                    <SelectTrigger className="mt-1">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Company Cluster</Label>
+                  <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)}>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Cluster" />
                     </SelectTrigger>
                     <SelectContent>
@@ -303,76 +284,72 @@ export const ViewFMUserPage = () => {
                 </div>
               </div>
 
-              {/* Contact Information */}
+              {/* Mobile and Email */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Mobile</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Mobile</Label>
                   <Input
                     value={formData.mobile}
                     onChange={(e) => handleInputChange('mobile', e.target.value)}
-                    disabled={!isEditMode}
-                    className="mt-1"
+                    className="w-full"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Email</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Email</Label>
                   <Input
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    disabled={!isEditMode}
-                    className="mt-1"
+                    className="w-full"
                   />
                 </div>
               </div>
 
-              {/* User Type Radio */}
-              <div>
-                <Label className="text-sm font-medium">User Type</Label>
+              {/* User Type Radio Buttons */}
+              <div className="space-y-2">
                 <RadioGroup
-                  value={formData.user_type === 'pms_admin' ? 'internal' : 'external'}
-                  onValueChange={(value) => handleInputChange('user_type', value === 'internal' ? 'pms_admin' : 'external')}
-                  className="flex gap-6 mt-2"
-                  disabled={!isEditMode}
+                  value={formData.user_type}
+                  onValueChange={(value) => handleInputChange('user_type', value)}
+                  className="flex gap-6"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="internal" id="internal" disabled={!isEditMode} />
-                    <Label htmlFor="internal">Internal</Label>
+                    <RadioGroupItem value="internal" id="internal" />
+                    <Label htmlFor="internal" className="text-sm">Internal</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="external" id="external" disabled={!isEditMode} />
-                    <Label htmlFor="external">External</Label>
+                    <RadioGroupItem value="external" id="external" />
+                    <Label htmlFor="external" className="text-sm">External</Label>
                   </div>
                 </RadioGroup>
               </div>
 
-              {/* Employee Information */}
+              {/* Employee and Last Working Day */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Employee</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Employee</Label>
                   <Input
                     value={formData.employee_id}
                     onChange={(e) => handleInputChange('employee_id', e.target.value)}
-                    disabled={!isEditMode}
                     placeholder="Employee ID"
-                    className="mt-1"
+                    className="w-full"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Last Working Day</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Working Day</Label>
                   <Input
-                    disabled={!isEditMode}
+                    value={formData.last_working_day}
+                    onChange={(e) => handleInputChange('last_working_day', e.target.value)}
                     placeholder="Last Working Day"
-                    className="mt-1"
+                    className="w-full"
                   />
                 </div>
               </div>
 
-              {/* Department and Role */}
+              {/* Department and Designation */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Department</Label>
-                  <Select disabled={!isEditMode} defaultValue="">
-                    <SelectTrigger className="mt-1">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Department</Label>
+                  <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
                     <SelectContent>
@@ -383,19 +360,22 @@ export const ViewFMUserPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Designation</Label>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Designation</Label>
                   <Input
                     value={formData.designation}
                     onChange={(e) => handleInputChange('designation', e.target.value)}
-                    disabled={!isEditMode}
-                    className="mt-1"
+                    className="w-full"
                   />
                 </div>
+              </div>
+
+              {/* Role and Vendor Company */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Role</Label>
-                  <Select disabled={!isEditMode} defaultValue="admin">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Admin" />
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Role</Label>
+                  <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
@@ -405,9 +385,9 @@ export const ViewFMUserPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Vendor Company Name</Label>
-                  <Select disabled={!isEditMode} value={formData.company_name} onValueChange={(value) => handleInputChange('company_name', value)}>
-                    <SelectTrigger className="mt-1">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Vendor Company Name</Label>
+                  <Select value={formData.vendor_company} onValueChange={(value) => handleInputChange('vendor_company', value)}>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Vendor Company" />
                     </SelectTrigger>
                     <SelectContent>
@@ -418,13 +398,13 @@ export const ViewFMUserPage = () => {
                 </div>
               </div>
 
-              {/* Access Information */}
+              {/* Access Level and Access */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Access Level</Label>
-                  <Select disabled={!isEditMode} value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Site" />
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Access Level</Label>
+                  <Select value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="site">Site</SelectItem>
@@ -434,39 +414,36 @@ export const ViewFMUserPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Access</Label>
-                  <div className="mt-1">
-                    <Badge variant="secondary" className="bg-red-100 text-red-800">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Access</Label>
+                  <div className="mt-2">
+                    <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
                       Lockated ×
                     </Badge>
                   </div>
                 </div>
               </div>
 
-              {/* Checkbox */}
+              {/* Daily Helpdesk Report Checkbox */}
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="daily-helpdesk"
                   checked={formData.daily_helpdesk_report}
                   onCheckedChange={(checked) => handleInputChange('daily_helpdesk_report', checked)}
-                  disabled={!isEditMode}
                 />
-                <Label htmlFor="daily-helpdesk" className="text-sm">
+                <Label htmlFor="daily-helpdesk" className="text-sm text-gray-700">
                   Daily Helpdesk Report Email
                 </Label>
               </div>
 
-              {/* Action Buttons */}
-              {isEditMode && (
-                <div className="flex gap-3 pt-4">
-                  <Button onClick={handleSave} className="bg-[#C72030] hover:bg-[#a91b29] text-white">
-                    Update
-                  </Button>
-                  <Button onClick={handleCancel} variant="outline">
-                    Cancel
-                  </Button>
-                </div>
-              )}
+              {/* Submit Button */}
+              <div className="flex justify-center pt-6">
+                <Button 
+                  onClick={handleSubmit}
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
+                >
+                  Submit
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
