@@ -131,20 +131,29 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
         {/* Tab Navigation */}
         <div className="flex space-x-1 mb-4">
           {[
-            { key: 'my' as const, label: 'My' },
-            { key: 'golden' as const, label: 'Golden' },
-            { key: 'flagged' as const, label: 'Flagged' },
-            { key: 'all' as const, label: 'All' }
+            { key: 'my' as const, label: 'My', icon: null },
+            { key: 'golden' as const, label: 'Golden', icon: Star },
+            { key: 'flagged' as const, label: 'Flagged', icon: Flag },
+            { key: 'all' as const, label: 'All', icon: null }
           ].map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 text-sm font-medium rounded-none border-b-2 transition-colors
+              className={`px-4 py-2 text-sm font-medium rounded-none border-b-2 transition-colors flex items-center gap-1
                 ${activeTab === tab.key 
                   ? 'text-red-600 border-red-600' 
                   : 'text-gray-600 border-transparent hover:text-gray-900'
                 }`}
             >
+              {tab.icon && (
+                <tab.icon 
+                  className={`h-4 w-4 ${
+                    tab.key === 'golden' 
+                      ? (activeTab === tab.key ? 'text-yellow-500' : 'text-gray-400')
+                      : activeTab === tab.key ? 'text-red-600' : 'text-gray-400'
+                  }`}
+                />
+              )}
               {tab.label}
             </button>
           ))}
