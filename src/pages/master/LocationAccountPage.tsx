@@ -764,7 +764,9 @@ export const LocationAccountPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {zones.map((zone, index) => (
+                  {zones.filter(zone => 
+                    zone.country.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).map((zone, index) => (
                     <TableRow key={index}>
                       <TableCell>{zone.country}</TableCell>
                       <TableCell>{zone.region}</TableCell>
