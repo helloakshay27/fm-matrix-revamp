@@ -448,10 +448,12 @@ export function BuildingPage() {
                           onCheckedChange={() => handleToggleStatus(building.id, 'has_room')}
                         />
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={building.active ? "default" : "secondary"}>
-                          {building.active ? 'Active' : 'Inactive'}
-                        </Badge>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={building.active}
+                          onCheckedChange={() => handleToggleStatus(building.id, 'active')}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
