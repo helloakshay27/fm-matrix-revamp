@@ -732,13 +732,13 @@ export const FMUserMasterDashboard = () => {
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger 
                   value="handover" 
-                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
                 >
                   Handover To
                 </TabsTrigger>
                 <TabsTrigger 
                   value="clone"
-                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
                 >
                   Clone To
                 </TabsTrigger>
@@ -796,7 +796,7 @@ export const FMUserMasterDashboard = () => {
             <div className="flex justify-center pt-6">
               <Button
                 onClick={handleCloneRoleSubmit}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-md"
+                className="bg-[#C72030] hover:bg-[#a91b29] text-white px-8 py-2 rounded-md"
                 disabled={!toUser || (activeTab === 'handover' && !fromUser)}
               >
                 Submit
