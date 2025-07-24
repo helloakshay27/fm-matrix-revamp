@@ -13,7 +13,7 @@ interface MobileTicketListProps {
 export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSelect }) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'my' | 'golden' | 'flagged' | 'all'>('all');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'approaching' | 'within'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'approaching' | 'within' | 'breach'>('all');
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -150,6 +150,9 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       case 'within':
         statusFilter = ticket.response_escalation === 'Within TAT' || ticket.response_escalation === 'Achieved';
         break;
+      case 'breach':
+        statusFilter = ticket.response_escalation === 'Breached';
+        break;
       case 'all':
       default:
         statusFilter = true;
@@ -211,7 +214,8 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
           {[
             { key: 'all' as const, label: 'All' },
             { key: 'approaching' as const, label: 'Approaching TAT' },
-            { key: 'within' as const, label: 'Within TAT' }
+            { key: 'within' as const, label: 'Within TAT' },
+            { key: 'breach' as const, label: 'TAT Breach' }
           ].map(filter => (
             <Button
               key={filter.key}
@@ -220,20 +224,13 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               onClick={() => setActiveFilter(filter.key)}
               className={`text-xs h-8 ${
                 activeFilter === filter.key 
-                  ? 'bg-orange-400 text-white border-orange-400' 
+                  ? (filter.key === 'breach' ? 'bg-red-500 text-white border-red-500' : 'bg-orange-400 text-white border-orange-400')
                   : 'bg-white text-gray-700 border-gray-300'
               }`}
             >
               {filter.label}
             </Button>
           ))}
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs h-8 bg-red-500 text-white border-red-500"
-          >
-            TAT Breach
-          </Button>
         </div>
 
         {/* Results Count */}
@@ -292,11 +289,6 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                   >
                     {ticket.issue_status}
                   </Badge>
-                  {getTATStatus(ticket) === 'breach' && (
-                    <Badge className="bg-red-600 text-white text-xs px-2 py-1 rounded">
-                      TAT Breach
-                    </Badge>
-                  )}
                 </div>
               </div>
 
