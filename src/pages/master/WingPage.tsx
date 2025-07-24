@@ -291,21 +291,22 @@ export function WingPage() {
                     <TableRow key={wing.id}>
                       <TableCell className="font-medium">{wing.name}</TableCell>
                       <TableCell>{wing.building?.name || 'N/A'}</TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={wing.active}
+                          onCheckedChange={() => handleToggleStatus(wing.id, wing.active)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                          aria-label={`Toggle ${wing.name} status`}
+                        />
+                      </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={wing.active}
-                            onCheckedChange={() => handleToggleStatus(wing.id, wing.active)}
-                            aria-label={`Toggle ${wing.name} status`}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(wing)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(wing)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
