@@ -1162,8 +1162,7 @@ export const TicketDashboard = () => {
                   pagination={false} 
                   enableExport={true} 
                   exportFileName="tickets" 
-                  onRowClick={ticket => handleViewDetails(ticket.id)} 
-                  storageKey="tickets-table" 
+                  storageKey="tickets-table"
                   enableSelection={true} 
                   selectedItems={selectedTickets.map(id => id.toString())} 
                   onSelectItem={handleTicketSelection} 
