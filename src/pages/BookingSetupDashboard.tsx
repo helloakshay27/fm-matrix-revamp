@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Filter, Eye, Pencil } from "lucide-react";
+import { Plus, Filter, Eye } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -141,6 +141,42 @@ export const BookingSetupDashboard = () => {
   const handleViewDetails = (id: string) => {
     navigate(`/vas/booking/setup/details/${id}`);
   };
+
+  const columns: ColumnConfig<BookingSetup>[] = [
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: (row) => (
+        <Button 
+          size="sm" 
+          variant="ghost"
+          onClick={() => handleViewDetails(row.id)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )
+    },
+    { id: 'id', header: 'ID', accessorKey: 'id' },
+    { id: 'name', header: 'Name', accessorKey: 'name' },
+    { id: 'type', header: 'Type', accessorKey: 'type' },
+    { id: 'department', header: 'Department', accessorKey: 'department' },
+    { id: 'bookBy', header: 'Book by', accessorKey: 'bookBy' },
+    { id: 'bookBefore', header: 'Book before', accessorKey: 'bookBefore' },
+    { id: 'advanceBooking', header: 'Advance Booking', accessorKey: 'advanceBooking' },
+    { id: 'createdOn', header: 'Created On', accessorKey: 'createdOn' },
+    { id: 'createdBy', header: 'Created by', accessorKey: 'createdBy' },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: (row) => (
+        <Switch 
+          checked={row.status} 
+          onCheckedChange={() => handleStatusToggle(row.id)} 
+        />
+      )
+    }
+  ];
+
   return <div className="p-6 bg-gray-50 min-h-screen">
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
 
@@ -157,69 +193,15 @@ export const BookingSetupDashboard = () => {
 
         {/* Table */}
         <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-700">Actions</TableHead>
-                <TableHead className="font-semibold text-gray-700">ID</TableHead>
-                <TableHead className="font-semibold text-gray-700">Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Type</TableHead>
-                <TableHead className="font-semibold text-gray-700">Department</TableHead>
-                <TableHead className="font-semibold text-gray-700">Book by</TableHead>
-                <TableHead className="font-semibold text-gray-700">Book before</TableHead>
-                <TableHead className="font-semibold text-gray-700">Advance Booking</TableHead>
-                <TableHead className="font-semibold text-gray-700">Created On</TableHead>
-                <TableHead className="font-semibold text-gray-700">Created by</TableHead>
-                <TableHead className="font-semibold text-gray-700">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8">
-                    Loading booking data...
-                  </TableCell>
-                </TableRow>
-              ) : bookingSetupData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8">
-                    No booking data found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                bookingSetupData.map((booking, index) => (
-                  <TableRow key={booking.id}>
-                    <TableCell>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={() => handleViewDetails(booking.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-black font-medium">{booking.id}</TableCell>
-                    <TableCell className="text-black">{booking.name}</TableCell>
-                    <TableCell>{booking.type}</TableCell>
-                    <TableCell>{booking.department}</TableCell>
-                    <TableCell>{booking.bookBy}</TableCell>
-                    <TableCell>{booking.bookBefore}</TableCell>
-                    <TableCell>{booking.advanceBooking}</TableCell>
-                    <TableCell>{booking.createdOn}</TableCell>
-                    <TableCell>{booking.createdBy}</TableCell>
-                    <TableCell>
-                      <Switch checked={booking.status} onCheckedChange={() => handleStatusToggle(booking.id)} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <EnhancedTable
+            data={bookingSetupData}
+            columns={columns}
+            loading={loading}
+          />
         </div>
 
         {/* Filter Modal */}
         <BookingSetupFilterModal open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleFilterApply} />
       </div>
     </div>
-  );
-};
+  };

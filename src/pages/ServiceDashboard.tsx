@@ -375,13 +375,13 @@ export const ServiceDashboard = () => {
   };
 
 
-  const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-3">
-      <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Plus className="w-4 h-4" /> Action
-      </Button>
-    </div>
-  );
+  // const renderCustomActions = () => (
+  //   <div className="flex flex-wrap gap-3">
+  //     <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+  //       <Plus className="w-4 h-4" /> Action
+  //     </Button>
+  //   </div>
+  // );
 
   return (
     <div className="p-4 sm:p-6">

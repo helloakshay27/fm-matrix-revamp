@@ -467,7 +467,6 @@ import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
 import { PermitSetupDashboard } from './pages/PermitSetupDashboard';
 import { IncidentSetupDashboard } from './pages/IncidentSetupDashboard';
 
-import { SpaceManagementBookingDetailsPage } from '@/pages/SpaceManagementBookingDetailsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
@@ -849,7 +848,6 @@ function App() {
                 {/* VAS Booking Routes */}
                 <Route path="/vas/booking/list" element={<BookingListDashboard />} />
                 <Route path="/vas/booking/add" element={<AddFacilityBookingPage />} />
-                <Route path="/vas/bookings/details/:id" element={<SpaceManagementBookingDetailsPage />} />
                 <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
 
