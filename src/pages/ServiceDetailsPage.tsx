@@ -258,12 +258,56 @@ export const ServiceDetailsPage = () => {
                     />
                   </div>
                   <Button
-                    onClick={() => window.open(details.qr_code, '_blank')}
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      const baseUrl = localStorage.getItem('baseUrl');
+                      if (!token) {
+                        alert('User is not authenticated.');
+                        return;
+                      }
+
+                      try {
+                        const response = await fetch(
+                          `https://${baseUrl}/pms/services/qr_codes?service_ids=[${details.id}]`,
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                          }
+                        );
+
+                        if (!response.ok) throw new Error('Failed to fetch QR code');
+
+                        const contentType = response.headers.get('Content-Type') || '';
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+
+                        // Decide file extension based on content type
+                        let extension = 'pdf';
+                        if (contentType.includes('pdf')) {
+                          extension = 'pdf';
+                        }
+
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `qr_code_service_${details.id}.${extension}`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } catch (err) {
+                        console.error('QR Code download failed:', err);
+                        alert('Failed to download QR code');
+                      }
+                    }}
                     className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     Download
                   </Button>
+
+
+
                 </>
               ) : (
                 <>
