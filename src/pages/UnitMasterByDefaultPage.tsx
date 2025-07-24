@@ -252,12 +252,13 @@ export const UnitMasterByDefaultPage = () => {
                   <TableCell className="font-medium">{meter.meterCategory}</TableCell>
                   <TableCell>{meter.unitName}</TableCell>
                   <TableCell>{meter.meterType}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={meter.status}
-                      onCheckedChange={() => handleStatusToggle(meter.id)}
-                    />
-                  </TableCell>
+                   <TableCell>
+                     <Switch
+                       checked={meter.status}
+                       onCheckedChange={() => handleStatusToggle(meter.id)}
+                       className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                     />
+                   </TableCell>
                   <TableCell>
                     <Button 
                       variant="ghost" 
