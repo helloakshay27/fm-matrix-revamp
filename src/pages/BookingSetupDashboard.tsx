@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Filter, Eye } from "lucide-react";
+import { Plus, Filter, Eye, Pencil } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -142,66 +142,171 @@ export const BookingSetupDashboard = () => {
     navigate(`/vas/booking/setup/details/${id}`);
   };
 
-  const columns: ColumnConfig<BookingSetup>[] = [
+  const columns: ColumnConfig[] = [
     {
-      id: 'actions',
-      header: 'Actions',
-      cell: (row) => (
-        <Button 
-          size="sm" 
-          variant="ghost"
-          onClick={() => handleViewDetails(row.id)}
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
-      )
+      key: 'id',
+      label: 'ID',
+      sortable: true,
+      draggable: true,
     },
-    { id: 'id', header: 'ID', accessorKey: 'id' },
-    { id: 'name', header: 'Name', accessorKey: 'name' },
-    { id: 'type', header: 'Type', accessorKey: 'type' },
-    { id: 'department', header: 'Department', accessorKey: 'department' },
-    { id: 'bookBy', header: 'Book by', accessorKey: 'bookBy' },
-    { id: 'bookBefore', header: 'Book before', accessorKey: 'bookBefore' },
-    { id: 'advanceBooking', header: 'Advance Booking', accessorKey: 'advanceBooking' },
-    { id: 'createdOn', header: 'Created On', accessorKey: 'createdOn' },
-    { id: 'createdBy', header: 'Created by', accessorKey: 'createdBy' },
     {
-      id: 'status',
-      header: 'Status',
-      cell: (row) => (
-        <Switch 
-          checked={row.status} 
-          onCheckedChange={() => handleStatusToggle(row.id)} 
-        />
-      )
-    }
+      key: 'name',
+      label: 'Name',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'department',
+      label: 'Department',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'bookBy',
+      label: 'Book by',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'bookBefore',
+      label: 'Book before',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'advanceBooking',
+      label: 'Advance Booking',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'createdOn',
+      label: 'Created On',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'createdBy',
+      label: 'Created by',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      draggable: true,
+    },
   ];
 
-  return <div className="p-6 bg-gray-50 min-h-screen">
+  const renderCell = (item: BookingSetup, columnKey: string) => {
+    switch (columnKey) {
+      case 'id':
+        return item.id || '';
+      case 'name':
+        return item.name || '';
+      case 'type':
+        return item.type || '';
+      case 'department':
+        return item.department || '';
+      case 'bookBy':
+        return item.bookBy || '';
+      case 'bookBefore':
+        return item.bookBefore || '';
+      case 'advanceBooking':
+        return item.advanceBooking || '';
+      case 'createdOn':
+        return item.createdOn || '';
+      case 'createdBy':
+        return item.createdBy || '';
+      case 'status':
+        return (
+          <div className="flex items-center">
+            <div
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              onClick={() => handleStatusToggle(item.id)}
+            >
+              <span
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.status ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+              />
+            </div>
+          </div>
+        );
+      default:
+        return item[columnKey as keyof BookingSetup]?.toString() || '';
+    }
+  };
+
+  const renderActions = (booking: BookingSetup) => (
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => handleViewDetails(booking.id)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => handleViewDetails(booking.id)}
+      >
+        <Pencil className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
+  const leftActions = (
+    <div className="flex items-center gap-2">
+      <Button
+        onClick={handleAddBooking}
+        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+      >
+        <Plus className="w-4 h-4" />
+        Add
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => setIsFilterOpen(true)}
+        className="flex items-center gap-2"
+      >
+        <Filter className="w-4 h-4" />
+        Filter
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
+        <EnhancedTable
+          data={bookingSetupData}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          storageKey="booking-setup-table"
+          className="min-w-full"
+          emptyMessage={loading ? "Loading booking data..." : "No booking data found"}
+          leftActions={leftActions}
+          enableSearch={true}
+          enableSelection={false}
+          hideTableExport={true}
+        />
 
-        <div className="flex items-center gap-2 mb-6">
-          <Button onClick={handleAddBooking} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Action
-          </Button>
-          <Button variant="outline" onClick={() => setIsFilterOpen(true)} className="flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            Filter
-          </Button>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-          <EnhancedTable
-            data={bookingSetupData}
-            columns={columns}
-            loading={loading}
-          />
-        </div>
-
-        {/* Filter Modal */}
-        <BookingSetupFilterModal open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleFilterApply} />
+        <BookingSetupFilterModal
+          open={isFilterOpen}
+          onOpenChange={setIsFilterOpen}
+          onApply={handleFilterApply}
+        />
       </div>
     </div>
-  };
+  );
+};

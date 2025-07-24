@@ -899,13 +899,13 @@ export const BookingSetupDetailPage = () => {
       <div className="px-5 bg-white min-h-screen">
         <div className="bg-white rounded-lg max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex justify-between items-center p-6 border-b">
+          {/* <div className="flex justify-between items-center p-6 border-b">
             <div>
               <h2 className="text-xl font-bold text-gray-800">
                 FACILITY BOOKING SETUP
               </h2>
             </div>
-          </div>
+          </div> */}
 
           <div className="p-6 space-y-8">
             <div className="border border-[#C72030]/20 rounded-lg p-4 space-y-3">
