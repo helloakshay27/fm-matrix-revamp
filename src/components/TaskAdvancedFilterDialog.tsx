@@ -19,13 +19,21 @@ interface Filters {
 interface TaskAdvancedFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onApply: (filters: Filters) => void;
+  onApply: (filters: Filters & { dateFrom: string; dateTo: string; searchTaskId: string; searchChecklist: string }) => void;
+  dateFrom?: string;
+  dateTo?: string;
+  searchTaskId?: string;
+  searchChecklist?: string;
 }
 
 export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> = ({
   open,
   onOpenChange,
   onApply,
+  dateFrom = '',
+  dateTo = '',
+  searchTaskId = '',
+  searchChecklist = ''
 }) => {
   const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
@@ -37,10 +45,22 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
     assignedTo: '',
     supplier: ''
   });
+  
+  const [localDateFrom, setLocalDateFrom] = useState(dateFrom);
+  const [localDateTo, setLocalDateTo] = useState(dateTo);
+  const [localSearchTaskId, setLocalSearchTaskId] = useState(searchTaskId);
+  const [localSearchChecklist, setLocalSearchChecklist] = useState(searchChecklist);
 
   const handleApply = () => {
-    console.log('Applying Advanced filters:', filters);
-    onApply(filters);
+    const allFilters = {
+      ...filters,
+      dateFrom: localDateFrom,
+      dateTo: localDateTo,
+      searchTaskId: localSearchTaskId,
+      searchChecklist: localSearchChecklist
+    };
+    console.log('Applying Advanced filters:', allFilters);
+    onApply(allFilters);
     toast({
       title: 'Success',
       description: 'Filters applied successfully!',
@@ -87,7 +107,62 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* First Row */}
+          {/* Date Range and Search Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <TextField
+                label="Date From"
+                type="date"
+                value={localDateFrom ? localDateFrom.split('/').reverse().join('-') : ''}
+                onChange={(e) => setLocalDateFrom(e.target.value.split('-').reverse().join('/'))}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
+            </div>
+            <div>
+              <TextField
+                label="Date To"
+                type="date"
+                value={localDateTo ? localDateTo.split('/').reverse().join('-') : ''}
+                onChange={(e) => setLocalDateTo(e.target.value.split('-').reverse().join('/'))}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <TextField
+                label="Search Task ID"
+                placeholder="Enter Task ID"
+                value={localSearchTaskId}
+                onChange={(e) => setLocalSearchTaskId(e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
+            </div>
+            <div>
+              <TextField
+                label="Search Checklist"
+                placeholder="Enter checklist name or assigned to"
+                value={localSearchChecklist}
+                onChange={(e) => setLocalSearchChecklist(e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
+            </div>
+          </div>
+
+          {/* Filter Options */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
