@@ -404,25 +404,30 @@ export const SubCategoryTab: React.FC = () => {
                   )}
                 />
 
-                <div className="flex items-center gap-2">
-                  <label htmlFor="subcategory-icon-upload" className="cursor-pointer">
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <span>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Icon
-                      </span>
-                    </Button>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Icon
                   </label>
-                  <input
-                    id="subcategory-icon-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleIconChange}
-                  />
-                  {iconFile && (
-                    <span className="text-sm text-gray-600">{iconFile.name}</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="subcategory-icon-upload" className="cursor-pointer">
+                      <Button type="button" variant="outline" size="sm" asChild>
+                        <span>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Icon
+                        </span>
+                      </Button>
+                    </label>
+                    <input
+                      id="subcategory-icon-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleIconChange}
+                    />
+                    {iconFile && (
+                      <span className="text-sm text-gray-600">{iconFile.name}</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
