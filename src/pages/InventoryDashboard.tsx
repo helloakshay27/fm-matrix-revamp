@@ -421,20 +421,6 @@ export const InventoryDashboard = () => {
     setShowFilter(true);
   };
 
-  const selectionActions = [
-    {
-      label: 'Filter',
-      icon: Filter,
-      onClick: handleFiltersClick,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Flag',
-      icon: AlertCircle,
-      // onClick: handleFlagSelected,
-      variant: 'outline' as const,
-    },
-  ];
 
   const handleActionClick = () => {
     setShowActionPanel(true);
@@ -921,7 +907,6 @@ export const InventoryDashboard = () => {
             </div>
             {showActionPanel && (
               <SelectionPanel
-                actions={selectionActions}
                 onAdd={handleAddInventory}
                 onImport={handleImportClick}
                 onClearSelection={() => setShowActionPanel(false)}
@@ -945,6 +930,7 @@ export const InventoryDashboard = () => {
               loading={loading}
               emptyMessage={loading ? "Loading inventory data..." : "No inventory items found"}
               leftActions={renderCustomActions()}
+              onFilterClick={handleFiltersClick}
             />
           </div>
           {/* Custom Pagination */}

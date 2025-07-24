@@ -327,25 +327,12 @@ export const ServiceDashboard = () => {
   };
 
   const selectionActions = [
-    {
-      label: 'Filter',
-      icon: Filter,
-      onClick: handleFiltersClick,
-      // onClick: handleUpdateSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Delete',
-      icon: Trash2,
-      // onClick: () => handleBulkDelete(selectedAMCObjects),
-      variant: 'destructive' as const,
-    },
-    {
-      label: "Print",
-      icon: FileText,
-      onClick: handleQRDownload,
-      variant: 'destructive' as const,
-    }
+    // {
+    //   label: "Print",
+    //   icon: FileText,
+    //   onClick: handleQRDownload,
+    //   variant: 'destructive' as const,
+    // }
   ];
   const handleActionClick = () => {
     setShowActionPanel(true);
@@ -468,6 +455,8 @@ export const ServiceDashboard = () => {
             storageKey="services-table"
             leftActions={renderCustomActions()}
             searchPlaceholder="Search..."
+            onFilterClick={handleFiltersClick}
+
           />
         </>
 

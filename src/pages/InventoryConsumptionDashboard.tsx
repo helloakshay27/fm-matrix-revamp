@@ -200,20 +200,6 @@ const InventoryConsumptionDashboard = () => {
     setShowActionPanel(false);
   };
 
-  const selectionActions = [
-    {
-      label: 'Filter',
-      icon: Filter,
-      onClick: handleFiltersClick,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Flag',
-      icon: AlertCircle,
-      // onClick: handleFlagSelected,
-      variant: 'outline' as const,
-    },
-  ];
   const handleActionClick = () => {
     setShowActionPanel(true);
   };
@@ -237,7 +223,6 @@ const InventoryConsumptionDashboard = () => {
       {/* Enhanced Table with Drag and Drop */}
       {showActionPanel && (
         <SelectionPanel
-          actions={selectionActions}
           onImport={handleImportClick}
           onClearSelection={() => setShowActionPanel(false)}
         />
@@ -258,6 +243,7 @@ const InventoryConsumptionDashboard = () => {
         pagination={false}
         selectable={true}
         selectedItems={selectedItems}
+        onFilterClick={handleFiltersClick}
         onSelectItem={(itemId: string, checked: boolean) => {
           if (checked) {
             setSelectedItems(prev => [...prev, itemId]);

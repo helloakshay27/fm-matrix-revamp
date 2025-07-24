@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Trash2, BarChart3, Users, Download, Calendar, AlertCircle, CheckCircle, Clock, UserCheck } from 'lucide-react';
+import { Eye, Trash2, BarChart3, Users, Download, Calendar, AlertCircle, CheckCircle, Clock, UserCheck, Flag } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -184,10 +184,14 @@ export const AttendanceDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
+          <>
           <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.user_id)} className="hover:bg-gray-100">
             <Eye className="w-4 h-4" />
           </Button>
+          
+         </>
         );
+
       case 'name':
         return <span className="font-medium text-center block">{item.name}</span>;
       case 'department':
@@ -276,6 +280,10 @@ export const AttendanceDashboard = () => {
     }
     return items;
   };
+
+  const handleFilterClick = () => {
+    console.log('Filter clicked');
+  }
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
@@ -563,6 +571,7 @@ export const AttendanceDashboard = () => {
                 pagination={false}
                 loading={loading}
                 onExport={handleExport}
+                onFilterClick={handleFilterClick}
               />
 
               {/* Custom Pagination */}

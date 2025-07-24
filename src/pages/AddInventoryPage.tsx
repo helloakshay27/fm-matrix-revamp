@@ -84,7 +84,7 @@ export const AddInventoryPage = () => {
         max_stock_level: parseInt(formData.maxStockLevel) || 0,
         min_stock_level: formData.minStockLevel,
         min_order_level: formData.minOrderLevel,
-        green_product: ecoFriendly ? 1 : 0, // Added green_product based on ecoFriendly state
+        green_product: ecoFriendly ? 1 : 0, 
         ...(taxApplicable && {
           hsn_id: taxApplicable ? parseInt(formData.sacHsnCode) || null : null,
           sgst_rate: parseFloat(formData.sgstRate) || 0,

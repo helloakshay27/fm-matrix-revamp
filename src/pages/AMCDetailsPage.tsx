@@ -396,7 +396,7 @@ export const AMCDetailsPage = () => {
           <CardTitle className="text-lg flex items-center">
             <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
               <FileTextIcon className="h-4 w-4" />
-            </div>                  AMC DATA LOGS
+            </div>                  AMC VISITS
           </CardTitle>
         </CardHeader>
         <CardContent>

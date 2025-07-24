@@ -54,13 +54,13 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
 
   return (
 <div
-  className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16.7rem] pointer-events-none transition-all duration-300 ${
+  className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${
     isSidebarCollapsed ? 'left-16' : 'left-64'
   } right-0 bottom-0`}
 >      {/* Main panel + right bar container */}
       <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
         {/* Right vertical bar */}
-        <div className="hidden sm:flex w-8 bg-[#C2B59B] items-center justify-center text-red-600 font-semibold text-sm">
+        <div className="hidden sm:flex w-8 bg-[#C4B89D54] items-center justify-center text-red-600 font-semibold text-sm">
         </div>
 
         {/* Main content */}

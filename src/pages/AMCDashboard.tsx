@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Trash2, BarChart3, FileText, Download, Calendar, AlertCircle, CheckCircle, Clock, Settings } from 'lucide-react';
+import { Plus, Eye, Trash2, BarChart3, FileText, Download, Calendar, AlertCircle, CheckCircle, Clock, Settings, Flag } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -137,31 +137,31 @@ export const AMCDashboard = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       const siteId = localStorage.getItem('selectedSiteId');
-  
+
       if (!baseUrl || !token || !siteId) {
         alert('Missing base URL, token, or site ID');
         return;
       }
-  
+
       // Find the current AMC record to determine the current status
       const amcRecord = amcData.find((item) => item.id === id);
       if (!amcRecord) {
         alert('AMC record not found');
         return;
       }
-  
+
       // Toggle the active status
       const updatedStatus = !amcRecord.active;
-  
+
       // Make the PUT request to update only the active status
       const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
       const response = await axios.put(
         url,
         {
-          pms_asset_amc:{
+          pms_asset_amc: {
             active: updatedStatus
           }
-         
+
         },
         {
           headers: {
@@ -169,7 +169,7 @@ export const AMCDashboard = () => {
           },
         }
       );
-  
+
       if (response.status === 200) {
         // Refresh the table by fetching updated data
         dispatch(fetchAMCData());
@@ -249,7 +249,7 @@ export const AMCDashboard = () => {
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = 'amc_export.xlsx';
-      document.body.appendChild(link); 
+      document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
@@ -277,13 +277,30 @@ export const AMCDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleViewDetails(item.id)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleViewDetails(item.id)}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            <div title="Flag ticket">
+              <Flag
+                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
+                  //  item.is_flagged 
+                  'text-red-500 fill-red-500'
+                  //  : 'text-gray-600'
+                  }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  //  handleSingleTicketFlag(item.id, item.is_flagged);
+                }}
+              />
+            </div>
+
+          </div>
+
         );
       case 'id':
         return <span className="font-medium">{item.id}</span>;
@@ -517,29 +534,18 @@ export const AMCDashboard = () => {
     return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
   }).length;
 
-  const selectionActions = [
-    {
-      label: 'Update',
-      icon: Clock,
-      // onClick: handleUpdateSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Flag',
-      icon: AlertCircle,
-      // onClick: handleFlagSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Delete',
-      icon: Trash2,
-      // onClick: () => handleBulkDelete(selectedAMCObjects),
-      variant: 'destructive' as const,
-    },
-  ];
+
   const handleActionClick = () => {
     setShowActionPanel(true);
   };
+
+  const handleFiltersClick = () => {
+    console.log('Filters clicked');
+  };
+
+  const handleImportClick = () => {
+    console.log('Import clicked');
+  }
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
@@ -844,7 +850,7 @@ export const AMCDashboard = () => {
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                     {11}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total AMC</div>
                 </div>
               </div>
 
@@ -899,8 +905,8 @@ export const AMCDashboard = () => {
 
             {showActionPanel && (
               <SelectionPanel
-                actions={selectionActions}
                 onAdd={handleAddClick}
+                onImport={handleImportClick}
                 onClearSelection={() => setShowActionPanel(false)}
 
               />
@@ -926,6 +932,7 @@ export const AMCDashboard = () => {
                 bulkActions={bulkActions}
                 showBulkActions={true}
                 pagination={false}
+                onFilterClick={handleFiltersClick}
                 leftActions={
                   <Button
                     onClick={handleActionClick}
