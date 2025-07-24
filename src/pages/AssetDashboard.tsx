@@ -116,7 +116,6 @@ export const AssetDashboard = () => {
     totalCount,
     totalPages,
     filters,
-    totalValue,
   } = useSelector((state: RootState) => state.assets);
 
   console.log(data);
@@ -306,14 +305,8 @@ export const AssetDashboard = () => {
   };
 
   // Calculate stats from currently displayed assets (this updates with filters)
-  // const stats = calculateStats(displayAssets);
-  const stats = {
-    ...calculateStats(displayAssets),
-    total_value:
-      totalValue !== undefined && totalValue !== null
-        ? String(totalValue)
-        : "₹0.00",
-  };
+  // Calculate stats from currently displayed assets (this updates with filters)
+  const stats = calculateStats(displayAssets);
 
   console.log("Final stats object:", stats);
   // Drag and drop sensors
@@ -845,7 +838,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} />
+              <AssetStats stats={stats} />
 
               {/* <AssetActions
                 searchTerm={searchTerm}
