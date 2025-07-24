@@ -100,7 +100,7 @@ export const ServiceDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <Button
           variant="ghost"
           onClick={() => navigate('/maintenance/service')}
@@ -109,34 +109,34 @@ export const ServiceDetailsPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Service List
         </Button>
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant="outline"
-              onClick={handleEditClick}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-            >
-              Edit
-            </Button>
-            <Button
-              onClick={handleAssociateServiceClick}
-              className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Associate Service
-            </Button>
-          </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={handleEditClick}
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          >
+            Edit
+          </Button>
+          <Button
+            onClick={handleAssociateServiceClick}
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Associate Service
+          </Button>
         </div>
+      </div>
 
       {/* LOCATION DETAIL */}
       <div className="bg-white rounded-lg border mb-6">
-        <div className="p-6">
-          <div className="flex items-center mb-4">
+        <div className="">
+          <div className="flex p-4 items-center bg-[#F6F4EE] ">
             <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
               <Box className="w-4 h-4" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">LOCATION DETAIL</h2>
+            <h2 className="text-lg font-[700]">LOCATION DETAIL</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 border border-[#D9D9D9] bg-[#F6F7F7] p-4 gap-6 ">
             <div className="space-y-3">
               <div className="flex text-sm">
                 <span className="text-gray-600 w-24">Site</span>
@@ -181,68 +181,71 @@ export const ServiceDetailsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Documents */}
         <div className="bg-white rounded-lg border">
-          <div className="p-6">
-            <div className="flex items-center mb-4">
+          <div>
+            <div className="flex items-center bg-[#F6F4EE] p-4">
               <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                 <FileText className="w-4 h-4" />
               </div>
-              <h2 className="text-lg font-semibold text-[#C72030]">DOCUMENTS</h2>
+              <h2 className="text-lg font-[700] ">DOCUMENTS</h2>
             </div>
-            {details?.documents?.map((doc: any) => (
-              <div
-                key={doc.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded gap-4"
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  {/* Thumbnail Preview */}
-                  {doc.doctype.startsWith('image/') ? (
-                    <img
-                      src={doc.document}
-                      alt="Preview"
-                      className="w-10 h-10 object-cover rounded border"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 flex items-center justify-center bg-white border rounded text-gray-500 text-xl">
-                      📄
-                    </div>
-                  )}
-
-                  {/* File Name (fallback generated) */}
-                  <span className="text-sm truncate max-w-[180px]">
-                    {`Document_${doc.id}.${doc.doctype.split('/')[1] || 'file'}`}
-                  </span>
-                </div>
-
-                {/* Download Button */}
-                <Button
-                  size="sm"
-                  className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = doc.document;
-                    link.download = 'filename.png';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
+            <div className='border border-[#D9D9D9] bg-[#F6F7F7]'>
+              {details?.documents?.map((doc: any) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-3 rounded gap-4"
                 >
-                  <Download className="w-4 h-4 mr-1" />
-                  Download
-                </Button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    {/* Thumbnail Preview */}
+                    {doc.doctype.startsWith('image/') ? (
+                      <img
+                        src={doc.document}
+                        alt="Preview"
+                        className="w-10 h-10 object-cover rounded border"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 flex items-center justify-center bg-white border rounded text-gray-500 text-xl">
+                        📄
+                      </div>
+                    )}
+
+                    {/* File Name (fallback generated) */}
+                    <span className="text-sm truncate max-w-[180px]">
+                      {`Document_${doc.id}.${doc.doctype.split('/')[1] || 'file'}`}
+                    </span>
+                  </div>
+
+                  {/* Download Button */}
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = doc.document;
+                      link.download = 'filename.png';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </div>
+
 
           </div>
         </div>
 
         {/* QR Code */}
-        <div className="bg-white rounded-lg border">
-          <div className="p-6">
-            <div className="flex items-center mb-4">
+        <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
+          <div >
+            <div className="flex items-center mb-4 bg-[#F6F4EE] p-4 ">
               <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                 <QrCode className="w-4 h-4" />
               </div>
-              <h2 className="text-lg font-semibold text-[#C72030]">QR CODE</h2>
+              <h2 className="text-lg font-[700] ">QR CODE</h2>
             </div>
             <div className="text-center">
               {details.qr_code ? (
@@ -273,15 +276,15 @@ export const ServiceDetailsPage = () => {
       </div>
 
       {/* Associated Assets */}
-      <div className="bg-white rounded-lg border mb-6">
-        <div className="p-6">
-          <div className="flex items-center mb-4">
+      <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg mb-6">
+        <div>
+          <div className="flex items-center mb-2 bg-[#F6F4EE] p-4">
             <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
               <Box className="w-4 h-4" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">Associated Assets</h2>
+            <h2 className="text-lg font-[700]">Associated Assets</h2>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 p-4">
             {details.associated_assets && details.associated_assets.length > 0 ? (
               details.associated_assets.map((asset, index) => (
                 <Button key={index} className="bg-[#C72030] text-white hover:bg-[#C72030]/90">

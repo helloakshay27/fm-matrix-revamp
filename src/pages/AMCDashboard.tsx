@@ -177,37 +177,37 @@ export const AMCDashboard = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       const siteId = localStorage.getItem('selectedSiteId');
-  
+
       if (!token || !siteId) {
         alert('Missing token or site ID');
         return;
       }
-  
-      let url = `${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
-  
+
+      let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
       }
-  
+
       console.log('Exporting from URL:', url);
-  
+
       const response = await axios.get(url, {
         responseType: 'blob',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       if (!response.data || response.data.size === 0) {
         alert('Empty file received from server.');
         return;
       }
-  
+
       const blob = new Blob([response.data], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
-  
+
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -221,7 +221,7 @@ export const AMCDashboard = () => {
       alert('Failed to export AMC data. Please try again.');
     }
   };
-  
+
   // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -482,12 +482,6 @@ export const AMCDashboard = () => {
 
   const selectionActions = [
     {
-      label: 'Export',
-      icon: Download,
-      onClick: handleExport,
-      variant: 'outline' as const,
-    },
-    {
       label: 'Update',
       icon: Clock,
       // onClick: handleUpdateSelected,
@@ -527,18 +521,34 @@ export const AMCDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
             <TabsTrigger
+              value="amclist"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <svg
+                width="18"
+                height="19"
+                viewBox="0 0 18 19"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current"
+              >
+                <path
+                  d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+
+              AMC List
+            </TabsTrigger>
+
+            <TabsTrigger
               value="analytics"
               className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <BarChart3 className="w-4 h-4" />
               Analytics
-            </TabsTrigger>
-            <TabsTrigger
-              value="amclist"
-              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-            >
-              <FileText className="w-4 h-4" />
-              AMC List
             </TabsTrigger>
           </TabsList>
 
@@ -851,13 +861,13 @@ export const AMCDashboard = () => {
             </div>
 
             {showActionPanel && (
-            <SelectionPanel
-              actions={selectionActions}
-              onAdd={handleAddClick}
-              onClearSelection={()=> setShowActionPanel(false)}
-             
-            />
-          )}
+              <SelectionPanel
+                actions={selectionActions}
+                onAdd={handleAddClick}
+                onClearSelection={() => setShowActionPanel(false)}
+
+              />
+            )}
 
             {/* Enhanced Table */}
             {!loading && (
@@ -874,7 +884,7 @@ export const AMCDashboard = () => {
                 getItemId={(item) => item.id.toString()}
                 storageKey="amc-dashboard-table"
                 emptyMessage="No AMC records found"
-                searchPlaceholder="Search AMC records..."
+                searchPlaceholder="Search..."
                 enableExport={true}
                 exportFileName="amc-records"
                 bulkActions={bulkActions}
@@ -885,7 +895,7 @@ export const AMCDashboard = () => {
                     onClick={handleActionClick}
                     className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4" />
                     Action
                   </Button>
                 }

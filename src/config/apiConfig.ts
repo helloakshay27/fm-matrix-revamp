@@ -6,8 +6,8 @@ const getApiConfig = () => {
   const savedToken = getToken();
 
   return {
-    BASE_URL: savedBaseUrl || 'https://fm-uat-api.lockated.com',
-    TOKEN: savedToken || 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
+    BASE_URL: savedBaseUrl,
+    TOKEN: savedToken,
   };
 };
 

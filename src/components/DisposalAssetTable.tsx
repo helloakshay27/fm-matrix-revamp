@@ -18,33 +18,38 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+interface Asset{
+  area: string|null;
+  assetGroup:string;
+  assetNumber:string;
+  assetSubGroup:string;
+  assetType:string|null;
+  building: string|null;
+  id:number;
+  name:string;
+  pmsRoom:string|null;
+  serialNumber:string;
+  siteName:string;
+  status:string;
+  wing:string|null;
+  purchase_cost?: string | number;
+}
+
 interface DisposalAssetTableProps {
-  selectedAssets: string[];
-  breakdown: string;
-  onBreakdownChange: (breakdown: string) => void;
-  soldValue: string;
-  onSoldValueChange: (value: string) => void;
+  selectedAssets: Asset[];
+  breakdown: { [key: string]: string };
+  onBreakdownChange: (breakdown: string, assetId?: string) => void;
+  soldValues: { [key: string]: string };
+  onSoldValueChange: (value: string, assetId?: string) => void;
 }
 
 export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
   selectedAssets,
   breakdown,
   onBreakdownChange,
-  soldValue,
+  soldValues,
   onSoldValueChange
 }) => {
-  // Mock data for the selected assets table
-  const mockAssets = [
-    {
-      name: 'sdcsdc',
-      code: '#02e0d956a50e6203182a',
-      status: 'Disposed',
-      site: 'Lockated',
-      purchaseCost: 'NA',
-      currentBookValue: 'NA',
-      soldValue: ''
-    }
-  ];
 
   const breakdownOptions = [
     'Breakdown',
@@ -69,43 +74,19 @@ export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockAssets.map((asset, index) => (
+          {selectedAssets.map((asset, index) => (
             <TableRow key={index}>
-              <TableCell className="font-medium">{asset.name}</TableCell>
-              <TableCell>{asset.code}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600 h-9 px-3 justify-between min-w-[120px]"
-                    >
-                      {breakdown}
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="min-w-[120px] bg-white border shadow-md">
-                    {breakdownOptions.map((option) => (
-                      <DropdownMenuItem
-                        key={option}
-                        onClick={() => onBreakdownChange(option)}
-                        className="cursor-pointer hover:bg-gray-100"
-                      >
-                        {option}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-              <TableCell>{asset.site}</TableCell>
-              <TableCell>{asset.purchaseCost}</TableCell>
-              <TableCell>{asset.currentBookValue}</TableCell>
+              <TableCell className="font-medium">{typeof asset.name === 'string' ? asset.name : ''}</TableCell>
+              <TableCell>{typeof asset.assetNumber === 'string' || typeof asset.assetNumber === 'number' ? asset.assetNumber : ''}</TableCell>
+              <TableCell>{typeof asset.status === 'string' ? asset.status : ''}</TableCell>
+              <TableCell>{typeof asset.siteName === 'string' ? asset.siteName : ''}</TableCell>
+              <TableCell>{typeof asset.purchase_cost === 'string' || typeof asset.purchase_cost === 'number' ? asset.purchase_cost : 'NA'}</TableCell>
               <TableCell>
                 <TextField
                   size="small"
                   placeholder="Enter Sold Value"
-                  value={soldValue}
-                  onChange={(e) => onSoldValueChange(e.target.value)}
+                  value={soldValues[asset.id] || ''}
+                  onChange={(e) => onSoldValueChange(e.target.value, asset.id.toString())}
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   fullWidth

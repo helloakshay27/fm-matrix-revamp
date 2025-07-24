@@ -202,7 +202,7 @@ const EcoFriendlyListPage = () => {
         hideTableExport={false} 
         hideTableSearch={false} 
         hideColumnsButton={false} 
-        searchPlaceholder="Search eco-friendly items..."
+        searchPlaceholder="Search..."
         loading={loading}
       />
     </div>;

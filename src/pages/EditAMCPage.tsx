@@ -331,9 +331,6 @@ export const EditAMCPage = () => {
       sendData.append('subaction', 'save');
 
       // Debug FormData
-      for (let [key, value] of sendData.entries()) {
-        console.log(key, value, value instanceof File ? 'File' : 'String');
-      }
 
       // Make API call
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
@@ -355,9 +352,6 @@ export const EditAMCPage = () => {
       }
 
     } catch (error: any) {
-      console.error('Error updating AMC:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Status code:', error.response?.status);
       toast({
         title: 'Error',
         description: `Failed to update AMC: ${error.response?.data?.message || error.message || 'Please try again.'}`,

@@ -17,18 +17,12 @@ export const InventoryDetailsPage = () => {
   useEffect(() => {
     const fetchInventoryDetails = async () => {
       if (!id) return;
-      
       try {
         setLoading(true);
-        console.log('Fetching inventory details for ID:', id);
         const response = await apiClient.get(`/pms/inventories/${id}.json`);
-        console.log('Full API response:', response);
-        console.log('Response data:', response.data);
-        console.log('Available fields:', Object.keys(response.data || {}));
         setInventoryData(response.data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching inventory details:', err);
         setError('Failed to load inventory details');
       } finally {
         setLoading(false);
@@ -38,7 +32,6 @@ export const InventoryDetailsPage = () => {
     fetchInventoryDetails();
   }, [id]);
 
-  console.log('Inventory data:', inventoryData);
 
   const handleBack = () => {
     navigate('/maintenance/inventory');
@@ -108,11 +101,11 @@ export const InventoryDetailsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Inventory Detail Section */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader className="border-b bg-white">
+          <Card className='border border-[#D9D9D9] bg-[#F6F7F7]'>
+            <CardHeader className="border-b bg-[#F6F4EE]">
               <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>!</div>
-                INVENTORY DETAIL
+                <h2 className="text-lg font-[700] text-black"> INVENTORY DETAIL </h2>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -212,11 +205,11 @@ export const InventoryDetailsPage = () => {
           </Card>
 
           {/* Asset Information Section */}
-          <Card className="mt-6">
-            <CardHeader className="border-b bg-white">
+          <Card className="mt-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+            <CardHeader className="border-b bg-[#F6F4EE]">
               <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>i</div>
-                ASSET INFORMATION
+                <h2 className="text-lg font-[700] text-black">ASSET INFORMATION </h2>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -264,11 +257,11 @@ export const InventoryDetailsPage = () => {
 
         {/* QR Code Section */}
         <div>
-          <Card>
-            <CardHeader className="border-b bg-white">
+          <Card className='border border-[#D9D9D9] bg-[#F6F7F7]'>
+            <CardHeader className="border-b bg-[#F6F4EE]">
               <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
                 <QrCode className="w-5 h-5" />
-                QR Code
+                <h2 className="text-lg font-[700] text-black">QR Code </h2>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 flex justify-center">

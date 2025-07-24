@@ -37,6 +37,11 @@ import { fetchMasterUnitsReducer } from './slices/unitMaster'
 import { createInventoryConsumptionReducer, inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
 import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
 import { ecoFriendlyListReducer } from './slices/ecoFriendlyListSlice'
+import buildingsReducer from './slices/buildingsSlice'
+import wingsReducer from './slices/wingsSlice'
+import floorsReducer from './slices/floorsSlice'
+import zonesReducer from './slices/zonesSlice'
+import roomsReducer from './slices/roomsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -69,53 +74,19 @@ export const store = configureStore({
     location: locationReducer,
     serviceLocation: serviceLocationReducer,
     attendance: attendanceReducer,
-    inventoryAssets: inventoryAssetsReducer,
-    inventoryEdit: inventoryEditReducer,
-    serviceEdit: serviceEditReducer,
-
-    fetchBookingDetails: fetchBookingDetailsReducer,
-    exportReport: exportReportReducer,
-    fetchRestaurants: fetchRestaurantsReducer,
-    createRestaurant: createRestaurantReducer,
-    fetchRestaurantDetails: fetchRestaurantDetailsReducer,
-    editRestaurant: editRestaurantReducer,
-    createRestaurantStatus: createRestaurantStatusReducer,
-    fetchRestaurantStatuses: fetchRestaurantStatusesReducer,
-    createRestaurantCategory: createRestaurantCategoryReducer,
-    fetchRestaurantCategory: fetchRestaurantCategoryReducer,
-    deleteCategory: deleteCategoryReducer,
-    editCategory: editCategoryReducer,
-    createSubcategory: createSubcategoryReducer,
-    fetchSubcategory: fetchSubcategoryReducer,
-    deleteSubCategory: deleteSubCategoryReducer,
-    serviceFilter: serviceFilterReducer,
-    deleteRestaurantStatus: deleteRestaurantStatusReducer,
-    editRestaurantStatus: editRestaurantStatusReducer,
-    editSubCategory: editSubCategoryReducer,
-    fetchRestaurantBookings: fetchRestaurantBookingsReducer,
-    createMenu: createMenuReducer,
-    fetchMenu: fetchMenuReducer,
-    fetchFacilitySetup: fetchFacilitySetupReducer,
-    fetchMenuDetails: fetchMenuDetailsReducer,
-    fetchOrderDetails: fetchOrderDetailsReducer,
-    exportOrders: exportOrdersReducer,
-
-    // Unit Master
-    fetchMasterUnits: fetchMasterUnitsReducer,
-    inventoryConsumption: inventoryConsumptionReducer,
-    inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
-    ecoFriendlyList: ecoFriendlyListReducer,
-    createInventoryConsumption: createInventoryConsumptionReducer,
-    facilityBookingSetupDetails: facilityBookingSetupDetailsReducer,
-
-    // Service Slices
-    fetchService: fetchServiceReducer,
-    createService: createServiceReducer,
-    updateService: updateServiceReducer,
+  inventoryAssets: inventoryAssetsReducer,
+  inventoryEdit: inventoryEditReducer,
+  serviceEdit: serviceEditReducer,
+  serviceFilter: serviceFilterReducer,
+  inventoryConsumption: inventoryConsumptionReducer,
+  inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
+  ecoFriendlyList: ecoFriendlyListReducer,
+  buildings: buildingsReducer,
+  wings: wingsReducer,
+  floors: floorsReducer,
+  zones: zonesReducer,
+  rooms: roomsReducer,
   },
 })
-
-console.log('Store configured with reducers:', Object.keys(store.getState()));
-
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch

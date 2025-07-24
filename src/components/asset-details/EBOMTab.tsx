@@ -79,61 +79,56 @@ export const EBOMTab: React.FC<EBOMTabProps> = ({ asset }) => {
         </Button>
       </div>
 
-      {/* EBOM Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                {tableHeaders.map((header, index) => (
-                  <th
-                    key={index}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap"
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {asset.ebom_details && asset.ebom_details.length > 0 ? (
-                asset.ebom_details.map((item, index) => (
-                  <tr key={index} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.name?.trim() || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.id}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.inventory_type}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.asset_group}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.asset_sub_group}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.category}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.criticality}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.quantity}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.unit}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">₹{item.cost.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.hsn || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.min_stock_level}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.min_order_level || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{item.asset_name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {item.active ? 'Active' : 'Inactive'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {item.expiry_date || '-'}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={tableHeaders.length}
-                    className="px-4 py-6 text-center text-sm text-gray-500"
-                  >
-                    No EBOM data available.
-                  </td>
+      {/* EBOM Table - Styled like PPMTab */}
+      <div className="bg-white rounded-lg border overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr style={{ backgroundColor: '#F6F4EE' }}>
+              {tableHeaders.map((header, index) => (
+                <th
+                  key={index}
+                  className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap"
+                  style={{ fontWeight: 600 }}
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {asset.ebom_details && asset.ebom_details.length > 0 ? (
+              asset.ebom_details.map((item, index) => (
+                <tr key={index} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-800 font-medium">{item.name?.trim() || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.id}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.inventory_type}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.asset_group}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.asset_sub_group}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.category}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.criticality}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.quantity}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.unit}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">₹{item.cost.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.hsn || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.min_stock_level}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.min_order_level || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.asset_name}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.active ? 'Active' : 'Inactive'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{item.expiry_date || '-'}</td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={tableHeaders.length}
+                  className="px-4 py-6 text-center text-sm text-gray-500"
+                >
+                  No EBOM data available.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
