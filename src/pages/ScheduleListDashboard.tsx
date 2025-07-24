@@ -8,6 +8,7 @@ import { ScheduleFilterDialog } from '@/components/ScheduleFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ScheduleSelector } from '@/components/ScheduleSelector';
 import { RecentSchedulesSidebar } from '@/components/RecentSchedulesSidebar';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Cell, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } from '@/services/customFormsAPI';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>(['checklist', 'technical-checklist', 'non-technical-checklist']);
   
   // Add filter state
@@ -55,6 +57,7 @@ export const ScheduleListDashboard = () => {
 
   // Transform the data
   const schedules = customFormsData ? transformCustomFormsData(customFormsData.custom_forms) : [];
+  
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   const handleExport = () => navigate('/maintenance/schedule/export');
   const handleToggleActive = (scheduleId: string) => {
@@ -71,6 +74,33 @@ export const ScheduleListDashboard = () => {
       state: { formCode } 
     });
   };
+
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+  
+  // Selection actions for the action panel
+  const selectionActions = [
+    {
+      label: 'Filter',
+      icon: Filter,
+      onClick: () => setShowFilterDialog(true),
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Export',
+      icon: Download,
+      onClick: handleExport,
+      variant: 'outline' as const,
+    },
+    // Add any additional bulk actions here if needed
+    // {
+    //   label: 'Bulk Update',
+    //   icon: Clock,
+    //   onClick: handleBulkUpdate,
+    //   variant: 'outline' as const,
+    // },
+  ];
   const columns = [{
     key: 'actions',
     label: 'Actions',
@@ -116,20 +146,17 @@ export const ScheduleListDashboard = () => {
     label: 'Created On',
     sortable: true
   }];
-  const renderCustomActions = () => <div className="flex flex-wrap gap-2 sm:gap-3">
-      <Button onClick={handleAddSchedule} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium">
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Action
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-2 sm:gap-3">
+      <Button 
+        onClick={handleActionClick}
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+      >
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+        Action
       </Button>
-      <Button onClick={() => setShowImportModal(true)} variant="outline" className="text-sm">
-        <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Import
-      </Button>
-      <Button onClick={() => setShowFilterDialog(true)} variant="outline" className="text-sm">
-        <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Filters
-      </Button>
-      <Button onClick={handleExport} variant="outline" className="text-sm">
-        <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Export
-      </Button>
-    </div>;
+    </div>
+  );
   const renderCell = (item: TransformedScheduleData, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
@@ -423,17 +450,46 @@ export const ScheduleListDashboard = () => {
         </div>
       </div>
     </div>;
-  const renderListTab = () => <div className="space-y-4">
+  const renderListTab = () => (
+    <div className="space-y-4">
+      {showActionPanel && (
+        <SelectionPanel
+          actions={selectionActions}
+          onAdd={handleAddSchedule}
+          onClearSelection={() => setShowActionPanel(false)}
+          onImport={() => setShowImportModal(true)}
+        />
+      )}
 
-      {isLoading ? <div className="flex items-center justify-center h-32">
+      {isLoading ? (
+        <div className="flex items-center justify-center h-32">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
           </div>
-        </div> : error ? <div className="flex items-center justify-center h-32">
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-32">
           <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
-        </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." leftActions={renderCustomActions()} />}
-    </div>;
+        </div>
+      ) : (
+        <EnhancedTable 
+          data={schedules} 
+          columns={columns} 
+          renderCell={renderCell} 
+          selectable={true} 
+          pagination={true} 
+          enableExport={true} 
+          exportFileName="schedules" 
+          onRowClick={handleViewSchedule} 
+          storageKey="schedules-table" 
+          enableSearch={true} 
+          searchPlaceholder="Search schedules..." 
+          leftActions={renderCustomActions()} 
+        />
+      )}
+    </div>
+  );
   function handleApplyFilters(filters: { activityName: string; type: string; category: string; }): void {
     setFilters(filters);
     setShowFilterDialog(false);

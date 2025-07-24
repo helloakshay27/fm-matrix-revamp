@@ -76,7 +76,7 @@ const CustomStep = styled(Step)(({ theme }) => ({
 const RedButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#C72030',
   color: 'white',
-  borderRadius: '8px',
+  borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
@@ -91,7 +91,7 @@ const RedButton = styled(MuiButton)(({ theme }) => ({
 const DraftButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#f6f4ee',
   color: '#C72030',
-  borderRadius: '8px',
+  borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
@@ -104,7 +104,7 @@ const DraftButton = styled(MuiButton)(({ theme }) => ({
 const SectionCard = styled(Paper)(({ theme }) => ({
   backgroundColor: 'white',
   boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  borderRadius: '8px',
+  borderRadius: 0,
   overflow: 'hidden',
   marginBottom: '24px',
 }));
@@ -381,11 +381,11 @@ export const AddSchedulePage = () => {
   }, [selectedAssetGroup]);
 
   const loadAssets = async () => {
-    console.log('Starting to load assets...');
+    // console.log('Starting to load assets...'); 
     setLoading(prev => ({ ...prev, assets: true }));
     try {
       const data = await assetService.getAssets();
-      console.log('Assets loaded successfully:', data);
+      // console.log('Assets loaded successfully:', data);
       setAssets(data);
     } catch (error) {
       console.error('Failed to load assets:', error);
@@ -400,11 +400,11 @@ export const AddSchedulePage = () => {
   };
 
   const loadAssetGroups = async () => {
-    console.log('Starting to load asset groups...');
+    // console.log('Starting to load asset groups...');
     setLoading(prev => ({ ...prev, groups: true }));
     try {
       const data = await assetService.getAssetGroups();
-      console.log('Asset groups loaded successfully:', data);
+      // console.log('Asset groups loaded successfully:', data);
       setAssetGroups(data.asset_groups);
     } catch (error) {
       console.error('Failed to load asset groups:', error);
@@ -419,11 +419,11 @@ export const AddSchedulePage = () => {
   };
 
   const loadAssetSubGroups = async (groupId: number) => {
-    console.log('Loading sub-groups for group ID:', groupId);
+    // console.log('Loading sub-groups for group ID:', groupId);
     setLoading(prev => ({ ...prev, subGroups: true }));
     try {
       const data = await assetService.getAssetSubGroups(groupId);
-      console.log('Sub-groups loaded successfully:', data);
+      // console.log('Sub-groups loaded successfully:', data);
       setAssetSubGroups(data.asset_groups);
     } catch (error) {
       console.error('Failed to load asset sub-groups:', error);
@@ -438,11 +438,11 @@ export const AddSchedulePage = () => {
   };
 
   const loadEmailRules = async () => {
-    console.log('Starting to load email rules...');
+    // console.log('Starting to load email rules...');
     setLoading(prev => ({ ...prev, emailRules: true }));
     try {
       const data = await assetService.getEmailRules();
-      console.log('Email rules loaded successfully:', data);
+      // console.log('Email rules loaded successfully:', data);
       setEmailRules(data);
     } catch (error) {
       console.error('Failed to load email rules:', error);
@@ -457,7 +457,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadUsers = async () => {
-    console.log('Starting to load users...');
+    // console.log('Starting to load users...');
     setLoading(prev => ({ ...prev, users: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ESCALATION_USERS}`, {
@@ -473,7 +473,7 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Users loaded successfully:', data);
+      // console.log('Users loaded successfully:', data);
       
       // Extract users array from response
       setUsers(data.users || []);
@@ -497,11 +497,11 @@ export const AddSchedulePage = () => {
   };
 
   const loadSuppliers = async () => {
-    console.log('Starting to load suppliers...');
+    // console.log('Starting to load suppliers...');
     setLoading(prev => ({ ...prev, suppliers: true }));
     try {
       const data = await assetService.getSuppliers();
-      console.log('Suppliers loaded successfully:', data);
+      // console.log('Suppliers loaded successfully:', data);
       setSuppliers(data);
     } catch (error) {
       console.error('Failed to load suppliers:', error);
@@ -516,7 +516,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadServices = async () => {
-    console.log('Starting to load services...');
+    // console.log('Starting to load services...');
     setLoading(prev => ({ ...prev, services: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/services/get_services.json`, {
@@ -532,7 +532,7 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Services loaded successfully:', data);
+      // console.log('Services loaded successfully:', data);
       setServices(data);
     } catch (error) {
       console.error('Failed to load services:', error);
@@ -547,7 +547,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadGroups = async () => {
-    console.log('Starting to load user groups...');
+    // console.log('Starting to load user groups...');
     setLoading(prev => ({ ...prev, groups: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER_GROUPS}`, {
@@ -563,7 +563,7 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('User groups loaded successfully:', data);
+      // console.log('User groups loaded successfully:', data);
       
       // Extract only id and name from the groups array
       const groupsArray = data.map((group: any) => ({
@@ -592,7 +592,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadTemplates = async () => {
-    console.log('Starting to load templates...');
+    // console.log('Starting to load templates...');
     setLoading(prev => ({ ...prev, templates: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/get_templates.json`, {
@@ -608,7 +608,7 @@ export const AddSchedulePage = () => {
       }
 
       const templateData = await response.json();
-      console.log('Templates loaded successfully:', templateData);
+      // console.log('Templates loaded successfully:', templateData);
       setTemplates(templateData);
     } catch (error) {
       console.error('Failed to load templates:', error);
@@ -630,7 +630,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadHelpdeskCategories = async () => {
-    console.log('Starting to load helpdesk categories...', API_CONFIG.BASE_URL);
+    // console.log('Starting to load helpdesk categories...', API_CONFIG.BASE_URL);
     setLoading(prev => ({ ...prev, helpdeskCategories: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.HELPDESK_CATEGORIES}`, {
@@ -646,8 +646,6 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log("response", response);
-      console.log('Helpdesk categories loaded successfully:', data);
       
       // Extract only id and name from helpdesk_categories
       const categoriesArray = (data.helpdesk_categories || []).map((category: any) => ({
@@ -657,7 +655,6 @@ export const AddSchedulePage = () => {
       
       setHelpdeskCategories(categoriesArray);
     } catch (error) {
-      console.log('Failed to load helpdesk categories:', error);
       
       console.error('Failed to load helpdesk categories:', error);
       toast({
@@ -679,7 +676,6 @@ export const AddSchedulePage = () => {
   };
 
   const loadTaskGroups = async () => {
-    console.log('Starting to load task groups...');
     setLoading(prev => ({ ...prev, taskGroups: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_GROUPS}`, {
@@ -695,7 +691,6 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Task groups loaded successfully:', data);
       
       // Extract only id and name from the groups array
       const groupsArray = data.map((group: any) => ({
@@ -726,7 +721,6 @@ export const AddSchedulePage = () => {
   const loadTaskSubGroups = async (groupId: string) => {
     if (!groupId) return;
     
-    console.log('Starting to load task sub-groups for group:', groupId);
     setLoading(prev => ({ ...prev, taskSubGroups: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_SUB_GROUPS}?group_id=${groupId}`, {
@@ -742,7 +736,6 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Task sub-groups loaded successfully:', data);
       
       // Extract only id and name from the asset_groups array
       const subGroupsArray = (data.asset_groups || []).map((subGroup: any) => ({
@@ -1264,7 +1257,6 @@ export const AddSchedulePage = () => {
   }, [activeStep, formData, questionSections, weightage, autoTicket]);
 
   const handleSave = async () => {
-    console.log('Saving schedule with current form data:', formData);
     
     // Validate all sections before submission
     const basicErrors = validateBasicConfiguration();
@@ -1274,7 +1266,6 @@ export const AddSchedulePage = () => {
     const allErrors = [...basicErrors, ...scheduleErrors, ...questionErrors];
     
     if (allErrors.length > 0) {
-      console.log('Validation errors found:', allErrors)
       toast({
         title: "Validation Error",
         description: `Please fix the following errors: ${allErrors.join(', ')}`,
@@ -1284,7 +1275,6 @@ export const AddSchedulePage = () => {
     }
 
     setIsSubmitting(true);
-    console.log('Saving schedule with data:', formData, questionSections, timeSetupData, attachments);
     
     try {
       const payload = buildAPIPayload();
@@ -1304,7 +1294,6 @@ export const AddSchedulePage = () => {
       }
 
       const result = await response.json();
-      console.log('Schedule created successfully:', result.custom_form_code, result);
       setCustomCode(result.custom_form_code);
       
       toast({
@@ -1369,7 +1358,6 @@ export const AddSchedulePage = () => {
       const templateData = await response.json();
       
       if (templateData && templateData.content) {
-        console.log('Detailed template data loaded:', templateData);
         
         // Convert template content to tasks format
         const templateTasks = templateData.content.map((question: any, index: number) => {
@@ -1439,7 +1427,6 @@ export const AddSchedulePage = () => {
           scheduleFor: mapChecklistFor(templateData.checklist_for)
         }));
         
-        console.log('Template tasks loaded:', templateTasks);
         toast({
           title: "Success",
           description: `Template "${templateData.form_name}" loaded successfully!`,
@@ -1458,7 +1445,6 @@ export const AddSchedulePage = () => {
   };
 
   const handleAssetGroupChange = (groupId: string) => {
-    console.log('Asset group changed to:', groupId); // Debug log
     const numericGroupId = groupId ? Number(groupId) : undefined;
     setSelectedAssetGroup(numericGroupId);
     setFormData(prev => ({ 
@@ -2002,14 +1988,12 @@ export const AddSchedulePage = () => {
         }
 
         return (
-          <Box>
-            {/* Header Outside the Box */}
+          <SectionCard style={{ padding: '24px', margin: 0, borderRadius:'3px' }} >
+            {/* Header with icon and title */}
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between',
-              mb: 3,
-              px: 1
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{
@@ -2019,7 +2003,8 @@ export const AddSchedulePage = () => {
                   height: '32px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  marginBottm:'2'
                 }}>
                   <Cog size={16} color="white" />
                 </Box>
@@ -2027,157 +2012,10 @@ export const AddSchedulePage = () => {
                   Basic Configuration
                 </Typography>
               </Box>
-            </Box>
-
-            {/* Main Content in White Box */}
-            <SectionCard style={{ padding: '24px' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="body2" sx={{ color: '#666' }}>
-                      Schedule For: <strong>{formData.scheduleFor}</strong>
-                    </Typography>
-                    {stepIndex < activeStep && (
-                      <MuiButton
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Edit />}
-                        onClick={() => handleStepClick(stepIndex)}
-                        sx={{
-                          color: '#C72030',
-                          borderColor: '#C72030',
-                          fontSize: '12px',
-                          padding: '4px 12px',
-                          minWidth: 'auto',
-                          '&:hover': {
-                            borderColor: '#C72030',
-                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                          }
-                        }}
-                      >
-                        Edit
-                      </MuiButton>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-              
-              {/* Type Radio Group */}
-              <Box sx={{ mb: 3 }}>
-                <RadioGroup
-                  row
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  sx={{ mb: 2 }}
-                >
-                  <FormControlLabel 
-                    value="PPM" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="PPM" 
-                  />
-                  <FormControlLabel 
-                    value="AMC" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="AMC" 
-                  />
-                  <FormControlLabel 
-                    value="Preparedness" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Preparedness" 
-                  />
-                  <FormControlLabel 
-                    value="Hoto" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Hoto" 
-                  />
-                  <FormControlLabel 
-                    value="Routine" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Routine" 
-                  />
-                  <FormControlLabel 
-                    value="Audit" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Audit" 
-                  />
-                </RadioGroup>
-              </Box>
-              
-              <TextField
-                label="Activity Name"
-                placeholder="Enter Activity Name"
-                fullWidth
-                value={formData.activityName}
-                onChange={(e) => setFormData({...formData, activityName: e.target.value})}
-                sx={{ mb: 3 }}
-              />
-              
-              <TextField
-                label="Description"
-                placeholder="Enter Description/SOP"
-                fullWidth
-                multiline
-                rows={4}
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                sx={{ mb: 3 }}
-              />
-              
-              {/* Add Attachment Button */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <RedButton 
-                  startIcon={<AttachFile />}
-                  onClick={addAttachment}
-                >
-                  Add Attachment
-                </RedButton>
-              </Box>
-            </SectionCard>
-          </Box>
-        );
-        
-      case 1: // Schedule Setup
-        function handleMultiSelectChange(field: 'selectedUsers' | 'selectedGroups', e: SelectChangeEvent<any>) {
-          const {
-            target: { value }
-          } = e;
-          setFormData(prev => ({
-            ...prev,
-            [field]: typeof value === 'string' ? value.split(',') : value
-          }));
-        }
-
-        return (
-          <Box>
-            {/* Header Outside the Box */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 2,
-              mb: 3,
-              px: 1
-            }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Schedule Setup
-              </Typography>
-            </Box>
-
-            {/* Main Content in White Box */}
-            <SectionCard style={{ padding: '24px' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3,  }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="body2" sx={{ color: '#666' }}>
+                  Schedule For: <strong>{formData.scheduleFor}</strong>
+                </Typography>
                 {stepIndex < activeStep && (
                   <MuiButton
                     variant="outlined"
@@ -2200,6 +2038,142 @@ export const AddSchedulePage = () => {
                   </MuiButton>
                 )}
               </Box>
+            </Box>
+
+            {/* Type section */}
+            <Box sx={{ my: 3 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Type</Typography>
+              <RadioGroup
+                row
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                sx={{ mb: 2 }}
+              >
+                <FormControlLabel 
+                  value="PPM" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="PPM" 
+                />
+                <FormControlLabel 
+                  value="AMC" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="AMC" 
+                />
+                <FormControlLabel 
+                  value="Preparedness" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Preparedness" 
+                />
+                <FormControlLabel 
+                  value="Hoto" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Hoto" 
+                />
+                <FormControlLabel 
+                  value="Routine" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Routine" 
+                />
+                <FormControlLabel 
+                  value="Audit" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Audit" 
+                />
+              </RadioGroup>
+            </Box>
+            
+            <TextField
+              label="Activity Name"
+              placeholder="Enter Activity Name"
+              fullWidth
+              value={formData.activityName}
+              onChange={(e) => setFormData({...formData, activityName: e.target.value})}
+              sx={{ mb: 3 }}
+            />
+            
+            <TextField
+              label="Description"
+              placeholder="Enter Description/SOP"
+              fullWidth
+              multiline
+              rows={4}
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              sx={{ mb: 3 }}
+            />
+            
+            {/* Add Attachment Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <RedButton 
+                startIcon={<AttachFile />}
+                onClick={addAttachment}
+              >
+                Add Attachment
+              </RedButton>
+            </Box>
+          </SectionCard>
+        );
+        
+      case 1: // Schedule Setup
+        function handleMultiSelectChange(field: 'selectedUsers' | 'selectedGroups', e: SelectChangeEvent<any>) {
+          const {
+            target: { value }
+          } = e;
+          setFormData(prev => ({
+            ...prev,
+            [field]: typeof value === 'string' ? value.split(',') : value
+          }));
+        }
+
+        return (
+          <SectionCard style={{ padding: '24px', margin: 0, borderRadius:'3px' }}>
+            {/* Header with icon and title */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              mb: 3
+            }}>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                Schedule Setup
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
+              {stepIndex < activeStep && (
+                <MuiButton
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Edit />}
+                  onClick={() => handleStepClick(stepIndex)}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    minWidth: 'auto',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  Edit
+                </MuiButton>
+              )}
+            </Box>
               <Box sx={{ mb: 3 }}>
                 <RadioGroup
                   row
@@ -2542,7 +2516,6 @@ export const AddSchedulePage = () => {
                   value={formData.graceTime}
                   onChange={(value) => setFormData({...formData, graceTime: value.toString(), graceTimeValue: ''})}
                   options={[
-                    { id: '', label: 'Select Grace Time', value: '' },
                     { id: 'minutes', label: 'Minutes', value: 'minutes' },
                     { id: 'hour', label: 'Hour', value: 'hour' },
                     { id: 'day', label: 'Day', value: 'day' },
@@ -2631,7 +2604,6 @@ export const AddSchedulePage = () => {
                 />
               </Box>
             </SectionCard>
-          </Box>
         );
         
       case 2: // Question Setup
@@ -3021,7 +2993,7 @@ export const AddSchedulePage = () => {
             
             {/* Create New Template Section */}
             {createNew && (
-              <SectionCard style={{ padding: '24px' }} sx={{ mb: 2 }}>
+              <SectionCard style={{ padding: '24px', margin: 0, borderRadius:'3px' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                   Select Template
                 </Typography>
@@ -3050,7 +3022,7 @@ export const AddSchedulePage = () => {
 
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
-              <SectionCard style={{ padding: '24px' }} sx={{ mb: 2 }}>
+              <SectionCard style={{ padding: '24px', margin: 0, borderRadius:'3px' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                   Auto Ticket Configuration
                 </Typography>
@@ -3131,7 +3103,7 @@ export const AddSchedulePage = () => {
                 {section.autoTicket && (
                   <Box sx={{ 
                     border: '1px solid #E0E0E0', 
-                    borderRadius: '8px', 
+                    borderRadius: 0, 
                     padding: 2, 
                     mb: 3,
                     backgroundColor: '#F9F9F9'
@@ -3255,7 +3227,7 @@ export const AddSchedulePage = () => {
                     <Box sx={{ 
                       border: '2px dashed #E0E0E0', 
                       padding: 2, 
-                      borderRadius: '8px',
+                      borderRadius: 0,
                       backgroundColor: '#FAFAFA'
                     }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -3375,7 +3347,7 @@ export const AddSchedulePage = () => {
                           <Box sx={{
                             backgroundColor: '#F5F5F5',
                             border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
+                            borderRadius: 0,
                             padding: 2
                           }}>
                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
@@ -3449,7 +3421,7 @@ export const AddSchedulePage = () => {
                           <Box sx={{
                             backgroundColor: '#F5F5F5',
                             border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
+                            borderRadius: 0,
                             padding: 2
                           }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -3541,7 +3513,7 @@ export const AddSchedulePage = () => {
                           <Box sx={{
                             backgroundColor: '#F5F5F5',
                             border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
+                            borderRadius: 0,
                             padding: 2
                           }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -3616,7 +3588,7 @@ export const AddSchedulePage = () => {
                           <Box sx={{
                             backgroundColor: '#F5F5F5',
                             border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
+                            borderRadius: 0,
                             padding: 2
                           }}>
                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333', textAlign: 'center' }}>
@@ -3697,7 +3669,6 @@ export const AddSchedulePage = () => {
             <TimeSetupStep
               data={timeSetupData}
               onChange={(field, value) => {
-                console.log('Time setup change:', field, value);
                 setTimeSetupData(prev => ({ ...prev, [field]: value }));
               }}
               isCompleted={false}
@@ -3720,7 +3691,6 @@ export const AddSchedulePage = () => {
               <TimeSetupStep
                 data={timeSetupData}
                 onChange={(field, value) => {
-                  console.log('Time setup change:', field, value);
                   setTimeSetupData(prev => ({ ...prev, [field]: value }));
                 }}
                 isCompleted={false}
@@ -3745,8 +3715,6 @@ export const AddSchedulePage = () => {
                 data={checklistMappings}
                 loading={loadingMappings}
                 onChange={(mappingData) => {
-                  console.log('Mapping data changed:', mappingData);
-                  // Handle mapping data changes if needed
                 }}
                 isCompleted={false}
                 isCollapsed={false}
@@ -3760,128 +3728,7 @@ export const AddSchedulePage = () => {
     }
   };
 
-  const renderStepContent = () => {
-    // Show all steps up to and including the current active step
-    return (
-      <Box>
-        {Array.from({ length: activeStep + 1 }, (_, index) => (
-          <Box key={`step-content-${index}`} sx={{ mb: 3 }}>
-            {renderSingleStep(index)}
-          </Box>
-        ))}
-      </Box>
-    );
-  };
-
-  // Add function to fetch checklist mappings
-  const fetchChecklistMappings = async (customCode: string) => {
-    if (!customCode) return;
-    
-    setLoadingMappings(true);
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/checklist_mappings.json?id=${customCode}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Checklist mappings loaded successfully:', data);
-      setChecklistMappings(data);
-    } catch (error) {
-      console.error('Failed to load checklist mappings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load checklist mappings.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingMappings(false);
-    }
-  };
-
-  return (
-    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
-      {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-          <button
-            onClick={() => navigate('/maintenance/schedule')}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
-          </button>
-          <span>Schedule List</span>
-          <span>{'>'}</span>
-          <span className="text-gray-900 font-medium">Create New Schedule</span>
-        </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
-      </div>
-
-      {/* Custom Stepper - Bordered Box Design */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          width: '100%'
-        }}>
-          {steps.map((label, index) => (
-            <Box key={`step-${index}`} sx={{ display: 'flex', alignItems: 'center' }}>
-              <Box
-                onClick={() => handleStepClick(index)}
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: isStepRed(index) ? '#C72030' : 'white',
-                  color: isStepRed(index) ? 'white' : '#C4B89D',
-                  border: `2px solid ${isStepRed(index) ? '#C72030' : '#C4B89D'}`,
-                  padding: '12px 20px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  textAlign: 'center',
-                  minWidth: '140px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
-                  transition: 'all 0.2s ease',
-                  fontFamily: 'Work Sans, sans-serif',
-                  '&:hover': {
-                    opacity: 0.9
-                  }
-                }}
-              >
-                {label}
-              </Box>
-              {index < steps.length - 1 && (
-                <Box
-                  sx={{
-                    width: '60px',
-                    height: '2px',
-                    backgroundImage: 'repeating-linear-gradient(to right, #C4B89D 0px, #C4B89D 8px, transparent 8px, transparent 16px)',
-                    margin: '0 0px'
-                  }}
-                />
-              )}
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      {/* Step Content */}
-      <div className="space-y-4 sm:space-y-6">
-        {renderStepContent()}
-      </div>
-
-      {/* Navigation Buttons */}
+  {/* Navigation Buttons */}
       <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
         <div>
           {activeStep > 0 && (
@@ -3929,6 +3776,284 @@ export const AddSchedulePage = () => {
           )}
         </div>
       </div>
+
+  const renderStepContent = () => {
+    // Show only the current active step content
+    return (
+      <Box>
+        <Box sx={{ mb: 3 }}>
+          {renderSingleStep(activeStep)}
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderCompletedSections = () => {
+    return (
+      <Box sx={{ mt: 4 }}>
+        {/* Progress Text */}
+        <Box sx={{ 
+          textAlign: 'center', 
+          mb: 3,
+          fontFamily: 'Work Sans, sans-serif'
+        }}>
+          <Typography variant="body2" sx={{ 
+            color: '#666',
+            fontSize: '14px',
+            fontWeight: 500
+          }}>
+            You've completed {completedSteps.length} out of {steps.length} steps.
+          </Typography>
+        </Box>
+
+        {/* Completed Steps with Actual Content */}
+        {completedSteps.length > 0 && (
+          <Box>
+            {completedSteps.map((stepIndex) => (
+              <Box
+                key={`completed-section-${stepIndex}`}
+                sx={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 0,
+                  mb: 3,
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Section Header */}
+                {/* <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '16px 20px',
+                    borderLeft: '4px solid #C72030',
+                    backgroundColor: '#fafafa',
+                    borderBottom: '1px solid #e0e0e0'
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      backgroundColor: '#C72030',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      mr: 2
+                    }}
+                  >
+                    <Settings sx={{ fontSize: '16px' }} />
+                  </Box>
+                  <Typography sx={{ 
+                    fontSize: '16px', 
+                    fontWeight: 600,
+                    color: '#C72030',
+                    fontFamily: 'Work Sans, sans-serif',
+                    flex: 1
+                  }}>
+                    {steps[stepIndex]}
+                  </Typography>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleStepClick(stepIndex)}>
+                    <Typography sx={{ 
+                      fontSize: '12px', 
+                      color: '#666',
+                      fontFamily: 'Work Sans, sans-serif'
+                    }}>
+                      Edit
+                    </Typography>
+                    <Edit sx={{ fontSize: '16px', color: '#C72030' }} />
+                  </Box>
+                </Box> */}
+
+                {/* Section Content */}
+                {/* <Box sx={{ p: 3 }}> */}
+                  {renderSingleStep(stepIndex)}
+                {/* </Box> */}
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
+  // Add function to fetch checklist mappings
+  const fetchChecklistMappings = async (customCode: string) => {
+    if (!customCode) return;
+    
+    setLoadingMappings(true);
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/checklist_mappings.json?id=${customCode}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setChecklistMappings(data);
+    } catch (error) {
+      console.error('Failed to load checklist mappings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load checklist mappings.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingMappings(false);
+    }
+  };
+
+  return (
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+      {/* Header */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={() => navigate('/maintenance/schedule')}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Schedule List</span>
+          <span>{'>'}</span>
+          <span className="text-gray-900 font-medium">Create New Schedule</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
+      </div>
+
+      {/* Custom Stepper - Bordered Box Design */}
+      <Box sx={{ mb: 4 }}>
+        {/* Main Stepper - Show all steps with proper progression */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '100%'
+        }}>
+          {steps.map((label, index) => (
+            <Box key={`step-${index}`} sx={{ display: 'flex', alignItems: 'center' }}>              
+              <Box
+                onClick={() => handleStepClick(index)}
+                sx={{
+                  cursor: 'pointer',
+                  backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#C72030' : 'white',
+                  color: (index === activeStep || completedSteps.includes(index)) ? 'white' : '#C4B89D',
+                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'}`,
+                  padding: '12px 20px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  textAlign: 'center',
+                  minWidth: '140px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'Work Sans, sans-serif',
+                  position: 'relative',
+                  '&:hover': {
+                    opacity: 0.9
+                  },
+                  '&::before': completedSteps.includes(index) && index !== activeStep ? {
+                    // content: `"${index + 1}."`,
+                    position: 'absolute',
+                    left: '8px',
+                    fontSize: '11px',
+                    fontWeight: 600
+                  } : {}
+                }}
+              >
+                {label}
+              </Box>
+              {index < steps.length - 1 && (
+                <Box
+                  sx={{
+                    width: '60px',
+                    height: '2px',
+                    backgroundImage: 'repeating-linear-gradient(to right, #C4B89D 0px, #C4B89D 8px, transparent 8px, transparent 16px)',
+                    margin: '0 0px'
+                  }}
+                />
+              )}
+            </Box>
+          ))}
+        </Box>
+      </Box>
+
+      {/* Step Content */}
+      <div className="space-y-4 sm:space-y-6">
+        {renderStepContent()}
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
+        <div>
+          {activeStep > 0 && (
+            <button
+              onClick={handleBack}
+              className="border border-[#C72030] text-[#C72030] px-6 py-2 hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+            >
+              Back
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-4">
+          {activeStep < steps.length - 1 ? (
+            <>
+              {activeStep === 3 ? ( // Time Setup step
+                <button
+                  onClick={handleSave}
+                  disabled={isSubmitting || validationErrors[activeStep]?.length > 0}
+                  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save & Continue'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  disabled={validationErrors[activeStep]?.length > 0}
+                  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+                >
+                  Next
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={handleFinish}
+              className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+            >
+              Finish
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Completed Sections */}
+      {renderCompletedSections()}
 
       {/* Validation Errors Display */}
       {validationErrors[activeStep]?.length > 0 && (
