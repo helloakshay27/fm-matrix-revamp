@@ -80,14 +80,6 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
         >
           <Upload className="w-4 h-4" />
         </Button>
-        
-        <Button 
-          variant="outline" 
-          size="icon"
-          className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   );
