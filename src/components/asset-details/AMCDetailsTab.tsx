@@ -95,6 +95,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <span className="text-gray-500 w-24">No. Of Visits</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcData.noOfVisits}</span>
+                    
                   </div>
                 </div>
               </div>
@@ -153,20 +154,29 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
 
                   <div className="space-y-6">
                     {logsData.length > 0 ? (
-                      logsData.map((log, i) => (
-                        <div key={i} className="flex gap-4">
-                          <div className="flex flex-col items-center">
-                            <div className="w-3 h-3 rounded-full bg-red-700" />
-                            {i < logsData.length - 1 && (
-                              <div className="w-0.5 h-12 mt-2 bg-red-700 opacity-30" />
-                            )}
+                      <div className="relative">
+                        {/* Timeline vertical line */}
+                        <div
+                          className="absolute left-[6px] top-[6px]"
+                          style={{
+                            background: '#C72030',
+                            width: '2px',
+                            height: `calc(100% - 6px)`, // from first dot to last dot
+                            zIndex: 0,
+                          }}
+                        />
+                        {logsData.map((log, i) => (
+                          <div key={i} className="flex gap-4 relative z-10">
+                            <div className="flex flex-col items-center">
+                              <div className="w-[14px] h-[14px] rounded-full" style={{ background: '#C72030' }} />
+                            </div>
+                            <div className="flex-1 pb-4">
+                              <p className="text-gray-900 text-sm mb-1">{log.text}</p>
+                              <p className="text-gray-400 text-xs">{log.date}</p>
+                            </div>
                           </div>
-                          <div className="flex-1 pb-4">
-                            <p className="text-gray-900 text-sm mb-1">{log.text}</p>
-                            <p className="text-gray-400 text-xs">{log.date}</p>
-                          </div>
-                        </div>
-                      ))
+                        ))}
+                      </div>
                     ) : (
                       <div className="text-gray-400 text-center">No logs available.</div>
                     )}

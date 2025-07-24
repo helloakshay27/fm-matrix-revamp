@@ -17,6 +17,7 @@ import { ReadingsTab } from "@/components/asset-details/ReadingsTab";
 import { HistoryCardTab } from "@/components/asset-details/HistoryCardTab";
 import { DepreciationTab } from "@/components/asset-details/DepreciationTab";
 import { TicketTab } from "@/components/asset-details/TicketTab";
+import { AssociationTab } from "@/components/asset-details/AssociationTab";
 
 import { RepairReplaceModal } from "@/components/RepairReplaceModal";
 import { QRCodeModal } from "@/components/QRCodeModal";

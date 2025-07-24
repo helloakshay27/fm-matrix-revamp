@@ -4,7 +4,7 @@ import { ENDPOINTS } from '@/config/apiConfig';
 import { Asset } from '@/hooks/useAssets';
 
 interface SearchResponse {
-  data: any[];
+    assets: Asset[];
   pagination: {
     current_page: number;
     total_pages: number;
@@ -57,15 +57,17 @@ export const useAssetSearch = () => {
         }
       });
 
+      console.log(response.data.assets)
+
       console.log('✅ Search response received:', response.status);
       console.log('📄 Response data structure:', {
         hasData: !!response.data,
-        hasDataArray: !!(response.data && Array.isArray(response.data.data)),
-        dataCount: response.data?.data?.length || 0
+        hasDataArray: !!(response.data && Array.isArray(response.data.assets)),
+        dataCount: response.data?.assets?.length || 0
       });
 
-      if (response.data && Array.isArray(response.data.data)) {
-        const mappedAssets = response.data.data.map(mapAssetData);
+      if (response.data && Array.isArray(response.data.assets)) {
+        const mappedAssets = response.data.assets.map(mapAssetData);
         console.log('🎯 Mapped assets count:', mappedAssets.length);
         setAssets(mappedAssets);
       } else {

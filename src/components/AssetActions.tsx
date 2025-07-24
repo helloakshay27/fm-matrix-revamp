@@ -23,6 +23,7 @@ interface AssetActionsProps {
   onUpdate: () => void;
   onFilterOpen: () => void;
   onRefresh: () => void;
+  onChecklist?: () => void;
   visibleColumns: any;
   onColumnChange: (columns: any) => void;
 }
@@ -35,6 +36,7 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
   onUpdate,
   onFilterOpen,
   onRefresh,
+  onChecklist = () => console.log('Checklist button clicked'),
   visibleColumns,
   onColumnChange,
 }) => {
@@ -42,25 +44,25 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
   
    const selectionActions = [
     
-      {
-        label: 'Update',
-        icon: Clock,
-        // onClick: handleUpdateSelected,
-        variant: 'outline' as const,
-      },
+      // {
+      //   label: 'Update',
+      //   icon: Clock,
+      //   // onClick: handleUpdateSelected,
+      //   variant: 'outline' as const,
+      // },
       
-      {
-        label: 'Flag',
-        icon: AlertCircle,
-        // onClick: handleFlagSelected,
-        variant: 'outline' as const,
-      },
-      {
-        label: 'Delete',
-        icon: Trash2,
-        // onClick: () => handleBulkDelete(selectedAMCObjects),
-        variant: 'destructive' as const,
-      },
+      // {
+      //   label: 'Flag',
+      //   icon: AlertCircle,
+      //   // onClick: handleFlagSelected,
+      //   variant: 'outline' as const,
+      // },
+      // {
+      //   label: 'Delete',
+      //   icon: Trash2,
+      //   // onClick: () => handleBulkDelete(selectedAMCObjects),
+      //   variant: 'destructive' as const,
+      // },
 
     ];
 
@@ -74,7 +76,7 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
                   onAdd={onAddAsset}
                   onClearSelection={()=> setShowActionPanel(false)}
                   onImport={onImport}
-                 
+                  onChecklist={onChecklist}
                 />
               )}
     <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -111,6 +113,7 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
         >
           <Filter className="w-4 h-4 " />
         </Button>
+
 
         {/* <Button 
           variant="outline" 

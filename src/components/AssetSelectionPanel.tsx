@@ -193,13 +193,13 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     if (showAll) {
       return selectedAssets.map((asset) => asset.name).join(", ");
     }
-    if (selectedAssets.length <= 3) {
+    if (selectedAssets.length <= 6) {
       return selectedAssets.map((asset) => asset.name).join(", ");
     }
     return (
       <>
         {selectedAssets
-          .slice(0, 2)
+          .slice(0, 6)
           .map((asset) => asset.name)
           .join(", ")}{" "}
         and{" "}
@@ -207,7 +207,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
           onClick={() => setShowAll(true)}
           className="text-blue-600 hover:text-blue-800 underline"
         >
-          {selectedAssets.length - 2} more
+          {selectedAssets.length - 6} more
         </button>
       </>
     );

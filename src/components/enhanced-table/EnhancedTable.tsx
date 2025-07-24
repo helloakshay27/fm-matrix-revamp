@@ -218,60 +218,8 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   const handleSearchInputChange = (value: string) => {
     setSearchInput(value);
+    onSearchChange?.(value);
   };
-
-  const performSearch = async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setApiSearchResults(null);
-      setInternalSearchTerm('');
-      if (onSearchChange) {
-        onSearchChange('');
-      }
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-
-      if (!token) {
-        alert('Authentication token not found. Please login first.');
-        return;
-      }
-
-      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchTerm}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setApiSearchResults(data.complaints || []);
-        setCurrentPage(1);
-        setInternalSearchTerm(searchTerm);
-        if (onSearchChange) {
-          onSearchChange(searchTerm);
-        }
-      } else if (response.status === 401) {
-        alert('Unauthorized: Please check your authentication token or login again.');
-      } else {
-        alert(`Failed to search: ${response.status} ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
-      alert('An error occurred while searching. Please try again.');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Trigger search when debounced input changes
-  useEffect(() => {
-    performSearch(debouncedSearchInput);
-  }, [debouncedSearchInput]);
 
   const handleClearSearch = () => {
     setSearchInput('');

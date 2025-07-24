@@ -258,20 +258,37 @@
 //       </div>
 //     </div>;
 // };
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
-  Calendar, Lock, AlertTriangle, CheckCircle, Clock, Search, RotateCcw, Grid3X3, Download,
-} from 'lucide-react';
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+  Calendar,
+  Lock,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Search,
+  RotateCcw,
+  Grid3X3,
+  Download,
+} from "lucide-react";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 
 interface Asset {
   id: number;
@@ -298,31 +315,34 @@ interface PPMTabProps {
 export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
   const [ppmData, setPpmData] = useState<Occurrence[]>([]);
   const [filteredData, setFilteredData] = useState<Occurrence[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('Scheduled');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Scheduled");
   const [loading, setLoading] = useState(false);
 
   const statusCards = [
-    { label: 'Scheduled', icon: Calendar },
-    { label: 'Open', icon: Lock },
-    { label: 'In Progress', icon: AlertTriangle },
-    { label: 'Closed', icon: CheckCircle },
-    { label: 'Overdue', icon: Clock },
+    { label: "Scheduled", icon: Calendar },
+    { label: "Open", icon: Lock },
+    { label: "In Progress", icon: AlertTriangle },
+    { label: "Closed", icon: CheckCircle },
+    { label: "Overdue", icon: Clock },
   ];
 
   const fetchPPMData = async () => {
     if (!assetId) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_CONFIG.BASE_URL}/pms/assets/${assetId}/occurrences.json`, {
-        headers: {
-          Authorization: getAuthHeader(),
-        },
-      });
+      const res = await axios.get(
+        `${API_CONFIG.BASE_URL}/pms/assets/${assetId}/occurrences.json`,
+        {
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
       const occurrences: Occurrence[] = res.data.occurrences;
       setPpmData(occurrences);
     } catch (error) {
-      console.error('Failed to fetch PPM data', error);
+      console.error("Failed to fetch PPM data", error);
     } finally {
       setLoading(false);
     }
@@ -333,10 +353,11 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
   }, [assetId]);
 
   useEffect(() => {
-    const filtered = ppmData.filter((occ) =>
-      occ.task_status === statusFilter &&
-      (occ.checklist_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        occ.schedule.toLowerCase().includes(searchTerm.toLowerCase()))
+    const filtered = ppmData.filter(
+      (occ) =>
+        occ.task_status === statusFilter &&
+        (occ.checklist_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          occ.schedule.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredData(filtered);
   }, [ppmData, statusFilter, searchTerm]);
@@ -347,21 +368,32 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statusCards.map((card, index) => {
           const IconComponent = card.icon;
-          const count = ppmData.filter((item) => item.task_status === card.label).length;
+          const count = ppmData.filter(
+            (item) => item.task_status === card.label
+          ).length;
           return (
             <div
               key={index}
-              className={`p-4 rounded-lg cursor-pointer ${statusFilter === card.label ? 'ring-2 ring-red-600' : ''}`}
-              style={{ backgroundColor: '#F6F4EE' }}
+              className={`p-4 rounded-lg cursor-pointer ${
+                statusFilter === card.label ? "ring-2 ring-red-600" : ""
+              }`}
+              style={{ backgroundColor: "#F6F4EE" }}
               onClick={() => setStatusFilter(card.label)}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                  <IconComponent className="w-5 h-5" style={{ color: '#C72030' }} />
+                  <IconComponent
+                    className="w-5 h-5"
+                    style={{ color: "#C72030" }}
+                  />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-black">{count.toString().padStart(2, '0')}</div>
-                  <div className="text-sm font-medium text-black">{card.label}</div>
+                  <div className="text-2xl font-bold text-black">
+                    {count.toString().padStart(2, "0")}
+                  </div>
+                  <div className="text-sm font-medium text-black">
+                    {card.label}
+                  </div>
                 </div>
               </div>
             </div>
@@ -370,8 +402,8 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
       </div>
 
       {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-end">
+        {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
@@ -382,7 +414,7 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select> */}
 
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
@@ -394,9 +426,13 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
               className="pl-10 w-64 min-w-[200px]"
             />
           </div>
-          <Button variant="outline" size="sm"><RotateCcw className="w-4 h-4" /></Button>
-          <Button variant="outline" size="sm"><Grid3X3 className="w-4 h-4" /></Button>
-          <Button variant="outline" size="sm"><Download className="w-4 h-4" /></Button>
+          
+          <Button variant="outline" size="sm">
+            <Grid3X3 className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -435,7 +471,7 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
                   <TableCell>{item.checklist_name}</TableCell>
                   <TableCell>{item.type}</TableCell>
                   <TableCell>{item.schedule}</TableCell>
-                  <TableCell>{item.assigned_to || '—'}</TableCell>
+                  <TableCell>{item.assigned_to || "—"}</TableCell>
                   <TableCell>{item.grace_time}</TableCell>
                   <TableCell>
                     <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium inline-flex items-center gap-1">

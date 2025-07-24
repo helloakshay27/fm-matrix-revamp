@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import axios from 'axios';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { useParams } from 'react-router-dom';
@@ -120,6 +120,12 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-medium">Label</TableHead>
+                    <TableHead className="font-medium">Value</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {basicAssetInfo.map((item, index) => (
                     <TableRow key={index}>
@@ -140,32 +146,32 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           <CardTitle className="text-base font-semibold text-[#C72030]">History</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+          <div className="bg-white rounded-lg border overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
-                <thead>
-                  <tr>
-                    <th className="p-4 text-center font-medium text-gray-700">Date</th>
-                    <th className="p-4 text-center font-medium text-gray-700">Type of Activity</th>
-                    <th className="p-4 text-center font-medium text-gray-700">Description</th>
-                    <th className="p-4 text-center font-medium text-gray-700">Performed By</th>
-                  </tr>
-                </thead>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-medium">Date</TableHead>
+                    <TableHead className="font-medium">Type of Activity</TableHead>
+                    <TableHead className="font-medium">Description</TableHead>
+                    <TableHead className="font-medium">Performed By</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {mappedHistoryTable.length > 0 ? (
                     mappedHistoryTable.map((row, idx) => (
                       <TableRow key={idx}>
-                        <TableCell className="p-4 text-center text-gray-900">{row.date}</TableCell>
-                        <TableCell className="p-4 text-center text-gray-900">{row.type}</TableCell>
-                        <TableCell className="p-4 text-center text-gray-900">
+                        <TableCell>{row.date}</TableCell>
+                        <TableCell>{row.type}</TableCell>
+                        <TableCell>
                           <div dangerouslySetInnerHTML={{ __html: row.description }} />
                         </TableCell>
-                        <TableCell className="p-4 text-center text-gray-900">{row.performedBy}</TableCell>
+                        <TableCell>{row.performedBy}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="p-4 text-center text-gray-400">No history available.</TableCell>
+                      <TableCell colSpan={4} className="text-center py-4 text-gray-400">No history available.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

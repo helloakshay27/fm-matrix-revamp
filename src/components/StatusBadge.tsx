@@ -1,25 +1,25 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
 
 interface StatusBadgeProps {
   status: string;
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+  console.log(status)
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'in_use':
       case 'in use':
-        return 'bg-green-500 text-white hover:bg-green-600';
+        return 'bg-green-500 text-white';
       case 'breakdown':
-        return 'bg-red-500 text-white hover:bg-red-600';
+        return 'bg-red-500 text-white';
       case 'in_storage':
       case 'in store':
-        return 'bg-blue-500 text-white hover:bg-blue-600';
+        return 'bg-blue-500 text-white';
       case 'disposed':
-        return 'bg-gray-500 text-white hover:bg-gray-600';
+        return 'bg-gray-500 text-white';
       default:
-        return 'bg-gray-400 text-white hover:bg-gray-500';
+        return 'bg-gray-400 text-white';
     }
   };
 
@@ -39,8 +39,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   };
 
   return (
-    <Badge className={`${getStatusColor(status)} text-xs px-2 py-1`}>
+    <div className={`${getStatusColor(status)} inline-flex items-center justify-center text-xs px-2 py-1 rounded-sm font-medium w-20 text-center`}>
       {formatStatusLabel(status)}
-    </Badge>
+    </div>
   );
 };

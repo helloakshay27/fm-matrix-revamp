@@ -20,6 +20,7 @@ interface SelectionPanelProps {
   actions?: SelectionAction[];
   onAdd?: () => void;
   onImport?: () => void;
+  onChecklist?: () => void;
   onClearSelection?: () => void;
 }
 
@@ -27,6 +28,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   actions = [],
   onAdd,
   onImport,
+  onChecklist,
   onClearSelection,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);

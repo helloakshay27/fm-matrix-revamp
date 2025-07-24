@@ -215,30 +215,24 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Open Tickets */}
         <div
-          className="border bg-[#F6F4EE] flex items-center justify-between p-4"
-          style={{ height: "132px" }}
+          className="border bg-[#F6F4EE] flex items-center p-4"
+          style={{ height: "132px", width: "488px" }}
         >
-          {/* Left: Icon and count/label */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center rounded-lg" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
-              {/* SVG icon */}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <mask id="mask0_135_3243" style={{maskType:"alpha"}} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
-                  <rect width="24" height="24" fill="url(#pattern0_135_3243)"/>
-                </mask>
-                <g mask="url(#mask0_135_3243)">
-                  <rect x="-3.28125" y="-2.71875" width="34.8281" height="31.5" fill="#C72030"/>
-                </g>
-              </svg>
-            </div>
-            <div className="flex flex-col justify-center">
-              <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 24 }}>2</span>
-              <span className="text-base text-[#1A1A1A]">Open Tickets</span>
-            </div>
+          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+            {/* SVG icon */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <mask id="mask0_135_3243" style={{maskType:"alpha"}} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+                <rect width="24" height="24" fill="url(#pattern0_135_3243)"/>
+              </mask>
+              <g mask="url(#mask0_135_3243)">
+                <rect x="-3.28125" y="-2.71875" width="34.8281" height="31.5" fill="#C72030"/>
+              </g>
+            </svg>
           </div>
-          {/* Right: Clock and DD:HH:MM */}
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-1">
+          <div className="flex flex-col justify-center">
+            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>Open Tickets</span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>2</span>
+            <div className="flex items-center gap-1 mt-2">
               <Clock className="w-4 h-4 text-[#9CA3AF]" />
               <span className="text-xs text-[#9CA3AF] font-medium">DD:HH:MM</span>
             </div>
