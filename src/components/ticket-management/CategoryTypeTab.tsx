@@ -104,6 +104,8 @@ export const CategoryTypeTab: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<CategoryApiResponse['helpdesk_categories'][0] | null>(null);
   const [editFaqItems, setEditFaqItems] = useState<FAQ[]>([{ question: '', answer: '' }]);
   const [editIconFile, setEditIconFile] = useState<File | null>(null);
+  const [editVendorEmailEnabled, setEditVendorEmailEnabled] = useState(false);
+  const [editVendorEmails, setEditVendorEmails] = useState<string[]>(['']);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -336,6 +338,8 @@ export const CategoryTypeTab: React.FC = () => {
     setEditingCategory(category);
     setEditFaqItems([{ question: '', answer: '' }]); // Reset FAQ items for edit
     setEditIconFile(null);
+    setEditVendorEmailEnabled(category.category_email?.length > 0);
+    setEditVendorEmails(category.category_email?.length > 0 ? category.category_email.map(e => e.email) : ['']);
     setIsEditModalOpen(true);
   };
 
@@ -378,6 +382,23 @@ export const CategoryTypeTab: React.FC = () => {
     const file = event.target.files?.[0];
     if (file) {
       setEditIconFile(file);
+    }
+  };
+
+  const addEditVendorEmail = () => {
+    setEditVendorEmails([...editVendorEmails, '']);
+  };
+
+  const updateEditVendorEmail = (index: number, value: string) => {
+    const updated = editVendorEmails.map((email, i) => 
+      i === index ? value : email
+    );
+    setEditVendorEmails(updated);
+  };
+
+  const removeEditVendorEmail = (index: number) => {
+    if (editVendorEmails.length > 1) {
+      setEditVendorEmails(editVendorEmails.filter((_, i) => i !== index));
     }
   };
 
@@ -735,9 +756,48 @@ export const CategoryTypeTab: React.FC = () => {
                 <label htmlFor="customer-enabled" className="text-sm font-medium">Customer Enabled</label>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <Checkbox id="vendor-email-enabled" />
-                <label htmlFor="vendor-email-enabled" className="text-sm font-medium">Enable Vendor Email</label>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="vendor-email-enabled"
+                    checked={editVendorEmailEnabled}
+                    onCheckedChange={(checked) => setEditVendorEmailEnabled(!!checked)}
+                  />
+                  <label htmlFor="vendor-email-enabled" className="text-sm font-medium">Enable Vendor Email</label>
+                </div>
+
+                {editVendorEmailEnabled && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Vendor Emails</h3>
+                      <Button type="button" onClick={addEditVendorEmail} variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Email
+                      </Button>
+                    </div>
+
+                    {editVendorEmails.map((email, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="Enter vendor email"
+                          value={email}
+                          onChange={(e) => updateEditVendorEmail(index, e.target.value)}
+                        />
+                        {editVendorEmails.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeEditVendorEmail(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
