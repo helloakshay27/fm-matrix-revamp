@@ -109,7 +109,6 @@ export function AreaPage() {
           <Button 
             onClick={() => setShowAddDialog(true)} 
             className="gap-2"
-            disabled={!selectedBuilding || !selectedWing}
           >
             <Plus className="h-4 w-4" />
             Add Area
