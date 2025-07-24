@@ -292,11 +292,6 @@ export function WingPage() {
                       <TableCell className="font-medium">{wing.name}</TableCell>
                       <TableCell>{wing.building?.name || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge variant={wing.active ? "default" : "secondary"}>
-                          {wing.active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={wing.active}
