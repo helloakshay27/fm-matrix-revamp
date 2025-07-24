@@ -454,8 +454,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                  <TableRow className="h-[28px]">
                    {selectable && (
-                   <TableHead className="bg-[#F6F4EE] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px] text-center" data-checkbox>
-                         <div className="flex items-center justify-center w-full h-full">
+                   <TableHead className="bg-[#F6F4EE] py-0 font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
+                         <div className="flex items-center justify-center w-full h-[28px]">
                            <Checkbox
                              checked={isAllSelected}
                              onCheckedChange={handleSelectAllChange}
