@@ -241,6 +241,7 @@ import { FMUserMasterDashboard } from './pages/master/FMUserMasterDashboard';
 import { OccupantUserMasterDashboard } from './pages/master/OccupantUserMasterDashboard';
 import { AddFMUserPage } from './pages/master/AddFMUserPage';
 import { EditFMUserPage } from './pages/master/EditFMUserPage';
+import { ViewFMUserPage } from './pages/master/ViewFMUserPage';
 
 // Import Material Master page
 import { MaterialMasterPage } from './pages/MaterialMasterPage';
@@ -864,7 +865,8 @@ function App() {
                 {/* Master User Routes */}
                 <Route path="/master/user/fm-users" element={<FMUserMasterDashboard />} />
                 <Route path="/master/user/fm-users/add" element={<AddFMUserPage />} />
-                <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
+                 <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
+                 <Route path="/master/user/fm-users/view/:id" element={<ViewFMUserPage />} />
                 <Route path="/master/user/occupant-users" element={<OccupantUserMasterDashboard />} />
 
                 {/* Material Master Route */}
