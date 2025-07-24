@@ -591,13 +591,23 @@ function App() {
                 <Route path="/maintenance/task/details/:id" element={<TaskDetailsPage />} />
 
                 {/* Safety Routes */}
-                <Route path="/safety/incident" element={<IncidentListDashboard />} />
+                <Route path="/safety/incident" element={<IncidentDashboard />} />
                 <Route path="/safety/incident/add" element={<AddIncidentPage />} />
                 <Route path="/safety/incident/:id" element={<IncidentDetailsPage />} />
                 <Route path="/safety/incident/edit/:id" element={<EditIncidentDetailsPage />} />
-                <Route path="/safety/permit" element={<PermitListDashboard />} />
+                <Route path="/safety/permit" element={<PermitToWorkDashboard />} />
                 <Route path="/safety/permit/add" element={<AddPermitPage />} />
                 <Route path="/safety/m-safe" element={<MSafeDashboard />} />
+                <Route path="/safety/training-list" element={<TrainingListDashboard />} />
+
+                {/* CRM Routes */}
+                <Route path="/crm/lead" element={<LeadDashboard />} />
+
+                {/* Utility Routes */}
+                <Route path="/utility/energy" element={<EnergyDashboard />} />
+
+                {/* Security Routes */}
+                <Route path="/security/visitor" element={<VisitorDashboard />} />
                 <Route path="/safety/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
                 <Route path="/safety/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
                 <Route path="/safety/training-list" element={<TrainingListDashboard />} />
