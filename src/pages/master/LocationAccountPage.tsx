@@ -158,8 +158,26 @@ export const LocationAccountPage = () => {
       toast.error('Please enter an entity name');
       return;
     }
-    toast.success('Entity added successfully');
+
+    // Check if entity already exists
+    const entityExists = entities.some(entity => entity.entity.toLowerCase() === entityName.toLowerCase());
+    if (entityExists) {
+      toast.error('This entity already exists');
+      return;
+    }
+
+    // Add the new entity to the entities array
+    const newEntity = {
+      entity: entityName,
+      status: true
+    };
+
+    setEntities([...entities, newEntity]);
+    toast.success(`Entity "${entityName}" added successfully`);
+    
+    // Reset form and close the form section
     setEntityName('');
+    setShowEntityForm(false);
   };
 
   const handleImportEntity = () => {
