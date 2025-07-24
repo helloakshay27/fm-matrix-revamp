@@ -533,8 +533,8 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="w-[50px] py-[12px] align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px] text-center" data-checkbox>
-                           <div className="flex items-center justify-center w-full h-full">
+                        <TableCell className="w-[50px] py-0 align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
+                           <div className="flex items-center justify-center w-full h-[40px]">
                              <Checkbox
                                checked={isSelected}
                                onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
@@ -544,7 +544,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                              />
                            </div>
                          </TableCell>
-                      )}
+                       )}
                       {visibleColumns.map((column) => {
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
