@@ -360,14 +360,6 @@ export const LocationAccountPage = () => {
     setIsAddCountryOpen(false);
   };
 
-    setRegions([...regions, newRegion]);
-    toast.success(`Region "${newRegionData.regionName}" added successfully`);
-    
-    // Reset form and close dialog
-    setNewRegionData({ country: '', regionName: '' });
-    setIsAddRegionOpen(false);
-  };
-
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
