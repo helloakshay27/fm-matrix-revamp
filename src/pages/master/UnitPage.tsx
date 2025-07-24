@@ -420,13 +420,13 @@ export const UnitPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Active/Inactive</TableHead>
-                  <TableHead>Building</TableHead>
-                  <TableHead>Wing</TableHead>
-                  <TableHead>Area</TableHead>
-                  <TableHead>Floor</TableHead>
-                  <TableHead>Unit</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">Actions</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">Active/Inactive</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">Building</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">Wing</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">Area</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">Floor</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">Unit</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
