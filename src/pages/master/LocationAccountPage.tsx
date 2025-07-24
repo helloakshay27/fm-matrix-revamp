@@ -49,6 +49,8 @@ export const LocationAccountPage = () => {
   const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
   const [isAddEntityOpen, setIsAddEntityOpen] = useState(false);
   const [isAddUserCategoryOpen, setIsAddUserCategoryOpen] = useState(false);
+  const [isEditZoneOpen, setIsEditZoneOpen] = useState(false);
+  const [selectedZonesForEdit, setSelectedZonesForEdit] = useState<string[]>([]);
   const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(false);
 
   // Sample data with state management
@@ -252,6 +254,24 @@ export const LocationAccountPage = () => {
       console.error('Error adding user category:', error);
       toast.error('Error adding user category');
     }
+  };
+
+  const handleZoneSelection = (zoneName: string, checked: boolean) => {
+    if (checked) {
+      setSelectedZonesForEdit([...selectedZonesForEdit, zoneName]);
+    } else {
+      setSelectedZonesForEdit(selectedZonesForEdit.filter(name => name !== zoneName));
+    }
+  };
+
+  const handleEditSelectedZones = () => {
+    if (selectedZonesForEdit.length === 0) {
+      toast.error('Please select at least one zone to edit');
+      return;
+    }
+    toast.success(`Editing ${selectedZonesForEdit.length} zone(s): ${selectedZonesForEdit.join(', ')}`);
+    setIsEditZoneOpen(false);
+    setSelectedZonesForEdit([]);
   };
 
   return (
@@ -628,9 +648,52 @@ export const LocationAccountPage = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                Edit Zone
-              </Button>
+              <Dialog open={isEditZoneOpen} onOpenChange={setIsEditZoneOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                    Edit Zone
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Select Zone to Edit</DialogTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-4 top-4"
+                      onClick={() => setIsEditZoneOpen(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {['Mumbai', 'Madhya Pradesh', 'Bali', 'Delhi', 'Hyderabad', 'Kolkata', 'NCR', 'Pune'].map((zoneName) => (
+                        <div key={zoneName} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`zone-${zoneName}`}
+                            checked={selectedZonesForEdit.includes(zoneName)}
+                            onChange={(e) => handleZoneSelection(zoneName, e.target.checked)}
+                            className="rounded border-gray-300 text-[#C72030] focus:ring-[#C72030]"
+                          />
+                          <label htmlFor={`zone-${zoneName}`} className="text-sm text-gray-700 cursor-pointer">
+                            {zoneName}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-end pt-4">
+                      <Button 
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                        onClick={handleEditSelectedZones}
+                      >
+                        Edit Selected Zone
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
             <div className="flex items-center gap-4">
               <select
