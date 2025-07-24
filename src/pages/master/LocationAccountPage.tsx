@@ -359,11 +359,14 @@ export const LocationAccountPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Country Name
                     </label>
-                    <input
-                      type="text"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                      placeholder="Enter country name"
-                    />
+                    <select 
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                    >
+                      <option value="">Select Country</option>
+                      {countries.map((country, index) => (
+                        <option key={index} value={country.name}>{country.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
