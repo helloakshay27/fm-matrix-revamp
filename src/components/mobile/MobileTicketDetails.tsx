@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { TicketResponse } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/store/store';
+import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 
 interface MobileTicketDetailsProps {
   ticket: TicketResponse;
@@ -15,6 +18,9 @@ interface MobileTicketDetailsProps {
 
 export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket, onBack }) => {
   const { toast } = useToast();
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers);
+  
   const [updateForm, setUpdateForm] = useState({
     priority: ticket.priority || '',
     status: ticket.issue_status || '',
@@ -22,6 +28,10 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
     comment: ''
   });
   const [comments, setComments] = useState<string[]>([]);
+
+  useEffect(() => {
+    dispatch(fetchFMUsers());
+  }, [dispatch]);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -176,9 +186,11 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
                     <SelectValue placeholder="Request" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="p1">P1</SelectItem>
-                    <SelectItem value="p2">P2</SelectItem>
-                    <SelectItem value="p3">P3</SelectItem>
+                    <SelectItem value="p1">P1 - Critical</SelectItem>
+                    <SelectItem value="p2">P2 - Very High</SelectItem>
+                    <SelectItem value="p3">P3 - High</SelectItem>
+                    <SelectItem value="p4">P4 - Medium</SelectItem>
+                    <SelectItem value="p5">P5 - Low</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -201,11 +213,22 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
             {/* Enter Assignee */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Enter Assignee</label>
-              <Input
-                placeholder="Enter name"
-                value={updateForm.assignee}
-                onChange={(e) => setUpdateForm(prev => ({ ...prev, assignee: e.target.value }))}
-              />
+              <Select value={updateForm.assignee} onValueChange={(value) => setUpdateForm(prev => ({ ...prev, assignee: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assignee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fmUsersLoading ? (
+                    <SelectItem value="" disabled>Loading...</SelectItem>
+                  ) : (
+                    fmUsersData?.fm_users?.map((user) => (
+                      <SelectItem key={user.id} value={`${user.firstname} ${user.lastname}`}>
+                        {user.firstname} {user.lastname} - {user.designation}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Comments Section */}
