@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { MoreVertical, Plus, Upload, Download, Filter, Eye, Search, Users, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Pagination,
   PaginationContent,
@@ -66,6 +67,7 @@ export const FMUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: fmUsersResponse, loading, error } = useSelector((state: RootState) => state.fmUsers);
   const { data: userCounts, loading: countsLoading } = useSelector((state: RootState) => state.userCounts);
+  const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
@@ -120,6 +122,26 @@ export const FMUserMasterDashboard = () => {
 
   const handleViewUser = (id: string) => {
     navigate(`/master/user/fm-users/view/${id}`);
+  };
+
+  const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
+    try {
+      // TODO: Replace with actual API call to update user status
+      // For now, just show a toast message
+      toast({
+        title: "Status Updated",
+        description: `User ${isActive ? 'activated' : 'deactivated'} successfully!`,
+      });
+      
+      // Refresh the data to reflect changes
+      dispatch(fetchFMUsers());
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleApplyFilters = () => {
@@ -390,7 +412,10 @@ export const FMUserMasterDashboard = () => {
                     </Button>
                   </TableCell>
                   <TableCell>
-                    <Switch checked={user.active} />
+                    <Switch 
+                      checked={user.active} 
+                      onCheckedChange={(checked) => handleToggleUserStatus(user.id, checked)}
+                    />
                   </TableCell>
                   <TableCell className="font-medium">{user.id}</TableCell>
                   <TableCell>{user.userName}</TableCell>
