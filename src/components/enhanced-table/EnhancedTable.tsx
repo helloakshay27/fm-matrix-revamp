@@ -454,16 +454,17 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                  <TableRow className="h-[28px]">
                    {selectable && (
-                      <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-center py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
-                        <div className="flex items-center justify-center h-full w-full">
-                          <Checkbox
-                            checked={isAllSelected}
-                            onCheckedChange={handleSelectAllChange}
-                            aria-label={selectAllLabel}
-                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                          />
-                        </div>
-                     </TableHead>
+                   <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
+                         <div className="flex items-center justify-center h-full w-full">
+                           <Checkbox
+                             checked={isAllSelected}
+                             onCheckedChange={handleSelectAllChange}
+                             aria-label={selectAllLabel}
+                             {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                             className="w-[12px] h-[12px]"
+                           />
+                         </div>
+                      </TableHead>
                    )}
                    <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {visibleColumns.map((column) => (
@@ -532,16 +533,17 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="w-[8px] px-[8px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
-                              aria-label={`Select row ${index + 1}`}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </TableCell>
+                        <TableCell className="w-[50px] py-[12px] align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
+                           <div className="flex items-center justify-center h-full w-full">
+                             <Checkbox
+                               checked={isSelected}
+                               onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                               aria-label={`Select row ${index + 1}`}
+                               onClick={(e) => e.stopPropagation()}
+                               className="w-[12px] h-[12px]"
+                             />
+                           </div>
+                         </TableCell>
                       )}
                       {visibleColumns.map((column) => {
                         const renderedRow = renderRow ? renderRow(item) : item;
