@@ -46,15 +46,6 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
         Import
       </Button>
       
-      <Button 
-        onClick={onFilterOpen}
-        variant="outline" 
-        className="border-gray-600 text-gray-800 bg-white hover:bg-gray-50 px-4"
-      >
-        <Filter className="w-4 h-4 mr-2" />
-        Filters
-      </Button>
-
       <div className="flex items-center gap-2 ml-auto">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -65,6 +56,15 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
             className="pl-10 w-64 bg-white border-gray-300"
           />
         </div>
+        
+        <Button 
+          onClick={onFilterOpen}
+          variant="outline" 
+          size="icon"
+          className="border-gray-600 text-gray-800 bg-white hover:bg-gray-50"
+        >
+          <Filter className="w-4 h-4" />
+        </Button>
         
         <Button 
           variant="outline" 
