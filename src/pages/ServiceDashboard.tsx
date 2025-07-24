@@ -189,9 +189,6 @@ export const ServiceDashboard = () => {
       <Button onClick={handleImportClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Upload className="w-4 h-4 mr-2" /> Import
       </Button>
-      <Button onClick={handleFiltersClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Filter className="w-4 h-4 mr-2" /> Filters
-      </Button>
       {selectedItems.length > 0 && (
         <Button onClick={handleQRDownload} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <FileText className="w-4 h-4 mr-2" /> QR Download
@@ -403,6 +400,7 @@ export const ServiceDashboard = () => {
           getItemId={(item) => item.id.toString()}
           storageKey="services-table"
           leftActions={renderCustomActions()}
+          onFilterClick={handleFiltersClick}
         />
       )}
 
