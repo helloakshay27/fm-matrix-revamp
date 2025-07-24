@@ -250,8 +250,8 @@ export const AddServicePage = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             BASIC DETAILS
@@ -303,8 +303,8 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
             SERVICE DESCRIPTION
@@ -331,8 +331,8 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             FILES UPLOAD

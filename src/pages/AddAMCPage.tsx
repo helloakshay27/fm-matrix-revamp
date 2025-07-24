@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, ClipboardList, File } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -18,7 +18,6 @@ import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
 import { Autocomplete, Checkbox, CircularProgress } from '@mui/material';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-
 
 export const AddAMCPage = () => {
   const navigate = useNavigate();
@@ -192,8 +191,29 @@ export const AddAMCPage = () => {
       setSubGroups([]);
     }
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate assets when details is Asset and type is Individual
+    if (formData.details === 'Asset' && formData.type === 'Individual') {
+      if (formData.asset_ids.length === 0) {
+        toast.error("Please select at least one asset.");
+        return;
+      }
+      if (!formData.startDate) {
+        toast.error("Please select a start date.");
+        return;
+      }
+      if (!formData.endDate) {
+        toast.error("Please select an end date.");
+        return;
+      }
+      if (!formData.firstService) {
+        toast.error("Please select a first service date.");
+        return;
+      }
+    }
 
     const sendData = new FormData();
 
@@ -236,6 +256,26 @@ export const AddAMCPage = () => {
   };
 
   const handleSaveAndSchedule = async () => {
+    // Validate assets when details is Asset and type is Individual
+    if (formData.details === 'Asset' && formData.type === 'Individual') {
+      if (formData.asset_ids.length === 0) {
+        toast.error("Please select at least one asset.");
+        return;
+      }
+      if (!formData.startDate) {
+        toast.error("Please select a start date.");
+        return;
+      }
+      if (!formData.endDate) {
+        toast.error("Please select an end date.");
+        return;
+      }
+      if (!formData.firstService) {
+        toast.error("Please select a first service date.");
+        return;
+      }
+    }
+
     const sendData = new FormData();
 
     sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ?
@@ -292,6 +332,7 @@ export const AddAMCPage = () => {
       }
     }
   };
+
   return <div className="p-6">
     <div className="mb-6">
       <Button variant="ghost" onClick={() => navigate('/maintenance/amc')} className="mb-4">
@@ -303,8 +344,8 @@ export const AddAMCPage = () => {
 
     <form onSubmit={handleSubmit}>
       {/* AMC Configuration */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6  border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             AMC CONFIGURATION
@@ -388,13 +429,19 @@ export const AddAMCPage = () => {
                       InputLabelProps={{ shrink: true }}
                       sx={{
                         '& .MuiOutlinedInput-root': {
-                          height: '45px',
+                          height: 'auto', // allow dynamic height
                           minHeight: '45px',
-                          alignItems: 'center',
+                          alignItems: 'flex-start',
+                          paddingTop: '4px',
+                          paddingBottom: '4px',
                         },
-                        '& .MuiInputBase-input': {
-                          paddingTop: '0px',
-                          paddingBottom: '0px',
+                        '& .MuiInputBase-root': {
+                          flexWrap: 'wrap',
+                          maxHeight: '100px', // ⬅️ max height for the input container
+                          overflowY: 'auto',
+                        },
+                        '& .MuiChip-root': {
+                          margin: '2px',
                         },
                       }}
                       InputProps={{
@@ -410,6 +457,7 @@ export const AddAMCPage = () => {
                   )}
                   disabled={loading || AssetsLoading || amcCreateLoading}
                 />
+
               ) : (
                 <FormControl fullWidth variant="outlined">
                   <InputLabel id="service-select-label" shrink>Service</InputLabel>
@@ -553,8 +601,8 @@ export const AddAMCPage = () => {
       </Card>
 
       {/* AMC Details */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6  border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
             AMC DETAILS
@@ -661,8 +709,8 @@ export const AddAMCPage = () => {
       </Card>
 
       {/* Attachments */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             ATTACHMENTS

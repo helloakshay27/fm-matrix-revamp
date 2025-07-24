@@ -203,10 +203,10 @@ export const AddInventoryPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         {/* Inventory Details Section */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-[#D9D9D9] bg-[#F6F7F7]">
           <button
             onClick={() => setInventoryDetailsExpanded(!inventoryDetailsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
+            className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-3"
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -525,12 +525,12 @@ export const AddInventoryPage = () => {
         </div>
 
         {/* Tax Details Section */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-[#D9D9D9] bg-[#F6F7F7]">
           <button
             onClick={() => setTaxDetailsExpanded(!taxDetailsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
+            className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-4"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ">
               <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
@@ -617,7 +617,7 @@ export const AddInventoryPage = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="p-6">
+        <div className="p-6  border-b border-[#D9D9D9] bg-[#F6F7F7]">
           <Button
             onClick={handleSubmit}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"

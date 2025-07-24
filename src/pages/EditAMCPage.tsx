@@ -424,8 +424,8 @@ export const EditAMCPage = () => {
 
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit('updated new service'); }}>
         {/* AMC Configuration */}
-        <Card className="mb-6">
-          <CardHeader>
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className='bg-[#F6F4EE] mb-4'>
             <CardTitle className="text-lg text-[#C72030] flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
               AMC CONFIGURATION
@@ -693,8 +693,8 @@ export const EditAMCPage = () => {
         </Card>
 
         {/* AMC Details */}
-        <Card className="mb-6">
-          <CardHeader>
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className='bg-[#F6F4EE] mb-4'>
             <CardTitle className="text-lg text-[#C72030] flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
               AMC DETAILS
@@ -821,8 +821,8 @@ export const EditAMCPage = () => {
         </Card>
 
         {/* Attachments */}
-        <Card className="mb-6">
-          <CardHeader>
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className='bg-[#F6F4EE] mb-4'>
             <CardTitle className="text-lg text-[#C72030] flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
               ATTACHMENTS
@@ -1025,15 +1025,15 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update & Show Details'}
+            {updateLoading ? 'Updating...' : 'Update'}
           </Button>
           <Button
-            type="submit"
+           onClick={() => navigate(`/maintenance/amc/details/${id}`)}
             disabled={updateLoading}
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update & Create New Service'}
+            {updateLoading ? 'Cancel' : 'Cancel'}
           </Button>
         </div>
       </form>
