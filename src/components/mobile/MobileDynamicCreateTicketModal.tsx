@@ -210,107 +210,105 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
         
         {currentStep === 'form' ? (
           /* Form Content */
-          <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 shadow-sm space-y-6">
-              {/* Issue Type */}
-              <div>
-                <Label className="text-lg font-semibold text-black mb-4 block">Issue Type</Label>
-                <Select value={formData.issueType} onValueChange={(value) => handleInputChange('issueType', value)}>
-                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
-                    <SelectValue placeholder="Request" />
-                    <ChevronDown className="h-5 w-5 text-red-500" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
-                    <SelectItem value="request" className="text-base py-3">Request</SelectItem>
-                    <SelectItem value="complaint" className="text-base py-3">Complaint</SelectItem>
-                    <SelectItem value="suggestion" className="text-base py-3">Suggestion</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="flex-1 bg-white p-6 overflow-y-auto space-y-6">
+            {/* Issue Type */}
+            <div>
+              <Label className="text-base font-medium text-black mb-2 block">Issue Type</Label>
+              <Select value={formData.issueType} onValueChange={(value) => handleInputChange('issueType', value)}>
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                  <SelectValue placeholder="Request" />
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <SelectItem value="request" className="text-base py-2">Request</SelectItem>
+                  <SelectItem value="complaint" className="text-base py-2">Complaint</SelectItem>
+                  <SelectItem value="suggestion" className="text-base py-2">Suggestion</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Category */}
-              <div>
-                <Label className="text-lg font-semibold text-black mb-4 block">Category</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => handleInputChange('category', value)}
-                  disabled={loadingCategories}
-                >
-                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
-                    <SelectValue placeholder={loadingCategories ? "Loading..." : "Request"} />
-                    <ChevronDown className="h-5 w-5 text-red-500" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()} className="text-base py-3">
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Category */}
+            <div>
+              <Label className="text-base font-medium text-black mb-2 block">Category</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => handleInputChange('category', value)}
+                disabled={loadingCategories}
+              >
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                  <SelectValue placeholder={loadingCategories ? "Loading..." : "Request"} />
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()} className="text-base py-2">
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Sub-category */}
-              <div>
-                <Label className="text-lg font-semibold text-black mb-4 block">Sub-category</Label>
-                <Select 
-                  value={formData.subCategory} 
-                  onValueChange={(value) => handleInputChange('subCategory', value)}
-                  disabled={loadingSubcategories || !formData.category}
-                >
-                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
-                    <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Request"} />
-                    <ChevronDown className="h-5 w-5 text-red-500" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
-                    {subcategories.map((subcategory) => (
-                      <SelectItem key={subcategory.id} value={subcategory.id.toString()} className="text-base py-3">
-                        {subcategory.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Sub-category */}
+            <div>
+              <Label className="text-base font-medium text-black mb-2 block">Sub-category</Label>
+              <Select 
+                value={formData.subCategory} 
+                onValueChange={(value) => handleInputChange('subCategory', value)}
+                disabled={loadingSubcategories || !formData.category}
+              >
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                  <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Request"} />
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  {subcategories.map((subcategory) => (
+                    <SelectItem key={subcategory.id} value={subcategory.id.toString()} className="text-base py-2">
+                      {subcategory.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Location */}
-              <div>
-                <Label className="text-lg font-semibold text-black mb-4 block">Location</Label>
-                <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
-                  <SelectTrigger className="h-14 bg-white border-2 border-gray-400 rounded-xl text-base">
-                    <SelectValue placeholder="Select Building" />
-                    <ChevronDown className="h-5 w-5 text-red-500" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50">
-                    {BUILDINGS.map((building) => (
-                      <SelectItem key={building.value} value={building.value} className="text-base py-3">
-                        {building.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Location */}
+            <div>
+              <Label className="text-base font-medium text-black mb-2 block">Location</Label>
+              <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                  <SelectValue placeholder="Select Building" />
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  {BUILDINGS.map((building) => (
+                    <SelectItem key={building.value} value={building.value} className="text-base py-2">
+                      {building.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Description */}
-              <div>
-                <Label className="text-lg font-semibold text-black mb-4 block">Description</Label>
-                <Textarea
-                  placeholder="Enter description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="min-h-20 bg-white border-2 border-gray-400 rounded-xl resize-none text-base p-4"
-                  rows={3}
-                />
-              </div>
+            {/* Description */}
+            <div>
+              <Label className="text-base font-medium text-black mb-2 block">Description</Label>
+              <Textarea
+                placeholder="Enter description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                className="min-h-20 bg-white border border-gray-300 rounded-md resize-none text-base p-3"
+                rows={3}
+              />
+            </div>
 
-              {/* Next Button */}
-              <div className="pt-6">
-                <Button
-                  onClick={handleNext}
-                  className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-xl"
-                >
-                  Next
-                </Button>
-              </div>
+            {/* Next Button */}
+            <div className="pt-4">
+              <Button
+                onClick={handleNext}
+                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium text-base rounded-md"
+              >
+                Next
+              </Button>
             </div>
           </div>
         ) : (
