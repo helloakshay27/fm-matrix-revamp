@@ -215,9 +215,9 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
             <div>
               <Label className="text-base font-medium text-black mb-2 block">Issue Type</Label>
               <Select value={formData.issueType} onValueChange={(value) => handleInputChange('issueType', value)}>
-                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-lg text-base">
                   <SelectValue placeholder="Request" />
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                  <ChevronDown className="h-4 w-4 text-red-500" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   <SelectItem value="request" className="text-base py-2">Request</SelectItem>
@@ -235,11 +235,11 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
                 onValueChange={(value) => handleInputChange('category', value)}
                 disabled={loadingCategories}
               >
-                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-lg text-base">
                   <SelectValue placeholder={loadingCategories ? "Loading..." : "Request"} />
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                  <ChevronDown className="h-4 w-4 text-red-500" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()} className="text-base py-2">
                       {category.name}
@@ -257,11 +257,11 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
                 onValueChange={(value) => handleInputChange('subCategory', value)}
                 disabled={loadingSubcategories || !formData.category}
               >
-                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-lg text-base">
                   <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Request"} />
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                  <ChevronDown className="h-4 w-4 text-red-500" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                   {subcategories.map((subcategory) => (
                     <SelectItem key={subcategory.id} value={subcategory.id.toString()} className="text-base py-2">
                       {subcategory.name}
@@ -275,9 +275,8 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
             <div>
               <Label className="text-base font-medium text-black mb-2 block">Location</Label>
               <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
-                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-md text-base">
+                <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-lg text-base">
                   <SelectValue placeholder="Select Building" />
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {BUILDINGS.map((building) => (
@@ -296,7 +295,7 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
                 placeholder="Enter description"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                className="min-h-20 bg-white border border-gray-300 rounded-md resize-none text-base p-3"
+                className="min-h-20 bg-white border border-gray-300 rounded-lg resize-none text-base p-3"
                 rows={3}
               />
             </div>
@@ -305,7 +304,7 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
             <div className="pt-4">
               <Button
                 onClick={handleNext}
-                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium text-base rounded-md"
+                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium text-base rounded-lg"
               >
                 Next
               </Button>
