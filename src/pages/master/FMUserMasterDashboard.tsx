@@ -83,7 +83,13 @@ export const FMUserMasterDashboard = () => {
   });
 
   // Transform API data to table format
-  const fmUsersData = fmUsersResponse?.fm_users ? fmUsersResponse.fm_users.map(transformFMUserData) : [];
+  const [fmUsersData, setFmUsersData] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (fmUsersResponse?.fm_users) {
+      setFmUsersData(fmUsersResponse.fm_users.map(transformFMUserData));
+    }
+  }, [fmUsersResponse]);
 
   useEffect(() => {
     setCurrentSection('Master');
@@ -130,16 +136,34 @@ export const FMUserMasterDashboard = () => {
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      // TODO: Replace with actual API call to update user status
-      // For now, just show a toast message
+      // Update local state immediately for responsive UI
+      setFmUsersData(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId 
+            ? { ...user, active: isActive, status: isActive ? 'Active' : 'Inactive' }
+            : user
+        )
+      );
+
+      // Show toast message
       toast({
         title: "Status Updated",
         description: `User ${isActive ? 'activated' : 'deactivated'} successfully!`,
       });
       
-      // Refresh the data to reflect changes
-      dispatch(fetchFMUsers());
+      // TODO: Replace with actual API call to update user status
+      // await apiClient.put(`/users/${userId}/status`, { active: isActive });
+      
     } catch (error) {
+      // Revert local state on error
+      setFmUsersData(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId 
+            ? { ...user, active: !isActive, status: !isActive ? 'Active' : 'Inactive' }
+            : user
+        )
+      );
+      
       toast({
         title: "Error",
         description: "Failed to update user status. Please try again.",
