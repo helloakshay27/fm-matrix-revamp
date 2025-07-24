@@ -233,7 +233,7 @@ export const SubCategoryTab: React.FC = () => {
       const subCategoryData = {
         helpdesk_category_id: parseInt(data.category),
         customer_enabled: data.customerEnabled,
-        icon: iconFile,
+        icon: iconFile, // This will be properly handled by the API service as helpdesk_sub_category[icon]
         sub_category_tags: tags.filter(tag => tag.trim()),
         location_enabled: {
           building: data.building,
@@ -292,6 +292,7 @@ export const SubCategoryTab: React.FC = () => {
   const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('Icon file selected:', file.name, file.type, file.size);
       setIconFile(file);
     }
   };
