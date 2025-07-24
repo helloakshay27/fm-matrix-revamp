@@ -77,30 +77,21 @@ type ExtraFieldsGrouped = {
 interface AssetInfoTabProps {
   asset: Asset & { extra_fields_grouped?: ExtraFieldsGrouped };
   assetId?: string | number;
+  showEnable?: boolean
 }
 
-const renderExtraFieldsGrouped = (
-  asset: Asset & { extra_fields_grouped?: ExtraFieldsGrouped }
-) => {
+const renderExtraFieldsGrouped = (asset: Asset & { extra_fields_grouped?: ExtraFieldsGrouped }) => {
   if (!asset.extra_fields_grouped) return null;
   return Object.entries(asset.extra_fields_grouped).map(([group, fields]) => (
     <div key={group} className="bg-white rounded-lg shadow-sm border mb-6">
       <div className="px-6 py-4 border-b font-semibold text-[#C72030] text-lg capitalize">
-        {group
-          .replace(/([A-Z])/g, " $1")
-          .replace(/^./, (str) => str.toUpperCase())}
+        {group.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
       </div>
       <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {fields.map((field, idx) => (
           <div key={idx} className="flex flex-col">
-            <span className="text-sm text-gray-500 mb-1">
-              {field.field_name
-                .replace(/_/g, " ")
-                .replace(/^./, (str) => str.toUpperCase())}
-            </span>
-            <span className="font-medium text-gray-800">
-              {field.field_value || "-"}
-            </span>
+            <span className="text-sm text-gray-500 mb-1">{field.field_name.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}</span>
+            <span className="font-medium text-gray-800">{field.field_value || '-'}</span>
           </div>
         ))}
       </div>
@@ -111,6 +102,7 @@ const renderExtraFieldsGrouped = (
 export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
   asset,
   assetId,
+  showEnable
 }) => {
   return (
     <div className="min-h-full ">
@@ -145,635 +137,380 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
         {/* Asset Details - Full Width */}
         <TabsContent value="assetDetails" className="space-y-6 ">
-          <div className="w-full bg-white rounded-lg shadow-sm border">
-            {/* Header */}
-            <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                <Settings className="w-6 h-6 "style={{ color: "#C72030" }} />
-              </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                Asset Details
-              </h3>
-            </div>
-
-            {/* Body */}
-            <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-10 text-sm text-gray-800">
-              {/* Main Asset Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-4">
-                  <div className="flex">
-                    <span className="text-gray-500 w-32">Asset No</span>
-                    <span className="mx-2 text-gray-500">:</span>
-                    <span className="font-medium">
-                      {asset.asset_number || "-"}
-                    </span>
-                  </div>
-                  <div className="flex">
-                    <span className="text-gray-500 w-32">Model No</span>
-                    <span className="mx-2 text-gray-500">:</span>
-                    <span className="font-medium">
-                      {asset.model_number || "-"}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex">
-                    <span className="text-gray-500 w-32">Serial No</span>
-                    <span className="mx-2 text-gray-500">:</span>
-                    <span className="font-medium">
-                      {asset.serial_number || "-"}
-                    </span>
-                  </div>
-                  <div className="flex">
-                    <span className="text-gray-500 w-32">Manufacturer</span>
-                    <span className="mx-2 text-gray-500">:</span>
-                    <span className="font-medium">
-                      {asset.manufacturer || "-"}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex">
-                    <span className="text-gray-500 w-32">Group</span>
-                    <span className="mx-2 text-gray-500">:</span>
-                    <span className="font-medium">{asset.group || "-"}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="text-gray-500 w-32">Sub Group</span>
-                    <span className="mx-2 text-gray-500">:</span>
-                    <span className="font-medium">
-                      {asset.sub_group || "-"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* System Details */}
-              <div className="border-t pt-6">
-                <div className="text-base font-semibold text-[#C72030] mb-6 pl-2">
-                  System Details
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">OS</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.custom_fields?.system_details?.os || "-"}
-                      </span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Total Memory</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.custom_fields?.system_details?.memory || "-"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Processor</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.custom_fields?.system_details?.processor || "-"}
-                      </span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">IP Address</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.custom_fields?.system_details?.["IP Address"] ||
-                          "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Hard Disk Details */}
-              <div className="border-t pt-6">
-                <div className="text-base font-semibold text-[#C72030] mb-6 pl-2">
-                  Hard Disk Details
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Model</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.custom_fields?.hardware?.model || "-"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Serial No.</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.custom_fields?.hardware?.serial_no || "-"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Capacity</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.custom_fields?.hardware?.capacity || "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Info */}
-              <div className="border-t pt-6">
-                <div className="text-base font-semibold text-[#C72030] mb-6 pl-2">
-                  Additional Info
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">
-                        Commissioning Date
-                      </span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.commisioning_date || "-"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">
-                        Allocation Based On
-                      </span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.allocation_type || "-"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Department</span>
-                      <span className="mx-2 text-gray-500">:</span>
-                      <span className="font-medium">
-                        {asset.allocated_to?.join(", ") || "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Purchase Details - Full Width */}
-
-          <div className="w-full bg-white rounded-lg shadow-sm border">
-            {/* Header */}
-            <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                <CreditCard className="w-6 h-6 "style={{ color: "#C72030" }} />
-              </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                Purchase Details
-              </h3>
-            </div>
-
-            {/* Body */}
-            <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 text-sm text-gray-800">
-                <div className="flex">
-                  <span className="text-gray-500 w-32">Purchase Cost</span>
-                  <span className="mx-2 text-gray-500">:</span>
-                  <span className="font-medium">
-                    ₹ {asset.purchase_cost?.toLocaleString() || "-"}
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-gray-500 w-32">Current Book Value</span>
-                  <span className="mx-2 text-gray-500">:</span>
-                  <span className="font-medium">
-                    ₹ {asset.current_book_value?.toLocaleString() || "-"} (
-                    {asset.depreciation_method || "-"})
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-gray-500 w-32">Purchase Date</span>
-                  <span className="mx-2 text-gray-500">:</span>
-                  <span className="font-medium">
-                    {asset.purchased_on || "-"}
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-gray-500 w-32">Under Warranty</span>
-                  <span className="mx-2 text-gray-500">:</span>
-                  <span className="font-medium">
-                    {asset.warranty ? "Yes" : "No"}
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-gray-500 w-32">Warranty Period</span>
-                  <span className="mx-2 text-gray-500">:</span>
-                  <span className="font-medium">
-                    {asset.warranty_period
-                      ? `${asset.warranty_period} year(s)`
-                      : "-"}
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-gray-500 w-32">Warranty Expiry</span>
-                  <span className="mx-2 text-gray-500">:</span>
-                  <span className="font-medium">
-                    {asset.warranty_expiry || "-"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Asset Loaned and Vendor Contact Details Side by Side */}
-          <div className="flex gap-6">
-            {/* Asset Loaned - 50% width */}
-            <div className="w-1/2 bg-white rounded-lg shadow-sm border">
-              {/* Header */}
-              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                  <UserCheck className="w-6 h-6 "style={{ color: "#C72030" }} />
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  Asset Loaned
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
-                  <div className="text-sm text-gray-800 gap-x-2">
-                    <span className="text-gray-500">Vendor:</span>{" "}
-                    {asset.asset_loan_detail?.supplier || "-"}
-                  </div>
-                  <div className="text-sm text-gray-800 gap-x-2">
-                    <span className="text-gray-500">Agreement From:</span>{" "}
-                    {asset.asset_loan_detail?.agrement_from_date || "-"}
-                  </div>
-                  <div className="text-sm text-gray-800 gap-x-2">
-                    <span className="text-gray-500">Agreement To:</span>{" "}
-                    {asset.asset_loan_detail?.agrement_to_date || "-"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Vendor Contact Details - 50% width */}
-            <div className="w-1/2 bg-white rounded-lg shadow-sm border">
-              {/* Header */}
-              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                  <User className="w-6 h-6 "style={{ color: "#C72030" }} />
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  Vendor Contact Details
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
-                  <div className="text-sm text-gray-800 gap-x-2">
-                    <span className="text-gray-500">Name:</span>{" "}
-                    {asset.supplier_detail?.company_name || "-"}
-                  </div>
-                  <div className="text-sm text-gray-800 gap-x-2">
-                    <span className="text-gray-500">Mobile No:</span>{" "}
-                    {asset.supplier_detail?.mobile1 || "-"}
-                  </div>
-                  <div className="text-sm text-gray-800 gap-x-2">
-                    <span className="text-gray-500">Email ID:</span>{" "}
-                    {asset.supplier_detail?.email || "-"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-6">
-            <div className="w-full bg-white rounded-lg shadow-sm border">
-              {/* Header */}
-              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                  <MapPin className="w-6 h-6 text-white"style={{ color: "#C72030" }}/>
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  Location Details
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                {/* Timeline */}
-                <div className="relative w-full px-4">
-                  {/* Connecting Line */}
-                  <div
-                    className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
-                    style={{
-                      left: `calc(9%)`,
-                      right: `calc(9%)`,
-                    }}
-                  />
-
-                  <div className="flex justify-between items-start relative z-10">
-                    {[
-                      { label: "Site", value: asset.site_name || "NA" },
-                      {
-                        label: "Building",
-                        value: asset.building?.name || "NA",
-                      },
-                      { label: "Wing", value: asset.wing?.name || "NA" },
-                      { label: "Floor", value: asset.floor?.name || "NA" },
-                      { label: "Area", value: asset.area?.name || "NA" },
-                      { label: "Room", value: asset.pms_room?.name || "NA" },
-                    ].map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col items-center w-full text-center"
-                      >
-                        {/* Label above dot */}
-                        <div className="text-sm text-gray-500 mb-2">
-                          {item.label}
+          {
+            showEnable ? (
+              <>
+                {
+                  Object.entries(asset.extra_fields_grouped).map(([groupName, fields]) => (
+                    <div className="w-full bg-white rounded-lg shadow-sm border">
+                      <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030]">
+                          <CreditCard className="w-4 h-4 text-white" />
                         </div>
+                        <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                          {groupName}
+                        </h3>
+                      </div>
 
-                        {/* Dot */}
-                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-1" />
-
-                        {/* Value below dot */}
-                        <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                          {item.value}
+                      <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
+                          {
+                            fields.map((field, idx) => (
+                              <div key={idx} className="text-sm text-gray-800">
+                                <span className="text-gray-500">{field.field_name}:</span>{" "}
+                                {field.field_value}
+                              </div>
+                            ))
+                          }
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  ))
+                }
+              </>
+            ) : (
+              <>
+                <div className="w-full bg-white rounded-lg shadow-sm border">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030]">
+                      <Settings className="w-4 h-4 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                      Asset Details
+                    </h3>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* <div className="flex flex-col lg:flex-row gap-6">
-      
-      <div className="w-full lg:w-4/5 bg-white rounded-lg p-6 shadow-sm border">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{
-            backgroundColor: '#C72030'
-          }}>
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-lg font-semibold uppercase" style={{
-            color: '#C72030'
-          }}>Movement Details</h3>
-        </div>
-
-        <div className="space-y-6">
-         
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>From Site</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>To Site</span>
-            </div>
-          </div>
-
-          <div className="flex justify-between text-lg font-semibold text-gray-800 mb-8">
-            <span>{asset.asset_move_tos?.[0]?.from?.location || '-'}</span>
-            <span>{asset.asset_move_tos?.[0]?.to?.location || '-'}</span>
-          </div>
-        </div>
-      </div>
-
-      
-      <div className="w-full lg:w-1/5 bg-white rounded-lg p-6 shadow-sm border">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{
-            backgroundColor: '#C72030'
-          }}>
-            <User className="w-4 h-4 text-white" />
-          </div>
-          <h3 className="text-lg font-semibold uppercase" style={{
-            color: '#C72030'
-          }}>Vendor Contact Details</h3>
-        </div>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Name</div>
-              <div className="font-medium">{asset.supplier_detail?.company_name || '-'}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Mobile No.</div>
-              <div className="font-medium">{asset.supplier_detail?.mobile1 || '-'}</div>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Email ID</div>
-            <div className="font-medium">{asset.supplier_detail?.email || '-'}</div>
-          </div>
-        </div>
-      </div>
-    </div> */}
-          {/* <div className="flex flex-col lg:flex-row gap-6">
-            
-            <div className="w-full lg:w-full bg-white rounded-lg p-6 shadow-sm border">
-              <div className="flex items-center gap-3 mb-8">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: "#C72030" }}
-                >
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <h3
-                  className="text-lg font-semibold uppercase"
-                  style={{ color: "#C72030" }}
-                >
-                  Movement Details
-                </h3>
-              </div>
-
-              <div className="space-y-6">
-                
-                <div className="flex justify-between items-center text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>From Site</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>To Site</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-lg font-semibold text-gray-800 mb-8">
-                  <span>
-                    {asset.asset_move_tos?.[0]?.from?.location || "-"}
-                  </span>
-                  <span>{asset.asset_move_tos?.[0]?.to?.location || "-"}</span>
-                </div>
-              </div>
-            </div>
-
-           
-          </div> */}
-          {/* <div className="flex flex-col lg:flex-row gap-6">
-            
-            <div className="w-full bg-white rounded-lg p-6 shadow-sm border">
-              <div className="flex items-center gap-3 mb-6">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: "#C72030" }}
-                >
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#C72030]">
-                  Movement Details
-                </h3>
-              </div>
-
-             
-              <div className="relative w-full px-4">
-                
-                <div
-                  className="flex flex-col items-center w-full relative"
-                  style={{ minHeight: "56px" }}
-                >
-                  <div
-                    className="flex w-full items-center justify-between"
-                    style={{ position: "relative", width: "100%" }}
-                  >
-                    
-                    <div
-                      className="flex flex-col items-center"
-                      style={{ width: "0" }}
-                    >
-                      <div
-                        className="text-xs text-gray-500 mb-2 whitespace-nowrap"
-                        style={{ marginLeft: "7px" }}
-                      >
-                        From Site
+                  {/* Body */}
+                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-10">
+                    {/* Main Asset Information */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Asset No.:</span>{" "}
+                        {asset.asset_number || "-"}
                       </div>
-                      <div
-                        className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10"
-                        style={{ position: "absolute", left: 0, top: "32px" }}
-                      />
-                    </div>
-                   
-                    <div
-                      className="flex-1"
-                      style={{ position: "relative", height: "14px" }}
-                    >
-                      <div className="absolute left-0 right-0 top-[32px] h-0.5 bg-[#C72030] z-0" />
-                    </div>
-                   
-                    <div
-                      className="flex flex-col items-center"
-                      style={{ width: "0" }}
-                    >
-                      <div
-                        className="text-xs text-gray-500 mb-2 mr-4 whitespace-nowrap "
-                        style={{ marginRight: "7px" }}
-                      >
-                        To Site
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Model No.:</span>{" "}
+                        {asset.model_number || "-"}
                       </div>
-                      <div
-                        className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10"
-                        style={{ position: "absolute", right: 0, top: "32px" }}
-                      />
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Serial No.:</span>{" "}
+                        {asset.serial_number || "-"}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Manufacturer:</span>{" "}
+                        {asset.manufacturer || "-"}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Group:</span>{" "}
+                        {asset.group || "-"}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Sub Group:</span>{" "}
+                        {asset.sub_group || "-"}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex w-full justify-between mt-4">
-                    <div
-                      className="mt-2 text-sm font-medium text-gray-800 break-words px-2 text-left"
-                      style={{ width: "50%" }}
-                    >
-                      {asset.asset_move_tos?.[0]?.from?.location || "NA"}
-                    </div>
-                    <div
-                      className="mt-2 text-sm font-medium text-gray-800 break-words px-2 text-right"
-                      style={{ width: "50%" }}
-                    >
-                      {asset.asset_move_tos?.[0]?.to?.location || "NA"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> */}
 
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Movement Details */}
-            <div className="w-full bg-white rounded-lg shadow-sm border">
-              {/* Header */}
-              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                 <TrendingUp className="w-6 h-6" style={{ color: "#C72030" }} />
-
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A ]">
-                  Movement Details
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] px-6">
-                {/* Timeline with two dots */}
-                <div className="relative w-full px-4">
-                  <div
-                    className="flex flex-col items-center w-full relative"
-                    style={{ minHeight: "56px" }}
-                  >
-                    <div className="flex w-full items-center justify-between relative">
-                      {/* From Site */}
-                      <div className="flex flex-col items-center w-1/2 text-left">
-                        <div className="text-xs text-gray-500 mb-2 ml-1">
-                          From Site
+                    {/* System Details */}
+                    <div className="border-t pt-6">
+                      <div className="text-base font-semibold text-[#C72030] mb-6 pl-4">
+                        System Details
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">OS:</span>{" "}
+                          {asset.custom_fields?.system_details?.os || "-"}
                         </div>
-                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
-                      </div>
-
-                      {/* Line */}
-                      <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
-
-                      {/* To Site */}
-                      <div className="flex flex-col items-center w-1/2 text-right">
-                        <div className="text-xs text-gray-500 mb-2 mr-1">
-                          To Site
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Total Memory:</span>{" "}
+                          {asset.custom_fields?.system_details?.memory || "-"}
                         </div>
-                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Processor:</span>{" "}
+                          {asset.custom_fields?.system_details?.processor || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">IP Address:</span>{" "}
+                          {asset.custom_fields?.system_details?.["IP Address"] || "-"}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Values */}
-                    <div className="flex w-full justify-between mt-6">
-                      <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
-                        {asset.asset_move_tos?.[0]?.from?.location || "NA"}
+                    {/* Hard Disk Details */}
+                    <div className="border-t pt-6">
+                      <div className="text-base font-semibold text-[#C72030] mb-6 pl-4">
+                        Hard Disk Details
                       </div>
-                      <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
-                        {asset.asset_move_tos?.[0]?.to?.location || "NA"}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Model:</span>{" "}
+                          {asset.custom_fields?.hardware?.model || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Serial No.:</span>{" "}
+                          {asset.custom_fields?.hardware?.serial_no || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Capacity:</span>{" "}
+                          {asset.custom_fields?.hardware?.capacity || "-"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Info */}
+                    <div className="border-t pt-6">
+                      <div className="text-base font-semibold text-[#C72030] mb-6 pl-4">
+                        Additional Info
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Commissioning Date:</span>{" "}
+                          {asset.commisioning_date || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Allocation based on:</span>{" "}
+                          {asset.allocation_type || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Department:</span>{" "}
+                          {asset.allocated_to?.join(", ") || "-"}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
+
+                {/* Purchase Details - Full Width */}
+                <div className="w-full bg-white rounded-lg shadow-sm border">
+                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030]">
+                      <CreditCard className="w-4 h-4 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                      Purchase Details
+                    </h3>
+                  </div>
+
+                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Purchase Cost:</span>{" "}
+                        ₹ {asset.purchase_cost?.toLocaleString() || "-"}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Current Date Cost:</span>{" "}
+                        ₹ {asset.current_book_value?.toLocaleString() || "-"} (
+                        {asset.depreciation_method || "-"})
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Purchase Date:</span>{" "}
+                        {asset.purchased_on || "-"}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Under Warranty:</span>{" "}
+                        {asset.warranty ? "Yes" : "No"}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Period:</span>{" "}
+                        {asset.warranty_period
+                          ? `${asset.warranty_period} year(s)`
+                          : "-"}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        <span className="text-gray-500">Warranty Expires On:</span>{" "}
+                        {asset.warranty_expiry || "-"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Asset Loaned and Vendor Contact Details Side by Side */}
+                <div className="flex gap-6">
+                  {/* Asset Loaned - 50% width */}
+                  <div className="w-1/2 bg-white rounded-lg shadow-sm border">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030]">
+                        <UserCheck className="w-4 h-4 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                        Asset Loaned
+                      </h3>
+                    </div>
+
+                    {/* Body */}
+                    <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                      <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Vendor:</span>{" "}
+                          {asset.asset_loan_detail?.supplier || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Agreement From:</span>{" "}
+                          {asset.asset_loan_detail?.agrement_from_date || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Agreement To:</span>{" "}
+                          {asset.asset_loan_detail?.agrement_to_date || "-"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vendor Contact Details - 50% width */}
+                  <div className="w-1/2 bg-white rounded-lg shadow-sm border">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030]">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                        Vendor Contact Details
+                      </h3>
+                    </div>
+
+                    {/* Body */}
+                    <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                      <div className="grid grid-cols-1 gap-y-6 gap-x-8 pl-4">
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Name:</span>{" "}
+                          {asset.supplier_detail?.company_name || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Mobile No.:</span>{" "}
+                          {asset.supplier_detail?.mobile1 || "-"}
+                        </div>
+                        <div className="text-sm text-gray-800">
+                          <span className="text-gray-500">Email ID:</span>{" "}
+                          {asset.supplier_detail?.email || "-"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-6">
+                  <div className="w-full bg-white rounded-lg shadow-sm border">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030]">
+                        <MapPin className="w-4 h-4 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                        Location Details
+                      </h3>
+                    </div>
+
+                    {/* Body */}
+                    <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6"
+                    >
+                      {/* Timeline */}
+                      <div className="relative w-full px-4">
+                        {/* Connecting Line */}
+                        <div
+                          className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                          style={{
+                            left: `calc(7px)`,
+                            right: `calc(7px)`,
+                          }}
+                        />
+
+                        <div className="flex justify-between items-start relative z-10">
+                          {[
+                            { label: "Site", value: asset.site_name || "NA" },
+                            {
+                              label: "Building",
+                              value: asset.building?.name || "NA",
+                            },
+                            { label: "Wing", value: asset.wing?.name || "NA" },
+                            { label: "Floor", value: asset.floor?.name || "NA" },
+                            { label: "Area", value: asset.area?.name || "NA" },
+                            { label: "Room", value: asset.pms_room?.name || "NA" },
+                          ].map((item, index) => (
+                            <div
+                              key={index}
+                              className="flex flex-col items-center w-full text-center"
+                            >
+                              {/* Label above dot */}
+                              <div className="text-sm text-gray-500 mb-2">
+                                {item.label}
+                              </div>
+
+                              {/* Dot */}
+                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+
+                              {/* Value below dot */}
+                              <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
+                                {item.value}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Movement Details */}
+                  <div className="w-full bg-white rounded-lg shadow-sm border">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#C72030]">
+                        <TrendingUp className="w-4 h-4 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                        Movement Details
+                      </h3>
+                    </div>
+
+                    {/* Body */}
+                    <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] px-6"
+                    >
+                      {/* Timeline with two dots */}
+                      <div className="relative w-full px-4">
+                        <div
+                          className="flex flex-col items-center w-full relative"
+                          style={{ minHeight: "56px" }}
+                        >
+                          <div className="flex w-full items-center justify-between relative">
+                            {/* From Site */}
+                            <div className="flex flex-col items-center w-1/2 text-left">
+                              <div className="text-xs text-gray-500 mb-2 ml-1">
+                                From Site
+                              </div>
+                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                            </div>
+
+                            {/* Line */}
+                            <div className="absolute top-[32px] left-[7px] right-[7px] h-0.5 bg-[#C72030] z-0" />
+
+                            {/* To Site */}
+                            <div className="flex flex-col items-center w-1/2 text-right">
+                              <div className="text-xs text-gray-500 mb-2 mr-1">
+                                To Site
+                              </div>
+                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                            </div>
+                          </div>
+
+                          {/* Values */}
+                          <div className="flex w-full justify-between mt-6">
+                            <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
+                              {asset.asset_move_tos?.[0]?.from?.location || "NA"}
+                            </div>
+                            <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
+                              {asset.asset_move_tos?.[0]?.to?.location || "NA"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )
+          }
         </TabsContent>
 
         <TabsContent value="analytics">

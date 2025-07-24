@@ -31,6 +31,7 @@ export const AssetDetailsPage = () => {
   const [isInUse, setIsInUse] = useState(true);
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [showEnable, setShowEnable] = useState(false)
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -44,6 +45,9 @@ export const AssetDetailsPage = () => {
           }
         );
         setAssetData(response.data.asset);
+        if (response.data.asset.asset_type_category === "Land" || response.data.asset.asset_type_category === "Building" || response.data.asset.asset_type_category === "Leasehold Improvement" || response.data.asset.asset_type_category === "Leasehold Land" || response.data.asset.asset_type_category === "Vehicle") {
+          setShowEnable(true)
+        }
       } catch (error) {
         console.error("Failed to fetch asset", error);
       } finally {
@@ -53,6 +57,8 @@ export const AssetDetailsPage = () => {
 
     fetchAsset();
   }, [id]);
+
+  console.log(showEnable)
 
   const handleBack = () => navigate("/maintenance/asset");
 
@@ -182,18 +188,36 @@ export const AssetDetailsPage = () => {
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-12 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
             <TabsTrigger value="asset-info">Asset Info</TabsTrigger>
             <TabsTrigger value="amc-details">AMC Details</TabsTrigger>
-            <TabsTrigger value="ppm">PPM</TabsTrigger>
-            <TabsTrigger value="e-bom">E-BOM</TabsTrigger>
+            {
+              assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
+                <>
+                  <TabsTrigger value="ppm">PPM</TabsTrigger>
+                  <TabsTrigger value="e-bom">E-BOM</TabsTrigger>
+                </>
+              )
+            }
             <TabsTrigger value="attachments">Attachments</TabsTrigger>
-            <TabsTrigger value="readings">Readings</TabsTrigger>
+            {
+              assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
+                <>
+                  <TabsTrigger value="readings">Readings</TabsTrigger>
+                </>
+              )
+            }
             <TabsTrigger value="history-card">History Card</TabsTrigger>
-            <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
-            <TabsTrigger value="ticket">Ticket</TabsTrigger>
-            <TabsTrigger value="association">Association</TabsTrigger>
+            {
+              assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
+                <>
+                  <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
+                  <TabsTrigger value="ticket">Ticket</TabsTrigger>
+                  <TabsTrigger value="association">Association</TabsTrigger>
+                </>
+              )
+            }
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
-            <AssetInfoTab asset={assetData} assetId={assetData.id} />
+            <AssetInfoTab asset={assetData} assetId={assetData.id} showEnable={showEnable} />
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab asset={assetData} assetId={assetData.id} />
