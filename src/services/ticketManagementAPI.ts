@@ -71,7 +71,6 @@ export interface UserOption {
 // Subcategory Types
 export interface SubCategoryFormData {
   helpdesk_category_id: number;
-  name: string;
   customer_enabled: boolean;
   icon?: File;
   sub_category_tags: string[];
@@ -443,14 +442,10 @@ export const ticketManagementAPI = {
     const formData = new FormData();
     
     formData.append('helpdesk_sub_category[helpdesk_category_id]', data.helpdesk_category_id.toString());
-    formData.append('helpdesk_sub_category[name]', data.name);
     formData.append('helpdesk_sub_category[customer_enabled]', data.customer_enabled ? '1' : '0');
     
     if (data.icon) {
-      console.log('Adding icon file to FormData:', data.icon.name, data.icon.type, data.icon.size);
       formData.append('helpdesk_sub_category[icon]', data.icon);
-    } else {
-      console.log('No icon file provided');
     }
     
     // Add tags - use array format as specified in API
