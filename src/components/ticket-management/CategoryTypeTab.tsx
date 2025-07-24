@@ -702,19 +702,6 @@ export const CategoryTypeTab: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Engineer</label>
-                  <Select>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select an Option..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white z-50">
-                      <SelectItem value="engineer1">Engineer 1</SelectItem>
-                      <SelectItem value="engineer2">Engineer 2</SelectItem>
-                      <SelectItem value="engineer3">Engineer 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Selected Site</label>
