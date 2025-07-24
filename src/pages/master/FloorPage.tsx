@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -35,7 +36,13 @@ export function FloorPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingFloor, setEditingFloor] = useState<any>(null);
   const [newFloorName, setNewFloorName] = useState('');
+  const [editFloorName, setEditFloorName] = useState('');
+  const [editFloorActive, setEditFloorActive] = useState(true);
+  const [editSelectedWing, setEditSelectedWing] = useState<number | null>(null);
+  const [editSelectedArea, setEditSelectedArea] = useState<number | null>(null);
 
   useEffect(() => {
     dispatch(fetchBuildings());
@@ -118,6 +125,41 @@ export function FloorPage() {
       toast.success('Floor status updated successfully');
     } catch (error) {
       toast.error('Failed to update floor status');
+    }
+  };
+
+  const handleEditFloor = (floor: any) => {
+    setEditingFloor(floor);
+    setEditFloorName(floor.name);
+    setEditFloorActive(floor.active);
+    setEditSelectedWing(floor.wing_id);
+    setEditSelectedArea(floor.area_id);
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateFloor = async () => {
+    if (editingFloor && editFloorName.trim() && editSelectedWing && editSelectedArea) {
+      try {
+        await dispatch(updateFloor({
+          id: editingFloor.id,
+          updates: {
+            name: editFloorName,
+            wing_id: editSelectedWing,
+            area_id: editSelectedArea,
+            active: editFloorActive
+          }
+        }));
+        toast.success('Floor updated successfully');
+        setShowEditDialog(false);
+        setEditingFloor(null);
+        dispatch(fetchFloors({ 
+          buildingId: selectedBuilding, 
+          wingId: selectedWing, 
+          areaId: selectedArea 
+        }));
+      } catch (error) {
+        toast.error('Failed to update floor');
+      }
     }
   };
 
@@ -280,11 +322,11 @@ export function FloorPage() {
                       />
                     </button>
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                   <TableCell>
+                     <Button variant="ghost" size="sm" onClick={() => handleEditFloor(floor)}>
+                       <Edit className="h-4 w-4" />
+                     </Button>
+                   </TableCell>
                 </TableRow>
               ))
             )}
@@ -343,6 +385,98 @@ export function FloorPage() {
               </Button>
               <Button variant="outline">Sample Format</Button>
               <Button variant="outline">Import</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Floor Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader className="flex flex-row items-center justify-between pb-0">
+            <DialogTitle>Edit Floor</DialogTitle>
+            <button
+              onClick={() => setShowEditDialog(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Building</label>
+              <Input
+                value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Wing</label>
+              <Select 
+                value={editSelectedWing?.toString() || ''} 
+                onValueChange={(value) => setEditSelectedWing(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Wing" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wings.data.map((wing) => (
+                    <SelectItem key={wing.id} value={wing.id.toString()}>
+                      {wing.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Area</label>
+              <Select 
+                value={editSelectedArea?.toString() || ''} 
+                onValueChange={(value) => setEditSelectedArea(parseInt(value))}
+                disabled={!editSelectedWing}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {areas.data.filter(area => Number(area.wing_id) === editSelectedWing).map((area) => (
+                    <SelectItem key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Floor Name</label>
+              <Input
+                value={editFloorName}
+                onChange={(e) => setEditFloorName(e.target.value)}
+                placeholder="Enter floor name"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="active" 
+                checked={editFloorActive}
+                onCheckedChange={(checked) => setEditFloorActive(checked as boolean)}
+              />
+              <label htmlFor="active" className="text-sm font-medium">
+                Active
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleUpdateFloor} 
+                disabled={!editFloorName.trim() || !editSelectedWing || !editSelectedArea}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Update Floor
+              </Button>
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                Close
+              </Button>
             </div>
           </div>
         </DialogContent>
