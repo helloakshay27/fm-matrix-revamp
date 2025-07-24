@@ -548,7 +548,6 @@ export const LocationAccountPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
-                <Button size="sm" variant="outline">Search</Button>
               </div>
             </div>
           </div>
