@@ -158,6 +158,12 @@ export interface TicketResponse {
   resolution_time: string | null;
   escalation_resolution_name: string | null;
   complaint_status_id: number;
+  is_golden_ticket?: boolean;
+  is_flagged?: boolean;
+  updated_at?: string;
+  color_code?: string;
+  priority_status?: string;
+  effective_priority?: string;
 }
 
 export interface TicketListResponse {

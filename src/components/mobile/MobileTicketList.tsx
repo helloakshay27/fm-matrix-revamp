@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Clock, Filter, History, Plus, Flag } from 'lucide-react';
+import { Star, Clock, Filter, History, Plus, Flag, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
@@ -47,7 +47,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       setTickets(prevTickets => 
         prevTickets.map(ticket => 
           ticket.id === ticketId 
-            ? { ...ticket, priority: ticket.priority === 'High' ? 'Medium' : 'High' }
+            ? { ...ticket, is_golden_ticket: !ticket.is_golden_ticket }
             : ticket
         )
       );
@@ -74,7 +74,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       setTickets(prevTickets => 
         prevTickets.map(ticket => 
           ticket.id === ticketId 
-            ? { ...ticket, priority: ticket.priority === 'Critical' ? 'Medium' : 'Critical' }
+            ? { ...ticket, is_flagged: !ticket.is_flagged }
             : ticket
         )
       );
@@ -116,6 +116,12 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
     }
   };
 
+  const getTATStatus = (ticket: TicketResponse) => {
+    if (ticket.response_escalation === 'Breached') return 'breach';
+    if (ticket.response_escalation === 'Approaching') return 'approaching';
+    return 'within';
+  };
+
   const filteredTickets = tickets.filter(ticket => {
     let tabFilter = true;
     
@@ -125,10 +131,10 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
         tabFilter = true; // Show all for now
         break;
       case 'golden':
-        tabFilter = ticket.priority === 'High'; // Using priority as proxy for golden status
+        tabFilter = ticket.is_golden_ticket === true;
         break;
       case 'flagged':
-        tabFilter = ticket.priority === 'Critical'; // Using priority as proxy for flagged status
+        tabFilter = ticket.is_flagged === true;
         break;
       case 'all':
       default:
@@ -139,10 +145,10 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
     let statusFilter = true;
     switch (activeFilter) {
       case 'approaching':
-        statusFilter = ticket.issue_status === 'Approaching TAT';
+        statusFilter = ticket.response_escalation === 'Approaching';
         break;
       case 'within':
-        statusFilter = ticket.issue_status === 'Within TAT';
+        statusFilter = ticket.response_escalation === 'Within TAT' || ticket.response_escalation === 'Achieved';
         break;
       case 'all':
       default:
@@ -221,6 +227,13 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               {filter.label}
             </Button>
           ))}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-8 bg-red-500 text-white border-red-500"
+          >
+            TAT Breach
+          </Button>
         </div>
 
         {/* Results Count */}
@@ -255,24 +268,35 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               style={{ backgroundColor: '#E5DFD2' }}
               onClick={() => onTicketSelect(ticket)}
             >
-              {/* Top Row: Ticket ID, Time, Status */}
+              {/* Top Row: Ticket ID, Timer with Time, Status */}
               <div className="flex justify-between items-start mb-3">
                 <span className="text-sm font-medium text-gray-700">
                   {ticket.ticket_number}
                 </span>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">
+                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                    <Timer className="h-4 w-4 text-gray-800" />
+                    <span className="text-sm font-medium text-gray-800">
                       {new Date(ticket.created_at).toLocaleTimeString('en-GB', {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
                     </span>
                   </div>
-                  <Badge className={`${getStatusColor(ticket.issue_status)} text-white text-xs px-2 py-1`}>
+                  <Badge 
+                    className={`text-white text-xs px-3 py-1 rounded-lg font-medium`}
+                    style={{ 
+                      backgroundColor: ticket.color_code || getStatusColor(ticket.issue_status).replace('bg-', '#'),
+                      color: 'white'
+                    }}
+                  >
                     {ticket.issue_status}
                   </Badge>
+                  {getTATStatus(ticket) === 'breach' && (
+                    <Badge className="bg-red-600 text-white text-xs px-2 py-1 rounded">
+                      TAT Breach
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -309,7 +333,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                 >
                   <Star 
                     className={`h-6 w-6 ${
-                      ticket.priority === 'High'
+                      ticket.is_golden_ticket
                         ? 'text-yellow-500 fill-current' 
                         : 'text-gray-400'
                     }`}
@@ -337,7 +361,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                 >
                   <Flag 
                     className={`h-4 w-4 ${
-                      ticket.priority === 'Critical'
+                      ticket.is_flagged
                         ? 'text-red-500 fill-current' 
                         : 'text-gray-500'
                     }`}
