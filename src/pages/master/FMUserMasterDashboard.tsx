@@ -487,12 +487,13 @@ export const FMUserMasterDashboard = () => {
                       <Eye className="w-4 h-4" />
                     </Button>
                   </TableCell>
-                  <TableCell>
-                    <Switch 
-                      checked={user.active} 
-                      onCheckedChange={(checked) => handleToggleUserStatus(user.id, checked)}
-                    />
-                  </TableCell>
+                   <TableCell>
+                     <Switch 
+                       checked={user.active} 
+                       onCheckedChange={(checked) => handleToggleUserStatus(user.id, checked)}
+                       className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                     />
+                   </TableCell>
                   <TableCell className="font-medium">{user.id}</TableCell>
                   <TableCell>{user.userName}</TableCell>
                   <TableCell>{user.gender}</TableCell>
