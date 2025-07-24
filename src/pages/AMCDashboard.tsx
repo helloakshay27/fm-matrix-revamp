@@ -909,7 +909,7 @@ export const AMCDashboard = () => {
             {/* Enhanced Table */}
             {!loading && (
               <EnhancedTable
-                handleExport={handleExport}
+                onExport={handleExport}
                 data={paginatedData}
                 columns={columns}
                 renderCell={renderCell}
