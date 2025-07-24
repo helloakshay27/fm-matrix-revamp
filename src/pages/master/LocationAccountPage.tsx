@@ -62,6 +62,11 @@ export const LocationAccountPage = () => {
     regionName: ''
   });
   const [selectedCountryToAdd, setSelectedCountryToAdd] = useState('');
+  const [newZoneData, setNewZoneData] = useState({
+    country: '',
+    region: '',
+    zoneName: ''
+  });
   const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(false);
 
   // Sample data with state management
@@ -358,6 +363,41 @@ export const LocationAccountPage = () => {
     // Reset form and close dialog
     setSelectedCountryToAdd('');
     setIsAddCountryOpen(false);
+  };
+
+  const handleAddZone = () => {
+    if (!newZoneData.country || !newZoneData.region || !newZoneData.zoneName.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Check if zone already exists
+    const zoneExists = zones.some(zone => 
+      zone.country === newZoneData.country && 
+      zone.region === newZoneData.region && 
+      zone.zone === newZoneData.zoneName
+    );
+    
+    if (zoneExists) {
+      toast.error('This zone already exists in the selected country and region');
+      return;
+    }
+
+    // Add the new zone to the zones array
+    const newZone = {
+      country: newZoneData.country,
+      region: newZoneData.region,
+      zone: newZoneData.zoneName,
+      status: true,
+      icon: '/placeholder.svg'
+    };
+
+    setZones([...zones, newZone]);
+    toast.success(`Zone "${newZoneData.zoneName}" added successfully`);
+    
+    // Reset form and close dialog
+    setNewZoneData({ country: '', region: '', zoneName: '' });
+    setIsAddZoneOpen(false);
   };
 
   return (
@@ -708,7 +748,11 @@ export const LocationAccountPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Country
                       </label>
-                      <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                      <select 
+                        value={newZoneData.country}
+                        onChange={(e) => setNewZoneData({...newZoneData, country: e.target.value})}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      >
                         <option value="">Select Country</option>
                         {countries.map((country, index) => (
                           <option key={index} value={country.name}>{country.name}</option>
@@ -719,9 +763,13 @@ export const LocationAccountPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Region
                       </label>
-                      <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                      <select 
+                        value={newZoneData.region}
+                        onChange={(e) => setNewZoneData({...newZoneData, region: e.target.value})}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      >
                         <option value="">Select Region</option>
-                        {regions.map((region, index) => (
+                        {regions.filter(region => !newZoneData.country || region.country === newZoneData.country).map((region, index) => (
                           <option key={index} value={region.region}>{region.region}</option>
                         ))}
                       </select>
@@ -732,6 +780,8 @@ export const LocationAccountPage = () => {
                       </label>
                       <input
                         type="text"
+                        value={newZoneData.zoneName}
+                        onChange={(e) => setNewZoneData({...newZoneData, zoneName: e.target.value})}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                         placeholder="Enter zone name"
                       />
@@ -740,7 +790,10 @@ export const LocationAccountPage = () => {
                       <Button variant="outline" onClick={() => setIsAddZoneOpen(false)}>
                         Cancel
                       </Button>
-                      <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                      <Button 
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        onClick={handleAddZone}
+                      >
                         Add Zone
                       </Button>
                     </div>
