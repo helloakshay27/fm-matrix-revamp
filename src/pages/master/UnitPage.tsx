@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Plus } from 'lucide-react';
+import { Edit, Square, Plus, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -168,11 +168,17 @@ export const UnitPage = () => {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
-                <DialogHeader>
+                <DialogHeader className="flex flex-row items-center justify-between pb-0">
                   <DialogTitle className="flex items-center gap-2">
                     <Square className="w-5 h-5" />
                     Add Unit
                   </DialogTitle>
+                  <button
+                    onClick={() => setIsAddDialogOpen(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4 py-4">
                   <div className="space-y-2">
