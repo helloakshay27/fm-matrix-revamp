@@ -460,6 +460,7 @@ import AddApprovalMatrixPage from './pages/settings/AddApprovalMatrixPage';
 import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
 import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
 import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
+import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
 
 import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
 
@@ -892,6 +893,9 @@ function App() {
                 <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
                 <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
                 <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
+                
+                {/* Mobile Routes */}
+                <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
                 <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
                 <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
                 <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
