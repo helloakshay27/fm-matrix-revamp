@@ -207,18 +207,6 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
           </Button>
           <h1 className="text-lg font-semibold text-gray-700 text-center flex-1">Tickets</h1>
         </div>
-
-        {/* Tab Navigation */}
-        <div className="bg-gray-100 px-4 pb-4">
-          <div className="flex space-x-8">
-            <button className="px-0 py-2 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
-              My Tickets
-            </button>
-            <button className="px-0 py-2 text-sm font-medium text-gray-500">
-              All Tickets
-            </button>
-          </div>
-        </div>
         
         {currentStep === 'form' ? (
           /* Form Content */
