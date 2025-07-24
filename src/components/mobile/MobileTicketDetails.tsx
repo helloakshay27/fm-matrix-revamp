@@ -21,10 +21,7 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
     assignee: ticket.assigned_to || '',
     comment: ''
   });
-  const [comments, setComments] = useState([
-    'Move below changes',
-    'Thank you'
-  ]);
+  const [comments, setComments] = useState<string[]>([]);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -68,60 +65,7 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
     }
   };
 
-  const activityLogs = [
-    {
-      date: 'Oct 15 2024',
-      time: '05:18 PM',
-      user: 'Abdul G',
-      action: 'Made below changes',
-      details: 'Status: Closed'
-    },
-    {
-      date: 'Oct 15 2024',
-      time: '05:18 PM',
-      user: 'Abdul G',
-      action: 'Commented: Thank you'
-    },
-    {
-      date: 'Oct 15 2024',
-      time: '05:18 PM',
-      user: 'Abdul G',
-      action: 'Made below changes',
-      details: 'Status: Closed'
-    },
-    {
-      date: 'Oct 15 2024',
-      time: '05:17 PM',
-      user: 'Ticket Created',
-      action: 'Status: Pending',
-      isCreated: true
-    },
-    {
-      date: 'Sep 25 2024',
-      time: '05:16 PM',
-      user: 'Abdul G',
-      action: 'Made below changes'
-    },
-    {
-      date: 'Sep 25 2024',
-      time: '05:16 PM',
-      user: 'Abdul G',
-      action: 'Commented: Thank you'
-    },
-    {
-      date: 'Sep 25 2024',
-      time: '05:16 PM',
-      user: 'Abdul G',
-      action: 'Made below changes'
-    },
-    {
-      date: 'Sep 25 2024',
-      time: '05:17 PM',
-      user: 'Ticket Created',
-      action: 'Status: Pending',
-      isCreated: true
-    }
-  ];
+  const activityLogs: any[] = [];
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
@@ -160,10 +104,12 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
               <span className="font-medium">Issue Type:</span>
               <span className="ml-2">{ticket.issue_type || '1 Day'}</span>
             </div>
-            <div>
-              <span className="font-medium">Resolved Time:</span>
-              <span className="ml-2">09:06</span>
-            </div>
+            {ticket.resolution_time && (
+              <div>
+                <span className="font-medium">Resolved Time:</span>
+                <span className="ml-2">{formatDate(ticket.resolution_time)}</span>
+              </div>
+            )}
             <div>
               <span className="font-medium">Assigned to:</span>
               <span className="ml-2">{ticket.assigned_to || 'Unassigned'}</span>
@@ -183,7 +129,7 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
               <span className="text-sm font-medium text-gray-700">Description</span>
             </div>
             <p className="text-sm text-gray-600 ml-6">
-              {ticket.heading || 'The Air Conditioner Is Not Functioning Properly. It Is Not Cooling, Turning On, Or Responding To Controls. Immediate Inspection And Servicing Are Required.'}
+              {ticket.heading || 'No description available'}
             </p>
           </div>
         </div>
@@ -197,20 +143,20 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
             </div>
             <div className="ml-6 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">Building:</span>
-                <span className="ml-2 text-gray-900">Building A</span>
+                <span className="text-gray-500">Site:</span>
+                <span className="ml-2 text-gray-900">{ticket.site_name || 'N/A'}</span>
               </div>
               <div>
-                <span className="text-gray-500">Area:</span>
-                <span className="ml-2 text-gray-900">Common Area</span>
+                <span className="text-gray-500">Service/Asset:</span>
+                <span className="ml-2 text-gray-900">{ticket.service_or_asset || 'N/A'}</span>
               </div>
               <div>
-                <span className="text-gray-500">Wing:</span>
-                <span className="ml-2 text-gray-900">Wing C</span>
+                <span className="text-gray-500">Complaint Mode:</span>
+                <span className="ml-2 text-gray-900">{ticket.complaint_mode || 'N/A'}</span>
               </div>
               <div>
-                <span className="text-gray-500">Floor:</span>
-                <span className="ml-2 text-gray-900">Floor 2</span>
+                <span className="text-gray-500">Type:</span>
+                <span className="ml-2 text-gray-900">{ticket.proactive_reactive || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -262,22 +208,22 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
               />
             </div>
 
-            {/* Comment Section */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Comment added</h4>
-              <div className="bg-gray-100 p-3 rounded mb-2 text-sm text-gray-700">
-                Move below changes
-              </div>
-            </div>
-
-            {/* Attachments */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
-              <div className="flex space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300"></div>
+            {/* Comments Section */}
+            {comments.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Comments</h4>
+                {comments.map((comment, index) => (
+                  <div key={index} className="bg-gray-100 p-3 rounded mb-2 text-sm text-gray-700">
+                    {comment}
+                  </div>
                 ))}
               </div>
+            )}
+
+            {/* Attachments - Placeholder for future implementation */}
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+              <div className="text-sm text-gray-500">No attachments available</div>
             </div>
 
             <Button onClick={handleUpdate} className="w-full bg-red-600 hover:bg-red-700 text-white">
@@ -311,21 +257,9 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
         <div className="mx-4 mt-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity logs</h3>
           <div className="space-y-4">
-            {activityLogs.map((log, index) => (
-              <div key={index} className={`p-3 rounded ${log.isCreated ? 'bg-red-100' : 'bg-gray-100'}`}>
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-sm font-medium text-gray-900">{log.date}</span>
-                  <span className="text-xs text-gray-500">{log.time}</span>
-                </div>
-                <div className="text-sm">
-                  <span className="font-medium text-gray-900">{log.user}</span>
-                  <span className="text-gray-600"> - {log.action}</span>
-                </div>
-                {log.details && (
-                  <div className="text-sm text-gray-600 mt-1">{log.details}</div>
-                )}
-              </div>
-            ))}
+            <div className="text-sm text-gray-500 text-center py-4">
+              No activity logs available
+            </div>
           </div>
         </div>
       </div>
