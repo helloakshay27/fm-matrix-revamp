@@ -80,10 +80,6 @@ export const OccupantUserMasterDashboard = () => {
   return (
       <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="w-full space-y-6">
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-600">
-          Master &gt; User Master &gt; Occupant Users
-        </div>
 
         {/* Header */}
         <div className="flex justify-between items-center">

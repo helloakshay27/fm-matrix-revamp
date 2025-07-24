@@ -152,10 +152,6 @@ export const UnitPage = () => {
     <div className="w-full min-h-screen bg-gray-50">
       <div className="w-full">
         <div className="p-6">
-          {/* Breadcrumb */}
-          <div className="mb-4">
-            <span className="text-sm text-gray-600">Account &gt; Unit</span>
-          </div>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">

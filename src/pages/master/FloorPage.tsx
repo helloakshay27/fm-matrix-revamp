@@ -125,7 +125,7 @@ export function FloorPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <div className="text-sm text-muted-foreground">Account &gt; Floor</div>
+        
         <h1 className="text-2xl font-bold">FLOOR</h1>
       </div>
 

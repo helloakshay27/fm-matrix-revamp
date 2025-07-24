@@ -98,7 +98,7 @@ export function AreaPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <div className="text-sm text-muted-foreground">Account &gt; Area</div>
+        
         <h1 className="text-2xl font-bold">AREA</h1>
       </div>
 

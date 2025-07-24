@@ -277,10 +277,6 @@ export const FMUserMasterDashboard = () => {
 
   return (
     <div className="w-full p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Master &gt; User Master &gt; FM User
-      </div>
 
       {/* Header */}
       <div className="flex justify-between items-center">
