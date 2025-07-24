@@ -227,6 +227,13 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               {filter.label}
             </Button>
           ))}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-8 bg-red-500 text-white border-red-500"
+          >
+            TAT Breach
+          </Button>
         </div>
 
         {/* Results Count */}
