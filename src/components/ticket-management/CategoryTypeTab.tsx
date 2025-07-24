@@ -411,16 +411,15 @@ export const CategoryTypeTab: React.FC = () => {
       const token = localStorage.getItem('token');
       const baseUrl = localStorage.getItem('baseUrl');
       
-      const formData = new FormData();
-      formData.append('id', category.id.toString());
-      formData.append('_method', 'delete');
-      
-      const response = await fetch(`https://${baseUrl}/pms/admin/modify_helpdesk_sub_category.json`, {
-        method: 'POST',
+      const response = await fetch(`https://${baseUrl}/pms/admin/helpdesk_categories/${category.id}.json`, {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          // Add any required data for the PATCH request
+        }),
       });
 
       if (response.ok) {

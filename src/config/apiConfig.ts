@@ -67,6 +67,8 @@ export const API_CONFIG = {
     ESCALATION_USERS: '/pms/users/get_escalate_to_users.json',
     // Add modify helpdesk category endpoint
     MODIFY_HELPDESK_CATEGORY: '/pms/admin/modify_helpdesk_sub_category.json',
+    // Add helpdesk category delete endpoint
+    DELETE_HELPDESK_CATEGORY: '/pms/admin/helpdesk_categories', // Base path, will append /{id}.json
     // Add task group endpoints
     TASK_GROUPS: '/pms/asset_groups.json?type=checklist',
     TASK_SUB_GROUPS: '/pms/assets/get_asset_group_sub_group.json', // Will append ?group_id=
