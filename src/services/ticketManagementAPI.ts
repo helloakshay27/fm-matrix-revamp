@@ -631,6 +631,24 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
+  // Update ticket
+  async updateTicket(ticketId: number, updateData: {
+    priority?: string;
+    issue_status?: string;
+    assigned_to?: string;
+    comment?: string;
+  }) {
+    try {
+      const response = await apiClient.put(`/pms/admin/complaints/${ticketId}.json`, {
+        complaint: updateData
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating ticket:', error);
+      throw error;
+    }
+  },
+
   // Get ticket details by ID
   async getTicketDetails(ticketId: string) {
     try {
