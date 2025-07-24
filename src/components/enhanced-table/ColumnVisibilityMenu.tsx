@@ -67,7 +67,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
               <Checkbox
                 checked={isVisible}
                 disabled={isLastVisible}
-                className="data-[state=checked]:bg-transparent data-[state=checked]:border-gray-300 [&>*]:data-[state=checked]:text-red-500"
+                className="border-black data-[state=checked]:bg-transparent data-[state=checked]:border-black [&>*]:data-[state=checked]:text-red-500"
               />
               <div className="flex items-center gap-2 flex-1">
                 {isVisible ? (
