@@ -34,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   TextField,
   Button as MuiButton,
@@ -71,6 +72,9 @@ export const FMUserMasterDashboard = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
   const [filters, setFilters] = useState({
@@ -141,6 +145,54 @@ export const FMUserMasterDashboard = () => {
         description: "Failed to update user status. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleStatusClick = (user: any) => {
+    setSelectedUser(user);
+    setSelectedStatus(user.status);
+    setStatusDialogOpen(true);
+  };
+
+  const handleStatusUpdate = async () => {
+    try {
+      // TODO: Replace with actual API call to update user status
+      toast({
+        title: "Status Updated",
+        description: `User status updated to ${selectedStatus} successfully!`,
+      });
+      
+      setStatusDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedStatus('');
+      
+      // Refresh the data to reflect changes
+      dispatch(fetchFMUsers());
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusBadgeProps = (status: string) => {
+    if (status === 'Active' || status === 'Approved') {
+      return {
+        className: 'bg-green-600 text-white hover:bg-green-700 cursor-pointer',
+        children: 'Approved'
+      };
+    } else if (status === 'Pending') {
+      return {
+        className: 'bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer',
+        children: 'Pending'
+      };
+    } else {
+      return {
+        className: 'bg-red-600 text-white hover:bg-red-700 cursor-pointer',
+        children: 'Rejected'
+      };
     }
   };
 
@@ -434,11 +486,12 @@ export const FMUserMasterDashboard = () => {
                       {user.type}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === 'Active' ? 'default' : 'secondary'}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
+                   <TableCell>
+                     <Badge 
+                       {...getStatusBadgeProps(user.status)}
+                       onClick={() => handleStatusClick(user)}
+                     />
+                   </TableCell>
                   <TableCell>
                     <Badge variant={user.faceRecognition ? 'default' : 'secondary'}>
                       {user.faceRecognition ? 'Yes' : 'No'}
@@ -537,6 +590,60 @@ export const FMUserMasterDashboard = () => {
             >
               Apply
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Update Dialog */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] p-0 bg-white">
+          <DialogHeader className="p-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">Update</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setStatusDialogOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="p-6 space-y-6">
+            <Select 
+              value={selectedStatus} 
+              onValueChange={setSelectedStatus}
+            >
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue placeholder="Select Status" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-lg z-50">
+                <SelectItem value="Select Status" disabled className="text-gray-400">
+                  Select Status
+                </SelectItem>
+                <SelectItem value="Approved" className="hover:bg-blue-50">
+                  Approved
+                </SelectItem>
+                <SelectItem value="Rejected" className="hover:bg-blue-50">
+                  Rejected
+                </SelectItem>
+                <SelectItem value="Pending" className="hover:bg-blue-50">
+                  Pending
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={handleStatusUpdate}
+                className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
+                disabled={!selectedStatus || selectedStatus === 'Select Status'}
+              >
+                Submit
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
