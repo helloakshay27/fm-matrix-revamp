@@ -79,7 +79,7 @@ export const OTPVerificationPage = () => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/lovable-uploads/c92dc81e-bd73-46fb-8828-e69c77712a6f.png')`,
+            backgroundImage: `url('/lovable-uploads/02d5802a-cd33-44e2-a858-a1e149cace5f.png')`,
           }}
         />
       </div>

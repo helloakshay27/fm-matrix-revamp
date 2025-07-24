@@ -61,7 +61,7 @@ export const ResetPasswordPage = () => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/lovable-uploads/a37de4bf-4401-4e4d-a1c5-343b8d9a4854.png')`,
+            backgroundImage: `url('/lovable-uploads/02d5802a-cd33-44e2-a858-a1e149cace5f.png')`,
           }}
         />
       </div>

@@ -57,7 +57,7 @@ export const ForgotPasswordPage = () => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/lovable-uploads/09814696-9f90-4795-b7b2-628695467e9e.png')`,
+            backgroundImage: `url('/lovable-uploads/02d5802a-cd33-44e2-a858-a1e149cace5f.png')`,
           }}
         />
       </div>
