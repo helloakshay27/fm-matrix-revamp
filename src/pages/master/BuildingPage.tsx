@@ -457,11 +457,6 @@ export function BuildingPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Switch
-                            checked={building.active}
-                            onCheckedChange={() => handleToggleStatus(building.id, 'active')}
-                            aria-label={`Toggle ${building.name} status`}
-                          />
                           <Button
                             variant="ghost"
                             size="sm"
