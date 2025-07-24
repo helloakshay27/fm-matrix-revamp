@@ -345,6 +345,14 @@ export const LocationAccountPage = () => {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Country</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-4"
+                    onClick={() => setIsAddCountryOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
