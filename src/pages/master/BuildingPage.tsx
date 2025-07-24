@@ -455,17 +455,6 @@ export function BuildingPage() {
                           className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                         />
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(building)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
                     </TableRow>
                   ))
                 )}
