@@ -8,6 +8,7 @@ import {
   Trash2,
   FileText,
 } from 'lucide-react';
+import { useLayout } from '@/contexts/LayoutContext';
 
 interface SelectionAction {
   label: string;
@@ -48,10 +49,15 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
     ...(onImport ? [{ label: 'Import', icon: Upload, onClick: onImport }] : []),
     ...actions,
   ];
+    const { isSidebarCollapsed } = useLayout();
+  
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center pb-8 sm:pb-[20rem] pointer-events-none">
-      {/* Main panel + right bar container */}
+<div
+  className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16.7rem] pointer-events-none transition-all duration-300 ${
+    isSidebarCollapsed ? 'left-16' : 'left-64'
+  } right-0 bottom-0`}
+>      {/* Main panel + right bar container */}
       <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
         {/* Right vertical bar */}
         <div className="hidden sm:flex w-8 bg-[#C2B59B] items-center justify-center text-red-600 font-semibold text-sm">

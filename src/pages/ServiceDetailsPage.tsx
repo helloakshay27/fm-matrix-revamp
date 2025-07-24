@@ -247,9 +247,12 @@ export const ServiceDetailsPage = () => {
               </div>
               <h2 className="text-lg font-[700] ">QR CODE</h2>
             </div>
+
+
             <div className="text-center">
               {details.qr_code ? (
                 <>
+                  {/* QR Preview */}
                   <div className="w-48 h-48 bg-gray-200 mx-auto mb-4 flex items-center justify-center">
                     <img
                       src={details.qr_code}
@@ -257,6 +260,8 @@ export const ServiceDetailsPage = () => {
                       className="w-40 h-40 object-contain"
                     />
                   </div>
+
+                  {/* Download Button */}
                   <Button
                     onClick={async () => {
                       const token = localStorage.getItem('token');
@@ -268,26 +273,35 @@ export const ServiceDetailsPage = () => {
 
                       try {
                         const response = await fetch(
-                          `https://${baseUrl}/pms/services/qr_codes?service_ids=[${details.id}]`,
+                          `https://${baseUrl}/pms/services/qr_codes.pdf?service_ids=[${details.id}]`,
                           {
                             headers: {
                               Authorization: `Bearer ${token}`,
+                              Accept: 'application/pdf',
                             },
                           }
                         );
+                      
 
                         if (!response.ok) throw new Error('Failed to fetch QR code');
 
                         const contentType = response.headers.get('Content-Type') || '';
+                        console.log('QR code content type:', contentType);
+
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
 
-                        // Decide file extension based on content type
-                        let extension = 'pdf';
+                        // Determine file extension
+                        let extension = 'png'; // default fallback
                         if (contentType.includes('pdf')) {
                           extension = 'pdf';
+                        } else if (contentType.includes('jpeg')) {
+                          extension = 'jpg';
+                        } else if (contentType.includes('png')) {
+                          extension = 'png';
                         }
 
+                        // Create and trigger download
                         const link = document.createElement('a');
                         link.href = url;
                         link.download = `qr_code_service_${details.id}.${extension}`;
@@ -300,19 +314,14 @@ export const ServiceDetailsPage = () => {
                         alert('Failed to download QR code');
                       }
                     }}
-                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                    className="bg-[#C72030] mb-4 text-white hover:bg-[#C72030]/90"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     Download
                   </Button>
-
-
-
                 </>
               ) : (
-                <>
-                  <div className="text-sm text-gray-600">No QR code available</div>
-                </>
+                <div className="text-sm text-gray-600">No QR code available</div>
               )}
             </div>
           </div>

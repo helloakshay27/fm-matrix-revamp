@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -37,7 +36,6 @@ export const AddInventoryPage = () => {
     dispatch(fetchSuppliersData());
   }, [dispatch]);
 
-
   const [formData, setFormData] = useState({
     assetName: '',
     inventoryName: '',
@@ -71,8 +69,6 @@ export const AddInventoryPage = () => {
     const payload = {
       pms_inventory: {
         user_id: user?.id?.toString() || "",
-        company_id: "",
-        pms_site_id: "",
         inventory_type: inventoryType === 'spares' ? 1 : 2,
         criticality: criticality === 'critical' ? 1 : 2,
         asset_id: parseInt(formData.assetName) || null,
@@ -88,6 +84,7 @@ export const AddInventoryPage = () => {
         max_stock_level: parseInt(formData.maxStockLevel) || 0,
         min_stock_level: formData.minStockLevel,
         min_order_level: formData.minOrderLevel,
+        green_product: ecoFriendly ? 1 : 0, // Added green_product based on ecoFriendly state
         ...(taxApplicable && {
           hsn_id: taxApplicable ? parseInt(formData.sacHsnCode) || null : null,
           sgst_rate: parseFloat(formData.sgstRate) || 0,
@@ -283,8 +280,6 @@ export const AddInventoryPage = () => {
                   onCheckedChange={(checked) => setEcoFriendly(checked === true)}
                 />
               </div>
-
-
 
               {/* Form Grid - First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
