@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { Settings } from 'lucide-react';
 interface DepreciationTab {
   asset: Asset;
   assetId?: string | number;
@@ -155,8 +156,10 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
       {/* Depreciation Rule */}
       <Card className="w-full">
         <CardHeader className="pb-4 lg:pb-6">
-          <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg lg:text-xl">
-            <div className="w-5 h-5 lg:w-6 lg:h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
+          <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+              <Settings className="w-6 h-6 text-[#C72030]" />
+            </div>
             <span>DEPRECIATION RULE</span>
           </CardTitle>
         </CardHeader>
@@ -193,8 +196,10 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
         <div className="xl:col-span-2 w-full">
           <Card className="h-full">
             <CardHeader className="pb-4 lg:pb-6">
-              <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg lg:text-xl">
-                <div className="w-5 h-5 lg:w-6 lg:h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
+              <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                  <Settings className="w-6 h-6 text-[#C72030]" />
+                </div>
                 <span>DEPRECIATION TABLE</span>
               </CardTitle>
             </CardHeader>
@@ -239,9 +244,11 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
         <div className="w-full">
           <Card className="h-full">
             <CardHeader className="pb-4 lg:pb-6">
-              <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg lg:text-xl">
-                <div className="w-5 h-5 lg:w-6 lg:h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
-                <span className="text-sm lg:text-base">ACTUAL COST CALCULATOR</span>
+              <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                  <Settings className="w-6 h-6 text-[#C72030]" />
+                </div>
+                <span>ACTUAL COST CALCULATOR</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 pt-0">
@@ -268,7 +275,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
                       <div
                         key={dayIndex}
                         className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${day === selectedDay
-                            ? 'bg-orange-500 text-white font-medium'
+                            ? 'bg-[#C72030] text-white'
                             : dayIndex === 6
                               ? 'text-red-500 hover:bg-red-50'
                               : 'text-gray-700 hover:bg-gray-200'
@@ -302,8 +309,10 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
       {/* Book Value Graph */}
       <Card className="w-full overflow-hidden">
         <CardHeader className="pb-4 lg:pb-6">
-          <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg lg:text-xl">
-            <div className="w-5 h-5 lg:w-6 lg:h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
+          <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+              <Settings className="w-6 h-6 text-[#C72030]" />
+            </div>
             <span>BOOK VALUE GRAPH</span>
             <span className="text-sm lg:text-base font-normal text-gray-600">(YEARLY STATS)</span>
           </CardTitle>

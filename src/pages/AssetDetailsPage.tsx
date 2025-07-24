@@ -186,31 +186,31 @@ export const AssetDetailsPage = () => {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-12 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
-            <TabsTrigger value="asset-info">Asset Info</TabsTrigger>
-            <TabsTrigger value="amc-details">AMC Details</TabsTrigger>
+            <TabsTrigger value="asset-info" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Asset Info</TabsTrigger>
+            <TabsTrigger value="amc-details" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">AMC Details</TabsTrigger>
             {
               assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
                 <>
-                  <TabsTrigger value="ppm">PPM</TabsTrigger>
-                  <TabsTrigger value="e-bom">E-BOM</TabsTrigger>
+                  <TabsTrigger value="ppm" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">PPM</TabsTrigger>
+                  <TabsTrigger value="e-bom" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">E-BOM</TabsTrigger>
                 </>
               )
             }
-            <TabsTrigger value="attachments">Attachments</TabsTrigger>
+            <TabsTrigger value="attachments" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Attachments</TabsTrigger>
             {
               assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
                 <>
-                  <TabsTrigger value="readings">Readings</TabsTrigger>
+                  <TabsTrigger value="readings" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Readings</TabsTrigger>
                 </>
               )
             }
-            <TabsTrigger value="history-card">History Card</TabsTrigger>
+            <TabsTrigger value="history-card" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">History Card</TabsTrigger>
             {
               assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
                 <>
-                  <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
-                  <TabsTrigger value="ticket">Ticket</TabsTrigger>
-                  <TabsTrigger value="association">Association</TabsTrigger>
+                  <TabsTrigger value="depreciation" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Depreciation</TabsTrigger>
+                  <TabsTrigger value="ticket" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Ticket</TabsTrigger>
+                  <TabsTrigger value="association" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Association</TabsTrigger>
                 </>
               )
             }

@@ -52,10 +52,10 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
           return (
             <div key={index} className="space-y-6 border-2 rounded-lg p-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-700">
-                  <X className="w-4 h-4 text-white" />
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                  <X className="w-4 h-4"style={{ color: "#C72030" }} />
                 </div>
-                <h3 className="text-lg font-semibold uppercase text-red-700">AMC Details {amcs.length > 1 ? `#${index + 1}` : ''}</h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">AMC Details {amcs.length > 1 ? `#${index + 1}` : ''}</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
@@ -105,10 +105,10 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 {/* AMC History */}
                 <div className="bg-white rounded-lg border p-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-700">
-                      <History className="w-4 h-4 text-white" />
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <History className="w-4 h-4 "style={{ color: "#C72030" }} />
                     </div>
-                    <h3 className="text-base font-semibold text-red-700">AMC History</h3>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">AMC History</h3>
                   </div>
 
                   <Table>
@@ -146,10 +146,10 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 {/* Logs */}
                 <div className="bg-white rounded-lg border p-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-700">
-                      <FileText className="w-4 h-4 text-white" />
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-4 h-4 "style={{ color: "#C72030" }} />
                     </div>
-                    <h3 className="text-base font-semibold text-red-700">Logs</h3>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">Logs</h3>
                   </div>
 
                   <div className="space-y-6">

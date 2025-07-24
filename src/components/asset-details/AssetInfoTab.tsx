@@ -136,7 +136,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
         </TabsList>
 
         {/* Asset Details - Full Width */}
-        <TabsContent value="assetDetails" className="space-y-6 ">
+        <TabsContent value="assetDetails" className="space-y-8 ">
           {
             showEnable ? (
               <>
@@ -530,7 +530,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                               className="flex flex-col items-center w-full text-center"
                             >
                               {/* Label above dot */}
-                              <div className="text-sm text-gray-500 mb-2">
+                              <div className="text-sm text-gray-500 mb-2 mt-1">
                                 {item.label}
                               </div>
 
@@ -593,7 +593,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                           </div>
 
                           {/* Values */}
-                          <div className="flex w-full justify-between mt-6">
+                          <div className="flex w-[80%] mx-auto justify-between mt-6">
                             <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
                               {asset.asset_move_tos?.[0]?.from?.location || "NA"}
                             </div>

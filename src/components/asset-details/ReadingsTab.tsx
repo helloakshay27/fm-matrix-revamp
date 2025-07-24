@@ -93,10 +93,10 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
         {/* First Consumption Table */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-xs">✕</span>
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+              <span className="text-white text-xs" style={{ color: "#C72030" }}>✕</span>
             </div>
-            <h3 className="text-lg font-semibold text-[#C72030] uppercase">Consumption</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">Consumption</h3>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -125,10 +125,10 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
         {/* Second Consumption Table */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-xs">✕</span>
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+              <span className="text-white text-xs" style={{ color: "#C72030" }}>✕</span>
             </div>
-            <h3 className="text-lg font-semibold text-[#C72030] uppercase">Non Consumption</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">Non Consumption</h3>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">

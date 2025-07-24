@@ -114,16 +114,16 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-[#C72030]">Basic Asset Info</CardTitle>
+          <CardTitle className="text-base font-semibold text-[#1A1A1A]">Basic Asset Info</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="w-full text-center"> 
                   <TableRow>
-                    <TableHead className="font-medium">Label</TableHead>
-                    <TableHead className="font-medium">Value</TableHead>
+                    <TableHead className="font-medium text-center">Label</TableHead>
+                    <TableHead className="font-medium text-center">Value</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -143,7 +143,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
       {/* History Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-[#C72030]">History</CardTitle>
+          <CardTitle className="text-base font-semibold text-[#1A1A1A]">History</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="bg-white rounded-lg border overflow-hidden">
@@ -230,7 +230,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6">
         <FileText className="w-5 h-5 text-[#C72030]" />
-        <h2 className="text-xl font-bold text-[#C72030]">History In Details</h2>
+        <h2 className="text-lg font-semibold uppercase text-[#1A1A1A]">History In Details</h2>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -238,7 +238,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           <button
             onClick={() => setActiveTab('history-details')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'history-details'
-              ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#1A1A1A" border-[#EDEAE3]'
               : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
               }`}
           >
@@ -247,7 +247,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           <button
             onClick={() => setActiveTab('logs')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'logs'
-              ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#1A1A1A] border-[#EDEAE3]'
               : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
               }`}
           >
