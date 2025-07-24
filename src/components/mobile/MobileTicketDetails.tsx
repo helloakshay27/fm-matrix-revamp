@@ -138,7 +138,7 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Ticket Info Card */}
-        <div className="bg-gray-200 mx-4 mt-4 p-4 rounded-lg">
+        <div className="bg-stone-100 mx-4 mt-4 p-4 rounded-lg">
           <div className="flex justify-between items-start mb-3">
             <span className="text-sm font-medium text-gray-700">
               #{ticket.ticket_number || ticket.id}
