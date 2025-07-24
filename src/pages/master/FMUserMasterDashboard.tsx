@@ -35,6 +35,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TextField,
   Button as MuiButton,
@@ -73,8 +74,12 @@ export const FMUserMasterDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [cloneRoleDialogOpen, setCloneRoleDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [activeTab, setActiveTab] = useState('handover');
+  const [fromUser, setFromUser] = useState('');
+  const [toUser, setToUser] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
   const [filters, setFilters] = useState({
@@ -196,6 +201,34 @@ export const FMUserMasterDashboard = () => {
       toast({
         title: "Error",
         description: "Failed to update user status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCloneRoleSubmit = async () => {
+    try {
+      if (activeTab === 'handover') {
+        toast({
+          title: "Handover Successful",
+          description: `Role handover from ${fromUser} to ${toUser} completed successfully!`,
+        });
+      } else {
+        toast({
+          title: "Clone Successful",
+          description: `Role cloned to ${toUser} successfully!`,
+        });
+      }
+      
+      setCloneRoleDialogOpen(false);
+      setFromUser('');
+      setToUser('');
+      setActiveTab('handover');
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process request. Please try again.",
         variant: "destructive",
       });
     }
@@ -432,7 +465,11 @@ export const FMUserMasterDashboard = () => {
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+        <Button 
+          variant="outline" 
+          className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          onClick={() => setCloneRoleDialogOpen(true)}
+        >
           Clone Role
         </Button>
         
@@ -665,6 +702,102 @@ export const FMUserMasterDashboard = () => {
                 onClick={handleStatusUpdate}
                 className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
                 disabled={!selectedStatus || selectedStatus === 'Select Status'}
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clone Role Dialog */}
+      <Dialog open={cloneRoleDialogOpen} onOpenChange={setCloneRoleDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] p-0 bg-white">
+          <DialogHeader className="p-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">Clone Role</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCloneRoleDialogOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="p-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger 
+                  value="handover" 
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  Handover To
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="clone"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  Clone To
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="handover" className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">From User</label>
+                  <Select value={fromUser} onValueChange={setFromUser}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="user1">John Doe</SelectItem>
+                      <SelectItem value="user2">Jane Smith</SelectItem>
+                      <SelectItem value="user3">Mike Johnson</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
+                  <Select value={toUser} onValueChange={setToUser}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="user1">John Doe</SelectItem>
+                      <SelectItem value="user2">Jane Smith</SelectItem>
+                      <SelectItem value="user3">Mike Johnson</SelectItem>
+                      <SelectItem value="user4">Sarah Wilson</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="clone" className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
+                  <Select value={toUser} onValueChange={setToUser}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="user1">John Doe</SelectItem>
+                      <SelectItem value="user2">Jane Smith</SelectItem>
+                      <SelectItem value="user3">Mike Johnson</SelectItem>
+                      <SelectItem value="user4">Sarah Wilson</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-center pt-6">
+              <Button
+                onClick={handleCloneRoleSubmit}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-md"
+                disabled={!toUser || (activeTab === 'handover' && !fromUser)}
               >
                 Submit
               </Button>
