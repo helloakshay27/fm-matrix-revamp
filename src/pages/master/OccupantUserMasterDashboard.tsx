@@ -22,6 +22,7 @@ export const OccupantUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeSearchTerm, setActiveSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -38,10 +39,7 @@ export const OccupantUserMasterDashboard = () => {
   const { total: totalUsers = 0, approved: approvedUsers = 0, pending: pendingUsers = 0, rejected: rejectedUsers = 0, appDownloaded = 0 } = occupantUserCounts || {};
 
   const filteredUsers = occupantUsersData.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.mobile.includes(searchTerm) ||
-    user.company.toLowerCase().includes(searchTerm.toLowerCase())
+    user.name.toLowerCase().includes(activeSearchTerm.toLowerCase())
   );
 
   // Pagination logic
@@ -72,13 +70,22 @@ export const OccupantUserMasterDashboard = () => {
   };
 
   const handleSearch = () => {
-    // Search functionality is already handled by the filter
-    console.log('Search triggered for:', searchTerm);
+    setActiveSearchTerm(searchTerm);
+    setCurrentPage(1);
+    toast({
+      title: "Search Applied",
+      description: `Searching for users with name: "${searchTerm}"`
+    });
   };
 
   const handleReset = () => {
     setSearchTerm('');
+    setActiveSearchTerm('');
     setCurrentPage(1);
+    toast({
+      title: "Search Reset",
+      description: "Search has been cleared"
+    });
   };
 
   const handleFilterChange = (field: string, value: string) => {
@@ -219,12 +226,17 @@ export const OccupantUserMasterDashboard = () => {
           <div className="flex gap-2 items-center ml-auto">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
-              />
+               <Input
+                 placeholder="Search by user name..."
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+                 onKeyDown={(e) => {
+                   if (e.key === 'Enter') {
+                     handleSearch();
+                   }
+                 }}
+                 className="pl-10 w-64"
+               />
             </div>
             <Button 
               onClick={handleSearch}
