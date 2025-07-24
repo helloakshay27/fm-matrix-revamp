@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchInventoryData } from '@/store/slices/inventorySlice';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight, Settings, AlertCircle, Trash2 } from 'lucide-react';
+import { Upload, FileText, Filter, Eye, Plus, Package, AlertTriangle, CheckCircle, TrendingUp, DollarSign, BarChart3, Download, ChevronDown, RotateCcw, ChevronRight, Settings, AlertCircle, Trash2, Leaf } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { InventoryFilterDialog } from '@/components/InventoryFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -15,7 +15,6 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-
 import {
   Pagination,
   PaginationContent,
@@ -25,6 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import bio from '@/assets/bio.png';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 // Map API field names to display field names for backward compatibility
@@ -50,7 +50,8 @@ const mapInventoryData = (apiData: any[]) => {
       sacHsnCode: item.hsc_hsn_code || '',
       maxStockLevel: item.max_stock_level?.toString() || '',
       minStockLevel: item.min_stock_level?.toString() || '',
-      minOrderLevel: item.min_order_level?.toString() || ''
+      minOrderLevel: item.min_order_level?.toString() || '',
+      greenProduct: item.green_product || false, // Add group_product field
     };
   });
 };
@@ -264,16 +265,27 @@ export const InventoryDashboard = () => {
     }
   ];
 
-
-
-
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === 'actions') {
-      const itemId = typeof item.id === 'string' ? item.id : String(item.id || ''); // Ensure ID is a string
+      const itemId = typeof item.id === 'string' ? item.id : String(item.id || '');
       return (
-        <Button variant="ghost" size="sm" onClick={() => handleViewItem(itemId)}>
-          <Eye className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => handleViewItem(itemId)}>
+            <Eye className="w-4 h-4" />
+          </Button>
+          {item.greenProduct && (
+            <img
+              src={bio}
+              alt="Green Product"
+              className="w-4 h-4"
+              style={{
+                filter:
+                  'invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)',
+              }}
+            />
+            // <Leaf className="w-4 h-4 text-green-600" />
+          )}
+        </div>
       );
     }
     if (columnKey === 'criticality') {
@@ -404,9 +416,11 @@ export const InventoryDashboard = () => {
 
     return items;
   };
+
   const handleFiltersClick = () => {
     setShowFilter(true);
-  }
+  };
+
   const selectionActions = [
     {
       label: 'Filter',
@@ -421,6 +435,7 @@ export const InventoryDashboard = () => {
       variant: 'outline' as const,
     },
   ];
+
   const handleActionClick = () => {
     setShowActionPanel(true);
   };
@@ -437,13 +452,9 @@ export const InventoryDashboard = () => {
     </div>
   );
 
-
-
   return (
     <div className="p-2 sm:p-4 lg:p-6">
-
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
-
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="list"
@@ -466,7 +477,6 @@ export const InventoryDashboard = () => {
             </svg>
             <span className="hidden sm:inline">Inventory List</span>
           </TabsTrigger>
-
           <TabsTrigger
             value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
@@ -475,14 +485,11 @@ export const InventoryDashboard = () => {
             <span className="hidden sm:inline">Analytics</span>
             <span className="sm:hidden">Charts</span>
           </TabsTrigger>
-
         </TabsList>
-
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end mb-4 sm:mb-6">
             <InventorySelector onSelectionChange={handleSelectionChange} />
           </div>
-
           <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
             {/* Main Content */}
             <div className="flex-1 order-2 xl:order-1">
@@ -558,7 +565,6 @@ export const InventoryDashboard = () => {
                             </SortableChartItem>
                           );
                         }
-
                         if (chartId === 'criticalityChart' && visibleSections.includes('criticalityChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
@@ -620,11 +626,9 @@ export const InventoryDashboard = () => {
                             </SortableChartItem>
                           );
                         }
-
                         return null;
                       })}
                     </div>
-
                     {/* Bottom Charts - Category and Aging Matrix */}
                     {chartOrder.filter(id => ['categoryChart', 'agingMatrix'].includes(id)).map((chartId) => {
                       if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
@@ -686,7 +690,6 @@ export const InventoryDashboard = () => {
                           </SortableChartItem>
                         );
                       }
-
                       if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
@@ -695,7 +698,6 @@ export const InventoryDashboard = () => {
                                 <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Items Ageing Matrix</h3>
                                 <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
                               </div>
-
                               <div className="space-y-4 sm:space-y-6">
                                 {/* Table - Horizontally scrollable on mobile */}
                                 <div className="overflow-x-auto -mx-3 sm:mx-0">
@@ -730,7 +732,6 @@ export const InventoryDashboard = () => {
                                     </table>
                                   </div>
                                 </div>
-
                                 {/* Summary Box - Full Width Below Table */}
                                 <div className="w-full">
                                   <div className="rounded-lg p-4 sm:p-8 text-center" style={{ backgroundColor: '#EDE4D8' }}>
@@ -743,14 +744,12 @@ export const InventoryDashboard = () => {
                           </SortableChartItem>
                         );
                       }
-
                       return null;
                     })}
                   </div>
                 </SortableContext>
               </DndContext>
             </div>
-
             {/* Right Sidebar */}
             <div className="w-full xl:w-80 order-1 xl:order-2">
               <div className="w-full bg-[#C4B89D]/25 border xl:border-l border-gray-200 rounded-lg xl:rounded-none p-3 sm:p-4 h-auto xl:h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
@@ -763,7 +762,6 @@ export const InventoryDashboard = () => {
                     16/07/2025
                   </div>
                 </div>
-
                 {/* Items List */}
                 <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 max-h-96 xl:max-h-none">
                   {recentItems.map((item, index) => (
@@ -778,7 +776,6 @@ export const InventoryDashboard = () => {
                           </span>
                         </div>
                       </div>
-
                       {/* Title and TAT */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                         <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{item.title}</h3>
@@ -787,7 +784,6 @@ export const InventoryDashboard = () => {
                           <span className="text-xs sm:text-sm font-bold text-blue-600">{item.tat}</span>
                         </div>
                       </div>
-
                       {/* Details */}
                       <div className="space-y-2 sm:space-y-3 mb-4">
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
@@ -796,28 +792,24 @@ export const InventoryDashboard = () => {
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.subtitle.replace('Category: ', '')}</span>
                         </div>
-
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <Package className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Sub-Category</span>
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.subcategory.replace('Sub-Category: ', '')}</span>
                         </div>
-
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-orange-400 mt-0.5 sm:mt-0"></div>
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Assignee Name</span>
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.assignee.replace('Manager: ', '')}</span>
                         </div>
-
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-400 mt-0.5 sm:mt-0"></div>
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Site</span>
                           <span className="text-xs sm:text-sm text-gray-700">:</span>
                           <span className="text-xs sm:text-sm text-gray-900 break-words">{item.site.replace('Site: ', '')}</span>
                         </div>
-
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                           <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
                           <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">Update</span>
@@ -828,12 +820,10 @@ export const InventoryDashboard = () => {
                             <span className="italic text-gray-600">Processed</span>
                           </div>
                         </div>
-
                         <div className="text-xs sm:text-sm text-gray-600 ml-5 sm:ml-7">
                           (Handled By Manager)
                         </div>
                       </div>
-
                       {/* Action Buttons */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
@@ -843,7 +833,6 @@ export const InventoryDashboard = () => {
                             <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                             Add Comment
                           </button>
-
                           <button
                             className="flex items-center gap-1 sm:gap-2 text-black text-xs sm:text-sm font-medium hover:opacity-80"
                           >
@@ -851,12 +840,11 @@ export const InventoryDashboard = () => {
                             Flag Issue
                           </button>
                         </div>
-
                         <button
                           className="text-blue-600 text-xs sm:text-sm font-medium underline hover:text-blue-800 self-start sm:self-auto"
                           onClick={() => handleViewItem(item.id)}
                         >
-                          View Detail&gt;&gt;
+                          View Detail
                         </button>
                       </div>
                     </div>
@@ -866,16 +854,13 @@ export const InventoryDashboard = () => {
             </div>
           </div>
         </TabsContent>
-
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
-
           {/* Error handling */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
               Error loading inventory data: {error}
             </div>
           )}
-
           <div className="overflow-x-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-3">
               <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
@@ -889,7 +874,6 @@ export const InventoryDashboard = () => {
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
                 </div>
               </div>
-
               <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
                 <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -901,7 +885,6 @@ export const InventoryDashboard = () => {
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
                 </div>
               </div>
-
               <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
                 <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -913,7 +896,6 @@ export const InventoryDashboard = () => {
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
                 </div>
               </div>
-
               <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
                 <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -925,7 +907,6 @@ export const InventoryDashboard = () => {
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
                 </div>
               </div>
-
               <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
                 <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -938,14 +919,12 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
             </div>
-
             {showActionPanel && (
               <SelectionPanel
                 actions={selectionActions}
                 onAdd={handleAddInventory}
                 onImport={handleImportClick}
                 onClearSelection={() => setShowActionPanel(false)}
-
               />
             )}
             <EnhancedTable
@@ -968,7 +947,6 @@ export const InventoryDashboard = () => {
               leftActions={renderCustomActions()}
             />
           </div>
-
           {/* Custom Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-6">
@@ -980,9 +958,7 @@ export const InventoryDashboard = () => {
                       className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                     />
                   </PaginationItem>
-
                   {renderPaginationItems()}
-
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
@@ -995,7 +971,6 @@ export const InventoryDashboard = () => {
           )}
         </TabsContent>
       </Tabs>
-
       <BulkUploadDialog open={showBulkUpload} onOpenChange={setShowBulkUpload} title="Bulk Upload" />
       <InventoryFilterDialog open={showFilter} onOpenChange={setShowFilter} onApply={(filters) => console.log('Applied filters:', filters)} />
     </div>
