@@ -165,7 +165,6 @@ export const OccupantUserMasterDashboard = () => {
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead className="font-semibold text-[#1a1a1a]">Sr. No.</TableHead>
-                  <TableHead className="font-semibold text-[#1a1a1a]">View</TableHead>
                   <TableHead className="font-semibold text-[#1a1a1a]">Company</TableHead>
                   <TableHead className="font-semibold text-[#1a1a1a]">Name</TableHead>
                   <TableHead className="font-semibold text-[#1a1a1a]">Mobile Number</TableHead>
@@ -177,15 +176,6 @@ export const OccupantUserMasterDashboard = () => {
                 {currentPageUsers.map((user) => (
                   <TableRow key={user.id} className="hover:bg-gray-50">
                     <TableCell className="font-medium">{user.srNo}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleViewUser(user.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
                     <TableCell>{user.company}</TableCell>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.mobile}</TableCell>
