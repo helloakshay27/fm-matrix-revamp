@@ -40,7 +40,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
           <Grid3x3 className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-48 h-[368px] overflow-y-auto">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Show Columns</span>
           <span className="text-xs text-gray-500">
