@@ -28,6 +28,7 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
     comment: ''
   });
   const [comments, setComments] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   useEffect(() => {
     dispatch(fetchFMUsers());
@@ -71,6 +72,18 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
       toast({
         title: "Success",
         description: "Comment added successfully"
+      });
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setAttachments(prev => [...prev, ...newFiles]);
+      toast({
+        title: "Success",
+        description: `${newFiles.length} file(s) attached successfully`
       });
     }
   };
@@ -245,10 +258,26 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
               </div>
             )}
 
-            {/* Attachments - Placeholder for future implementation */}
+            {/* Attachments */}
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
-              <div className="text-sm text-gray-500">No attachments available</div>
+              {attachments.length > 0 ? (
+                <div className="space-y-2">
+                  {attachments.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-sm">
+                      <span className="text-gray-700">{file.name}</span>
+                      <button 
+                        onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">No attachments</div>
+              )}
             </div>
 
             <Button onClick={handleUpdate} className="w-full bg-red-600 hover:bg-red-700 text-white">
@@ -267,14 +296,29 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
               onChange={(e) => setUpdateForm(prev => ({ ...prev, comment: e.target.value }))}
               rows={3}
             />
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
-              onClick={handleAddComment}
-            >
-              <Paperclip className="h-4 w-4" />
-              Add Attachment
-            </Button>
+            <div className="space-y-2">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                <Paperclip className="h-4 w-4" />
+                Add Attachment
+              </Button>
+              <Button
+                onClick={handleAddComment}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Add Comment
+              </Button>
+            </div>
           </div>
         </div>
 
