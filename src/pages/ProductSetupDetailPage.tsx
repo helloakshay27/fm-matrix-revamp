@@ -306,45 +306,10 @@ export const ProductSetupDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Breadcrumb */}
-      <div className="bg-white px-6 py-2 border-b">
-        <div className="flex items-center text-sm text-gray-600">
-          <span>F&B List</span>
-          <span className="mx-2">{'>'}</span>
-          <span>F&B Detail</span>
-        </div>
-      </div>
-
-      {/* Main Header */}
-      <div className="bg-white px-6 py-4 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={handleBack}
-              variant="ghost"
-              size="sm"
-              className="p-1"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl font-bold text-gray-900">F&B DETAIL</h1>
-          </div>
-        </div>
-      </div>
-
-      {/* Sub Breadcrumb */}
-      <div className="bg-white px-6 py-2">
-        <div className="flex items-center text-sm text-gray-600">
-          <span>Restaurant</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Restaurant Menu</span>
-        </div>
-      </div>
-
+    <div className="bg-gray-50">
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Product Setup Detail</h1>
+        <div className="flex items-center justify-end mb-2">
+          {/* <h1 className="text-2xl font-bold text-gray-900">Product Setup Detail</h1> */}
           <Button
             onClick={handleEdit}
             className="bg-transparent border-0 text-gray-600 hover:text-gray-800"

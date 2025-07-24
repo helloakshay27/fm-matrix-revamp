@@ -183,7 +183,7 @@ export const StatusSetupTable = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-start">
+      {/* <div className="flex justify-start">
         <Button
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
@@ -191,7 +191,7 @@ export const StatusSetupTable = () => {
           <Plus className="w-4 h-4 text-black" />
           Add
         </Button>
-      </div>
+      </div> */}
 
       <EnhancedTable
         data={statusItems}
@@ -201,6 +201,17 @@ export const StatusSetupTable = () => {
         enableSelection={true}
         enableExport={true}
         storageKey="status-table"
+        leftActions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          </div>
+        }
       />
 
       <AddStatusModal

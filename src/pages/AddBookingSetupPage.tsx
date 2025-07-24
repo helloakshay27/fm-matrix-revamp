@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload } from "lucide-react";
+import { ChevronDown, ChevronUp, Upload } from "lucide-react";
 import {
   TextField,
   Select,
@@ -83,6 +83,8 @@ export const AddBookingSetupPage = () => {
   const bookingImageRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState<File[]>([]);
   const [selectedBookingFiles, setSelectedBookingFiles] = useState<File[]>([]);
+
+  const [additionalOpen, setAdditionalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     facilityName: "",
@@ -165,13 +167,16 @@ export const AddBookingSetupPage = () => {
     setSelectedBookingFiles(files);
   };
 
-
   const triggerFileSelect = () => {
     coverImageRef.current?.click();
   };
 
   const triggerBookingImgSelect = () => {
     bookingImageRef.current?.click();
+  };
+
+  const handleAdditionalOpen = () => {
+    setAdditionalOpen(!additionalOpen);
   };
 
   const fetchDepartments = async () => {
@@ -323,11 +328,11 @@ export const AddBookingSetupPage = () => {
 
       selectedFile.forEach((file) => {
         formDataToSend.append(`cover_image`, file);
-      })
+      });
 
       selectedBookingFiles.forEach((file) => {
         formDataToSend.append(`attachments[]`, file);
-      })
+      });
 
       // Generic Tags (Amenities)
       const amenities = [];
@@ -492,191 +497,105 @@ export const AddBookingSetupPage = () => {
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b">
             <div>
-              
-              <h2 className="text-xl font-bold text-gray-800">NEW BOOKING SETUP</h2>
+              <h2 className="text-xl font-bold text-gray-800">
+                FACILITY BOOKING SETUP
+              </h2>
             </div>
-            {/* <Button variant="ghost" onClick={handleClose} className="text-gray-500 hover:text-gray-700">
-              <X className="h-5 w-5" />
-            </Button> */}
           </div>
 
           <div className="p-6 space-y-8">
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <TextField
-                label="Facility Name*"
-                placeholder="Enter Facility Name"
-                value={formData.facilityName}
-                onChange={(e) =>
-                  setFormData({ ...formData, facilityName: e.target.value })
-                }
-                variant="outlined"
-              />
-              <FormControl>
-                <InputLabel>Active*</InputLabel>
-                <Select
-                  value={formData.active}
-                  onChange={(e) =>
-                    setFormData({ ...formData, active: e.target.value })
-                  }
-                  label="Active*"
-                >
-                  <MenuItem value="Select">Select</MenuItem>
-                  <MenuItem value="1">Yes</MenuItem>
-                  <MenuItem value="0">No</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl>
-                <InputLabel>Department</InputLabel>
-                <Select
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
-                  onFocus={fetchDepartments}
-                  label="Department"
-                >
-                  <MenuItem value="Select Department">
-                    {loadingDepartments ? "Loading..." : "Select Department"}
-                  </MenuItem>
-                  {Array.isArray(departments) &&
-                    departments.map((dept, index) => (
-                      <MenuItem key={index} value={dept.id}>
-                        {dept.department_name}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
-            </div>
-
-            {/* Radio Buttons */}
-            <div className="flex gap-6">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="bookable"
-                  name="type"
-                  checked={formData.isBookable}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      isBookable: true,
-                      isRequest: false,
-                    })
-                  }
-                  className="text-blue-600"
-                />
-                <label htmlFor="bookable">Bookable</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="request"
-                  name="type"
-                  checked={formData.isRequest}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      isBookable: false,
-                      isRequest: true,
-                    })
-                  }
-                  className="text-blue-600"
-                />
-                <label htmlFor="request">Request</label>
-              </div>
-            </div>
-
-            {/* Configure App Key */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="border border-[#C72030]/20 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                   1
                 </div>
                 <h3 className="text-lg font-semibold text-[#C72030]">
-                  CONFIGURE APP KEY
+                  Basic Info
                 </h3>
               </div>
-              <TextField
-                label="App Key"
-                placeholder="Enter Alphanumeric Key"
-                value={formData.appKey}
-                onChange={(e) =>
-                  setFormData({ ...formData, appKey: e.target.value })
-                }
-                variant="outlined"
-              />
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <TextField
+                  label="Facility Name*"
+                  placeholder="Enter Facility Name"
+                  value={formData.facilityName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, facilityName: e.target.value })
+                  }
+                  variant="outlined"
+                />
+                <FormControl>
+                  <InputLabel>Active*</InputLabel>
+                  <Select
+                    value={formData.active}
+                    onChange={(e) =>
+                      setFormData({ ...formData, active: e.target.value })
+                    }
+                    label="Active*"
+                  >
+                    <MenuItem value="Select">Select</MenuItem>
+                    <MenuItem value="1">Yes</MenuItem>
+                    <MenuItem value="0">No</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl>
+                  <InputLabel>Department</InputLabel>
+                  <Select
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData({ ...formData, department: e.target.value })
+                    }
+                    onFocus={fetchDepartments}
+                    label="Department"
+                  >
+                    <MenuItem value="Select Department">
+                      {loadingDepartments ? "Loading..." : "Select Department"}
+                    </MenuItem>
+                    {Array.isArray(departments) &&
+                      departments.map((dept, index) => (
+                        <MenuItem key={index} value={dept.id}>
+                          {dept.department_name}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </div>
 
-            {/* Configure Payment */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  2
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  CONFIGURE PAYMENT
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              {/* Radio Buttons */}
+              <div className="flex gap-6">
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="postpaid"
-                    checked={formData.postpaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, postpaid: !!checked })
+                  <input
+                    type="radio"
+                    id="bookable"
+                    name="type"
+                    checked={formData.isBookable}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        isBookable: true,
+                        isRequest: false,
+                      })
                     }
+                    className="text-blue-600"
                   />
-                  <label htmlFor="postpaid">Postpaid</label>
+                  <label htmlFor="bookable">Bookable</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="prepaid"
-                    checked={formData.prepaid}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, prepaid: !!checked })
+                  <input
+                    type="radio"
+                    id="request"
+                    name="type"
+                    checked={formData.isRequest}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        isBookable: false,
+                        isRequest: true,
+                      })
                     }
+                    className="text-blue-600"
                   />
-                  <label htmlFor="prepaid">Prepaid</label>
+                  <label htmlFor="request">Request</label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="payOnFacility"
-                    checked={formData.payOnFacility}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, payOnFacility: !!checked })
-                    }
-                  />
-                  <label htmlFor="payOnFacility">Pay on Facility</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="complimentary"
-                    checked={formData.complimentary}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, complimentary: !!checked })
-                    }
-                  />
-                  <label htmlFor="complimentary">Complimentary</label>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField
-                  label="SGST(%)"
-                  value={formData.sgstPercentage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sgstPercentage: e.target.value })
-                  }
-                  variant="outlined"
-                />
-                <TextField
-                  label="GST(%)"
-                  value={formData.gstPercentage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, gstPercentage: e.target.value })
-                  }
-                  variant="outlined"
-                />
               </div>
             </div>
 
@@ -684,7 +603,7 @@ export const AddBookingSetupPage = () => {
             <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  3
+                  2
                 </div>
                 <h3 className="text-lg font-semibold text-[#C72030]">
                   CONFIGURE SLOT
@@ -923,27 +842,8 @@ export const AddBookingSetupPage = () => {
                   />
                 </div>
               ))}
-            </div>
 
-            {/* Charge Setup */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  4
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  CHARGE SETUP
-                </h3>
-              </div>
-              <div className="space-y-4">
-                <TextField
-                  label="Per Slot Charge"
-                  value={formData.perSlotCharge}
-                  onChange={(e) =>
-                    setFormData({ ...formData, perSlotCharge: e.target.value })
-                  }
-                  variant="outlined"
-                />
+              <div className="space-y-4 mt-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">
                     Booking Allowed before :
@@ -1122,19 +1022,8 @@ export const AddBookingSetupPage = () => {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Slot Setup */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  5
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  SLOT SETUP
-                </h3>
-              </div>
-              <div className="space-y-4 flex items-center justify-between">
+              <div className="space-y-4 flex items-center justify-between mt-4  ">
                 <div className="flex flex-col gap-5">
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -1192,23 +1081,116 @@ export const AddBookingSetupPage = () => {
               </div>
             </div>
 
+            {/* Configure Payment */}
+            <div className="border border-[#C72030]/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  3
+                </div>
+                <h3 className="text-lg font-semibold text-[#C72030]">
+                  CONFIGURE PAYMENT
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="postpaid"
+                    checked={formData.postpaid}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, postpaid: !!checked })
+                    }
+                  />
+                  <label htmlFor="postpaid">Postpaid</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="prepaid"
+                    checked={formData.prepaid}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, prepaid: !!checked })
+                    }
+                  />
+                  <label htmlFor="prepaid">Prepaid</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="payOnFacility"
+                    checked={formData.payOnFacility}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, payOnFacility: !!checked })
+                    }
+                  />
+                  <label htmlFor="payOnFacility">Pay on Facility</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="complimentary"
+                    checked={formData.complimentary}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, complimentary: !!checked })
+                    }
+                  />
+                  <label htmlFor="complimentary">Complimentary</label>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <TextField
+                  label="SGST(%)"
+                  value={formData.sgstPercentage}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sgstPercentage: e.target.value })
+                  }
+                  variant="outlined"
+                />
+                <TextField
+                  label="GST(%)"
+                  value={formData.gstPercentage}
+                  onChange={(e) =>
+                    setFormData({ ...formData, gstPercentage: e.target.value })
+                  }
+                  variant="outlined"
+                />
+              </div>
+
+              <TextField
+                label="Per Slot Charge"
+                value={formData.perSlotCharge}
+                onChange={(e) =>
+                  setFormData({ ...formData, perSlotCharge: e.target.value })
+                }
+                variant="outlined"
+              />
+            </div>
+
             {/* Cover Image */}
-            <div className='flex items-center justify-between gap-4'>
+            <div className="flex items-center justify-between gap-4">
               {/* Cover Image */}
               <div className="border border-[#C72030]/20 rounded-lg p-4 w-full">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">6</div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">COVER IMAGE</h3>
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    4
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    COVER IMAGE
+                  </h3>
                 </div>
-                <div className="border-2 border-dashed border-[#C72030]/30 rounded-lg p-8 text-center" onClick={triggerFileSelect}>
+                <div
+                  className="border-2 border-dashed border-[#C72030]/30 rounded-lg p-8 text-center"
+                  onClick={triggerFileSelect}
+                >
                   <div className="text-[#C72030] mb-2">
                     <Upload className="h-8 w-8 mx-auto" />
                   </div>
                   <p className="text-sm text-gray-600">
-                    Drag & Drop or <span className="text-[#C72030] cursor-pointer">Choose File</span> No file chosen
+                    Drag & Drop or{" "}
+                    <span className="text-[#C72030] cursor-pointer">
+                      Choose File
+                    </span>{" "}
+                    No file chosen
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Accepted file formats: PNG/JPEG (height: 142px, width: 328px) (max 5 mb)
+                    Accepted file formats: PNG/JPEG (height: 142px, width:
+                    328px) (max 5 mb)
                   </p>
                 </div>
                 <input
@@ -1235,18 +1217,30 @@ export const AddBookingSetupPage = () => {
               {/* Booking Summary Image */}
               <div className="border border-[#C72030]/20 rounded-lg p-4 w-full">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">7</div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">Booking Summary Image</h3>
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    5
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    Booking Summary Image
+                  </h3>
                 </div>
-                <div className="border-2 border-dashed border-[#C72030]/30 rounded-lg p-8 text-center" onClick={triggerBookingImgSelect}>
+                <div
+                  className="border-2 border-dashed border-[#C72030]/30 rounded-lg p-8 text-center"
+                  onClick={triggerBookingImgSelect}
+                >
                   <div className="text-[#C72030] mb-2">
                     <Upload className="h-8 w-8 mx-auto" />
                   </div>
                   <p className="text-sm text-gray-600">
-                    Drag & Drop or <span className="text-[#C72030] cursor-pointer">Choose File</span> No file chosen
+                    Drag & Drop or{" "}
+                    <span className="text-[#C72030] cursor-pointer">
+                      Choose File
+                    </span>{" "}
+                    No file chosen
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Accepted file formats: PNG/JPEG (height: 91px, width: 108px) (max 5 mb)
+                    Accepted file formats: PNG/JPEG (height: 91px, width: 108px)
+                    (max 5 mb)
                   </p>
                 </div>
                 <input
@@ -1270,14 +1264,13 @@ export const AddBookingSetupPage = () => {
                   </div>
                 )}
               </div>
-
             </div>
 
             {/* Description */}
             <div className="border border-[#C72030]/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  8
+                  6
                 </div>
                 <h3 className="text-lg font-semibold text-[#C72030]">
                   DESCRIPTION
@@ -1298,7 +1291,7 @@ export const AddBookingSetupPage = () => {
               <div className="border border-[#C72030]/20 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    9
+                    7
                   </div>
                   <h3 className="text-lg font-semibold text-[#C72030]">
                     TERMS & CONDITIONS
@@ -1320,7 +1313,7 @@ export const AddBookingSetupPage = () => {
               <div className="border border-[#C72030]/20 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    10
+                    8
                   </div>
                   <h3 className="text-lg font-semibold text-[#C72030]">
                     CANCELLATION TEXT
@@ -1342,6 +1335,14 @@ export const AddBookingSetupPage = () => {
 
             {/* Cancellation Rules */}
             <div className="border border-[#C72030]/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  9
+                </div>
+                <h3 className="text-lg font-semibold text-[#C72030]">
+                  RULE SETUP
+                </h3>
+              </div>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="font-medium text-gray-700">
                   Rules Description
@@ -1432,214 +1433,256 @@ export const AddBookingSetupPage = () => {
               ))}
             </div>
 
-            {/* Configure Amenity Info */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  11
+            <div className={`border border-[#C72030]/20 rounded-lg p-4 space-y-4 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[3.8rem]'}`}>
+              <div className="flex justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold"></div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    ADDITIONAL SETUP
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  CONFIGURE AMENITY INFO
-                </h3>
+                {additionalOpen ? (
+                  <ChevronUp
+                    onClick={handleAdditionalOpen}
+                    className="cursor-pointer"
+                  />
+                ) : (
+                  <ChevronDown
+                    onClick={handleAdditionalOpen}
+                    className="cursor-pointer"
+                  />
+                )}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="tv"
-                    checked={formData.amenities.tv}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        amenities: { ...formData.amenities, tv: !!checked },
-                      })
-                    }
-                  />
-                  <label htmlFor="tv">TV</label>
+              {/* Configure Amenity Info */}
+              <div className="border border-[#C72030]/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    11
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    CONFIGURE AMENITY INFO
+                  </h3>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="whiteboard"
-                    checked={formData.amenities.whiteboard}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        amenities: {
-                          ...formData.amenities,
-                          whiteboard: !!checked,
-                        },
-                      })
-                    }
-                  />
-                  <label htmlFor="whiteboard">Whiteboard</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="casting"
-                    checked={formData.amenities.casting}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        amenities: {
-                          ...formData.amenities,
-                          casting: !!checked,
-                        },
-                      })
-                    }
-                  />
-                  <label htmlFor="casting">Casting</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="smartPenForTV"
-                    checked={formData.amenities.smartPenForTV}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        amenities: {
-                          ...formData.amenities,
-                          smartPenForTV: !!checked,
-                        },
-                      })
-                    }
-                  />
-                  <label htmlFor="smartPenForTV">Smart Pen for TV</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="wirelessCharging"
-                    checked={formData.amenities.wirelessCharging}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        amenities: {
-                          ...formData.amenities,
-                          wirelessCharging: !!checked,
-                        },
-                      })
-                    }
-                  />
-                  <label htmlFor="wirelessCharging">Wireless Charging</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="meetingRoomInventory"
-                    checked={formData.amenities.meetingRoomInventory}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        amenities: {
-                          ...formData.amenities,
-                          meetingRoomInventory: !!checked,
-                        },
-                      })
-                    }
-                  />
-                  <label htmlFor="meetingRoomInventory">
-                    Meeting Room Inventory
-                  </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="tv"
+                      checked={formData.amenities.tv}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: { ...formData.amenities, tv: !!checked },
+                        })
+                      }
+                    />
+                    <label htmlFor="tv">TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="whiteboard"
+                      checked={formData.amenities.whiteboard}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            whiteboard: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="whiteboard">Whiteboard</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="casting"
+                      checked={formData.amenities.casting}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            casting: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="casting">Casting</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="smartPenForTV"
+                      checked={formData.amenities.smartPenForTV}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            smartPenForTV: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="wirelessCharging"
+                      checked={formData.amenities.wirelessCharging}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            wirelessCharging: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="wirelessCharging">Wireless Charging</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="meetingRoomInventory"
+                      checked={formData.amenities.meetingRoomInventory}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            meetingRoomInventory: !!checked,
+                          },
+                        })
+                      }
+                    />
+                    <label htmlFor="meetingRoomInventory">
+                      Meeting Room Inventory
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Seater Info */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  12
+              {/* Seater Info */}
+              <div className="border border-[#C72030]/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    12
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    SEATER INFO
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  SEATER INFO
-                </h3>
+                <FormControl>
+                  <InputLabel>Seater Info</InputLabel>
+                  <Select
+                    value={formData.seaterInfo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, seaterInfo: e.target.value })
+                    }
+                    label="Seater Info"
+                  >
+                    <MenuItem value="Select a seater">Select a seater</MenuItem>
+                    <MenuItem value="1 Seater">1 Seater</MenuItem>
+                    <MenuItem value="2 Seater">2 Seater</MenuItem>
+                    <MenuItem value="3 Seater">3 Seater</MenuItem>
+                    <MenuItem value="4 Seater">4 Seater</MenuItem>
+                    <MenuItem value="5 Seater">5 Seater</MenuItem>
+                    <MenuItem value="6 Seater">6 Seater</MenuItem>
+                    <MenuItem value="7 Seater">7 Seater</MenuItem>
+                    <MenuItem value="8 Seater">8 Seater</MenuItem>
+                    <MenuItem value="9 Seater">9 Seater</MenuItem>
+                    <MenuItem value="10 Seater">10 Seater</MenuItem>
+                    <MenuItem value="11 Seater">11 Seater</MenuItem>
+                    <MenuItem value="12 Seater">12 Seater</MenuItem>
+                    <MenuItem value="13 Seater">13 Seater</MenuItem>
+                    <MenuItem value="14 Seater">14 Seater</MenuItem>
+                    <MenuItem value="15 Seater">15 Seater</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
-              <FormControl>
-                <InputLabel>Seater Info</InputLabel>
-                <Select
-                  value={formData.seaterInfo}
+
+              {/* Floor Info */}
+              <div className="border border-[#C72030]/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    13
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    FLOOR INFO
+                  </h3>
+                </div>
+                <FormControl>
+                  <InputLabel>Floor Info</InputLabel>
+                  <Select
+                    value={formData.floorInfo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, floorInfo: e.target.value })
+                    }
+                    label="Floor Info"
+                  >
+                    <MenuItem value="Select a floor">Select a floor</MenuItem>
+                    <MenuItem value="1st Floor">1st Floor</MenuItem>
+                    <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+                    <MenuItem value="3rd Floor">3rd Floor</MenuItem>
+                    <MenuItem value="4th Floor">4th Floor</MenuItem>
+                    <MenuItem value="5th Floor">5th Floor</MenuItem>
+                    <MenuItem value="6th Floor">6th Floor</MenuItem>
+                    <MenuItem value="7th Floor">7th Floor</MenuItem>
+                    <MenuItem value="8th Floor">8th Floor</MenuItem>
+                    <MenuItem value="9th Floor">9th Floor</MenuItem>
+                    <MenuItem value="10th Floor">10th Floor</MenuItem>
+                    <MenuItem value="11th Floor">11th Floor</MenuItem>
+                    <MenuItem value="12th Floor">12th Floor</MenuItem>
+                    <MenuItem value="13th Floor">13th Floor</MenuItem>
+                    <MenuItem value="14th Floor">14th Floor</MenuItem>
+                    <MenuItem value="15th Floor">15th Floor</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+
+              {/* Shared Content Info */}
+              <div className="border border-[#C72030]/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    14
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    Shared Content Info
+                  </h3>
+                </div>
+                <Textarea
+                  placeholder="Text content will appear on meeting room share icon in Application"
+                  value={formData.sharedContentInfo}
                   onChange={(e) =>
-                    setFormData({ ...formData, seaterInfo: e.target.value })
+                    setFormData({
+                      ...formData,
+                      sharedContentInfo: e.target.value,
+                    })
                   }
-                  label="Seater Info"
-                >
-                  <MenuItem value="Select a seater">Select a seater</MenuItem>
-                  <MenuItem value="1 Seater">1 Seater</MenuItem>
-                  <MenuItem value="2 Seater">2 Seater</MenuItem>
-                  <MenuItem value="3 Seater">3 Seater</MenuItem>
-                  <MenuItem value="4 Seater">4 Seater</MenuItem>
-                  <MenuItem value="5 Seater">5 Seater</MenuItem>
-                  <MenuItem value="6 Seater">6 Seater</MenuItem>
-                  <MenuItem value="7 Seater">7 Seater</MenuItem>
-                  <MenuItem value="8 Seater">8 Seater</MenuItem>
-                  <MenuItem value="9 Seater">9 Seater</MenuItem>
-                  <MenuItem value="10 Seater">10 Seater</MenuItem>
-                  <MenuItem value="11 Seater">11 Seater</MenuItem>
-                  <MenuItem value="12 Seater">12 Seater</MenuItem>
-                  <MenuItem value="13 Seater">13 Seater</MenuItem>
-                  <MenuItem value="14 Seater">14 Seater</MenuItem>
-                  <MenuItem value="15 Seater">15 Seater</MenuItem>
-                </Select>
-              </FormControl>
-            </div>
-
-            {/* Floor Info */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  13
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  FLOOR INFO
-                </h3>
+                  className="min-h-[100px]"
+                />
               </div>
-              <FormControl>
-                <InputLabel>Floor Info</InputLabel>
-                <Select
-                  value={formData.floorInfo}
+
+              {/* Configure App Key */}
+              <div className="border border-[#C72030]/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    2
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    CONFIGURE APP KEY
+                  </h3>
+                </div>
+                <TextField
+                  label="App Key"
+                  placeholder="Enter Alphanumeric Key"
+                  value={formData.appKey}
                   onChange={(e) =>
-                    setFormData({ ...formData, floorInfo: e.target.value })
+                    setFormData({ ...formData, appKey: e.target.value })
                   }
-                  label="Floor Info"
-                >
-                  <MenuItem value="Select a floor">Select a floor</MenuItem>
-                  <MenuItem value="1st Floor">1st Floor</MenuItem>
-                  <MenuItem value="2nd Floor">2nd Floor</MenuItem>
-                  <MenuItem value="3rd Floor">3rd Floor</MenuItem>
-                  <MenuItem value="4th Floor">4th Floor</MenuItem>
-                  <MenuItem value="5th Floor">5th Floor</MenuItem>
-                  <MenuItem value="6th Floor">6th Floor</MenuItem>
-                  <MenuItem value="7th Floor">7th Floor</MenuItem>
-                  <MenuItem value="8th Floor">8th Floor</MenuItem>
-                  <MenuItem value="9th Floor">9th Floor</MenuItem>
-                  <MenuItem value="10th Floor">10th Floor</MenuItem>
-                  <MenuItem value="11th Floor">11th Floor</MenuItem>
-                  <MenuItem value="12th Floor">12th Floor</MenuItem>
-                  <MenuItem value="13th Floor">13th Floor</MenuItem>
-                  <MenuItem value="14th Floor">14th Floor</MenuItem>
-                  <MenuItem value="15th Floor">15th Floor</MenuItem>
-                </Select>
-              </FormControl>
-            </div>
-
-            {/* Shared Content Info */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  14
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  Shared Content Info
-                </h3>
+                  variant="outlined"
+                />
               </div>
-              <Textarea
-                placeholder="Text content will appear on meeting room share icon in Application"
-                value={formData.sharedContentInfo}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    sharedContentInfo: e.target.value,
-                  })
-                }
-                className="min-h-[100px]"
-              />
             </div>
 
             {/* Action Buttons */}

@@ -129,7 +129,7 @@ export const SubCategoriesSetupTable = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-start">
+      {/* <div className="flex justify-start">
         <Button
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
@@ -137,7 +137,7 @@ export const SubCategoriesSetupTable = () => {
           <Plus className="w-4 h-4" />
           Add
         </Button>
-      </div>
+      </div> */}
 
       <EnhancedTable
         data={[...subCategories].reverse()}
@@ -147,6 +147,17 @@ export const SubCategoriesSetupTable = () => {
         enableSelection={true}
         enableExport={true}
         storageKey="subcategories-table"
+        leftActions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          </div>
+        }
       />
 
       <AddSubCategoryModal

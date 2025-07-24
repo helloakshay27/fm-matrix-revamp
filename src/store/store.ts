@@ -18,7 +18,7 @@ import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
 import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
-import { exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
+import { editFacilityBookingSetupReducer, exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer, filterBookingsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer, { fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
@@ -74,18 +74,56 @@ export const store = configureStore({
     location: locationReducer,
     serviceLocation: serviceLocationReducer,
     attendance: attendanceReducer,
-  inventoryAssets: inventoryAssetsReducer,
-  inventoryEdit: inventoryEditReducer,
-  serviceEdit: serviceEditReducer,
-  serviceFilter: serviceFilterReducer,
-  inventoryConsumption: inventoryConsumptionReducer,
-  inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
-  ecoFriendlyList: ecoFriendlyListReducer,
-  buildings: buildingsReducer,
-  wings: wingsReducer,
-  floors: floorsReducer,
-  zones: zonesReducer,
-  rooms: roomsReducer,
+    inventoryAssets: inventoryAssetsReducer,
+    inventoryEdit: inventoryEditReducer,
+    serviceEdit: serviceEditReducer,
+    serviceFilter: serviceFilterReducer,
+    inventoryConsumption: inventoryConsumptionReducer,
+    inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
+    ecoFriendlyList: ecoFriendlyListReducer,
+    buildings: buildingsReducer,
+    wings: wingsReducer,
+    floors: floorsReducer,
+    zones: zonesReducer,
+    rooms: roomsReducer,
+
+    fetchBookingDetails: fetchBookingDetailsReducer,
+    exportReport: exportReportReducer,
+    fetchRestaurants: fetchRestaurantsReducer,
+    createRestaurant: createRestaurantReducer,
+    fetchRestaurantDetails: fetchRestaurantDetailsReducer,
+    editRestaurant: editRestaurantReducer,
+    createRestaurantStatus: createRestaurantStatusReducer,
+    fetchRestaurantStatuses: fetchRestaurantStatusesReducer,
+    createRestaurantCategory: createRestaurantCategoryReducer,
+    fetchRestaurantCategory: fetchRestaurantCategoryReducer,
+    deleteCategory: deleteCategoryReducer,
+    editCategory: editCategoryReducer,
+    createSubcategory: createSubcategoryReducer,
+    fetchSubcategory: fetchSubcategoryReducer,
+    deleteSubCategory: deleteSubCategoryReducer,
+    deleteRestaurantStatus: deleteRestaurantStatusReducer,
+    editRestaurantStatus: editRestaurantStatusReducer,
+    editSubCategory: editSubCategoryReducer,
+    fetchRestaurantBookings: fetchRestaurantBookingsReducer,
+    createMenu: createMenuReducer,
+    fetchMenu: fetchMenuReducer,
+    fetchFacilitySetup: fetchFacilitySetupReducer,
+    fetchMenuDetails: fetchMenuDetailsReducer,
+    fetchOrderDetails: fetchOrderDetailsReducer,
+    exportOrders: exportOrdersReducer,
+    editFacilityBookingSetup: editFacilityBookingSetupReducer,
+    filterBookings: filterBookingsReducer,
+
+    // Unit Master
+    fetchMasterUnits: fetchMasterUnitsReducer,
+    createInventoryConsumption: createInventoryConsumptionReducer,
+    facilityBookingSetupDetails: facilityBookingSetupDetailsReducer,
+
+    // Service Slices
+    fetchService: fetchServiceReducer,
+    createService: createServiceReducer,
+    updateService: updateServiceReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

@@ -271,10 +271,10 @@ export const FnBRestaurantDetailsPage = () => {
     '& .MuiInputBase-root': {
       height: { xs: '36px', sm: '45px' },
       borderRadius: '6px',
+      backgroundColor: '#F6F7F7',
     },
     '& .MuiOutlinedInput-root': {
       borderRadius: '6px',
-      backgroundColor: '#FFFFFF',
       '& fieldset': {
         borderColor: '#E0E0E0',
         borderRadius: '6px',
@@ -297,6 +297,7 @@ export const FnBRestaurantDetailsPage = () => {
     '& .MuiInputBase-input': {
       padding: '8px 14px',
       fontSize: '14px',
+      backgroundColor: '#F6F7F7',
     },
   };
 
@@ -307,67 +308,42 @@ export const FnBRestaurantDetailsPage = () => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center text-sm text-gray-600 mb-4">
-        <span>F&B List</span>
-        <span className="mx-2">{'>'}</span>
-        <span>F&B Detail</span>
-      </div>
-
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/vas/fnb')}
-            className="p-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">F&B DETAIL</h1>
-        </div>
-        <Button
-          onClick={handleSave}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
-        >
-          <Save className="w-4 h-4" />
-          Save
-        </Button>
-      </div>
-
       <Tabs defaultValue="restaurant" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 bg-gray-100 gap-1 sm:gap-2 p-1 h-auto">
-          <TabsTrigger value="restaurant" className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 bg-[#FAFAFA] gap-1 sm:gap-2 p-1 h-auto" style={{ border: "1px solid #D9D9D9" }}>
+          <TabsTrigger value="restaurant" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
             Restaurant
           </TabsTrigger>
-          <TabsTrigger value="status-setup" className="whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
-            Status Setup
+          <TabsTrigger value="status-setup" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+            Status
           </TabsTrigger>
-          <TabsTrigger value="categories-setup" className="whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
-            Categories Setup
+          <TabsTrigger value="categories-setup" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+            Categories
           </TabsTrigger>
-          <TabsTrigger value="sub-categories-setup" className="whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
-            Sub Categories Setup
+          <TabsTrigger value="sub-categories-setup" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+            Sub Categories
           </TabsTrigger>
-          <TabsTrigger value="restaurant-menu" className="whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
-            Restaurant Menu
+          <TabsTrigger value="restaurant-menu" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+            Menu
           </TabsTrigger>
-          <TabsTrigger value="restaurant-bookings" className="whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
-            Restaurant Bookings
+          <TabsTrigger value="restaurant-bookings" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+            Table Bookings
           </TabsTrigger>
-          <TabsTrigger value="restaurant-order" className="whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
-            Restaurant Orders
+          <TabsTrigger value="restaurant-order" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+            Orders
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="restaurant" className="mt-6">
           <div className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
-                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+              <CardHeader className="bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}>
+                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
+                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">1</span>
                   BASIC DETAIL
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
                 <div>
                   <TextField
                     label="Restaurant Name"
@@ -432,13 +408,15 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
-                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+              <CardHeader className="bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}>
+                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
+                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">2</span>
                   RESTAURANT SCHEDULE
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="py-[31px] bg-[#F6F7F7]"
+                style={{ border: "1px solid #D9D9D9" }} >
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
@@ -470,7 +448,7 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.start_time}
                               onValueChange={(value) => handleScheduleChange(index, 'start_time', value)}
                             >
-                              <SelectTrigger className="w-20">
+                              <SelectTrigger className="w-20 bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -485,7 +463,7 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.end_time}
                               onValueChange={(value) => handleScheduleChange(index, 'end_time', value)}
                             >
-                              <SelectTrigger className="w-20">
+                              <SelectTrigger className="w-20  bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -500,7 +478,7 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.break_start_time}
                               onValueChange={(value) => handleScheduleChange(index, 'break_start_time', value)}
                             >
-                              <SelectTrigger className="w-20">
+                              <SelectTrigger className="w-20  bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -515,7 +493,7 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.break_end_time}
                               onValueChange={(value) => handleScheduleChange(index, 'break_end_time', value)}
                             >
-                              <SelectTrigger className="w-20">
+                              <SelectTrigger className="w-20  bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -542,7 +520,7 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.last_order_time}
                               onValueChange={(value) => handleScheduleChange(index, 'last_order_time', value)}
                             >
-                              <SelectTrigger className="w-20">
+                              <SelectTrigger className="w-20  bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -561,13 +539,14 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
-                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+              <CardHeader className="bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}>
+                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
+                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">3</span>
                   OTHER INFO
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
                 <div>
                   <TextField
                     label="Phone Number"
@@ -625,13 +604,14 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
-                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+              <CardHeader className="bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}>
+                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
+                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">4</span>
                   COVER
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className='py-[31px] bg-[#F6F7F7]' style={{ border: "1px solid #D9D9D9" }}>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">Cover image upload functionality would be implemented here</p>
                   <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
@@ -654,13 +634,14 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
-                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
+              <CardHeader className="bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}>
+                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
+                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">5</span>
                   MENU
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className='py-[31px] bg-[#F6F7F7]' style={{ border: "1px solid #D9D9D9" }}>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">Menu management functionality would be implemented here</p>
                   <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
@@ -683,13 +664,14 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
-                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+              <CardHeader className="bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}>
+                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
+                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">6</span>
                   GALLERY
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className='py-[31px] bg-[#F6F7F7]' style={{ border: "1px solid #D9D9D9" }}>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">Gallery management functionality would be implemented here</p>
                   <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
@@ -710,77 +692,56 @@ export const FnBRestaurantDetailsPage = () => {
                 </div>
               </CardContent>
             </Card>
+            <div className='flex justify-end'>
+              <Button
+                onClick={handleSave}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Save
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
         <TabsContent value="status-setup" className="mt-6">
           <div className="space-y-4">
-            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
-              <span>Restaurant</span>
-              <span className="mx-2">{'>'}</span>
-              <span>Restaurant Status</span>
-            </div>
-            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT STATUS</h2>
+            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT STATUS</h2> */}
             <StatusSetupTable />
           </div>
         </TabsContent>
 
         <TabsContent value="categories-setup" className="mt-6">
           <div className="space-y-4">
-            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
-              <span>Restaurant</span>
-              <span className="mx-2">{'>'}</span>
-              <span>Restaurant Categories</span>
-            </div>
-            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT CATEGORIES</h2>
+            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT CATEGORIES</h2> */}
             <CategoriesSetupTable />
           </div>
         </TabsContent>
 
         <TabsContent value="sub-categories-setup" className="mt-6">
           <div className="space-y-4">
-            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
-              <span>Restaurant</span>
-              <span className="mx-2">{'>'}</span>
-              <span>Restaurant Sub Categories</span>
-            </div>
-            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT SUB CATEGORIES</h2>
+            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT SUB CATEGORIES</h2> */}
             <SubCategoriesSetupTable />
           </div>
         </TabsContent>
 
         <TabsContent value="restaurant-menu" className="mt-6">
           <div className="space-y-4">
-            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
-              <span>Restaurant</span>
-              <span className="mx-2">{'>'}</span>
-              <span>Restaurant Menu</span>
-            </div>
-            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT MENU</h2>
+            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT MENU</h2> */}
             <RestaurantMenuTable />
           </div>
         </TabsContent>
 
         <TabsContent value="restaurant-bookings" className="mt-6">
           <div className="space-y-4">
-            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
-              <span>Restaurant</span>
-              <span className="mx-2">{'>'}</span>
-              <span>Table Bookings</span>
-            </div>
-            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">TABLE BOOKING</h2>
+            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">TABLE BOOKING</h2> */}
             <RestaurantBookingsTable />
           </div>
         </TabsContent>
 
         <TabsContent value="restaurant-order" className="mt-6">
           <div className="space-y-4">
-            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
-              <span>Restaurant</span>
-              <span className="mx-2">{'>'}</span>
-              <span>Restaurant Orders</span>
-            </div>
-            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT ORDERS</h2>
+            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT ORDERS</h2> */}
             <RestaurantOrdersTable />
           </div>
         </TabsContent>

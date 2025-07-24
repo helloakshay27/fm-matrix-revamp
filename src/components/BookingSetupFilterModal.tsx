@@ -4,9 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  TextField, 
-  createTheme, 
+import {
+  TextField,
+  createTheme,
   ThemeProvider,
   useMediaQuery,
   useTheme
@@ -112,7 +112,7 @@ export const BookingSetupFilterModal: React.FC<BookingSetupFilterModalProps> = (
     facilityType: '',
     bookingMethod: ''
   });
-  
+
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -166,7 +166,7 @@ export const BookingSetupFilterModal: React.FC<BookingSetupFilterModalProps> = (
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent className="sm:max-w-md max-w-[90vw] p-0">
         <ThemeProvider theme={muiTheme}>
           <div className="p-6">
@@ -181,7 +181,7 @@ export const BookingSetupFilterModal: React.FC<BookingSetupFilterModalProps> = (
                 <X className="h-4 w-4" />
               </Button>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               <div>
                 <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
@@ -207,8 +207,8 @@ export const BookingSetupFilterModal: React.FC<BookingSetupFilterModalProps> = (
                       />
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent 
-                    className="w-auto p-0 bg-white border shadow-lg z-50" 
+                  <PopoverContent
+                    className="w-auto p-0 bg-white border shadow-lg z-50"
                     align="start"
                     sideOffset={4}
                   >
@@ -259,7 +259,7 @@ export const BookingSetupFilterModal: React.FC<BookingSetupFilterModalProps> = (
                   </PopoverContent>
                 </Popover>
               </div>
-              
+
               <div>
                 <TextField
                   fullWidth
@@ -290,7 +290,7 @@ export const BookingSetupFilterModal: React.FC<BookingSetupFilterModalProps> = (
             </div>
 
             <div className="flex gap-3 pt-6">
-              <Button 
+              <Button
                 onClick={handleApply}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               >
