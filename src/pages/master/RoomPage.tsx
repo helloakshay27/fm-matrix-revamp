@@ -342,13 +342,17 @@ export const RoomPage = () => {
                     <TableCell>{room.floor}</TableCell>
                     <TableCell>{room.unit || '-'}</TableCell>
                     <TableCell>{room.room}</TableCell>
-                    <TableCell>
-                      {room.status ? (
-                        <Check className="w-5 h-5 text-green-600" />
-                      ) : (
-                        <span className="text-red-600">✗</span>
-                      )}
-                    </TableCell>
+                     <TableCell>
+                       {room.status ? (
+                         <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                           <Check className="w-3 h-3 text-white" />
+                         </div>
+                       ) : (
+                         <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center">
+                           <span className="text-white text-xs">✗</span>
+                         </div>
+                       )}
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
