@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Paperclip, FileText, X } from 'lucide-react';
+import { ArrowLeft, Upload, Paperclip, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 
@@ -322,335 +322,300 @@ export const AddTicketDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-white min-h-screen">
-      <div className="mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate('/maintenance/ticket')} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Ticket List
-          </Button>
-          <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">
-            NEW TICKET
-          </h1>
-        </div>
+    <div className="p-6">
+      <div className="mb-6">
+        <Button variant="ghost" onClick={() => navigate('/maintenance/ticket')} className="mb-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Ticket List
+        </Button>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW TICKET</h1>
+      </div>
 
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
         {/* Ticket Details Section */}
-        <div className="p-4 rounded-lg mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center">
-              <FileText className="w-4 h-4 text-[#C72030]" />
-            </div>
-            <h2 className="text-lg font-semibold text-orange-800">TICKET DETAILS</h2>
-          </div>
-
-          {/* On Behalf Of */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket On Behalf Of</label>
-            <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex flex-wrap gap-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="self" id="self" />
-                <label htmlFor="self">Self</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="occupant-user" id="occupant-user" />
-                <label htmlFor="occupant-user">Occupant User</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="fm-user" id="fm-user" />
-                <label htmlFor="fm-user">FM User</label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* User Selection Dropdown */}
-          {onBehalfOf !== 'self' && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#C72030] flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+              TICKET DETAILS
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* On Behalf Of */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
-              <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {getUsersForDropdown().map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket On Behalf Of</label>
+              <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex flex-wrap gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="self" id="self" />
+                  <label htmlFor="self">Self</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="occupant-user" id="occupant-user" />
+                  <label htmlFor="occupant-user">Occupant User</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="fm-user" id="fm-user" />
+                  <label htmlFor="fm-user">FM User</label>
+                </div>
+              </RadioGroup>
             </div>
-          )}
 
-          {/* Requestor Details */}
-          <h3 className="font-medium mb-3">
-            Requestor Details
-            {isFieldsReadOnly && (
-              <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                Auto-populated
-              </span>
+            {/* User Selection Dropdown */}
+            {onBehalfOf !== 'self' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
+                <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getUsersForDropdown().map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <Input
-                placeholder="Enter Name"
-                value={formData.name}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
-                disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div>
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-              <Input
-                placeholder="Enter Contact Number"
-                value={formData.contactNumber}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, contactNumber: e.target.value })}
-                disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div> */}
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
-              <Input
-                placeholder="Enter Site"
-                value={formData.site}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, site: e.target.value })}
-                disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div> */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-              <Input
-                placeholder="Enter Department"
-                value={formData.department}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
-                disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div>
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-              <Input
-                placeholder="Enter Unit"
-                value={formData.unit}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, unit: e.target.value })}
-                disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div> */}
-          </div>
 
-          {/* Ticket Type */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Ticket Type *</label>
-            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="request" id="request" />
-                <label htmlFor="request">Request</label>
+            {/* Requestor Details */}
+            <h3 className="font-medium mb-3">
+              Requestor Details
+              {isFieldsReadOnly && (
+                <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  Auto-populated
+                </span>
+              )}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <Input
+                  placeholder="Enter Name"
+                  value={formData.name}
+                  onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
+                  disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
+                  className={isFieldsReadOnly ? "bg-gray-50" : ""}
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="suggestion" id="suggestion" />
-                <label htmlFor="suggestion">Suggestion</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <Input
+                  placeholder="Enter Department"
+                  value={formData.department}
+                  onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
+                  disabled={isFieldsReadOnly}
+                  className={isFieldsReadOnly ? "bg-gray-50" : ""}
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="complaint" id="complaint" />
-                <label htmlFor="complaint">Complaint</label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Category and Other Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category Type *</label>
-              <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingCategories ? "Loading..." : "Select Category"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category Type</label>
-              <Select 
-                value={formData.subCategoryType} 
-                onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
-                disabled={!formData.categoryType || loadingSubcategories}
+
+            {/* Ticket Type */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ticket Type *</label>
+              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="request" id="request" />
+                  <label htmlFor="request">Request</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="suggestion" id="suggestion" />
+                  <label htmlFor="suggestion">Suggestion</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="complaint" id="complaint" />
+                  <label htmlFor="complaint">Complaint</label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Category and Other Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category Type *</label>
+                <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingCategories ? "Loading..." : "Select Category"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category Type</label>
+                <Select 
+                  value={formData.subCategoryType} 
+                  onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
+                  disabled={loadingSubcategories || !formData.categoryType}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      loadingSubcategories ? "Loading..." : 
+                      !formData.categoryType ? "Select Category First" : 
+                      "Select Sub Category"
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategories.map((subcategory) => (
+                      <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
+                        {subcategory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+                <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Engineer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fmUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.firstname} {user.lastname}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Proactive/Reactive</label>
+                <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Admin Priority</label>
+                <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+                <Input
+                  placeholder="Enter Reference Number"
+                  value={formData.referenceNumber}
+                  onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+              <Textarea
+                placeholder="Enter description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full min-h-24 resize-y"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Attachments Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#C72030] flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+              ATTACHMENTS
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <input 
+                type="file" 
+                multiple 
+                onChange={handleFileUpload}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button
+                type="button"
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Select SubCategory"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {subcategories.map((subcat) => (
-                    <SelectItem key={subcat.id} value={subcat.id.toString()}>
-                      {subcat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-              <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
-              <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Assignee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fmUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.firstname} {user.lastname}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Proactive/Reactive</label>
-              <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
-              <Input
-                placeholder="Enter Reference Number"
-                value={formData.referenceNumber}
-                onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
-              />
-            </div> */}
-          </div>
-
-          {/* Description */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter description"
-              className="min-h-[120px]"
-            />
-          </div>
-        </div>
-
-        {/* Attachment Section */}
-        <div className="p-4 rounded-lg mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center">
-              <Paperclip className="w-4 h-4 text-[#C72030]" />
-            </div>
-            <h2 className="text-lg font-semibold text-orange-800">ATTACHMENTS</h2>
-          </div>
-
-          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-              accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
-            />
-            <label htmlFor="file-upload" className="cursor-pointer">
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2">
-                Drag & Drop or{' '}
-                <span className="text-[#C72030] underline">Choose Files</span>
-              </p>
-              <p className="text-sm text-gray-500">
-                PNG, JPG, PDF up to 10MB
-              </p>
-            </label>
-          </div>
-
-          {/* Selected Files */}
-          {attachedFiles.length > 0 && (
-            <div className="mt-4">
-              <h4 className="font-medium text-gray-700 mb-2">Selected Files:</h4>
-              <div className="space-y-2">
-                {attachedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Files
+              </Button>
+              
+              {/* Display attached files */}
+              {attachedFiles.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm p-2 rounded" style={{backgroundColor: '#f6f4ee'}}>
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="w-4 h-4 text-gray-500" />
+                        <span>{file.name}</span>
                       </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Submit Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-3">
-          <Button
-            onClick={handleSubmit}
+          </CardContent>
+        </Card>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center">
+          <Button 
+            type="submit"
             disabled={isSubmitting}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8 py-2"
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white hover:bg-[#C72030]/90"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
+            {isSubmitting ? 'Creating...' : 'Create Ticket'}
           </Button>
-          <Button
+          <Button 
+            type="button"
             variant="outline"
             onClick={() => navigate('/maintenance/ticket')}
-            className="px-8 py-2"
-            disabled={isSubmitting}
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
           >
             Cancel
           </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };
