@@ -42,12 +42,20 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
   const handleStarToggle = async (ticketId: number) => {
     try {
       await ticketManagementAPI.markAsGoldenTicket([ticketId]);
+      
+      // Update local state instead of reloading
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, priority: ticket.priority === 'High' ? 'Medium' : 'High' }
+            : ticket
+        )
+      );
+      
       toast({
         title: "Success",
         description: "Ticket marked as golden successfully",
       });
-      // Refresh tickets to get updated data
-      fetchTickets();
     } catch (error) {
       console.error('Error marking ticket as golden:', error);
       toast({
@@ -61,12 +69,20 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
   const handleFlagToggle = async (ticketId: number) => {
     try {
       await ticketManagementAPI.markAsFlagged([ticketId]);
+      
+      // Update local state instead of reloading
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, priority: ticket.priority === 'Critical' ? 'Medium' : 'Critical' }
+            : ticket
+        )
+      );
+      
       toast({
         title: "Success",
         description: "Ticket flagged successfully",
       });
-      // Refresh tickets to get updated data
-      fetchTickets();
     } catch (error) {
       console.error('Error flagging ticket:', error);
       toast({
@@ -261,7 +277,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               </div>
 
               {/* Title */}
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 pr-20 break-words line-clamp-2">
                 {ticket.heading}
               </h3>
 
