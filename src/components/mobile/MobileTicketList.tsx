@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Clock, Filter, History, Plus } from 'lucide-react';
+import { Star, Clock, Filter, History, Plus, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
@@ -76,18 +76,40 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
   };
 
   const filteredTickets = tickets.filter(ticket => {
-    // Apply tab filter
+    let tabFilter = true;
+    
     switch (activeTab) {
       case 'my':
         // Filter for current user's tickets (you may need to implement user context)
-        return true; // For now, show all
+        tabFilter = true; // Show all for now
+        break;
       case 'golden':
-        return false; // Implement golden ticket logic when available
+        tabFilter = starredTickets.has(ticket.id) || ticket.priority === 'High';
+        break;
       case 'flagged':
-        return starredTickets.has(ticket.id);
+        tabFilter = ticket.priority === 'Critical' || ticket.issue_status === 'Open';
+        break;
+      case 'all':
       default:
-        return true;
+        tabFilter = true;
+        break;
     }
+
+    let statusFilter = true;
+    switch (activeFilter) {
+      case 'approaching':
+        statusFilter = ticket.issue_status === 'Approaching TAT';
+        break;
+      case 'within':
+        statusFilter = ticket.issue_status === 'Within TAT';
+        break;
+      case 'all':
+      default:
+        statusFilter = true;
+        break;
+    }
+
+    return tabFilter && statusFilter;
   });
 
   return (
@@ -179,7 +201,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
           filteredTickets.map((ticket) => (
             <div
               key={ticket.id}
-              className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 relative"
+              className="bg-stone-100 rounded-lg p-4 shadow-sm border border-stone-200 relative"
               onClick={() => onTicketSelect(ticket)}
             >
               {/* Ticket Header */}
