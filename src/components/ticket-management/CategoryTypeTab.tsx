@@ -193,6 +193,16 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const handleSubmit = async (data: CategoryFormData) => {
+    // Check for duplicate category name
+    const existingCategory = categories.find(
+      category => category.name.toLowerCase() === data.categoryName.toLowerCase()
+    );
+    
+    if (existingCategory) {
+      toast.error('Category name already exists. Please choose a different name.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
