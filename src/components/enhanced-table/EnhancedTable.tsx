@@ -452,10 +452,10 @@ export function EnhancedTable<T extends Record<string, any>>({
           >
             <Table className={className}>
               <TableHeader>
-                 <TableRow className="h-[28px]">
+                 <TableRow className="h-[32px]">
                    {selectable && (
-                   <TableHead className="bg-[#F6F4EE] py-0 font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
-                         <div className="flex items-center justify-center w-full h-[28px]">
+                   <TableHead className="bg-[#F9F8F5] py-0 font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white w-[50px]" data-checkbox>
+                         <div className="flex items-center justify-center w-full h-[32px]">
                            <Checkbox
                              checked={isAllSelected}
                              onCheckedChange={handleSelectAllChange}
@@ -475,13 +475,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#F6F4EE] text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white"
+                        className="bg-[#F9F8F5] text-left px-[18px] py-[10px] font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#F6F4EE] text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]">Actions</TableHead>
+                      <TableHead className="bg-[#F9F8F5] text-left px-[18px] py-[10px] font-medium text-[14px] text-[#1A1A1A] h-[32px]">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
