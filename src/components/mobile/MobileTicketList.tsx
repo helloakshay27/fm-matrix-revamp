@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
-import { MobileCreateTicketModal } from './MobileCreateTicketModal';
+import { MobileDynamicCreateTicketModal } from './MobileDynamicCreateTicketModal';
 
 interface MobileTicketListProps {
   onTicketSelect: (ticket: TicketResponse) => void;
@@ -210,7 +210,8 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
           filteredTickets.map((ticket) => (
             <div
               key={ticket.id}
-              className="bg-stone-100 rounded-lg p-4 shadow-sm border border-stone-200 relative"
+              className="rounded-lg p-4 shadow-sm border border-stone-200 relative"
+              style={{ backgroundColor: '#E5DFD2' }}
               onClick={() => onTicketSelect(ticket)}
             >
               {/* Top Row: Ticket ID, Time, Status */}
@@ -291,7 +292,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       </div>
 
       {/* Create Ticket Modal */}
-      <MobileCreateTicketModal
+      <MobileDynamicCreateTicketModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {
