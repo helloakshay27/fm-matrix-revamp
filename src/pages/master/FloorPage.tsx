@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Building } from 'lucide-react';
+import { Search, Plus, Edit, Building, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -295,8 +295,14 @@ export function FloorPage() {
       {/* Add Floor Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent>
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between pb-0">
             <DialogTitle>ADD FLOOR</DialogTitle>
+            <button
+              onClick={() => setShowAddDialog(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </DialogHeader>
           <div className="space-y-4">
             <div>
