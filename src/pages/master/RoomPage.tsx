@@ -129,6 +129,12 @@ export const RoomPage = () => {
     }
   };
 
+  const toggleRoomStatus = (roomId: number) => {
+    setRooms(prev => prev.map(room => 
+      room.id === roomId ? { ...room, status: !room.status } : room
+    ));
+  };
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       <div className="w-full">
@@ -343,15 +349,17 @@ export const RoomPage = () => {
                     <TableCell>{room.unit || '-'}</TableCell>
                     <TableCell>{room.room}</TableCell>
                      <TableCell>
-                       {room.status ? (
-                         <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
-                           <Check className="w-3 h-3 text-white" />
-                         </div>
-                       ) : (
-                         <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center">
-                           <span className="text-white text-xs">✗</span>
-                         </div>
-                       )}
+                       <button onClick={() => toggleRoomStatus(room.id)} className="cursor-pointer">
+                         {room.status ? (
+                           <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                             <Check className="w-3 h-3 text-white" />
+                           </div>
+                         ) : (
+                           <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                             <span className="text-white text-xs">✗</span>
+                           </div>
+                         )}
+                       </button>
                      </TableCell>
                   </TableRow>
                 ))}
