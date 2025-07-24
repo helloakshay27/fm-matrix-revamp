@@ -103,7 +103,6 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       data={assets}
       columns={columns}
       renderCell={renderCell}
-      onRowClick={(asset) => onViewAsset(asset.id)}
       storageKey="asset-data-table"
       emptyMessage="No assets found"
       selectable={true}
