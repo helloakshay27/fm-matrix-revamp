@@ -93,11 +93,11 @@ export const AssetDetailsPage = () => {
           Back to Assets
         </button>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-4">
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
-                {assetData.name} (#{assetData.id})
+                {assetData.name} ({assetData.asset_type_category})
               </h1>
 
               <div className="relative inline-block">
@@ -115,8 +115,8 @@ export const AssetDetailsPage = () => {
             </div>
 
             <div className="text-sm text-gray-600">
-              Created by {assetData.created_by} • Last updated by Rakesh on
-              06/01/2022, 12:22pm
+              Created by {assetData.created_by} • Last updated by {assetData.last_updated_by} on
+              &nbsp; {assetData.updated_at}
             </div>
           </div>
 

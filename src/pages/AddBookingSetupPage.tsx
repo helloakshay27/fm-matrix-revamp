@@ -504,16 +504,18 @@ export const AddBookingSetupPage = () => {
           </div>
 
           <div className="p-6 space-y-8">
-            <div className="border border-[#C72030]/20 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="border border-[#C72030]/20 rounded-lg space-y-3">
+              <div className="flex items-center gap-2 mb-4 bg-[#F6F4EE] p-[30px]"
+                style={{ border: "1px solid #D9D9D9" }}>
                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                   1
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
+                <h3 className="text-lg font-semibold text-[20px] fw-semibold text-[#C72030]">
                   Basic Info
                 </h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-6 py-3 bg-[#F6F7F7]"
+                style={{ border: "1px solid  #D9D9D9" }}>
                 <TextField
                   label="Facility Name*"
                   placeholder="Enter Facility Name"
@@ -561,7 +563,7 @@ export const AddBookingSetupPage = () => {
               </div>
 
               {/* Radio Buttons */}
-              <div className="flex gap-6">
+              <div className="flex gap-6 px-6 pb-3">
                 <div className="flex items-center space-x-2">
                   <input
                     type="radio"
@@ -600,8 +602,8 @@ export const AddBookingSetupPage = () => {
             </div>
 
             {/* Configure Slot */}
-            <div className="border border-[#C72030]/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="border border-[#C72030]/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-4 p-[30px] bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                   2
                 </div>
@@ -617,7 +619,7 @@ export const AddBookingSetupPage = () => {
               </Button>
 
               {/* Slot Headers */}
-              <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
+              <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600 px-6 py-3">
                 <div>Start Time</div>
                 <div>Break Time Start</div>
                 <div>Break Time End</div>

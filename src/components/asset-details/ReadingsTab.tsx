@@ -46,7 +46,7 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
 
   const tableHeaders = [
     'Particulars', 'UOM', 'MF', 'Balance',
-    '19 MAY', '20 MAY', '21 MAY', '22 MAY', '23 MAY', '24 MAY', '25 MAY', '26 MAY', 
+    '19 MAY', '20 MAY', '21 MAY', '22 MAY', '23 MAY', '24 MAY', '25 MAY', '26 MAY',
     '27 MAY', '28 MAY', '29 MAY', '30 MAY', '31 MAY', '01 JUN', '02 JUN', '03 JUN', '04 JUN'
   ];
 
@@ -69,13 +69,13 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
             className="w-48"
           />
         </div>
-        <Button 
+        <Button
           onClick={handleApply}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
           Apply
         </Button>
-        <Button 
+        <Button
           onClick={handleReset}
           variant="outline"
           className="border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -98,7 +98,7 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
             </div>
             <h3 className="text-lg font-semibold text-[#C72030] uppercase">Consumption</h3>
           </div>
-          
+
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -128,9 +128,9 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
             <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
               <span className="text-white text-xs">✕</span>
             </div>
-            <h3 className="text-lg font-semibold text-[#C72030] uppercase">Consumption</h3>
+            <h3 className="text-lg font-semibold text-[#C72030] uppercase">Non Consumption</h3>
           </div>
-          
+
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
