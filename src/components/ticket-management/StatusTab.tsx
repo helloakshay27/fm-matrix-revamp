@@ -112,9 +112,38 @@ export const StatusTab: React.FC = () => {
     setAllowReopen(checked === true);
   };
 
-  const handleDelete = (status: StatusType) => {
-    setStatuses(statuses.filter(s => s.id !== status.id));
-    toast.success('Status deleted successfully!');
+  const handleDelete = async (status: StatusType) => {
+    if (!confirm('Are you sure you want to delete this status?')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const response = await fetch(`https://${baseUrl}/pms/admin/modify_complaint_status.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: status.id,
+          active: 0
+        }),
+      });
+
+      if (response.ok) {
+        setStatuses(statuses.filter(s => s.id !== status.id));
+        toast.success('Status deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete status');
+      }
+    } catch (error) {
+      console.error('Error deleting status:', error);
+      toast.error('Failed to delete status');
+    }
   };
 
   const columns = [

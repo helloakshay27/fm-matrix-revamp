@@ -54,6 +54,7 @@ export const API_CONFIG = {
     STATUSES: '/pms/admin/create_complaint_statuses.json',
     STATUSES_LIST: '/pms/admin/complaint_statuses.json',
     STATUSES_UPDATE: '/pms/admin/modify_complaint_status.json',
+    MODIFY_COMPLAINT_STATUS: '/pms/admin/modify_complaint_status.json',
     // New endpoints for ticket creation
     CREATE_TICKET: '/pms/admin/complaints.json',
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
