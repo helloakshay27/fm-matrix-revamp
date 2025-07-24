@@ -400,7 +400,7 @@ export function BuildingPage() {
                   <TableHead className="text-center">Floor</TableHead>
                   <TableHead className="text-center">Room</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  
                 </TableRow>
               </TableHeader>
               <TableBody>
