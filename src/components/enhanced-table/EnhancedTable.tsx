@@ -300,10 +300,9 @@ export function EnhancedTable<T extends Record<string, any>>({
           )}
 
           {onFilterClick && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="h-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            <Button
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
@@ -334,7 +333,7 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden font-['Work_Sans']">
+      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
           <DndContext
             sensors={sensors}
@@ -343,10 +342,14 @@ export function EnhancedTable<T extends Record<string, any>>({
           >
             <Table className={className}>
               <TableHeader>
-                 <TableRow className="h-[28px]">
-                   {selectable && (
-                      <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-center py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
-                        <div className="flex items-center justify-center h-full w-full">
+                <TableRow>
+                  <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                    {renderActions && (
+                      <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
+                    )}
+                    {selectable && (
+                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
+                        <div className="flex justify-center">
                           <Checkbox
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAllChange}
@@ -354,9 +357,8 @@ export function EnhancedTable<T extends Record<string, any>>({
                             {...(isIndeterminate && { 'data-state': 'indeterminate' })}
                           />
                         </div>
-                     </TableHead>
-                   )}
-                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                      </TableHead>
+                    )}
                     {visibleColumns.map((column) => (
                       <SortableColumnHeader
                         key={column.key}
@@ -365,14 +367,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white"
+                        className="bg-[#f6f4ee] text-center text-black"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
-                    {renderActions && (
-                      <TableHead className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]">Actions</TableHead>
-                    )}
                   </SortableContext>
                 </TableRow>
               </TableHeader>
@@ -417,7 +416,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                       key={index}
                       className={cn(
                         onRowClick && "cursor-pointer",
-                        "hover:bg-gray-50 h-[40px] border-b border-gray-100",
+                        "hover:bg-gray-50",
                         isSelected && "bg-blue-50"
                       )}
                       onClick={(e) => handleRowClick(item, e)}
@@ -428,7 +427,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </TableCell>
                       )}
                       {selectable && (
-                        <TableCell className="w-[8px] px-[8px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
+                        <TableCell className="p-4 w-12 text-center" data-checkbox>
                           <div className="flex justify-center">
                             <Checkbox
                               checked={isSelected}
@@ -443,16 +442,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="px-[18px] py-[12px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[40px]">
+                          <TableCell key={column.key} className="p-4 text-center">
                             {cellContent}
                           </TableCell>
                         );
                       })}
-                      {renderActions && (
-                        <TableCell className="px-[18px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-actions>
-                          {renderActions(item)}
-                        </TableCell>
-                      )}
                     </TableRow>
                   );
                 })}
