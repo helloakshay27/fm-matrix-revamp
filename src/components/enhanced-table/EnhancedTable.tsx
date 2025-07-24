@@ -454,8 +454,8 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                  <TableRow className="h-[32px]">
                    {selectable && (
-                   <TableHead className="bg-[#F9F8F5] py-0 font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white w-[50px]" data-checkbox>
-                         <div className="flex items-center justify-center w-full h-[32px]">
+                   <TableHead className="bg-[#F9F8F5] px-[16px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white w-[50px]" data-checkbox>
+                         <div className="flex items-center justify-center w-full h-full">
                            <Checkbox
                              checked={isAllSelected}
                              onCheckedChange={handleSelectAllChange}
@@ -533,8 +533,8 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {selectable && (
-                        <TableCell className="w-[50px] py-0 align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
-                           <div className="flex items-center justify-center w-full h-[40px]">
+                        <TableCell className="w-[50px] px-[16px] py-[8px] align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-checkbox>
+                           <div className="flex items-center justify-center w-full h-full">
                              <Checkbox
                                checked={isSelected}
                                onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
