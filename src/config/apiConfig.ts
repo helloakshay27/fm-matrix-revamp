@@ -44,7 +44,7 @@ export const API_CONFIG = {
     RESPONSE_ESCALATION: '/pms/admin/response_escalation',
     RESOLUTION_ESCALATION: '/pms/admin/resolution_escalation',
     UPDATE_COMPLAINT_WORKER: '/pms/admin/update_complaint_worker.json',
-    DELETE_COMPLAINT_WORKER: '/pms/admin/delete_complaint_worker',
+    DELETE_COMPLAINT_WORKER: '/pms/admin/delete_complaint_worker.json',
     FACILITY_BOOKINGS: '/pms/admin/facility_bookings.json',
     ENTITIES: '/entities.json',
     FACILITY_SETUPS: '/pms/admin/facility_setups.json',
