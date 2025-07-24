@@ -346,7 +346,10 @@ export const SubCategoryTab: React.FC = () => {
 
   const renderActions = (item: SubCategoryType) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={() => setEditingSubCategory(item)}>
+      <Button variant="ghost" size="sm" onClick={() => {
+        setEditingSubCategory(item);
+        setEditModalOpen(true);
+      }}>
         <Edit className="h-4 w-4" />
       </Button>
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
@@ -928,18 +931,7 @@ export const SubCategoryTab: React.FC = () => {
       <EditSubCategoryModal
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        subCategory={editingSubCategory ? {
-          id: editingSubCategory.id.toString(),
-          srNo: parseInt(editingSubCategory.id),
-          category: editingSubCategory.helpdesk_category_name || '',
-          subCategory: editingSubCategory.name || '',
-          building: editingSubCategory.location_config?.building_enabled || false,
-          wing: editingSubCategory.location_config?.wing_enabled || false,
-          floor: editingSubCategory.location_config?.floor_enabled || false,
-          zone: editingSubCategory.location_config?.zone_enabled || false,
-          room: editingSubCategory.location_config?.room_enabled || false,
-          customerEnabled: editingSubCategory.customer_enabled || false
-        } : null}
+        subCategory={editingSubCategory}
         onUpdate={() => fetchData()}
       />
     </div>
