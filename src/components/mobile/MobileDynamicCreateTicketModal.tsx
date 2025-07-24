@@ -305,7 +305,7 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
             <div className="pt-4">
               <Button
                 onClick={handleNext}
-                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium text-base rounded-lg"
+                className="w-full h-12 bg-red-700 hover:bg-red-800 text-white font-medium text-base rounded-lg"
               >
                 Next
               </Button>
