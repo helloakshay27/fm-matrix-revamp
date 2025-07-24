@@ -105,6 +105,12 @@ import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
 
+// Import new dashboard pages
+import { IncidentDashboard } from './pages/IncidentDashboard';
+import { PermitToWorkDashboard } from './pages/PermitToWorkDashboard';
+import { LeadDashboard } from './pages/LeadDashboard';
+import { EnergyDashboard } from './pages/EnergyDashboard';
+
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
 
@@ -607,7 +613,7 @@ function App() {
                 <Route path="/utility/energy" element={<EnergyDashboard />} />
 
                 {/* Security Routes */}
-                <Route path="/security/visitor" element={<VisitorDashboard />} />
+                <Route path="/security/visitor" element={<VisitorsDashboard />} />
                 <Route path="/safety/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
                 <Route path="/safety/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
                 <Route path="/safety/training-list" element={<TrainingListDashboard />} />
