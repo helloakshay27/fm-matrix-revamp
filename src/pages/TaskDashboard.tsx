@@ -132,8 +132,8 @@ export const TaskDashboard = () => {
   }];
 
   const renderCustomActions = () => <div className="flex flex-wrap gap-3">
-      <Button onClick={() => navigate('/maintenance/task/add')} className="bg-[#C72030] text-white hover:bg-[#C72030]/90">
-        <Plus className="w-4 h-4 mr-2" /> Add
+      <Button onClick={() => navigate('/maintenance/task/add')} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium">
+        <Plus className="w-4 h-4 mr-2" /> Action
       </Button>
       <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={() => setIsFilterOpen(true)}>
         <Filter className="w-4 h-4 mr-2" /> Filters

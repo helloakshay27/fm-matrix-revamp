@@ -730,10 +730,9 @@ export const TicketDashboard = () => {
     <div className="flex gap-3">
       <Button 
         onClick={() => navigate('/maintenance/ticket/add')} 
-        style={{ backgroundColor: '#C72030' }}
-        className="text-white hover:bg-[#C72030]/90"
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-4 h-4 mr-2" /> Add
+        <Plus className="w-4 h-4 mr-2" /> Action
       </Button>
     </div>
   );

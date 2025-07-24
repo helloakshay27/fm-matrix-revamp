@@ -183,8 +183,8 @@ export const ServiceDashboard = () => {
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-3">
-      <Button onClick={handleAddClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Plus className="w-4 h-4 mr-2" /> Add
+      <Button onClick={handleAddClick} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium">
+        <Plus className="w-4 h-4 mr-2" /> Action
       </Button>
       <Button onClick={handleImportClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Upload className="w-4 h-4 mr-2" /> Import
