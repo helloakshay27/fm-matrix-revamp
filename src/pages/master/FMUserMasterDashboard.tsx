@@ -380,25 +380,14 @@ export const FMUserMasterDashboard = () => {
               {paginatedUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-gray-50">
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="bg-white">
-                        <DropdownMenuItem onClick={() => handleViewUser(user.id)}>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditUser(user.id)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewUser(user.id)}
+                      className="hover:bg-gray-100"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Switch checked={user.active} />
