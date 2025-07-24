@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Search, Edit } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchSites, fetchBuildings, createBuilding, updateBuilding } from '@/store/slices/locationSlice';
 import { useForm } from 'react-hook-form';
@@ -181,6 +181,14 @@ export function BuildingPage() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create New Building</DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-4 top-4"
+                onClick={() => setShowCreateDialog(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </DialogHeader>
             <Form {...createForm}>
               <form onSubmit={createForm.handleSubmit(handleCreateBuilding)} className="space-y-4">
@@ -475,6 +483,14 @@ export function BuildingPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Building</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => setShowEditDialog(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(handleEditBuilding)} className="space-y-4">
