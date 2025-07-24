@@ -50,6 +50,7 @@ export const API_CONFIG = {
     FACILITY_SETUPS: '/pms/admin/facility_setups.json',
     COMPLAINT_MODES: '/pms/admin/create_complaint_modes.json',
     COMPLAINT_MODE_LIST: '/pms/admin/complaint_modes.json',
+    DELETE_COMPLAINT_MODE: '/pms/admin/delete_complaint_mode.json',
     ACCOUNTS: '/api/users/account.json',
     STATUSES: '/pms/admin/create_complaint_statuses.json',
     STATUSES_LIST: '/pms/admin/complaint_statuses.json',

@@ -96,9 +96,37 @@ export const ComplaintModeTab: React.FC = () => {
     ));
   };
 
-  const handleDelete = (complaintMode: ComplaintModeType) => {
-    setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
-    toast.success('Complaint mode deleted successfully!');
+  const handleDelete = async (complaintMode: ComplaintModeType) => {
+    if (!confirm('Are you sure you want to delete this complaint mode?')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const response = await fetch(`https://${baseUrl}/pms/admin/delete_complaint_mode.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: complaintMode.id
+        }),
+      });
+
+      if (response.ok) {
+        setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
+        toast.success('Complaint mode deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete complaint mode');
+      }
+    } catch (error) {
+      console.error('Error deleting complaint mode:', error);
+      toast.error('Failed to delete complaint mode');
+    }
   };
 
   const columns = [
