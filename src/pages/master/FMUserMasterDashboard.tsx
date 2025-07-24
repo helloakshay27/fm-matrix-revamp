@@ -752,9 +752,40 @@ export const FMUserMasterDashboard = () => {
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      <SelectItem value="user1">John Doe</SelectItem>
-                      <SelectItem value="user2">Jane Smith</SelectItem>
-                      <SelectItem value="user3">Mike Johnson</SelectItem>
+                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
+                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
+                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
+                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
+                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
+                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
+                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
+                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
+                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
+                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
+                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
+                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
+                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
+                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
+                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
+                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
+                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
+                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
+                      <SelectItem value="dev-j">Dev J</SelectItem>
+                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
+                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
+                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
+                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
+                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
+                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
+                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
+                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
+                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
+                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
+                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
+                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
+                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
+                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
+                      <SelectItem value="demo-user">Demo User</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -766,10 +797,40 @@ export const FMUserMasterDashboard = () => {
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      <SelectItem value="user1">John Doe</SelectItem>
-                      <SelectItem value="user2">Jane Smith</SelectItem>
-                      <SelectItem value="user3">Mike Johnson</SelectItem>
-                      <SelectItem value="user4">Sarah Wilson</SelectItem>
+                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
+                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
+                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
+                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
+                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
+                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
+                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
+                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
+                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
+                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
+                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
+                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
+                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
+                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
+                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
+                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
+                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
+                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
+                      <SelectItem value="dev-j">Dev J</SelectItem>
+                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
+                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
+                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
+                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
+                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
+                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
+                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
+                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
+                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
+                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
+                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
+                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
+                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
+                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
+                      <SelectItem value="demo-user">Demo User</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -783,10 +844,40 @@ export const FMUserMasterDashboard = () => {
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      <SelectItem value="user1">John Doe</SelectItem>
-                      <SelectItem value="user2">Jane Smith</SelectItem>
-                      <SelectItem value="user3">Mike Johnson</SelectItem>
-                      <SelectItem value="user4">Sarah Wilson</SelectItem>
+                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
+                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
+                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
+                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
+                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
+                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
+                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
+                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
+                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
+                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
+                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
+                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
+                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
+                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
+                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
+                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
+                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
+                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
+                      <SelectItem value="dev-j">Dev J</SelectItem>
+                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
+                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
+                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
+                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
+                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
+                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
+                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
+                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
+                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
+                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
+                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
+                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
+                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
+                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
+                      <SelectItem value="demo-user">Demo User</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
