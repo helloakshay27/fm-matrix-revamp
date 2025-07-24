@@ -17,6 +17,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [starredTickets, setStarredTickets] = useState<Set<number>>(new Set());
+  const [flaggedTickets, setFlaggedTickets] = useState<Set<number>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchTickets = async () => {
@@ -50,6 +51,32 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       }
       return newSet;
     });
+  };
+
+  const handleFlagToggle = async (ticketId: number) => {
+    try {
+      await ticketManagementAPI.markAsFlagged([ticketId]);
+      setFlaggedTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+      toast({
+        title: "Success",
+        description: "Ticket flagged successfully",
+      });
+    } catch (error) {
+      console.error('Error flagging ticket:', error);
+      toast({
+        title: "Error",
+        description: "Failed to flag ticket",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -217,38 +244,43 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
               {/* Top Row: Ticket ID, Time, Status */}
               <div className="flex justify-between items-start mb-3">
                 <span className="text-sm font-medium text-gray-700">
-                  Ticket ID
+                  {ticket.ticket_number}
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">09:06</span>
+                    <span className="text-sm text-gray-600">
+                      {new Date(ticket.created_at).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
                   </div>
-                  <Badge className="bg-green-600 text-white text-xs px-2 py-1">
-                    Open
+                  <Badge className={`${getStatusColor(ticket.issue_status)} text-white text-xs px-2 py-1`}>
+                    {ticket.issue_status}
                   </Badge>
                 </div>
               </div>
 
               {/* Title */}
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Title
+                {ticket.heading}
               </h3>
 
               {/* Category */}
               <p className="text-sm text-gray-700 mb-2">
-                Category
+                {ticket.category_type}
               </p>
 
               {/* Assigned to */}
               <p className="text-sm text-gray-700 mb-4">
-                Assigned to:
+                Assigned to: {ticket.assigned_to || 'Unassigned'}
               </p>
 
               {/* Date in top right corner */}
               <div className="absolute top-16 right-4">
                 <span className="text-sm text-gray-600">
-                  24 May 2025
+                  {formatDate(ticket.created_at)}
                 </span>
               </div>
 
@@ -282,9 +314,21 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
                   View Details
                 </Button>
 
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <Flag className="h-4 w-4 text-gray-500" />
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFlagToggle(ticket.id);
+                  }}
+                  className="w-6 h-6 flex items-center justify-center p-1"
+                >
+                  <Flag 
+                    className={`h-4 w-4 ${
+                      flaggedTickets.has(ticket.id) 
+                        ? 'text-red-500 fill-current' 
+                        : 'text-gray-500'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
           ))
