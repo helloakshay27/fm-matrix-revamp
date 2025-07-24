@@ -21,6 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
@@ -94,6 +100,10 @@ export const CategoryTypeTab: React.FC = () => {
   const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
   const [accountData, setAccountData] = useState<any>(null);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryApiResponse['helpdesk_categories'][0] | null>(null);
+  const [editFaqItems, setEditFaqItems] = useState<FAQ[]>([{ question: '', answer: '' }]);
+  const [editIconFile, setEditIconFile] = useState<File | null>(null);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -323,8 +333,52 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const handleEdit = (category: CategoryApiResponse['helpdesk_categories'][0]) => {
-    // TODO: Implement edit functionality
-    console.log('Edit category:', category);
+    setEditingCategory(category);
+    setEditFaqItems([{ question: '', answer: '' }]); // Reset FAQ items for edit
+    setEditIconFile(null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (formData: any) => {
+    if (!editingCategory) return;
+    
+    try {
+      // TODO: Implement actual API call for updating category
+      console.log('Updating category:', editingCategory.id, formData);
+      
+      // Simulate successful update
+      toast.success('Category updated successfully!');
+      setIsEditModalOpen(false);
+      setEditingCategory(null);
+      fetchCategories(); // Refresh the list
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Failed to update category');
+    }
+  };
+
+  const addEditFaqItem = () => {
+    setEditFaqItems([...editFaqItems, { question: '', answer: '' }]);
+  };
+
+  const updateEditFaqItem = (index: number, field: 'question' | 'answer', value: string) => {
+    const updated = editFaqItems.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    );
+    setEditFaqItems(updated);
+  };
+
+  const removeEditFaqItem = (index: number) => {
+    if (editFaqItems.length > 1) {
+      setEditFaqItems(editFaqItems.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleEditIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setEditIconFile(file);
+    }
   };
 
   const handleDelete = async (category: CategoryApiResponse['helpdesk_categories'][0]) => {
@@ -622,6 +676,158 @@ export const CategoryTypeTab: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Category Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="relative">
+            <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-0 right-0 p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </DialogHeader>
+
+          {editingCategory && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <Input
+                    defaultValue={editingCategory.name}
+                    placeholder="Category Name"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Engineer</label>
+                  <Select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select an Option..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      <SelectItem value="engineer1">Engineer 1</SelectItem>
+                      <SelectItem value="engineer2">Engineer 2</SelectItem>
+                      <SelectItem value="engineer3">Engineer 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Selected Site</label>
+                  <Select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={selectedSite?.name || "Select Site"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {sites.map((site) => (
+                        <SelectItem key={site.id} value={site.id.toString()}>
+                          {site.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Response Time(min)</label>
+                  <Input
+                    defaultValue={editingCategory.tat}
+                    placeholder="Response Time"
+                    type="number"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <Checkbox id="customer-enabled" />
+                <label htmlFor="customer-enabled" className="text-sm font-medium">Customer Enabled</label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Upload Icon</label>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="edit-icon-upload" className="cursor-pointer">
+                      <Button type="button" variant="outline" size="sm" asChild>
+                        <span className="text-orange-500">Choose File</span>
+                      </Button>
+                    </label>
+                    <input
+                      id="edit-icon-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleEditIconChange}
+                    />
+                    <span className="text-sm text-gray-500">
+                      {editIconFile ? editIconFile.name : 'No file chosen'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">FAQs</h3>
+                  <Button type="button" onClick={addEditFaqItem} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                  </Button>
+                </div>
+
+                {editFaqItems.map((item, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Question</label>
+                      <textarea
+                        placeholder="Question"
+                        value={item.question}
+                        onChange={(e) => updateEditFaqItem(index, 'question', e.target.value)}
+                        className="w-full p-2 border rounded-md resize-none h-20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Answer</label>
+                      <div className="flex gap-2">
+                        <textarea
+                          placeholder="Answer"
+                          value={item.answer}
+                          onChange={(e) => updateEditFaqItem(index, 'answer', e.target.value)}
+                          className="w-full p-2 border rounded-md resize-none h-20"
+                        />
+                        {editFaqItems.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeEditFaqItem(index)}
+                            className="h-fit mt-1"
+                          >
+                            <X className="h-4 w-4 text-red-500" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button 
+                  onClick={() => handleEditSubmit({})}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
