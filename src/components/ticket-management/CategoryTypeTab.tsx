@@ -403,11 +403,35 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const handleDelete = async (category: CategoryApiResponse['helpdesk_categories'][0]) => {
+    if (!confirm('Are you sure you want to delete this category?')) {
+      return;
+    }
+    
     try {
-      // TODO: Implement delete API call
-      setCategories(categories.filter(cat => cat.id !== category.id));
-      toast.success('Category deleted successfully!');
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      
+      const formData = new FormData();
+      formData.append('id', category.id.toString());
+      formData.append('_method', 'delete');
+      
+      const response = await fetch(`https://${baseUrl}/pms/admin/modify_helpdesk_sub_category.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        setCategories(categories.filter(cat => cat.id !== category.id));
+        toast.success('Category deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete category');
+      }
     } catch (error) {
+      console.error('Error deleting category:', error);
       toast.error('Failed to delete category');
     }
   };
