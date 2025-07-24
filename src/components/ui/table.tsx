@@ -74,7 +74,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-[28px] px-[18px] py-[8px] text-left align-middle font-medium text-[14px] text-[#1A1A1A] border-b border-gray-200 whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:text-center [&:has([role=checkbox])]:w-[50px]",
+      "h-[28px] px-[18px] py-[8px] text-left align-middle font-medium text-[14px] text-[#1A1A1A] border-b border-gray-200 whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:pl-0 [&:has([role=checkbox])]:text-center [&:has([role=checkbox])]:w-[50px]",
       className
     )}
     style={{ backgroundColor: "#f6f4ee" }}
@@ -89,7 +89,7 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-4 align-middle border-b border-gray-200 whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:text-center [&:has([role=checkbox])]:w-[50px]", className)}
+    className={cn("p-4 align-middle border-b border-gray-200 whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&:has([role=checkbox])]:pl-0 [&:has([role=checkbox])]:text-center [&:has([role=checkbox])]:w-[50px]", className)}
     {...props}
   />
 ));
