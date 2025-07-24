@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
 
@@ -162,41 +161,65 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md mx-4 rounded-lg" style={{ backgroundColor: '#E5DFD2' }}>
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-gray-900">Create New Ticket</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-md mx-0 my-0 w-full h-full max-h-full rounded-none border-0 p-0 overflow-hidden">
+        {/* Mobile Header */}
+        <div className="bg-white shadow-sm p-4 flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="p-0 mr-4 h-auto"
+          >
+            <ArrowLeft className="h-6 w-6 text-gray-700" />
+          </Button>
+          <h1 className="text-lg font-semibold text-gray-900 text-center flex-1">Tickets</h1>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="bg-white px-4 pb-4">
+          <div className="flex space-x-8">
+            <button className="px-0 py-2 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
+              My Tickets
+            </button>
+            <button className="px-0 py-2 text-sm font-medium text-gray-500">
+              All Tickets
+            </button>
+          </div>
+        </div>
         
-        <div className="space-y-6 mt-4">
+        {/* Form Content */}
+        <div className="flex-1 bg-white p-6 space-y-6 overflow-y-auto">
           {/* Issue Type */}
           <div>
-            <Label className="text-sm font-medium text-gray-900">Issue Type</Label>
+            <Label className="text-base font-semibold text-gray-900 mb-3 block">Issue Type</Label>
             <Select value={formData.issueType} onValueChange={(value) => handleInputChange('issueType', value)}>
-              <SelectTrigger className="mt-2 bg-white border-gray-300 rounded-lg">
+              <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
                 <SelectValue placeholder="Request" />
+                <ChevronDown className="h-5 w-5 text-red-500" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="request">Request</SelectItem>
-                <SelectItem value="complaint">Complaint</SelectItem>
-                <SelectItem value="suggestion">Suggestion</SelectItem>
+              <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg">
+                <SelectItem value="request" className="text-base py-3">Request</SelectItem>
+                <SelectItem value="complaint" className="text-base py-3">Complaint</SelectItem>
+                <SelectItem value="suggestion" className="text-base py-3">Suggestion</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Category */}
           <div>
-            <Label className="text-sm font-medium text-gray-900">Category</Label>
+            <Label className="text-base font-semibold text-gray-900 mb-3 block">Category</Label>
             <Select 
               value={formData.category} 
               onValueChange={(value) => handleInputChange('category', value)}
               disabled={loadingCategories}
             >
-              <SelectTrigger className="mt-2 bg-white border-gray-300 rounded-lg">
+              <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
                 <SelectValue placeholder={loadingCategories ? "Loading..." : "Request"} />
+                <ChevronDown className="h-5 w-5 text-red-500" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg">
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
+                  <SelectItem key={category.id} value={category.id.toString()} className="text-base py-3">
                     {category.name}
                   </SelectItem>
                 ))}
@@ -206,18 +229,19 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
 
           {/* Sub-category */}
           <div>
-            <Label className="text-sm font-medium text-gray-900">Sub-category</Label>
+            <Label className="text-base font-semibold text-gray-900 mb-3 block">Sub-category</Label>
             <Select 
               value={formData.subCategory} 
               onValueChange={(value) => handleInputChange('subCategory', value)}
               disabled={loadingSubcategories || !formData.category}
             >
-              <SelectTrigger className="mt-2 bg-white border-gray-300 rounded-lg">
+              <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
                 <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Request"} />
+                <ChevronDown className="h-5 w-5 text-red-500" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg">
                 {subcategories.map((subcategory) => (
-                  <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
+                  <SelectItem key={subcategory.id} value={subcategory.id.toString()} className="text-base py-3">
                     {subcategory.name}
                   </SelectItem>
                 ))}
@@ -227,14 +251,15 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
 
           {/* Location */}
           <div>
-            <Label className="text-sm font-medium text-gray-900">Location</Label>
+            <Label className="text-base font-semibold text-gray-900 mb-3 block">Location</Label>
             <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
-              <SelectTrigger className="mt-2 bg-white border-gray-300 rounded-lg">
+              <SelectTrigger className="h-12 bg-white border-2 border-gray-300 rounded-lg text-base">
                 <SelectValue placeholder="Select Building" />
+                <ChevronDown className="h-5 w-5 text-red-500" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-2 border-gray-200 rounded-lg shadow-lg">
                 {BUILDINGS.map((building) => (
-                  <SelectItem key={building.value} value={building.value}>
+                  <SelectItem key={building.value} value={building.value} className="text-base py-3">
                     {building.label}
                   </SelectItem>
                 ))}
@@ -244,24 +269,26 @@ export const MobileDynamicCreateTicketModal: React.FC<MobileDynamicCreateTicketM
 
           {/* Description */}
           <div>
-            <Label className="text-sm font-medium text-gray-900">Description</Label>
+            <Label className="text-base font-semibold text-gray-900 mb-3 block">Description</Label>
             <Textarea
               placeholder="Enter description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              className="mt-2 bg-white border-gray-300 rounded-lg resize-none"
+              className="min-h-24 bg-white border-2 border-gray-300 rounded-lg resize-none text-base p-4"
               rows={4}
             />
           </div>
 
           {/* Submit Button */}
-          <Button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-lg"
-          >
-            {loading ? 'Creating...' : 'Next'}
-          </Button>
+          <div className="pt-4">
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-base rounded-lg"
+            >
+              {loading ? 'Creating...' : 'Next'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
