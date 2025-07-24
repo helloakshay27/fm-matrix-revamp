@@ -475,13 +475,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#F9F8F5] text-left px-[18px] py-[10px] font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white"
+                        className="bg-[#F9F8F5] text-left px-[16px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[32px] border-r border-white"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#F9F8F5] text-left px-[18px] py-[10px] font-medium text-[14px] text-[#1A1A1A] h-[32px]">Actions</TableHead>
+                      <TableHead className="bg-[#F9F8F5] text-left px-[16px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[32px]">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
@@ -549,13 +549,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="px-[18px] py-[12px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[40px]">
+                          <TableCell key={column.key} className="px-[16px] py-[8px] text-center align-middle whitespace-nowrap font-normal text-[13px] text-[#1A1A1A] h-[40px]">
                             {cellContent}
                           </TableCell>
                         );
                       })}
                       {renderActions && (
-                        <TableCell className="px-[18px] py-[12px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-actions>
+                        <TableCell className="px-[16px] py-[8px] text-center align-middle font-normal text-[13px] text-[#1A1A1A] h-[40px]" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
