@@ -91,9 +91,9 @@ export const FnBRestaurantDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-4 mb-6">
-        <Button onClick={() => navigate('/vas/fnb/add')} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0">
+        <Button onClick={() => navigate('/vas/fnb/add')} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium rounded-md flex items-center gap-2 border-0">
           <Plus className="w-4 h-4" />
-          Add
+          Action
         </Button>
       </div>
 

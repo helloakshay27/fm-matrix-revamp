@@ -32,10 +32,10 @@ export const AssetActions: React.FC<AssetActionsProps> = ({
     <div className="flex flex-wrap items-center gap-3 mb-4">
       <Button 
         onClick={onAddAsset}
-        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-6"
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
       >
         <Plus className="w-4 h-4 mr-2" />
-        Add
+        Action
       </Button>
       
       <div className="flex items-center gap-2 ml-auto">

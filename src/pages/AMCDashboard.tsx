@@ -736,10 +736,10 @@ export const AMCDashboard = () => {
               leftActions={
                 <Button 
                   onClick={handleAddClick} 
-                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add
+                  Action
                 </Button>
               }
             />

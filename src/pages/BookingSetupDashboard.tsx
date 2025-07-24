@@ -90,9 +90,9 @@ export const BookingSetupDashboard = () => {
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
 
         <div className="flex items-center gap-2 mb-6">
-          <Button onClick={handleAddBooking} className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2">
+          <Button onClick={handleAddBooking} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            Add
+            Action
           </Button>
           <Button variant="outline" onClick={() => setIsFilterOpen(true)} className="flex items-center gap-2">
             <Filter className="w-4 h-4" />
