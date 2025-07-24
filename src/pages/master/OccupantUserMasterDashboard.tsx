@@ -110,6 +110,46 @@ export const OccupantUserMasterDashboard = () => {
     });
   };
 
+  const handleExport = () => {
+    try {
+      // Create CSV data
+      const headers = ['Sr. No.', 'Company', 'Name', 'Mobile Number', 'Email ID', 'Status'];
+      const csvData = [
+        headers.join(','),
+        ...filteredUsers.map(user => [
+          user.srNo,
+          `"${user.company}"`,
+          `"${user.name}"`,
+          user.mobile,
+          user.email,
+          user.status
+        ].join(','))
+      ].join('\n');
+
+      // Create and download the file
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `occupant-users-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export Successful",
+        description: "Occupant users data has been exported to CSV file."
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting the data. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const { setCurrentSection } = useLayout();
   
   useEffect(() => {
@@ -158,7 +198,11 @@ export const OccupantUserMasterDashboard = () => {
 
         {/* Action Buttons and Search */}
         <div className="flex flex-wrap gap-3 items-center">
-          <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+          <Button 
+            variant="outline" 
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            onClick={handleExport}
+          >
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
