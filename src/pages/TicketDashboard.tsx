@@ -776,14 +776,14 @@ export const TicketDashboard = () => {
     }
     
     const truncated = words.slice(0, maxWords).join(' ');
-    return <div className="w-48">
-        <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
+    return <div className="w-48 max-w-[200px]">
+        <span className={`${isExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'} block`}>
           {isExpanded ? text : `${truncated}...`}
         </span>
         <button onClick={e => {
         e.stopPropagation();
         setIsExpanded(!isExpanded);
-      }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in">
+      }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in inline-block mt-1">
           {isExpanded ? 'Show less' : 'Show more'}
         </button>
       </div>;
