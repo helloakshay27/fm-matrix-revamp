@@ -401,7 +401,9 @@ export const LocationAccountPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {countries.map((country, index) => (
+                  {countries.filter(country => 
+                    country.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).map((country, index) => (
                     <TableRow key={index}>
                       <TableCell>{country.name}</TableCell>
                       <TableCell>
