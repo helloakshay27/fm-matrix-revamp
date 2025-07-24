@@ -454,7 +454,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                  <TableRow className="h-[28px]">
                    {selectable && (
-                   <TableHead className="bg-[#C4B89D]/35 py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px] text-center" data-checkbox>
+                   <TableHead className="bg-[#F6F4EE] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px] text-center" data-checkbox>
                          <div className="flex items-center justify-center w-full h-full">
                            <Checkbox
                              checked={isAllSelected}
@@ -475,13 +475,13 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white"
+                        className="bg-[#F6F4EE] text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white"
                       >
                         {column.label}
                       </SortableColumnHeader>
                     ))}
                     {renderActions && (
-                      <TableHead className="bg-[#C4B89D]/35 text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]">Actions</TableHead>
+                      <TableHead className="bg-[#F6F4EE] text-left px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px]">Actions</TableHead>
                     )}
                   </SortableContext>
                 </TableRow>
