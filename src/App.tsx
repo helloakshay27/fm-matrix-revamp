@@ -893,9 +893,6 @@ function App() {
                 <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
                 <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
                 <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
-                
-                {/* Mobile Routes */}
-                <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
                 <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
                 <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
                 <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
@@ -916,7 +913,10 @@ function App() {
               <Route path="/setup/occupant-users" element={<ProtectedRoute><OccupantUsersDashboard /></ProtectedRoute>} />
               <Route path="/setup/occupant-users/add" element={<ProtectedRoute><AddOccupantUserDashboard /></ProtectedRoute>} />
 
-            </Routes>
+                
+                {/* Mobile Routes */}
+                <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
+              </Routes>
             <Toaster />
           </LayoutProvider>
         </QueryClientProvider>
