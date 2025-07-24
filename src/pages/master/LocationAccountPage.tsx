@@ -57,6 +57,10 @@ export const LocationAccountPage = () => {
     headquarter: '',
     region: ''
   });
+  const [newRegionData, setNewRegionData] = useState({
+    country: '',
+    regionName: ''
+  });
   const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(false);
 
   // Sample data with state management
@@ -307,6 +311,27 @@ export const LocationAccountPage = () => {
     }
   };
 
+  const handleAddRegion = () => {
+    if (!newRegionData.country || !newRegionData.regionName.trim()) {
+      toast.error('Please select a country and enter a region name');
+      return;
+    }
+
+    // Add the new region to the regions array
+    const newRegion = {
+      country: newRegionData.country,
+      region: newRegionData.regionName,
+      status: true
+    };
+
+    setRegions([...regions, newRegion]);
+    toast.success(`Region "${newRegionData.regionName}" added successfully`);
+    
+    // Reset form and close dialog
+    setNewRegionData({ country: '', regionName: '' });
+    setIsAddRegionOpen(false);
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
@@ -534,7 +559,11 @@ export const LocationAccountPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Country
                     </label>
-                    <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]">
+                    <select 
+                      value={newRegionData.country}
+                      onChange={(e) => setNewRegionData({...newRegionData, country: e.target.value})}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    >
                       <option value="">Select Country</option>
                       {countries.map((country, index) => (
                         <option key={index} value={country.name}>{country.name}</option>
@@ -547,6 +576,8 @@ export const LocationAccountPage = () => {
                     </label>
                     <input
                       type="text"
+                      value={newRegionData.regionName}
+                      onChange={(e) => setNewRegionData({...newRegionData, regionName: e.target.value})}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       placeholder="Enter region name"
                     />
@@ -555,7 +586,10 @@ export const LocationAccountPage = () => {
                     <Button variant="outline" onClick={() => setIsAddRegionOpen(false)}>
                       Cancel
                     </Button>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                    <Button 
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      onClick={handleAddRegion}
+                    >
                       Add Region
                     </Button>
                   </div>
