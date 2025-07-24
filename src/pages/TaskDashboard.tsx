@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Filter, Download, Ticket, Clock, AlertCircle, CheckCircle, Eye } from 'lucide-react';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -168,72 +169,164 @@ export const TaskDashboard = () => {
     return item[columnKey];
   };
 
-  return <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">TASK LIST</h1>
-      </div>
+  return (
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+      <Tabs defaultValue="tasklist" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger
+            value="tasklist"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              width="18"
+              height="19"
+              viewBox="0 0 18 19"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-current"
+            >
+              <path
+                d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Task List
+          </TabsTrigger>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        {[{
-        label: 'Total Tasks',
-        value: totalTasks,
-        icon: Ticket,
-        iconName: 'Ticket'
-      }, {
-        label: 'Open',
-        value: openTasks,
-        icon: AlertCircle,
-        iconName: 'AlertCircle'
-      }, {
-        label: 'In Progress',
-        value: inProgressTasks,
-        icon: Clock,
-        iconName: 'Clock'
-      }, {
-        label: 'Pending',
-        value: pendingTasks,
-        icon: Clock,
-        iconName: 'Clock'
-      }, {
-        label: 'Closed',
-        value: closedTasks,
-        icon: CheckCircle,
-        iconName: 'CheckCircle'
-      }].map((item, i) => {
-        const IconComponent = item.icon;
-        return <div key={i} className="bg-[#F5F3F0] p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-[#FFE8E9] flex items-center justify-center flex-shrink-0">
-                <IconComponent className="w-6 h-6 text-[#C72030]" />
-              </div>
-              <div className="flex flex-col">
-                <div className="text-2xl font-bold text-[#C72030] leading-tight">{item.value}</div>
-                <div className="text-sm text-gray-600 font-medium">{item.label}</div>
-              </div>
-            </div>;
-      })}
-      </div>
+          <TabsTrigger
+            value="analytics"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              width="18"
+              height="19"
+              viewBox="0 0 18 19"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-current"
+            >
+              <path
+                d="M3 3V16C3 17.1 3.9 18 5 18H16M18 17V9M13 17V5M8 17V14"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Analytics
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="mb-4">
-        {renderCustomActions()}
-      </div>
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          {/* Analytics content placeholder */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            {[{
+              label: 'Total Tasks',
+              value: totalTasks,
+              icon: Ticket,
+            }, {
+              label: 'Open',
+              value: openTasks,
+              icon: AlertCircle,
+            }, {
+              label: 'In Progress',
+              value: inProgressTasks,
+              icon: Clock,
+            }, {
+              label: 'Pending',
+              value: pendingTasks,
+              icon: Clock,
+            }, {
+              label: 'Closed',
+              value: closedTasks,
+              icon: CheckCircle,
+            }].map((item, i) => {
+              const IconComponent = item.icon;
+              return (
+                <div key={i} className="bg-[#F5F3F0] p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#FFE8E9] flex items-center justify-center flex-shrink-0">
+                    <IconComponent className="w-6 h-6 text-[#C72030]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="text-2xl font-bold text-[#C72030] leading-tight">{item.value}</div>
+                    <div className="text-sm text-gray-600 font-medium">{item.label}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </TabsContent>
 
-      <EnhancedTable 
-        data={taskData} 
-        columns={columns} 
-        renderCell={renderCell} 
-        selectable={true} 
-        pagination={true} 
-        pageSize={10}
-        enableExport={true} 
-        exportFileName="tasks" 
-        onRowClick={handleViewDetails} 
-        storageKey="tasks-table" 
+        <TabsContent value="tasklist" className="space-y-6 mt-6">
+          <div className="mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">TASK LIST</h1>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            {[{
+              label: 'Total Tasks',
+              value: totalTasks,
+              icon: Ticket,
+            }, {
+              label: 'Open',
+              value: openTasks,
+              icon: AlertCircle,
+            }, {
+              label: 'In Progress',
+              value: inProgressTasks,
+              icon: Clock,
+            }, {
+              label: 'Pending',
+              value: pendingTasks,
+              icon: Clock,
+            }, {
+              label: 'Closed',
+              value: closedTasks,
+              icon: CheckCircle,
+            }].map((item, i) => {
+              const IconComponent = item.icon;
+              return (
+                <div key={i} className="bg-[#F5F3F0] p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#FFE8E9] flex items-center justify-center flex-shrink-0">
+                    <IconComponent className="w-6 h-6 text-[#C72030]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="text-2xl font-bold text-[#C72030] leading-tight">{item.value}</div>
+                    <div className="text-sm text-gray-600 font-medium">{item.label}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mb-4">
+            {renderCustomActions()}
+          </div>
+
+          <EnhancedTable 
+            data={taskData} 
+            columns={columns} 
+            renderCell={renderCell} 
+            selectable={true} 
+            pagination={true} 
+            pageSize={10}
+            enableExport={true} 
+            exportFileName="tasks" 
+            onRowClick={handleViewDetails} 
+            storageKey="tasks-table" 
+          />
+        </TabsContent>
+      </Tabs>
+
+      <TaskAdvancedFilterDialog 
+        open={isFilterOpen} 
+        onOpenChange={setIsFilterOpen} 
+        onApply={(filters) => {
+          console.log('Applied filters:', filters);
+          setIsFilterOpen(false);
+        }} 
       />
-
-      <TaskAdvancedFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={filters => {
-      console.log('Applied filters:', filters);
-      setIsFilterOpen(false);
-    }} />
-    </div>;
+    </div>
+  );
 };

@@ -864,13 +864,33 @@ export const TicketDashboard = () => {
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C72030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chart-column w-4 h-4" data-lov-id="src\pages\TicketDashboard.tsx:868:12" data-lov-name="BarChart3" data-component-path="src\pages\TicketDashboard.tsx" data-component-line="868" data-component-file="TicketDashboard.tsx" data-component-name="BarChart3" data-component-content="%7B%22className%22%3A%22w-4%20h-4%22%7D"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C72030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ticket w-4 h-4" data-lov-id="src\pages\TicketDashboard.tsx:872:12" data-lov-name="Ticket" data-component-path="src\pages\TicketDashboard.tsx" data-component-line="872" data-component-file="TicketDashboard.tsx" data-component-name="Ticket" data-component-content="%7B%22className%22%3A%22w-4%20h-4%22%7D"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+          <TabsTrigger
+            value="tickets"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              width="18"
+              height="19"
+              viewBox="0 0 18 19"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-current"
+            >
+              <path
+                d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             Ticket List
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytics"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Analytics
           </TabsTrigger>
         </TabsList>
 
