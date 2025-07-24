@@ -37,7 +37,7 @@ export const SubCategoriesSetupTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
 
-  const handleAddSubCategory = (subCategoryData: { category: string; subCategory: string; description: string }) => {
+  const handleAddSubCategory = (subCategoryData: { category: string; subCategory: string; description: string; icon?: File }) => {
     const newSubCategory: SubCategory = {
       id: Math.max(...subCategories.map(c => c.id), 0) + 1,
       category: subCategoryData.category,
