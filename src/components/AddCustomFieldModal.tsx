@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TextField, FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent } from '@mui/material';
+import { TextField, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 
 interface AddCustomFieldModalProps {
@@ -92,7 +92,7 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
                 <InputLabel id="section-select-label" shrink>
                   Section
                 </InputLabel>
-                <MuiSelect
+                <Select
                   labelId="section-select-label"
                   label="Section"
                   value={selectedSection}
@@ -100,8 +100,8 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
                   sx={fieldStyles}
                 >
                   <MenuItem value="System Details">System Details</MenuItem>
-                  <MenuItem value="Hard Disk Details">Hard Disk Details</MenuItem>
-                </MuiSelect>
+                  <MenuItem value="Hardware Details">Hardware Details</MenuItem>
+                </Select>
               </FormControl>
             </div>
           )}

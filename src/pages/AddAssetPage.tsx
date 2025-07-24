@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Form, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive, Calendar, DollarSign, CheckCircle, Wrench, Car, Cog, Users2, TrendingUp as Performance, ShieldCheck, Edit3, Check } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Autocomplete, InputAdornment } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -14,6 +14,7 @@ import { useLocationData } from '@/hooks/useLocationData';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import apiClient from '@/utils/apiClient';
 import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
+import { FormatShapes } from '@mui/icons-material';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -137,7 +138,7 @@ const AddAssetPage = () => {
   const [underWarranty, setUnderWarranty] = useState('');
 
   const [hardDiskHeading, setHardDiskHeading] = useState(() => {
-    return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
+    return localStorage.getItem('hardDiskHeading') || 'HARDWARE DETAILS';
   });
   interface ExtraFormField {
     value: string;
@@ -148,9 +149,9 @@ const AddAssetPage = () => {
   const [extraFormFields, setExtraFormFields] = useState<Record<string, ExtraFormField>>({});
   const [isEditingHardDiskHeading, setIsEditingHardDiskHeading] = useState(false);
   const [editingHardDiskHeadingText, setEditingHardDiskHeadingText] = useState(() => {
-    return localStorage.getItem('hardDiskHeading') || 'HARD DISK DETAILS';
+    return localStorage.getItem('hardDiskHeading') || 'HARDWARE DETAILS';
   });
-
+  console.log('Hard Disk Heading:', extraFormFields);
   const [formData, setFormData] = useState({
     name: '',
     asset_number: '',
@@ -219,8 +220,62 @@ const AddAssetPage = () => {
     asset_insurances: [],
     asset_purchases: [],
     asset_other_uploads: [],
-    extra_fields_attributes: []
+    extra_fields_attributes: [],
+    custom_fields: {
+      system_details: {},
+      hardware: {}
+    }
   });
+
+  const [itAssetDetails, setItAssetDetails] = useState({
+    system_details: {
+      os: "",
+      memory: "",
+      processor: "",
+    },
+    hardware: {
+      model: "",
+      serial_no: "",
+      capacity: "",
+    },
+  });
+
+  const buildCustomFieldsPayload = () => {
+    const result: Record<string, Record<string, string>> = {};
+    
+    // Start with the default IT asset details (system_details and hardware)
+    Object.entries(itAssetDetails).forEach(([section, fields]) => {
+      result[section] = { ...fields };
+    });
+    
+    // Add any additional custom fields from itAssetsCustomFields
+    Object.entries(itAssetsCustomFields).forEach(([section, fields]) => {
+      // Map section names to the correct backend structure
+      let sectionKey;
+      if (section === 'System Details') {
+        sectionKey = 'system_details';
+      } else if (section === 'Hardware Details') {
+        sectionKey = 'hardware';
+      } else {
+        // Fallback to snake_case conversion
+        sectionKey = section.trim().toLowerCase().replace(/\s+/g, '_');
+      }
+      
+      if (!result[sectionKey]) {
+        result[sectionKey] = {};
+      }
+      fields.forEach(field => {
+        // Convert field name to snake_case as well
+        const fieldKey = field.name.trim().toLowerCase().replace(/\s+/g, '_');
+        result[sectionKey][fieldKey] = field.value;
+      });
+    });
+    
+    return result;
+  };
+
+  // Initialize IT asset details only once on component mount, not on every formData change
+  const [itAssetCustomFields, setItAssetCustomFields] = useState([]); // [{name, value, row}]
 
   // Meter measure fields state
   interface MeterMeasureField {
@@ -234,6 +289,132 @@ const AddAssetPage = () => {
     multiplierFactor: string;
     checkPreviousReading?: boolean;
   }
+
+//   const [attachments, setAttachments] = useState({
+//   landAttachments: [],
+//   manualsUpload: [],
+//   insuranceDetails: [],
+//   purchaseInvoice: [],
+//   amc: []
+// });
+
+// Helper function to compress images
+const compressImage = (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      resolve(file);
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          } else {
+            resolve(file);
+          }
+        },
+        file.type,
+        quality
+      );
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+const handleFileUpload = async (category: string, files: FileList | null) => {
+  if (!files) return;
+  
+  const maxFileSize = 10 * 1024 * 1024; // 10MB per file
+  const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+  const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+  
+  const fileArray = Array.from(files);
+  const processedFiles: File[] = [];
+  let totalSize = 0;
+  
+  // Calculate current total size
+  Object.values(attachments).forEach(fileList => {
+    if (Array.isArray(fileList)) {
+      fileList.forEach(file => {
+        totalSize += file.size || 0;
+      });
+    }
+  });
+  
+  // Validate and compress each file
+  for (const file of fileArray) {
+    // Check file type
+    if (!allowedTypes.includes(file.type)) {
+      alert(`File "${file.name}" is not a supported format. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.`);
+      continue;
+    }
+    
+    // Compress image files
+    let processedFile = file;
+    if (file.type.startsWith('image/')) {
+      try {
+        processedFile = await compressImage(file);
+        console.log(`Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
+      } catch (error) {
+        console.warn(`Failed to compress ${file.name}, using original file:`, error);
+        processedFile = file;
+      }
+    }
+    
+    // Check individual file size (after compression)
+    if (processedFile.size > maxFileSize) {
+      alert(`File "${file.name}" is too large (${(processedFile.size / 1024 / 1024).toFixed(2)}MB). Maximum file size is 10MB.`);
+      continue;
+    }
+    
+    // Check total size
+    if (totalSize + processedFile.size > maxTotalSize) {
+      alert(`Adding "${file.name}" would exceed the total upload limit of 50MB. Please remove some files first.`);
+      continue;
+    }
+    
+    totalSize += processedFile.size;
+    processedFiles.push(processedFile);
+  }
+  
+  if (processedFiles.length > 0) {
+    setAttachments(prev => ({
+      ...prev,
+      [category]: [...(prev[category] || []), ...processedFiles]
+    }));
+    
+    // Show success message
+    if (processedFiles.length === 1) {
+      console.log(`Successfully added "${processedFiles[0].name}"`);
+    } else {
+      console.log(`Successfully added ${processedFiles.length} files`);
+    }
+  }
+};
+
+const removeFile = (category, index) => {
+  setAttachments(prev => ({
+    ...prev,
+    [category]: prev[category].filter((_, i) => i !== index)
+  }));
+};
 
   const [consumptionMeasureFields, setConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
   const [nonConsumptionMeasureFields, setNonConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
@@ -276,7 +457,7 @@ const AddAssetPage = () => {
 
   const [itAssetsCustomFields, setItAssetsCustomFields] = useState({
     'System Details': [],
-    'Hard Disk Details': []
+    'Hardware Details': []
   });
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
@@ -300,12 +481,23 @@ const AddAssetPage = () => {
     multiplierFactor: '',
     checkPreviousReading: false
   }]);
-  const [attachments, setAttachments] = useState({
-    manualsUpload: [],
-    insuranceDetails: [],
-    purchaseInvoice: [],
-    amc: []
-  });
+
+  console.log('It Assets Custom Fields:', itAssetsCustomFields);
+
+const [attachments, setAttachments] = useState({
+  landAttachments: [],           // Land documents  
+  vehicleAttachments: [],        // Vehicle documents (RC, insurance, etc.)
+  leaseholdAttachments: [],      // Leasehold improvement documents
+  buildingAttachments: [],       // Building documents
+  furnitureAttachments: [],      // Furniture & Fixtures documents
+  itEquipmentAttachments: [],    // IT Equipment documents
+  machineryAttachments: [],      // Machinery & Equipment documents
+  toolsAttachments: [],          // Tools & Instruments documents
+  manualsUpload: [],             // Asset manuals
+  insuranceDetails: [],          // Insurance documents
+  purchaseInvoice: [],           // Purchase invoices
+  amc: []                        // AMC documents
+});
   const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
 
   const handleGoBack = () => {
@@ -459,10 +651,22 @@ const AddAssetPage = () => {
       [field]: valueArray
     }));
   };
+
+  // --- For IT Asset details (system_details and hardware) ---
+  const handleItAssetDetailsChange = (section, field, value) => {
+    setItAssetDetails(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
+  };
   console.log(customFields)
   const buildExtraFieldsAttributes = () => {
     let extraFields = [];
     console.log('Building extra fields attributes...', customFields);
+    
     // Custom fields
     Object.keys(customFields).forEach(sectionKey => {
       customFields[sectionKey].forEach(field => {
@@ -470,7 +674,6 @@ const AddAssetPage = () => {
           field_name: field.name,
           field_value: field.value,
           group_name: sectionKey,
-          field_type: field.fieldType || 'text',
           field_description: field.name,
           _destroy: false
         });
@@ -484,7 +687,6 @@ const AddAssetPage = () => {
           field_name: field.name,
           field_value: field.value,
           group_name: sectionKey,
-          field_type: field.fieldType || 'text',
           field_description: field.name,
           _destroy: false
         });
@@ -493,12 +695,17 @@ const AddAssetPage = () => {
 
     // Standard extra fields (dynamic)
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
-      if (fieldObj?.value) {
+      if (fieldObj?.value !== undefined && fieldObj?.value !== '' && fieldObj?.value !== null) {
+        // Convert date objects to ISO string
+        let processedValue = fieldObj.value;
+        if (fieldObj.value && (fieldObj.value as any) instanceof Date) {
+          processedValue = ((fieldObj.value as unknown) as Date).toISOString();
+        }
+        
         extraFields.push({
           field_name: key,
-          field_value: fieldObj.value,
+          field_value: processedValue,
           group_name: fieldObj.groupType,
-          field_type: fieldObj.fieldType,
           field_description: fieldObj.fieldDescription,
           _destroy: false
         });
@@ -707,14 +914,41 @@ const AddAssetPage = () => {
     }));
   };
 
+  // const removeCustomField = (section, id) => {
+  //   setCustomFields(prev => ({
+  //     ...prev,
+  //     [section]: prev[section].filter(field => field.id !== id)
+  //   }));
+  // };
   const removeCustomField = (section, id) => {
     setCustomFields(prev => ({
       ...prev,
       [section]: prev[section].filter(field => field.id !== id)
     }));
+
+    // Remove from extraFormFields as well
+    setExtraFormFields(prev => {
+      // Find the field name to remove
+      const fieldToRemove = customFields[section].find(field => field.id === id);
+      if (!fieldToRemove) return prev;
+      const newFields = { ...prev };
+      delete newFields[fieldToRemove.name];
+      return newFields;
+    });
   };
 
   // Custom field functions for IT Assets
+  // const handleAddItAssetsCustomField = (fieldName, section = 'System Details') => {
+  //   const newField = {
+  //     id: Date.now(),
+  //     name: fieldName,
+  //     value: ''
+  //   };
+  //   setItAssetsCustomFields(prev => ({
+  //     ...prev,
+  //     [section]: [...prev[section], newField]
+  //   }));
+  // };
   const handleAddItAssetsCustomField = (fieldName, section = 'System Details') => {
     const newField = {
       id: Date.now(),
@@ -723,7 +957,7 @@ const AddAssetPage = () => {
     };
     setItAssetsCustomFields(prev => ({
       ...prev,
-      [section]: [...prev[section], newField]
+      [section]: [...(prev[section] || []), newField]
     }));
   };
   const handleItAssetsCustomFieldChange = (section, id, value) => {
@@ -798,21 +1032,21 @@ const AddAssetPage = () => {
       [section]: !prev[section]
     }));
   };
-  const handleFileUpload = (category, files) => {
-    if (files) {
-      const fileArray = Array.from(files);
-      setAttachments(prev => ({
-        ...prev,
-        [category]: [...prev[category], ...fileArray]
-      }));
-    }
-  };
-  const removeFile = (category, index) => {
-    setAttachments(prev => ({
-      ...prev,
-      [category]: prev[category].filter((_, i) => i !== index)
-    }));
-  };
+  // const handleFileUpload = (category, files) => {
+  //   if (files) {
+  //     const fileArray = Array.from(files);
+  //     setAttachments(prev => ({
+  //       ...prev,
+  //       [category]: [...prev[category], ...fileArray]
+  //     }));
+  //   }
+  // };
+  // const removeFile = (category, index) => {
+  //   setAttachments(prev => ({
+  //     ...prev,
+  //     [category]: prev[category].filter((_, i) => i !== index)
+  //   }));
+  // };
   // const handleSaveAndShow = () => {
   //   console.log('Save and show details');
   //   navigate('/maintenance/asset');
@@ -821,52 +1055,335 @@ const AddAssetPage = () => {
   // ..
 
 
-  const handleSaveAndShow = () => {
-    const payload = {
-      pms_asset: {
-        ...formData,
-        extra_fields_attributes: buildExtraFieldsAttributes(),
-        consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(field => ({
-          name: field.name,
-          meter_unit_id: field.unitType,
-          min_value: field.min,
-          max_value: field.max,
-          alert_below: field.alertBelowVal,
-          alert_above: field.alertAboveVal,
-          multiplier_factor: field.multiplierFactor,
-          active: true,
-          meter_tag: "Consumption",
-          check_previous_reading: field.checkPreviousReading || false,
-          _destroy: false
-        })),
-        non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(field => ({
-          name: field.name,
-          meter_unit_id: field.unitType,
-          min_value: field.min,
-          max_value: field.max,
-          alert_below: field.alertBelowVal,
-          alert_above: field.alertAboveVal,
-          multiplier_factor: field.multiplierFactor,
-          active: true,
-          meter_tag: "Non Consumption",
-          check_previous_reading: field.checkPreviousReading || false,
-          _destroy: false
-        }))
-      }
-    };
-    // Add top-level fields if needed (allocation_ids, asset_move_to, amc_detail, etc.)
-    if (formData.allocation_ids) payload.pms_asset.allocation_ids = formData.allocation_ids;
-    if (formData.asset_move_to) payload.pms_asset.asset_move_to = formData.asset_move_to;
-    if (formData.amc_detail) payload.pms_asset.amc_detail = formData.amc_detail;
-    if (formData.asset_manuals) payload.pms_asset.asset_manuals = formData.asset_manuals;
-    if (formData.asset_insurances) payload.pms_asset.asset_insurances = formData.asset_insurances;
-    if (formData.asset_purchases) payload.pms_asset.asset_purchases = formData.asset_purchases;
-    if (formData.asset_other_uploads) payload.pms_asset.asset_other_uploads = formData.asset_other_uploads;
+  // const handleSaveAndShow = () => {
+  //   const payload = {
+  //     pms_asset: {
+  //       ...formData,
+  //       custom_fields: buildCustomFieldsPayload(),
+  //       extra_fields_attributes: buildExtraFieldsAttributes(),
+  //       consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(field => ({
+  //         name: field.name,
+  //         meter_unit_id: field.unitType,
+  //         min_value: field.min,
+  //         max_value: field.max,
+  //         alert_below: field.alertBelowVal,
+  //         alert_above: field.alertAboveVal,
+  //         multiplier_factor: field.multiplierFactor,
+  //         active: true,
+  //         meter_tag: "Consumption",
+  //         check_previous_reading: field.checkPreviousReading || false,
+  //         _destroy: false
+  //       })),
+  //       non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(field => ({
+  //         name: field.name,
+  //         meter_unit_id: field.unitType,
+  //         min_value: field.min,
+  //         max_value: field.max,
+  //         alert_below: field.alertBelowVal,
+  //         alert_above: field.alertAboveVal,
+  //         multiplier_factor: field.multiplierFactor,
+  //         active: true,
+  //         meter_tag: "Non Consumption",
+  //         check_previous_reading: field.checkPreviousReading || false,
+  //         _destroy: false
+  //       }))
+  //     }
+  //   };
+  //   // Add top-level fields if needed (allocation_ids, asset_move_to, amc_detail, etc.)
+  //   if (formData.allocation_ids) payload.pms_asset.allocation_ids = formData.allocation_ids;
+  //   if (formData.asset_move_to) payload.pms_asset.asset_move_to = formData.asset_move_to;
+  //   if (formData.amc_detail) payload.pms_asset.amc_detail = formData.amc_detail;
+  //   if (formData.asset_manuals) payload.pms_asset.asset_manuals = formData.asset_manuals;
+  //   if (formData.asset_insurances) payload.pms_asset.asset_insurances = formData.asset_insurances;
+  //   if (formData.asset_purchases) payload.pms_asset.asset_purchases = formData.asset_purchases;
+  //   if (formData.asset_other_uploads) payload.pms_asset.asset_other_uploads = formData.asset_other_uploads;
 
-    apiClient.post('pms/assets.json', payload)
-      .then(() => navigate('/maintenance/asset'))
-      .catch(err => console.error(err));
+  //   apiClient.post('pms/assets.json', payload)
+  //     // .then(() => navigate('/maintenance/asset'))
+  //     .catch(err => console.error(err));
+  // };
+
+  const handleSaveAndShow = () => {
+  // Build the complete payload
+  const payload = {
+    pms_asset: {
+      // Basic asset fields
+      name: formData.name,
+      asset_number: formData.asset_number,
+      model_number: formData.model_number,
+      serial_number: formData.serial_number,
+      manufacturer: formData.manufacturer,
+      status: formData.status,
+      critical: formData.critical,
+      breakdown: formData.breakdown,
+      
+      // Location fields
+      pms_site_id: selectedLocation.site,
+      pms_building_id: selectedLocation.building,
+      pms_wing_id: selectedLocation.wing,
+      pms_area_id: selectedLocation.area,
+      pms_floor_id: selectedLocation.floor,
+      pms_room_id: selectedLocation.room,
+      
+      // Vendor and supplier fields
+      loaned_from_vendor_id: formData.loaned_from_vendor_id,
+      pms_supplier_id: formData.pms_supplier_id,
+      
+      // Dates
+      agreement_from_date: formData.agreement_from_date,
+      agreement_to_date: formData.agreement_to_date,
+      commisioning_date: formData.commisioning_date,
+      purchased_on: formData.purchased_on,
+      warranty_expiry: formData.warranty_expiry,
+      
+      // Asset grouping
+      pms_asset_group_id: formData.pms_asset_group_id,
+      pms_asset_sub_group_id: formData.pms_asset_sub_group_id,
+      
+      // Financial fields
+      salvage_value: formData.salvage_value,
+      depreciation_rate: formData.depreciation_rate,
+      depreciation_method: formData.depreciation_method,
+      useful_life: formData.useful_life,
+      purchase_cost: formData.purchase_cost,
+      
+      // Asset type flags
+      it_asset: formData.it_asset,
+      it_meter: formData.it_meter,
+      is_meter: formData.is_meter,
+      asset_loaned: formData.asset_loaned,
+      depreciation_applicable: formData.depreciation_applicable,
+      
+      // Meter fields
+      meter_tag_type: formData.meter_tag_type,
+      parent_meter_id: formData.parent_meter_id,
+      
+      // Warranty
+      warranty: formData.warranty,
+      warranty_period: formData.warranty_period,
+      
+      // Other fields
+      depreciation_applicable_for: formData.depreciation_applicable_for,
+      indiv_group: formData.indiv_group,
+      allocation_type: formData.allocation_type,
+      
+      // Array fields
+      allocation_ids: formData.allocation_ids,
+      asset_ids: formData.asset_ids,
+      
+      // Nested objects
+      asset_move_to: formData.asset_move_to,
+      amc_detail: formData.amc_detail,
+      
+      // IT Asset custom fields (as nested object)
+      custom_fields: buildCustomFieldsPayload(),
+      
+      // Extra fields for other categories (as array)
+      extra_fields_attributes: buildExtraFieldsAttributes(),
+      
+      // Meter measures
+      consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(field => ({
+        name: field.name,
+        meter_unit_id: field.unitType,
+        min_value: field.min,
+        max_value: field.max,
+        alert_below: field.alertBelowVal,
+        alert_above: field.alertAboveVal,
+        multiplier_factor: field.multiplierFactor,
+        active: true,
+        meter_tag: "Consumption",
+        check_previous_reading: field.checkPreviousReading || false,
+        _destroy: false
+      })),
+      
+      non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(field => ({
+        name: field.name,
+        meter_unit_id: field.unitType,
+        min_value: field.min,
+        max_value: field.max,
+        alert_below: field.alertBelowVal,
+        alert_above: field.alertAboveVal,
+        multiplier_factor: field.multiplierFactor,
+        active: true,
+        meter_tag: "Non Consumption",
+        check_previous_reading: field.checkPreviousReading || false,
+        _destroy: false
+      })),
+      
+      // File attachments (if sending as arrays)
+      asset_manuals: formData.asset_manuals,
+      asset_insurances: formData.asset_insurances,
+      asset_purchases: formData.asset_purchases,
+      asset_other_uploads: formData.asset_other_uploads,
+      land_attachments: attachments.landAttachments
+    }
   };
+
+  console.log('Final payload:', payload);
+  console.log('Extra fields attributes being sent:', payload.pms_asset.extra_fields_attributes);
+  console.log('Using FormData:', hasFiles());
+
+  // If sending files, use FormData
+  if (hasFiles()) {
+    const formDataObj = new FormData();
+    
+    // Add all non-file fields
+    Object.entries(payload.pms_asset).forEach(([key, value]) => {
+      if (!['asset_manuals', 'asset_insurances', 'asset_purchases', 'asset_other_uploads', 'land_attachments', 'extra_fields_attributes', 'consumption_pms_asset_measures_attributes', 'non_consumption_pms_asset_measures_attributes'].includes(key)) {
+        if (typeof value === 'object' && value !== null) {
+          formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+        } else {
+          // Ensure value is string or Blob for FormData
+          if (
+            typeof value === 'string' ||
+            value instanceof Blob
+          ) {
+            formDataObj.append(`pms_asset[${key}]`, value);
+          } else if (
+            typeof value === 'boolean' ||
+            typeof value === 'number'
+          ) {
+            formDataObj.append(`pms_asset[${key}]`, value.toString());
+          } else if (value !== null && value !== undefined) {
+            formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+          }
+        }
+      }
+    });
+    
+    // Handle extra_fields_attributes specially for FormData
+    if (payload.pms_asset.extra_fields_attributes && Array.isArray(payload.pms_asset.extra_fields_attributes)) {
+      payload.pms_asset.extra_fields_attributes.forEach((field, index) => {
+        Object.entries(field).forEach(([fieldKey, fieldValue]) => {
+          formDataObj.append(`pms_asset[extra_fields_attributes][${index}][${fieldKey}]`, String(fieldValue));
+        });
+      });
+    }
+    
+    // Handle consumption measures
+    if (payload.pms_asset.consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.consumption_pms_asset_measures_attributes)) {
+      payload.pms_asset.consumption_pms_asset_measures_attributes.forEach((measure, index) => {
+        Object.entries(measure).forEach(([measureKey, measureValue]) => {
+          formDataObj.append(`pms_asset[consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
+        });
+      });
+    }
+    
+    // Handle non-consumption measures
+    if (payload.pms_asset.non_consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.non_consumption_pms_asset_measures_attributes)) {
+      payload.pms_asset.non_consumption_pms_asset_measures_attributes.forEach((measure, index) => {
+        Object.entries(measure).forEach(([measureKey, measureValue]) => {
+          formDataObj.append(`pms_asset[non_consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
+        });
+      });
+    }
+    
+    // Add files
+    attachments.landAttachments.forEach(file => 
+      formDataObj.append("land_attachments[]", file)
+    );
+    attachments.vehicleAttachments.forEach(file => 
+      formDataObj.append("vehicle_attachments[]", file)
+    );
+    attachments.leaseholdAttachments.forEach(file => 
+      formDataObj.append("leasehold_attachments[]", file)
+    );
+    attachments.buildingAttachments.forEach(file => 
+      formDataObj.append("building_attachments[]", file)
+    );
+    attachments.furnitureAttachments.forEach(file => 
+      formDataObj.append("furniture_attachments[]", file)
+    );
+    attachments.itEquipmentAttachments.forEach(file => 
+      formDataObj.append("it_equipment_attachments[]", file)
+    );
+    attachments.machineryAttachments.forEach(file => 
+      formDataObj.append("machinery_attachments[]", file)
+    );
+    attachments.toolsAttachments.forEach(file => 
+      formDataObj.append("tools_attachments[]", file)
+    );
+    attachments.manualsUpload.forEach(file => 
+      formDataObj.append("asset_manuals[]", file)
+    );
+    attachments.insuranceDetails.forEach(file => 
+      formDataObj.append("asset_insurances[]", file)
+    );
+    attachments.purchaseInvoice.forEach(file => 
+      formDataObj.append("asset_purchases[]", file)
+    );
+    attachments.amc.forEach(file => 
+      formDataObj.append("asset_other_uploads[]", file)
+    );
+
+    // Debug: Log FormData contents
+    console.log('FormData contents:');
+    for (let [key, value] of formDataObj.entries()) {
+      console.log(key, value);
+    }
+
+    // Submit with FormData
+    apiClient.post('pms/assets.json', formDataObj, {
+      headers: { 
+        "Content-Type": "multipart/form-data"
+      },
+      timeout: 300000, // 5 minutes timeout for large files
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload progress: ${percentCompleted}%`);
+        }
+      }
+    })
+    .then(response => {
+      console.log('Asset created successfully:', response.data);
+      navigate('/maintenance/asset');
+    })
+    .catch(err => {
+      console.error('Error creating asset:', err);
+      
+      if (err.response?.status === 413) {
+        alert('Upload failed: Request too large. Please reduce the number or size of files and try again.');
+      } else if (err.response?.status === 422) {
+        alert('Upload failed: Validation error. Please check your form data.');
+      } else if (err.code === 'ECONNABORTED') {
+        alert('Upload failed: Request timeout. Please try with smaller files or better internet connection.');
+      } else {
+        alert('Upload failed: ' + (err.response?.data?.message || err.message || 'Unknown error'));
+      }
+    });
+  } else {
+    // Submit as JSON
+    apiClient.post('pms/assets.json', payload, {
+      headers: { "Content-Type": "application/json" }
+    })
+    .then(response => {
+      console.log('Asset created successfully:', response.data);
+      navigate('/maintenance/asset');
+    })
+    .catch(err => {
+      console.error('Error creating asset:', err);
+    });
+  }
+};
+
+// Helper function to check if there are files to upload
+const hasFiles = () => {
+  return (
+    attachments.landAttachments.length > 0 ||
+    attachments.vehicleAttachments.length > 0 ||
+    attachments.leaseholdAttachments.length > 0 ||
+    attachments.buildingAttachments.length > 0 ||
+    attachments.furnitureAttachments.length > 0 ||
+    attachments.itEquipmentAttachments.length > 0 ||
+    attachments.machineryAttachments.length > 0 ||
+    attachments.toolsAttachments.length > 0 ||
+    attachments.manualsUpload.length > 0 ||
+    attachments.insuranceDetails.length > 0 ||
+    attachments.purchaseInvoice.length > 0 ||
+    attachments.amc.length > 0
+  );
+};
   // ...existing code...
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
@@ -885,6 +1402,11 @@ const AddAssetPage = () => {
       }
     }
   };
+  useEffect(() => {
+    if (selectedAssetCategory) {
+      handleExtraFieldChange('asset_category', selectedAssetCategory, 'text', 'assetCategory', 'Asset Category');
+    }
+  }, [selectedAssetCategory]);
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
     {/* Header */}
     <div className="mb-4 sm:mb-6">
@@ -906,14 +1428,14 @@ const AddAssetPage = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Asset Category Selection */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+        <div className="border-l-4 border-l-[#C72030] p-2 sm:p-6 bg-white">
           <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
             <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
               <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
             </span>
             ASSET CATEGORY
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <RadioGroup
               value={selectedAssetCategory}
               onValueChange={setSelectedAssetCategory}
@@ -929,14 +1451,15 @@ const AddAssetPage = () => {
                 'Machinery & Equipment',
                 'Tools & Instruments'
               ].map((category) => (
-                <div key={category} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div key={category} className="flex flex-col items-center space-y-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer min-w-[120px]">
                   <RadioGroupItem
                     value={category}
                     id={category}
+                    className="mx-auto"
                   />
                   <label
                     htmlFor={category}
-                    className="text-sm font-medium cursor-pointer flex-1"
+                    className="text-xs sm:text-sm font-medium cursor-pointer text-center leading-tight"
                   >
                     {category}
                   </label>
@@ -971,7 +1494,7 @@ const AddAssetPage = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <TextField
-                    label="Asset ID / Code"
+                    label="Asset Id/Code"
                     placeholder="Enter unique identifier"
                     variant="outlined"
                     fullWidth
@@ -981,19 +1504,18 @@ const AddAssetPage = () => {
                       }
                     }}
                     onChange={e => handleFieldChange('asset_number', e.target.value)}
-
                   />
                   <TextField
                     label="Asset Name"
                     placeholder="Enter land name"
                     variant="outlined"
                     fullWidth
-                    onChange={e => handleFieldChange('name', e.target.value)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
+                    onChange={e => handleFieldChange('name', e.target.value)}
                   />
                   <FormControl
                     fullWidth
@@ -1025,7 +1547,6 @@ const AddAssetPage = () => {
                       <MenuItem value="special">Special Use</MenuItem>
                     </MuiSelect>
                   </FormControl>
-
                   {/* Custom Fields */}
                   {customFields.basicIdentification.map((field) => (
                     <div key={field.id} className="relative">
@@ -1035,20 +1556,13 @@ const AddAssetPage = () => {
                         variant="outlined"
                         fullWidth
                         value={field.value}
-
-                        onChange={e =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'basicIdentification',
-                            `${field.name}`
-                          )
-                        }
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             height: { xs: '36px', md: '45px' }
                           }
+                        }}
+                        onChange={e => {
+                          handleCustomFieldChange('basicIdentification', field.id, e.target.value);
                         }}
                       />
                       <button
@@ -1118,7 +1632,7 @@ const AddAssetPage = () => {
                         handleExtraFieldChange(
                           'ownership_type',
                           (e.target as HTMLInputElement).value,
-                          'slect',
+                          'select',
                           'basicIdentification',
                           'Ownership Type'
                         )
@@ -1222,15 +1736,9 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={e =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'locationOwnership',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={e => {
+                          handleCustomFieldChange('locationOwnership', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('locationOwnership', field.id)}
@@ -1277,11 +1785,11 @@ const AddAssetPage = () => {
                       }}
                       onChange={e =>
                         handleExtraFieldChange(
-                          'landsizeValue',
+                          'area',
                           (e.target as HTMLInputElement).value,
-                          'select',
+                          'number',
                           'landSizeValue',
-                          'Land Size Value'
+                          'Area'
                         )
                       }
                     />
@@ -1292,15 +1800,6 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
-                      onChange={e =>
-                        handleExtraFieldChange(
-                          'landType',
-                          (e.target as HTMLInputElement).value,
-                          'select',
-                          'landsizeValue',
-                          'Legal Document Ref No'
-                        )
-                      }
                     >
                       <InputLabel>Unit</InputLabel>
                       <MuiSelect
@@ -1338,9 +1837,9 @@ const AddAssetPage = () => {
                       handleExtraFieldChange(
                         'date_of_acquisition',
                         date,
-                        'select',
+                        'date',
                         'landSizeValue',
-                        'dateOfAcquisition'
+                        'Date of Acquisition'
                       )
                     }
 
@@ -1387,8 +1886,8 @@ const AddAssetPage = () => {
                         handleExtraFieldChange(
                           'acquisition_cost',
                           (e.target as HTMLInputElement).value,
-                          'select',
-                          'acquisitionCost',
+                          'number',
+                          'landSizeValue',
                           'Acquisition Cost'
                         )
                       }
@@ -1412,7 +1911,7 @@ const AddAssetPage = () => {
                       handleExtraFieldChange(
                         'current_market_value',
                         (e.target as HTMLInputElement).value,
-                        'select',
+                        'number',
                         'landSizeValue',
                         'Current Market Value'
                       )
@@ -1433,15 +1932,9 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
-                      onChange={e =>
-                        handleExtraFieldChange(
-                          `${field.name}`,
-                          (e.target as HTMLInputElement).value,
-                          'text',
-                          'landSizeValue',
-                          `${field.name}`
-                        )
-                      }
+                      onChange={e => {
+                        handleCustomFieldChange('landSizeValue', field.id, e.target.value);
+                      }}
                     />
                     <button
                       onClick={() => removeCustomField('landSizeValue', field.id)}
@@ -1541,15 +2034,7 @@ const AddAssetPage = () => {
                       '& .MuiOutlinedInput-root': {
                         height: { xs: '36px', md: '45px' }
                       }
-                    }}
-                    onChange={e =>
-                      handleExtraFieldChange(
-                        'responsible_department',
-                        e.target.value,
-                        'text',
-                        'landUsageDevelopment',
-                        'Responsible Department'
-                      )
+                    }
                     }
                   />
 
@@ -1562,15 +2047,10 @@ const AddAssetPage = () => {
                         variant="outlined"
                         fullWidth
                         value={field.value}
-                        onChange={e =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'landUsageDevelopment',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={e => {
+
+                          handleCustomFieldChange('landUsageDevelopment', field.id, e.target.value);
+                        }}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             height: { xs: '36px', md: '45px' }
@@ -1616,7 +2096,7 @@ const AddAssetPage = () => {
                   rows={4}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
+                      // height: { xs: '36px', md: '45px' }
                     }
                   }}
                   // onChange={e => handleFieldChange('remarks', e.target.value)}
@@ -1637,6 +2117,7 @@ const AddAssetPage = () => {
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     className="hidden"
                     id="land-attachments"
+                    onChange={e => handleFileUpload('landAttachments', e.target.files)}
                   />
                   <label htmlFor="land-attachments" className="cursor-pointer">
                     <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
@@ -1646,7 +2127,33 @@ const AddAssetPage = () => {
                     <p className="text-xs text-gray-500 mt-1">
                       Upload deed copy, layout, map, lease, etc.
                     </p>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      Max 10MB per file, 50MB total. Images will be compressed automatically.
+                    </p>
                   </label>
+                  {attachments.landAttachments && attachments.landAttachments.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {attachments.landAttachments.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                          <div className="flex flex-col truncate">
+                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </span>
+                          </div>
+                          <button onClick={() => removeFile('landAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="text-xs text-gray-500 mt-1">
+                        Total: {attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                          ? `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                          : `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                        }
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Custom Fields */}
@@ -1663,15 +2170,9 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
-                      onChange={e =>
-                        handleExtraFieldChange(
-                          `${field.name}`,
-                          (e.target as HTMLInputElement).value,
-                          'text',
-                          'miscellaneousf',
-                          `${field.name}`
-                        )
-                      }
+                      onChange={e => {
+                        handleCustomFieldChange('miscellaneous', field.id, e.target.value);
+                      }}
                     />
                     <button
                       onClick={() => removeCustomField('miscellaneous', field.id)}
@@ -1750,15 +2251,9 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'leaseholdBasicId',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+                          handleCustomFieldChange('leaseholdBasicId', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('leaseholdBasicId', field.id)}
@@ -1868,15 +2363,10 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'leaseholdLocationAssoc',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('leaseholdLocationAssoc', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('leaseholdLocationAssoc', field.id)}
@@ -2048,15 +2538,9 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'improvementDetails',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+                          handleCustomFieldChange('improvementDetails', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('improvementDetails', field.id)}
@@ -2215,14 +2699,11 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'leaseholdFinancial',
-                            `${field.name}`
-                          )
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('leaseholdFinancial', field.id, e.target.value);
+
+                        }
                         }
                       />
                       <button
@@ -2345,15 +2826,10 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'leaseholdLease',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('leaseholdLease', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('leaseholdLease', field.id)}
@@ -2447,7 +2923,7 @@ const AddAssetPage = () => {
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                         className="hidden"
                         id="leasehold-attachments"
-
+                        onChange={e => handleFileUpload('leaseholdAttachments', e.target.files)}
                       />
                       <label htmlFor="leasehold-attachments" className="cursor-pointer">
                         <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
@@ -2457,7 +2933,33 @@ const AddAssetPage = () => {
                         <p className="text-xs text-gray-500 mt-1">
                           Upload invoices, contracts, improvement photos, etc.
                         </p>
+                        <p className="text-xs text-yellow-600 mt-1">
+                          Max 10MB per file, 50MB total. Images will be compressed automatically.
+                        </p>
                       </label>
+                      {attachments.leaseholdAttachments && attachments.leaseholdAttachments.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {attachments.leaseholdAttachments.map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                              <div className="flex flex-col truncate">
+                                <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                                <span className="text-xs text-gray-500">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              </div>
+                              <button onClick={() => removeFile('leaseholdAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                          <div className="text-xs text-gray-500 mt-1">
+                            Total: {attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                              ? `${(attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                              : `${(attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                            }
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -2470,7 +2972,9 @@ const AddAssetPage = () => {
                         variant="outlined"
                         fullWidth
                         value={field.value}
-                        onChange={(e) => handleCustomFieldChange('leaseholdOversight', field.id, e.target.value)}
+                        onChange={(e) => {
+                          handleCustomFieldChange('leaseholdOversight', field.id, e.target.value);
+                        }}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             height: { xs: '36px', md: '45px' }
@@ -2613,15 +3117,10 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'vehicleBasicId',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('vehicleBasicId', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('vehicleBasicId', field.id)}
@@ -2879,14 +3378,10 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'vehicleOwnership',
-                            `${field.name}`
-                          )
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('vehicleOwnership', field.id, e.target.value);
+                        }
                         }
                       />
                       <button
@@ -3051,15 +3546,11 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'vehicleTechnicalSpecs',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('vehicleTechnicalSpecs', field.id, e.target.value);
+                        }}
+
                       />
                       <button
                         onClick={() => removeCustomField('vehicleTechnicalSpecs', field.id)}
@@ -3363,15 +3854,10 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'vehicleLegal',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('vehicleLegal', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('vehicleLegal', field.id)}
@@ -3412,7 +3898,7 @@ const AddAssetPage = () => {
                   rows={4}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      height: { xs: '80px', md: '100px' }
+                      // height: { xs: '80px', md: '100px' }
                     }
                   }}
                   onChange={(e) =>
@@ -3432,6 +3918,7 @@ const AddAssetPage = () => {
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     className="hidden"
                     id="vehicle-attachments"
+                    onChange={(e) => handleFileUpload('vehicleAttachments', e.target.files)}
                   />
                   <label htmlFor="vehicle-attachments" className="cursor-pointer">
                     <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
@@ -3443,6 +3930,35 @@ const AddAssetPage = () => {
                     </p>
                   </label>
                 </div>
+
+                {/* Display uploaded vehicle attachments */}
+                {attachments.vehicleAttachments && attachments.vehicleAttachments.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Uploaded Vehicle Documents:</h4>
+                    <div className="space-y-2">
+                      {attachments.vehicleAttachments.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                          <div className="flex items-center space-x-2">
+                            <Archive className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm text-gray-700 truncate max-w-xs">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => removeFile('vehicleAttachments', index)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Remove file"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Custom Fields */}
                 {customFields.vehicleMiscellaneous.map((field) => (
@@ -3459,15 +3975,10 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
-                      onChange={(e) =>
-                        handleExtraFieldChange(
-                          `${field.name}`,
-                          (e.target as HTMLInputElement).value,
-                          'text',
-                          'vehicleMiscellaneous',
-                          `${field.name}`
-                        )
-                      }
+                      onChange={(e) => {
+
+                        handleCustomFieldChange('vehicleMiscellaneous', field.id, e.target.value);
+                      }}
                     />
                     <button
                       onClick={() => removeCustomField('vehicleMiscellaneous', field.id)}
@@ -3576,15 +4087,10 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'buildingBasicId',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('buildingBasicId', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('buildingBasicId', field.id)}
@@ -3702,15 +4208,9 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'buildingLocation',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+                          handleCustomFieldChange('buildingLocation', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('buildingLocation', field.id)}
@@ -3882,15 +4382,9 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'buildingConstruction',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+                          handleCustomFieldChange('buildingConstruction', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('buildingConstruction', field.id)}
@@ -4121,14 +4615,9 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'buildingAcquisition',
-                            `${field.name}`
-                          )
+                        onChange={(e) => {
+                          handleCustomFieldChange('buildingAcquisition', field.id, e.target.value);
+                        }
                         }
                       />
                       <button
@@ -4313,15 +4802,9 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'buildingUsage',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+                          handleCustomFieldChange('buildingLocation', field.id, e.target.value);
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('buildingUsage', field.id)}
@@ -4426,15 +4909,11 @@ const AddAssetPage = () => {
                             height: { xs: '36px', md: '45px' }
                           }
                         }}
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            `${field.name}`,
-                            (e.target as HTMLInputElement).value,
-                            'text',
-                            'buildingMaintenance',
-                            `${field.name}`
-                          )
-                        }
+                        onChange={(e) => {
+
+                          handleCustomFieldChange('buildingMaintenance', field.id, e.target.value);
+
+                        }}
                       />
                       <button
                         onClick={() => removeCustomField('buildingMaintenance', field.id)}
@@ -4495,6 +4974,7 @@ const AddAssetPage = () => {
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.dwg"
                     className="hidden"
                     id="building-attachments"
+                    onChange={e => handleFileUpload('buildingAttachments', e.target.files)}
                   />
                   <label htmlFor="building-attachments" className="cursor-pointer">
                     <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
@@ -4504,7 +4984,33 @@ const AddAssetPage = () => {
                     <p className="text-xs text-gray-500 mt-1">
                       Upload blueprints, tax receipts, occupancy certificate, etc.
                     </p>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      Max 10MB per file, 50MB total. Images will be compressed automatically.
+                    </p>
                   </label>
+                  {attachments.buildingAttachments && attachments.buildingAttachments.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {attachments.buildingAttachments.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                          <div className="flex flex-col truncate">
+                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </span>
+                          </div>
+                          <button onClick={() => removeFile('buildingAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="text-xs text-gray-500 mt-1">
+                        Total: {attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                          ? `${(attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                          : `${(attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                        }
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Custom Fields */}
@@ -4522,14 +5028,9 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
-                      onChange={(e) =>
-                        handleExtraFieldChange(
-                          `${field.name}`,
-                          (e.target as HTMLInputElement).value,
-                          'text',
-                          'buildingMiscellaneous',
-                          `${field.name}`
-                        )
+                      onChange={(e) => {
+                        handleCustomFieldChange('buildingMiscellaneous', field.id, e.target.value);
+                      }
                       }
                     />
                     <button
@@ -4562,7 +5063,7 @@ const AddAssetPage = () => {
                   LOCATION DETAILS
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
+                  {/* <button
                     onClick={(e) => {
                       e.stopPropagation();
                       openCustomFieldModal('locationDetails');
@@ -4571,7 +5072,7 @@ const AddAssetPage = () => {
                   >
                     <Plus className="w-4 h-4" />
                     Custom Field
-                  </button>
+                  </button> */}
                   {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </div>
               </div>
@@ -4730,7 +5231,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={field.name}
                       value={field.value}
-                      onChange={(e) => handleCustomFieldChange('locationDetails', field.id, e.target.value)}
+                      onChange={(e) => { handleCustomFieldChange('locationDetails', field.id, e.target.value); }}
                       variant="outlined"
                       fullWidth
                       sx={{
@@ -4738,6 +5239,7 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
+
                     />
                     <button
                       onClick={() => removeCustomField('locationDetails', field.id)}
@@ -4947,21 +5449,52 @@ const AddAssetPage = () => {
                       color: '#C72030'
                     }}>SYSTEM DETAILS</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <TextField label="OS" placeholder="Enter OS" name="os" fullWidth variant="outlined" InputLabelProps={{
-                        shrink: true
-                      }} InputProps={{
-                        sx: fieldStyles
-                      }} />
-                      <TextField label="Total Memory" placeholder="Enter Total Memory" name="totalMemory" fullWidth variant="outlined" InputLabelProps={{
-                        shrink: true
-                      }} InputProps={{
-                        sx: fieldStyles
-                      }} />
-                      <TextField label="Processor" placeholder="Enter Processor" name="processor" fullWidth variant="outlined" InputLabelProps={{
-                        shrink: true
-                      }} InputProps={{
-                        sx: fieldStyles
-                      }} />
+                      <TextField 
+                        label="OS" 
+                        placeholder="Enter OS" 
+                        name="os" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={itAssetDetails.system_details.os}
+                        onChange={(e) => handleItAssetDetailsChange('system_details', 'os', e.target.value)}
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }}
+                      />
+
+                      <TextField 
+                        label="Total Memory" 
+                        placeholder="Enter Total Memory" 
+                        name="totalMemory" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={itAssetDetails.system_details.memory}
+                        onChange={(e) => handleItAssetDetailsChange('system_details', 'memory', e.target.value)}
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }} 
+                      />
+                      <TextField 
+                        label="Processor" 
+                        placeholder="Enter Processor" 
+                        name="processor" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={itAssetDetails.system_details.processor}
+                        onChange={(e) => handleItAssetDetailsChange('system_details', 'processor', e.target.value)}
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }} 
+                      />
 
                       {/* Custom Fields for System Details */}
                       {itAssetsCustomFields['System Details'].map(field => <div key={field.id} className="relative">
@@ -4977,7 +5510,7 @@ const AddAssetPage = () => {
                     </div>
                   </div>
 
-                  {/* Hard Disk Details */}
+                  {/* Hardware Details */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       {isEditingHardDiskHeading ? (
@@ -5028,30 +5561,60 @@ const AddAssetPage = () => {
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <TextField label="Model" placeholder="Enter Model" name="hdModel" fullWidth variant="outlined" InputLabelProps={{
-                        shrink: true
-                      }} InputProps={{
-                        sx: fieldStyles
-                      }} />
-                      <TextField label="Serial No." placeholder="Enter Serial No." name="hdSerialNo" fullWidth variant="outlined" InputLabelProps={{
-                        shrink: true
-                      }} InputProps={{
-                        sx: fieldStyles
-                      }} />
-                      <TextField label="Capacity" placeholder="Enter Capacity" name="hdCapacity" fullWidth variant="outlined" InputLabelProps={{
-                        shrink: true
-                      }} InputProps={{
-                        sx: fieldStyles
-                      }} />
+                      <TextField 
+                        label="Model" 
+                        placeholder="Enter Model" 
+                        name="hdModel" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={itAssetDetails.hardware.model}
+                        onChange={(e) => handleItAssetDetailsChange('hardware', 'model', e.target.value)}
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }} 
+                      />
+                      <TextField 
+                        label="Serial No." 
+                        placeholder="Enter Serial No." 
+                        name="hdSerialNo" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={itAssetDetails.hardware.serial_no}
+                        onChange={(e) => handleItAssetDetailsChange('hardware', 'serial_no', e.target.value)}
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }} 
+                      />
+                      <TextField 
+                        label="Capacity" 
+                        placeholder="Enter Capacity" 
+                        name="hdCapacity" 
+                        fullWidth 
+                        variant="outlined" 
+                        value={itAssetDetails.hardware.capacity}
+                        onChange={(e) => handleItAssetDetailsChange('hardware', 'capacity', e.target.value)}
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }} 
+                      />
 
-                      {/* Custom Fields for Hard Disk Details */}
-                      {itAssetsCustomFields['Hard Disk Details'].map(field => <div key={field.id} className="relative">
-                        <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('Hard Disk Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                      {/* Custom Fields for Hardware Details */}
+                      {itAssetsCustomFields['Hardware Details'].map(field => <div key={field.id} className="relative">
+                        <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('Hardware Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
                           shrink: true
                         }} InputProps={{
                           sx: fieldStyles
                         }} />
-                        <button onClick={() => removeItAssetsCustomField('Hard Disk Details', field.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                        <button onClick={() => removeItAssetsCustomField('Hardware Details', field.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
                           <X className="w-4 h-4" />
                         </button>
                       </div>)}
@@ -5343,7 +5906,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={field.name}
                       value={field.value}
-                      onChange={(e) => handleCustomFieldChange('purchaseDetails', field.id, e.target.value)}
+                      onChange={(e) => { handleCustomFieldChange('purchaseDetails', field.id, e.target.value); }}
                       variant="outlined"
                       fullWidth
                       sx={{
@@ -5373,7 +5936,7 @@ const AddAssetPage = () => {
                   DEPRECIATION RULE
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
+                  {/* <button
                     onClick={(e) => {
                       e.stopPropagation();
                       openCustomFieldModal('depreciationRule');
@@ -5382,7 +5945,7 @@ const AddAssetPage = () => {
                   >
                     <Plus className="w-4 h-4" />
                     Custom Field
-                  </button>
+                  </button> */}
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">If Applicable</span>
                     <div className="relative inline-block w-12 h-6">
@@ -5475,7 +6038,7 @@ const AddAssetPage = () => {
                       <TextField
                         label={field.name}
                         value={field.value}
-                        onChange={(e) => handleCustomFieldChange('depreciationRule', field.id, e.target.value)}
+                        onChange={(e) => { handleCustomFieldChange('depreciationRule', field.id, e.target.value); }}
                         variant="outlined"
                         fullWidth
                         sx={{
@@ -5670,7 +6233,8 @@ const AddAssetPage = () => {
                         label="Vendor"
                         displayEmpty
                         value={selectedAmcVendorId}
-                        onChange={(e) =>{setSelectedAmcVendorId(e.target.value);
+                        onChange={(e) => {
+                          setSelectedAmcVendorId(e.target.value);
                           handleNestedFieldChange('amc_detail', 'supplier_id', e.target.value);
                         }}
                         sx={fieldStyles}
@@ -5699,9 +6263,9 @@ const AddAssetPage = () => {
                       shrink: true
                     }} InputProps={{
                       sx: fieldStyles
-                    }} 
+                    }}
                       onChange={e => handleNestedFieldChange('amc_detail', 'amc_end_date', e.target.value)}
-                    
+
                     />
 
                     <TextField label="First Service" placeholder="dd/mm/yyyy" name="amcFirstService" type="date" fullWidth variant="outlined" InputLabelProps={{
@@ -5710,16 +6274,16 @@ const AddAssetPage = () => {
                       sx: fieldStyles
                     }}
                       onChange={e => handleNestedFieldChange('amc_detail', 'amc_first_service', e.target.value)}
-                    
+
                     />
 
                     <FormControl fullWidth variant="outlined" sx={{
                       minWidth: 120
                     }}>
                       <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
-                      <MuiSelect labelId="payment-terms-select-label" label="Payment Terms" value={formData.amc_detail.payment_term}  sx={fieldStyles}
-                      onChange={e => handleNestedFieldChange('amc_detail', 'payment_term', e.target.value)}
-                      
+                      <MuiSelect labelId="payment-terms-select-label" label="Payment Terms" value={formData.amc_detail.payment_term} sx={fieldStyles}
+                        onChange={e => handleNestedFieldChange('amc_detail', 'payment_term', e.target.value)}
+
                       >
                         <MenuItem value=""><em>Select Payment Terms</em></MenuItem>
                         <MenuItem value="monthly">Monthly</MenuItem>
@@ -5732,8 +6296,8 @@ const AddAssetPage = () => {
                       shrink: true
                     }} InputProps={{
                       sx: fieldStyles
-                    }} 
-                    
+                    }}
+
                       onChange={e => handleNestedFieldChange('amc_detail', 'no_of_visits', e.target.value)}
 
                     />
@@ -5745,9 +6309,9 @@ const AddAssetPage = () => {
                       shrink: true
                     }} InputProps={{
                       sx: fieldStyles
-                    }} 
+                    }}
                       onChange={e => handleNestedFieldChange('amc_detail', 'amc_cost', e.target.value)}
-                    
+
                     />
                   </div>
                 </div>
@@ -5823,6 +6387,199 @@ const AddAssetPage = () => {
           </>
         )}
 
+      {/* Category-Specific Attachments */}
+      {selectedAssetCategory === 'Furniture & Fixtures' && (
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-4">
+              <Archive className="w-5 h-5" />
+              FURNITURE & FIXTURES ATTACHMENTS
+            </div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                className="hidden"
+                id="furniture-attachments"
+                onChange={e => handleFileUpload('furnitureAttachments', e.target.files)}
+              />
+              <label htmlFor="furniture-attachments" className="cursor-pointer">
+                <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm text-gray-600">Click to upload attachments</p>
+                <p className="text-xs text-gray-500 mt-1">Upload invoices, warranties, assembly manuals, etc.</p>
+                <p className="text-xs text-yellow-600 mt-1">Max 10MB per file, 50MB total. Images will be compressed automatically.</p>
+              </label>
+              {attachments.furnitureAttachments && attachments.furnitureAttachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.furnitureAttachments.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                      <div className="flex flex-col truncate">
+                        <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                        <span className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <button onClick={() => removeFile('furnitureAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Total: {attachments.furnitureAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                      ? `${(attachments.furnitureAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                      : `${(attachments.furnitureAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedAssetCategory === 'IT Equipment' && (
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-4">
+              <Archive className="w-5 h-5" />
+              IT EQUIPMENT ATTACHMENTS
+            </div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                className="hidden"
+                id="it-equipment-attachments"
+                onChange={e => handleFileUpload('itEquipmentAttachments', e.target.files)}
+              />
+              <label htmlFor="it-equipment-attachments" className="cursor-pointer">
+                <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm text-gray-600">Click to upload attachments</p>
+                <p className="text-xs text-gray-500 mt-1">Upload user manuals, drivers, warranties, configuration docs, etc.</p>
+                <p className="text-xs text-yellow-600 mt-1">Max 10MB per file, 50MB total. Images will be compressed automatically.</p>
+              </label>
+              {attachments.itEquipmentAttachments && attachments.itEquipmentAttachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.itEquipmentAttachments.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                      <div className="flex flex-col truncate">
+                        <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                        <span className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <button onClick={() => removeFile('itEquipmentAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Total: {attachments.itEquipmentAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                      ? `${(attachments.itEquipmentAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                      : `${(attachments.itEquipmentAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedAssetCategory === 'Machinery & Equipment' && (
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-4">
+              <Archive className="w-5 h-5" />
+              MACHINERY & EQUIPMENT ATTACHMENTS
+            </div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                className="hidden"
+                id="machinery-attachments"
+                onChange={e => handleFileUpload('machineryAttachments', e.target.files)}
+              />
+              <label htmlFor="machinery-attachments" className="cursor-pointer">
+                <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm text-gray-600">Click to upload attachments</p>
+                <p className="text-xs text-gray-500 mt-1">Upload operation manuals, safety certificates, maintenance logs, etc.</p>
+                <p className="text-xs text-yellow-600 mt-1">Max 10MB per file, 50MB total. Images will be compressed automatically.</p>
+              </label>
+              {attachments.machineryAttachments && attachments.machineryAttachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.machineryAttachments.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                      <div className="flex flex-col truncate">
+                        <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                        <span className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <button onClick={() => removeFile('machineryAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Total: {attachments.machineryAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                      ? `${(attachments.machineryAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                      : `${(attachments.machineryAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedAssetCategory === 'Tools & Instruments' && (
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-4">
+              <Archive className="w-5 h-5" />
+              TOOLS & INSTRUMENTS ATTACHMENTS
+            </div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                className="hidden"
+                id="tools-attachments"
+                onChange={e => handleFileUpload('toolsAttachments', e.target.files)}
+              />
+              <label htmlFor="tools-attachments" className="cursor-pointer">
+                <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm text-gray-600">Click to upload attachments</p>
+                <p className="text-xs text-gray-500 mt-1">Upload calibration certificates, user guides, specifications, etc.</p>
+                <p className="text-xs text-yellow-600 mt-1">Max 10MB per file, 50MB total. Images will be compressed automatically.</p>
+              </label>
+              {attachments.toolsAttachments && attachments.toolsAttachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.toolsAttachments.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                      <div className="flex flex-col truncate">
+                        <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                        <span className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <button onClick={() => removeFile('toolsAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Total: {attachments.toolsAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                      ? `${(attachments.toolsAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                      : `${(attachments.toolsAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
         <button onClick={handleSaveAndShow} className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base">
@@ -5875,7 +6632,14 @@ const AddAssetPage = () => {
     </Dialog>
 
     {/* Custom Field Modal for IT Assets */}
-    <AddCustomFieldModal isOpen={itAssetsCustomFieldModalOpen} onClose={() => setItAssetsCustomFieldModalOpen(false)} onAddField={handleAddItAssetsCustomField} isItAsset={true} />
+
+    <AddCustomFieldModal
+      isOpen={itAssetsCustomFieldModalOpen}
+      onClose={() => setItAssetsCustomFieldModalOpen(false)}
+      onAddField={(fieldName, sectionName) => handleAddItAssetsCustomField(fieldName, sectionName)}
+      isItAsset={true}
+    />
+    {/* <AddCustomFieldModal isOpen={itAssetsCustomFieldModalOpen} onClose={() => setItAssetsCustomFieldModalOpen(false)} onAddField={handleAddItAssetsCustomField} isItAsset={true} /> */}
   </div>;
 };
 export default AddAssetPage;

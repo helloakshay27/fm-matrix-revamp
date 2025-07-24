@@ -178,7 +178,7 @@ export const AssetDetailsPage = () => {
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-11 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-12 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
             <TabsTrigger value="asset-info">Asset Info</TabsTrigger>
             <TabsTrigger value="amc-details">AMC Details</TabsTrigger>
             <TabsTrigger value="ppm">PPM</TabsTrigger>
@@ -188,6 +188,7 @@ export const AssetDetailsPage = () => {
             <TabsTrigger value="history-card">History Card</TabsTrigger>
             <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
             <TabsTrigger value="ticket">Ticket</TabsTrigger>
+            <TabsTrigger value="association">Association</TabsTrigger>
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
@@ -216,6 +217,9 @@ export const AssetDetailsPage = () => {
           </TabsContent>
           <TabsContent value="ticket" className="p-4 sm:p-6">
             <TicketTab asset={assetData} assetId={assetData.id} />
+          </TabsContent>
+          <TabsContent value="association" className="p-4 sm:p-6">
+            <AssociationTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
         </Tabs>
       </div>

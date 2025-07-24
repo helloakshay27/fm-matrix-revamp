@@ -3,10 +3,7 @@ import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User, File
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AssetAnalyticsTab } from './AssetAnalyticsTab';
 
-interface AssetInfoTabProps {
-  asset: Asset;
-  assetId?: string | number;
-}
+// Removed duplicate interface declaration for AssetInfoTabProps
 interface Asset {
   id: number;
   name: string;
@@ -61,6 +58,33 @@ interface Asset {
     to?: { location?: string };
   }[];
 }
+type ExtraFieldsGrouped = {
+  [group: string]: { field_name: string; field_value: string }[];
+};
+
+interface AssetInfoTabProps {
+  asset: Asset & { extra_fields_grouped?: ExtraFieldsGrouped };
+  assetId?: string | number;
+}
+
+ const renderExtraFieldsGrouped = (asset: Asset & { extra_fields_grouped?: ExtraFieldsGrouped }) => {
+    if (!asset.extra_fields_grouped) return null;
+    return Object.entries(asset.extra_fields_grouped).map(([group, fields]) => (
+      <div key={group} className="bg-white rounded-lg shadow-sm border mb-6">
+        <div className="px-6 py-4 border-b font-semibold text-[#C72030] text-lg capitalize">
+          {group.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+        </div>
+        <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {fields.map((field, idx) => (
+            <div key={idx} className="flex flex-col">
+              <span className="text-sm text-gray-500 mb-1">{field.field_name.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}</span>
+              <span className="font-medium text-gray-800">{field.field_value || '-'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ));
+  };
 
 export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({ asset, assetId }) => {
   return <div className="min-h-full ">
