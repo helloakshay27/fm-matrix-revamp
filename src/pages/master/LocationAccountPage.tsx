@@ -51,6 +51,12 @@ export const LocationAccountPage = () => {
   const [isAddUserCategoryOpen, setIsAddUserCategoryOpen] = useState(false);
   const [isEditZoneOpen, setIsEditZoneOpen] = useState(false);
   const [selectedZonesForEdit, setSelectedZonesForEdit] = useState<string[]>([]);
+  const [isEditZoneFormOpen, setIsEditZoneFormOpen] = useState(false);
+  const [editZoneData, setEditZoneData] = useState({
+    zoneName: '',
+    headquarter: '',
+    region: ''
+  });
   const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(false);
 
   // Sample data with state management
@@ -269,9 +275,36 @@ export const LocationAccountPage = () => {
       toast.error('Please select at least one zone to edit');
       return;
     }
-    toast.success(`Editing ${selectedZonesForEdit.length} zone(s): ${selectedZonesForEdit.join(', ')}`);
+    
+    // Pre-fill form with data from the first selected zone
+    const firstSelectedZone = selectedZonesForEdit[0];
+    setEditZoneData({
+      zoneName: firstSelectedZone,
+      headquarter: 'India', // Default value
+      region: 'west' // Default value
+    });
+    
     setIsEditZoneOpen(false);
+    setIsEditZoneFormOpen(true);
+  };
+
+  const handleSaveZoneChanges = () => {
+    if (!editZoneData.zoneName.trim() || !editZoneData.headquarter.trim() || !editZoneData.region.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
+    toast.success(`Zone "${editZoneData.zoneName}" updated successfully`);
+    setIsEditZoneFormOpen(false);
     setSelectedZonesForEdit([]);
+    setEditZoneData({ zoneName: '', headquarter: '', region: '' });
+  };
+
+  const handleZoneFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      toast.success('Zone image uploaded successfully');
+    }
   };
 
   return (
@@ -1068,6 +1101,94 @@ export const LocationAccountPage = () => {
           </Dialog>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Zone Form Dialog */}
+      <Dialog open={isEditZoneFormOpen} onOpenChange={setIsEditZoneFormOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Zone</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => setIsEditZoneFormOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          <div className="space-y-4 p-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Zone Name
+              </label>
+              <input
+                type="text"
+                value={editZoneData.zoneName}
+                onChange={(e) => setEditZoneData({...editZoneData, zoneName: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                placeholder="Enter zone name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Headquarter
+              </label>
+              <input
+                type="text"
+                value={editZoneData.headquarter}
+                onChange={(e) => setEditZoneData({...editZoneData, headquarter: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                placeholder="Enter headquarter"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Region
+              </label>
+              <input
+                type="text"
+                value={editZoneData.region}
+                onChange={(e) => setEditZoneData({...editZoneData, region: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
+                placeholder="Enter region"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Upload Image
+              </label>
+              <div className="flex items-center">
+                <input
+                  type="file"
+                  id="zoneImageUpload"
+                  accept="image/*"
+                  onChange={handleZoneFileUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="zoneImageUpload"
+                  className="cursor-pointer bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+                >
+                  Choose File
+                </label>
+                <span className="ml-3 text-sm text-gray-500">No file chosen</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-end pt-4">
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+                onClick={handleSaveZoneChanges}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
