@@ -454,15 +454,15 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableHeader>
                  <TableRow className="h-[28px]">
                    {selectable && (
-                     <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-center px-[18px] py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white" data-checkbox>
-                        <div className="flex items-center justify-center h-full">
-                         <Checkbox
-                           checked={isAllSelected}
-                           onCheckedChange={handleSelectAllChange}
-                           aria-label={selectAllLabel}
-                           {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                         />
-                       </div>
+                      <TableHead className="bg-[#C4B89D]/35 !bg-[#C4B89D]/35 text-center py-[8px] font-medium text-[14px] text-[#1A1A1A] h-[28px] border-r border-white w-[50px]" data-checkbox>
+                        <div className="flex items-center justify-center h-full w-full">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAllChange}
+                            aria-label={selectAllLabel}
+                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                          />
+                        </div>
                      </TableHead>
                    )}
                    <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
