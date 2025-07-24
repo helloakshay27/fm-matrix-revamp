@@ -40,7 +40,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
           <Grid3x3 className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 h-[368px] overflow-y-auto">
+      <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Show Columns</span>
           <span className="text-xs text-gray-500">
@@ -67,7 +67,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
               <Checkbox
                 checked={isVisible}
                 disabled={isLastVisible}
-                className="border-[#4B4B4B] data-[state=checked]:bg-transparent data-[state=checked]:border-[#4B4B4B] [&>*]:data-[state=checked]:text-red-500"
+                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
               <div className="flex items-center gap-2 flex-1">
                 {isVisible ? (
