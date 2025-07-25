@@ -155,6 +155,11 @@ const UpdateTicketsPage: React.FC = () => {
         category => category.name === ticketData.category_type
       );
 
+      // Find the complaint mode ID that matches the mode name from API
+      const matchingMode = complaintModes.find(
+        mode => mode.name === ticketData.complaint_mode
+      );
+
       // Populate form with API data
       setFormData(prev => ({
         ...prev,
@@ -171,7 +176,7 @@ const UpdateTicketsPage: React.FC = () => {
         categoryType: matchingCategory?.id.toString() || '',
         subCategoryType: '', // Will be set after subcategories are fetched
         assignTo: ticketData.assigned_to || '',
-        mode: ticketData.complaint_mode || '',
+        mode: matchingMode?.id.toString() || '',
         responsiblePerson: ticketData.responsible_person || '',
         issueRelatedTo: ticketData.issue_related_to || '',
         refNumber: ticketData.reference_number || '',
@@ -205,7 +210,7 @@ const UpdateTicketsPage: React.FC = () => {
 
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
-    if (id && helpdeskData?.helpdesk_categories) {
+    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0) {
       fetchTicketData(id);
     }
     // If we have selected tickets from navigation state, use the first one
@@ -225,7 +230,7 @@ const UpdateTicketsPage: React.FC = () => {
         }));
       }
     }
-  }, [id, location.state, helpdeskData]);
+  }, [id, location.state, helpdeskData, complaintModes]);
 
   useEffect(() => {
     const fetchData = async () => {
