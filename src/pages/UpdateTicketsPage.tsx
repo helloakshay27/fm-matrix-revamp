@@ -605,8 +605,43 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
           </div>
 
-
-
+          {/* Cost Approval Requests */}
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-700">Cost Approval Requests</h3>
+              <button className="bg-purple-700 text-white px-4 py-2 rounded text-sm hover:bg-purple-800">
+                Add
+              </button>
+            </div>
+            <div className="overflow-x-auto bg-white rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Request Id</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Amount</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Comments</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Created On</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Created By</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L1</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L2</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L3</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L4</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L5</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Master Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Cancelled By</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Attachments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="px-4 py-3 text-gray-500 text-center" colSpan={13}>
+                      No data available
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           {/* Submit Button */}
           <div className="flex justify-center mt-8">
             <Button
