@@ -341,20 +341,16 @@ export const AddTicketDashboard = () => {
             {/* Create Ticket On Behalf Of */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Create Ticket On Behalf Of</label>
-              <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex gap-6">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="self" id="self" />
-                  <label htmlFor="self" className="text-sm">Self</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="occupant-user" id="occupant-user" />
-                  <label htmlFor="occupant-user" className="text-sm">Occupant User</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="fm-user" id="fm-user" />
-                  <label htmlFor="fm-user" className="text-sm">FM User</label>
-                </div>
-              </RadioGroup>
+              <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select behalf option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="self">Self</SelectItem>
+                  <SelectItem value="occupant-user">Occupant User</SelectItem>
+                  <SelectItem value="fm-user">FM User</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* User Selection Dropdown for behalf of others */}
