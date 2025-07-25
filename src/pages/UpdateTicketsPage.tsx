@@ -210,8 +210,18 @@ const UpdateTicketsPage: React.FC = () => {
       }));
 
       // Set review date if available
-      if (ticketData.review_tracking) {
-        setReviewDate(new Date(ticketData.review_tracking));
+      console.log('Review tracking from API:', ticketData.review_tracking);
+      if (ticketData.review_tracking && ticketData.review_tracking !== null) {
+        const date = new Date(ticketData.review_tracking);
+        if (!isNaN(date.getTime())) {
+          setReviewDate(date);
+          console.log('Set review date to:', date);
+        } else {
+          console.log('Invalid date value:', ticketData.review_tracking);
+        }
+      } else {
+        console.log('No review tracking date available');
+        setReviewDate(undefined);
       }
 
       // Fetch sub-categories if category is set
