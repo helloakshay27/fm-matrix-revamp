@@ -1,7 +1,7 @@
 
 // Authentication utility functions
 export interface User {
-  id: string;
+  id: number;
   email: string;
   firstname: string;
   lastname: string;
@@ -9,30 +9,18 @@ export interface User {
 }
 
 export interface LoginResponse {
-  id: string;
+  id: number;
   email: string;
   firstname: string;
   lastname: string;
   access_token: string;
   phone?: string;
-  success?: boolean;
-  message?: string;
 }
 
 export interface OTPResponse {
   success: boolean;
   message: string;
   otp?: string; // For development/testing
-}
-
-export interface Organization {
-  id: string;
-  name: string;
-  domain: string;
-  sub_domain: string;
-  logo?: {
-    url: string;
-  };
 }
 
 // Local storage keys
@@ -64,16 +52,6 @@ export const getToken = (): string | null => {
   return localStorage.getItem(AUTH_KEYS.TOKEN);
 };
 
-// Save base URL to localStorage
-export const saveBaseUrl = (baseUrl: string): void => {
-  localStorage.setItem('baseUrl', baseUrl);
-};
-
-// Get base URL from localStorage
-export const getBaseUrl = (): string | null => {
-  return localStorage.getItem('baseUrl');
-};
-
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   const user = getUser();
@@ -87,49 +65,6 @@ export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.TOKEN);
   localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
-};
-
-// Get organizations by email
-export const getOrganizationsByEmail = async (email: string): Promise<Organization[]> => {
-  // Mock API call - replace with actual API endpoint
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock organizations response
-  const mockOrganizations: Organization[] = [
-    {
-      id: "org_1",
-      name: "Acme Corporation",
-      domain: "gophygital.work",
-      sub_domain: "acme",
-    },
-    {
-      id: "org_2", 
-      name: "Tech Solutions Inc",
-      domain: "gophygital.work",
-      sub_domain: "techsolutions",
-    }
-  ];
-  
-  return mockOrganizations;
-};
-
-// Login user with organization
-export const loginUser = async (email: string, password: string, baseUrl: string): Promise<LoginResponse> => {
-  // Mock API call - replace with actual API endpoint
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock successful response
-  const mockResponse: LoginResponse = {
-    success: true,
-    message: "Login successful",
-    access_token: "mock_token_123",
-    id: "user_123",
-    email: email,
-    firstname: "John",
-    lastname: "Doe"
-  };
-  
-  return mockResponse;
 };
 
 // Login with email and password
@@ -186,7 +121,7 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
     
     // Return mock user data
     return {
-      id: "1",
+      id: 1,
       email: 'user@example.com',
       firstname: 'John',
       lastname: 'Doe',
