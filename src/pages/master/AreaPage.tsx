@@ -355,16 +355,23 @@ export function AreaPage() {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Building</label>
-                <Input
-                  value={editingArea?.building?.name || ''}
-                  disabled
-                  className="bg-gray-50"
-                />
+                <Select value={editingArea?.building_id?.toString() || ''} onValueChange={(value) => dispatch(setSelectedBuilding(parseInt(value)))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Building" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.data.map((building) => (
+                      <SelectItem key={building.id} value={building.id.toString()}>
+                        {building.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Wing</label>
-                <Select value={editingArea?.wing_id?.toString() || ''} disabled>
+                <Select value={editingArea?.wing_id?.toString() || ''} onValueChange={(value) => dispatch(setSelectedWing(parseInt(value)))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
