@@ -83,6 +83,12 @@ const UpdateTicketsPage: React.FC = () => {
   const [complaintStatuses, setComplaintStatuses] = useState<ComplaintStatus[]>([]);
   const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [showCostPopup, setShowCostPopup] = useState(false);
+  const [costPopupData, setCostPopupData] = useState({
+    cost: '',
+    description: '',
+    attachments: [] as File[]
+  });
 
   useEffect(() => {
     if (location.state?.selectedTickets) {
@@ -156,6 +162,48 @@ const UpdateTicketsPage: React.FC = () => {
 
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCostInvolvedChange = (checked: boolean) => {
+    setFormData(prev => ({ ...prev, costInvolved: checked }));
+    if (checked) {
+      setShowCostPopup(true);
+    } else {
+      setCostPopupData({ cost: '', description: '', attachments: [] });
+    }
+  };
+
+  const handleCostPopupFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setCostPopupData(prev => ({
+        ...prev,
+        attachments: [...prev.attachments, ...Array.from(event.target.files!)]
+      }));
+    }
+  };
+
+  const removeCostPopupAttachment = (index: number) => {
+    setCostPopupData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleCostPopupSubmit = () => {
+    // Update main form data with popup data
+    setFormData(prev => ({
+      ...prev,
+      cost: costPopupData.cost,
+      description: costPopupData.description
+    }));
+    setAttachments(prev => [...prev, ...costPopupData.attachments]);
+    setShowCostPopup(false);
+  };
+
+  const handleCostPopupClose = () => {
+    setShowCostPopup(false);
+    setFormData(prev => ({ ...prev, costInvolved: false }));
+    setCostPopupData({ cost: '', description: '', attachments: [] });
   };
 
   const handleSubmit = async () => {
@@ -362,7 +410,7 @@ const UpdateTicketsPage: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={formData.costInvolved}
-                    onChange={(e) => handleInputChange('costInvolved', e.target.checked)}
+                    onChange={(e) => handleCostInvolvedChange(e.target.checked)}
                     className="mr-2"
                   />
                   Cost Involved
@@ -457,6 +505,110 @@ const UpdateTicketsPage: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Cost Popup Modal */}
+        {showCostPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg w-96 max-w-md mx-4">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-lg font-medium text-gray-900">Popup Name</h3>
+                <button
+                  onClick={handleCostPopupClose}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 space-y-4">
+                {/* Cost Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cost<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={costPopupData.cost}
+                    onChange={(e) => setCostPopupData(prev => ({ ...prev, cost: e.target.value }))}
+                    placeholder="Enter Cost"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                  />
+                </div>
+
+                {/* Description Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description<span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={costPopupData.description}
+                    onChange={(e) => setCostPopupData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Enter Description"
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                  />
+                </div>
+
+                {/* Attachment Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Attachment<span className="text-red-500">*</span>
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <input
+                      type="file"
+                      id="cost-popup-file-upload"
+                      multiple
+                      onChange={handleCostPopupFileUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="cost-popup-file-upload"
+                      className="cursor-pointer flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload Files
+                    </label>
+                  </div>
+                  
+                  {/* Display uploaded files in popup */}
+                  {costPopupData.attachments.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {costPopupData.attachments.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                          <span className="text-gray-700">{file.name}</span>
+                          <Button
+                            onClick={() => removeCostPopupAttachment(index)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-800 p-1"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t">
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleCostPopupSubmit}
+                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
+                    disabled={!costPopupData.cost || !costPopupData.description}
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
