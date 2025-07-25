@@ -806,6 +806,17 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
+          <div title="Update ticket">
+            <Edit
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('/maintenance/ticket/update', {
+                  state: { selectedTickets: [item] }
+                });
+              }}
+            />
+          </div>
           <div title="Flag ticket">
             <Flag
               className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged
