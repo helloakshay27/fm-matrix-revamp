@@ -1046,7 +1046,7 @@ const UpdateTicketsPage: React.FC = () => {
               value={formData.comments}
               onChange={(e) => handleInputChange('comments', e.target.value)}
               rows={4}
-              className="min-h-[100px] border-gray-300 focus:border-primary focus:ring-primary"
+              className="text-base border rounded min-h-[100px] w-full border-gray-300 bg-white px-3 py-2 focus:border-primary focus:ring-primary"
               placeholder="Add comment"
             />
             <div className="mt-2">
