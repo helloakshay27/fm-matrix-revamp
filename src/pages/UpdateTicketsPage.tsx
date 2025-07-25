@@ -161,6 +161,11 @@ const UpdateTicketsPage: React.FC = () => {
         mode => mode.name === ticketData.complaint_mode
       );
 
+      // Find the status ID that matches the status name from API
+      const matchingStatus = complaintStatuses.find(
+        status => status.name === ticketData.issue_status
+      );
+
       // Find the user ID that matches the assigned_to name from API
       console.log('Looking for assigned_to match:', ticketData.assigned_to);
       console.log('Available fmUsers:', fmUsers);
@@ -187,7 +192,7 @@ const UpdateTicketsPage: React.FC = () => {
         ...prev,
         title: ticketData.heading || '',
         adminPriority: ticketData.priority || '',
-        selectedStatus: ticketData.issue_status || '',
+        selectedStatus: matchingStatus?.id.toString() || '',
         proactiveReactive: ticketData.proactive_reactive || '',
         serviceType: ticketData.service_type || '',
         externalPriority: ticketData.external_priority || '',
@@ -256,7 +261,7 @@ const UpdateTicketsPage: React.FC = () => {
 
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
-    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0 && fmUsers.length > 0) {
+    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0 && fmUsers.length > 0 && complaintStatuses.length > 0) {
       fetchTicketData(id);
     }
     // If we have selected tickets from navigation state, use the first one
@@ -276,7 +281,7 @@ const UpdateTicketsPage: React.FC = () => {
         }));
       }
     }
-  }, [id, location.state, helpdeskData, complaintModes, fmUsers]);
+  }, [id, location.state, helpdeskData, complaintModes, fmUsers, complaintStatuses]);
 
   useEffect(() => {
     const fetchData = async () => {
