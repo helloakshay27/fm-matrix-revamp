@@ -5,19 +5,23 @@ import { ArrowLeft, User } from 'lucide-react';
 import { useAllocationData } from '@/hooks/useAllocationData';
 
 interface SelectedTicket {
-  id: string;
+  id: number;
   ticket_number: string;
-  task_number: string;
-  description: string;
-  category: string;
-  sub_category: string;
-  site: string;
-  building: string;
-  wing: string;
-  floor: string;
-  area: string;
-  room: string;
-  status: string | { name: string; color_code?: string } | any;
+  heading: string;
+  category_type: string;
+  sub_category_type: string;
+  site_name: string;
+  posted_by: string;
+  assigned_to: string | null;
+  issue_status: string;
+  priority: string;
+  created_at: string;
+  // Add other fields that might be available
+  building?: string;
+  wing?: string;
+  floor?: string;
+  area?: string;
+  room?: string;
 }
 
 const AssignTicketsPage: React.FC = () => {
@@ -77,7 +81,7 @@ const AssignTicketsPage: React.FC = () => {
                     TICKET NUMBER
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    TASK NUMBER
+                    HEADING
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     STATUS
@@ -86,19 +90,16 @@ const AssignTicketsPage: React.FC = () => {
                     SITE
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    BUILDING
+                    CATEGORY
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    WING
+                    PRIORITY
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    FLOOR
+                    POSTED BY
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    AREA
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ROOM
+                    ASSIGNED TO
                   </th>
                 </tr>
               </thead>
@@ -106,19 +107,17 @@ const AssignTicketsPage: React.FC = () => {
                 {selectedTickets.map((ticket) => (
                   <tr key={ticket.id}>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticket_number}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.task_number}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.heading}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {typeof ticket.status === 'string' ? ticket.status : 
-                         (ticket.status?.name || ticket.status || 'Unknown')}
+                        {ticket.issue_status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.site || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.building || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.wing || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.floor || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.area || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.room || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.site_name || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.category_type || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.priority || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.posted_by || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.assigned_to || 'Unassigned'}</td>
                   </tr>
                 ))}
               </tbody>
