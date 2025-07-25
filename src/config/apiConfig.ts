@@ -1,13 +1,16 @@
-import { getToken } from '@/utils/auth';
+import { getBaseUrl, getToken } from '@/utils/auth';
 
 // API Configuration - Central place for managing API endpoints and tokens
 const getApiConfig = () => {
   const savedToken = getToken();
+    const savedBaseUrl = getBaseUrl();
+console.log('Saved Base URL:', savedBaseUrl);
 
   return {
-    BASE_URL: 'https://fm-uat-api.lockated.com',
-    TOKEN: savedToken || 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
+    BASE_URL: savedBaseUrl,
+    TOKEN: savedToken ,
   };
+
 };
 
 export const API_CONFIG = {
