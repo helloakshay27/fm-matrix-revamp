@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Paperclip, X, User, Ticket } from 'lucide-react';
+import { ArrowLeft, Upload, Paperclip, X, User, Ticket, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 
@@ -547,7 +547,9 @@ export const AddTicketDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
             <h2 className="text-sm font-medium text-gray-700 flex items-center">
-              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">3</span>
+              <span className="w-6 h-6 text-white rounded-full flex items-center justify-center text-xs mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <FileText size={12} color="#C72030" />
+              </span>
               Add Attachments
             </h2>
           </div>
