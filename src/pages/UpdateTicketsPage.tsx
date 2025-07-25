@@ -621,7 +621,8 @@ const UpdateTicketsPage: React.FC = () => {
         description: `Successfully updated ticket ${ticketId}.`,
       });
       
-      navigate(-1);
+      // Redirect to ticket list page
+      navigate('/maintenance/ticket');
     } catch (error) {
       console.error('Error updating tickets:', error);
       toast({
