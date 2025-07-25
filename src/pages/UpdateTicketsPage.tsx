@@ -160,6 +160,27 @@ const UpdateTicketsPage: React.FC = () => {
         mode => mode.name === ticketData.complaint_mode
       );
 
+      // Find the user ID that matches the assigned_to name from API
+      console.log('Looking for assigned_to match:', ticketData.assigned_to);
+      console.log('Available fmUsers:', fmUsers);
+      const matchingUser = fmUsers.find(user => {
+        const fullName = `${user.firstname} ${user.lastname}`;
+        const apiAssignedTo = ticketData.assigned_to?.trim() || '';
+        console.log('Comparing:', fullName, 'with:', apiAssignedTo);
+        
+        // Try exact match first
+        if (fullName === apiAssignedTo) return true;
+        
+        // Try partial matches
+        if (apiAssignedTo.includes(fullName) || fullName.includes(apiAssignedTo)) return true;
+        
+        // Try case-insensitive match
+        if (fullName.toLowerCase() === apiAssignedTo.toLowerCase()) return true;
+        
+        return false;
+      });
+      console.log('Found matching user:', matchingUser);
+
       // Populate form with API data
       setFormData(prev => ({
         ...prev,
@@ -175,7 +196,7 @@ const UpdateTicketsPage: React.FC = () => {
         rootCause: ticketData.root_cause || '',
         categoryType: matchingCategory?.id.toString() || '',
         subCategoryType: '', // Will be set after subcategories are fetched
-        assignTo: ticketData.assigned_to || '',
+        assignTo: matchingUser?.id.toString() || '',
         mode: matchingMode?.id.toString() || '',
         responsiblePerson: ticketData.responsible_person || '',
         issueRelatedTo: ticketData.issue_related_to || '',
@@ -210,7 +231,7 @@ const UpdateTicketsPage: React.FC = () => {
 
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
-    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0) {
+    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0 && fmUsers.length > 0) {
       fetchTicketData(id);
     }
     // If we have selected tickets from navigation state, use the first one
@@ -230,7 +251,7 @@ const UpdateTicketsPage: React.FC = () => {
         }));
       }
     }
-  }, [id, location.state, helpdeskData, complaintModes]);
+  }, [id, location.state, helpdeskData, complaintModes, fmUsers]);
 
   useEffect(() => {
     const fetchData = async () => {
