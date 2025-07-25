@@ -518,7 +518,7 @@ const UpdateTicketsPage: React.FC = () => {
                     value="project"
                     checked={formData.issueRelatedTo.project}
                     onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">Project</span>
                 </label>
@@ -529,7 +529,7 @@ const UpdateTicketsPage: React.FC = () => {
                     value="fm"
                     checked={formData.issueRelatedTo.pm}
                     onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">FM</span>
                 </label>
@@ -549,7 +549,7 @@ const UpdateTicketsPage: React.FC = () => {
                     value="asset"
                     checked={formData.associatedTo.asset}
                     onChange={(e) => handleCheckboxChange('associatedTo', 'asset', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">Asset</span>
                 </label>
@@ -560,7 +560,7 @@ const UpdateTicketsPage: React.FC = () => {
                     value="service"
                     checked={formData.associatedTo.service}
                     onChange={(e) => handleCheckboxChange('associatedTo', 'service', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">Service</span>
                 </label>
