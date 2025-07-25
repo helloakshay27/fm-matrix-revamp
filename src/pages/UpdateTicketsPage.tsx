@@ -738,19 +738,26 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Review (Tracking) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Review (Tracking)</label>
-              <Input
-                type="date"
-                value={reviewDate ? format(reviewDate, "yyyy-MM-dd") : ''}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setReviewDate(new Date(e.target.value));
-                  } else {
-                    setReviewDate(null);
-                  }
-                }}
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary"
-                placeholder="mm/dd/yyyy"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary justify-start text-left font-normal"
+                  >
+                    {reviewDate ? format(reviewDate, "MM/dd/yyyy") : <span className="text-gray-400">mm/dd/yyyy</span>}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={reviewDate || undefined}
+                    onSelect={(date) => setReviewDate(date || null)}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Category Type */}
