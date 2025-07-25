@@ -52,7 +52,7 @@ export const ServiceDashboard = () => {
   const pageSize = 7;
 
   // Use API data if available, otherwise fallback to initial data
-  const servicesData = apiData && Array.isArray(apiData) ? apiData : initialServiceData;
+  const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
 
   useEffect(() => {
     dispatch(fetchServicesData());
@@ -366,16 +366,16 @@ export const ServiceDashboard = () => {
       {/* Enhanced Table */}
       {!loading && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
             <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
               <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {11}
+                  {apiData.total_services_count}
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Services</div>
               </div>
             </div>
 
@@ -385,9 +385,9 @@ export const ServiceDashboard = () => {
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {22}
+                  {apiData.active_services_count}
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
               </div>
             </div>
 
@@ -397,33 +397,9 @@ export const ServiceDashboard = () => {
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {0}
+                  {apiData.inactive_services_count}
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {4}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {2}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
               </div>
             </div>
           </div>
