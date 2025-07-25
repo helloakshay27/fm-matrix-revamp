@@ -297,7 +297,7 @@ export const BookingSetupDashboard = () => {
           emptyMessage={loading ? "Loading booking data..." : "No booking data found"}
           leftActions={leftActions}
           enableSearch={true}
-          onFilterClick={() => setIsFilterOpen(true)}
+          // onFilterClick={() => setIsFilterOpen(true)}
           enableSelection={false}
           hideTableExport={true}
         />

@@ -10,6 +10,7 @@ import { fetchOrderDetails } from '@/store/slices/f&bSlice';
 import { useAppDispatch } from '@/store/hooks';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import axios from 'axios';
 
 interface OrderLog {
   date: string;
@@ -100,20 +101,20 @@ export const RestaurantOrderDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        setIsLoading(true);
-        const response = await dispatch(fetchOrderDetails({ baseUrl, token, id: Number(id), oid: Number(oid) })).unwrap();
-        setOrder(response);
-      } catch (error) {
-        console.error('Error fetching order details:', error);
-        setError('Failed to load order details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchOrder = async () => {
+    try {
+      setIsLoading(true);
+      const response = await dispatch(fetchOrderDetails({ baseUrl, token, id: Number(id), oid: Number(oid) })).unwrap();
+      setOrder(response);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      setError('Failed to load order details');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrder();
   }, [dispatch, baseUrl, token, id, oid]);
 
@@ -121,10 +122,26 @@ export const RestaurantOrderDetailPage = () => {
     navigate(-1);
   };
 
-  const handleSubmitStatus = () => {
-    console.log("Updating status:", selectedStatus, "Comments:", comments);
-    setIsEditStatusOpen(false);
-    setComments("");
+  const handleSubmitStatus = async () => {
+    try {
+      await axios.post(`https://${baseUrl}/crm/create_osr_log.json`, {
+        osr_log: {
+          about: "FoodOrder",
+          about_id: oid,
+          osr_status_id: selectedStatus,
+          comment: comments
+        }
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      setIsEditStatusOpen(false);
+      setComments("");
+      fetchOrder();
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   if (isLoading) {
@@ -186,8 +203,8 @@ export const RestaurantOrderDetailPage = () => {
       <div className="p-6">
         {/* Restaurant Header */}
         <div className="bg-white rounded-lg shadow mb-6">
-          <div className="flex items-center justify-between bg-[#F6F4EE] p-[30px]" style={{ border: "1px solid #D9D9D9" }}>
-            <h2 className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">{order.restaurant.name}</h2>
+          <div className="flex items-center justify-between bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+            <h2 className="flex items-center gap-4 text-[20px] fw-bold text-[#000]">{order.restaurant.name}</h2>
             <Button
               onClick={() => {
                 setSelectedStatus(order.status.name);
@@ -270,7 +287,7 @@ export const RestaurantOrderDetailPage = () => {
         {/* Logs Section */}
         <div className="bg-white rounded-lg shadow">
           <div className="flex items-center justify-between bg-[#F6F4EE] p-[30px]" style={{ border: "1px solid #D9D9D9" }}>
-            <h2 className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">Logs</h2>
+            <h2 className="flex items-center gap-4 text-[20px] fw-bold text-[#000]">Logs</h2>
           </div>
           {/* <div className="overflow-x-auto">
             <table className="w-full">
@@ -340,7 +357,7 @@ export const RestaurantOrderDetailPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {order.available_statuses.map((status) => (
-                    <SelectItem key={status.id} value={status.name}>
+                    <SelectItem key={status.id} value={status.id.toString()}>
                       {status.name}
                     </SelectItem>
                   ))}

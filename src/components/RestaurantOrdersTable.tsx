@@ -177,18 +177,23 @@ export const RestaurantOrdersTable = () => {
       case 'item_count':
         return item.item_count || '';
       case 'payment_status':
-        return (
+        return item.payment_status ? (
           <span
             className={`px-2 py-1 rounded-full text-xs ${item.payment_status === 'Paid'
-              ? 'bg-green-100 text-green-800'
-              : item.payment_status === 'Pending'
-                ? 'bg-yellow-100 text-yellow-800'
-                : 'bg-red-100 text-red-800'
+                ? 'bg-green-100 text-green-800'
+                : item.payment_status === 'Pending'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : item.payment_status === 'Unpaid'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-gray-100 text-gray-500'
               }`}
           >
             {item.payment_status}
           </span>
+        ) : (
+          <span className="text-xs text-gray-500">-</span>
         );
+
       default:
         return item[columnKey as keyof RestaurantOrder]?.toString() || '';
     }

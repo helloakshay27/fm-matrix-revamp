@@ -358,24 +358,24 @@ const BookingListDashboard = () => {
   };
 
   const selectionActions = [
-    {
-      label: 'Import',
-      icon: Upload,
-      // onClick: handleExport,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Export',
-      icon: Download,
-      // onClick: handleExport,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Delete',
-      icon: Trash2,
-      // onClick: () => handleBulkDelete(selectedAMCObjects),
-      variant: 'destructive' as const,
-    },
+    // {
+    //   label: 'Import',
+    //   icon: Upload,
+    //   // onClick: handleExport,
+    //   variant: 'outline' as const,
+    // },
+    // {
+    //   label: 'Export',
+    //   icon: Download,
+    //   // onClick: handleExport,
+    //   variant: 'outline' as const,
+    // },
+    // {
+    //   label: 'Delete',
+    //   icon: Trash2,
+    //   // onClick: () => handleBulkDelete(selectedAMCObjects),
+    //   variant: 'destructive' as const,
+    // },
   ];
 
   return (
