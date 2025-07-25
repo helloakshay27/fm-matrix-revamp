@@ -1015,29 +1015,27 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {formData.associatedTo.asset ? 'Select Asset' : 'Select Service'}
               </label>
-              <select
-                value={formData.selectedAsset}
-                onChange={(e) => handleInputChange('selectedAsset', e.target.value)}
-                className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-                disabled={isLoadingAssets || isLoadingServices}
-              >
-                <option value="">
-                  {isLoadingAssets || isLoadingServices 
-                    ? 'Loading...' 
-                    : `Select ${formData.associatedTo.asset ? 'Asset' : 'Service'}`
-                  }
-                </option>
-                {formData.associatedTo.asset && assetOptions.map((asset) => (
-                  <option key={asset.id} value={asset.id}>
-                    {asset.name}
-                  </option>
-                ))}
-                {formData.associatedTo.service && serviceOptions.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.service_name}
-                  </option>
-                ))}
-              </select>
+              <Select value={formData.selectedAsset} onValueChange={(value) => handleInputChange('selectedAsset', value)} disabled={isLoadingAssets || isLoadingServices}>
+                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder={
+                    isLoadingAssets || isLoadingServices 
+                      ? 'Loading...' 
+                      : `Select ${formData.associatedTo.asset ? 'Asset' : 'Service'}`
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.associatedTo.asset && assetOptions.map((asset) => (
+                    <SelectItem key={asset.id} value={asset.id.toString()}>
+                      {asset.name}
+                    </SelectItem>
+                  ))}
+                  {formData.associatedTo.service && serviceOptions.map((service) => (
+                    <SelectItem key={service.id} value={service.id.toString()}>
+                      {service.service_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
