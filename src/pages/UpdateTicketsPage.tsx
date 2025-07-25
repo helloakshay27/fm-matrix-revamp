@@ -508,59 +508,63 @@ const UpdateTicketsPage: React.FC = () => {
 
           {/* Issue Related To */}
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">Issue Related To</label>
-            <div className="flex gap-6">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="issueRelatedTo"
-                  value="project"
-                  checked={formData.issueRelatedTo.project}
-                  onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
-                  className="mr-2"
-                />
-                Project
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="issueRelatedTo"
-                  value="fm"
-                  checked={formData.issueRelatedTo.pm}
-                  onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
-                  className="mr-2"
-                />
-                FM
-              </label>
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 min-w-[120px]">Issue Related To</span>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="issueRelatedTo"
+                    value="project"
+                    checked={formData.issueRelatedTo.project}
+                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Project</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="issueRelatedTo"
+                    value="fm"
+                    checked={formData.issueRelatedTo.pm}
+                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">FM</span>
+                </label>
+              </div>
             </div>
           </div>
 
           {/* Associated To */}
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">Associated To</label>
-            <div className="flex gap-6">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="associatedTo"
-                  value="asset"
-                  checked={formData.associatedTo.asset}
-                  onChange={(e) => handleCheckboxChange('associatedTo', 'asset', e.target.checked)}
-                  className="mr-2"
-                />
-                Asset
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="associatedTo"
-                  value="service"
-                  checked={formData.associatedTo.service}
-                  onChange={(e) => handleCheckboxChange('associatedTo', 'service', e.target.checked)}
-                  className="mr-2"
-                />
-                Service
-              </label>
+          <div className="mt-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 min-w-[120px]">Associated To</span>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="associatedTo"
+                    value="asset"
+                    checked={formData.associatedTo.asset}
+                    onChange={(e) => handleCheckboxChange('associatedTo', 'asset', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Asset</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="associatedTo"
+                    value="service"
+                    checked={formData.associatedTo.service}
+                    onChange={(e) => handleCheckboxChange('associatedTo', 'service', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Service</span>
+                </label>
+              </div>
             </div>
           </div>
 
