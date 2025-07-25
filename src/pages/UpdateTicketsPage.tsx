@@ -705,11 +705,14 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <Select value={formData.selectedStatus} onValueChange={(value) => handleInputChange('selectedStatus', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Closed" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Closed</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {complaintStatuses.map((status) => (
-                    <SelectItem key={status.id} value={status.id.toString()}>
+                    <SelectItem key={status.id} value={status.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {status.name}
                     </SelectItem>
                   ))}
@@ -723,11 +726,14 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Responsible Person</label>
               <Select value={formData.responsiblePerson} onValueChange={(value) => handleInputChange('responsiblePerson', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select Responsible Person Name" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select Responsible Person Name</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {fmUsers.map((user) => (
-                    <SelectItem key={user.id} value={`${user.firstname} ${user.lastname}`}>
+                    <SelectItem key={user.id} value={`${user.firstname} ${user.lastname}`} className="text-gray-900 hover:bg-gray-100">
                       {user.firstname} {user.lastname}
                     </SelectItem>
                   ))}
@@ -765,11 +771,14 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Category Type</label>
               <Select value={formData.categoryType} onValueChange={(value) => handleInputChange('categoryType', value)} disabled={helpdeskLoading}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select Category Type" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select Category Type</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {helpdeskData?.helpdesk_categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
+                    <SelectItem key={category.id} value={category.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {category.name}
                     </SelectItem>
                   ))}
@@ -804,11 +813,14 @@ const UpdateTicketsPage: React.FC = () => {
                 disabled={subCategoriesLoading || !formData.categoryType}
               >
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select Sub Category" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select Sub Category</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {Array.isArray(subCategories) && subCategories.map((subCategory) => (
-                    <SelectItem key={subCategory.id} value={subCategory.id.toString()}>
+                    <SelectItem key={subCategory.id} value={subCategory.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {subCategory.name}
                     </SelectItem>
                   ))}
@@ -821,11 +833,14 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
               <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Vinayak Mane" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Vinayak Mane</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {fmUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
+                    <SelectItem key={user.id} value={user.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {user.firstname} {user.lastname}
                     </SelectItem>
                   ))}
@@ -839,14 +854,17 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
               <Select value={formData.adminPriority} onValueChange={(value) => handleInputChange('adminPriority', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select Priority" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select Priority</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="p1">P1 - Critical</SelectItem>
-                  <SelectItem value="p2">P2 - Very High</SelectItem>
-                  <SelectItem value="p3">P3 - High</SelectItem>
-                  <SelectItem value="p4">P4 - Medium</SelectItem>
-                  <SelectItem value="p5">P5 - Low</SelectItem>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <SelectItem value="p1" className="text-gray-900 hover:bg-gray-100">P1 - Critical</SelectItem>
+                  <SelectItem value="p2" className="text-gray-900 hover:bg-gray-100">P2 - Very High</SelectItem>
+                  <SelectItem value="p3" className="text-gray-900 hover:bg-gray-100">P3 - High</SelectItem>
+                  <SelectItem value="p4" className="text-gray-900 hover:bg-gray-100">P4 - Medium</SelectItem>
+                  <SelectItem value="p5" className="text-gray-900 hover:bg-gray-100">P5 - Low</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -856,12 +874,15 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">External Priority</label>
               <Select value={formData.externalPriority} onValueChange={(value) => handleInputChange('externalPriority', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select External Priority" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select External Priority</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <SelectItem value="High" className="text-gray-900 hover:bg-gray-100">High</SelectItem>
+                  <SelectItem value="Medium" className="text-gray-900 hover:bg-gray-100">Medium</SelectItem>
+                  <SelectItem value="Low" className="text-gray-900 hover:bg-gray-100">Low</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -871,11 +892,14 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
               <Select value={formData.mode} onValueChange={(value) => handleInputChange('mode', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select Complaint Mode" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select Complaint Mode</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {complaintModes.map((mode) => (
-                    <SelectItem key={mode.id} value={mode.id.toString()}>
+                    <SelectItem key={mode.id} value={mode.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {mode.name}
                     </SelectItem>
                   ))}
@@ -947,11 +971,14 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
               <Select value={formData.serviceType} onValueChange={(value) => handleInputChange('serviceType', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select Service Type" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select Service Type</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="product">Product</SelectItem>
-                  <SelectItem value="service">Service</SelectItem>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <SelectItem value="product" className="text-gray-900 hover:bg-gray-100">Product</SelectItem>
+                  <SelectItem value="service" className="text-gray-900 hover:bg-gray-100">Service</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1027,20 +1054,23 @@ const UpdateTicketsPage: React.FC = () => {
               </label>
               <Select value={formData.selectedAsset} onValueChange={(value) => handleInputChange('selectedAsset', value)} disabled={isLoadingAssets || isLoadingServices}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder={
-                    isLoadingAssets || isLoadingServices 
-                      ? 'Loading...' 
-                      : `Select ${formData.associatedTo.asset ? 'Asset' : 'Service'}`
-                  } />
+                  <SelectValue 
+                    placeholder={
+                      isLoadingAssets || isLoadingServices 
+                        ? <span className="text-gray-400">Loading...</span>
+                        : <span className="text-gray-400">{`Select ${formData.associatedTo.asset ? 'Asset' : 'Service'}`}</span>
+                    }
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
                   {formData.associatedTo.asset && assetOptions.map((asset) => (
-                    <SelectItem key={asset.id} value={asset.id.toString()}>
+                    <SelectItem key={asset.id} value={asset.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {asset.name}
                     </SelectItem>
                   ))}
                   {formData.associatedTo.service && serviceOptions.map((service) => (
-                    <SelectItem key={service.id} value={service.id.toString()}>
+                    <SelectItem key={service.id} value={service.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {service.service_name}
                     </SelectItem>
                   ))}
