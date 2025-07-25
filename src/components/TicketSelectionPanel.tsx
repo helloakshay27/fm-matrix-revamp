@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { X, User, Edit, Download, QrCode, Loader2 } from 'lucide-react';
+import { X, User, Edit, Download, QrCode, Loader2, HandCoins } from 'lucide-react';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -93,6 +93,16 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               <User className="w-6 h-6 text-black" />
             )}
             <span className="text-xs text-gray-600">Assign To</span>
+          </Button>
+          
+          <Button
+            onClick={() => console.log('Cost approval clicked for tickets:', selectedTickets)}
+            variant="ghost"
+            size="sm"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+          >
+            <HandCoins className="w-6 h-6 text-black" />
+            <span className="text-xs text-gray-600">Cost Approval</span>
           </Button>
           
           <Button
