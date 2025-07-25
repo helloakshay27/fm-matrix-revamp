@@ -1,56 +1,59 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, AlertCircle, Play, CheckCircle, XCircle, Plus, Filter as FilterIcon, Download, Calendar as CalendarIcon, List } from 'lucide-react';
+import { Clock, AlertCircle, Play, CheckCircle, XCircle, Plus, Filter as FilterIcon, Download, Calendar as CalendarIcon, List, Settings, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { useNavigate } from 'react-router-dom';
 import { StatusCard } from '@/components/maintenance/StatusCard';
-import { TaskTable } from '@/components/maintenance/TaskTable';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ScheduledTaskCalendar } from '@/components/maintenance/ScheduledTaskCalendar';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { taskData } from '@/data/taskData';
 import { calendarService, CalendarEvent } from '@/services/calendarService';
 
+interface TaskRecord {
+  id: string;
+  checklist: string;
+  type: string;
+  schedule: string;
+  assignTo: string;
+  status: string;
+  scheduleFor: string;
+  assetsServices: string;
+  site: string;
+  location: string;
+  supplier: string;
+  graceTime: string;
+  duration: string;
+  percentage: string;
+  active: boolean;
+}
+
 const statusCards = [
   { 
-    title: 'Scheduled', 
+    title: 'Scheduled Tasks', 
     count: 1555, 
-    color: 'bg-rose-50', 
-    textColor: 'text-red-600',
-    iconBg: 'bg-rose-100',
-    icon: Clock
+    icon: Settings
   },
   { 
-    title: 'Open', 
+    title: 'Open Tasks', 
     count: 174, 
-    color: 'bg-rose-50', 
-    textColor: 'text-red-600',
-    iconBg: 'bg-rose-100',
     icon: AlertCircle
   },
   { 
     title: 'In Progress', 
     count: 0, 
-    color: 'bg-rose-50', 
-    textColor: 'text-red-600',
-    iconBg: 'bg-rose-100',
     icon: Play
   },
   { 
-    title: 'Closed', 
+    title: 'Closed Tasks', 
     count: 0, 
-    color: 'bg-rose-50', 
-    textColor: 'text-red-600',
-    iconBg: 'bg-rose-100',
     icon: CheckCircle
   },
   { 
-    title: 'Overdue', 
+    title: 'Overdue Tasks', 
     count: 907, 
-    color: 'bg-rose-50', 
-    textColor: 'text-red-600',
-    iconBg: 'bg-rose-100',
     icon: XCircle
   }
 ];
@@ -118,7 +121,6 @@ export const ScheduledTaskDashboard = () => {
   };
 
   const handleAdvancedFilter = (filters: any) => {
-    console.log('Advanced filters applied:', filters);
     setDateFrom(filters.dateFrom || dateFrom);
     setDateTo(filters.dateTo || dateTo);
     setSearchTaskId(filters.searchTaskId || '');
@@ -126,11 +128,16 @@ export const ScheduledTaskDashboard = () => {
   };
 
   const handleAddTask = () => {
-    console.log('Add new task');
+    navigate('/maintenance/task/add');
   };
 
-  const handleExport = () => {
-    console.log('Export tasks');
+  const handleExport = async () => {
+    try {
+      // Implementation for exporting tasks
+      console.log('Exporting tasks...');
+    } catch (error) {
+      console.error('Failed to export tasks:', error);
+    }
   };
 
   const selectionActions = [
@@ -145,108 +152,178 @@ export const ScheduledTaskDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-card border-b">
-        <div className="container mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground uppercase">SCHEDULED TASK</h1>
-        </div>
-      </div>
-      
-      <div className="container mx-auto px-6 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex items-center justify-between mb-6">
-            <TabsList className="grid w-fit grid-cols-2 bg-muted/50">
-              <TabsTrigger value="list" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-primary">
-                <List className="w-4 h-4" />
-                List
-              </TabsTrigger>
-              <TabsTrigger value="calendar" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-primary">
-                <CalendarIcon className="w-4 h-4" />
-                Calendar
-              </TabsTrigger>
-            </TabsList>
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+     
+      <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger 
+            value="list" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <List className="w-4 h-4" />
+            Task List
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calendar" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <CalendarIcon className="w-4 h-4" />
+            Calendar
+          </TabsTrigger>
+        </TabsList>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button 
-                onClick={handleAddTask}
-                className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Task
-              </Button>
-              <Button 
-                onClick={() => setShowAdvancedFilter(true)}
-                variant="outline" 
-                className="border-primary text-primary hover:bg-primary/10 flex items-center gap-2"
-              >
-                <FilterIcon className="w-4 h-4" />
-                Filter
-              </Button>
-              <Button 
-                onClick={handleExport}
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary/10 flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
-            </div>
+        <TabsContent value="list" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          {/* Quick Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {statusCards.map((card, index) => (
+              <div key={index} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <card.icon className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {card.count}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{card.title}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          <TabsContent value="list" className="mt-0">
-            {/* Status Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-              {statusCards.map((card, index) => (
-                <StatusCard key={index} {...card} />
-              ))}
-            </div>
-
-            {/* Task Table */}
-            <TaskTable 
-              tasks={taskData} 
-              onViewTask={handleViewTask}
-              selectedTasks={selectedTasks}
-              onTaskSelection={(taskIds) => {
-                setSelectedTasks(taskIds);
-                setShowSelectionPanel(taskIds.length > 0);
+          {/* Task Table */}
+          <div className="bg-white rounded-lg">
+            <EnhancedTable
+              data={taskData}
+              columns={[
+                { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
+                { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+                { key: 'checklist', label: 'Checklist', sortable: true, hideable: true, draggable: true },
+                { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
+                { key: 'schedule', label: 'Schedule', sortable: true, hideable: true, draggable: true },
+                { key: 'assignTo', label: 'Assign to', sortable: true, hideable: true, draggable: true },
+                { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+                { key: 'scheduleFor', label: 'Schedule For', sortable: true, hideable: true, draggable: true },
+                { key: 'assetsServices', label: 'Assets/Services', sortable: true, hideable: true, draggable: true },
+                { key: 'site', label: 'Site', sortable: true, hideable: true, draggable: true },
+                { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
+                { key: 'supplier', label: 'Supplier', sortable: true, hideable: true, draggable: true },
+                { key: 'graceTime', label: 'Grace Time', sortable: true, hideable: true, draggable: true },
+                { key: 'duration', label: 'Duration', sortable: true, hideable: true, draggable: true },
+                { key: 'percentage', label: '%', sortable: true, hideable: true, draggable: true }
+              ]}
+              renderRow={(task) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewTask(task.id);
+                    }}
+                    className="p-2 h-8 w-8 hover:bg-accent"
+                  >
+                    <Eye className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                ),
+                id: task.id,
+                checklist: task.checklist,
+                type: task.type,
+                schedule: task.schedule,
+                assignTo: task.assignTo || '-',
+                status: (
+                  <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
+                    {task.status}
+                  </span>
+                ),
+                scheduleFor: task.scheduleFor,
+                assetsServices: task.assetsServices,
+                site: task.site,
+                location: (
+                  <div className="max-w-xs truncate" title={task.location}>
+                    {task.location}
+                  </div>
+                ),
+                supplier: task.supplier || '-',
+                graceTime: task.graceTime,
+                duration: task.duration || '-',
+                percentage: task.percentage || '-'
+              })}
+              enableSearch={true}
+              enableSelection={true}
+              enableExport={true}
+              storageKey="scheduled-tasks-table"
+              headerContent={
+                <div className="flex items-center gap-3 mb-4">
+                  <Button 
+                    onClick={() => setShowAdvancedFilter(true)}
+                    variant="outline" 
+                    className="border-primary text-primary hover:bg-primary/10 flex items-center gap-2"
+                  >
+                    <FilterIcon className="w-4 h-4" />
+                    Filter
+                  </Button>
+                  <Button 
+                    onClick={handleExport}
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary/10 flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export
+                  </Button>
+                </div>
+              }
+              emptyMessage="No scheduled tasks found"
+              searchPlaceholder="Search tasks..."
+              exportFileName="scheduled-tasks"
+              selectedItems={selectedTasks}
+              getItemId={(task) => task.id}
+              onSelectItem={(taskId, checked) => {
+                const newSelected = checked 
+                  ? [...selectedTasks, taskId]
+                  : selectedTasks.filter(id => id !== taskId);
+                setSelectedTasks(newSelected);
+                setShowSelectionPanel(newSelected.length > 0);
+              }}
+              onSelectAll={(checked) => {
+                setSelectedTasks(checked ? taskData.map(task => task.id) : []);
+                setShowSelectionPanel(checked && taskData.length > 0);
               }}
             />
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="calendar" className="mt-0">
-            <ScheduledTaskCalendar
-              events={calendarEvents}
-              onDateRangeChange={(start, end) => {
-                setDateFrom(start);
-                setDateTo(end);
-              }}
-              onFiltersChange={(filters) => {
-                console.log('Filters changed:', filters);
-              }}
-            />
-          </TabsContent>
-        </Tabs>
-
-        {/* Selection Panel */}
-        {showSelectionPanel && (
-          <SelectionPanel
-            actions={selectionActions}
-            onClearSelection={handleClearSelection}
+        <TabsContent value="calendar" className="mt-4 sm:mt-6">
+          <ScheduledTaskCalendar
+            events={calendarEvents}
+            onDateRangeChange={(start, end) => {
+              setDateFrom(start);
+              setDateTo(end);
+            }}
+            onFiltersChange={(filters) => {
+              console.log('Filters changed:', filters);
+            }}
           />
-        )}
+        </TabsContent>
+      </Tabs>
 
-        {/* Advanced Filter Dialog */}
-        <TaskAdvancedFilterDialog
-          open={showAdvancedFilter}
-          onOpenChange={setShowAdvancedFilter}
-          onApply={handleAdvancedFilter}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          searchTaskId={searchTaskId}
-          searchChecklist={searchChecklist}
+      {/* Selection Panel */}
+      {showSelectionPanel && (
+        <SelectionPanel
+          actions={selectionActions}
+          onClearSelection={handleClearSelection}
         />
-      </div>
+      )}
+
+      {/* Advanced Filter Dialog */}
+      <TaskAdvancedFilterDialog
+        open={showAdvancedFilter}
+        onOpenChange={setShowAdvancedFilter}
+        onApply={handleAdvancedFilter}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        searchTaskId={searchTaskId}
+        searchChecklist={searchChecklist}
+      />
     </div>
   );
 };
