@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { X, User, Flag, Download, Loader2 } from 'lucide-react';
+import { X, User, Edit, Download, Loader2 } from 'lucide-react';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -113,9 +113,9 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             {isFlagLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Flag className="w-4 h-4" />
+              <Edit className="w-4 h-4" />
             )}
-            Flag
+            Update
           </Button>
           
           <Button
