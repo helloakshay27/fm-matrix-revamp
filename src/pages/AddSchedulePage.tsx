@@ -36,6 +36,7 @@ import {
   Chip,
   OutlinedInput,
   SelectChangeEvent,
+  Autocomplete,
 } from '@mui/material';
 import {
   Settings,
@@ -198,10 +199,10 @@ export const AddSchedulePage = () => {
     
     // Schedule Setup
     checklistType: 'Individual',
-    asset: '',
-    service: '',
+    asset: [],
+    service: [],
     assetGroup: '',
-    assetSubGroup: '',
+    assetSubGroup: [],
     assignTo: '',
     assignToType: 'user', // 'user' or 'group'
     selectedUsers: [],
@@ -1271,7 +1272,7 @@ export const AddSchedulePage = () => {
         description: `Please fix the following errors: ${allErrors.join(', ')}`,
         variant: "destructive"
       });
-      
+      return;
     }
 
     setIsSubmitting(true);
@@ -1301,15 +1302,25 @@ export const AddSchedulePage = () => {
         description: "Schedule created successfully!",
       });
       
-      // Fetch checklist mappings when moving to mapping step
-      if (result?.custom_form_code) {
-        await fetchChecklistMappings(customCode);
-      }
+      // Check if any task has reading checkbox selected
+      const hasReadingTasks = questionSections.some(section => 
+        section.tasks.some(task => task.reading)
+      );
       
-      // Move to next step (Mapping) after successful submission
-      if (activeStep < steps.length - 1) {
-        setActiveStep(activeStep + 1);
-        setCompletedSteps([...completedSteps, activeStep]);
+      if (hasReadingTasks) {
+        // Fetch checklist mappings when moving to mapping step
+        if (result?.custom_form_code) {
+          await fetchChecklistMappings(result.custom_form_code);
+        }
+        
+        // Move to next step (Mapping) after successful submission
+        if (activeStep < steps.length - 1) {
+          setActiveStep(activeStep + 1);
+          setCompletedSteps([...completedSteps, activeStep]);
+        }
+      } else {
+        // No reading tasks found, skip mapping and navigate directly to schedule list
+        navigate('/maintenance/schedule');
       }
       
     } catch (error) {
@@ -1450,7 +1461,7 @@ export const AddSchedulePage = () => {
     setFormData(prev => ({ 
       ...prev, 
       assetGroup: groupId,
-      assetSubGroup: '' // Reset sub-group when group changes
+      assetSubGroup: [] // Reset sub-group when group changes
     }));
   };
 
@@ -1459,9 +1470,9 @@ export const AddSchedulePage = () => {
       ...prev,
       checklistType: value,
       // Reset all asset-related fields when switching between types
-      asset: '',
+      asset: [],
       assetGroup: '',
-      assetSubGroup: ''
+      assetSubGroup: []
     }));
     
     // Reset asset group selection state
@@ -1473,14 +1484,14 @@ export const AddSchedulePage = () => {
   const validateBasicConfiguration = (): string[] => {
     const errors: string[] = [];
     
+    if (!formData.type) {
+      errors.push('Type selection is required');
+    }
     if (!formData.activityName.trim()) {
       errors.push('Activity Name is required');
     }
     if (!formData.description.trim()) {
       errors.push('Description is required');
-    }
-    if (!formData.type) {
-      errors.push('Type selection is required');
     }
     
     return errors;
@@ -1493,18 +1504,29 @@ export const AddSchedulePage = () => {
       errors.push('Checklist Type is required');
     }
     
-    // Asset validation based on checklist type
-    if (formData.checklistType === 'Individual' && !formData.asset) {
-      errors.push('Asset selection is required for Individual checklist type');
+    // Asset/Service validation based on scheduleFor and checklist type
+    if (formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && formData.asset.length === 0) {
+      errors.push('At least one asset must be selected for Individual checklist type');
+    }
+    
+    if (formData.scheduleFor === 'Service' && formData.service.length === 0) {
+      errors.push('At least one service must be selected');
     }
     
     if (formData.checklistType === 'Asset Group') {
       if (!formData.assetGroup) {
         errors.push('Asset Group selection is required');
       }
+      if (formData.assetSubGroup.length === 0) {
+        errors.push('At least one Asset Sub-Group must be selected');
+      }
     }
     
     // Assignment validation
+    if (!formData.assignToType) {
+      errors.push('Assign To type is required');
+    }
+    
     if (formData.assignToType === 'user' && formData.selectedUsers.length === 0) {
       errors.push('At least one user must be selected');
     }
@@ -1513,23 +1535,68 @@ export const AddSchedulePage = () => {
       errors.push('At least one group must be selected');
     }
     
-    if (!formData.frequency) {
-      errors.push('Frequency is required');
+    if (!formData.backupAssignee) {
+      errors.push('Backup Assignee is required');
     }
     
     // Plan duration validation
+    if (!formData.planDuration) {
+      errors.push('Plan Duration type is required');
+    }
     if (formData.planDuration && !formData.planDurationValue) {
       errors.push('Plan Duration value is required when duration type is selected');
     }
     
+    if (!formData.emailTriggerRule) {
+      errors.push('Email Trigger Rule is required');
+    }
+    
+    if (!formData.scanType) {
+      errors.push('Scan Type is required');
+    }
+    
+    if (!formData.category) {
+      errors.push('Category is required');
+    }
+    
     // Submission time validation
+    if (!formData.submissionTime) {
+      errors.push('Submission Time type is required');
+    }
     if (formData.submissionTime && !formData.submissionTimeValue) {
       errors.push('Submission Time value is required when time type is selected');
     }
     
+    if (!formData.supervisors) {
+      errors.push('Supervisors selection is required');
+    }
+    
+    if (!formData.lockOverdueTask) {
+      errors.push('Lock Overdue Task selection is required');
+    }
+    
+    if (!formData.frequency) {
+      errors.push('Frequency is required');
+    }
+    
     // Grace time validation
+    if (!formData.graceTime) {
+      errors.push('Grace Time type is required');
+    }
     if (formData.graceTime && !formData.graceTimeValue) {
       errors.push('Grace Time value is required when time type is selected');
+    }
+    
+    if (!formData.supplier) {
+      errors.push('Supplier selection is required');
+    }
+    
+    if (!formData.startFrom) {
+      errors.push('Start From date is required');
+    }
+    
+    if (!formData.endAt) {
+      errors.push('End At date is required');
     }
     
     // Date validation
@@ -1557,8 +1624,16 @@ export const AddSchedulePage = () => {
       // Validate each task
       section.tasks.forEach((task, taskIndex) => {
         if (task.task.trim()) {
+          if (!task.group) {
+            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`);
+          }
+          
+          if (!task.subGroup) {
+            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`);
+          }
+          
           if (!task.inputType) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type`);
+            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`);
           }
           
           if (task.helpText && !task.helpTextValue.trim()) {
@@ -1568,6 +1643,26 @@ export const AddSchedulePage = () => {
           if (weightage && task.rating && !task.weightage) {
             errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} weightage is required when rating is enabled`);
           }
+          
+          // Validate input type specific values
+          if (task.inputType === 'dropdown' && task.dropdownValues.some(val => !val.label.trim())) {
+            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} dropdown must have all option values filled`);
+          }
+          
+          if (task.inputType === 'radio' && task.radioValues.some(val => !val.label.trim())) {
+            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} radio must have all option values filled`);
+          }
+          
+          if (task.inputType === 'checkbox' && task.checkboxValues.some(val => !val.trim())) {
+            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} checkbox must have all option values filled`);
+          }
+          
+          if (task.inputType === 'options-inputs' && task.optionsInputsValues.some(val => !val.trim())) {
+            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} options & inputs must have all values filled`);
+          }
+        } else if (section.tasks.length === 1) {
+          // If there's only one task and it's empty, require it to be filled
+          errors.push(`Section ${sectionIndex + 1} must have at least one task filled`);
         }
       });
       
@@ -1585,6 +1680,48 @@ export const AddSchedulePage = () => {
     return errors;
   };
 
+  const validateTimeSetup = (): string[] => {
+    const errors: string[] = [];
+    
+    // Validate hour settings
+    if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length === 0) {
+      errors.push('At least one hour must be selected when using specific hours');
+    }
+    
+    // Validate minute settings
+    if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length === 0) {
+      errors.push('At least one minute must be selected when using specific minutes');
+    }
+    
+    if (timeSetupData.minuteMode === 'between') {
+      if (!timeSetupData.betweenMinuteStart || !timeSetupData.betweenMinuteEnd) {
+        errors.push('Both start and end minutes are required for between minute range');
+      }
+    }
+    
+    // Validate day settings
+    if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length === 0) {
+      errors.push('At least one weekday must be selected when using specific weekdays');
+    }
+    
+    if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length === 0) {
+      errors.push('At least one day must be selected when using specific days');
+    }
+    
+    // Validate month settings
+    if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length === 0) {
+      errors.push('At least one month must be selected when using specific months');
+    }
+    
+    if (timeSetupData.monthMode === 'between') {
+      if (!timeSetupData.betweenMonthStart || !timeSetupData.betweenMonthEnd) {
+        errors.push('Both start and end months are required for between month range');
+      }
+    }
+    
+    return errors;
+  };
+
   const validateCurrentStep = (): boolean => {
     let errors: string[] = [];
     
@@ -1597,6 +1734,9 @@ export const AddSchedulePage = () => {
         break;
       case 2:
         errors = validateQuestionSetup();
+        break;
+      case 3:
+        errors = validateTimeSetup();
         break;
       default:
         errors = [];
@@ -1634,6 +1774,9 @@ export const AddSchedulePage = () => {
       case 2:
         errors = validateQuestionSetup();
         break;
+      case 3:
+        errors = validateTimeSetup();
+        break;
       default:
         errors = [];
     }
@@ -1642,7 +1785,7 @@ export const AddSchedulePage = () => {
       ...prev,
       [activeStep]: errors
     }));
-  }, [activeStep, formData, questionSections, weightage, autoTicket]);
+  }, [activeStep, formData, questionSections, timeSetupData, weightage, autoTicket]);
 
   const handleNext = () => {
     if (!validateCurrentStep()) {
@@ -1848,8 +1991,9 @@ export const AddSchedulePage = () => {
       }
     });
 
-    // Get selected asset IDs
-    const assetIds = formData.checklistType === 'Individual' ? [formData.asset] : [];
+    // Get selected asset IDs or service IDs based on scheduleFor
+    const assetIds = formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' ? formData.asset : [];
+    const serviceIds = formData.scheduleFor === 'Service' ? formData.service : [];
 
     // Get assigned people IDs
     const peopleAssignedIds = formData.assignToType === 'user' ? formData.selectedUsers : [];
@@ -1913,10 +2057,11 @@ export const AddSchedulePage = () => {
       sch_type: formData.type.toLowerCase(),
       checklist_type: formData.scheduleFor,
       group_id: formData.assetGroup || "",
-      sub_group_id: formData.assetSubGroup || "",
+      sub_group_id: Array.isArray(formData.assetSubGroup) ? (formData.assetSubGroup[0] || "") : (formData.assetSubGroup || ""),
       content: content,
       checklist_upload_type: formData.checklistType,
       asset_ids: assetIds.filter(id => id),
+      service_ids: serviceIds.filter(id => id),
       training_subject_ids: [""],
       sub_group_ids: [""],
       pms_asset_task: {
@@ -2115,13 +2260,20 @@ export const AddSchedulePage = () => {
         );
         
       case 1: // Schedule Setup
-        function handleMultiSelectChange(field: 'selectedUsers' | 'selectedGroups', e: SelectChangeEvent<any>) {
+        function handleMultiSelectChange(field: 'selectedUsers' | 'selectedGroups' | 'service' | 'assetSubGroup' | 'asset', e: SelectChangeEvent<any>) {
           const {
             target: { value }
           } = e;
           setFormData(prev => ({
             ...prev,
             [field]: typeof value === 'string' ? value.split(',') : value
+          }));
+        }
+
+        function handleAutocompleteChange(field: 'service' | 'asset' | 'selectedUsers', value: any[]) {
+          setFormData(prev => ({
+            ...prev,
+            [field]: value.map(item => item.id.toString())
           }));
         }
 
@@ -2190,51 +2342,89 @@ export const AddSchedulePage = () => {
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Asset Group" 
                   />
-                  <FormControlLabel 
+                  {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Branching" 
-                  />
+                  /> */}
                 </RadioGroup>
               </Box>
               
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
                 {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
                 {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
-                  <MuiSearchableDropdown
-                    label="Asset"
-                    value={formData.asset}
-                    onChange={(value) => setFormData({...formData, asset: value.toString()})}
-                    options={assets ? assets.map(asset => ({
-                      id: asset.id,
-                      label: asset.name,
-                      value: asset.id.toString()
-                    })) : []}
-                    placeholder="Select Asset"
-                    disabled={loading.assets}
-                    loading={loading.assets}
-                    loadingText="Loading assets..."
-                    fullWidth
-                  />
+                  <Box>
+                    <Autocomplete
+                      multiple
+                      options={assets || []}
+                      getOptionLabel={(option) => option.name}
+                      value={assets?.filter(asset => formData.asset.includes(asset.id.toString())) || []}
+                      onChange={(event, newValue) => handleAutocompleteChange('asset', newValue)}
+                      disabled={loading.assets}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Select Assets"
+                          placeholder="Search and select assets..."
+                        />
+                      )}
+                      renderTags={(tagValue, getTagProps) =>
+                        tagValue.map((option, index) => (
+                          <Chip
+                            key={option.id}
+                            label={option.name}
+                            size="small"
+                            {...getTagProps({ index })}
+                          />
+                        ))
+                      }
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      filterSelectedOptions
+                    />
+                    {loading.assets && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading assets...
+                      </Typography>
+                    )}
+                  </Box>
                 )}
 
                 {/* Service Dropdown - Show when scheduleFor is Service */}
                 {formData.scheduleFor === 'Service' && (
-                  <MuiSearchableDropdown
-                    label="Service"
-                    value={formData.service}
-                    onChange={(value) => setFormData({...formData, service: value.toString()})}
-                    options={services ? services.map(service => ({
-                      id: service.id,
-                      label: service.service_name,
-                      value: service.id.toString()
-                    })) : []}
-                    placeholder="Select Service"
-                    disabled={loading.services}
-                    loading={loading.services}
-                    loadingText="Loading services..."
-                    fullWidth
-                  />
+                  <Box>
+                    <Autocomplete
+                      multiple
+                      options={services || []}
+                      getOptionLabel={(option) => option.service_name}
+                      value={services?.filter(service => formData.service.includes(service.id.toString())) || []}
+                      onChange={(event, newValue) => handleAutocompleteChange('service', newValue)}
+                      disabled={loading.services}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Select Services"
+                          placeholder="Search and select services..."
+                        />
+                      )}
+                      renderTags={(tagValue, getTagProps) =>
+                        tagValue.map((option, index) => (
+                          <Chip
+                            key={option.id}
+                            label={option.service_name}
+                            size="small"
+                            {...getTagProps({ index })}
+                          />
+                        ))
+                      }
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      filterSelectedOptions
+                    />
+                    {loading.services && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading services...
+                      </Typography>
+                    )}
+                  </Box>
                 )}
 
                 {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
@@ -2258,21 +2448,37 @@ export const AddSchedulePage = () => {
 
                     {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
                     {selectedAssetGroup && (
-                      <MuiSearchableDropdown
-                        label="Asset Sub-Group"
-                        value={formData.assetSubGroup || ''}
-                        onChange={(value) => setFormData({...formData, assetSubGroup: value.toString()})}
-                        options={assetSubGroups.map(subGroup => ({
-                          id: subGroup.id,
-                          label: subGroup.name,
-                          value: subGroup.id.toString()
-                        }))}
-                        placeholder="Select Asset Sub-Group"
-                        disabled={loading.subGroups}
-                        loading={loading.subGroups}
-                        loadingText="Loading sub-groups..."
-                        fullWidth
-                      />
+                      <FormControl fullWidth>
+                        <InputLabel>Select Asset Sub-Groups</InputLabel>
+                        <Select
+                          multiple
+                          value={formData.assetSubGroup}
+                          onChange={(e) => handleMultiSelectChange('assetSubGroup', e)}
+                          input={<OutlinedInput label="Select Asset Sub-Groups" />}
+                          renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {selected.map((value) => {
+                                const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
+                                return (
+                                  <Chip key={value} label={subGroup?.name || value} size="small" />
+                                );
+                              })}
+                            </Box>
+                          )}
+                          disabled={loading.subGroups}
+                        >
+                          {assetSubGroups && assetSubGroups.map((subGroup) => (
+                            <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                              {subGroup.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {loading.subGroups && (
+                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                            Loading sub-groups...
+                          </Typography>
+                        )}
+                      </FormControl>
                     )}
                   </>
                 )}
@@ -2292,32 +2498,35 @@ export const AddSchedulePage = () => {
 
                 {/* Multi-select Users - Show when assignToType is 'user' */}
                 {formData.assignToType === 'user' && (
-                  <FormControl fullWidth>
-                    <InputLabel>Select Users</InputLabel>
-                    <Select
+                  <Box>
+                    <Autocomplete
                       multiple
-                      value={formData.selectedUsers}
-                      onChange={(e) => handleMultiSelectChange('selectedUsers', e)}
-                      input={<OutlinedInput label="Select Users" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((value) => {
-                            const user = users.find(u => u.id.toString() === value);
-                            return (
-                              <Chip key={value} label={user?.full_name || value} size="small" />
-                            );
-                          })}
-                        </Box>
-                      )}
+                      options={users || []}
+                      getOptionLabel={(option) => option.full_name}
+                      value={users?.filter(user => formData.selectedUsers.includes(user.id.toString())) || []}
+                      onChange={(event, newValue) => handleAutocompleteChange('selectedUsers', newValue)}
                       disabled={loading.users}
-                    >
-                      {users && users.map((user) => (
-                        <MenuItem key={user.id} value={user.id.toString()}>
-                          {user.full_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Select Users"
+                          placeholder="Search and select users..."
+                        />
+                      )}
+                      renderTags={(tagValue, getTagProps) =>
+                        tagValue.map((option, index) => (
+                          <Chip
+                            key={option.id}
+                            label={option.full_name}
+                            size="small"
+                            {...getTagProps({ index })}
+                          />
+                        ))
+                      }
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      filterSelectedOptions
+                    />
+                  </Box>
                 )}
 
                 {/* Multi-select Groups - Show when assignToType is 'group' */}
@@ -3180,14 +3389,13 @@ export const AddSchedulePage = () => {
                       <MuiSearchableDropdown
                         value={task.group}
                         onChange={(value) => handleTaskGroupChange(section.id, task.id, value.toString())}
-                        options={[
-                          { id: '', label: 'Select Group', value: '' },
-                          ...(taskGroups ? taskGroups.map((group) => ({
+                        options={
+                          taskGroups ? taskGroups.map((group) => ({
                             id: group.id.toString(),
                             label: group.name,
                             value: group.id.toString()
-                          })) : [])
-                        ]}
+                          })) : []
+                        }
                         label="Group"
                         disabled={loading.taskGroups}
                       />
@@ -3200,14 +3408,13 @@ export const AddSchedulePage = () => {
                       <MuiSearchableDropdown
                         value={task.subGroup}
                         onChange={(value) => updateTaskInSection(section.id, task.id, 'subGroup', value)}
-                        options={[
-                          { id: '', label: 'Select Sub-Group', value: '' },
-                          ...(task.group && taskSubGroups[task.group] ? taskSubGroups[task.group].map((subGroup) => ({
+                        options={
+                          task.group && taskSubGroups[task.group] ? taskSubGroups[task.group].map((subGroup) => ({
                             id: subGroup.id.toString(),
                             label: subGroup.name,
                             value: subGroup.id.toString()
-                          })) : [])
-                        ]}
+                          })) : []
+                        }
                         label="Sub-Group"
                         disabled={loading.taskSubGroups || !task.group}
                       />
@@ -3256,7 +3463,14 @@ export const AddSchedulePage = () => {
                             control={
                               <Checkbox 
                                 checked={task.reading}
-                                onChange={(e) => updateTaskInSection(section.id, task.id, 'reading', e.target.checked)}
+                                onChange={(e) => {
+                                  const isChecked = e.target.checked;
+                                  updateTaskInSection(section.id, task.id, 'reading', isChecked);
+                                  // Auto-select numeric input type when reading is checked and no template is selected
+                                  if (isChecked && !formData.selectedTemplate) {
+                                    updateTaskInSection(section.id, task.id, 'inputType', 'number');
+                                  }
+                                }}
                                 sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
                               />
                             }
@@ -3289,6 +3503,10 @@ export const AddSchedulePage = () => {
                         <MuiSearchableDropdown
                           value={task.inputType}
                           onChange={(value) => {
+                            // Prevent changing input type if reading is checked and no template is selected
+                            if (task.reading && !formData.selectedTemplate) {
+                              return;
+                            }
                             updateTaskInSection(section.id, task.id, 'inputType', value);
                             // Reset values when changing input type
                             if (value !== 'dropdown') {
@@ -3308,13 +3526,14 @@ export const AddSchedulePage = () => {
                           options={[
                             { id: '', label: 'Select Input Type', value: '' },
                             { id: 'text', label: 'Text', value: 'text' },
-                            { id: 'number', label: 'Number', value: 'number' },
+                            { id: 'number', label: 'Numeric', value: 'number' },
                             { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
                             { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
                             { id: 'radio', label: 'Radio', value: 'radio' },
                             { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
                           ]}
                           label="Input Type"
+                          disabled={task.reading && !formData.selectedTemplate}
                         />
 
                         {weightage && (
