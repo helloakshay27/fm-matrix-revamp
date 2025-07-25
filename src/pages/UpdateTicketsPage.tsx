@@ -625,7 +625,7 @@ const UpdateTicketsPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-lg w-96 max-w-md mx-4">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-medium text-gray-900">Popup Name</h3>
+                <h3 className="text-lg font-medium text-gray-900">Cost involved</h3>
                 <button
                   onClick={handleCostPopupClose}
                   className="text-gray-400 hover:text-gray-600"
