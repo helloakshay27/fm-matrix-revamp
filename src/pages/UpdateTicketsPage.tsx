@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { ArrowLeft, Upload, X, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SelectedTicket {
   id: number;
@@ -124,6 +132,7 @@ const UpdateTicketsPage: React.FC = () => {
   const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [reviewDate, setReviewDate] = useState<Date>();
 
   useEffect(() => {
     if (location.state?.selectedTickets) {
@@ -446,14 +455,29 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Review (Tracking) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Review (Tracking)</label>
-              <div className="flex">
-                <Button 
-                  variant="outline" 
-                  className="text-sm border-gray-300 text-blue-600 hover:bg-blue-50"
-                >
-                  Review Date
-                </Button>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal border-gray-300",
+                      !reviewDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {reviewDate ? format(reviewDate, "PPP") : <span>Pick a review date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={reviewDate}
+                    onSelect={setReviewDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Category Type */}
