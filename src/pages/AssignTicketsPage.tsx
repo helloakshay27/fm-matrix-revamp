@@ -123,7 +123,7 @@ const AssignTicketsPage: React.FC = () => {
   }, [toast]);
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/maintenance/ticket');
   };
 
   const handleSubmit = async () => {
@@ -186,8 +186,8 @@ const AssignTicketsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="w-full p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button
@@ -327,13 +327,13 @@ const AssignTicketsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-6">Update To</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-sm text-gray-500 mb-2">Status</label>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white z-50 relative"
                 disabled={loadingStatuses}
               >
                 <option value="">Select Status</option>
@@ -349,7 +349,7 @@ const AssignTicketsPage: React.FC = () => {
               <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white z-50 relative"
                 disabled={loadingUsers}
               >
                 <option value="">Select User</option>
