@@ -547,7 +547,12 @@ export const AddTicketDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
             <h2 className="text-sm font-medium text-gray-700 flex items-center">
-              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">3</span>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030"/>
+                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3"/>
+                </svg>
+              </span>
               Add Attachments
             </h2>
           </div>
