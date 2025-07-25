@@ -137,44 +137,45 @@ export const MobileRestaurantDetails: React.FC<MobileRestaurantDetailsProps> = (
                 <p className="text-gray-600 text-sm mb-4">{item.description}</p>
               </div>
 
-              {/* Item Image */}
-              <div className="w-24 h-24 bg-gray-200 rounded-lg m-4 overflow-hidden">
-                <img 
-                  src={item.image} 
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            
-            {/* Add/Quantity Controls - Below the image */}
-            <div className="px-4 pb-4">
-              {!item.quantity || item.quantity === 0 ? (
-                <Button
-                  onClick={() => addItem(item.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium"
-                >
-                  Add
-                </Button>
-              ) : (
-                <div className="flex items-center border border-red-600 rounded-lg w-fit">
-                  <button
-                    onClick={() => updateQuantity(item.id, -1)}
-                    className="p-2 text-red-600 hover:bg-red-50"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="px-4 py-2 text-gray-900 font-medium min-w-[40px] text-center">
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => updateQuantity(item.id, 1)}
-                    className="p-2 text-red-600 hover:bg-red-50"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+              {/* Item Image and Add Button Column */}
+              <div className="flex flex-col p-4 items-center">
+                {/* Item Image */}
+                <div className="w-24 h-24 bg-gray-200 rounded-lg mb-3 overflow-hidden">
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              )}
+                
+                {/* Add/Quantity Controls - Below the image */}
+                {!item.quantity || item.quantity === 0 ? (
+                  <Button
+                    onClick={() => addItem(item.id)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium"
+                  >
+                    Add
+                  </Button>
+                ) : (
+                  <div className="flex items-center border border-red-600 rounded-lg">
+                    <button
+                      onClick={() => updateQuantity(item.id, -1)}
+                      className="p-2 text-red-600 hover:bg-red-50"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="px-4 py-2 text-gray-900 font-medium min-w-[40px] text-center">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item.id, 1)}
+                      className="p-2 text-red-600 hover:bg-red-50"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
