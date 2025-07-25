@@ -7,15 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CalendarEvent } from '@/services/calendarService';
-
 const localizer = momentLocalizer(moment);
-
 interface ScheduledTaskCalendarProps {
   events?: CalendarEvent[];
   onDateRangeChange?: (start: string, end: string) => void;
   onFiltersChange?: (filters: any) => void;
 }
-
 export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   events = [],
   onDateRangeChange,
@@ -34,30 +31,30 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       id: event.id,
       title: event.title,
       start: new Date(event.start),
-      end: new Date(moment(event.start).add(1, 'hour').toISOString()), // Default 1 hour duration
+      end: new Date(moment(event.start).add(1, 'hour').toISOString()),
+      // Default 1 hour duration
       color: event.color,
       status: event.status,
       resource: event
     }));
   }, [events]);
-
   const handleNavigate = (newDate: Date) => {
     setDate(newDate);
   };
-
   const handleViewChange = (newView: any) => {
     setView(newView);
   };
-
   const handleApply = () => {
     if (onDateRangeChange) {
       onDateRangeChange(dateFrom, dateTo);
     }
     if (onFiltersChange) {
-      onFiltersChange({ amc, service });
+      onFiltersChange({
+        amc,
+        service
+      });
     }
   };
-
   const handleReset = () => {
     setDateFrom('01/07/2025');
     setDateTo('31/07/2025');
@@ -67,10 +64,12 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       onDateRangeChange('01/07/2025', '31/07/2025');
     }
     if (onFiltersChange) {
-      onFiltersChange({ amc: '', service: '' });
+      onFiltersChange({
+        amc: '',
+        service: ''
+      });
     }
   };
-
   const handleExport = () => {
     console.log('Export calendar data');
   };
@@ -92,31 +91,19 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   };
 
   // Custom toolbar
-  const CustomToolbar = ({ label, onNavigate, onView }: any) => (
-    <div className="flex items-center justify-between mb-4">
+  const CustomToolbar = ({
+    label,
+    onNavigate,
+    onView
+  }: any) => <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onNavigate('PREV')}
-          className="h-8 w-8 p-0"
-        >
+        <Button variant="outline" size="sm" onClick={() => onNavigate('PREV')} className="h-8 w-8 p-0">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onNavigate('NEXT')}
-          className="h-8 w-8 p-0"
-        >
+        <Button variant="outline" size="sm" onClick={() => onNavigate('NEXT')} className="h-8 w-8 p-0">
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onNavigate('TODAY')}
-          className="px-3 py-1 h-8"
-        >
+        <Button variant="outline" size="sm" onClick={() => onNavigate('TODAY')} className="px-3 py-1 h-8">
           today
         </Button>
       </div>
@@ -124,76 +111,34 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       <h2 className="text-xl font-semibold">{label}</h2>
       
       <div className="flex items-center gap-2">
-        <Button
-          variant={view === 'month' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onView('month')}
-          className="px-3 py-1 h-8"
-        >
+        <Button variant={view === 'month' ? 'default' : 'outline'} size="sm" onClick={() => onView('month')} className="px-3 py-1 h-8">
           month
         </Button>
-        <Button
-          variant={view === 'week' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onView('week')}
-          className="px-3 py-1 h-8"
-        >
+        <Button variant={view === 'week' ? 'default' : 'outline'} size="sm" onClick={() => onView('week')} className="px-3 py-1 h-8">
           week
         </Button>
-        <Button
-          variant={view === 'day' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onView('day')}
-          className="px-3 py-1 h-8"
-        >
+        <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => onView('day')} className="px-3 py-1 h-8">
           day
         </Button>
-        <Button
-          variant={view === 'agenda' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onView('agenda')}
-          className="px-3 py-1 h-8"
-        >
+        <Button variant={view === 'agenda' ? 'default' : 'outline'} size="sm" onClick={() => onView('agenda')} className="px-3 py-1 h-8">
           list
         </Button>
       </div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-6">
+    </div>;
+  return <div className="space-y-6">
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Scheduled Task &gt; Scheduled Task List
-      </div>
+      
 
       {/* Title */}
-      <h1 className="text-2xl font-bold">SCHEDULED TASK CALENDER</h1>
+      
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b">
-        <Button variant="ghost" className="border-b-2 border-transparent hover:border-gray-300">
-          List
-        </Button>
-        <Button variant="ghost" className="border-b-2 border-orange-500 text-orange-500">
-          Calender
-        </Button>
-      </div>
+      
 
       {/* Filters */}
       <div className="flex items-center gap-4 flex-wrap">
-        <Input
-          placeholder="01/07/2025"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="w-32"
-        />
-        <Input
-          placeholder="31/07/2025"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="w-32"
-        />
+        <Input placeholder="01/07/2025" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-32" />
+        <Input placeholder="31/07/2025" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-32" />
         <Select value={amc} onValueChange={setAmc}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="AMC" />
@@ -251,34 +196,25 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       </div>
 
       {/* Calendar */}
-      <div className="bg-white border rounded-lg p-4" style={{ height: '600px' }}>
-        <Calendar
-          localizer={localizer}
-          events={calendarEvents}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: '100%' }}
-          view={view}
-          onView={handleViewChange}
-          date={date}
-          onNavigate={handleNavigate}
-          eventPropGetter={eventStyleGetter}
-          components={{
-            toolbar: CustomToolbar
-          }}
-          views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
-          step={60}
-          showMultiDayTimes
-          formats={{
-            timeGutterFormat: 'HH:mm',
-            eventTimeRangeFormat: ({ start, end }: any) => 
-              `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
-            agendaTimeFormat: 'HH:mm',
-            agendaTimeRangeFormat: ({ start, end }: any) => 
-              `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
-          }}
-        />
+      <div className="bg-white border rounded-lg p-4" style={{
+      height: '600px'
+    }}>
+        <Calendar localizer={localizer} events={calendarEvents} startAccessor="start" endAccessor="end" style={{
+        height: '100%'
+      }} view={view} onView={handleViewChange} date={date} onNavigate={handleNavigate} eventPropGetter={eventStyleGetter} components={{
+        toolbar: CustomToolbar
+      }} views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]} step={60} showMultiDayTimes formats={{
+        timeGutterFormat: 'HH:mm',
+        eventTimeRangeFormat: ({
+          start,
+          end
+        }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
+        agendaTimeFormat: 'HH:mm',
+        agendaTimeRangeFormat: ({
+          start,
+          end
+        }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
+      }} />
       </div>
-    </div>
-  );
+    </div>;
 };
