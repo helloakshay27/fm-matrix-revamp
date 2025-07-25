@@ -811,9 +811,7 @@ export const TicketDashboard = () => {
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate('/maintenance/ticket/update', {
-                  state: { selectedTickets: [item] }
-                });
+                navigate(`/maintenance/ticket/update/${item.id}`);
               }}
             />
           </div>

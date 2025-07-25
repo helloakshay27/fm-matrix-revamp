@@ -594,7 +594,7 @@ function App() {
                 <Route path="/maintenance/ticket" element={<TicketDashboard />} />
                 <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
                 <Route path="/maintenance/ticket/assign" element={<AssignTicketsPage />} />
-                <Route path="/maintenance/ticket/update" element={<UpdateTicketsPage />} />
+                <Route path="/maintenance/ticket/update/:id" element={<UpdateTicketsPage />} />
                 <Route path="/maintenance/ticket/details/:id" element={<TicketDetailsPage />} />
                 <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
                 <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
