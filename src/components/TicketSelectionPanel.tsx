@@ -136,9 +136,9 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
           onClick={handleClearSelection}
           variant="ghost"
           size="sm"
-          className="w-8 h-8 p-0 hover:bg-gray-50"
+          className="w-6 h-6 p-0 hover:bg-gray-50 flex items-center justify-center"
         >
-          <X className="w-5 h-5 text-black" />
+          <X className="w-4 h-4 text-black" />
         </Button>
       </div>
     </div>
