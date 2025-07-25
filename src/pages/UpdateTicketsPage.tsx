@@ -10,6 +10,9 @@ import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice'
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -676,66 +679,66 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-              <textarea
+              <Textarea
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Feedback: Tap Faulty, Wc Choked, Hand Dryer Faulty, Tissue Paper Missing"
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="min-h-[100px] border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
             {/* Preventive Action */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Preventive Action</label>
-              <input
+              <Input
                 type="text"
                 value={formData.preventiveAction}
                 onChange={(e) => handleInputChange('preventiveAction', e.target.value)}
                 placeholder="nn"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
             {/* Status */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={formData.selectedStatus}
-                onChange={(e) => handleInputChange('selectedStatus', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Closed</option>
-                {complaintStatuses.map((status) => (
-                  <option key={status.id} value={status.id}>
-                    {status.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={formData.selectedStatus} onValueChange={(value) => handleInputChange('selectedStatus', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Closed" />
+                </SelectTrigger>
+                <SelectContent>
+                  {complaintStatuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id.toString()}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 2 */}
             {/* Responsible Person */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Responsible Person</label>
-              <select
-                value={formData.responsiblePerson}
-                onChange={(e) => handleInputChange('responsiblePerson', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Responsible Person Name</option>
-                {fmUsers.map((user) => (
-                  <option key={user.id} value={`${user.firstname} ${user.lastname}`}>
-                    {user.firstname} {user.lastname}
-                  </option>
-                ))}
-              </select>
+              <Select value={formData.responsiblePerson} onValueChange={(value) => handleInputChange('responsiblePerson', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select Responsible Person Name" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fmUsers.map((user) => (
+                    <SelectItem key={user.id} value={`${user.firstname} ${user.lastname}`}>
+                      {user.firstname} {user.lastname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Review (Tracking) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Review (Tracking)</label>
-              <input
+              <Input
                 type="date"
                 value={reviewDate ? format(reviewDate, "yyyy-MM-dd") : ''}
                 onChange={(e) => {
@@ -745,7 +748,7 @@ const UpdateTicketsPage: React.FC = () => {
                     setReviewDate(null);
                   }
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
                 placeholder="mm/dd/yyyy"
               />
             </div>
@@ -753,153 +756,155 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Category Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Category Type</label>
-              <select
-                value={formData.categoryType}
-                onChange={(e) => handleInputChange('categoryType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-                disabled={helpdeskLoading}
-              >
-                <option value="">Select Category Type</option>
-                {helpdeskData?.helpdesk_categories?.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={formData.categoryType} onValueChange={(value) => handleInputChange('categoryType', value)} disabled={helpdeskLoading}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select Category Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {helpdeskData?.helpdesk_categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 3 */}
             {/* Proactive/Reactive */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
-              <select
-                value={formData.proactiveReactive}
-                onChange={(e) => handleInputChange('proactiveReactive', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Proactive/Reactive</option>
-                <option value="Proactive">Proactive</option>
-                <option value="Reactive">Reactive</option>
-              </select>
+              <Select value={formData.proactiveReactive} onValueChange={(value) => handleInputChange('proactiveReactive', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select Proactive/Reactive" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Proactive">Proactive</SelectItem>
+                  <SelectItem value="Reactive">Reactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Sub Category Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Sub Category Type</label>
-              <select
-                value={formData.subCategoryType}
-                onChange={(e) => handleInputChange('subCategoryType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              <Select 
+                value={formData.subCategoryType} 
+                onValueChange={(value) => handleInputChange('subCategoryType', value)}
                 disabled={subCategoriesLoading || !formData.categoryType}
               >
-                <option value="">Select Sub Category</option>
-                {Array.isArray(subCategories) && subCategories.map((subCategory) => (
-                  <option key={subCategory.id} value={subCategory.id}>
-                    {subCategory.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select Sub Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(subCategories) && subCategories.map((subCategory) => (
+                    <SelectItem key={subCategory.id} value={subCategory.id.toString()}>
+                      {subCategory.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Assign To */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
-              <select
-                value={formData.assignTo}
-                onChange={(e) => handleInputChange('assignTo', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Vinayak Mane</option>
-                {fmUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.firstname} {user.lastname}
-                  </option>
-                ))}
-              </select>
+              <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Vinayak Mane" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fmUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.firstname} {user.lastname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 4 */}
             {/* Admin Priority */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
-              <select
-                value={formData.adminPriority}
-                onChange={(e) => handleInputChange('adminPriority', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Priority</option>
-                <option value="p1">P1 - Critical</option>
-                <option value="p2">P2 - Very High</option>
-                <option value="p3">P3 - High</option>
-                <option value="p4">P4 - Medium</option>
-                <option value="p5">P5 - Low</option>
-              </select>
+              <Select value={formData.adminPriority} onValueChange={(value) => handleInputChange('adminPriority', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="p1">P1 - Critical</SelectItem>
+                  <SelectItem value="p2">P2 - Very High</SelectItem>
+                  <SelectItem value="p3">P3 - High</SelectItem>
+                  <SelectItem value="p4">P4 - Medium</SelectItem>
+                  <SelectItem value="p5">P5 - Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* External Priority */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">External Priority</label>
-              <select
-                value={formData.externalPriority}
-                onChange={(e) => handleInputChange('externalPriority', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select External Priority</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
+              <Select value={formData.externalPriority} onValueChange={(value) => handleInputChange('externalPriority', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select External Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Mode */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
-              <select
-                value={formData.mode}
-                onChange={(e) => handleInputChange('mode', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Complaint Mode</option>
-                {complaintModes.map((mode) => (
-                  <option key={mode.id} value={mode.id}>
-                    {mode.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={formData.mode} onValueChange={(value) => handleInputChange('mode', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select Complaint Mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {complaintModes.map((mode) => (
+                    <SelectItem key={mode.id} value={mode.id.toString()}>
+                      {mode.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 5 */}
             {/* Root Cause */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Root Cause</label>
-              <input
+              <Input
                 type="text"
                 value={formData.rootCause}
                 onChange={(e) => handleInputChange('rootCause', e.target.value)}
                 placeholder="ghj"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
             {/* Impact */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Impact</label>
-              <input
+              <Input
                 type="text"
                 value={formData.impact}
                 onChange={(e) => handleInputChange('impact', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
             {/* Correction */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Correction</label>
-              <input
+              <Input
                 type="text"
                 value={formData.correction}
                 onChange={(e) => handleInputChange('correction', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
@@ -907,38 +912,38 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Reference Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
-              <input
+              <Input
                 type="text"
                 value={formData.refNumber}
                 onChange={(e) => handleInputChange('refNumber', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
             {/* Corrective Action */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Corrective Action</label>
-              <input
+              <Input
                 type="text"
                 value={formData.correctiveAction}
                 onChange={(e) => handleInputChange('correctiveAction', e.target.value)}
                 placeholder="hko"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
             {/* Service Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
-              <select
-                value={formData.serviceType}
-                onChange={(e) => handleInputChange('serviceType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Service Type</option>
-                <option value="product">Product</option>
-                <option value="service">Service</option>
-              </select>
+              <Select value={formData.serviceType} onValueChange={(value) => handleInputChange('serviceType', value)}>
+                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                  <SelectValue placeholder="Select Service Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="product">Product</SelectItem>
+                  <SelectItem value="service">Service</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -1039,11 +1044,11 @@ const UpdateTicketsPage: React.FC = () => {
           {/* Comments */}
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
-            <textarea
+            <Textarea
               value={formData.comments}
               onChange={(e) => handleInputChange('comments', e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              className="min-h-[100px] border-gray-300 focus:border-primary focus:ring-primary"
               placeholder="Add comment"
             />
             <div className="mt-2">
