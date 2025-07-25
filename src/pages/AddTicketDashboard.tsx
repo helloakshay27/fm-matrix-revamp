@@ -322,7 +322,7 @@ export const AddTicketDashboard = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">NEW TICKET</h1>
@@ -331,10 +331,10 @@ export const AddTicketDashboard = () => {
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
         {/* Section 1: Requestor Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+          <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center mr-3">
-                <User size={16} />
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <User size={16} color="#C72030" />
               </span>
               Requestor Details
             </h2>
@@ -377,7 +377,7 @@ export const AddTicketDashboard = () => {
             )}
 
             {/* Name and Department in 2 columns as shown in image */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                 <Input
@@ -385,7 +385,7 @@ export const AddTicketDashboard = () => {
                   value={formData.name}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
                   disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                  className={`h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
+                  className={`h-10 border border-gray-300 rounded text-gray-600 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
               </div>
               <div>
@@ -395,7 +395,7 @@ export const AddTicketDashboard = () => {
                   value={formData.department}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                   disabled={isFieldsReadOnly}
-                  className={`h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
+                  className={`h-10 border border-gray-300 rounded text-gray-600 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
               </div>
             </div>
@@ -404,10 +404,10 @@ export const AddTicketDashboard = () => {
 
         {/* Section 2: Tickets Type */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+          <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 bg-gray-300 text-gray-900 rounded-full flex items-center justify-center mr-3">
-                <Ticket size={16} />
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <Ticket size={16} color="#C72030" />
               </span>
               Tickets Type
             </h2>
@@ -545,9 +545,14 @@ export const AddTicketDashboard = () => {
 
         {/* Section 3: Add Attachments */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
-            <h2 className="text-sm font-medium text-gray-700 flex items-center">
-              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">3</span>
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030"/>
+                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3"/>
+                </svg>
+              </span>
               Add Attachments
             </h2>
           </div>
