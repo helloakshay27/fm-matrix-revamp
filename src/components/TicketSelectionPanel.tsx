@@ -65,97 +65,75 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   console.log('TicketSelectionPanel - Rendering with selected tickets:', selectedTickets);
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border-l-4 border-l-[#C4B59A] border-r border-t border-b border-[#A6966E] shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50" style={{ width: '800px', height: '60px' }}>
-      <div className="flex items-center h-full px-4 gap-4">
-        {/* Selection Title */}
-        <div className="text-sm font-medium text-[#1a1a1a] whitespace-nowrap">Selection</div>
-        
-        {/* Selected Items */}
-        <div className="flex items-center gap-2 flex-1 overflow-x-auto">
-          {selectedTicketObjects.map((ticket, index) => (
-            <div key={ticket.id || index} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded text-xs whitespace-nowrap">
-              <span className="text-gray-700">{ticket.ticket_number || `Ticket ${index + 1}`}</span>
-              <button 
-                onClick={() => {
-                  // Remove this specific ticket from selection
-                  const updatedSelection = selectedTickets.filter((_, i) => i !== index);
-                  // This would need to be handled by parent component
-                }}
-                className="text-gray-500 hover:text-gray-700 ml-1"
-              >
-                <X className="w-3 h-3" />
-              </button>
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border-l-4 border-l-[#C4B59A] border-r border-t border-b border-[#A6966E] shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50">
+      <div className="px-8 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-[#1a1a1a]">Selection</span>
             </div>
-          ))}
+            <div className="flex items-center gap-2">
+              <div className="bg-[#C72030] text-white px-2 py-1 rounded text-xs font-medium">
+                {selectedTickets.length}
+              </div>
+              <span className="text-xs text-gray-600">
+                {selectedTicketObjects.slice(0, 2).map(ticket => ticket.ticket_number).join(', ')}
+                {selectedTicketObjects.length > 2 && ` +${selectedTicketObjects.length - 2} more`}
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleGoldenTicket}
+              disabled={isGoldenLoading}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            >
+              {isGoldenLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Star className="w-4 h-4" />
+              )}
+              Golden Ticket
+            </Button>
+            
+            <Button
+              onClick={handleFlag}
+              disabled={isFlagLoading}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            >
+              {isFlagLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Flag className="w-4 h-4" />
+              )}
+              Flag
+            </Button>
+            
+            <Button
+              onClick={handleExport}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+            
+            <Button
+              onClick={handleClearSelection}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-        
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1">
-          <Button
-            onClick={handleGoldenTicket}
-            disabled={isGoldenLoading}
-            variant="outline"
-            size="sm"
-            className="gap-1 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-7 px-2 text-xs font-medium whitespace-nowrap"
-          >
-            {isGoldenLoading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Star className="w-3 h-3" />
-            )}
-            Move Assets
-          </Button>
-          
-          <Button
-            onClick={handleFlag}
-            disabled={isFlagLoading}
-            variant="outline"
-            size="sm"
-            className="gap-1 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-7 px-2 text-xs font-medium whitespace-nowrap"
-          >
-            {isFlagLoading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Flag className="w-3 h-3" />
-            )}
-            Print QR
-          </Button>
-          
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            size="sm"
-            className="gap-1 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-7 px-2 text-xs font-medium whitespace-nowrap"
-          >
-            <Download className="w-3 h-3" />
-            Download
-          </Button>
-          
-          <Button
-            onClick={handleGoldenTicket}
-            disabled={isGoldenLoading}
-            variant="outline"
-            size="sm"
-            className="gap-1 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-7 px-2 text-xs font-medium whitespace-nowrap"
-          >
-            {isGoldenLoading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Flag className="w-3 h-3" />
-            )}
-            Dispose
-          </Button>
-        </div>
-        
-        {/* Main Close Button */}
-        <Button
-          onClick={handleClearSelection}
-          variant="outline"
-          size="sm"
-          className="bg-white text-gray-600 border border-gray-300 hover:bg-gray-100 hover:text-gray-800 transition-colors duration-200 h-7 w-7 p-0 flex items-center justify-center"
-        >
-          <X className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   );
