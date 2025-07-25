@@ -9,8 +9,8 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ScheduledTaskCalendar } from '@/components/maintenance/ScheduledTaskCalendar';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { taskData } from '@/data/taskData';
 import { calendarService, CalendarEvent } from '@/services/calendarService';
+import { getToken } from '@/utils/auth';
 
 interface TaskRecord {
   id: string;
@@ -28,6 +28,49 @@ interface TaskRecord {
   duration: string;
   percentage: string;
   active: boolean;
+}
+
+interface ApiTaskResponse {
+  current_page: number;
+  pages: number;
+  asset_task_occurrences: ApiTaskOccurrence[];
+}
+
+interface ApiTaskOccurrence {
+  id: number;
+  checklist: string;
+  asset: string;
+  asset_id: number;
+  asset_code: string;
+  latitude: number;
+  longitude: number;
+  geofence_range: number;
+  task_id: number;
+  scan_type: string;
+  overdue_task_start_status: boolean;
+  start_date: string;
+  assigned_to_id: number[];
+  assigned_to_name: string;
+  grace_time: string;
+  company_id: number;
+  company: string;
+  active: boolean | null;
+  task_status: string;
+  schedule_type: string;
+  site_name: string;
+  task_approved_at: string | null;
+  task_approved_by_id: number | null;
+  task_approved_by: string | null;
+  task_verified: boolean;
+  asset_path: string;
+  checklist_responses: any;
+  checklist_questions: any[];
+  supervisors: any[];
+  task_start_time: string | null;
+  task_end_time: string | null;
+  time_log: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 const statusCards = [
@@ -70,6 +113,68 @@ export const ScheduledTaskDashboard = () => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [showSelectionPanel, setShowSelectionPanel] = useState(false);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [taskData, setTaskData] = useState<TaskRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Transform API data to TaskRecord format
+  const transformApiDataToTaskRecord = (apiData: ApiTaskOccurrence[]): TaskRecord[] => {
+    return apiData.map(task => ({
+      id: task.id.toString(),
+      checklist: task.checklist,
+      type: task.schedule_type,
+      schedule: task.start_date,
+      assignTo: task.assigned_to_name,
+      status: task.task_status === 'Scheduled' ? 'Open' : task.task_status,
+      scheduleFor: 'Service', // Default value as mentioned
+      assetsServices: task.asset,
+      site: task.site_name,
+      location: task.asset_path,
+      supplier: '', // Not available in API
+      graceTime: task.grace_time,
+      duration: '', // Not available in API
+      percentage: '', // Not available in API
+      active: task.active !== false
+    }));
+  };
+
+  // Fetch tasks from API
+  const fetchTasks = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const token = getToken();
+      const response = await fetch('https://fm-uat-api.lockated.com/all_tasks_listing.json?show_all=true', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: ApiTaskResponse = await response.json();
+      const transformedData = transformApiDataToTaskRecord(data.asset_task_occurrences);
+      setTaskData(transformedData);
+      
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      setError('Failed to fetch tasks. Please try again.');
+      // Set empty data on error
+      setTaskData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load tasks on component mount
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   // Load calendar events
   useEffect(() => {
@@ -192,6 +297,22 @@ export const ScheduledTaskDashboard = () => {
 
           {/* Task Table */}
           <div className="bg-white rounded-lg">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-500">Loading tasks...</div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-red-500">{error}</div>
+                <Button 
+                  onClick={fetchTasks} 
+                  variant="outline" 
+                  className="ml-4"
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : (
             <EnhancedTable
               data={taskData}
               columns={[
@@ -272,6 +393,7 @@ export const ScheduledTaskDashboard = () => {
                 setShowSelectionPanel(checked && taskData.length > 0);
               }}
             />
+            )}
           </div>
         </TabsContent>
 
