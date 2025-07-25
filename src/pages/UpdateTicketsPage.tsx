@@ -579,7 +579,7 @@ const UpdateTicketsPage: React.FC = () => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {reviewDate ? format(reviewDate, "PPP") : <span>Pick a review date</span>}
+                    {reviewDate ? format(reviewDate, "dd/MM/yyyy") : <span>Pick a review date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
