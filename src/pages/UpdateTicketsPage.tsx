@@ -504,7 +504,7 @@ const UpdateTicketsPage: React.FC = () => {
               >
                 <option value="">Select Responsible Person Name</option>
                 {fmUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
+                  <option key={user.id} value={`${user.firstname} ${user.lastname}`}>
                     {user.firstname} {user.lastname}
                   </option>
                 ))}
