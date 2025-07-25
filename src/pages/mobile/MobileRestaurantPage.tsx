@@ -1,0 +1,134 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { MobileRestaurantWelcome } from '@/components/mobile/MobileRestaurantWelcome';
+import { MobileRestaurantDashboard } from '@/components/mobile/MobileRestaurantDashboard';
+import { MobileRestaurantDetails } from '@/components/mobile/MobileRestaurantDetails';
+import { MobileItemsDetails } from '@/components/mobile/MobileItemsDetails';
+import { MobileContactForm } from '@/components/mobile/MobileContactForm';
+import { MobileOrderReview } from '@/components/mobile/MobileOrderReview';
+import { useToast } from '@/hooks/use-toast';
+
+// Mock data - replace with actual API calls
+const mockRestaurants = [
+  {
+    id: '1',
+    name: 'The Bawa Kitchen',
+    location: 'Andheri West',
+    rating: 4.1,
+    timeRange: '60-65 mins',
+    discount: '20% OFF',
+    image: '/placeholder.svg',
+    menuItems: [
+      {
+        id: '1',
+        name: 'Chicken Noodles',
+        description: 'Noodles + Manchurian + Sauces',
+        price: 250,
+        image: '/placeholder.svg'
+      },
+      {
+        id: '2',
+        name: 'Veggie Burger',
+        description: 'Plant-based patty + Lettuce + Tomato',
+        price: 180,
+        image: '/placeholder.svg'
+      },
+      {
+        id: '3',
+        name: 'Grilled Salmon',
+        description: 'Salmon fillet + Garlic butter + Lemon',
+        price: 450,
+        image: '/placeholder.svg'
+      },
+      {
+        id: '4',
+        name: 'Spicy Tacos',
+        description: 'Chicken + Spices + Fresh salsa',
+        price: 220,
+        image: '/placeholder.svg'
+      }
+    ]
+  }
+];
+
+export const MobileRestaurantPage: React.FC = () => {
+  const { action, restaurantId } = useParams();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  
+  const [restaurants, setRestaurants] = useState(mockRestaurants);
+  const [loading, setLoading] = useState(false);
+
+  // Determine the view type based on QR scan source
+  const scanSource = searchParams.get('source'); // 'app' or 'external'
+  
+  useEffect(() => {
+    // Fetch restaurants from API
+    fetchRestaurants();
+  }, []);
+
+  const fetchRestaurants = async () => {
+    setLoading(true);
+    try {
+      // Use the API service
+      // const restaurants = await restaurantApi.getRestaurantsBySite('2189');
+      // setRestaurants(restaurants);
+      
+      // For now, use mock data with a delay to simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setRestaurants(mockRestaurants);
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load restaurants. Please try again."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  // Route to different components based on the action
+  switch (action) {
+    case 'dashboard':
+      return <MobileRestaurantDashboard restaurants={restaurants} />;
+    
+    case 'details':
+      const restaurant = restaurants.find(r => r.id === restaurantId);
+      if (!restaurant) {
+        return <div>Restaurant not found</div>;
+      }
+      return <MobileRestaurantDetails restaurant={restaurant} />;
+    
+    case 'items':
+      return <MobileItemsDetails />;
+    
+    case 'contact-form':
+      return <MobileContactForm />;
+    
+    case 'order-review':
+      return <MobileOrderReview />;
+    
+    default:
+      // Default view based on scan source
+      if (scanSource === 'app') {
+        return <MobileRestaurantDashboard restaurants={restaurants} />;
+      } else {
+        // External scan - show welcome page
+        const firstRestaurant = restaurants[0];
+        if (!firstRestaurant) {
+          return <div>No restaurants available</div>;
+        }
+        return <MobileRestaurantWelcome restaurant={firstRestaurant} />;
+      }
+  }
+};
