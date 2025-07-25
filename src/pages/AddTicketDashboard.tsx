@@ -340,44 +340,23 @@ export const AddTicketDashboard = () => {
             </h2>
           </div>
           <div className="p-6 space-y-6">
-            {/* Create Ticket On Behalf Of - positioned like in the image */}
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Create Ticket on Behalf of</label>
-              <div className="min-w-[200px]">
-                <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
-                  <SelectTrigger className="bg-[#E8E0D4] border border-[#D4C4B0] rounded-md text-gray-600 hover:bg-[#E0D8CC] [&>svg]:text-red-500">
-                    <SelectValue placeholder="Select behalf option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="self">Self</SelectItem>
-                    <SelectItem value="occupant-user">Occupant User</SelectItem>
-                    <SelectItem value="fm-user">FM User</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* User Selection Dropdown for behalf of others */}
-            {onBehalfOf !== 'self' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
-                <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getUsersForDropdown().map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Name and Department in 2 columns as shown in image */}
+            {/* Create Ticket On Behalf Of with Name and Department in same row */}
             <div className="grid grid-cols-3 gap-6">
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Create Ticket on Behalf of</label>
+                <div className="min-w-[200px]">
+                  <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
+                    <SelectTrigger className="bg-[#E8E0D4] border border-[#D4C4B0] rounded-md text-gray-600 hover:bg-[#E0D8CC] [&>svg]:text-red-500">
+                      <SelectValue placeholder="Select behalf option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="self">Self</SelectItem>
+                      <SelectItem value="occupant-user">Occupant User</SelectItem>
+                      <SelectItem value="fm-user">FM User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                 <Input
@@ -399,6 +378,25 @@ export const AddTicketDashboard = () => {
                 />
               </div>
             </div>
+
+            {/* User Selection Dropdown for behalf of others */}
+            {onBehalfOf !== 'self' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
+                <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getUsersForDropdown().map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
 
