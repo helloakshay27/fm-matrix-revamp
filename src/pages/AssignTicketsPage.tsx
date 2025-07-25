@@ -16,12 +16,20 @@ interface SelectedTicket {
   issue_status: string;
   priority: string;
   created_at: string;
-  // Add other fields that might be available
-  building?: string;
-  wing?: string;
-  floor?: string;
-  area?: string;
-  room?: string;
+  issue_type: string;
+  complaint_mode: string;
+  service_or_asset: string | null;
+  asset_task_occurrence_id: string | null;
+  proactive_reactive: string | null;
+  review_tracking_date: string | null;
+  response_escalation: string;
+  response_tat: number;
+  response_time: string | null;
+  escalation_response_name: string | null;
+  resolution_escalation: string;
+  resolution_tat: number | null;
+  resolution_time: string | null;
+  escalation_resolution_name: string | null;
 }
 
 const AssignTicketsPage: React.FC = () => {
@@ -107,6 +115,48 @@ const AssignTicketsPage: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     CREATED ON
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    TICKET TYPE
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    COMPLAINT MODE
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ASSET / SERVICE NAME
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    TASK ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    PROACTIVE / REACTIVE
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    REVIEW
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESPONSE ESCALATION
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESPONSE TAT (MIN)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESPONSE TIME (D:H:M)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESPONSE ESCALATION LEVEL
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESOLUTION ESCALATION
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESOLUTION TAT (MIN)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESOLUTION TIME (D:H:M)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    RESOLUTION ESCALATION LEVEL
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -128,6 +178,22 @@ const AssignTicketsPage: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
                     </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.issue_type || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.complaint_mode || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.service_or_asset || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.asset_task_occurrence_id || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.proactive_reactive || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.review_tracking_date ? new Date(ticket.review_tracking_date).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_escalation || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_tat || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_time || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.escalation_response_name || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_escalation || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_tat || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_time || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.escalation_resolution_name || 'N/A'}</td>
                   </tr>
                 ))}
               </tbody>
