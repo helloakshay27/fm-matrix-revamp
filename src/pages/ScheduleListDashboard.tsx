@@ -505,18 +505,24 @@ export const ScheduleListDashboard = () => {
   }
 
   return <div className="p-2 sm:p-4 lg:p-6">
-      <div className="mb-4 sm:mb-6">
+      {/* <div className="mb-4 sm:mb-6">
         <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Schedule Dashboard</h1>
-      </div>
+      </div> */}
 
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+          <TabsTrigger 
+            value="analytics" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <BarChart3 className="w-4 h-4" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="list" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+          <TabsTrigger 
+            value="list" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <Calendar className="w-4 h-4" />
             Schedule List
           </TabsTrigger>
         </TabsList>
