@@ -491,26 +491,40 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('=== HANDLE SUBMIT STARTED ===');
     console.log('handleSubmit called');
+    console.log('Current selectedTickets:', selectedTickets);
+    console.log('URL ID parameter:', id);
+    console.log('Form data state:', formData);
+    
     setIsSubmitting(true);
     
     try {
-      if (selectedTickets.length === 0) {
-        console.error('No tickets selected');
+      // Use the URL ID parameter if selectedTickets is empty
+      let ticketId: number;
+      
+      if (selectedTickets.length > 0) {
+        ticketId = selectedTickets[0].id;
+        console.log('Using ticketId from selectedTickets:', ticketId);
+      } else if (id) {
+        ticketId = parseInt(id);
+        console.log('Using ticketId from URL parameter:', ticketId);
+      } else {
+        console.error('No ticket ID available - selectedTickets empty and no URL id');
         toast({
           title: "Error",
-          description: "No tickets selected for update.",
+          description: "No ticket ID found for update.",
           variant: "destructive"
         });
         setIsSubmitting(false);
         return;
       }
 
+      console.log('Final ticket ID to use:', ticketId);
+
       // Get the first selected ticket for the complaint ID
-      const ticketId = selectedTickets[0].id;
-      console.log('Ticket ID:', ticketId);
-      console.log('Form Data:', formData);
-      console.log('Review Date:', reviewDate);
+      console.log('Form Data before API call:', formData);
+      console.log('Review Date before API call:', reviewDate);
       
       // Prepare form data for API
       const formDataToSend = new FormData();
@@ -1080,7 +1094,11 @@ const UpdateTicketsPage: React.FC = () => {
           {/* Submit Button */}
           <div className="flex justify-center mt-8">
             <Button
-              onClick={handleSubmit}
+              onClick={() => {
+                console.log('=== SAVE BUTTON CLICKED ===');
+                console.log('Button clicked, calling handleSubmit');
+                handleSubmit();
+              }}
               className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
               disabled={isSubmitting}
             >
