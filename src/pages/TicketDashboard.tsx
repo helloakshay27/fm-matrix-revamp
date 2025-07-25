@@ -547,6 +547,9 @@ export const TicketDashboard = () => {
         title: "Success",
         description: response.message || "Ticket(s) flagged successfully"
       });
+      
+      // Refresh the page to update the data
+      window.location.reload();
     } catch (error) {
       console.error('Single flag action failed:', error);
       toast({
