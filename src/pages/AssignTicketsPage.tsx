@@ -186,7 +186,7 @@ const AssignTicketsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
