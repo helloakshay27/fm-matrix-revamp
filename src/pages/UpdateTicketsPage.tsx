@@ -146,6 +146,11 @@ const UpdateTicketsPage: React.FC = () => {
       console.log('Category type:', ticketData.category_type);
       console.log('Sub category type:', ticketData.sub_category_type);
       
+      // Find the category ID that matches the category name from API
+      const matchingCategory = helpdeskData?.helpdesk_categories?.find(
+        category => category.name === ticketData.category_type
+      );
+
       // Populate form with API data
       setFormData(prev => ({
         ...prev,
@@ -159,7 +164,7 @@ const UpdateTicketsPage: React.FC = () => {
         impact: ticketData.impact || '',
         correction: ticketData.correction || '',
         rootCause: ticketData.root_cause || '',
-        categoryType: ticketData.category_type || '',
+        categoryType: matchingCategory?.id.toString() || '',
         subCategoryType: ticketData.sub_category_type || '',
         assignTo: ticketData.assigned_to || '',
         mode: ticketData.complaint_mode || '',
@@ -178,6 +183,11 @@ const UpdateTicketsPage: React.FC = () => {
       if (ticketData.review_tracking) {
         setReviewDate(new Date(ticketData.review_tracking));
       }
+
+      // Fetch sub-categories if category is set
+      if (matchingCategory?.id) {
+        fetchSubCategories(matchingCategory.id.toString());
+      }
       
     } catch (error) {
       console.error('Error fetching ticket data:', error);
@@ -191,7 +201,7 @@ const UpdateTicketsPage: React.FC = () => {
 
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
-    if (id) {
+    if (id && helpdeskData?.helpdesk_categories) {
       fetchTicketData(id);
     }
     // If we have selected tickets from navigation state, use the first one
@@ -211,7 +221,7 @@ const UpdateTicketsPage: React.FC = () => {
         }));
       }
     }
-  }, [id, location.state]);
+  }, [id, location.state, helpdeskData]);
 
   useEffect(() => {
     const fetchData = async () => {
