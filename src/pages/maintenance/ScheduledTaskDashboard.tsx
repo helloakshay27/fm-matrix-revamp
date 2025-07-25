@@ -179,6 +179,10 @@ if (filters.assetGroupId) queryParams.append('q[asset_pms_asset_group_id_eq]', f
 if (filters.assetSubGroupId) queryParams.append('q[asset_pms_asset_sub_group_id_eq]', filters.assetSubGroupId);
 if (filters.assignedTo) queryParams.append('q[pms_task_assignments_assigned_to_id_eq]', filters.assignedTo);
 if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filters.supplierId);
+if (filters.taskId) queryParams.append('q[id_eq]', filters.taskId);
+if (filters.status) queryParams.append('q[task_status_eq]', filters.status);
+if (filters.site) queryParams.append('q[asset_pms_site_site_name_cont]', filters.site);
+if (filters.priority) queryParams.append('q[custom_form_priority_eq]', filters.priority);
 
       
       const apiUrl = getFullUrl(`/all_tasks_listing.json?${queryParams.toString()}`);
@@ -354,29 +358,6 @@ if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filt
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Show All Toggle and Pagination Controls */}
-          <div className="flex justify-between items-center bg-white p-4 rounded-lg border">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="show-all"
-                checked={showAll}
-                onCheckedChange={handleShowAllChange}
-              />
-              <label htmlFor="show-all" className="text-sm font-medium text-gray-700">
-                Show All Tasks
-              </label>
-              <span className="text-xs text-gray-500">
-                ({showAll ? 'Shows all tasks' : 'Paginated view'})
-              </span>
-            </div>
-            
-            {!showAll && (
-              <div className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages} ({totalCount} total tasks)
-              </div>
-            )}
           </div>
 
           {/* Task Table */}
@@ -571,6 +552,8 @@ if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filt
         isOpen={showTaskFilter}
         onClose={() => setShowTaskFilter(false)}
         onApply={handleApplyFilters}
+        showAll={showAll}
+        onShowAllChange={handleShowAllChange}
       />
 
       {/* Advanced Filter Dialog - Keep existing for backward compatibility */}

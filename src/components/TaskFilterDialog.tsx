@@ -14,6 +14,8 @@ interface TaskFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: TaskFilters) => void;
+  showAll?: boolean;
+  onShowAllChange?: (showAll: boolean) => void;
 }
 
 export interface TaskFilters {
@@ -29,6 +31,7 @@ export interface TaskFilters {
   assetGroupId?: string;
   assetSubGroupId?: string;
   supplierId?: string;
+  showAll?: boolean;
 }
 
 const fieldStyles = {
@@ -54,7 +57,7 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onClose, onApply }) => {
+export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onClose, onApply, showAll = true, onShowAllChange }) => {
   const [taskId, setTaskId] = useState('');
   const [checklist, setChecklist] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
@@ -294,6 +297,33 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
               />
             </div>
           </div>
+
+          {/* Show All Tasks Toggle */}
+          {onShowAllChange && (
+            <div>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Display Options</h3>
+              <div className="flex items-center space-x-3">
+                <label htmlFor="show-all-toggle" className="flex items-center cursor-pointer">
+                  <input
+                    id="show-all-toggle"
+                    type="checkbox"
+                    checked={showAll}
+                    onChange={(e) => onShowAllChange(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-11 h-6 rounded-full ${showAll ? 'bg-[#C72030]' : 'bg-gray-300'} transition-colors duration-200 ease-in-out relative`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-lg transform transition-transform duration-200 ease-in-out absolute top-0.5 ${showAll ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-gray-700">
+                    Show All Tasks
+                  </span>
+                </label>
+                <span className="text-xs text-gray-500">
+                  ({showAll ? 'Shows all tasks' : 'Paginated view'})
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
