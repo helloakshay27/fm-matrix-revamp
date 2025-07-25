@@ -7,10 +7,10 @@ import { AddSubCategoryModal } from "./AddSubCategoryModal";
 import { EditSubCategoryModal } from "./EditSubCategoryModal";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { useAppDispatch } from '@/store/hooks';
 import { createSubcategory, deleteSubCategory, fetchSubcategory } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
 
 export interface SubCategory {
   id: number;
@@ -41,21 +41,35 @@ export const SubCategoriesSetupTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
 
-  const handleAddSubCategory = (subCategoryData: { category: string; subCategory: string; description: string; icon?: File }) => {
-    const newSubCategory: SubCategory = {
-      id: Math.max(...subCategories.map(c => c.id), 0) + 1,
-      category: subCategoryData.category,
-      subCategory: subCategoryData.subCategory,
-      description: subCategoryData.description,
-      active: true
-    };
-    setSubCategories([...subCategories, newSubCategory]);
-  };
+  const fetchData = async () => {
+    try {
+      const response = await dispatch(fetchSubcategory({ baseUrl, token, id: Number(id) })).unwrap();
+      setSubCategories(response);
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
-  const handleEditSubCategory = (updatedSubCategory: SubCategory) => {
-    setSubCategories(subCategories.map(cat => 
-      cat.id === updatedSubCategory.id ? updatedSubCategory : cat
-    ));
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleAddSubCategory = async (subCategoryData: { category: string; subCategory: string; description: string }) => {
+    const payload = {
+      spree_manage_restaurant_sub_category: {
+        category_id: Number(subCategoryData.category),
+        name: subCategoryData.subCategory,
+        description: subCategoryData.description
+      },
+      restaurant_id: Number(id)
+    }
+    try {
+      await dispatch(createSubcategory({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      fetchData();
+      toast.success('Subcategory added successfully');
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleDeleteSubCategory = async () => {
@@ -92,7 +106,7 @@ export const SubCategoriesSetupTable = () => {
       </span>
     ),
     actions: (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <Button
           variant="ghost"
           size="sm"
@@ -101,14 +115,14 @@ export const SubCategoriesSetupTable = () => {
         >
           <Pencil className="w-4 h-4" />
         </Button>
-        <Button
+        {/* <Button
           variant="ghost"
           size="sm"
           onClick={() => openDeleteDialog(item)}
           className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
         >
           <Trash2 className="w-4 h-4" />
-        </Button>
+        </Button> */}
       </div>
     )
   });

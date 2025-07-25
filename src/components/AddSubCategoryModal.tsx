@@ -1,13 +1,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { X, Upload } from 'lucide-react';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { X } from 'lucide-react';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchRestaurantCategory } from '@/store/slices/f&bSlice';
+import { useParams } from 'react-router-dom';
 
 interface AddSubCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (subCategory: { category: string; subCategory: string; description: string; icon?: File }) => void;
+  onSubmit: (subCategory: { category: string; subCategory: string; description: string }) => void;
 }
 
 // const categories = ["Breakfast", "Lunch", "Dinner", "Snacks", "Beverages"];
@@ -27,20 +30,25 @@ export const AddSubCategoryModal = ({
     subCategory: "",
     description: ""
   });
-  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [categories, setCategories] = useState([])
 
-  const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setIconFile(file);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantCategory({ baseUrl, token, id: Number(id) })).unwrap();
+        setCategories(response)
+      } catch (error) {
+        console.log(error)
+      }
     }
-  };
+
+    fetchCategories()
+  }, [])
 
   const handleSubmit = () => {
-    if (formData.category.trim() && formData.subCategory.trim()) {
-      onSubmit({ ...formData, icon: iconFile || undefined });
+    if (formData.category && formData.subCategory.trim()) {
+      onSubmit(formData);
       setFormData({ category: "", subCategory: "", description: "" });
-      setIconFile(null);
       onClose();
     }
   };
@@ -196,32 +204,6 @@ export const AddSubCategoryModal = ({
               }
             }}
           />
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Icon
-            </label>
-            <div className="flex items-center gap-2">
-              <label htmlFor="icon-upload" className="cursor-pointer">
-                <Button type="button" variant="outline" size="sm" asChild>
-                  <span>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Icon
-                  </span>
-                </Button>
-              </label>
-              <input
-                id="icon-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleIconChange}
-              />
-              {iconFile && (
-                <span className="text-sm text-gray-600">{iconFile.name}</span>
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="flex justify-center pt-4">

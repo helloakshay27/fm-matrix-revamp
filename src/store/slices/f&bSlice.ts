@@ -532,7 +532,7 @@ export const fetchRestaurantOrders = createAsyncThunk(
     async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json?all=true`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

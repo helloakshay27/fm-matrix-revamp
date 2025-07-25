@@ -227,7 +227,7 @@ export const BookingSetupDashboard = () => {
         return item.createdBy || '';
       case 'status':
         return (
-          <div className="flex items-center">
+          <div className="flex items-center justify-center">
             <div
               className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? 'bg-green-500' : 'bg-gray-300'
                 }`}
@@ -268,19 +268,19 @@ export const BookingSetupDashboard = () => {
     <div className="flex items-center gap-2">
       <Button
         onClick={handleAddBooking}
-        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
       >
         <Plus className="w-4 h-4" />
         Add
       </Button>
-      <Button
+      {/* <Button
         variant="outline"
         onClick={() => setIsFilterOpen(true)}
         className="flex items-center gap-2"
       >
         <Filter className="w-4 h-4" />
         Filter
-      </Button>
+      </Button> */}
     </div>
   );
 
@@ -297,6 +297,7 @@ export const BookingSetupDashboard = () => {
           emptyMessage={loading ? "Loading booking data..." : "No booking data found"}
           leftActions={leftActions}
           enableSearch={true}
+          onFilterClick={() => setIsFilterOpen(true)}
           enableSelection={false}
           hideTableExport={true}
         />
