@@ -407,7 +407,7 @@ export const AddTicketDashboard = () => {
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Ticket size={16} />
+                <Ticket size={16} color="#C72030" />
               </span>
               Tickets Type
             </h2>
