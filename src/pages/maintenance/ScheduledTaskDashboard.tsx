@@ -170,16 +170,16 @@ export const ScheduledTaskDashboard = () => {
       const queryParams = new URLSearchParams();
       queryParams.append('show_all', showAll.toString());
       queryParams.append('page', page.toString());
-      
-      if (filters.taskId) queryParams.append('task_id', filters.taskId);
-      if (filters.checklist) queryParams.append('checklist', filters.checklist);
-      if (filters.assignedTo) queryParams.append('assigned_to', filters.assignedTo);
-      if (filters.status) queryParams.append('status', filters.status);
-      if (filters.scheduleType) queryParams.append('schedule_type', filters.scheduleType);
-      if (filters.site) queryParams.append('site', filters.site);
-      if (filters.priority) queryParams.append('priority', filters.priority);
-      if (filters.dateFrom) queryParams.append('date_from', filters.dateFrom);
-      if (filters.dateTo) queryParams.append('date_to', filters.dateTo);
+
+if (filters.dateFrom) queryParams.append('q[start_date_gteq]', filters.dateFrom);
+if (filters.dateTo) queryParams.append('q[start_date_lteq]', filters.dateTo);
+if (filters.checklist) queryParams.append('q[custom_form_form_name_cont]', filters.checklist);
+if (filters.scheduleType) queryParams.append('q[custom_form_schedule_type_eq]', filters.scheduleType);
+if (filters.assetGroupId) queryParams.append('q[asset_pms_asset_group_id_eq]', filters.assetGroupId);
+if (filters.assetSubGroupId) queryParams.append('q[asset_pms_asset_sub_group_id_eq]', filters.assetSubGroupId);
+if (filters.assignedTo) queryParams.append('q[pms_task_assignments_assigned_to_id_eq]', filters.assignedTo);
+if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filters.supplierId);
+
       
       const apiUrl = getFullUrl(`/all_tasks_listing.json?${queryParams.toString()}`);
       const response = await fetch(apiUrl, {
