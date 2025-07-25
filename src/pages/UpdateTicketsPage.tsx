@@ -138,8 +138,13 @@ const UpdateTicketsPage: React.FC = () => {
   // Fetch ticket data for editing
   const fetchTicketData = async (ticketId: string) => {
     try {
+      console.log('Fetching ticket data for ID:', ticketId);
       const response = await apiClient.get(`/pms/admin/complaints/${ticketId}.json`);
       const ticketData = response.data;
+      
+      console.log('Received ticket data:', ticketData);
+      console.log('Category type:', ticketData.category_type);
+      console.log('Sub category type:', ticketData.sub_category_type);
       
       // Populate form with API data
       setFormData(prev => ({
