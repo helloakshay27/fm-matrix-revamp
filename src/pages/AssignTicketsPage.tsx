@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User } from 'lucide-react';
 import { useAllocationData } from '@/hooks/useAllocationData';
+import { useToast } from '@/hooks/use-toast';
 
 interface SelectedTicket {
   id: number;
@@ -36,10 +37,11 @@ const AssignTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { departments, users, loading } = useAllocationData();
+  const { toast } = useToast();
   const [selectedTickets, setSelectedTickets] = useState<SelectedTicket[]>([]);
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<string>('');
-  const [assignTo, setAssignTo] = useState<'Department' | 'User'>('Department');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Get selected tickets from navigation state
@@ -52,15 +54,48 @@ const AssignTicketsPage: React.FC = () => {
     navigate(-1);
   };
 
-  const handleSubmit = () => {
-    // Implement assignment logic here
-    console.log('Assigning tickets:', selectedTickets);
-    console.log('Assign to:', assignTo);
-    console.log('Selected Department:', selectedDepartment);
-    console.log('Selected User:', selectedUser);
-    
-    // Navigate back after assignment
-    navigate(-1);
+  const handleSubmit = async () => {
+    // Validate form
+    if (!selectedStatus && !selectedUser) {
+      toast({
+        title: "Validation Error",
+        description: "Please select either a status or assign to a user.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Implement assignment logic here
+      console.log('Updating tickets:', selectedTickets.map(t => t.id));
+      console.log('Selected Status:', selectedStatus);
+      console.log('Selected User:', selectedUser);
+      
+      // TODO: Make API call to update tickets
+      // await updateTicketsAPI({ 
+      //   ticketIds: selectedTickets.map(t => t.id),
+      //   status: selectedStatus,
+      //   assignedTo: selectedUser 
+      // });
+      
+      toast({
+        title: "Success",
+        description: `Successfully updated ${selectedTickets.length} ticket(s).`,
+      });
+      
+      // Navigate back after successful assignment
+      navigate(-1);
+    } catch (error) {
+      console.error('Error updating tickets:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update tickets. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -212,6 +247,8 @@ const AssignTicketsPage: React.FC = () => {
             <div>
               <label className="block text-sm text-gray-500 mb-2">Status</label>
               <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
               >
                 <option value="">Select Status</option>
@@ -246,9 +283,9 @@ const AssignTicketsPage: React.FC = () => {
             <Button
               onClick={handleSubmit}
               className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
-              disabled={!selectedDepartment && !selectedUser}
+              disabled={isSubmitting || (!selectedStatus && !selectedUser)}
             >
-              SUBMIT
+              {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
             </Button>
           </div>
         </div>
