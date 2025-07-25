@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useAllocationData } from '@/hooks/useAllocationData';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
 
@@ -49,10 +48,21 @@ interface ComplaintStatus {
   email: boolean;
 }
 
+interface FMUser {
+  id: number;
+  email: string;
+  firstname: string;
+  lastname: string;
+  login: string;
+  created_at: string;
+  updated_at: string;
+  spree_api_key: string;
+  deleted_at: string | null;
+}
+
 const AssignTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { users, loading } = useAllocationData();
   const { toast } = useToast();
   
   const [selectedTickets, setSelectedTickets] = useState<SelectedTicket[]>([]);
@@ -61,6 +71,8 @@ const AssignTicketsPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complaintStatuses, setComplaintStatuses] = useState<ComplaintStatus[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState(false);
+  const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
     if (location.state?.selectedTickets) {
@@ -87,6 +99,27 @@ const AssignTicketsPage: React.FC = () => {
     };
 
     fetchComplaintStatuses();
+  }, [toast]);
+
+  useEffect(() => {
+    const fetchFMUsers = async () => {
+      setLoadingUsers(true);
+      try {
+        const response = await apiClient.get('/pms/account_setups/fm_users.json');
+        setFmUsers(response.data.fm_users || []);
+      } catch (error) {
+        console.error('Error fetching FM users:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load users.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchFMUsers();
   }, [toast]);
 
   const handleBack = () => {
@@ -292,12 +325,12 @@ const AssignTicketsPage: React.FC = () => {
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
-                disabled={loading.users}
+                disabled={loadingUsers}
               >
                 <option value="">Select User</option>
-                {users.map((user) => (
+                {fmUsers.map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.full_name}
+                    {user.firstname} {user.lastname}
                   </option>
                 ))}
               </select>
