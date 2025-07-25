@@ -26,6 +26,9 @@ export interface TaskFilters {
   priority?: string;
   dateFrom?: string;
   dateTo?: string;
+  assetGroupId?: string;
+  assetSubGroupId?: string;
+  supplierId?: string;
 }
 
 const fieldStyles = {
