@@ -161,12 +161,12 @@ export const ScheduleListDashboard = () => {
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item.id)}>
+          {/* <Button v`ariant="ghost" size="sm" onClick={() => handleEditSchedule(item.id)}>
             <Edit className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item.id)}>
+          </Button>` */}
+          {/* <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item.id)}>
             <Copy className="w-4 h-4" />
-          </Button>
+          </Button> */}
           <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)}>
             <Eye className="w-4 h-4" />
           </Button>
@@ -477,7 +477,7 @@ export const ScheduleListDashboard = () => {
           data={schedules} 
           columns={columns} 
           renderCell={renderCell} 
-          selectable={true} 
+          // selectable={true} 
           pagination={true} 
           enableExport={true} 
           exportFileName="schedules" 
