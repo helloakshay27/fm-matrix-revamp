@@ -132,14 +132,12 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
       
       {/* Cross button - 44px wide */}
       <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
-        <Button
+        <button
           onClick={handleClearSelection}
-          variant="ghost"
-          size="sm"
-          className="w-6 h-6 p-0 hover:bg-gray-50 flex items-center justify-center"
+          className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
         >
           <X className="w-4 h-4 text-black" />
-        </Button>
+        </button>
       </div>
     </div>
   );
