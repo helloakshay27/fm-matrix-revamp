@@ -342,19 +342,27 @@ export const AddTicketDashboard = () => {
             </h2>
           </div>
           <div className="p-6 space-y-4">
-            {/* Create Ticket On Behalf Of */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Create Ticket On Behalf Of</label>
-              <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select behalf option" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="self">Self</SelectItem>
-                  <SelectItem value="occupant-user">Occupant User</SelectItem>
-                  <SelectItem value="fm-user">FM User</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Create Ticket On Behalf Of in grid layout */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket on Behalf of</label>
+                <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
+                  <SelectTrigger className="w-full border border-gray-300 rounded-md">
+                    <SelectValue placeholder="Select behalf option" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="self">Self</SelectItem>
+                    <SelectItem value="occupant-user">Occupant User</SelectItem>
+                    <SelectItem value="fm-user">FM User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                {/* Second column - empty for now */}
+              </div>
+              <div>
+                {/* Third column - empty for now */}
+              </div>
             </div>
 
             {/* User Selection Dropdown for behalf of others */}
