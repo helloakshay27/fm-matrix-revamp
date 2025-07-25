@@ -127,7 +127,7 @@ const AssignTicketsPage: React.FC = () => {
 
         {/* Assignment Form */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-6">Allocate To</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-6">Update To</h2>
           
           {/* Department/User selection */}
 
