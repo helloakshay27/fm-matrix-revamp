@@ -55,6 +55,11 @@ interface SubCategory {
   name: string;
 }
 
+interface ComplaintMode {
+  id: number;
+  name: string;
+}
+
 const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -97,6 +102,7 @@ const UpdateTicketsPage: React.FC = () => {
   const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
+  const [complaintModes, setComplaintModes] = useState<ComplaintMode[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCostPopup, setShowCostPopup] = useState(false);
   const [costPopupData, setCostPopupData] = useState({
@@ -128,13 +134,15 @@ const UpdateTicketsPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statusResponse, usersResponse] = await Promise.all([
+        const [statusResponse, usersResponse, complaintModesResponse] = await Promise.all([
           apiClient.get('/pms/admin/complaint_statuses.json'),
-          apiClient.get('/pms/account_setups/fm_users.json')
+          apiClient.get('/pms/account_setups/fm_users.json'),
+          apiClient.get('/pms/admin/complaint_modes.json')
         ]);
         
         setComplaintStatuses(statusResponse.data || []);
         setFmUsers(usersResponse.data.fm_users || []);
+        setComplaintModes(complaintModesResponse.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast({
@@ -484,9 +492,11 @@ const UpdateTicketsPage: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
               >
                 <option value="">Select Complaint Mode</option>
-                <option value="Phone">Phone</option>
-                <option value="Email">Email</option>
-                <option value="App">App</option>
+                {complaintModes.map((mode) => (
+                  <option key={mode.id} value={mode.id}>
+                    {mode.name}
+                  </option>
+                ))}
               </select>
             </div>
 
