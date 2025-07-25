@@ -796,8 +796,8 @@ export const TicketDashboard = () => {
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
       return (
-        <div className="flex items-center justify-center gap-2">
-          <div title="View ticket">
+        <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
+          <div title="View ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Eye
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
               onClick={(e) => {
@@ -806,7 +806,7 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
-          <div title="Update ticket">
+          <div title="Update ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Edit
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
               onClick={(e) => {
@@ -817,7 +817,7 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
-          <div title="Flag ticket">
+          <div title="Flag ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Flag
               className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged
                   ? 'text-red-500 fill-red-500'
@@ -829,7 +829,7 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
-          <div title="Star ticket">
+          <div title="Star ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Star
               className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_golden_ticket
                   ? 'text-yellow-500 fill-yellow-500'
