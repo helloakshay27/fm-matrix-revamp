@@ -163,15 +163,7 @@ const AssignTicketsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Comments section */}
-          <div className="mb-6">
-            <label className="block text-sm text-gray-500 mb-2">Comments</label>
-            <textarea
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              placeholder="Add Comments"
-            />
-          </div>
+          {/* Submit button */}
 
           {/* Submit button */}
           <div className="flex justify-center">
