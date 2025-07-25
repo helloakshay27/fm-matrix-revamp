@@ -17,7 +17,7 @@ interface SelectedTicket {
   floor: string;
   area: string;
   room: string;
-  status: string;
+  status: string | { name: string; color_code?: string } | any;
 }
 
 const AssignTicketsPage: React.FC = () => {
@@ -109,7 +109,8 @@ const AssignTicketsPage: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.task_number}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {ticket.status}
+                        {typeof ticket.status === 'string' ? ticket.status : 
+                         (ticket.status?.name || ticket.status || 'Unknown')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.site || 'N/A'}</td>
