@@ -145,6 +145,22 @@ const AssignTicketsPage: React.FC = () => {
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm text-gray-500 mb-2">Assign To</label>
+              <select
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                disabled={loading.users}
+              >
+                <option value="">Select User</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Comments section */}
