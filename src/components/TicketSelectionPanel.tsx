@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { X, User, Edit, Download, QrCode, Loader2 } from 'lucide-react';
+import { X, User, Edit, Download, QrCode, Loader2, HandCoins } from 'lucide-react';
+import { CostApprovalModal } from './CostApprovalModal';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -24,6 +25,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   const navigate = useNavigate();
   const [isGoldenLoading, setIsGoldenLoading] = useState(false);
   const [isFlagLoading, setIsFlagLoading] = useState(false);
+  const [isCostApprovalOpen, setIsCostApprovalOpen] = useState(false);
 
   const handleGoldenTicket = () => {
     console.log('TicketSelectionPanel - Assign To clicked for tickets:', selectedTickets);
@@ -96,18 +98,13 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
           </Button>
           
           <Button
-            onClick={handleFlag}
-            disabled={isFlagLoading}
+            onClick={() => setIsCostApprovalOpen(true)}
             variant="ghost"
             size="sm"
             className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
-            {isFlagLoading ? (
-              <Loader2 className="w-6 h-6 animate-spin text-black" />
-            ) : (
-              <Edit className="w-6 h-6 text-black" />
-            )}
-            <span className="text-xs text-gray-600">Update</span>
+            <HandCoins className="w-6 h-6 text-black" />
+            <span className="text-xs text-gray-600">Cost Approval</span>
           </Button>
           
           <Button
@@ -131,6 +128,13 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
           <X className="w-4 h-4 text-black" />
         </button>
       </div>
+      
+      {/* Cost Approval Modal */}
+      <CostApprovalModal
+        isOpen={isCostApprovalOpen}
+        onClose={() => setIsCostApprovalOpen(false)}
+        selectedTickets={selectedTickets}
+      />
     </div>
   );
 };

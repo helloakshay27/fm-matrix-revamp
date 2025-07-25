@@ -806,6 +806,17 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
+          <div title="Update ticket">
+            <Edit
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('/maintenance/ticket/update', {
+                  state: { selectedTickets: [item] }
+                });
+              }}
+            />
+          </div>
           <div title="Flag ticket">
             <Flag
               className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged
@@ -870,13 +881,13 @@ export const TicketDashboard = () => {
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-chart-column w-4 h-4" data-lov-id="src\pages\TicketDashboard.tsx:868:12" data-lov-name="BarChart3" data-component-path="src\pages\TicketDashboard.tsx" data-component-line="868" data-component-file="TicketDashboard.tsx" data-component-name="BarChart3" data-component-content="%7B%22className%22%3A%22w-4%20h-4%22%7D"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>
-            Analytics
-          </TabsTrigger>
           <TabsTrigger value="tickets" className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-ticket w-4 h-4" data-lov-id="src\pages\TicketDashboard.tsx:872:12" data-lov-name="Ticket" data-component-path="src\pages\TicketDashboard.tsx" data-component-line="872" data-component-file="TicketDashboard.tsx" data-component-name="Ticket" data-component-content="%7B%22className%22%3A%22w-4%20h-4%22%7D"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
             Ticket List
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-chart-column w-4 h-4" data-lov-id="src\pages\TicketDashboard.tsx:868:12" data-lov-name="BarChart3" data-component-path="src\pages\TicketDashboard.tsx" data-component-line="868" data-component-file="TicketDashboard.tsx" data-component-name="BarChart3" data-component-content="%7B%22className%22%3A%22w-4%20h-4%22%7D"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>
+            Analytics
           </TabsTrigger>
         </TabsList>
 

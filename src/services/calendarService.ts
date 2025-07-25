@@ -37,7 +37,9 @@ export const calendarService = {
     service?: string;
   }): Promise<CalendarEvent[]> {
     try {
-      const response = await apiClient.get<CalendarResponse>('/pms/users/tasks_calender.json');
+      const response = await apiClient.get<CalendarResponse>('/pms/users/tasks_calender.json', {
+        params
+      });
       return response.data.calendar_events || [];
     } catch (error) {
       console.error('Error fetching calendar events:', error);

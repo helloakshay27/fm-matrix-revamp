@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 
 interface SelectedTicket {
   id: number;
@@ -48,10 +50,17 @@ interface FMUser {
   login: string;
 }
 
+interface SubCategory {
+  id: number;
+  name: string;
+}
+
 const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const dispatch = useAppDispatch();
+  const { data: helpdeskData, loading: helpdeskLoading } = useAppSelector(state => state.helpdeskCategories);
   
   const [selectedTickets, setSelectedTickets] = useState<SelectedTicket[]>([]);
   const [formData, setFormData] = useState({
@@ -86,6 +95,8 @@ const UpdateTicketsPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complaintStatuses, setComplaintStatuses] = useState<ComplaintStatus[]>([]);
   const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCostPopup, setShowCostPopup] = useState(false);
   const [costPopupData, setCostPopupData] = useState({
@@ -135,7 +146,8 @@ const UpdateTicketsPage: React.FC = () => {
     };
 
     fetchData();
-  }, [toast]);
+    dispatch(fetchHelpdeskCategories());
+  }, [toast, dispatch]);
 
   const handleBack = () => {
     navigate(-1);
@@ -146,6 +158,44 @@ const UpdateTicketsPage: React.FC = () => {
       ...prev,
       [field]: value
     }));
+
+    // Fetch sub-categories when category changes
+    if (field === 'categoryType' && value) {
+      fetchSubCategories(value);
+    } else if (field === 'categoryType' && !value) {
+      setSubCategories([]);
+      setFormData(prev => ({ ...prev, subCategoryType: '' }));
+    }
+  };
+
+  const fetchSubCategories = async (categoryId: string) => {
+    try {
+      setSubCategoriesLoading(true);
+      const response = await apiClient.get(`/pms/admin/get_sub_categories.json?category_type_id=${categoryId}`);
+      console.log('Sub-categories API response:', response.data);
+      
+      // Handle different possible response structures
+      let categories = [];
+      if (Array.isArray(response.data)) {
+        categories = response.data;
+      } else if (response.data && Array.isArray(response.data.sub_categories)) {
+        categories = response.data.sub_categories;
+      } else if (response.data && Array.isArray(response.data.subcategories)) {
+        categories = response.data.subcategories;
+      }
+      
+      setSubCategories(categories);
+    } catch (error) {
+      console.error('Error fetching sub-categories:', error);
+      setSubCategories([]);
+      toast({
+        title: "Error",
+        description: "Failed to load sub-categories.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubCategoriesLoading(false);
+    }
   };
 
   const handleCheckboxChange = (group: string, field: string, checked: boolean) => {
@@ -331,11 +381,14 @@ const UpdateTicketsPage: React.FC = () => {
                 value={formData.categoryType}
                 onChange={(e) => handleInputChange('categoryType', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+                disabled={helpdeskLoading}
               >
-                <option value="">Air Conditioner</option>
-                <option value="Air Conditioner">Air Conditioner</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Plumbing">Plumbing</option>
+                <option value="">Select Category Type</option>
+                {helpdeskData?.helpdesk_categories?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -361,10 +414,14 @@ const UpdateTicketsPage: React.FC = () => {
                 value={formData.subCategoryType}
                 onChange={(e) => handleInputChange('subCategoryType', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+                disabled={subCategoriesLoading || !formData.categoryType}
               >
                 <option value="">Select Sub Category</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Repair">Repair</option>
+                {Array.isArray(subCategories) && subCategories.map((subCategory) => (
+                  <option key={subCategory.id} value={subCategory.id}>
+                    {subCategory.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -395,9 +452,11 @@ const UpdateTicketsPage: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
               >
                 <option value="">Select Priority</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
+                <option value="p1">P1 - Critical</option>
+                <option value="p2">P2 - Very High</option>
+                <option value="p3">P3 - High</option>
+                <option value="p4">P4 - Medium</option>
+                <option value="p5">P5 - Low</option>
               </select>
             </div>
 
@@ -508,77 +567,79 @@ const UpdateTicketsPage: React.FC = () => {
 
           {/* Issue Related To */}
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">Issue Related To</label>
-            <div className="flex gap-6">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="issueRelatedTo"
-                  value="project"
-                  checked={formData.issueRelatedTo.project}
-                  onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
-                  className="mr-2"
-                />
-                Project
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="issueRelatedTo"
-                  value="fm"
-                  checked={formData.issueRelatedTo.pm}
-                  onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
-                  className="mr-2"
-                />
-                FM
-              </label>
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 min-w-[120px]">Issue Related To</span>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="issueRelatedTo"
+                    value="project"
+                    checked={formData.issueRelatedTo.project}
+                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                  />
+                  <span className="text-sm text-gray-700">Project</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="issueRelatedTo"
+                    value="fm"
+                    checked={formData.issueRelatedTo.pm}
+                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                  />
+                  <span className="text-sm text-gray-700">FM</span>
+                </label>
+              </div>
             </div>
           </div>
 
           {/* Associated To */}
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">Associated To</label>
-            <div className="flex gap-6">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="associatedTo"
-                  value="asset"
-                  checked={formData.associatedTo.asset}
-                  onChange={(e) => handleCheckboxChange('associatedTo', 'asset', e.target.checked)}
-                  className="mr-2"
-                />
-                Asset
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="associatedTo"
-                  value="service"
-                  checked={formData.associatedTo.service}
-                  onChange={(e) => handleCheckboxChange('associatedTo', 'service', e.target.checked)}
-                  className="mr-2"
-                />
-                Service
-              </label>
+          <div className="mt-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 min-w-[120px]">Associated To</span>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="associatedTo"
+                    value="asset"
+                    checked={formData.associatedTo.asset}
+                    onChange={(e) => handleCheckboxChange('associatedTo', 'asset', e.target.checked)}
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                  />
+                  <span className="text-sm text-gray-700">Asset</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="associatedTo"
+                    value="service"
+                    checked={formData.associatedTo.service}
+                    onChange={(e) => handleCheckboxChange('associatedTo', 'service', e.target.checked)}
+                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                  />
+                  <span className="text-sm text-gray-700">Service</span>
+                </label>
+              </div>
             </div>
           </div>
 
           {/* Select Asset */}
-          {formData.associatedTo.asset && (
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Asset</label>
-              <select
-                value={formData.selectedAsset}
-                onChange={(e) => handleInputChange('selectedAsset', e.target.value)}
-                className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Asset</option>
-                <option value="asset1">Asset 1</option>
-                <option value="asset2">Asset 2</option>
-              </select>
-            </div>
-          )}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Asset</label>
+            <select
+              value={formData.selectedAsset}
+              onChange={(e) => handleInputChange('selectedAsset', e.target.value)}
+              className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+            >
+              <option value="">Select Asset</option>
+              <option value="asset1">Asset 1</option>
+              <option value="asset2">Asset 2</option>
+            </select>
+          </div>
 
           {/* Comments */}
           <div className="mt-6">
@@ -603,8 +664,43 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
           </div>
 
-
-
+          {/* Cost Approval Requests */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-6">
+            <div className="px-6 py-3 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">Cost Approval Requests</h3>
+              <button className="bg-[#C72030] text-white px-4 py-2 rounded text-sm hover:bg-[#C72030]/90">
+                Add
+              </button>
+            </div>
+            <div className="overflow-x-auto bg-white rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Request Id</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Amount</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Comments</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Created On</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Created By</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L1</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L2</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L3</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L4</th>
+                    <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">L5</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Master Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Cancelled By</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">Attachments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="px-4 py-3 text-gray-500 text-center" colSpan={13}>
+                      No data available
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           {/* Submit Button */}
           <div className="flex justify-center mt-8">
             <Button
@@ -623,7 +719,7 @@ const UpdateTicketsPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-lg w-96 max-w-md mx-4">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-medium text-gray-900">Popup Name</h3>
+                <h3 className="text-lg font-medium text-gray-900">Cost involved</h3>
                 <button
                   onClick={handleCostPopupClose}
                   className="text-gray-400 hover:text-gray-600"
