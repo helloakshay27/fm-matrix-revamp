@@ -1066,9 +1066,6 @@ const UpdateTicketsPage: React.FC = () => {
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-6">
             <div className="px-6 py-3 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-900">Cost Approval Requests</h3>
-              <button className="bg-[#C72030] text-white px-4 py-2 rounded text-sm hover:bg-[#C72030]/90">
-                Add
-              </button>
             </div>
             <div className="overflow-x-auto bg-white rounded-lg border">
               <table className="w-full text-sm">
