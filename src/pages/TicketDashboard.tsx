@@ -796,7 +796,7 @@ export const TicketDashboard = () => {
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
       return (
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
           <div title="View ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Eye
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
