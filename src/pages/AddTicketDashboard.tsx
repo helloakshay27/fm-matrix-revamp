@@ -377,7 +377,7 @@ export const AddTicketDashboard = () => {
             )}
 
             {/* Name and Department in 2 columns as shown in image */}
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                 <Input
@@ -385,7 +385,7 @@ export const AddTicketDashboard = () => {
                   value={formData.name}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
                   disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                  className={`h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
+                  className={`h-14 px-4 border-2 border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-0 outline-none ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
               </div>
               <div>
@@ -395,7 +395,7 @@ export const AddTicketDashboard = () => {
                   value={formData.department}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                   disabled={isFieldsReadOnly}
-                  className={`h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
+                  className={`h-14 px-4 border-2 border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-0 outline-none ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
               </div>
             </div>
