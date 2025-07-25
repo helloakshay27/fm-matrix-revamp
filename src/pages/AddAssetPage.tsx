@@ -416,6 +416,8 @@ const removeFile = (category, index) => {
   }));
 };
 
+  const [meterUnitTypes, setMeterUnitTypes] = useState<Array<{ id: number; unit_name: string }>>([]);
+  const [loadingUnitTypes, setLoadingUnitTypes] = useState(false);
   const [consumptionMeasureFields, setConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
   const [nonConsumptionMeasureFields, setNonConsumptionMeasureFields] = useState<MeterMeasureField[]>([]);
   const [customFields, setCustomFields] = useState({
@@ -803,13 +805,29 @@ const [attachments, setAttachments] = useState({
     fetchSubgroups(groupId);
   };
 
-  // Fetch groups on component mount
+  // Fetch groups and other data on component mount
   useEffect(() => {
     fetchGroups();
     fetchVendors();
     fetchDepartments();
     fetchUsers();
+    fetchMeterUnitTypes();
   }, []);
+  
+  // Fetch meter unit types
+  const fetchMeterUnitTypes = async () => {
+    try {
+      setLoadingUnitTypes(true);
+      const response = await apiClient.get(`${API_CONFIG.BASE_URL}/pms/meter_types/meter_unit_types.json`, {
+        headers: { Authorization: getAuthHeader() }
+      });
+      setMeterUnitTypes(response.data);
+    } catch (error) {
+      console.error('Error fetching meter unit types:', error);
+    } finally {
+      setLoadingUnitTypes(false);
+    }
+  };
 
   // Fetch parent meters when Sub Meter is selected
   useEffect(() => {
@@ -1433,7 +1451,24 @@ const hasFiles = () => {
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <RadioGroup
               value={selectedAssetCategory}
-              onValueChange={setSelectedAssetCategory}
+              onValueChange={(category) => {
+                setSelectedAssetCategory(category);
+                // handleFieldChange('asset_category', category);
+                handleExtraFieldChange(
+                  'asset_category',
+                  category,
+                  'text',
+                  'basicIdentification',
+                  'Asset Category'
+                );
+                // Reset form data when category changes
+                setFormData(prevData => ({
+                  ...prevData,
+                  asset_category: category,
+                  name: '',
+                  asset_number: '',
+                }));
+              }}
               className="contents"
             >
               {[
@@ -1444,9 +1479,10 @@ const hasFiles = () => {
                 'Furniture & Fixtures',
                 'IT Equipment',
                 'Machinery & Equipment',
-                'Tools & Instruments'
+                'Tools & Instruments',
+                'Meter'
               ].map((category) => (
-                <div key={category} className="flex flex-col items-center space-y-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer min-w-[120px]">
+                <div key={category} className="flex flex-col items-center space-y-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer min-w-[80px]">
                   <RadioGroupItem
                     value={category}
                     id={category}
@@ -1454,9 +1490,9 @@ const hasFiles = () => {
                   />
                   <label
                     htmlFor={category}
-                    className="text-xs sm:text-sm font-medium cursor-pointer text-center leading-tight"
+                    className="text-xs sm:text-sm font-medium cursor-pointer text-center leading-tight whitespace-pre-line"
                   >
-                    {category}
+                    {category.split(' & ').join('\n').split(' ').join('\n')}
                   </label>
                 </div>
               ))}
@@ -5045,7 +5081,7 @@ const hasFiles = () => {
       {/* Conditional Sections - Show only for specific asset categories */}
       {(selectedAssetCategory === 'Furniture & Fixtures' ||
         selectedAssetCategory === 'IT Equipment' ||
-        selectedAssetCategory === 'Machinery & Equipment' ||
+        selectedAssetCategory === 'Machinery & Equipment' || selectedAssetCategory === 'Meter' ||
         selectedAssetCategory === 'Tools & Instruments') && (
           <>
             {/* Location Details */}
@@ -5058,16 +5094,6 @@ const hasFiles = () => {
                   LOCATION DETAILS
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openCustomFieldModal('locationDetails');
-                    }}
-                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Custom Field
-                  </button> */}
                   {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </div>
               </div>
@@ -5620,7 +5646,7 @@ const hasFiles = () => {
             )}
 
             {/* Meter Details */}
-            {selectedAssetCategory !== 'Tools & Instruments' && selectedAssetCategory !== 'IT Equipment' && (
+            {selectedAssetCategory !== 'Tools & Instruments' && selectedAssetCategory !== 'Furniture & Fixtures' && selectedAssetCategory !== 'IT Equipment' && (
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
                   <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
@@ -5760,6 +5786,8 @@ const hasFiles = () => {
                         }
                         onAddField={() => addMeterMeasureField('consumption')}
                         onRemoveField={(id) => removeMeterMeasureField('consumption', id)}
+                        unitTypes={meterUnitTypes}
+                        loadingUnitTypes={loadingUnitTypes}
                       />
                       <MeterMeasureFields
                         title="NON CONSUMPTION METER MEASURE"
@@ -5770,6 +5798,8 @@ const hasFiles = () => {
                         }
                         onAddField={() => addMeterMeasureField('nonConsumption')}
                         onRemoveField={(id) => removeMeterMeasureField('nonConsumption', id)}
+                        unitTypes={meterUnitTypes}
+                        loadingUnitTypes={loadingUnitTypes}
                       />
                     </>
                   )}
@@ -5784,6 +5814,8 @@ const hasFiles = () => {
                       }
                       onAddField={() => addMeterMeasureField('nonConsumption')}
                       onRemoveField={(id) => removeMeterMeasureField('nonConsumption', id)}
+                      unitTypes={meterUnitTypes}
+                      loadingUnitTypes={loadingUnitTypes}
                     />
                   )}
                 </div>}
@@ -6105,6 +6137,7 @@ const hasFiles = () => {
                           if (allocationBasedOn === 'department') {
                             setSelectedDepartmentIds(value);
                             handleArrayFieldChange('allocation_ids', value);
+                            
                           } else {
                             setSelectedUserIds(value);
                             handleArrayFieldChange('allocation_ids', value);
@@ -6175,7 +6208,10 @@ const hasFiles = () => {
                       label="Vendor Name"
                       displayEmpty
                       value={selectedLoanedVendorId}
-                      onChange={(e) => setSelectedLoanedVendorId(e.target.value)}
+                      onChange={(e) => {setSelectedLoanedVendorId(e.target.value);
+                         handleArrayFieldChange('loaned_from_vendor_id', e.target.value);}
+                            
+                      }
                       sx={fieldStyles}
                       required
                       disabled={vendorsLoading}
@@ -6194,12 +6230,17 @@ const hasFiles = () => {
                     shrink: true
                   }} InputProps={{
                     sx: fieldStyles
-                  }} />
+                  }}
+                  onChange={(e) => handleArrayFieldChange('agreement_from_date', e.target.value)}
+                  />
                   <TextField required label="Agreement End Date*" placeholder="dd/mm/yyyy" name="agreementEndDate" type="date" fullWidth variant="outlined" InputLabelProps={{
                     shrink: true
                   }} InputProps={{
                     sx: fieldStyles
-                  }} />
+                  }}
+                  onChange={(e) => handleArrayFieldChange('agreement_to_date', e.target.value)}
+                  
+                  />
                 </div>
               </div>}
             </div>
@@ -6229,8 +6270,9 @@ const hasFiles = () => {
                         displayEmpty
                         value={selectedAmcVendorId}
                         onChange={(e) => {
-                          setSelectedAmcVendorId(e.target.value);
-                          handleNestedFieldChange('amc_detail', 'supplier_id', e.target.value);
+                          const value = e.target.value;
+                          setSelectedAmcVendorId(value);
+                          handleNestedFieldChange('amc_detail', 'supplier_id', Number(value));
                         }}
                         sx={fieldStyles}
                         disabled={vendorsLoading}
@@ -6244,7 +6286,7 @@ const hasFiles = () => {
                           </MenuItem>
                         ))}
                       </MuiSelect>
-                    </FormControl>
+                    </FormControl>  
 
                     <TextField label="Start Date" placeholder="dd/mm/yyyy" name="amcStartDate" type="date" fullWidth variant="outlined" InputLabelProps={{
                       shrink: true
@@ -6293,7 +6335,7 @@ const hasFiles = () => {
                       sx: fieldStyles
                     }}
 
-                      onChange={e => handleNestedFieldChange('amc_detail', 'no_of_visits', e.target.value)}
+                      onChange={e => handleNestedFieldChange('amc_detail', 'no_of_visits', Number(e.target.value))}
 
                     />
                   </div>
@@ -6305,7 +6347,7 @@ const hasFiles = () => {
                     }} InputProps={{
                       sx: fieldStyles
                     }}
-                      onChange={e => handleNestedFieldChange('amc_detail', 'amc_cost', e.target.value)}
+                      onChange={e => handleNestedFieldChange('amc_detail', 'amc_cost', Number(e.target.value))}
 
                     />
                   </div>
@@ -6383,7 +6425,7 @@ const hasFiles = () => {
         )}
 
       {/* Category-Specific Attachments */}
-      {selectedAssetCategory === 'Furniture & Fixtures' && (
+      {/* {selectedAssetCategory === 'Furniture & Fixtures' && (
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-4">
@@ -6477,9 +6519,9 @@ const hasFiles = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
-      {selectedAssetCategory === 'Machinery & Equipment' && (
+      {/* {selectedAssetCategory === 'Machinery & Equipment' && (
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-4">
@@ -6525,9 +6567,9 @@ const hasFiles = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
-      {selectedAssetCategory === 'Tools & Instruments' && (
+      {/* {selectedAssetCategory === 'Tools & Instruments' && (
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-4">
@@ -6573,7 +6615,7 @@ const hasFiles = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
