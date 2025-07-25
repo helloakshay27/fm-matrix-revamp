@@ -683,8 +683,8 @@ const UpdateTicketsPage: React.FC = () => {
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Feedback: Tap Faulty, Wc Choked, Hand Dryer Faulty, Tissue Paper Missing"
-                rows={3}
-                className="min-h-[100px] border-gray-300 focus:border-primary focus:ring-primary"
+                rows={1}
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
               />
             </div>
 
