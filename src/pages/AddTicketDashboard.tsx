@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Paperclip, X, User } from 'lucide-react';
+import { ArrowLeft, Upload, Paperclip, X, User, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 
@@ -405,36 +405,36 @@ export const AddTicketDashboard = () => {
         {/* Section 2: Tickets Type */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
-            <h2 className="text-sm font-medium text-gray-700 flex items-center">
-              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">2</span>
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center mr-3">
+                <Ticket size={16} />
+              </span>
               Tickets Type
             </h2>
           </div>
           <div className="p-6 space-y-6">
-            {/* Ticket Type Dropdown */}
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Select value={ticketType} onValueChange={setTicketType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select ticket type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="request">Request</SelectItem>
-                    <SelectItem value="complaint">Complaint</SelectItem>
-                    <SelectItem value="suggestion">Suggestion</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Radio buttons for ticket type */}
+            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="request" id="request" className="text-red-500 border-red-500" />
+                <label htmlFor="request" className="text-sm font-medium">Request</label>
               </div>
-              <div></div>
-              <div></div>
-            </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="complaint" id="complaint" className="text-red-500 border-red-500" />
+                <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="suggestion" id="suggestion" className="text-red-500 border-red-500" />
+                <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
+              </div>
+            </RadioGroup>
 
             {/* Row 1: Category Type, Sub Category Type, Assigned To */}
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category Type*</label>
                 <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
                     <SelectValue placeholder={loadingCategories ? "Loading..." : "Select category"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -453,7 +453,7 @@ export const AddTicketDashboard = () => {
                   onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
                   disabled={loadingSubcategories || !formData.categoryType}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
                     <SelectValue placeholder={
                       loadingSubcategories ? "Loading..." : 
                       !formData.categoryType ? "Select Category First" : 
@@ -472,7 +472,7 @@ export const AddTicketDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
                 <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
                     <SelectValue placeholder="Select engineer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -491,7 +491,7 @@ export const AddTicketDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
                 <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -506,7 +506,7 @@ export const AddTicketDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
                 <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -524,18 +524,19 @@ export const AddTicketDashboard = () => {
                   placeholder="Enter reference number"
                   value={formData.referenceNumber}
                   onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+                  className="h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0"
                 />
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Descriptions</label>
               <Textarea
                 placeholder="Enter description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="min-h-[100px] resize-y"
+                className="min-h-[120px] resize-y border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0"
               />
             </div>
           </div>
