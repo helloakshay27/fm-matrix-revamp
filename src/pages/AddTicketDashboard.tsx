@@ -382,7 +382,7 @@ export const AddTicketDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
                 <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
                     <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
                   </SelectTrigger>
                   <SelectContent>
