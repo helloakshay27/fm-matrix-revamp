@@ -94,7 +94,7 @@ const UpdateTicketsPage: React.FC = () => {
     adminPriority: '',
     softClose: '',
     refNumber: '',
-    issueRelatedTo: { project: false, pm: false },
+    issueRelatedTo: '',
     associatedTo: { asset: false, service: false },
     comments: '',
     cost: '',
@@ -163,7 +163,8 @@ const UpdateTicketsPage: React.FC = () => {
         subCategoryType: ticketData.sub_category_type || '',
         assignTo: ticketData.assigned_to || '',
         mode: ticketData.complaint_mode || '',
-        responsiblePerson: ticketData.responsible_person || ''
+        responsiblePerson: ticketData.responsible_person || '',
+        issueRelatedTo: ticketData.issue_related_to || ''
       }));
 
       // Set review date if available
@@ -732,9 +733,9 @@ const UpdateTicketsPage: React.FC = () => {
                   <input
                     type="radio"
                     name="issueRelatedTo"
-                    value="project"
-                    checked={formData.issueRelatedTo.project}
-                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
+                    value="Projects"
+                    checked={formData.issueRelatedTo === 'Projects'}
+                    onChange={(e) => handleInputChange('issueRelatedTo', e.target.value)}
                     className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">Project</span>
@@ -743,9 +744,9 @@ const UpdateTicketsPage: React.FC = () => {
                   <input
                     type="radio"
                     name="issueRelatedTo"
-                    value="fm"
-                    checked={formData.issueRelatedTo.pm}
-                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
+                    value="FM"
+                    checked={formData.issueRelatedTo === 'FM'}
+                    onChange={(e) => handleInputChange('issueRelatedTo', e.target.value)}
                     className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">FM</span>
