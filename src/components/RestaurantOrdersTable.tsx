@@ -5,12 +5,13 @@ import { Download, Eye } from "lucide-react";
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { useParams } from 'react-router-dom';
-import { exportOrders, fetchRestaurantOrders } from '@/store/slices/f&bSlice';
+import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 
 interface RestaurantOrder {
   id: number;
+  meeting_room: string;
   created_at: string;
   created_by: string;
   details_url: string;
@@ -18,6 +19,7 @@ interface RestaurantOrder {
   payment_status: string;
   payment_status_class: string;
   restaurant_name: string;
+  restaurant_id: number;
   status_name: string;
   total_amount: number;
 }
@@ -27,14 +29,28 @@ export const RestaurantOrdersTable = () => {
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
-  const { id } = useParams();
+  // const { id } = useParams();
 
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
+  const [restoId, setRestoId] = useState()
+
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const response = await dispatch(fetchRestaurants({ baseUrl, token })).unwrap();
+        setRestoId(response[0].id)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchRestaurant()
+  }, [])
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(id) })).unwrap();
+        const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
         setOrders(response);
       } catch (error) {
         console.log(error);
@@ -42,11 +58,11 @@ export const RestaurantOrdersTable = () => {
     };
 
     fetchOrders();
-  }, [dispatch, id, baseUrl, token]);
+  }, [dispatch, restoId, baseUrl, token]);
 
   const handleExport = async () => {
     try {
-      const response = await dispatch(exportOrders({ baseUrl, token, id: Number(id) })).unwrap();
+      const response = await dispatch(exportOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
       const blob = new Blob([response], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
@@ -68,7 +84,8 @@ export const RestaurantOrdersTable = () => {
   };
 
   const handleViewOrder = (order: RestaurantOrder) => {
-    navigate(`/vas/fnb/details/${id}/restaurant-order/${order.id}`);
+    const restoId = orders.find((o) => o.id === order.id)?.restaurant_id;
+    navigate(`/vas/fnb/details/${restoId}/restaurant-order/${order.id}`);
   };
 
   const columns: ColumnConfig[] = [
@@ -81,6 +98,12 @@ export const RestaurantOrdersTable = () => {
     {
       key: 'restaurant_name',
       label: 'Restaurant',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'meeting_room',
+      label: 'Meeting Room',
       sortable: true,
       draggable: true,
     },
@@ -128,6 +151,8 @@ export const RestaurantOrdersTable = () => {
         return item.id || '';
       case 'restaurant_name':
         return item.restaurant_name || '';
+      case 'meeting_room':
+        return item.meeting_room || '';
       case 'created_at':
         return item.created_at || '';
       case 'created_by':
@@ -193,7 +218,7 @@ export const RestaurantOrdersTable = () => {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="p-[30px]">
       <EnhancedTable
         data={orders}
         columns={columns}

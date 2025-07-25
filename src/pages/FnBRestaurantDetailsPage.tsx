@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TextField } from '@mui/material';
@@ -51,10 +51,10 @@ type DaySchedule = {
   last_hour: number;
   last_min: number;
   day_name: string;
-  start_time: string;         // format: "HH:mm"
-  end_time: string;           // format: "HH:mm"
-  break_start_time: string;   // format: "HH:mm"
-  break_end_time: string;     // format: "HH:mm"
+  start_time: string;
+  end_time: string;
+  break_start_time: string;
+  break_end_time: string;
   last_order_time: string;
 };
 
@@ -94,11 +94,11 @@ const mapRestaurantData = (apiData: any): {
     id: apiData.id,
     name: apiData.name,
     cuisines: apiData.cuisines,
-    cost_for_two: apiData.cost_for_two.toString(),
+    cost_for_two: apiData.cost_for_two,
     address: apiData.address,
-    delivery_time: apiData.delivery_time.toString(),
+    delivery_time: apiData.delivery_time,
     phoneNumber: apiData.contact1,
-    cancelBeforeSchedule: apiData.cancel_before.toString(),
+    cancelBeforeSchedule: apiData.cancel_before,
     bookingAllowed: !!apiData.booking_allowed,
     closingMessage: apiData.booking_closed || apiData.disclaimer || '-',
     openDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
@@ -109,56 +109,77 @@ const mapRestaurantData = (apiData: any): {
     active: !!apiData.status,
   };
 
-  const schedule: DaySchedule[] = apiData.restaurant_operations;
-
-  console.log(schedule)
-
-  const coverImages = apiData.cover_images || [];
-  const menuImages = apiData.menu_images || [];
-  const mainImages = apiData.main_images || [];
-  const blockedDays = apiData.blocked_days || [];
+  const schedule: DaySchedule[] = apiData.restaurant_operations || [];
+  const coverImages: string[] = apiData.cover_images || [];
+  const menuImages: string[] = apiData.menu_images || [];
+  const mainImages: string[] = apiData.main_images || [];
+  const blockedDays: BlockedDay[] = apiData.blocked_days || [];
 
   return { restaurant, schedule, coverImages, menuImages, mainImages, blockedDays };
 };
 
 export const FnBRestaurantDetailsPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
-  const restaurant = mockRestaurants.find(r => r.id === parseInt(id || '80'));
+  const restaurant = mockRestaurants.find((r) => r.id === parseInt(id || '80'));
   const [formData, setFormData] = useState<Restaurant>(restaurant || mockRestaurants[0]);
   const [scheduleData, setScheduleData] = useState<DaySchedule[]>([]);
-  const [coverImages, setCoverImages] = useState<string[]>([]);
-  const [menuImages, setMenuImages] = useState<string[]>([]);
-  const [mainImages, setMainImages] = useState<string[]>([]);
   const [blockedDays, setBlockedDays] = useState<BlockedDay[]>([]);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [menuImages, setMenuImages] = useState<File[]>([]);
+  const [mainImages, setMainImages] = useState<File[]>([]);
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+  const [menuImagesPreview, setMenuImagesPreview] = useState<string[]>([]);
+  const [mainImagesPreview, setMainImagesPreview] = useState<string[]>([]);
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const menuInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileClick = (ref: React.RefObject<HTMLInputElement>) => {
-    if (ref.current) {
-      ref.current.click();
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setCoverImage(file);
+      setCoverImagePreview(imageUrl);
+      console.log('Cover image selected:', file.name);
+    }
+  };
+
+  const handleMenuChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const imageUrls = files.map((file) => URL.createObjectURL(file));
+      setMenuImages((prev) => [...prev, ...files]);
+      setMenuImagesPreview((prev) => [...prev, ...imageUrls]);
+      files.forEach((file) => console.log('Menu image selected:', file.name));
+    }
+  };
+
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const imageUrls = files.map((file) => URL.createObjectURL(file));
+      setMainImages((prev) => [...prev, ...files]);
+      setMainImagesPreview((prev) => [...prev, ...imageUrls]);
+      files.forEach((file) => console.log('Gallery image selected:', file.name));
     }
   };
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        // Use API instead of Redux dispatch for simplicity
         const response = await dispatch(fetchRestaurantDetails({ baseUrl, token, id })).unwrap();
         const { restaurant, schedule, coverImages, menuImages, mainImages, blockedDays } = mapRestaurantData(response);
-        console.log(restaurant)
         setFormData(restaurant);
         setScheduleData(schedule);
-        setCoverImages(coverImages);
-        setMenuImages(menuImages);
-        setMainImages(mainImages);
+        setCoverImagePreview(coverImages[0]?.document || null); // Use first image as cover preview
+        setMenuImagesPreview(menuImages.map((img) => img?.document));
+        setMainImagesPreview(mainImages.map((img) => img?.document));
         setBlockedDays(blockedDays);
       } catch (error) {
         console.log(error);
@@ -169,54 +190,50 @@ export const FnBRestaurantDetailsPage = () => {
     fetchDetails();
   }, [dispatch, baseUrl, token, id]);
 
-  console.log(scheduleData)
-
   const handleInputChange = (field: keyof Restaurant, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleScheduleChange = (dayIndex: number, field: keyof DaySchedule, value: any) => {
-    setScheduleData(prev => prev.map((day, index) =>
-      index === dayIndex ? { ...day, [field]: value } : day
-    ));
+    setScheduleData((prev) =>
+      prev.map((day, index) => (index === dayIndex ? { ...day, [field]: value } : day))
+    );
   };
 
   const handleSave = async () => {
     try {
       const dataToSubmit = new FormData();
 
-      // Append restaurant details
       dataToSubmit.append('restaurant[name]', formData.name);
       dataToSubmit.append('restaurant[cost_for_two]', formData.cost_for_two);
       dataToSubmit.append('restaurant[contact1]', formData.phoneNumber);
-      dataToSubmit.append('restaurant[contact2]', ''); // Not in UI, set as empty
-      dataToSubmit.append('restaurant[contact3]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[contact2]', '');
+      dataToSubmit.append('restaurant[contact3]', '');
       dataToSubmit.append('restaurant[delivery_time]', formData.delivery_time);
       dataToSubmit.append('restaurant[cuisines]', formData.cuisines);
-      dataToSubmit.append('restaurant[alcohol]', ''); // Not in UI, set as empty
-      dataToSubmit.append('restaurant[wheelchair]', ''); // Not in UI, set as empty
-      dataToSubmit.append('restaurant[cod]', ''); // Not in UI, set as empty
-      dataToSubmit.append('restaurant[pure_veg]', 'false'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[alcohol]', '');
+      dataToSubmit.append('restaurant[wheelchair]', '');
+      dataToSubmit.append('restaurant[cod]', '');
+      dataToSubmit.append('restaurant[pure_veg]', 'false');
       dataToSubmit.append('restaurant[address]', formData.address);
-      dataToSubmit.append('restaurant[terms]', ''); // Not in UI, set as empty
-      dataToSubmit.append('restaurant[disclaimer]', formData.closingMessage); // Map closingMessage to disclaimer
+      dataToSubmit.append('restaurant[terms]', '');
+      dataToSubmit.append('restaurant[disclaimer]', formData.closingMessage);
       dataToSubmit.append('restaurant[booking_closed]', formData.closingMessage);
-      dataToSubmit.append('restaurant[min_people]', '0'); // Not in UI, set as default
-      dataToSubmit.append('restaurant[max_people]', '0'); // Not in UI, set as default
+      dataToSubmit.append('restaurant[min_people]', '0');
+      dataToSubmit.append('restaurant[max_people]', '0');
       dataToSubmit.append('restaurant[cancel_before]', formData.cancelBeforeSchedule);
-      dataToSubmit.append('restaurant[booking_not_allowed]', ''); // Not in UI, set as empty
-      dataToSubmit.append('restaurant[gst]', '0'); // Not in UI, set as default
-      dataToSubmit.append('restaurant[delivery_charge]', '0'); // Not in UI, set as default
-      dataToSubmit.append('restaurant[min_amount]', '0'); // Not in UI, set as default
-      dataToSubmit.append('restaurant[order_not_allowed]', ''); // Not in UI, set as empty
+      dataToSubmit.append('restaurant[booking_not_allowed]', '');
+      dataToSubmit.append('restaurant[gst]', '0');
+      dataToSubmit.append('restaurant[delivery_charge]', '0');
+      dataToSubmit.append('restaurant[min_amount]', '0');
+      dataToSubmit.append('restaurant[order_not_allowed]', '');
 
-      // Attach files (empty since UI doesn't support uploads)
-      coverImages.forEach((file) => {
-        dataToSubmit.append('restaurant[cover_images][]', file);
-      });
+      if (coverImage) {
+        dataToSubmit.append('restaurant[cover_images][]', coverImage);
+      }
       menuImages.forEach((file) => {
         dataToSubmit.append('restaurant[menu_images][]', file);
       });
@@ -224,40 +241,36 @@ export const FnBRestaurantDetailsPage = () => {
         dataToSubmit.append('restaurant[main_images][]', file);
       });
 
-      // Append only enabled schedules
-      scheduleData
-        .forEach((item, index) => {
-          const [startHour, startMin] = item.start_time.split(':');
-          const [endHour, endMin] = item.end_time.split(':');
-          const [breakStartHour, breakStartMin] = item.break_start_time.split(':');
-          const [breakEndHour, breakEndMin] = item.break_end_time.split(':');
-          const [lastHour, lastMin] = item.last_order_time.split(':');
+      scheduleData.forEach((item, index) => {
+        const [startHour, startMin] = item.start_time.split(':');
+        const [endHour, endMin] = item.end_time.split(':');
+        const [breakStartHour, breakStartMin] = item.break_start_time.split(':');
+        const [breakEndHour, breakEndMin] = item.break_end_time.split(':');
+        const [lastHour, lastMin] = item.last_order_time.split(':');
 
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][id]`, item.id.toString());
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, item.is_open ? '1' : '0');
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][dayofweek]`, item.dayofweek.toLowerCase());
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_hour]`, startHour);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_min]`, startMin);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_hour]`, endHour);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_min]`, endMin);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_hour]`, breakStartHour);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_min]`, breakStartMin);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_hour]`, breakEndHour);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_min]`, breakEndMin);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][booking_allowed]`, item.booking_allowed ? '1' : '0');
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][order_allowed]`, item.order_allowed ? '1' : '0');
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_hour]`, lastHour);
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_min]`, lastMin);
-        });
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][id]`, item.id.toString());
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, item.is_open ? '1' : '0');
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][dayofweek]`, item.dayofweek.toLowerCase());
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_hour]`, startHour);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_min]`, startMin);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_hour]`, endHour);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][end_min]`, endMin);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_hour]`, breakStartHour);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_start_min]`, breakStartMin);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_hour]`, breakEndHour);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][break_end_min]`, breakEndMin);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][booking_allowed]`, item.booking_allowed ? '1' : '0');
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][order_allowed]`, item.order_allowed ? '1' : '0');
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_hour]`, lastHour);
+        dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_min]`, lastMin);
+      });
 
-      // Append blocked days
       blockedDays.forEach((day, index) => {
         dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][date]`, day.date);
         dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][order_blocked]`, day.orderBlocked ? '1' : '0');
         dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][booking_blocked]`, day.bookingBlocked ? '1' : '0');
       });
 
-      // Make API call to update restaurant
       await dispatch(editRestaurant({ token, baseUrl, id, data: dataToSubmit })).unwrap();
 
       toast.success('Restaurant details saved successfully!');
@@ -309,41 +322,55 @@ export const FnBRestaurantDetailsPage = () => {
   return (
     <div className="p-6">
       <Tabs defaultValue="restaurant" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 bg-[#FAFAFA] gap-1 sm:gap-2 p-1 h-auto" style={{ border: "1px solid #D9D9D9" }}>
-          <TabsTrigger value="restaurant" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 bg-[#FAFAFA] gap-1 sm:gap-2 p-1 h-auto" style={{ border: '1px solid #D9D9D9' }}>
+          <TabsTrigger
+            value="restaurant"
+            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+          >
             Restaurant
           </TabsTrigger>
-          <TabsTrigger value="status-setup" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+          <TabsTrigger
+            value="status-setup"
+            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+          >
             Status
           </TabsTrigger>
-          <TabsTrigger value="categories-setup" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+          <TabsTrigger
+            value="categories-setup"
+            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+          >
             Categories
           </TabsTrigger>
-          <TabsTrigger value="sub-categories-setup" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+          <TabsTrigger
+            value="sub-categories-setup"
+            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+          >
             Sub Categories
           </TabsTrigger>
-          <TabsTrigger value="restaurant-menu" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+          <TabsTrigger
+            value="restaurant-menu"
+            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+          >
             Menu
           </TabsTrigger>
-          <TabsTrigger value="restaurant-bookings" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
+          <TabsTrigger
+            value="restaurant-bookings"
+            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+          >
             Table Bookings
-          </TabsTrigger>
-          <TabsTrigger value="restaurant-order" className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3">
-            Orders
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="restaurant" className="mt-6">
           <div className="space-y-6">
             <Card>
-              <CardHeader className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}>
+              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
                 <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
                   <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">1</span>
                   BASIC DETAIL
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
                 <div>
                   <TextField
                     label="Restaurant Name"
@@ -408,15 +435,13 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}>
+              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
                 <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
                   <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">2</span>
                   RESTAURANT SCHEDULE
                 </CardTitle>
               </CardHeader>
-              <CardContent className="py-[31px] bg-[#F6F7F7]"
-                style={{ border: "1px solid #D9D9D9" }} >
+              <CardContent className="py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
@@ -452,8 +477,10 @@ export const FnBRestaurantDetailsPage = () => {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {timeOptions.map(time => (
-                                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                                {timeOptions.map((time) => (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -463,12 +490,14 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.end_time}
                               onValueChange={(value) => handleScheduleChange(index, 'end_time', value)}
                             >
-                              <SelectTrigger className="w-20  bg-transparent">
+                              <SelectTrigger className="w-20 bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {timeOptions.map(time => (
-                                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                                {timeOptions.map((time) => (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -478,12 +507,14 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.break_start_time}
                               onValueChange={(value) => handleScheduleChange(index, 'break_start_time', value)}
                             >
-                              <SelectTrigger className="w-20  bg-transparent">
+                              <SelectTrigger className="w-20 bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {timeOptions.map(time => (
-                                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                                {timeOptions.map((time) => (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -493,12 +524,14 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.break_end_time}
                               onValueChange={(value) => handleScheduleChange(index, 'break_end_time', value)}
                             >
-                              <SelectTrigger className="w-20  bg-transparent">
+                              <SelectTrigger className="w-20 bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {timeOptions.map(time => (
-                                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                                {timeOptions.map((time) => (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -520,12 +553,14 @@ export const FnBRestaurantDetailsPage = () => {
                               value={dayData.last_order_time}
                               onValueChange={(value) => handleScheduleChange(index, 'last_order_time', value)}
                             >
-                              <SelectTrigger className="w-20  bg-transparent">
+                              <SelectTrigger className="w-20 bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {timeOptions.map(time => (
-                                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                                {timeOptions.map((time) => (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -539,14 +574,13 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}>
+              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
                 <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
                   <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">3</span>
                   OTHER INFO
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
                 <div>
                   <TextField
                     label="Phone Number"
@@ -560,7 +594,9 @@ export const FnBRestaurantDetailsPage = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="booking-allowed" className="text-sm font-medium">Booking Allowed</Label>
+                  <Label htmlFor="booking-allowed" className="text-sm font-medium">
+                    Booking Allowed
+                  </Label>
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-sm">No</span>
                     <div
@@ -604,95 +640,108 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}>
+              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
                 <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
                   <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">4</span>
                   COVER
                 </CardTitle>
               </CardHeader>
-              <CardContent className='py-[31px] bg-[#F6F7F7]' style={{ border: "1px solid #D9D9D9" }}>
+              <CardContent className="py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <p className="text-gray-500">Cover image upload functionality would be implemented here</p>
-                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                  <p className="text-gray-500">Upload a cover image for the restaurant</p>
+                  <Button
+                    className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    onClick={() => coverInputRef.current?.click()}
+                  >
                     Upload Cover Image
                   </Button>
                   <input
                     type="file"
+                    accept="image/*"
                     ref={coverInputRef}
                     className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        // handle upload logic here
-                        console.log('Cover image selected:', file.name);
-                      }
-                    }}
+                    onChange={handleCoverChange}
                   />
                 </div>
+                {coverImagePreview && (
+                  <div className="mt-4">
+                    <img src={coverImagePreview} alt="Cover Preview" className="w-24 h-24" />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}>
+              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
                 <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
                   <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">5</span>
                   MENU
                 </CardTitle>
               </CardHeader>
-              <CardContent className='py-[31px] bg-[#F6F7F7]' style={{ border: "1px solid #D9D9D9" }}>
+              <CardContent className="py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <p className="text-gray-500">Menu management functionality would be implemented here</p>
-                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
-                    Add Menu Items
+                  <p className="text-gray-500">Upload menu images for the restaurant</p>
+                  <Button
+                    className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    onClick={() => menuInputRef.current?.click()}
+                  >
+                    Add Menu Images
                   </Button>
                   <input
                     type="file"
-                    ref={coverInputRef}
+                    accept="image/*"
+                    multiple
+                    ref={menuInputRef}
                     className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        // handle upload logic here
-                        console.log('Cover image selected:', file.name);
-                      }
-                    }}
+                    onChange={handleMenuChange}
                   />
                 </div>
+                {menuImagesPreview.length > 0 && (
+                  <div className="mt-4 flex items-center gap-4">
+                    {menuImagesPreview.map((url, index) => (
+                      <img key={index} src={url || url.document} alt={`Menu Preview ${index}`} className="w-24 h-24" />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}>
+              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
                 <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#C72030]">
                   <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#C72030] rounded-full flex items-center justify-center text-md font-bold">6</span>
                   GALLERY
                 </CardTitle>
               </CardHeader>
-              <CardContent className='py-[31px] bg-[#F6F7F7]' style={{ border: "1px solid #D9D9D9" }}>
+              <CardContent className="py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <p className="text-gray-500">Gallery management functionality would be implemented here</p>
-                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                  <p className="text-gray-500">Upload gallery images for the restaurant</p>
+                  <Button
+                    className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    onClick={() => galleryInputRef.current?.click()}
+                  >
                     Add Gallery Images
                   </Button>
                   <input
                     type="file"
-                    ref={coverInputRef}
+                    accept="image/*"
+                    multiple
+                    ref={galleryInputRef}
                     className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        // handle upload logic here
-                        console.log('Cover image selected:', file.name);
-                      }
-                    }}
+                    onChange={handleGalleryChange}
                   />
                 </div>
+                {mainImagesPreview.length > 0 && (
+                  <div className="mt-4 flex items-center gap-4">
+                    {mainImagesPreview.map((url, index) => (
+                      <img key={index} src={url || url.document} alt={`Gallery Preview ${index}`} className="w-24 h-24" />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-            <div className='flex justify-end'>
+
+            <div className="flex justify-end">
               <Button
                 onClick={handleSave}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
@@ -706,43 +755,31 @@ export const FnBRestaurantDetailsPage = () => {
 
         <TabsContent value="status-setup" className="mt-6">
           <div className="space-y-4">
-            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT STATUS</h2> */}
             <StatusSetupTable />
           </div>
         </TabsContent>
 
         <TabsContent value="categories-setup" className="mt-6">
           <div className="space-y-4">
-            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT CATEGORIES</h2> */}
             <CategoriesSetupTable />
           </div>
         </TabsContent>
 
         <TabsContent value="sub-categories-setup" className="mt-6">
           <div className="space-y-4">
-            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT SUB CATEGORIES</h2> */}
             <SubCategoriesSetupTable />
           </div>
         </TabsContent>
 
         <TabsContent value="restaurant-menu" className="mt-6">
           <div className="space-y-4">
-            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT MENU</h2> */}
             <RestaurantMenuTable />
           </div>
         </TabsContent>
 
         <TabsContent value="restaurant-bookings" className="mt-6">
           <div className="space-y-4">
-            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">TABLE BOOKING</h2> */}
             <RestaurantBookingsTable />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="restaurant-order" className="mt-6">
-          <div className="space-y-4">
-            {/* <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT ORDERS</h2> */}
-            <RestaurantOrdersTable />
           </div>
         </TabsContent>
       </Tabs>

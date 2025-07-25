@@ -55,6 +55,12 @@ import { AddIncidentPage } from './pages/AddIncidentPage';
 import { IncidentDetailsPage } from './pages/IncidentDetailsPage';
 import { EditIncidentDetailsPage } from './pages/EditIncidentDetailsPage';
 
+// Import new dashboard pages
+import { IncidentDashboard } from './pages/IncidentDashboard';
+import { PermitToWorkDashboard } from './pages/PermitToWorkDashboard';
+import { LeadDashboard } from './pages/LeadDashboard';
+import { EnergyDashboard } from './pages/EnergyDashboard';
+
 // Import Inventory pages
 import { InventoryDashboard } from './pages/InventoryDashboard';
 import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
@@ -104,12 +110,6 @@ import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
-
-// Import new dashboard pages
-import { IncidentDashboard } from './pages/IncidentDashboard';
-import { PermitToWorkDashboard } from './pages/PermitToWorkDashboard';
-import { LeadDashboard } from './pages/LeadDashboard';
-import { EnergyDashboard } from './pages/EnergyDashboard';
 
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
@@ -482,6 +482,8 @@ import { NewPasswordPage } from '@/pages/NewPasswordPage';
 import { LoginSuccessPage } from '@/pages/LoginSuccessPage';
 import { PasswordResetSuccessPage } from '@/pages/PasswordResetSuccessPage';
 import { isAuthenticated } from '@/utils/auth';
+import { BookingDetailsPage } from './pages/BookingDetailsPage';
+import { RestaurantOrdersTable } from './components/RestaurantOrdersTable';
 
 const queryClient = new QueryClient();
 
@@ -494,18 +496,18 @@ function App() {
             <Routes>
               {/* Login Route */}
 
-                <Route 
-              path="/login" 
-              element={
-                isAuthenticated() ? <Navigate to="/" replace /> : <LoginPage />
-              } 
-            />
-            <Route path="/otp-verification" element={<OTPVerificationPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/forgot-password-otp" element={<ForgotPasswordOTPPage />} />
-            <Route path="/new-password" element={<NewPasswordPage />} />
-            <Route path="/login-success" element={<LoginSuccessPage />} />
-            <Route path="/password-reset-success" element={<PasswordResetSuccessPage />} />
+              <Route
+                path="/login"
+                element={
+                  isAuthenticated() ? <Navigate to="/" replace /> : <LoginPage />
+                }
+              />
+              <Route path="/otp-verification" element={<OTPVerificationPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/forgot-password-otp" element={<ForgotPasswordOTPPage />} />
+              <Route path="/new-password" element={<NewPasswordPage />} />
+              <Route path="/login-success" element={<LoginSuccessPage />} />
+              <Route path="/password-reset-success" element={<PasswordResetSuccessPage />} />
 
               <Route path="/" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
                 <Route index element={<Index />} />
@@ -603,6 +605,13 @@ function App() {
                 <Route path="/safety/permit" element={<PermitToWorkDashboard />} />
                 <Route path="/safety/permit/add" element={<AddPermitPage />} />
                 <Route path="/safety/m-safe" element={<MSafeDashboard />} />
+                <Route path="/safety/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
+                <Route path="/safety/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
+                <Route path="/safety/training-list" element={<TrainingListDashboard />} />
+                <Route path="/safety/training-list/add" element={<AddTrainingRecordDashboard />} />
+                <Route path="/safety/training-list/:id" element={<TrainingRecordDetailsPage />} />
+                <Route path="/safety/training-list/edit/:id" element={<AddTrainingRecordDashboard />} />
+
                 <Route path="/safety/training-list" element={<TrainingListDashboard />} />
 
                 {/* CRM Routes */}
@@ -613,12 +622,6 @@ function App() {
 
                 {/* Security Routes */}
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
-                <Route path="/safety/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-                <Route path="/safety/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
-                <Route path="/safety/training-list" element={<TrainingListDashboard />} />
-                <Route path="/safety/training-list/add" element={<AddTrainingRecordDashboard />} />
-                <Route path="/safety/training-list/:id" element={<TrainingRecordDetailsPage />} />
-                <Route path="/safety/training-list/edit/:id" element={<AddTrainingRecordDashboard />} />
 
                 {/* Incident Routes */}
                 <Route path="/maintenance/incident" element={<IncidentListDashboard />} />
@@ -786,8 +789,8 @@ function App() {
                 <Route path="/security/vehicle/r-vehicles/in" element={<RVehiclesInDashboard />} />
                 <Route path="/security/vehicle/r-vehicles/out" element={<RVehiclesOutDashboard />} />
                 {/* Value Added Services Routes */}
-                <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
-                <Route path="/vas/fnb/add" element={<AddRestaurantPage />} />
+                <Route path="/vas/fnb" element={<RestaurantOrdersTable />} />
+                {/* <Route path="/vas/fnb/add" element={<AddRestaurantPage />} /> */}
                 <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
                 <Route path="/vas/fnb/details/:id/restaurant-menu/:mid" element={<ProductSetupDetailPage />} />
                 <Route path="/vas/fnb/restaurant-menu/edit/:id" element={<ProductEditPage />} />
@@ -806,9 +809,8 @@ function App() {
                 <Route path="/vas/tickets/discounts" element={<TicketDiscountsPage />} />
 
                 {/* Value Added Services Routes */}
-                <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
-                <Route path="/vas/fnb/add" element={<AddRestaurantPage />} />
-                <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
+                {/* <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} /> */}
+
                 <Route path="/vas/fnb/discounts" element={<FnBDiscountsPage />} />
                 <Route path="/vas/parking" element={<ParkingDashboard />} />
                 <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />
@@ -865,23 +867,24 @@ function App() {
                 {/* VAS Booking Routes */}
                 <Route path="/vas/booking/list" element={<BookingListDashboard />} />
                 <Route path="/vas/booking/add" element={<AddFacilityBookingPage />} />
+                <Route path="/vas/bookings/details/:id" element={<BookingDetailsPage />} />
                 <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
 
-               {/* Master Location Routes */}
-               <Route path="/master/location/building" element={<BuildingPage />} />
-               <Route path="/master/location/wing" element={<WingPage />} />
-               <Route path="/master/location/area" element={<AreaPage />} />
-               <Route path="/master/location/floor" element={<FloorPage />} />
-               <Route path="/master/location/unit" element={<UnitPage />} />
-               <Route path="/master/location/room" element={<RoomPage />} />
-               <Route path="/master/location/account" element={<LocationAccountPage />} />
+                {/* Master Location Routes */}
+                <Route path="/master/location/building" element={<BuildingPage />} />
+                <Route path="/master/location/wing" element={<WingPage />} />
+                <Route path="/master/location/area" element={<AreaPage />} />
+                <Route path="/master/location/floor" element={<FloorPage />} />
+                <Route path="/master/location/unit" element={<UnitPage />} />
+                <Route path="/master/location/room" element={<RoomPage />} />
+                <Route path="/master/location/account" element={<LocationAccountPage />} />
 
                 {/* Master User Routes */}
                 <Route path="/master/user/fm-users" element={<FMUserMasterDashboard />} />
                 <Route path="/master/user/fm-users/add" element={<AddFMUserPage />} />
-                 <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
-                 <Route path="/master/user/fm-users/view/:id" element={<ViewFMUserPage />} />
+                <Route path="/master/user/fm-users/edit/:id" element={<EditFMUserPage />} />
+                <Route path="/master/user/fm-users/view/:id" element={<ViewFMUserPage />} />
                 <Route path="/master/user/occupant-users" element={<OccupantUserMasterDashboard />} />
 
                 {/* Material Master Route */}
@@ -912,6 +915,9 @@ function App() {
                 <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
                 <Route path="/settings/safety/incident" element={<IncidentSetupDashboard />} />
                 <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
+                <Route path="/settings/vas/fnb/setup" element={<FnBRestaurantDashboard />} />
+                <Route path="/settings/vas/fnb/add" element={<AddRestaurantPage />} />
+                <Route path="/settings/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
                 <Route path="/settings/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
@@ -927,10 +933,10 @@ function App() {
               <Route path="/setup/occupant-users" element={<ProtectedRoute><OccupantUsersDashboard /></ProtectedRoute>} />
               <Route path="/setup/occupant-users/add" element={<ProtectedRoute><AddOccupantUserDashboard /></ProtectedRoute>} />
 
-                
-                {/* Mobile Routes */}
-                <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
-              </Routes>
+
+              {/* Mobile Routes */}
+              <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
+            </Routes>
             <Toaster />
           </LayoutProvider>
         </QueryClientProvider>

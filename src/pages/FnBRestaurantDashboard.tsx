@@ -40,7 +40,7 @@ export const FnBRestaurantDashboard = () => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
 
   const handleViewRestaurant = (id: number) => {
-    navigate(`/vas/fnb/details/${id}`);
+    navigate(`/settings/vas/fnb/details/${id}`);
   };
 
   useEffect(() => {
@@ -244,7 +244,7 @@ export const FnBRestaurantDashboard = () => {
 
   const leftActions = (
     <Button
-      onClick={() => navigate("/vas/fnb/add")}
+      onClick={() => navigate("/settings/vas/fnb/add")}
       className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
     >
       <Plus className="w-4 h-4" />

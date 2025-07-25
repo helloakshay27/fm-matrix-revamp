@@ -571,6 +571,13 @@ const modulesByPackage = {
       href: '/settings/vas',
       subItems: [
         {
+          name: 'F&B',
+          href: '/settings/vas/fnb',
+          subItems: [
+            { name: 'Setup', href: '/settings/vas/fnb/setup' },
+          ]
+        },
+        {
           name: 'MOM',
           href: '/settings/vas/mom',
           subItems: [

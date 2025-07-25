@@ -1,165 +1,3 @@
-
-// import React, { useEffect, useState } from 'react';
-// import { Button } from "@/components/ui/button";
-// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-// import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-// import { Pencil, Trash2 } from "lucide-react";
-// import { useAppDispatch } from '@/store/hooks';
-// import { useParams } from 'react-router-dom';
-// import { fetchRestaurantBookings } from '@/store/slices/f&bSlice';
-
-// interface Schedule {
-//   date: string; // e.g., "01/04/2023"
-//   time: string; // e.g., "04:04 PM"
-// }
-
-// interface Booking {
-//   id: number;
-//   user_name: string;
-//   guest_count: number;
-//   additional_requests: string;
-//   booked_on: string; // e.g., "29/03/2023 04:04 PM"
-//   schedule_on: Schedule;
-//   date: string; // same as schedule_on.date
-//   time: string; // same as schedule_on.time
-//   status_id: number;
-//   status_name: string;
-// }
-
-// export const RestaurantBookingsTable = () => {
-//   const dispatch = useAppDispatch();
-//   const baseUrl = localStorage.getItem('baseUrl');
-//   const token = localStorage.getItem('token');
-//   const { id } = useParams();
-
-//   const [bookings, setBookings] = useState<Booking[]>([]);
-//   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-//   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-
-//   useEffect(() => {
-//     const fetchBookings = async () => {
-//       try {
-//         const response = await dispatch(fetchRestaurantBookings({ baseUrl, token, id: Number(id) })).unwrap();
-//         setBookings(response);
-//       } catch (error) {
-//         console.error('Error fetching bookings:', error);
-//       }
-//     };
-//     fetchBookings();
-//   }, []);
-
-//   const handleDeleteBooking = () => {
-//     if (selectedBooking) {
-//       setBookings(bookings.filter(booking => booking.id !== selectedBooking.id));
-//       setSelectedBooking(null);
-//       setIsDeleteDialogOpen(false);
-//     }
-//   };
-
-//   const openDeleteDialog = (booking: Booking) => {
-//     setSelectedBooking(booking);
-//     setIsDeleteDialogOpen(true);
-//   };
-
-//   return (
-//     <div className="space-y-4">
-//       <div className="bg-white rounded-lg border">
-//         <Table>
-//           <TableHeader>
-//             <TableRow className="bg-gray-100">
-//               <TableHead className="font-medium">Actions</TableHead>
-//               <TableHead className="font-medium text-center">Booking ID</TableHead>
-//               <TableHead className="font-medium text-center">Name</TableHead>
-//               <TableHead className="font-medium text-center">Booked on</TableHead>
-//               <TableHead className="font-medium text-center">Schedule on</TableHead>
-//               <TableHead className="font-medium text-center">Guest</TableHead>
-//               <TableHead className="font-medium text-center">Status</TableHead>
-//               <TableHead className="font-medium text-center">Additional Request</TableHead>
-//             </TableRow>
-//           </TableHeader>
-//           <TableBody>
-//             {bookings.length === 0 ? (
-//               <TableRow>
-//                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-//                   No bookings found.
-//                 </TableCell>
-//               </TableRow>
-//             ) : (
-//               bookings.map((booking) => (
-//                 <TableRow key={booking.id}>
-//                   <TableCell>
-//                     <div className="flex items-center gap-2">
-//                       <Button
-//                         variant="ghost"
-//                         size="sm"
-//                         className="p-1 h-8 w-8"
-//                       >
-//                         <Pencil className="w-4 h-4" />
-//                       </Button>
-//                       <Button
-//                         variant="ghost"
-//                         size="sm"
-//                         onClick={() => openDeleteDialog(booking)}
-//                         className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-//                       >
-//                         <Trash2 className="w-4 h-4" />
-//                       </Button>
-//                     </div>
-//                   </TableCell>
-//                   <TableCell className="text-center">{booking.id}</TableCell>
-//                   <TableCell className="text-center">{booking.user_name}</TableCell>
-//                   <TableCell className="text-center">{booking.booked_on}</TableCell>
-//                   <TableCell className="text-center">{booking.schedule_on.date + ' ' + booking.schedule_on.time}</TableCell>
-//                   <TableCell className="text-center">{booking.guest_count}</TableCell>
-//                   <TableCell className="text-center">
-//                     <span className={`px-2 py-1 rounded-full text-xs ${booking.status_name === 'Confirmed'
-//                       ? 'bg-green-100 text-green-800'
-//                       : booking.status_name === 'Pending'
-//                         ? 'bg-yellow-100 text-yellow-800'
-//                         : 'bg-red-100 text-red-800'
-//                       }`}>
-//                       {booking.status_name}
-//                     </span>
-//                   </TableCell>
-//                   <TableCell className="text-center">{booking.additional_requests}</TableCell>
-//                 </TableRow>
-//               ))
-//             )}
-//           </TableBody>
-//         </Table>
-//       </div>
-
-//       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-//         <AlertDialogContent className="max-w-md">
-//           <AlertDialogHeader>
-//             <AlertDialogTitle>app.lockated.com says</AlertDialogTitle>
-//             <AlertDialogDescription>
-//               Are you sure you want to delete this booking?
-//             </AlertDialogDescription>
-//           </AlertDialogHeader>
-//           <AlertDialogFooter>
-//             <AlertDialogCancel
-//               onClick={() => setIsDeleteDialogOpen(false)}
-//               className="bg-gray-200 text-gray-800 hover:bg-gray-300"
-//             >
-//               Cancel
-//             </AlertDialogCancel>
-//             <AlertDialogAction
-//               onClick={handleDeleteBooking}
-//               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-//             >
-//               OK
-//             </AlertDialogAction>
-//           </AlertDialogFooter>
-//         </AlertDialogContent>
-//       </AlertDialog>
-//     </div>
-//   );
-// };
-
-
-
-
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -309,14 +147,14 @@ export const RestaurantBookingsTable = () => {
       >
         <Pencil className="w-4 h-4" />
       </Button>
-      <Button
+      {/* <Button
         variant="ghost"
         size="sm"
         onClick={() => openDeleteDialog(booking)}
         className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
       >
         <Trash2 className="w-4 h-4" />
-      </Button>
+      </Button> */}
     </div>
   );
 
@@ -326,7 +164,7 @@ export const RestaurantBookingsTable = () => {
         data={bookings}
         columns={columns}
         renderCell={renderCell}
-        renderActions={renderActions}
+        // renderActions={renderActions}
         storageKey="restaurant-bookings-table"
         className="min-w-full"
         emptyMessage="No bookings found."
