@@ -593,10 +593,10 @@ const UpdateTicketsPage: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      console.log('Making API call to:', 'https://fm-uat-api.lockated.com/pms/admin/complaint_logs.json');
+      console.log('Making API call to:', 'https://fm-uat-api.lockated.com/complaint_logs.json');
 
       // Make API call
-      const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaint_logs.json', {
+      const response = await fetch('https://fm-uat-api.lockated.com/complaint_logs.json', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
