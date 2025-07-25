@@ -429,12 +429,13 @@ export const AddTicketDashboard = () => {
               </div>
             </RadioGroup>
 
-            {/* Row 1: Category Type, Sub Category Type, Assigned To */}
+            {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-3 gap-4">
+              {/* Row 1: Category Type, Sub Category Type, Assigned To */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category Type*</label>
                 <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
-                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
+                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
                     <SelectValue placeholder={loadingCategories ? "Loading..." : "Select category"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -453,7 +454,7 @@ export const AddTicketDashboard = () => {
                   onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
                   disabled={loadingSubcategories || !formData.categoryType}
                 >
-                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
+                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
                     <SelectValue placeholder={
                       loadingSubcategories ? "Loading..." : 
                       !formData.categoryType ? "Select Category First" : 
@@ -472,7 +473,7 @@ export const AddTicketDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
                 <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
-                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
+                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
                     <SelectValue placeholder="Select engineer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -491,7 +492,7 @@ export const AddTicketDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
                 <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
-                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
+                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -506,7 +507,7 @@ export const AddTicketDashboard = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
                 <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
-                  <SelectTrigger className="h-12 border border-gray-200 rounded-sm">
+                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -524,19 +525,19 @@ export const AddTicketDashboard = () => {
                   placeholder="Enter reference number"
                   value={formData.referenceNumber}
                   onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
-                  className="h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0"
+                  className="h-10 px-3 border border-gray-300 rounded bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0"
                 />
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description - Full width */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Descriptions</label>
               <Textarea
                 placeholder="Enter description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="min-h-[120px] resize-y border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0"
+                className="min-h-[80px] w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 resize-none"
               />
             </div>
           </div>
