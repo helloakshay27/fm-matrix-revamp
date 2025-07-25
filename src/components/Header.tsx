@@ -42,12 +42,12 @@ export const Header = () => {
   
   // Get user data from localStorage
   const user = getUser() || {
-    id: 0,
+    id: "0",
     firstname: "Guest",
     lastname: "",
     email: ""
   };
-  const userId = user.id;
+  const userId = typeof user.id === 'string' ? parseInt(user.id) : user.id;
 
   const assetSuggestions = [
     'sdcdsc', 'test', 'asus zenbook', 'Diesel Generator', 'A.c', 'Energy Meter 23',
