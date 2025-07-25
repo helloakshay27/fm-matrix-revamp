@@ -83,6 +83,12 @@ export const API_CONFIG = {
     CHECKLIST_MASTER: '/master_checklist_list.json',
     // Checklist creation endpoint
     CREATE_CHECKLIST: '/pms/custom_forms/checklist_create_pms.json',
+    // Asset statistics endpoint
+    ASSET_STATISTICS: '/pms/assets/assets_statictics.json',
+    // Asset status endpoint
+    ASSET_STATUS: '/pms/assets/assets_status.json',
+    // Asset distributions endpoint
+    ASSET_DISTRIBUTIONS: '/pms/assets/assets_distributions.json',
   },
 } as const
 

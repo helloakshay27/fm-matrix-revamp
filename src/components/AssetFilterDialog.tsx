@@ -611,7 +611,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 </MuiSelect>
               </FormControl>
             </div>
-            <div className="grid grid-cols-3 gap-6 mt-4">
+            <div className="grid grid-cols-2 gap-6 mt-4">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="wing-label" shrink>Wing</InputLabel>
                 <MuiSelect

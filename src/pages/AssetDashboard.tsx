@@ -50,6 +50,7 @@ import { AssetSelector } from "@/components/AssetSelector";
 import { RecentAssetsSidebar } from "@/components/RecentAssetsSidebar";
 import { DonutChartGrid } from "@/components/DonutChartGrid";
 import { useAssetSearch } from "@/hooks/useAssetSearch";
+import { BASE_URL, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
 import {
   DndContext,
   closestCenter,
@@ -66,6 +67,52 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
+// Interface for asset statistics API response
+interface AssetStatistics {
+  total_assets_count?: {
+    info: string;
+    total_assets_count: number;
+  };
+  assets_in_use?: {
+    info: string;
+    total_assets_in_use: number;
+  };
+  assets_in_breakdown?: {
+    info: string;
+    total_assets_in_breakdown: number;
+  };
+  critical_assets_in_breakdown?: {
+    info: string;
+    total_assets_in_breakdown: number;
+  };
+  ppm_conduct_assets_count?: {
+    info: string;
+    overdue_assets: string;
+    total: number;
+  };
+  average_customer_rating?: {
+    info: string;
+    avg_rating: number;
+  };
+}
+
+// Interface for asset status API response
+interface AssetStatus {
+  // Add proper typing based on the actual API response structure
+  [key: string]: any;
+}
+
+// Interface for asset distributions API response
+interface AssetDistributions {
+  success: number;
+  message: string;
+  info: {
+    info: string;
+    total_it_assets: number;
+    total_non_it_assets: number;
+  };
+}
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -135,6 +182,18 @@ export const AssetDashboard = () => {
     "asset-breakdown",
     "critical-breakdown",
   ]);
+  // Asset statistics state
+  const [assetStatistics, setAssetStatistics] = useState<AssetStatistics>({});
+  const [statisticsLoading, setStatisticsLoading] = useState(false);
+  const [statisticsError, setStatisticsError] = useState<string | null>(null);
+  // Asset status state
+  const [assetStatus, setAssetStatus] = useState<AssetStatus>({});
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  // Asset distributions state
+  const [assetDistributions, setAssetDistributions] = useState<AssetDistributions | null>(null);
+  const [distributionsLoading, setDistributionsLoading] = useState(false);
+  const [distributionsError, setDistributionsError] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -169,12 +228,143 @@ export const AssetDashboard = () => {
 
   console.log(searchAssets);
 
+  // Function to get current date in YYYY-MM-DD format
+  const getCurrentDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  // Function to get selected site ID from localStorage
+  const getSelectedSiteId = () => {
+    return localStorage.getItem('selectedSiteId') || '2189'; // Default to 2189 if not found
+  };
+
+  // Function to fetch asset statistics from API
+  const fetchAssetStatistics = async () => {
+    setStatisticsLoading(true);
+    setStatisticsError(null);
+
+    try {
+      const siteId = getSelectedSiteId();
+      const currentDate = getCurrentDate();
+      
+      // Build the API URL with parameters
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATISTICS}?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching asset statistics from:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Asset statistics response:', data);
+      
+      setAssetStatistics(data);
+    } catch (error) {
+      console.error('Error fetching asset statistics:', error);
+      setStatisticsError(error instanceof Error ? error.message : 'Failed to fetch asset statistics');
+    } finally {
+      setStatisticsLoading(false);
+    }
+  };
+
+  // Function to fetch asset status from API
+  const fetchAssetStatus = async () => {
+    setStatusLoading(true);
+    setStatusError(null);
+
+    try {
+      const siteId = getSelectedSiteId();
+      const currentDate = getCurrentDate();
+      
+      // Build the API URL with parameters
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATUS}?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching asset status from:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Asset status response:', data);
+      
+      setAssetStatus(data);
+    } catch (error) {
+      console.error('Error fetching asset status:', error);
+      setStatusError(error instanceof Error ? error.message : 'Failed to fetch asset status');
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  // Function to fetch asset distributions from API
+  const fetchAssetDistributions = async () => {
+    setDistributionsLoading(true);
+    setDistributionsError(null);
+
+    try {
+      const siteId = getSelectedSiteId();
+      const currentDate = getCurrentDate();
+      
+      // Build the API URL with parameters
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_DISTRIBUTIONS}?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching asset distributions from:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Asset distributions response:', data);
+      
+      setAssetDistributions(data);
+    } catch (error) {
+      console.error('Error fetching asset distributions:', error);
+      setDistributionsError(error instanceof Error ? error.message : 'Failed to fetch asset distributions');
+    } finally {
+      setDistributionsLoading(false);
+    }
+  };
+
   // Fetch initial assets data
   useEffect(() => {
     if (assets.length === 0) {
       dispatch(fetchAssetsData({ page: currentPage }));
     }
   }, [dispatch, currentPage, assets.length]);
+
+  // Fetch asset statistics when component mounts
+  useEffect(() => {
+    fetchAssetStatistics();
+    fetchAssetStatus();
+    fetchAssetDistributions();
+  }, []);
 
   // Transform Redux assets to match the expected Asset interface
   const transformedAssets = assets.map((asset) => ({
@@ -337,6 +527,10 @@ export const AssetDashboard = () => {
   // Handle refresh - fetch assets from Redux
   const handleRefresh = () => {
     dispatch(fetchAssetsData({ page: currentPage, filters }));
+    // Also refresh asset statistics and status
+    fetchAssetStatistics();
+    fetchAssetStatus();
+    fetchAssetDistributions();
   };
 
   // Handle pagination
@@ -463,6 +657,52 @@ export const AssetDashboard = () => {
     },
   ];
 
+  // Process asset status data for donut charts
+  const processAssetStatusForCharts = () => {
+    // If we have asset status data from API, use it, otherwise use stats
+    const chartStatusData = [
+      { 
+        name: "In Use", 
+        value: assetStatistics.assets_in_use?.total_assets_in_use || stats.inUse, 
+        color: "#c6b692" 
+      },
+      { 
+        name: "Breakdown", 
+        value: assetStatistics.assets_in_breakdown?.total_assets_in_breakdown || stats.breakdown, 
+        color: "#d8dcdd" 
+      }
+    ];
+
+    // Use API data for asset type distribution if available
+    const chartTypeData = assetDistributions ? [
+      { 
+        name: "IT Equipment", 
+        value: assetDistributions.info.total_it_assets, 
+        color: "#d8dcdd" 
+      },
+      { 
+        name: "Non-IT Equipment", 
+        value: assetDistributions.info.total_non_it_assets, 
+        color: "#c6b692" 
+      }
+    ] : [
+      { 
+        name: "IT Equipment", 
+        value: stats.itAssets, 
+        color: "#d8dcdd" 
+      },
+      { 
+        name: "Non-IT Equipment", 
+        value: stats.nonItAssets, 
+        color: "#c6b692" 
+      }
+    ];
+
+    return { chartStatusData, chartTypeData };
+  };
+
+  const { chartStatusData, chartTypeData } = processAssetStatusForCharts();
+
   const categoryData = [
     { name: "Electronics", value: 2 },
     { name: "Office", value: 1 },
@@ -543,7 +783,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {stats.total}
+                  {statisticsLoading ? "..." : (assetStatistics.total_assets_count?.total_assets_count || stats.total)}
                 </div>
                 <div className="text-sm text-gray-600">Total Assets</div>
               </div>
@@ -562,7 +802,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {stats.inUse}
+                  {statisticsLoading ? "..." : (assetStatistics.assets_in_use?.total_assets_in_use || stats.inUse)}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Use</div>
               </div>
@@ -578,7 +818,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {stats.breakdown}
+                  {statisticsLoading ? "..." : (assetStatistics.assets_in_breakdown?.total_assets_in_breakdown || stats.breakdown)}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Breakdown</div>
               </div>
@@ -593,7 +833,9 @@ export const AssetDashboard = () => {
                 <Zap className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">15</div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading ? "..." : (assetStatistics.critical_assets_in_breakdown?.total_assets_in_breakdown || 0)}
+                </div>
                 <div className="text-sm text-gray-600">
                   Critical Assets In Breakdown
                 </div>
@@ -609,7 +851,9 @@ export const AssetDashboard = () => {
                 <Wrench className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">0</div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading ? "..." : (assetStatistics.ppm_conduct_assets_count?.total || 0)}
+                </div>
                 <div className="text-sm text-gray-600">PPM Overdue</div>
               </div>
             </div>
@@ -623,11 +867,52 @@ export const AssetDashboard = () => {
                 <TrendingUp className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">0</div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading ? "..." : (assetStatistics.average_customer_rating?.avg_rating || 0)}
+                </div>
                 <div className="text-sm text-gray-600">Customer Average</div>
               </div>
             </div>
           </div>
+
+          {/* Error message for statistics */}
+          {statisticsError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">Failed to load asset statistics: {statisticsError}</p>
+              <button 
+                onClick={fetchAssetStatistics}
+                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Error message for status */}
+          {statusError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">Failed to load asset status: {statusError}</p>
+              <button 
+                onClick={fetchAssetStatus}
+                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Error message for distributions */}
+          {distributionsError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">Failed to load asset distributions: {distributionsError}</p>
+              <button 
+                onClick={fetchAssetDistributions}
+                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
           {/* Header with Asset Selector */}
           <div className="flex justify-end">
@@ -656,7 +941,11 @@ export const AssetDashboard = () => {
                       if (chartId === "donutCharts") {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
-                            <DonutChartGrid />
+                            <DonutChartGrid 
+                              assetStatusData={chartStatusData}
+                              assetTypeData={chartTypeData}
+                              loading={statisticsLoading || statusLoading || distributionsLoading}
+                            />
                           </SortableChartItem>
                         );
                       }
@@ -668,7 +957,7 @@ export const AssetDashboard = () => {
                               <div className="flex items-center justify-between mb-4">
                                 <h3
                                   className="text-lg font-semibold"
-                                  style={{ color: "#C72030" }}
+                                  style={{ color: "black" }}
                                 >
                                   Category-wise Assets
                                 </h3>
@@ -712,7 +1001,7 @@ export const AssetDashboard = () => {
                               <div className="flex items-center justify-between mb-4">
                                 <h3
                                   className="text-lg font-semibold"
-                                  style={{ color: "#C72030" }}
+                                  style={{ color: "black" }}
                                 >
                                   Asset Aging Matrix
                                 </h3>
@@ -780,7 +1069,7 @@ export const AssetDashboard = () => {
                               <div className="flex items-center justify-between mb-4">
                                 <h3
                                   className="text-lg font-semibold"
-                                  style={{ color: "#C72030" }}
+                                  style={{ color: "black" }}
                                 >
                                   Performance Metrics
                                 </h3>

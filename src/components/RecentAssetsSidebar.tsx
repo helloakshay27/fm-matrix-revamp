@@ -109,7 +109,7 @@ export const RecentAssetsSidebar = () => {
     <div className="bg-[#C4B89D]/25 p-4 h-fit">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-bold mb-1" style={{ color: '#C72030' }}>Recent Assets</h3>
+        <h3 className="text-lg font-bold mb-1" style={{ color: 'black' }}>Recent Assets</h3>
         <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', { 
           weekday: 'long', 
           year: 'numeric', 

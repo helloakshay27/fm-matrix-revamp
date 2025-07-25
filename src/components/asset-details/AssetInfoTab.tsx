@@ -14,7 +14,14 @@ import {
   X,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 import { AssetAnalyticsTab } from "./AssetAnalyticsTab";
 
 // Removed duplicate interface declaration for AssetInfoTabProps
@@ -145,7 +152,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
             value="assetDetails"
             className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
           >
-             <svg
+            <svg
               width="18"
               height="19"
               viewBox="0 0 18 19"
@@ -173,8 +180,10 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                   <div className="w-full bg-white rounded-lg shadow-sm border">
                     <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
                       <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <CreditCard className="w-8 h-8 "
-                      style={{ color: "#C72030" }} />
+                        <CreditCard
+                          className="w-8 h-8 "
+                          style={{ color: "#C72030" }}
+                        />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-[#C72030]">
                         {groupName}
@@ -215,114 +224,117 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                 {/* Body */}
                 <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-10 text-sm text-gray-800">
-                  {/* Main Asset Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">Asset No</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.asset_number || "-"}
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">Model No</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.model_number || "-"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">Serial No</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.serial_number || "-"}
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">Manufacturer</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.manufacturer || "-"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">Group</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.group || "-"}
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">Sub Group</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.sub_group || "-"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Asset Image Section */}
-                    {/* <div className="space-y-4">
-                      <div className="flex flex-col">
-                        <span className="text-gray-500 mb-2">Asset Image</span>
-                        <div className="w-full h-32 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-                          {asset.image_url ? (
-                            <img
-                              src={asset.image_url}
-                              alt="Asset"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                                e.currentTarget.nextElementSibling.style.display =
-                                  "flex";
-                              }}
-                            />
-                          ) : (
-                            <div className="text-gray-400 text-sm text-center">
-                              No Image Available
-                            </div>
-                          )}
-                          <div className="text-gray-400 text-sm text-center hidden">
-                            Image Not Found
-                          </div>
+                  {/* Asset Details */}
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                    {/* Left: Asset info (3 columns) */}
+                    <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* Column 1 */}
+                      <div className="space-y-4">
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">Asset No</span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.asset_number || "-"}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">Model No</span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.model_number || "-"}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">Group</span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.group || "-"}
+                          </span>
                         </div>
                       </div>
-                    </div> */}
 
-                    <div className="space-y-4">
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">
-                          Commissioning Date
-                        </span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.commisioning_date || "-"}
-                        </span>
+                      {/* Column 2 */}
+                      <div className="space-y-4">
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">Serial No</span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.serial_number || "-"}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">Sub Group</span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.sub_group || "-"}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">
+                            Commissioning Date
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.commisioning_date || "-"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Column 3 */}
+                      <div className="space-y-4">
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">
+                            Manufacturer
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.manufacturer || "-"}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">
+                            Allocation Based On
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.allocation_type || "-"}
+                          </span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-gray-500 w-32">Department</span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {asset.allocated_to?.join(", ") || "-"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-4">
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">
-                          Allocation Based On
-                        </span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.allocation_type || "-"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex">
-                        <span className="text-gray-500 w-32">Department</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {asset.allocated_to?.join(", ") || "-"}
-                        </span>
+
+                    {/* Right: Image */}
+                    <div className="space-y-2">
+                      <span className="text-gray-500 mb-1 block">
+                        Asset Image
+                      </span>
+                      <div className="w-full h-36 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                        {asset.image_url ? (
+                          <img
+                            src={asset.image_url}
+                            alt="Asset"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                              e.currentTarget.nextElementSibling.style.display =
+                                "flex";
+                            }}
+                          />
+                        ) : (
+                          <div className="text-gray-400 text-sm text-center">
+                            No Image Available
+                          </div>
+                        )}
+                        <div className="text-gray-400 text-sm text-center hidden">
+                          Image Not Found
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -408,8 +420,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       </div>
                     </div>
                   </div>
-
-                  {/* Additional Info */}
                 </div>
               </div>
 
@@ -560,27 +570,47 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-gray-600 font-medium">Name</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Min</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Max</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Alert Below</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Alert Above</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Multiplier</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Check Prev Reading</TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Name
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Min
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Max
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Alert Below
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Alert Above
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Multiplier
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Check Prev Reading
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {asset.consumption_pms_asset_measures.map((item: any) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.name || "N/A"}</TableCell>
-                            <TableCell>{item.min_value || "N/A"}</TableCell>
-                            <TableCell>{item.max_value || "N/A"}</TableCell>
-                            <TableCell>{item.alert_below || "N/A"}</TableCell>
-                            <TableCell>{item.alert_above || "N/A"}</TableCell>
-                            <TableCell>{item.multiplier_factor ?? "-"}</TableCell>
-                            <TableCell>{item.check_previous_reading ? "Yes" : "No"}</TableCell>
-                          </TableRow>
-                        ))}
+                        {asset.consumption_pms_asset_measures.map(
+                          (item: any) => (
+                            <TableRow key={item.id}>
+                              <TableCell>{item.name || "N/A"}</TableCell>
+                              <TableCell>{item.min_value || "N/A"}</TableCell>
+                              <TableCell>{item.max_value || "N/A"}</TableCell>
+                              <TableCell>{item.alert_below || "N/A"}</TableCell>
+                              <TableCell>{item.alert_above || "N/A"}</TableCell>
+                              <TableCell>
+                                {item.multiplier_factor ?? "-"}
+                              </TableCell>
+                              <TableCell>
+                                {item.check_previous_reading ? "Yes" : "No"}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -593,10 +623,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                   {/* Header */}
                   <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <X
-                        className="w-6 h-6"
-                        style={{ color: "#C72030" }}
-                      />
+                      <X className="w-6 h-6" style={{ color: "#C72030" }} />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                       NON-CONSUMPTION DETAILS
@@ -608,27 +635,47 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-gray-600 font-medium">Name</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Min</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Max</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Alert Below</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Alert Above</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Multiplier</TableHead>
-                          <TableHead className="text-gray-600 font-medium">Check Prev Reading</TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Name
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Min
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Max
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Alert Below
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Alert Above
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Multiplier
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium">
+                            Check Prev Reading
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {asset.non_consumption_pms_asset_measures.map((item: any) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.name || "N/A"}</TableCell>
-                            <TableCell>{item.min_value || "N/A"}</TableCell>
-                            <TableCell>{item.max_value || "N/A"}</TableCell>
-                            <TableCell>{item.alert_below || "N/A"}</TableCell>
-                            <TableCell>{item.alert_above || "N/A"}</TableCell>
-                            <TableCell>{item.multiplier_factor ?? "-"}</TableCell>
-                            <TableCell>{item.check_previous_reading ? "Yes" : "No"}</TableCell>
-                          </TableRow>
-                        ))}
+                        {asset.non_consumption_pms_asset_measures.map(
+                          (item: any) => (
+                            <TableRow key={item.id}>
+                              <TableCell>{item.name || "N/A"}</TableCell>
+                              <TableCell>{item.min_value || "N/A"}</TableCell>
+                              <TableCell>{item.max_value || "N/A"}</TableCell>
+                              <TableCell>{item.alert_below || "N/A"}</TableCell>
+                              <TableCell>{item.alert_above || "N/A"}</TableCell>
+                              <TableCell>
+                                {item.multiplier_factor ?? "-"}
+                              </TableCell>
+                              <TableCell>
+                                {item.check_previous_reading ? "Yes" : "No"}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
                       </TableBody>
                     </Table>
                   </div>
