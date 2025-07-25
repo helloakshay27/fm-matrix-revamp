@@ -420,30 +420,6 @@ const UpdateTicketsPage: React.FC = () => {
           </div>
 
 
-          {/* Cost and Description Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Cost</label>
-              <input
-                type="text"
-                value={formData.cost}
-                onChange={(e) => handleInputChange('cost', e.target.value)}
-                placeholder="Add Cost"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Enter Description"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-              />
-            </div>
-          </div>
 
           {/* Submit Button */}
           <div className="flex justify-center mt-8">
