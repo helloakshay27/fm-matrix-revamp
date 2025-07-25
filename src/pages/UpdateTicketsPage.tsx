@@ -789,7 +789,7 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Row 3 */}
             {/* Proactive/Reactive */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Proactive/ Reactive</label>
               <Select value={formData.proactiveReactive} onValueChange={(value) => handleInputChange('proactiveReactive', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
