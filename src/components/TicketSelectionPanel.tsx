@@ -127,15 +127,6 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             <Download className="w-6 h-6 text-black" />
             <span className="text-xs text-gray-600">Export</span>
           </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
-          >
-            <QrCode className="w-6 h-6 text-black" />
-            <span className="text-xs text-gray-600">Print QR Code</span>
-          </Button>
         </div>
       </div>
       
