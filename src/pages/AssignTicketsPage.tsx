@@ -138,9 +138,34 @@ const AssignTicketsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      console.log('Updating tickets:', selectedTickets.map(t => t.id));
-      console.log('Selected Status:', selectedStatus);
-      console.log('Selected User:', selectedUser);
+      const complaint_ids = selectedTickets.map(t => t.id);
+      const apiCalls = [];
+
+      // If user is selected, call assign API
+      if (selectedUser) {
+        const assignPayload = {
+          complaint_ids,
+          assigned_to_ids: [parseInt(selectedUser)],
+          comment: "Assigned from bulk assignment"
+        };
+        apiCalls.push(
+          apiClient.post('/pms/admin/complaints/bulk_assign_tickets', assignPayload)
+        );
+      }
+
+      // If status is selected, call status update API
+      if (selectedStatus) {
+        const statusPayload = {
+          complaint_ids,
+          issue_status: parseInt(selectedStatus)
+        };
+        apiCalls.push(
+          apiClient.post('/pms/admin/complaints/bulk_update_status.json', statusPayload)
+        );
+      }
+
+      // Execute all API calls
+      await Promise.all(apiCalls);
       
       toast({
         title: "Success",
