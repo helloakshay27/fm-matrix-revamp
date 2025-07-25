@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 
 interface SelectedTicket {
   id: number;
@@ -52,6 +54,8 @@ const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const dispatch = useAppDispatch();
+  const { data: helpdeskData, loading: helpdeskLoading } = useAppSelector(state => state.helpdeskCategories);
   
   const [selectedTickets, setSelectedTickets] = useState<SelectedTicket[]>([]);
   const [formData, setFormData] = useState({
@@ -135,7 +139,8 @@ const UpdateTicketsPage: React.FC = () => {
     };
 
     fetchData();
-  }, [toast]);
+    dispatch(fetchHelpdeskCategories());
+  }, [toast, dispatch]);
 
   const handleBack = () => {
     navigate(-1);
@@ -331,11 +336,14 @@ const UpdateTicketsPage: React.FC = () => {
                 value={formData.categoryType}
                 onChange={(e) => handleInputChange('categoryType', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+                disabled={helpdeskLoading}
               >
-                <option value="">Air Conditioner</option>
-                <option value="Air Conditioner">Air Conditioner</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Plumbing">Plumbing</option>
+                <option value="">Select Category Type</option>
+                {helpdeskData?.helpdesk_categories?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
 
