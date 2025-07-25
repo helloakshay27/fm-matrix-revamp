@@ -114,6 +114,15 @@ interface AssetDistributions {
   };
 }
 
+// Interface for group-wise assets API response
+interface GroupWiseAssets {
+  info: string;
+  group_wise_assets: {
+    group_name: string;
+    asset_count: number;
+  }[];
+}
+
 // Sortable Chart Item Component
 const SortableChartItem = ({
   id,
@@ -194,6 +203,10 @@ export const AssetDashboard = () => {
   const [assetDistributions, setAssetDistributions] = useState<AssetDistributions | null>(null);
   const [distributionsLoading, setDistributionsLoading] = useState(false);
   const [distributionsError, setDistributionsError] = useState<string | null>(null);
+  // Group-wise assets state
+  const [groupWiseAssets, setGroupWiseAssets] = useState<GroupWiseAssets | null>(null);
+  const [groupWiseLoading, setGroupWiseLoading] = useState(false);
+  const [groupWiseError, setGroupWiseError] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -352,6 +365,43 @@ export const AssetDashboard = () => {
     }
   };
 
+  // Function to fetch group-wise assets from API
+  const fetchGroupWiseAssets = async () => {
+    setGroupWiseLoading(true);
+    setGroupWiseError(null);
+
+    try {
+      const siteId = getSelectedSiteId();
+      
+      // Build the API URL with parameters
+      const url = `${BASE_URL}/pms/assets/group_wise_assets.json?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching group-wise assets from:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Group-wise assets response:', data);
+      
+      setGroupWiseAssets(data);
+    } catch (error) {
+      console.error('Error fetching group-wise assets:', error);
+      setGroupWiseError(error instanceof Error ? error.message : 'Failed to fetch group-wise assets');
+    } finally {
+      setGroupWiseLoading(false);
+    }
+  };
+
   // Fetch initial assets data
   useEffect(() => {
     if (assets.length === 0) {
@@ -364,6 +414,7 @@ export const AssetDashboard = () => {
     fetchAssetStatistics();
     fetchAssetStatus();
     fetchAssetDistributions();
+    fetchGroupWiseAssets();
   }, []);
 
   // Transform Redux assets to match the expected Asset interface
@@ -516,6 +567,42 @@ export const AssetDashboard = () => {
     })
   );
 
+  // Handle asset stat card clicks
+  const handleStatCardClick = (filterType: string) => {
+    let filters: any = {};
+
+    switch (filterType) {
+      case "total":
+        // No filters for total - show all assets
+        filters = {};
+        break;
+      case "non_it":
+        filters = { it_asset_eq: false };
+        break;
+      case "it":
+        filters = { it_asset_eq: true };
+        break;
+      case "in_use":
+        filters = { breakdown_eq: false };
+        break;
+      case "breakdown":
+        filters = { breakdown_eq: true };
+        break;
+      case "in_store":
+        filters = { status_eq: "in_store" };
+        break;
+      case "dispose":
+        filters = { status_eq: "dispose" };
+        break;
+      default:
+        filters = {};
+    }
+
+    // Dispatch the filter to fetch filtered assets
+    dispatch(fetchAssetsData({ page: 1, filters }));
+    setCurrentPage(1);
+  };
+
   // Handle search with API call
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -531,6 +618,7 @@ export const AssetDashboard = () => {
     fetchAssetStatistics();
     fetchAssetStatus();
     fetchAssetDistributions();
+    fetchGroupWiseAssets();
   };
 
   // Handle pagination
@@ -703,12 +791,12 @@ export const AssetDashboard = () => {
 
   const { chartStatusData, chartTypeData } = processAssetStatusForCharts();
 
-  const categoryData = [
-    { name: "Electronics", value: 2 },
-    { name: "Office", value: 1 },
-    { name: "HVAC", value: 1 },
-    { name: "Security", value: 1 },
-    { name: "AV", value: 1 },
+  // Process group-wise assets data for category chart
+  const categoryData = groupWiseAssets?.group_wise_assets?.map(item => ({
+    name: item.group_name,
+    value: item.asset_count
+  })) || [
+    { name: "Loading...", value: 0 }
   ];
 
   const agingMatrixData = [
@@ -914,6 +1002,19 @@ export const AssetDashboard = () => {
             </div>
           )}
 
+          {/* Error message for group-wise assets */}
+          {groupWiseError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">Failed to load group-wise assets: {groupWiseError}</p>
+              <button 
+                onClick={fetchGroupWiseAssets}
+                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Header with Asset Selector */}
           <div className="flex justify-end">
             <AssetSelector
@@ -944,7 +1045,7 @@ export const AssetDashboard = () => {
                             <DonutChartGrid 
                               assetStatusData={chartStatusData}
                               assetTypeData={chartTypeData}
-                              loading={statisticsLoading || statusLoading || distributionsLoading}
+                              loading={statisticsLoading || statusLoading || distributionsLoading || groupWiseLoading}
                             />
                           </SortableChartItem>
                         );
@@ -960,159 +1061,180 @@ export const AssetDashboard = () => {
                                   style={{ color: "black" }}
                                 >
                                   Category-wise Assets
+                                  {groupWiseLoading && (
+                                    <span className="ml-2 text-sm text-gray-500">(Loading...)</span>
+                                  )}
                                 </h3>
                                 <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                               </div>
-                              <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={categoryData}>
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="hsl(var(--analytics-border))"
-                                  />
-                                  <XAxis
-                                    dataKey="name"
-                                    tick={{
-                                      fill: "hsl(var(--analytics-text))",
-                                      fontSize: 12,
-                                    }}
-                                  />
-                                  <YAxis
-                                    tick={{
-                                      fill: "hsl(var(--analytics-text))",
-                                      fontSize: 12,
-                                    }}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="value"
-                                    fill="hsl(var(--chart-tan))"
-                                  />
-                                </BarChart>
-                              </ResponsiveContainer>
+                              {groupWiseError ? (
+                                <div className="flex items-center justify-center h-64 text-red-500">
+                                  <div className="text-center">
+                                    <p className="mb-2">Failed to load category data</p>
+                                    <button 
+                                      onClick={fetchGroupWiseAssets}
+                                      className="text-red-600 underline hover:text-red-800"
+                                    >
+                                      Retry
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <ResponsiveContainer width="100%" height={250}>
+                                  <BarChart data={categoryData}>
+                                    <CartesianGrid
+                                      strokeDasharray="3 3"
+                                      stroke="hsl(var(--analytics-border))"
+                                    />
+                                    <XAxis
+                                      dataKey="name"
+                                      tick={{
+                                        fill: "hsl(var(--analytics-text))",
+                                        fontSize: 12,
+                                      }}
+                                      interval={0}
+                                      angle={-45}
+                                      textAnchor="end"
+                                      height={80}
+                                    />
+                                    <YAxis
+                                      tick={{
+                                        fill: "hsl(var(--analytics-text))",
+                                        fontSize: 12,
+                                      }}
+                                    />
+                                    <Tooltip />
+                                    <Bar
+                                      dataKey="value"
+                                      fill="hsl(var(--chart-tan))"
+                                    />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              )}
                             </div>
                           </SortableChartItem>
                         );
                       }
 
-                      if (chartId === "agingMatrix") {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                              <div className="flex items-center justify-between mb-4">
-                                <h3
-                                  className="text-lg font-semibold"
-                                  style={{ color: "black" }}
-                                >
-                                  Asset Aging Matrix
-                                </h3>
-                                <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                              </div>
-                              <div className="overflow-x-auto">
-                                <table className="w-full border-collapse">
-                                  <thead>
-                                    <tr className="bg-[hsl(var(--analytics-background))]">
-                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-left text-sm font-medium text-[hsl(var(--analytics-text))]">
-                                        Priority
-                                      </th>
-                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
-                                        0-1Y
-                                      </th>
-                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
-                                        1-2Y
-                                      </th>
-                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
-                                        2-3Y
-                                      </th>
-                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
-                                        3-4Y
-                                      </th>
-                                      <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
-                                        4-5Y
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {agingMatrixData.map((row, index) => (
-                                      <tr key={index}>
-                                        <td className="border border-[hsl(var(--analytics-border))] p-2 font-medium text-[hsl(var(--analytics-text))]">
-                                          {row.priority}
-                                        </td>
-                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
-                                          {row["0-1Y"]}
-                                        </td>
-                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
-                                          {row["1-2Y"]}
-                                        </td>
-                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
-                                          {row["2-3Y"]}
-                                        </td>
-                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
-                                          {row["3-4Y"]}
-                                        </td>
-                                        <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
-                                          {row["4-5Y"]}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
+                      // if (chartId === "agingMatrix") {
+                      //   return (
+                      //     <SortableChartItem key={chartId} id={chartId}>
+                      //       <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                      //         <div className="flex items-center justify-between mb-4">
+                      //           <h3
+                      //             className="text-lg font-semibold"
+                      //             style={{ color: "black" }}
+                      //           >
+                      //             Asset Aging Matrix
+                      //           </h3>
+                      //           <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                      //         </div>
+                      //         <div className="overflow-x-auto">
+                      //           <table className="w-full border-collapse">
+                      //             <thead>
+                      //               <tr className="bg-[hsl(var(--analytics-background))]">
+                      //                 <th className="border border-[hsl(var(--analytics-border))] p-2 text-left text-sm font-medium text-[hsl(var(--analytics-text))]">
+                      //                   Priority
+                      //                 </th>
+                      //                 <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
+                      //                   0-1Y
+                      //                 </th>
+                      //                 <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
+                      //                   1-2Y
+                      //                 </th>
+                      //                 <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
+                      //                   2-3Y
+                      //                 </th>
+                      //                 <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
+                      //                   3-4Y
+                      //                 </th>
+                      //                 <th className="border border-[hsl(var(--analytics-border))] p-2 text-center text-sm font-medium text-[hsl(var(--analytics-text))]">
+                      //                   4-5Y
+                      //                 </th>
+                      //               </tr>
+                      //             </thead>
+                      //             <tbody>
+                      //               {agingMatrixData.map((row, index) => (
+                      //                 <tr key={index}>
+                      //                   <td className="border border-[hsl(var(--analytics-border))] p-2 font-medium text-[hsl(var(--analytics-text))]">
+                      //                     {row.priority}
+                      //                   </td>
+                      //                   <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
+                      //                     {row["0-1Y"]}
+                      //                   </td>
+                      //                   <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
+                      //                     {row["1-2Y"]}
+                      //                   </td>
+                      //                   <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
+                      //                     {row["2-3Y"]}
+                      //                   </td>
+                      //                   <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
+                      //                     {row["3-4Y"]}
+                      //                   </td>
+                      //                   <td className="border border-[hsl(var(--analytics-border))] p-2 text-center text-[hsl(var(--analytics-text))]">
+                      //                     {row["4-5Y"]}
+                      //                   </td>
+                      //                 </tr>
+                      //               ))}
+                      //             </tbody>
+                      //           </table>
+                      //         </div>
+                      //       </div>
+                      //     </SortableChartItem>
+                      //   );
+                      // }
 
-                      if (chartId === "performanceMetrics") {
-                        return (
-                          <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
-                              <div className="flex items-center justify-between mb-4">
-                                <h3
-                                  className="text-lg font-semibold"
-                                  style={{ color: "black" }}
-                                >
-                                  Performance Metrics
-                                </h3>
-                                <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
-                              </div>
-                              <div className="space-y-4">
-                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                                  <span className="text-sm text-[hsl(var(--analytics-text))]">
-                                    Average Uptime
-                                  </span>
-                                  <span className="font-semibold text-green-600">
-                                    98.5%
-                                  </span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                                  <span className="text-sm text-[hsl(var(--analytics-text))]">
-                                    Maintenance Cost
-                                  </span>
-                                  <span className="font-semibold text-[hsl(var(--analytics-text))]">
-                                    ₹45,000
-                                  </span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                                  <span className="text-sm text-[hsl(var(--analytics-text))]">
-                                    Asset Utilization
-                                  </span>
-                                  <span className="font-semibold text-blue-600">
-                                    85.2%
-                                  </span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
-                                  <span className="text-sm text-[hsl(var(--analytics-text))]">
-                                    ROI
-                                  </span>
-                                  <span className="font-semibold text-green-600">
-                                    12.5%
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </SortableChartItem>
-                        );
-                      }
+                      // if (chartId === "performanceMetrics") {
+                      //   return (
+                      //     <SortableChartItem key={chartId} id={chartId}>
+                      //       <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                      //         <div className="flex items-center justify-between mb-4">
+                      //           <h3
+                      //             className="text-lg font-semibold"
+                      //             style={{ color: "black" }}
+                      //           >
+                      //             Performance Metrics
+                      //           </h3>
+                      //           <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                      //         </div>
+                      //         <div className="space-y-4">
+                      //           <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      //             <span className="text-sm text-[hsl(var(--analytics-text))]">
+                      //               Average Uptime
+                      //             </span>
+                      //             <span className="font-semibold text-green-600">
+                      //               98.5%
+                      //             </span>
+                      //           </div>
+                      //           <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      //             <span className="text-sm text-[hsl(var(--analytics-text))]">
+                      //               Maintenance Cost
+                      //             </span>
+                      //             <span className="font-semibold text-[hsl(var(--analytics-text))]">
+                      //               ₹45,000
+                      //             </span>
+                      //           </div>
+                      //           <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      //             <span className="text-sm text-[hsl(var(--analytics-text))]">
+                      //               Asset Utilization
+                      //             </span>
+                      //             <span className="font-semibold text-blue-600">
+                      //               85.2%
+                      //             </span>
+                      //           </div>
+                      //           <div className="flex justify-between items-center p-3 bg-[hsl(var(--analytics-background))] rounded">
+                      //             <span className="text-sm text-[hsl(var(--analytics-text))]">
+                      //               ROI
+                      //             </span>
+                      //             <span className="font-semibold text-green-600">
+                      //               12.5%
+                      //             </span>
+                      //           </div>
+                      //         </div>
+                      //       </div>
+                      //     </SortableChartItem>
+                      //   );
+                      // }
 
                       return null;
                     })}
@@ -1139,7 +1261,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} />
+              <AssetStats stats={data} onCardClick={handleStatCardClick} />
 
               {/* <AssetActions
                 searchTerm={searchTerm}

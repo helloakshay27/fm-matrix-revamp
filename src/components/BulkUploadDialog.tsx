@@ -4,11 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { X, Upload } from 'lucide-react';
 import { toast } from "sonner";
+import { apiClient } from '@/utils/apiClient';
 
 interface BulkUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  uploadType?: "upload" | "update";
   onImport?: (file: File) => void;
 }
 
@@ -16,6 +18,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
   open,
   onOpenChange,
   title,
+  uploadType = "upload",
   onImport
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -68,28 +71,31 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
     setDragOver(false);
   };
 
-  const handleDownloadSample = () => {
+  const handleDownloadSample = async () => {
     console.log('Downloading sample format...');
     
-    // Create sample CSV for WBS
-    const sampleData = [
-      'Plant Code,Category,Category WBS Code,WBS Name,WBS Code,Site',
-      'PLT001,Infrastructure,INF001,Building Maintenance,BM001,Site A',
-      'PLT002,Equipment,EQP001,HVAC System,HVAC001,Site B',
-      'PLT003,Utilities,UTL001,Power Distribution,PD001,Site C'
-    ].join('\n');
-    
-    const blob = new Blob([sampleData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'wbs_sample_format.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    toast.success('Sample format downloaded successfully');
+    try {
+      // Call the API to download the sample file
+      const response = await apiClient.get('/assets/asset.xlsx', {
+        responseType: 'blob'
+      });
+      
+      // Create blob URL and trigger download
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'asset_sample_format.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('Sample format downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      toast.error('Failed to download sample file. Please try again.');
+    }
   };
 
   const handleImport = async () => {
@@ -102,8 +108,23 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
     console.log('Starting import process for:', selectedFile.name);
 
     try {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Determine the API endpoint based on upload type
+      const endpoint = uploadType === "upload" 
+        ? "/pms/assets/asset_import" 
+        : "/pms/assets/update_assets";
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      // Call the API with the selected file
+      const response = await apiClient.post(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('Import response:', response.data);
       
       if (onImport) {
         onImport(selectedFile);
@@ -113,9 +134,12 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       setSelectedFile(null);
       onOpenChange(false);
       
+      toast.success(`${uploadType === "upload" ? "Import" : "Update"} completed successfully`);
+      
     } catch (error) {
       console.error('Import failed:', error);
-      toast.error('Import failed. Please try again.');
+      const errorMessage = error.response?.data?.message || error.message || 'Import failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
     }

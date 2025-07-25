@@ -1355,7 +1355,7 @@ const [attachments, setAttachments] = useState({
     })
     .then(response => {
       console.log('Asset created successfully:', response.data);
-      navigate('/maintenance/asset');
+      window.location.href = "/maintenance/asset";
     })
     .catch(err => {
       console.error('Error creating asset:', err);
@@ -2053,7 +2053,9 @@ const hasFiles = () => {
                       <MenuItem value="fencing">Fencing</MenuItem>
                       <MenuItem value="landscaping">Landscaping</MenuItem>
                       <MenuItem value="roads">Roads</MenuItem>
-                      <MenuItem value="other">Other (Manual Input)</MenuItem>
+                      <MenuItem value="electricity">Electricity</MenuItem>
+                      <MenuItem value="wateracess">Water Access</MenuItem>
+                      <MenuItem value="other">Other </MenuItem>
                     </MuiSelect>
                   </FormControl>
                   <TextField
@@ -2365,7 +2367,7 @@ const hasFiles = () => {
                       <MenuItem value="prop003">Property 003</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                  <TextField
+                  {/* <TextField
                     label="Ownership Type"
                     value="Lessee"
                     variant="outlined"
@@ -2377,7 +2379,7 @@ const hasFiles = () => {
                       }
                     }}
 
-                  />
+                  /> */}
 
                   {/* Custom Fields */}
                   {customFields.leaseholdLocationAssoc.map((field) => (
@@ -2457,6 +2459,7 @@ const hasFiles = () => {
                       <MenuItem value="electrical">Electrical</MenuItem>
                       <MenuItem value="hvac">HVAC</MenuItem>
                       <MenuItem value="plumbing">Plumbing</MenuItem>
+                      <MenuItem value="Security">Security</MenuItem>
                       <MenuItem value="it">IT Infrastructure</MenuItem>
                     </MuiSelect>
                   </FormControl>
@@ -2897,7 +2900,7 @@ const hasFiles = () => {
                     fullWidth
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        height: { xs: '36px', md: '45px' }
+                        
                       }
                     }}
                   >
@@ -2932,7 +2935,7 @@ const hasFiles = () => {
                       rows={4}
                       sx={{
                         '& .MuiOutlinedInput-root': {
-                          height: { xs: '36px', md: '45px' }
+                          
                         }
                       }}
                       onChange={(e) =>
@@ -3060,6 +3063,22 @@ const hasFiles = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
+                  onChange={e => handleFieldChange('serial_number', e.target.value)}
+
+                  />
+                  <TextField
+                    label="Asset Name"
+                    placeholder="Name "
+                    variant="outlined"
+
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' }
+                      }
+                    }}
+                    onChange={e => handleFieldChange('name', e.target.value)}
+
                   />
                   <FormControl
                     fullWidth
@@ -4985,7 +5004,7 @@ const hasFiles = () => {
                   rows={4}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
+                      
                     }
                   }}
                   onChange={(e) =>
@@ -6420,6 +6439,53 @@ const hasFiles = () => {
                   </div>)}
                 </div>
               </div>}
+                 <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">Asset Image</label>
+
+               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    className="hidden"
+                    id="land-attachments"
+                    onChange={e => handleFileUpload('landAttachments', e.target.files)}
+                  />
+                  <label htmlFor="land-attachments" className="cursor-pointer">
+                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">
+                      Click to upload attachments
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Upload deed copy, layout, map, lease, etc.
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      Max 10MB per file, 50MB total. Images will be compressed automatically.
+                    </p>
+                  </label>
+                  {attachments.landAttachments && attachments.landAttachments.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {attachments.landAttachments.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                          <div className="flex flex-col truncate">
+                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </span>
+                          </div>
+                          <button onClick={() => removeFile('landAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="text-xs text-gray-500 mt-1">
+                        Total: {attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                          ? `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                          : `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                        }
+                      </div>
+                    </div>
+                  )}
+                </div>
             </div>
           </>
         )}

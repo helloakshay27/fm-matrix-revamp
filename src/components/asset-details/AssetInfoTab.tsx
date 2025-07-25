@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   MapPin,
   QrCode,
@@ -12,6 +13,7 @@ import {
   Clock,
   UserIcon,
   X,
+  Archive,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
@@ -50,6 +52,7 @@ interface Asset {
   commisioning_date: string;
   vendor_name: string;
   warranty_period?: number; // <-- Added property
+  image_url?: string; // <-- Added property
   supplier_detail?: {
     company_name: string;
     email: string;
@@ -125,6 +128,34 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
   assetId,
   showEnable,
 }) => {
+  const [attachments, setAttachments] = useState<{
+    assetImage?: File[];
+  }>({});
+
+  const handleFileUpload = (type: string, files: FileList | null) => {
+    if (!files) return;
+    
+    const fileArray = Array.from(files);
+    
+    // For asset image, only allow one file
+    if (type === 'assetImage') {
+      const imageFile = fileArray[0];
+      if (imageFile && imageFile.type.startsWith('image/')) {
+        setAttachments(prev => ({
+          ...prev,
+          [type]: [imageFile]
+        }));
+      }
+    }
+  };
+
+  const removeFile = (type: string, index: number) => {
+    setAttachments(prev => ({
+      ...prev,
+      [type]: prev[type as keyof typeof prev]?.filter((_, i) => i !== index)
+    }));
+  };
+
   return (
     <div className="min-h-full ">
       <Tabs defaultValue="analytics" style={{ width: "100%" }}>
@@ -185,7 +216,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                           style={{ color: "#C72030" }}
                         />
                       </div>
-                      <h3 className="text-lg font-semibold uppercase text-[#C72030]">
+                      <h3 className="text-lg font-semibold uppercase text-black">
                         {groupName}
                       </h3>
                     </div>
@@ -225,116 +256,167 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                 {/* Body */}
                 <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-10 text-sm text-gray-800">
                   {/* Asset Details */}
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-                    {/* Left: Asset info (3 columns) */}
-                    <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {/* Column 1 */}
-                      <div className="space-y-4">
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">Asset No</span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.asset_number || "-"}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">Model No</span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.model_number || "-"}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">Group</span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.group || "-"}
-                          </span>
-                        </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start p-6 bg-[#F9F9F6] rounded-lg border">
+                    {/* Left Section - Asset Info */}
+                    <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
+                      {/* Asset No */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">Asset No</span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.asset_number || "-"}
+                        </span>
                       </div>
 
-                      {/* Column 2 */}
-                      <div className="space-y-4">
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">Serial No</span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.serial_number || "-"}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">Sub Group</span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.sub_group || "-"}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">
-                            Commissioning Date
-                          </span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.commisioning_date || "-"}
-                          </span>
-                        </div>
+                      {/* Serial No */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">Serial No</span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.serial_number || "-"}
+                        </span>
                       </div>
 
-                      {/* Column 3 */}
-                      <div className="space-y-4">
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">
-                            Manufacturer
-                          </span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.manufacturer || "-"}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">
-                            Allocation Based On
-                          </span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.allocation_type || "-"}
-                          </span>
-                        </div>
-                        <div className="flex">
-                          <span className="text-gray-500 w-32">Department</span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-medium">
-                            {asset.allocated_to?.join(", ") || "-"}
-                          </span>
-                        </div>
+                      {/* Manufacturer */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">Manufacturer</span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.manufacturer || "-"}
+                        </span>
+                      </div>
+
+                      {/* Model No */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">Model No</span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.model_number || "-"}
+                        </span>
+                      </div>
+
+                      {/* Sub Group */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">Sub Group</span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.sub_group || "-"}
+                        </span>
+                      </div>
+
+                      {/* Allocation Based On */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">
+                          Allocation Based On
+                        </span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.allocation_type || "-"}
+                        </span>
+                      </div>
+
+                      {/* Group */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">Group</span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.group || "-"}
+                        </span>
+                      </div>
+
+                      {/* Commissioning Date */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">
+                          Commissioning Date
+                        </span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.commisioning_date || "-"}
+                        </span>
+                      </div>
+
+                      {/* Department */}
+                      <div className="flex items-start">
+                        <span className="w-32 text-gray-500">Department</span>
+                        <span className="mx-1 text-gray-500">:</span>
+                        <span className="font-semibold">
+                          {asset.allocated_to?.join(", ") || "-"}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Right: Image */}
-                    <div className="space-y-2">
-                      <span className="text-gray-500 mb-1 block">
-                        Asset Image
-                      </span>
-                      <div className="w-full h-36 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-                        {asset.image_url ? (
-                          <img
-                            src={asset.image_url}
-                            alt="Asset"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                              e.currentTarget.nextElementSibling.style.display =
-                                "flex";
-                            }}
-                          />
-                        ) : (
-                          <div className="text-gray-400 text-sm text-center">
-                            No Image Available
+                    {/* Right Section - Image */}
+                    <div className="lg:col-span-4">
+                      <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">Asset Image</label>
+                      
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.gif,.webp"
+                          className="hidden"
+                          id="asset-image"
+                          onChange={e => handleFileUpload('assetImage', e.target.files)}
+                        />
+                        <label htmlFor="asset-image" className="cursor-pointer">
+                          {attachments.assetImage && attachments.assetImage.length > 0 ? (
+                            <div className="relative">
+                              <img
+                                src={URL.createObjectURL(attachments.assetImage[0])}
+                                alt="Asset Preview"
+                                className="w-full h-48 object-cover rounded"
+                              />
+                              <button 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  removeFile('assetImage', 0);
+                                }} 
+                                className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow-md"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : asset.image_url ? (
+                            <div className="relative">
+                              <img
+                                src={asset.image_url}
+                                alt="Asset"
+                                className="w-full h-48 object-cover rounded"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                                  if (nextSibling) {
+                                    nextSibling.style.display = "flex";
+                                  }
+                                }}
+                              />
+                              <div className="hidden flex-col items-center justify-center h-48">
+                                <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                <p className="text-sm text-gray-600">
+                                  Click to upload new image
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  JPG, PNG, GIF up to 10MB
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-48">
+                              <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                              <p className="text-sm text-gray-600">
+                                Click to upload asset image
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                JPG, PNG, GIF up to 10MB
+                              </p>
+                            </div>
+                          )}
+                        </label>
+                        
+                        {attachments.assetImage && attachments.assetImage.length > 0 && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            {attachments.assetImage[0].name} - {(attachments.assetImage[0].size / 1024 / 1024).toFixed(2)} MB
                           </div>
                         )}
-                        <div className="text-gray-400 text-sm text-center hidden">
-                          Image Not Found
-                        </div>
                       </div>
                     </div>
                   </div>
