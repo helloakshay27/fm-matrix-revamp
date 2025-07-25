@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Upload, X, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -81,6 +81,7 @@ interface ServiceOption {
 const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
   const { toast } = useToast();
   const dispatch = useAppDispatch();
   const { data: helpdeskData, loading: helpdeskLoading } = useAppSelector(state => state.helpdeskCategories);
@@ -134,10 +135,55 @@ const UpdateTicketsPage: React.FC = () => {
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [reviewDate, setReviewDate] = useState<Date>();
 
+  // Fetch ticket data for editing
+  const fetchTicketData = async (ticketId: string) => {
+    try {
+      const response = await apiClient.get(`/pms/admin/complaints/${ticketId}.json`);
+      const ticketData = response.data;
+      
+      // Populate form with API data
+      setFormData(prev => ({
+        ...prev,
+        title: ticketData.heading || '',
+        adminPriority: ticketData.priority || '',
+        selectedStatus: ticketData.issue_status || '',
+        proactiveReactive: ticketData.proactive_reactive || '',
+        serviceType: ticketData.service_type || '',
+        externalPriority: ticketData.external_priority || '',
+        preventiveAction: ticketData.preventive_action || '',
+        impact: ticketData.impact || '',
+        correction: ticketData.correction || '',
+        rootCause: ticketData.root_cause || '',
+        categoryType: ticketData.category_type || '',
+        subCategoryType: ticketData.sub_category_type || '',
+        assignTo: ticketData.assigned_to || '',
+        mode: ticketData.complaint_mode || '',
+        responsiblePerson: ticketData.responsible_person || ''
+      }));
+
+      // Set review date if available
+      if (ticketData.review_tracking) {
+        setReviewDate(new Date(ticketData.review_tracking));
+      }
+      
+    } catch (error) {
+      console.error('Error fetching ticket data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load ticket data.",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
-    if (location.state?.selectedTickets) {
+    // If we have an ID from the URL, fetch the ticket data
+    if (id) {
+      fetchTicketData(id);
+    }
+    // If we have selected tickets from navigation state, use the first one
+    else if (location.state?.selectedTickets) {
       setSelectedTickets(location.state.selectedTickets);
-      // Pre-populate form with first ticket's data if available
       const firstTicket = location.state.selectedTickets[0];
       if (firstTicket) {
         setFormData(prev => ({
@@ -152,7 +198,7 @@ const UpdateTicketsPage: React.FC = () => {
         }));
       }
     }
-  }, [location.state]);
+  }, [id, location.state]);
 
   useEffect(() => {
     const fetchData = async () => {
