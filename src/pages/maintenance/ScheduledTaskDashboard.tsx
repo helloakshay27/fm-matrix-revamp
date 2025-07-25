@@ -12,6 +12,7 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { calendarService, CalendarEvent } from '@/services/calendarService';
 import { getToken } from '@/utils/auth';
 import { getFullUrl } from '@/config/apiConfig';
+import { TaskFilterDialog, TaskFilters } from '@/components/TaskFilterDialog';
 
 interface TaskRecord {
   id: string;
@@ -117,6 +118,8 @@ export const ScheduledTaskDashboard = () => {
   const [taskData, setTaskData] = useState<TaskRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTaskFilter, setShowTaskFilter] = useState(false);
+  const [currentFilters, setCurrentFilters] = useState<TaskFilters>({});
 
   // Transform API data to TaskRecord format
   const transformApiDataToTaskRecord = (apiData: ApiTaskOccurrence[]): TaskRecord[] => {
@@ -140,13 +143,28 @@ export const ScheduledTaskDashboard = () => {
   };
 
   // Fetch tasks from API
-  const fetchTasks = async () => {
+  const fetchTasks = async (filters: TaskFilters = {}) => {
     setLoading(true);
     setError(null);
     
     try {
       const token = getToken();
-      const apiUrl = getFullUrl('/all_tasks_listing.json?show_all=true');
+      
+      // Build query parameters from filters
+      const queryParams = new URLSearchParams();
+      queryParams.append('show_all', 'true');
+      
+      if (filters.taskId) queryParams.append('task_id', filters.taskId);
+      if (filters.checklist) queryParams.append('checklist', filters.checklist);
+      if (filters.assignedTo) queryParams.append('assigned_to', filters.assignedTo);
+      if (filters.status) queryParams.append('status', filters.status);
+      if (filters.scheduleType) queryParams.append('schedule_type', filters.scheduleType);
+      if (filters.site) queryParams.append('site', filters.site);
+      if (filters.priority) queryParams.append('priority', filters.priority);
+      if (filters.dateFrom) queryParams.append('date_from', filters.dateFrom);
+      if (filters.dateTo) queryParams.append('date_to', filters.dateTo);
+      
+      const apiUrl = getFullUrl(`/all_tasks_listing.json?${queryParams.toString()}`);
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -175,8 +193,14 @@ export const ScheduledTaskDashboard = () => {
 
   // Load tasks on component mount
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchTasks(currentFilters);
+  }, [currentFilters]);
+
+  // Handle filter application
+  const handleApplyFilters = (filters: TaskFilters) => {
+    setCurrentFilters(filters);
+    console.log('Applied filters:', filters);
+  };
 
   // Load calendar events
   useEffect(() => {
@@ -307,7 +331,7 @@ export const ScheduledTaskDashboard = () => {
               <div className="flex items-center justify-center py-8">
                 <div className="text-red-500">{error}</div>
                 <Button 
-                  onClick={fetchTasks} 
+                  onClick={() => fetchTasks(currentFilters)} 
                   variant="outline" 
                   className="ml-4"
                 >
@@ -375,8 +399,8 @@ export const ScheduledTaskDashboard = () => {
               enableSelection={true}
               enableExport={true}
               storageKey="scheduled-tasks-table"
-              onFilterClick={() => setShowAdvancedFilter(true)}
-              handleExport={handleExport}
+              onFilterClick={() => setShowTaskFilter(true)}
+              handleExport={() => fetchTasks(currentFilters)}
 
               emptyMessage="No scheduled tasks found"
               searchPlaceholder="Search tasks..."
@@ -421,7 +445,14 @@ export const ScheduledTaskDashboard = () => {
         />
       )}
 
-      {/* Advanced Filter Dialog */}
+      {/* Task Filter Dialog */}
+      <TaskFilterDialog
+        isOpen={showTaskFilter}
+        onClose={() => setShowTaskFilter(false)}
+        onApply={handleApplyFilters}
+      />
+
+      {/* Advanced Filter Dialog - Keep existing for backward compatibility */}
       <TaskAdvancedFilterDialog
         open={showAdvancedFilter}
         onOpenChange={setShowAdvancedFilter}
