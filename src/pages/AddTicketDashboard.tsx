@@ -385,7 +385,7 @@ export const AddTicketDashboard = () => {
                   value={formData.name}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
                   disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                  className={`border border-gray-300 rounded-md ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
+                  className={`h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
               </div>
               <div>
@@ -395,7 +395,7 @@ export const AddTicketDashboard = () => {
                   value={formData.department}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                   disabled={isFieldsReadOnly}
-                  className={`border border-gray-300 rounded-md ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
+                  className={`h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
               </div>
             </div>
