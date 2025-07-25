@@ -129,31 +129,7 @@ const AssignTicketsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-6">Allocate To</h2>
           
-          {/* Radio buttons for Department/User selection */}
-          <div className="flex gap-6 mb-6">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="assignTo"
-                value="Department"
-                checked={assignTo === 'Department'}
-                onChange={(e) => setAssignTo(e.target.value as 'Department' | 'User')}
-                className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Department</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="assignTo"
-                value="User"
-                checked={assignTo === 'User'}
-                onChange={(e) => setAssignTo(e.target.value as 'Department' | 'User')}
-                className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
-              />
-              <span className="text-sm font-medium text-gray-700">User</span>
-            </label>
-          </div>
+          {/* Department/User selection */}
 
           {/* Department/User selection */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
