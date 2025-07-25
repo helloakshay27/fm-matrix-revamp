@@ -377,7 +377,7 @@ export const AddTicketDashboard = () => {
             )}
 
             {/* Name and Department in 2 columns as shown in image */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                 <Input
