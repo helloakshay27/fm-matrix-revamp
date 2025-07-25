@@ -123,7 +123,7 @@ const AssignTicketsPage: React.FC = () => {
   }, [toast]);
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/maintenance/ticket');
   };
 
   const handleSubmit = async () => {
