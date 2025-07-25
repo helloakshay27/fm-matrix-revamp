@@ -113,7 +113,7 @@ export const AMCDashboard = () => {
   );
 
   // Use API data if available, otherwise fallback to initial data
-  const amcData = apiData && Array.isArray(apiData) ? apiData : initialAmcData;
+  const amcData = apiData && Array.isArray(apiData.asset_amcs) ? apiData.asset_amcs : initialAmcData;
 
   useEffect(() => {
     dispatch(fetchAMCData());
@@ -842,14 +842,14 @@ export const AMCDashboard = () => {
           </TabsContent>
 
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
               <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
                 <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {11}
+                    {apiData.total_amcs_count}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total AMC</div>
                 </div>
@@ -861,9 +861,9 @@ export const AMCDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {22}
+                    {apiData.active_amcs_count}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
                 </div>
               </div>
 
@@ -873,9 +873,9 @@ export const AMCDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {0}
+                    {apiData.inactive_amcs_count}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
                 </div>
               </div>
 
@@ -885,21 +885,9 @@ export const AMCDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {4}
+                    {apiData.flagged_amcs_count}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
-                </div>
-              </div>
-
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {2}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
                 </div>
               </div>
             </div>
