@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Upload, X, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
+import { getToken } from '@/utils/auth';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 import { format } from "date-fns";
@@ -490,19 +491,26 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called');
     setIsSubmitting(true);
+    
     try {
       if (selectedTickets.length === 0) {
+        console.error('No tickets selected');
         toast({
           title: "Error",
           description: "No tickets selected for update.",
           variant: "destructive"
         });
+        setIsSubmitting(false);
         return;
       }
 
       // Get the first selected ticket for the complaint ID
       const ticketId = selectedTickets[0].id;
+      console.log('Ticket ID:', ticketId);
+      console.log('Form Data:', formData);
+      console.log('Review Date:', reviewDate);
       
       // Prepare form data for API
       const formDataToSend = new FormData();
@@ -512,46 +520,47 @@ const UpdateTicketsPage: React.FC = () => {
       formDataToSend.append('complaint_log[society_staff_type]', 'User');
       formDataToSend.append('complaint_log[status_reason]', '');
       formDataToSend.append('complaint_log[expected_date]', '');
-      formDataToSend.append('complaint_log[complaint_status_id]', formData.selectedStatus);
-      formDataToSend.append('complaint_log[assigned_to]', formData.assignTo);
-      formDataToSend.append('complaint_log[priority]', formData.adminPriority);
-      formDataToSend.append('complaint_log[comment]', formData.comments);
+      formDataToSend.append('complaint_log[complaint_status_id]', formData.selectedStatus || '');
+      formDataToSend.append('complaint_log[assigned_to]', formData.assignTo || '');
+      formDataToSend.append('complaint_log[priority]', formData.adminPriority || '');
+      formDataToSend.append('complaint_log[comment]', formData.comments || '');
       formDataToSend.append('save_and_show_detail', 'true');
       formDataToSend.append('custom_redirect', `/pms/admin/complaints/${ticketId}`);
       
       // Complaint data
       formDataToSend.append('complaint[complaint_type]', 'Request');
-      formDataToSend.append('complaint[preventive_action]', formData.preventiveAction);
+      formDataToSend.append('complaint[preventive_action]', formData.preventiveAction || '');
       formDataToSend.append('complaint[person_id]', '');
       
       // Format review tracking date properly
       if (reviewDate) {
         const formattedDate = format(reviewDate, 'yyyy-MM-dd');
         formDataToSend.append('complaint[review_tracking_date]', formattedDate);
+        console.log('Review date formatted:', formattedDate);
       } else {
         formDataToSend.append('complaint[review_tracking_date]', '');
       }
       
-      formDataToSend.append('complaint[category_type_id]', formData.categoryType);
-      formDataToSend.append('complaint[proactive_reactive]', formData.proactiveReactive);
-      formDataToSend.append('complaint[sub_category_id]', formData.subCategoryType);
-      formDataToSend.append('complaint[external_priority]', formData.externalPriority);
-      formDataToSend.append('complaint[complaint_mode_id]', formData.mode);
-      formDataToSend.append('complaint[root_cause]', formData.rootCause);
-      formDataToSend.append('complaint[impact]', formData.impact);
-      formDataToSend.append('complaint[correction]', formData.correction);
-      formDataToSend.append('complaint[reference_number]', formData.refNumber);
-      formDataToSend.append('complaint[corrective_action]', formData.correctiveAction);
-      formDataToSend.append('complaint[service_type]', formData.serviceType);
-      formDataToSend.append('complaint[issue_related_to]', formData.issueRelatedTo);
-      formDataToSend.append('complaint[cost_involved]', formData.costInvolved.toString());
+      formDataToSend.append('complaint[category_type_id]', formData.categoryType || '');
+      formDataToSend.append('complaint[proactive_reactive]', formData.proactiveReactive || '');
+      formDataToSend.append('complaint[sub_category_id]', formData.subCategoryType || '');
+      formDataToSend.append('complaint[external_priority]', formData.externalPriority || '');
+      formDataToSend.append('complaint[complaint_mode_id]', formData.mode || '');
+      formDataToSend.append('complaint[root_cause]', formData.rootCause || '');
+      formDataToSend.append('complaint[impact]', formData.impact || '');
+      formDataToSend.append('complaint[correction]', formData.correction || '');
+      formDataToSend.append('complaint[reference_number]', formData.refNumber || '');
+      formDataToSend.append('complaint[corrective_action]', formData.correctiveAction || '');
+      formDataToSend.append('complaint[service_type]', formData.serviceType || '');
+      formDataToSend.append('complaint[issue_related_to]', formData.issueRelatedTo || '');
+      formDataToSend.append('complaint[cost_involved]', formData.costInvolved ? 'true' : 'false');
       
       // Add cost approval data if cost is involved
       if (formData.costInvolved && costPopupData.cost) {
         const timestamp = Date.now();
-        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][created_by_id]`, '12437'); // You might need to get this from user context
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][created_by_id]`, '12437');
         formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][cost]`, costPopupData.cost);
-        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][comment]`, costPopupData.description);
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][comment]`, costPopupData.description || '');
         formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][_destroy]`, 'false');
         
         // Add attachments if any
@@ -562,7 +571,7 @@ const UpdateTicketsPage: React.FC = () => {
       }
       
       formDataToSend.append('checklist_type', 'Asset');
-      formDataToSend.append('asset_id', formData.selectedAsset);
+      formDataToSend.append('asset_id', formData.selectedAsset || '');
       formDataToSend.append('service_id', '');
       
       // Add file attachments if any
@@ -570,20 +579,42 @@ const UpdateTicketsPage: React.FC = () => {
         formDataToSend.append('attachments[]', file);
       });
 
+      // Log FormData contents for debugging
+      console.log('FormData contents:');
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(key, value);
+      }
+
+      // Get token
+      const token = getToken();
+      console.log('Token available:', !!token);
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      console.log('Making API call to:', 'https://fm-uat-api.lockated.com/pms/admin/complaint_logs.json');
+
       // Make API call
       const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaint_logs.json', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Add auth token
+          'Authorization': `Bearer ${token}`,
         },
         body: formDataToSend
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const result = await response.json();
+      console.log('API Response:', result);
       
       toast({
         title: "Success",
@@ -595,7 +626,7 @@ const UpdateTicketsPage: React.FC = () => {
       console.error('Error updating tickets:', error);
       toast({
         title: "Error",
-        description: "Failed to update tickets. Please try again.",
+        description: `Failed to update tickets: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
