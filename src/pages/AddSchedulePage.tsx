@@ -3885,14 +3885,7 @@ export const AddSchedulePage = () => {
               </div>
             ))}
 
-            <TimeSetupStep
-              data={timeSetupData}
-              onChange={(field, value) => {
-                setTimeSetupData(prev => ({ ...prev, [field]: value }));
-              }}
-              isCompleted={false}
-              isCollapsed={false}
-            />
+          
           </div>
         );
         

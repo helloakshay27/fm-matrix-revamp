@@ -119,7 +119,7 @@ export const LoginPage = () => {
       });
       return;
     }
-    
+
     if (password.length < 6) {
       toast({
         variant: "destructive",
@@ -128,16 +128,16 @@ export const LoginPage = () => {
       });
       return;
     }
-    
+
     setLoginLoading(true);
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const response = await loginUser(email, password, baseUrl);
-      
+
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
       }
-      
+
       // Save user data and token to localStorage
       saveUser({
         id: response.id,
@@ -147,13 +147,13 @@ export const LoginPage = () => {
       });
       saveToken(response.access_token);
       saveBaseUrl(baseUrl);
-      
+
       toast({
         title: "Login Successful",
         description: `Welcome back, ${response.firstname}!`,
         duration: 3000,
       });
-      
+
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
         navigate('/');
@@ -187,13 +187,12 @@ export const LoginPage = () => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
-              step === currentStep
-                ? "bg-[#C72030] text-white shadow-lg scale-110"
-                : step < currentStep
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 text-gray-400"
-            }`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
+              ? "bg-[#C72030] text-white shadow-lg scale-110"
+              : step < currentStep
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-400"
+              }`}
           >
             {step < currentStep ? (
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -258,11 +257,11 @@ export const LoginPage = () => {
           Select Organization
         </h2>
       </div>
-      <p className="text-gray-300 text-sm mb-6">
+      <p className="text-black-400 text-sm mb-6">
         Email: <span className="text-white">{email}</span>
       </p>
 
-      <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto no-scrollbar">
+      <div className="space-y-3 mb-6 max-h-[200px] overflow-y-auto no-scrollbar">
         {organizations && organizations.map((org) => (
           <div
             key={org.id}
@@ -271,7 +270,7 @@ export const LoginPage = () => {
           >
             <div className="flex items-center">
               <div className="w-12 h-12 bg-[#C72030] bg-opacity-10 rounded-lg flex items-center justify-center mr-4">
-                {org.logo?.url ? (
+                {/* {org.logo?.url ? (
                   <img 
                     src={`https://uat.lockated.com${org.logo.url}`} 
                     alt={`${org.name} logo`}
@@ -279,7 +278,10 @@ export const LoginPage = () => {
                   />
                 ) : (
                   <Building2 className="text-[#C72030]" size={24} />
-                )}
+                )} */}
+
+                <Building2 className="text-[#C72030]" size={24} />
+
               </div>
               <div>
                 <h3 className="text-gray-900 font-medium">{org.name}</h3>
@@ -313,28 +315,31 @@ export const LoginPage = () => {
           Enter Password
         </h2>
       </div>
-      
-        {selectedOrganization && (
-          <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 mb-6">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
-                {selectedOrganization.logo?.url ? (
-                  <img 
-                    src={`https://uat.lockated.com${selectedOrganization.logo.url}`} 
-                    alt={`${selectedOrganization.name} logo`}
-                    className="w-6 h-6 object-contain"
-                  />
-                ) : (
-                  <Building2 className="text-black" size={20} />
-                )}
-              </div>
-              <div>
-                <h3 className="text-white font-medium">{selectedOrganization.name}</h3>
-                <p className="text-gray-300 text-sm">{email}</p>
-              </div>
+
+      {selectedOrganization && (
+        <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 mb-6">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center mr-3">
+              {/* {selectedOrganization.logo?.url ? (
+                <img
+                  src={`https://uat.lockated.com${selectedOrganization.logo.url}`}
+                  alt={`${selectedOrganization.name} logo`}
+                  className="w-6 h-6 object-contain"
+                />
+              ) : (
+                <Building2 className="text-black" size={20} />
+              )} */}
+
+              <Building2 className="text-black" size={20} />
+
+            </div>
+            <div>
+              <h3 className="text-black font-medium">{selectedOrganization.name}</h3>
+              <p className="text-gray-400 text-sm">{email}</p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       <TextField
         variant="outlined"
@@ -377,7 +382,7 @@ export const LoginPage = () => {
 
       {/* Forgot Password */}
       <div className="text-center mt-6">
-        <button className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors">
+        <button className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors" onClick={() => navigate('/forgot-password')}>
           Forgot your password?
         </button>
       </div>
