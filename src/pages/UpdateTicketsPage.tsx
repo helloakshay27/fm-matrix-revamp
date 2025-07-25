@@ -875,7 +875,7 @@ const UpdateTicketsPage: React.FC = () => {
               <Select value={formData.externalPriority} onValueChange={(value) => handleInputChange('externalPriority', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select External Priority</span>}
+                    placeholder={<span className="text-gray-400">Select</span>}
                     className="text-gray-900"
                   />
                 </SelectTrigger>
