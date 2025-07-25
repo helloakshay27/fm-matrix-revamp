@@ -961,7 +961,7 @@ const UpdateTicketsPage: React.FC = () => {
                 type="text"
                 value={formData.correctiveAction}
                 onChange={(e) => handleInputChange('correctiveAction', e.target.value)}
-                placeholder="hko"
+                placeholder=""
                 className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
               />
             </div>
