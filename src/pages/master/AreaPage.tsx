@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, X } from 'lucide-react';
+import { Search, Plus, Edit, X, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,29 +10,51 @@ import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
   fetchWings, 
-  fetchAreas, 
-  createArea, 
   setSelectedBuilding, 
   setSelectedWing,
-  updateArea
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+
+interface Area {
+  id: number;
+  name: string;
+  building_id: number;
+  wing_id: number;
+  active: boolean;
+  building?: {
+    id: number;
+    name: string;
+  };
+  wing?: {
+    id: number;
+    name: string;
+  };
+}
 
 export function AreaPage() {
   const dispatch = useAppDispatch();
-  const { buildings, wings, areas, selectedBuilding, selectedWing } = useAppSelector((state) => state.location);
+  const { buildings, wings, selectedBuilding, selectedWing } = useAppSelector((state) => state.location);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [newAreaName, setNewAreaName] = useState('');
-  const [editingArea, setEditingArea] = useState(null);
+  const [editingArea, setEditingArea] = useState<Area | null>(null);
   const [editAreaName, setEditAreaName] = useState('');
   const [editAreaStatus, setEditAreaStatus] = useState(true);
+  const [editSelectedBuilding, setEditSelectedBuilding] = useState<number | null>(null);
+  const [editSelectedWing, setEditSelectedWing] = useState<number | null>(null);
+  
+  // Areas state
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [areasLoading, setAreasLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchBuildings());
+    fetchAreas();
   }, [dispatch]);
 
   useEffect(() => {
@@ -42,12 +64,43 @@ export function AreaPage() {
   }, [dispatch, selectedBuilding]);
 
   useEffect(() => {
-    if (selectedBuilding && selectedWing) {
-      dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
+    if (editSelectedBuilding) {
+      dispatch(fetchWings(editSelectedBuilding));
     }
-  }, [dispatch, selectedBuilding, selectedWing]);
+  }, [dispatch, editSelectedBuilding]);
 
-  const filteredAreas = areas.data.filter(area =>
+  // Fetch all areas
+  const fetchAreas = async () => {
+    setAreasLoading(true);
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/areas.json`, {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch areas');
+      }
+      
+      const data = await response.json();
+      setAreas(data.areas || []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+      toast.error('Failed to fetch areas');
+      setAreas([]);
+    } finally {
+      setAreasLoading(false);
+    }
+  };
+
+  // Refresh areas data
+  const handleRefresh = () => {
+    fetchAreas();
+  };
+
+  const filteredAreas = areas.filter(area =>
     area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     area.building?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     area.wing?.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -66,42 +119,80 @@ export function AreaPage() {
 
   const handleAddArea = async () => {
     if (selectedBuilding && selectedWing && newAreaName.trim()) {
+      setIsSubmitting(true);
       try {
-        await dispatch(createArea({
-          name: newAreaName,
-          building_id: selectedBuilding,
-          wing_id: selectedWing
-        }));
+        const response = await fetch(`${API_CONFIG.BASE_URL}/pms/areas.json`, {
+          method: 'POST',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pms_area: {
+              name: newAreaName,
+              building_id: selectedBuilding,
+              wing_id: selectedWing,
+              active: true
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create area');
+        }
+
         toast.success('Area created successfully');
         setNewAreaName('');
         setShowAddDialog(false);
-        dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
+        fetchAreas(); // Refresh areas list
       } catch (error) {
+        console.error('Error creating area:', error);
         toast.error('Failed to create area');
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
 
   const toggleStatus = async (areaId: number) => {
-    try {
-      const area = areas.data.find(a => a.id === areaId);
-      if (!area) return;
+    const area = areas.find(a => a.id === areaId);
+    if (!area) return;
 
-      await dispatch(updateArea({
-        id: areaId,
-        updates: { active: !area.active }
-      }));
-      
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/areas/${areaId}.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pms_area: {
+            name: area.name,
+            building_id: area.building_id,
+            wing_id: area.wing_id,
+            active: !area.active
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update area status');
+      }
+
       toast.success('Area status updated successfully');
+      fetchAreas(); // Refresh areas list
     } catch (error) {
+      console.error('Error updating area status:', error);
       toast.error('Failed to update area status');
     }
   };
 
-  const handleEditArea = (area) => {
+  const handleEditArea = (area: Area) => {
     setEditingArea(area);
     setEditAreaName(area.name);
     setEditAreaStatus(area.active);
+    setEditSelectedBuilding(area.building_id);
+    setEditSelectedWing(area.wing_id);
     setShowEditDialog(true);
   };
 
@@ -111,38 +202,74 @@ export function AreaPage() {
       return;
     }
 
+    if (!editSelectedBuilding || !editSelectedWing) {
+      toast.error('Please select building and wing');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await dispatch(updateArea({
-        id: editingArea.id,
-        updates: { 
-          name: editAreaName,
-          active: editAreaStatus
-        }
-      }));
-      
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/areas/${editingArea.id}.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pms_area: {
+            name: editAreaName,
+            building_id: editSelectedBuilding,
+            wing_id: editSelectedWing,
+            active: editAreaStatus
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update area');
+      }
+
       toast.success('Area updated successfully');
       setShowEditDialog(false);
-      setEditingArea(null);
-      setEditAreaName('');
-      setEditAreaStatus(true);
-      
-      // Refresh areas list
-      if (selectedBuilding && selectedWing) {
-        dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
-      }
+      resetEditForm();
+      fetchAreas(); // Refresh areas list
     } catch (error) {
+      console.error('Error updating area:', error);
       toast.error('Failed to update area');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const resetEditForm = () => {
+    setEditingArea(null);
+    setEditAreaName('');
+    setEditAreaStatus(true);
+    setEditSelectedBuilding(null);
+    setEditSelectedWing(null);
+  };
+
+  const handleEditDialogClose = () => {
+    setShowEditDialog(false);
+    resetEditForm();
   };
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">AREA</h1>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          disabled={areasLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${areasLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
-
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
@@ -197,13 +324,7 @@ export function AreaPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!selectedBuilding || !selectedWing ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  Please select building and wing to view areas
-                </TableCell>
-              </TableRow>
-            ) : areas.loading ? (
+            {areasLoading ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-4">
                   Loading areas...
@@ -216,18 +337,18 @@ export function AreaPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              displayedAreas.map((area, index) => (
+              displayedAreas.map((area) => (
                 <TableRow key={area.id}>
                   <TableCell>{area.building?.name || 'N/A'}</TableCell>
                   <TableCell>{area.wing?.name || 'N/A'}</TableCell>
                   <TableCell>{area.name}</TableCell>
                   <TableCell>
-                     <button
-                       onClick={() => toggleStatus(area.id)}
-                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                         area.active ? 'bg-green-500' : 'bg-gray-300'
-                       }`}
-                     >
+                    <button
+                      onClick={() => toggleStatus(area.id)}
+                      className={`w-12 h-6 rounded-full transition-colors duration-200 ${
+                        area.active ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
                       <div
                         className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
                           area.active ? 'translate-x-7' : 'translate-x-1'
@@ -269,7 +390,7 @@ export function AreaPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select Building</label>
-                <Select value={selectedBuilding?.toString() || ''} onValueChange={(value) => dispatch(setSelectedBuilding(parseInt(value)))}>
+                <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Building" />
                   </SelectTrigger>
@@ -285,7 +406,7 @@ export function AreaPage() {
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select Wing</label>
-                <Select value={selectedWing?.toString() || ''} onValueChange={(value) => dispatch(setSelectedWing(parseInt(value)))} disabled={!selectedBuilding}>
+                <Select value={selectedWing?.toString() || ''} onValueChange={handleWingChange} disabled={!selectedBuilding}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
@@ -313,10 +434,10 @@ export function AreaPage() {
             <div className="flex justify-end gap-3 pt-4">
               <Button 
                 onClick={handleAddArea} 
-                disabled={!selectedBuilding || !selectedWing || !newAreaName.trim()}
+                disabled={!selectedBuilding || !selectedWing || !newAreaName.trim() || isSubmitting}
                 className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
               >
-                Submit
+                {isSubmitting ? 'Creating...' : 'Submit'}
               </Button>
               <Button 
                 variant="outline" 
@@ -338,7 +459,7 @@ export function AreaPage() {
       </Dialog>
 
       {/* Edit Area Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <Dialog open={showEditDialog} onOpenChange={handleEditDialogClose}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Area - {editingArea?.name}</DialogTitle>
@@ -346,7 +467,7 @@ export function AreaPage() {
               variant="ghost"
               size="icon"
               className="absolute right-4 top-4"
-              onClick={() => setShowEditDialog(false)}
+              onClick={handleEditDialogClose}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -355,7 +476,10 @@ export function AreaPage() {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Building</label>
-                <Select value={editingArea?.building_id?.toString() || ''} onValueChange={(value) => dispatch(setSelectedBuilding(parseInt(value)))}>
+                <Select 
+                  value={editSelectedBuilding?.toString() || ''} 
+                  onValueChange={(value) => setEditSelectedBuilding(parseInt(value))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Building" />
                   </SelectTrigger>
@@ -371,7 +495,11 @@ export function AreaPage() {
               
               <div className="space-y-2">
                 <label className="text-sm font-medium">Wing</label>
-                <Select value={editingArea?.wing_id?.toString() || ''} onValueChange={(value) => dispatch(setSelectedWing(parseInt(value)))}>
+                <Select 
+                  value={editSelectedWing?.toString() || ''} 
+                  onValueChange={(value) => setEditSelectedWing(parseInt(value))}
+                  disabled={!editSelectedBuilding}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
@@ -418,16 +546,16 @@ export function AreaPage() {
               <Button 
                 variant="outline" 
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
-                onClick={() => setShowEditDialog(false)}
+                onClick={handleEditDialogClose}
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleSaveChanges} 
-                disabled={!editAreaName.trim()}
+                disabled={!editAreaName.trim() || !editSelectedBuilding || !editSelectedWing || isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6"
               >
-                Save Changes
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </div>
