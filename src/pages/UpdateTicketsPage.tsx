@@ -212,12 +212,26 @@ const UpdateTicketsPage: React.FC = () => {
       // Set review date if available
       console.log('Review tracking from API:', ticketData.review_tracking);
       if (ticketData.review_tracking && ticketData.review_tracking !== null) {
-        const date = new Date(ticketData.review_tracking);
-        if (!isNaN(date.getTime())) {
-          setReviewDate(date);
-          console.log('Set review date to:', date);
+        // Check if it's in DD/MM/YYYY format
+        const dateMatch = ticketData.review_tracking.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (dateMatch) {
+          const [, day, month, year] = dateMatch;
+          const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          if (!isNaN(parsedDate.getTime())) {
+            setReviewDate(parsedDate);
+            console.log('Set review date from DD/MM/YYYY format:', parsedDate);
+          } else {
+            console.log('Invalid date parsed from DD/MM/YYYY:', parsedDate);
+          }
         } else {
-          console.log('Invalid date value:', ticketData.review_tracking);
+          // Try ISO format as fallback
+          const date = new Date(ticketData.review_tracking);
+          if (!isNaN(date.getTime())) {
+            setReviewDate(date);
+            console.log('Set review date from ISO format:', date);
+          } else {
+            console.log('Invalid date value:', ticketData.review_tracking);
+          }
         }
       } else {
         console.log('No review tracking date available');
@@ -478,11 +492,102 @@ const UpdateTicketsPage: React.FC = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Here you would implement the actual update API call
-      // For now, just showing success message
+      if (selectedTickets.length === 0) {
+        toast({
+          title: "Error",
+          description: "No tickets selected for update.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get the first selected ticket for the complaint ID
+      const ticketId = selectedTickets[0].id;
+      
+      // Prepare form data for API
+      const formDataToSend = new FormData();
+      
+      // Complaint Log data
+      formDataToSend.append('complaint_log[complaint_id]', ticketId.toString());
+      formDataToSend.append('complaint_log[society_staff_type]', 'User');
+      formDataToSend.append('complaint_log[status_reason]', '');
+      formDataToSend.append('complaint_log[expected_date]', '');
+      formDataToSend.append('complaint_log[complaint_status_id]', formData.selectedStatus);
+      formDataToSend.append('complaint_log[assigned_to]', formData.assignTo);
+      formDataToSend.append('complaint_log[priority]', formData.adminPriority);
+      formDataToSend.append('complaint_log[comment]', formData.comments);
+      formDataToSend.append('save_and_show_detail', 'true');
+      formDataToSend.append('custom_redirect', `/pms/admin/complaints/${ticketId}`);
+      
+      // Complaint data
+      formDataToSend.append('complaint[complaint_type]', 'Request');
+      formDataToSend.append('complaint[preventive_action]', formData.preventiveAction);
+      formDataToSend.append('complaint[person_id]', '');
+      
+      // Format review tracking date properly
+      if (reviewDate) {
+        const formattedDate = format(reviewDate, 'yyyy-MM-dd');
+        formDataToSend.append('complaint[review_tracking_date]', formattedDate);
+      } else {
+        formDataToSend.append('complaint[review_tracking_date]', '');
+      }
+      
+      formDataToSend.append('complaint[category_type_id]', formData.categoryType);
+      formDataToSend.append('complaint[proactive_reactive]', formData.proactiveReactive);
+      formDataToSend.append('complaint[sub_category_id]', formData.subCategoryType);
+      formDataToSend.append('complaint[external_priority]', formData.externalPriority);
+      formDataToSend.append('complaint[complaint_mode_id]', formData.mode);
+      formDataToSend.append('complaint[root_cause]', formData.rootCause);
+      formDataToSend.append('complaint[impact]', formData.impact);
+      formDataToSend.append('complaint[correction]', formData.correction);
+      formDataToSend.append('complaint[reference_number]', formData.refNumber);
+      formDataToSend.append('complaint[corrective_action]', formData.correctiveAction);
+      formDataToSend.append('complaint[service_type]', formData.serviceType);
+      formDataToSend.append('complaint[issue_related_to]', formData.issueRelatedTo);
+      formDataToSend.append('complaint[cost_involved]', formData.costInvolved.toString());
+      
+      // Add cost approval data if cost is involved
+      if (formData.costInvolved && costPopupData.cost) {
+        const timestamp = Date.now();
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][created_by_id]`, '12437'); // You might need to get this from user context
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][cost]`, costPopupData.cost);
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][comment]`, costPopupData.description);
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][_destroy]`, 'false');
+        
+        // Add attachments if any
+        costPopupData.attachments.forEach((file, index) => {
+          const attachmentTimestamp = Date.now() + index;
+          formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][attachments_attributes][${attachmentTimestamp}][_destroy]`, 'false');
+        });
+      }
+      
+      formDataToSend.append('checklist_type', 'Asset');
+      formDataToSend.append('asset_id', formData.selectedAsset);
+      formDataToSend.append('service_id', '');
+      
+      // Add file attachments if any
+      attachments.forEach((file) => {
+        formDataToSend.append('attachments[]', file);
+      });
+
+      // Make API call
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/admin/complaint_logs.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Add auth token
+        },
+        body: formDataToSend
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
       toast({
         title: "Success",
-        description: `Successfully updated ${selectedTickets.length} ticket(s).`,
+        description: `Successfully updated ticket ${ticketId}.`,
       });
       
       navigate(-1);
