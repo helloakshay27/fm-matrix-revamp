@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Clock, AlertCircle, Play, CheckCircle, XCircle, Plus, Filter as FilterIcon, Download, Calendar as CalendarIcon, List } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,9 +7,10 @@ import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog'
 import { useNavigate } from 'react-router-dom';
 import { StatusCard } from '@/components/maintenance/StatusCard';
 import { TaskTable } from '@/components/maintenance/TaskTable';
-import { CalendarView } from '@/components/maintenance/CalendarView';
+import { ScheduledTaskCalendar } from '@/components/maintenance/ScheduledTaskCalendar';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { taskData } from '@/data/taskData';
+import { calendarService, CalendarEvent } from '@/services/calendarService';
 
 const statusCards = [
   { 
@@ -65,6 +66,52 @@ export const ScheduledTaskDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [showSelectionPanel, setShowSelectionPanel] = useState(false);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+
+  // Load calendar events
+  useEffect(() => {
+    const loadCalendarEvents = async () => {
+      try {
+        const events = await calendarService.fetchCalendarEvents({
+          start_date: dateFrom,
+          end_date: dateTo
+        });
+        setCalendarEvents(events);
+      } catch (error) {
+        console.error('Failed to load calendar events:', error);
+        // Use sample data as fallback
+        setCalendarEvents([
+          {
+            id: 14482120,
+            title: "PPM - LIFT LOBBY CLEANING",
+            start: "2025-07-21 07:00:00",
+            details_url: "/pms/asset_task_occurrences/14482120/asset_task_details",
+            color: "#fdbb0b",
+            status: "Scheduled",
+            custom_form: {
+              name: "LIFT LOBBY CLEANING",
+              schedule_type: "PPM"
+            },
+            task: {
+              id: 22099,
+              task_type: null
+            },
+            schedule_task: {
+              building: "Test QA",
+              wing: null,
+              floor: null,
+              area: null,
+              room: null
+            }
+          }
+        ]);
+      }
+    };
+
+    if (activeTab === 'calendar') {
+      loadCalendarEvents();
+    }
+  }, [activeTab, dateFrom, dateTo]);
 
   const handleViewTask = (taskId: string) => {
     navigate(`/task-details/${taskId}`);
@@ -168,14 +215,15 @@ export const ScheduledTaskDashboard = () => {
           </TabsContent>
 
           <TabsContent value="calendar" className="mt-0">
-            <CalendarView
-              dateFrom={dateFrom}
-              dateTo={dateTo}
-              selectedDate={selectedDate}
-              onDateFromChange={setDateFrom}
-              onDateToChange={setDateTo}
-              onSelectedDateChange={setSelectedDate}
-              tasks={taskData}
+            <ScheduledTaskCalendar
+              events={calendarEvents}
+              onDateRangeChange={(start, end) => {
+                setDateFrom(start);
+                setDateTo(end);
+              }}
+              onFiltersChange={(filters) => {
+                console.log('Filters changed:', filters);
+              }}
             />
           </TabsContent>
         </Tabs>
