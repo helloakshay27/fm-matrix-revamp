@@ -32,16 +32,11 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
     });
   };
 
-  const handleFlag = async () => {
-    console.log('TicketSelectionPanel - Flag clicked for tickets:', selectedTickets);
-    setIsFlagLoading(true);
-    try {
-      await onFlag();
-    } catch (error) {
-      console.error('Flag action failed:', error);
-    } finally {
-      setIsFlagLoading(false);
-    }
+  const handleFlag = () => {
+    console.log('TicketSelectionPanel - Update clicked for tickets:', selectedTickets);
+    navigate('/maintenance/ticket/update', {
+      state: { selectedTickets: selectedTicketObjects }
+    });
   };
 
   const handleExport = () => {

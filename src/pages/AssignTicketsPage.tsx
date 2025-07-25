@@ -149,7 +149,7 @@ const AssignTicketsPage: React.FC = () => {
           comment: "Assigned from bulk assignment"
         };
         apiCalls.push(
-          apiClient.post('/pms/admin/complaints/bulk_assign_tickets', assignPayload)
+          apiClient.post('/pms/admin/complaints/bulk_assign_tickets.json', assignPayload)
         );
       }
 
