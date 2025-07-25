@@ -31,29 +31,29 @@ interface TaskRecord {
 }
 
 const statusCards = [
-  { 
-    title: 'Scheduled Tasks', 
-    count: 1555, 
+  {
+    title: 'Scheduled Tasks',
+    count: 1555,
     icon: Settings
   },
-  { 
-    title: 'Open Tasks', 
-    count: 174, 
+  {
+    title: 'Open Tasks',
+    count: 174,
     icon: AlertCircle
   },
-  { 
-    title: 'In Progress', 
-    count: 0, 
+  {
+    title: 'In Progress',
+    count: 0,
     icon: Play
   },
-  { 
-    title: 'Closed Tasks', 
-    count: 0, 
+  {
+    title: 'Closed Tasks',
+    count: 0,
     icon: CheckCircle
   },
-  { 
-    title: 'Overdue Tasks', 
-    count: 907, 
+  {
+    title: 'Overdue Tasks',
+    count: 907,
     icon: XCircle
   }
 ];
@@ -153,18 +153,18 @@ export const ScheduledTaskDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-     
+
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="list" 
+          <TabsTrigger
+            value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
             <List className="w-4 h-4" />
             Task List
           </TabsTrigger>
-          <TabsTrigger 
-            value="calendar" 
+          <TabsTrigger
+            value="calendar"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
             <CalendarIcon className="w-4 h-4" />
@@ -252,33 +252,16 @@ export const ScheduledTaskDashboard = () => {
               enableSelection={true}
               enableExport={true}
               storageKey="scheduled-tasks-table"
-              headerContent={
-                <div className="flex items-center gap-3 mb-4">
-                  <Button 
-                    onClick={() => setShowAdvancedFilter(true)}
-                    variant="outline" 
-                    className="border-primary text-primary hover:bg-primary/10 flex items-center gap-2"
-                  >
-                    <FilterIcon className="w-4 h-4" />
-                    Filter
-                  </Button>
-                  <Button 
-                    onClick={handleExport}
-                    variant="outline"
-                    className="border-primary text-primary hover:bg-primary/10 flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export
-                  </Button>
-                </div>
-              }
+              onFilterClick={() => setShowAdvancedFilter(true)}
+              handleExport={handleExport}
+
               emptyMessage="No scheduled tasks found"
               searchPlaceholder="Search tasks..."
               exportFileName="scheduled-tasks"
               selectedItems={selectedTasks}
               getItemId={(task) => task.id}
               onSelectItem={(taskId, checked) => {
-                const newSelected = checked 
+                const newSelected = checked
                   ? [...selectedTasks, taskId]
                   : selectedTasks.filter(id => id !== taskId);
                 setSelectedTasks(newSelected);
