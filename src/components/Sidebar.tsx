@@ -715,8 +715,8 @@ export const Sidebar = () => {
               itemsToExpand.push(subItem.name);
               
               // If there are nested items
-              if (subItem.subItems) {
-                subItem.subItems.forEach(nestedItem => {
+              if ((subItem as any).subItems) {
+                (subItem as any).subItems.forEach((nestedItem: any) => {
                   if (nestedItem.href && path.startsWith(nestedItem.href)) {
                     itemsToExpand.push(subItem.name);
                   }
