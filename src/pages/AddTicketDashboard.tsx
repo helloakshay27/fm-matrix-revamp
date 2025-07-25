@@ -333,7 +333,11 @@ export const AddTicketDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
             <h2 className="text-sm font-medium text-gray-700 flex items-center">
-              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">1</span>
+              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 7.65C14.35 6.85 13.4 6.3 12.35 6.05L12 2H10L9.65 6.05C8.6 6.3 7.65 6.85 7 7.65L1 7V9L7 7.95C6.85 8.95 7.05 10 7.65 11L1 13V15L7 13.05C7.65 14.15 8.6 14.85 9.65 15.3L10 22H12L12.35 15.3C13.4 14.85 14.35 14.15 15 13.05L21 15V13L15 11C15.95 10 16.15 8.95 16 7.95L21 9Z"/>
+                </svg>
+              </span>
               Requestor Details
             </h2>
           </div>
