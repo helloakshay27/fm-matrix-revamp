@@ -345,7 +345,7 @@ export const AddTicketDashboard = () => {
               <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Create Ticket on Behalf of</label>
               <div className="min-w-[200px]">
                 <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
-                  <SelectTrigger className="bg-gray-100 border border-gray-300 rounded-md">
+                  <SelectTrigger className="bg-[#E8E0D4] border border-[#D4C4B0] rounded-md text-gray-600 hover:bg-[#E0D8CC] [&>svg]:text-red-500">
                     <SelectValue placeholder="Select behalf option" />
                   </SelectTrigger>
                   <SelectContent>
