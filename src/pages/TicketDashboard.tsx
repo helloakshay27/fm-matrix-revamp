@@ -16,7 +16,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+
 const ticketData = [{
   id: '2189-11106',
   taskNumber: 'test',
@@ -250,7 +250,7 @@ export const TicketDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
-  const [showActionPanel, setShowActionPanel] = useState<boolean>(false);
+  
   const [ticketSummary, setTicketSummary] = useState({
     total_tickets: 0,
     open_tickets: 0,
@@ -731,10 +731,10 @@ export const TicketDashboard = () => {
   const renderCustomActions = () => (
     <div className="flex gap-3">
       <Button
-        onClick={() => setShowActionPanel(!showActionPanel)}
+        onClick={handleAddButton}
         className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-4 h-4 mr-2" /> Action
+        <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
     </div>
   );
@@ -743,10 +743,6 @@ export const TicketDashboard = () => {
     navigate('/maintenance/ticket/add');
   }
 
-  const handleImportClick = () => {
-    // Implement import functionality here
-    console.log('Import clicked');
-  };
 
   const renderRightActions = () => (
     <div className="flex gap-2">
@@ -1164,14 +1160,6 @@ export const TicketDashboard = () => {
               </div>
             ) : (
               <>
-                {showActionPanel && (
-                  <SelectionPanel
-                    onAdd={handleAddButton}
-                    onImport={handleImportClick}
-                    onClearSelection={() => setShowActionPanel(false)}
-
-                  />
-                )}
                 <EnhancedTable
                   data={safeTickets}
                   columns={columns}

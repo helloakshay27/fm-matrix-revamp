@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { X, User, Flag, Download, Loader2 } from 'lucide-react';
+import { X, User, Edit, Download, QrCode, Loader2 } from 'lucide-react';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -20,19 +21,15 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   onExport,
   onClearSelection
 }) => {
+  const navigate = useNavigate();
   const [isGoldenLoading, setIsGoldenLoading] = useState(false);
   const [isFlagLoading, setIsFlagLoading] = useState(false);
 
-  const handleGoldenTicket = async () => {
-    console.log('TicketSelectionPanel - Golden Ticket clicked for tickets:', selectedTickets);
-    setIsGoldenLoading(true);
-    try {
-      await onGoldenTicket();
-    } catch (error) {
-      console.error('Golden Ticket action failed:', error);
-    } finally {
-      setIsGoldenLoading(false);
-    }
+  const handleGoldenTicket = () => {
+    console.log('TicketSelectionPanel - Assign To clicked for tickets:', selectedTickets);
+    navigate('/maintenance/ticket/assign', {
+      state: { selectedTickets: selectedTicketObjects }
+    });
   };
 
   const handleFlag = async () => {
@@ -91,55 +88,53 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
           <Button
             onClick={handleGoldenTicket}
             disabled={isGoldenLoading}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
             {isGoldenLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin text-black" />
             ) : (
-              <User className="w-4 h-4" />
+              <User className="w-6 h-6 text-black" />
             )}
-            Assign To
+            <span className="text-xs text-gray-600">Assign To</span>
           </Button>
           
           <Button
             onClick={handleFlag}
             disabled={isFlagLoading}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
             {isFlagLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin text-black" />
             ) : (
-              <Flag className="w-4 h-4" />
+              <Edit className="w-6 h-6 text-black" />
             )}
-            Flag
+            <span className="text-xs text-gray-600">Update</span>
           </Button>
           
           <Button
             onClick={handleExport}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
-            <Download className="w-4 h-4" />
-            Export
+            <Download className="w-6 h-6 text-black" />
+            <span className="text-xs text-gray-600">Export</span>
           </Button>
         </div>
       </div>
       
       {/* Cross button - 44px wide */}
       <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
-        <Button
+        <button
           onClick={handleClearSelection}
-          variant="ghost"
-          size="sm"
-          className="w-8 h-8 p-0 hover:bg-gray-100"
+          className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
         >
-          <X className="w-4 h-4 text-gray-600" />
-        </Button>
+          <X className="w-4 h-4 text-black" />
+        </button>
       </div>
     </div>
   );
