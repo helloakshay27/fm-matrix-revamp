@@ -23,7 +23,9 @@ interface ConfigStatus {
   tagged: boolean;
   mtr: boolean;
   audit: boolean;
-  cost: boolean;
+  tickets: boolean;
+  ebom: boolean;
+  readings: boolean;
 }
 
 interface DashboardSummary {
@@ -32,6 +34,7 @@ interface DashboardSummary {
   last_ppm: string | null;
   next_ppm_due: string | null;
   upcoming_amc_date: string | null;
+  tickets: string | number;
 }
 
 export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
@@ -82,28 +85,28 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
 
   const configHeaders = [
     "Asset Info",
-    "Analytics",
+    // "Analytics",
     "AMC Details",
     "PPM",
     "Ebom",
-    "Attachments",
+    // "Attachments",
     "Readings",
-    "History Card",
+    // "History Card",
     "Depriciation",
     "Tickets",
   ];
 
   const configKeys: (keyof ConfigStatus)[] = [
     "asset_basic",
-
     "amc",
     "ppm",
-    "group",
+    "ebom",
+    "readings",
+   
     "depreciation",
-    "tagged",
-    "mtr",
-    "audit",
-    "cost",
+    
+    
+    "tickets",
   ];
 
   return (
@@ -116,7 +119,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
 
         <div className="flex items-center gap-4">
           <span className="text-[#1A1A1A] text-[14px] font-medium">
-            Down Time
+           Asset Down Time
           </span>
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200"
@@ -218,20 +221,41 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
           className="border bg-[#F6F4EE] flex items-center p-4"
           style={{ height: "132px", width: "488px" }}
         >
-          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+          <div
+            className="flex items-center justify-center rounded-lg mr-4"
+            style={{ background: "#EDEAE3", width: 62, height: 62 }}
+          >
             {/* Cog SVG icon */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="#C72030" strokeWidth="1.5"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="#C72030" strokeWidth="1.5"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
             </svg>
           </div>
           <div className="flex flex-col justify-center">
-            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>Open Tickets</span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>2</span>
-            <div className="flex items-center gap-1 mt-2">
-              <Clock className="w-4 h-4 text-[#9CA3AF]" />
-              <span className="text-xs text-[#9CA3AF] font-medium">DD:HH:MM</span>
-            </div>
+            <span
+              className="font-semibold text-[#1A1A1A]"
+              style={{ fontSize: 18 }}
+            >
+              Open Tickets
+            </span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+              {dashboardSummary?.tickets !== undefined ? dashboardSummary.tickets : "-"}
+            </span>
+            
           </div>
         </div>
 
@@ -240,16 +264,40 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
           className="border bg-[#F6F4EE] flex items-center p-4"
           style={{ height: "132px", width: "488px" }}
         >
-          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+          <div
+            className="flex items-center justify-center rounded-lg mr-4"
+            style={{ background: "#EDEAE3", width: 62, height: 62 }}
+          >
             {/* Cog SVG icon */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="#C72030" strokeWidth="1.5"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="#C72030" strokeWidth="1.5"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
             </svg>
           </div>
           <div className="flex flex-col justify-center">
-            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 24 }}>{dashboardSummary?.upcoming_amc_date && dashboardSummary.upcoming_amc_date !== "NA" ? dashboardSummary.upcoming_amc_date : "23/08/2025"}</span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>Upcoming AMC</span>
+            <span
+              className="font-semibold text-[#1A1A1A]"
+              style={{ fontSize: 24 }}
+            >
+              {dashboardSummary?.upcoming_amc_date || "-"}
+            </span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+              Upcoming AMC
+            </span>
           </div>
         </div>
 
@@ -258,16 +306,40 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
           className="border bg-[#F6F4EE] flex items-center p-4"
           style={{ height: "132px", width: "488px" }}
         >
-          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+          <div
+            className="flex items-center justify-center rounded-lg mr-4"
+            style={{ background: "#EDEAE3", width: 62, height: 62 }}
+          >
             {/* Cog SVG icon */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="#C72030" strokeWidth="1.5"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="#C72030" strokeWidth="1.5"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
             </svg>
           </div>
           <div className="flex flex-col justify-center">
-            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>PPM Completion %</span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>{dashboardSummary?.ppm_comp_rate || "55%"}</span>
+            <span
+              className="font-semibold text-[#1A1A1A]"
+              style={{ fontSize: 18 }}
+            >
+              PPM Completion %
+            </span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+              {dashboardSummary?.ppm_comp_rate || "-"}
+            </span>
           </div>
         </div>
 
@@ -276,16 +348,40 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
           className="border bg-[#F6F4EE] flex items-center p-4"
           style={{ height: "132px", width: "488px" }}
         >
-          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+          <div
+            className="flex items-center justify-center rounded-lg mr-4"
+            style={{ background: "#EDEAE3", width: 62, height: 62 }}
+          >
             {/* Cog SVG icon */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="#C72030" strokeWidth="1.5"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="#C72030" strokeWidth="1.5"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
             </svg>
           </div>
           <div className="flex flex-col justify-center">
-            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>Last PPM Conducted On</span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>{dashboardSummary?.last_ppm || "23/07/2025"}</span>
+            <span
+              className="font-semibold text-[#1A1A1A]"
+              style={{ fontSize: 18 }}
+            >
+              Last PPM Conducted On
+            </span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+              {dashboardSummary?.last_ppm || "-"}
+            </span>
           </div>
         </div>
 
@@ -294,16 +390,40 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
           className="border bg-[#F6F4EE] flex items-center p-4"
           style={{ height: "132px", width: "488px" }}
         >
-          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+          <div
+            className="flex items-center justify-center rounded-lg mr-4"
+            style={{ background: "#EDEAE3", width: 62, height: 62 }}
+          >
             {/* Cog SVG icon */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="#C72030" strokeWidth="1.5"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="#C72030" strokeWidth="1.5"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
             </svg>
           </div>
           <div className="flex flex-col justify-center">
-            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 24 }}>Next PPM Due</span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>{dashboardSummary?.next_ppm_due || "23/07/2025"}</span>
+            <span
+              className="font-semibold text-[#1A1A1A]"
+              style={{ fontSize: 24 }}
+            >
+              Next PPM Due
+            </span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+              {dashboardSummary?.next_ppm_due || "-"}
+            </span>
           </div>
         </div>
 
@@ -312,18 +432,42 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
           className="border bg-[#F6F4EE] flex items-center p-4"
           style={{ height: "132px", width: "488px" }}
         >
-          <div className="flex items-center justify-center rounded-lg mr-4" style={{ background: '#EDEAE3', width: 62, height: 62 }}>
+          <div
+            className="flex items-center justify-center rounded-lg mr-4"
+            style={{ background: "#EDEAE3", width: 62, height: 62 }}
+          >
             {/* Info SVG icon */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="#C72030" strokeWidth="1.5" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#C72030"
+                strokeWidth="1.5"
+              />
               <rect x="11" y="10" width="2" height="7" rx="1" fill="#C72030" />
               <rect x="11" y="7" width="2" height="2" rx="1" fill="#C72030" />
             </svg>
           </div>
           <div className="flex flex-col justify-center">
-            <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>Recent Updates</span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>Aman Created a new Checklist.</span>
-            <span className="text-[12px] text-[#9CA3AF] mt-2">Created on: 23/07/2025 – 12:23 PM</span>
+            <span
+              className="font-semibold text-[#1A1A1A]"
+              style={{ fontSize: 18 }}
+            >
+              Recent Updates
+            </span>
+            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+              Aman Created a new Checklist.
+            </span>
+            <span className="text-[12px] text-[#9CA3AF] mt-2">
+              Created on: 23/07/2025 – 12:23 PM
+            </span>
           </div>
         </div>
       </div>

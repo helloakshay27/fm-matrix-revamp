@@ -538,7 +538,7 @@ interface TicketCounts {
   complaints: number;
   suggestions: number;
   requests: number;
-  duplicate: number;
+  // duplicate: number;
 }
 
 const statusMapping: Record<string, string> = {
@@ -548,7 +548,7 @@ const statusMapping: Record<string, string> = {
   Complaints: 'complaints',
   Suggestion: 'suggestions',
   Requests: 'requests',
-  Duplicate: 'duplicate',
+  // Duplicate: 'duplicate',
 };
 
 export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
@@ -561,7 +561,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
     complaints: 0,
     suggestions: 0,
     requests: 0,
-    duplicate: 0,
+    // duplicate: 0,
   });
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
@@ -585,7 +585,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
         complaints: data.complaints || 0,
         suggestions: data.suggestions || 0,
         requests: data.requests || 0,
-        duplicate: data.duplicate || 0,
+        // duplicate: data.duplicate || 0,
       });
     } catch (err) {
       console.error('Failed to fetch ticket counts', err);
@@ -635,7 +635,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
     { label: 'Complaints', icon: MessageSquareHeart },
     { label: 'Suggestion', icon: AlertTriangle },
     { label: 'Requests', icon: FileText },
-    { label: 'Duplicate', icon: Grid3X3 },
+    // { label: 'Duplicate', icon: Grid3X3 },
   ];
 
   const filteredTickets = tickets.filter((ticket) =>

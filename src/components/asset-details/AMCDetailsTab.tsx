@@ -46,6 +46,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 date: log.created_at
                   ? new Date(log.created_at).toLocaleString('en-GB')
                   : '-',
+                performedBy: log.user_name || '-',
               }))
             : [];
 
@@ -108,7 +109,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
                       <History className="w-4 h-4 "style={{ color: "#C72030" }} />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">AMC History</h3>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Visit History</h3>
                   </div>
 
                   <Table>
@@ -152,35 +153,34 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">Logs</h3>
                   </div>
 
-                  <div className="space-y-6">
-                    {logsData.length > 0 ? (
-                      <div className="relative">
-                        {/* Timeline vertical line */}
-                        <div
-                          className="absolute left-[6px] top-[6px]"
-                          style={{
-                            background: '#C72030',
-                            width: '2px',
-                            height: `calc(100% - 6px)`, // from first dot to last dot
-                            zIndex: 0,
-                          }}
-                        />
-                        {logsData.map((log, i) => (
-                          <div key={i} className="flex gap-4 relative z-10">
-                            <div className="flex flex-col items-center">
-                              <div className="w-[14px] h-[14px] rounded-full" style={{ background: '#C72030' }} />
-                            </div>
-                            <div className="flex-1 pb-4">
-                              <p className="text-gray-900 text-sm mb-1">{log.text}</p>
-                              <p className="text-gray-400 text-xs">{log.date}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-gray-400 text-center">No logs available.</div>
-                    )}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-600 font-medium">Sr. No.</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Description</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Performed By</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {logsData.length > 0 ? (
+                        logsData.map((log, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{idx + 1}</TableCell>
+                            <TableCell>{log.text}</TableCell>
+                            <TableCell>{log.performedBy}</TableCell>
+                            <TableCell>{log.date}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-gray-400">
+                            No logs available.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>

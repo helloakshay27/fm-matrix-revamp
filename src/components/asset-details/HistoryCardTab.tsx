@@ -234,7 +234,7 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <div className="flex border-b border-gray-200">
+        {/* <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('history-details')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'history-details'
@@ -253,7 +253,30 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           >
             Logs
           </button>
-        </div>
+        </div> */}
+        <div className="flex border-b border-gray-200">
+  <button
+    onClick={() => setActiveTab('history-details')}
+    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+      activeTab === 'history-details'
+        ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
+        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+    }`}
+  >
+    History Details
+  </button>
+  <button
+    onClick={() => setActiveTab('logs')}
+    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+      activeTab === 'logs'
+        ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
+        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+    }`}
+  >
+    Logs
+  </button>
+</div>
+
 
         <div className="p-4 sm:p-6 ">
           {activeTab === 'history-details' && renderHistoryDetails()}

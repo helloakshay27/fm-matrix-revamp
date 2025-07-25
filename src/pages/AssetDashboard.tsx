@@ -535,14 +535,14 @@ export const AssetDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
             {/* Total Assets Available */}
             <div
-              className="p-4 rounded-lg flex items-center gap-3"
+              className="p-6 rounded-lg flex items-center gap-4"
               style={{ backgroundColor: "#f6f4ee" }}
             >
-              <div className="w-12 h-12 bg-[#FCE8E8]  flex items-center justify-center">
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
                 <Package className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-[#C72030]">
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
                   {stats.total}
                 </div>
                 <div className="text-sm text-gray-600">Total Assets</div>
@@ -551,14 +551,17 @@ export const AssetDashboard = () => {
 
             {/* Asset In Use */}
             <div
-              className="p-4 rounded-lg flex items-center gap-3"
+              className="p-6 rounded-lg flex items-center gap-4"
               style={{ backgroundColor: "#f6f4ee" }}
             >
-              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
-                <Activity className="w-6 h-6 text-[#C72030]" />
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
+                <Activity
+                  className="w-6 h-6 text-white"
+                  style={{ color: "#C72030" }}
+                />
               </div>
               <div>
-                <div className="text-2xl font-bold text-[#C72030]">
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
                   {stats.inUse}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Use</div>
@@ -567,14 +570,14 @@ export const AssetDashboard = () => {
 
             {/* Asset In Breakdown */}
             <div
-              className="p-4 rounded-lg flex items-center gap-3"
+              className="p-6 rounded-lg flex items-center gap-4"
               style={{ backgroundColor: "#f6f4ee" }}
             >
-              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-[#C72030]">
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
                   {stats.breakdown}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Breakdown</div>
@@ -583,14 +586,14 @@ export const AssetDashboard = () => {
 
             {/* Critical Assets In Breakdown */}
             <div
-              className="p-4 rounded-lg flex items-center gap-3"
+              className="p-6 rounded-lg flex items-center gap-4"
               style={{ backgroundColor: "#f6f4ee" }}
             >
-              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
                 <Zap className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-[#C72030]">15</div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">15</div>
                 <div className="text-sm text-gray-600">
                   Critical Assets In Breakdown
                 </div>
@@ -599,28 +602,28 @@ export const AssetDashboard = () => {
 
             {/* PPM Overdue */}
             <div
-              className="p-4 rounded-lg flex items-center gap-3"
+              className="p-6 rounded-lg flex items-center gap-4"
               style={{ backgroundColor: "#f6f4ee" }}
             >
-              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
                 <Wrench className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-[#C72030]">0</div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">0</div>
                 <div className="text-sm text-gray-600">PPM Overdue</div>
               </div>
             </div>
 
             {/* Customer Average */}
             <div
-              className="p-4 rounded-lg flex items-center gap-3"
+              className="p-6 rounded-lg flex items-center gap-4"
               style={{ backgroundColor: "#f6f4ee" }}
             >
-              <div className="w-12 h-12 bg-[#FCE8E8] rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-[#C72030]">0</div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">0</div>
                 <div className="text-sm text-gray-600">Customer Average</div>
               </div>
             </div>
@@ -873,6 +876,7 @@ export const AssetDashboard = () => {
                   handleImport={handleImport}
                   onFilterOpen={() => setIsFilterOpen(true)}
                   onSearch={handleSearch}
+                  onRefreshData={handleRefresh}
                 />
 
                 {/* Empty state when no data and filters are applied */}

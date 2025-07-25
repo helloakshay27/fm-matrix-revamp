@@ -20,6 +20,7 @@ interface AssetDataTableProps {
   handleImport: () => void;
   onFilterOpen: () => void;
   onSearch: (searchTerm: string) => void;
+  onRefreshData?: () => void; // Add refresh callback
 }
 
 export const AssetDataTable: React.FC<AssetDataTableProps> = ({
@@ -32,7 +33,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   handleAddAsset,
   handleImport,
   onFilterOpen,
-  onSearch
+  onSearch,
+  onRefreshData
 }) => {
   // Status color logic moved to StatusBadge component
 
@@ -200,7 +202,13 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           <span className="text-sm text-gray-600">{asset.assetNumber}</span>
         );
       case "assetStatus":
-        return <StatusBadge status={asset.status} />;
+        return (
+          <StatusBadge 
+            status={asset.status} 
+            assetId={asset.id}
+            onStatusUpdate={onRefreshData}
+          />
+        );
       case "site":
         return <span className="text-sm text-gray-600">{asset.siteName}</span>;
       case "building":

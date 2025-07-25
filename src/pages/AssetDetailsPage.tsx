@@ -18,9 +18,11 @@ import { HistoryCardTab } from "@/components/asset-details/HistoryCardTab";
 import { DepreciationTab } from "@/components/asset-details/DepreciationTab";
 import { TicketTab } from "@/components/asset-details/TicketTab";
 import { AssociationTab } from "@/components/asset-details/AssociationTab";
+import { OwnerCostTab } from "@/components/asset-details/OwnerCostTab";
 
 import { RepairReplaceModal } from "@/components/RepairReplaceModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
+import { StatusBadge } from "@/components/StatusBadge";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -31,7 +33,7 @@ export const AssetDetailsPage = () => {
   const [isInUse, setIsInUse] = useState(true);
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
-  const [showEnable, setShowEnable] = useState(false)
+  const [showEnable, setShowEnable] = useState(false);
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -45,8 +47,14 @@ export const AssetDetailsPage = () => {
           }
         );
         setAssetData(response.data.asset);
-        if (response.data.asset.asset_type_category === "Land" || response.data.asset.asset_type_category === "Building" || response.data.asset.asset_type_category === "Leasehold Improvement" || response.data.asset.asset_type_category === "Leasehold Land" || response.data.asset.asset_type_category === "Vehicle") {
-          setShowEnable(true)
+        if (
+          response.data.asset.asset_type_category === "Land" ||
+          response.data.asset.asset_type_category === "Building" ||
+          response.data.asset.asset_type_category === "Leasehold Improvement" ||
+          response.data.asset.asset_type_category === "Leasehold Land" ||
+          response.data.asset.asset_type_category === "Vehicle"
+        ) {
+          setShowEnable(true);
         }
       } catch (error) {
         console.error("Failed to fetch asset", error);
@@ -58,7 +66,24 @@ export const AssetDetailsPage = () => {
     fetchAsset();
   }, [id]);
 
-  console.log(showEnable)
+  // Function to refresh asset data after status update
+  const refreshAssetData = async () => {
+    try {
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}/pms/assets/${id}.json`,
+        {
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
+      setAssetData(response.data.asset);
+    } catch (error) {
+      console.error("Failed to refresh asset data", error);
+    }
+  };
+
+  console.log(showEnable);
 
   const handleBack = () => navigate("/maintenance/asset");
 
@@ -100,34 +125,29 @@ export const AssetDetailsPage = () => {
                 {assetData.name} ({assetData.asset_type_category})
               </h1>
 
-              <div className="relative inline-block">
-                <select
-                  className="appearance-none bg-[#EDEAE3] text-[#C72030] px-4 py-2 pr-8 rounded font-medium text-sm cursor-pointer"
-                  defaultValue="In Use"
-                >
-                  <option className="text-[#C72030]">In Use</option>
-                  <option className="text-[#C72030]">Breakdown</option>
-                  <option className="text-[#C72030]">Under Maintenance</option>
-                  <option className="text-[#C72030]">Retired</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#C72030] pointer-events-none" />
+              <div className="text-base px-4 py-2 ">
+                <StatusBadge 
+                  status={assetData.status || "-"} 
+                  assetId={assetData.id}
+                  onStatusUpdate={refreshAssetData}
+                />
               </div>
             </div>
 
             <div className="text-sm text-gray-600">
-              Created by {assetData.created_by} • Last updated by {assetData.last_updated_by} on
-              &nbsp; {assetData.updated_at}
+              Created by {assetData.created_by} • Last updated by{" "}
+              {assetData.last_updated_by} on &nbsp; {assetData.updated_at}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
+            {/* <Button
               onClick={handleCreateChecklist}
               className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
             >
               <Plus className="w-4 h-4 mr-2" />
               Checklist
-            </Button>
+            </Button> */}
             <Button
               onClick={() => setIsQRModalOpen(true)}
               className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -185,39 +205,93 @@ export const AssetDetailsPage = () => {
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-12 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
-            <TabsTrigger value="asset-info" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Asset Info</TabsTrigger>
-            <TabsTrigger value="amc-details" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">AMC Details</TabsTrigger>
-            {
-              assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
-                <>
-                  <TabsTrigger value="ppm" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">PPM</TabsTrigger>
-                  <TabsTrigger value="e-bom" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">E-BOM</TabsTrigger>
-                </>
-              )
-            }
-            <TabsTrigger value="attachments" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Attachments</TabsTrigger>
-            {
-              assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
-                <>
-                  <TabsTrigger value="readings" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Readings</TabsTrigger>
-                </>
-              )
-            }
-            <TabsTrigger value="history-card" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">History Card</TabsTrigger>
-            {
-              assetData.asset_type_category === null && assetData.asset_type_category !== "Land" && assetData.asset_type_category !== "Building" && assetData.asset_type_category !== "Leasehold Improvement" && assetData.asset_type_category !== "Vehicle" && (
-                <>
-                  <TabsTrigger value="depreciation" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Depreciation</TabsTrigger>
-                  <TabsTrigger value="ticket" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Ticket</TabsTrigger>
-                  <TabsTrigger value="association" className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2">Association</TabsTrigger>
-                </>
-              )
-            }
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-12 xl:flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+            <TabsTrigger
+              value="asset-info"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              Asset Info
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="amc-details"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              AMC Details
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="ppm"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              PPM
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="e-bom"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              E-BOM
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="attachments"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              Attachments
+            </TabsTrigger>
+
+            {assetData.asset_type_category === "Meter" && (
+              <TabsTrigger
+                value="readings"
+                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+              >
+                Readings
+              </TabsTrigger>
+            )}
+
+            <TabsTrigger
+              value="history-card"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              History Card
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="depreciation"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              Depreciation
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="ticket"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              Ticket
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="association"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              Association
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="owner-cost"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030]"
+            >
+              Owner Cost
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
-            <AssetInfoTab asset={assetData} assetId={assetData.id} showEnable={showEnable} />
+            <AssetInfoTab
+              asset={assetData}
+              assetId={assetData.id}
+              showEnable={showEnable}
+            />
           </TabsContent>
           <TabsContent value="amc-details" className="p-4 sm:p-6">
             <AMCDetailsTab asset={assetData} assetId={assetData.id} />
@@ -245,6 +319,9 @@ export const AssetDetailsPage = () => {
           </TabsContent>
           <TabsContent value="association" className="p-4 sm:p-6">
             <AssociationTab asset={assetData} assetId={assetData.id} />
+          </TabsContent>
+          <TabsContent value="owner-cost" className="p-4 sm:p-6">
+            <OwnerCostTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
         </Tabs>
       </div>
