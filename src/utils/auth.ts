@@ -23,6 +23,17 @@ export interface OTPResponse {
   otp?: string; // For development/testing
 }
 
+export interface Organization {
+  id: number;
+  name: string;
+  active: boolean;
+  domain: string;
+  sub_domain: string;
+  logo?: {
+    url: string;
+  };
+}
+
 // Local storage keys
 export const AUTH_KEYS = {
   USER: 'user',
@@ -52,6 +63,20 @@ export const getToken = (): string | null => {
   return localStorage.getItem(AUTH_KEYS.TOKEN);
 };
 
+// Save base URL to localStorage
+export const saveBaseUrl = (baseUrl: string): void => {
+  localStorage.setItem(AUTH_KEYS.BASE_URL, baseUrl);
+};
+
+// Get base URL from localStorage
+export const getBaseUrl = (): string | null => {
+  const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
+  if (!savedUrl) return null;
+  
+  // Ensure the URL includes the protocol
+  return savedUrl.startsWith('http') ? savedUrl : `https://${savedUrl}`;
+};
+
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   const user = getUser();
@@ -60,12 +85,51 @@ export const isAuthenticated = (): boolean => {
 };
 
 // Clear all auth data
+
+
+
+// Clear all auth data
 export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.USER);
   localStorage.removeItem(AUTH_KEYS.TOKEN);
   localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
+  localStorage.removeItem(AUTH_KEYS.BASE_URL);
+  
 };
+
+export const getOrganizationsByEmail = async (email: string): Promise<Organization[]> => {
+  const response = await fetch(`https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch organizations');
+  }
+  
+  const data = await response.json();
+  return data.organizations || [];
+};
+
+
+export const loginUser = async (email: string, password: string, baseUrl: string): Promise<{ id: number; email: string; firstname: string; lastname: string; access_token: string }> => {
+  const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      password
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Login failed');
+  }
+
+  const data = await response.json();
+  return data;
+};
+
 
 // Login with email and password
 export const loginWithEmail = async (email: string, password: string): Promise<LoginResponse> => {
