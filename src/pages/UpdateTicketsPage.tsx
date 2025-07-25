@@ -723,7 +723,7 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Row 2 */}
             {/* Responsible Person */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Responsible Person</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.responsiblePerson} onValueChange={(value) => handleInputChange('responsiblePerson', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
@@ -768,7 +768,7 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Category Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.categoryType} onValueChange={(value) => handleInputChange('categoryType', value)} disabled={helpdeskLoading}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
@@ -806,7 +806,7 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Sub Category Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sub Category Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select 
                 value={formData.subCategoryType} 
                 onValueChange={(value) => handleInputChange('subCategoryType', value)}
@@ -830,7 +830,7 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Assign To */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
@@ -871,7 +871,7 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* External Priority */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">External Priority</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.externalPriority} onValueChange={(value) => handleInputChange('externalPriority', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
@@ -889,7 +889,7 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Mode */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.mode} onValueChange={(value) => handleInputChange('mode', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
@@ -968,7 +968,7 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Service Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.serviceType} onValueChange={(value) => handleInputChange('serviceType', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
@@ -1050,7 +1050,7 @@ const UpdateTicketsPage: React.FC = () => {
           {(formData.associatedTo.asset || formData.associatedTo.service) && (
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {formData.associatedTo.asset ? 'Select Asset' : 'Select Service'}
+                Select
               </label>
               <Select value={formData.selectedAsset} onValueChange={(value) => handleInputChange('selectedAsset', value)} disabled={isLoadingAssets || isLoadingServices}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
