@@ -129,7 +129,7 @@ export const MobileRestaurantDetails: React.FC<MobileRestaurantDetailsProps> = (
       {/* Menu Items */}
       <div className="p-4 space-y-4">
         {menuItems.map((item) => (
-          <div key={item.id} className="rounded-xl shadow-sm border border-gray-100 overflow-hidden relative text-center" style={{ backgroundColor: '#E8E2D3' }}>
+          <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
             <div className="flex">
               {/* Item Details */}
               <div className="flex-1 p-4">
@@ -147,8 +147,8 @@ export const MobileRestaurantDetails: React.FC<MobileRestaurantDetailsProps> = (
               </div>
             </div>
             
-            {/* Add/Quantity Controls - Positioned at bottom center */}
-            <div className="flex justify-center pb-4">
+            {/* Add/Quantity Controls - Positioned at bottom right */}
+            <div className="absolute bottom-3 right-3">
               {!item.quantity || item.quantity === 0 ? (
                 <Button
                   onClick={() => addItem(item.id)}
