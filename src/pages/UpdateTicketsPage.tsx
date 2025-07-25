@@ -704,7 +704,7 @@ const UpdateTicketsPage: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <Select value={formData.selectedStatus} onValueChange={(value) => handleInputChange('selectedStatus', value)}>
-                <SelectTrigger className="h-10 border-gray-300 focus:border-primary focus:ring-primary">
+                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue placeholder="Closed" />
                 </SelectTrigger>
                 <SelectContent>
