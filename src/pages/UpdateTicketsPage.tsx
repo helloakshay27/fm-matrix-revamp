@@ -568,9 +568,8 @@ const UpdateTicketsPage: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
               >
                 <option value="">Select Service Type</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Repair">Repair</option>
-                <option value="Installation">Installation</option>
+                <option value="product">Product</option>
+                <option value="service">Service</option>
               </select>
             </div>
           </div>
