@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Check } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -53,13 +53,29 @@ export const MobileOrderReview: React.FC = () => {
   };
 
   const handleViewOrderDetails = () => {
-    // Navigate to order tracking or details page
-    navigate(`/mobile/orders/${orderDetails.orderId}`);
+    if (isAppUser) {
+      // App users go to my orders
+      navigate('/mobile/orders');
+    } else {
+      // External users see order details
+      navigate(`/mobile/orders/${orderDetails.orderId}`);
+    }
   };
 
   const getTotalItems = () => {
     return items.reduce((total, item) => total + item.quantity, 0);
   };
+
+  // Auto-redirect app users after 5 seconds
+  useEffect(() => {
+    if (showSuccess && isAppUser) {
+      const timer = setTimeout(() => {
+        navigate('/mobile/orders');
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, isAppUser, navigate]);
 
   if (showSuccess) {
     return (

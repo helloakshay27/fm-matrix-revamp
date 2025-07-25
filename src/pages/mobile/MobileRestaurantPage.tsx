@@ -119,16 +119,15 @@ export const MobileRestaurantPage: React.FC = () => {
       return <MobileOrderReview />;
     
     default:
-      // Default view based on scan source
-      if (scanSource === 'app') {
+      // Direct menu flow - check restaurant count
+      if (restaurants.length > 1) {
+        // Multiple restaurants - show dashboard list
         return <MobileRestaurantDashboard restaurants={restaurants} />;
+      } else if (restaurants.length === 1) {
+        // Single restaurant - show menu directly
+        return <MobileRestaurantDetails restaurant={restaurants[0]} />;
       } else {
-        // External scan - show welcome page
-        const firstRestaurant = restaurants[0];
-        if (!firstRestaurant) {
-          return <div>No restaurants available</div>;
-        }
-        return <MobileRestaurantWelcome restaurant={firstRestaurant} />;
+        return <div>No restaurants available</div>;
       }
   }
 };
