@@ -50,6 +50,11 @@ interface FMUser {
   login: string;
 }
 
+interface SubCategory {
+  id: number;
+  name: string;
+}
+
 const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,6 +95,8 @@ const UpdateTicketsPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complaintStatuses, setComplaintStatuses] = useState<ComplaintStatus[]>([]);
   const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCostPopup, setShowCostPopup] = useState(false);
   const [costPopupData, setCostPopupData] = useState({
@@ -151,6 +158,32 @@ const UpdateTicketsPage: React.FC = () => {
       ...prev,
       [field]: value
     }));
+
+    // Fetch sub-categories when category changes
+    if (field === 'categoryType' && value) {
+      fetchSubCategories(value);
+    } else if (field === 'categoryType' && !value) {
+      setSubCategories([]);
+      setFormData(prev => ({ ...prev, subCategoryType: '' }));
+    }
+  };
+
+  const fetchSubCategories = async (categoryId: string) => {
+    try {
+      setSubCategoriesLoading(true);
+      const response = await apiClient.get(`/pms/admin/get_sub_categories?category_type_id=${categoryId}`);
+      setSubCategories(response.data || []);
+    } catch (error) {
+      console.error('Error fetching sub-categories:', error);
+      setSubCategories([]);
+      toast({
+        title: "Error",
+        description: "Failed to load sub-categories.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubCategoriesLoading(false);
+    }
   };
 
   const handleCheckboxChange = (group: string, field: string, checked: boolean) => {
@@ -369,10 +402,14 @@ const UpdateTicketsPage: React.FC = () => {
                 value={formData.subCategoryType}
                 onChange={(e) => handleInputChange('subCategoryType', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+                disabled={subCategoriesLoading || !formData.categoryType}
               >
                 <option value="">Select Sub Category</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Repair">Repair</option>
+                {subCategories.map((subCategory) => (
+                  <option key={subCategory.id} value={subCategory.id}>
+                    {subCategory.name}
+                  </option>
+                ))}
               </select>
             </div>
 
