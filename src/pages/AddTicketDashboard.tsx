@@ -62,7 +62,8 @@ export const AddTicketDashboard = () => {
     proactiveReactive: '',
     adminPriority: '',
     referenceNumber: '',
-    mode: ''
+    mode: '',
+    serviceName: ''
   });
 
   // Load initial data
@@ -396,6 +397,16 @@ export const AddTicketDashboard = () => {
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                   disabled={isFieldsReadOnly}
                   className={`h-12 px-4 border border-gray-200 rounded-sm bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Service Name</label>
+                <Input
+                  placeholder="Enter Service Name"
+                  value={formData.serviceName || ''}
+                  onChange={(e) => setFormData({ ...formData, serviceName: e.target.value })}
+                  required
+                  className="h-12 px-4 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                 />
               </div>
             </div>
