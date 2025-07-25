@@ -172,7 +172,19 @@ const UpdateTicketsPage: React.FC = () => {
     try {
       setSubCategoriesLoading(true);
       const response = await apiClient.get(`/pms/admin/get_sub_categories.json?category_type_id=${categoryId}`);
-      setSubCategories(response.data || []);
+      console.log('Sub-categories API response:', response.data);
+      
+      // Handle different possible response structures
+      let categories = [];
+      if (Array.isArray(response.data)) {
+        categories = response.data;
+      } else if (response.data && Array.isArray(response.data.sub_categories)) {
+        categories = response.data.sub_categories;
+      } else if (response.data && Array.isArray(response.data.subcategories)) {
+        categories = response.data.subcategories;
+      }
+      
+      setSubCategories(categories);
     } catch (error) {
       console.error('Error fetching sub-categories:', error);
       setSubCategories([]);
@@ -405,7 +417,7 @@ const UpdateTicketsPage: React.FC = () => {
                 disabled={subCategoriesLoading || !formData.categoryType}
               >
                 <option value="">Select Sub Category</option>
-                {subCategories.map((subCategory) => (
+                {Array.isArray(subCategories) && subCategories.map((subCategory) => (
                   <option key={subCategory.id} value={subCategory.id}>
                     {subCategory.name}
                   </option>
