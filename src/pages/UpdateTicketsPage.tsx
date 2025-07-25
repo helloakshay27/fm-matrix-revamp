@@ -171,7 +171,7 @@ const UpdateTicketsPage: React.FC = () => {
   const fetchSubCategories = async (categoryId: string) => {
     try {
       setSubCategoriesLoading(true);
-      const response = await apiClient.get(`/pms/admin/get_sub_categories?category_type_id=${categoryId}`);
+      const response = await apiClient.get(`/pms/admin/get_sub_categories.json?category_type_id=${categoryId}`);
       setSubCategories(response.data || []);
     } catch (error) {
       console.error('Error fetching sub-categories:', error);
