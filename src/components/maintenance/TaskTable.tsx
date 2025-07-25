@@ -25,6 +25,8 @@ interface Task {
 interface TaskTableProps {
   tasks: Task[];
   onViewTask: (taskId: string) => void;
+  selectedTasks?: string[];
+  onTaskSelection?: (taskIds: string[]) => void;
 }
 
 const columns: ColumnConfig[] = [
@@ -45,7 +47,7 @@ const columns: ColumnConfig[] = [
   { key: 'percentage', label: '%', sortable: true, hideable: true, draggable: true }
 ];
 
-export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask }) => {
+export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask, selectedTasks = [], onTaskSelection }) => {
   const renderRow = (task: Task) => ({
     actions: (
       <Button
@@ -97,6 +99,21 @@ export const TaskTable: React.FC<TaskTableProps> = ({ tasks, onViewTask }) => {
         emptyMessage="No scheduled tasks found"
         searchPlaceholder="Search tasks..."
         exportFileName="scheduled-tasks"
+        selectedItems={selectedTasks}
+        getItemId={(task) => task.id}
+        onSelectItem={(taskId, checked) => {
+          if (onTaskSelection) {
+            const newSelected = checked 
+              ? [...selectedTasks, taskId]
+              : selectedTasks.filter(id => id !== taskId);
+            onTaskSelection(newSelected);
+          }
+        }}
+        onSelectAll={(checked) => {
+          if (onTaskSelection) {
+            onTaskSelection(checked ? tasks.map(task => task.id) : []);
+          }
+        }}
       />
     </div>
   );

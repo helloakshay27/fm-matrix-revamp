@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { TicketResponse } from '@/services/ticketManagementAPI';
+import { TicketResponse, ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
@@ -29,6 +29,7 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
   });
   const [comments, setComments] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     dispatch(fetchFMUsers());
@@ -57,12 +58,31 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
     }
   };
 
-  const handleUpdate = () => {
-    // Here you would call the API to update the ticket
-    toast({
-      title: "Success",
-      description: "Ticket updated successfully"
-    });
+  const handleUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      const updateData = {
+        priority: updateForm.priority || ticket.priority,
+        issue_status: updateForm.status || ticket.issue_status,
+        assigned_to: updateForm.assignee || ticket.assigned_to,
+      };
+
+      await ticketManagementAPI.updateTicket(ticket.id, updateData);
+      
+      toast({
+        title: "Success",
+        description: "Ticket updated successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update ticket",
+        variant: "destructive"
+      });
+      console.error('Failed to update ticket:', error);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleAddComment = () => {
@@ -280,8 +300,12 @@ export const MobileTicketDetails: React.FC<MobileTicketDetailsProps> = ({ ticket
               )}
             </div>
 
-            <Button onClick={handleUpdate} className="w-full bg-red-600 hover:bg-red-700 text-white">
-              Update
+            <Button 
+              onClick={handleUpdate} 
+              disabled={isUpdating}
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isUpdating ? 'Updating...' : 'Update'}
             </Button>
           </div>
         </div>
