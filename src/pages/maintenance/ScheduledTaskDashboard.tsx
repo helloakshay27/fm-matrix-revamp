@@ -11,6 +11,7 @@ import { ScheduledTaskCalendar } from '@/components/maintenance/ScheduledTaskCal
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { calendarService, CalendarEvent } from '@/services/calendarService';
 import { getToken } from '@/utils/auth';
+import { getFullUrl } from '@/config/apiConfig';
 
 interface TaskRecord {
   id: string;
@@ -145,7 +146,8 @@ export const ScheduledTaskDashboard = () => {
     
     try {
       const token = getToken();
-      const response = await fetch('https://fm-uat-api.lockated.com/all_tasks_listing.json?show_all=true', {
+      const apiUrl = getFullUrl('/all_tasks_listing.json?show_all=true');
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
