@@ -322,50 +322,47 @@ export const AddTicketDashboard = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <Button variant="ghost" onClick={() => navigate('/maintenance/ticket')} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Ticket List
-        </Button>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW TICKET</h1>
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">NEW TICKET</h1>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-        {/* Ticket Details Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-              TICKET DETAILS
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* On Behalf Of */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket On Behalf Of</label>
-              <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex flex-wrap gap-4">
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+        {/* Section 1: Requestor Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+            <h2 className="text-sm font-medium text-gray-700 flex items-center">
+              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">1</span>
+              Requestor Details
+            </h2>
+          </div>
+          <div className="p-6 space-y-4">
+            {/* Create Ticket On Behalf Of */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Create Ticket On Behalf Of</label>
+              <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex gap-6">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="self" id="self" />
-                  <label htmlFor="self">Self</label>
+                  <label htmlFor="self" className="text-sm">Self</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="occupant-user" id="occupant-user" />
-                  <label htmlFor="occupant-user">Occupant User</label>
+                  <label htmlFor="occupant-user" className="text-sm">Occupant User</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="fm-user" id="fm-user" />
-                  <label htmlFor="fm-user">FM User</label>
+                  <label htmlFor="fm-user" className="text-sm">FM User</label>
                 </div>
               </RadioGroup>
             </div>
 
-            {/* User Selection Dropdown */}
+            {/* User Selection Dropdown for behalf of others */}
             {onBehalfOf !== 'self' && (
-              <div className="mb-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
                 <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -379,20 +376,12 @@ export const AddTicketDashboard = () => {
               </div>
             )}
 
-            {/* Requestor Details */}
-            <h3 className="font-medium mb-3">
-              Requestor Details
-              {isFieldsReadOnly && (
-                <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  Auto-populated
-                </span>
-              )}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            {/* Name and Department */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                 <Input
-                  placeholder="Enter Name"
+                  placeholder="Auto-filled"
                   value={formData.name}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
                   disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
@@ -400,9 +389,9 @@ export const AddTicketDashboard = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
                 <Input
-                  placeholder="Enter Department"
+                  placeholder="Technology"
                   value={formData.department}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                   disabled={isFieldsReadOnly}
@@ -410,33 +399,43 @@ export const AddTicketDashboard = () => {
                 />
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Ticket Type */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ticket Type *</label>
-              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-4">
+        {/* Section 2: Tickets Type */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+            <h2 className="text-sm font-medium text-gray-700 flex items-center">
+              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">2</span>
+              Tickets Type
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Ticket Type Radio Buttons */}
+            <div>
+              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-6">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="request" id="request" />
-                  <label htmlFor="request">Request</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="suggestion" id="suggestion" />
-                  <label htmlFor="suggestion">Suggestion</label>
+                  <label htmlFor="request" className="text-sm">Request</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="complaint" id="complaint" />
-                  <label htmlFor="complaint">Complaint</label>
+                  <label htmlFor="complaint" className="text-sm">Complaint</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="suggestion" id="suggestion" />
+                  <label htmlFor="suggestion" className="text-sm">Suggestion</label>
                 </div>
               </RadioGroup>
             </div>
 
-            {/* Category and Other Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+            {/* Row 1: Category Type, Sub Category Type, Assigned To */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category Type *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category Type*</label>
                 <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
                   <SelectTrigger>
-                    <SelectValue placeholder={loadingCategories ? "Loading..." : "Select Category"} />
+                    <SelectValue placeholder={loadingCategories ? "Loading..." : "Select category"} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -447,9 +446,8 @@ export const AddTicketDashboard = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sub Category Type</label>
                 <Select 
                   value={formData.subCategoryType} 
                   onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
@@ -459,7 +457,7 @@ export const AddTicketDashboard = () => {
                     <SelectValue placeholder={
                       loadingSubcategories ? "Loading..." : 
                       !formData.categoryType ? "Select Category First" : 
-                      "Select Sub Category"
+                      "Select subcategory"
                     } />
                   </SelectTrigger>
                   <SelectContent>
@@ -471,12 +469,11 @@ export const AddTicketDashboard = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
                 <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Engineer" />
+                    <SelectValue placeholder="Select engineer" />
                   </SelectTrigger>
                   <SelectContent>
                     {fmUsers.map((user) => (
@@ -489,12 +486,13 @@ export const AddTicketDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+            {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Proactive/Reactive</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
                 <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Type" />
+                    <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
@@ -505,12 +503,11 @@ export const AddTicketDashboard = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Admin Priority</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
                 <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Priority" />
+                    <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent>
                     {PRIORITY_OPTIONS.map((option) => (
@@ -521,11 +518,10 @@ export const AddTicketDashboard = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
                 <Input
-                  placeholder="Enter Reference Number"
+                  placeholder="Enter reference number"
                   value={formData.referenceNumber}
                   onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
                 />
@@ -533,28 +529,28 @@ export const AddTicketDashboard = () => {
             </div>
 
             {/* Description */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
               <Textarea
                 placeholder="Enter description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full min-h-24 resize-y"
+                className="min-h-[100px] resize-y"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Attachments Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
-              ATTACHMENTS
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+        {/* Section 3: Add Attachments */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+            <h2 className="text-sm font-medium text-gray-700 flex items-center">
+              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">3</span>
+              Add Attachments
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
               <input 
                 type="file" 
                 multiple 
@@ -565,7 +561,8 @@ export const AddTicketDashboard = () => {
               <Button
                 type="button"
                 onClick={() => document.getElementById('file-upload')?.click()}
-                className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
+                variant="outline"
+                className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Files
@@ -573,9 +570,9 @@ export const AddTicketDashboard = () => {
               
               {/* Display attached files */}
               {attachedFiles.length > 0 && (
-                <div className="mt-2 space-y-1">
+                <div className="space-y-2">
                   {attachedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm p-2 rounded" style={{backgroundColor: '#f6f4ee'}}>
+                    <div key={index} className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded border">
                       <div className="flex items-center gap-2">
                         <Paperclip className="w-4 h-4 text-gray-500" />
                         <span>{file.name}</span>
@@ -593,24 +590,23 @@ export const AddTicketDashboard = () => {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
-        
+          </div>
+        </div>
+
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center pt-6">
           <Button 
             type="submit"
             disabled={isSubmitting}
-            style={{ backgroundColor: '#C72030' }} 
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
           >
-            {isSubmitting ? 'Creating...' : 'Create Ticket'}
+            {isSubmitting ? 'Creating...' : 'Create Tickets'}
           </Button>
           <Button 
             type="button"
             variant="outline"
             onClick={() => navigate('/maintenance/ticket')}
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
           >
             Cancel
           </Button>
