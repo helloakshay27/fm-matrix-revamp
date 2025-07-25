@@ -851,7 +851,7 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Row 4 */}
             {/* Admin Priority */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.adminPriority} onValueChange={(value) => handleInputChange('adminPriority', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
                   <SelectValue 
