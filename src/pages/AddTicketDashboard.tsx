@@ -334,7 +334,7 @@ export const AddTicketDashboard = () => {
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 rounded-full flex items-center justify-center mr-3">
-                <img src="/lovable-uploads/2d6e8bd8-9e18-45cb-9961-4b079abb1339.png" alt="User icon" className="w-8 h-8" />
+                <img src="/lovable-uploads/2d6e8bd8-9e18-45cb-9961-4b079abb1339.png" alt="User icon" className="w-12 h-12" />
               </span>
               Requestor Details
             </h2>
