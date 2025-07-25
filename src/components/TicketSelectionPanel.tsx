@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { X, Move, Trash2, Download, QrCode, Loader2 } from 'lucide-react';
+import { X, User, Trash2, Download, QrCode, Loader2 } from 'lucide-react';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -98,9 +98,9 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             {isGoldenLoading ? (
               <Loader2 className="w-6 h-6 animate-spin text-black" />
             ) : (
-              <Move className="w-6 h-6 text-black" />
+              <User className="w-6 h-6 text-black" />
             )}
-            <span className="text-xs text-gray-600">Move Asset</span>
+            <span className="text-xs text-gray-600">Assign To</span>
           </Button>
           
           <Button
