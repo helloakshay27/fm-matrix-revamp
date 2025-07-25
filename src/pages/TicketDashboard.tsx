@@ -771,12 +771,11 @@ export const TicketDashboard = () => {
   };
   const TruncatedDescription = ({
     text,
-    maxWords = 2
+    maxWords = 5
   }: {
     text: string;
     maxWords?: number;
   }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
     if (!text) return <span>--</span>;
 
     const words = text.split(' ');
@@ -785,16 +784,13 @@ export const TicketDashboard = () => {
     }
 
     const truncated = words.slice(0, maxWords).join(' ');
-    return <div className="w-48 max-w-[200px]">
-      <span className={`${isExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'} block`}>
-        {isExpanded ? text : `${truncated}...`}
+    return <div className="w-48 max-w-[200px] group relative">
+      <span className="block line-clamp-2">
+        {`${truncated}...`}
       </span>
-      <button onClick={e => {
-        e.stopPropagation();
-        setIsExpanded(!isExpanded);
-      }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in inline-block mt-1">
-        {isExpanded ? 'Show less' : 'Show more'}
-      </button>
+      <div className="absolute left-0 top-0 w-max max-w-xs bg-black text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none">
+        {text}
+      </div>
     </div>;
   };
   const renderCell = (item, columnKey) => {
