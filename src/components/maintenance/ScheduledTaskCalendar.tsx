@@ -165,9 +165,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         <Button onClick={handleReset} variant="outline" className="px-6">
           Reset
         </Button>
-        <Button onClick={handleExport} variant="outline" className="px-6">
-          Export
-        </Button>
+        
       </div>
 
       {/* Legends */}
