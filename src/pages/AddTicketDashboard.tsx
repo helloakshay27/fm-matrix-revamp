@@ -333,7 +333,7 @@ export const AddTicketDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center mr-3">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3">
                 <User size={16} color="red" />
               </span>
               Requestor Details
