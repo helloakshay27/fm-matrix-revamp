@@ -76,7 +76,11 @@ const UpdateTicketsPage: React.FC = () => {
     assignTo: '',
     mode: '',
     serviceType: '',
-    costInvolved: false
+    costInvolved: false,
+    selectedStatus: '',
+    rootCause: '',
+    correction: '',
+    selectedAsset: ''
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -245,27 +249,58 @@ const UpdateTicketsPage: React.FC = () => {
           <h1 className="text-xl font-semibold text-gray-900">COMPLAINT EDIT</h1>
         </div>
 
-        {/* Form */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Row 1 */}
             {/* Title */}
-            <div className="col-span-full">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-              <input
-                type="text"
+              <textarea
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                placeholder="Feedback: Tap Faulty, Wc Choked, Hand Dryer Faulty, Tissue Paper Missing"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
               />
             </div>
 
+            {/* Preventive Action */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Preventive Action</label>
+              <input
+                type="text"
+                value={formData.preventiveAction}
+                onChange={(e) => handleInputChange('preventiveAction', e.target.value)}
+                placeholder="nn"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                value={formData.selectedStatus}
+                onChange={(e) => handleInputChange('selectedStatus', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Closed</option>
+                {complaintStatuses.map((status) => (
+                  <option key={status.id} value={status.id}>
+                    {status.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Row 2 */}
             {/* Responsible Person */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Responsible Person</label>
               <select
                 value={formData.responsiblePerson}
                 onChange={(e) => handleInputChange('responsiblePerson', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
               >
                 <option value="">Select Responsible Person Name</option>
                 {fmUsers.map((user) => (
@@ -276,107 +311,16 @@ const UpdateTicketsPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Proactive/Reactive */}
+            {/* Review (Tracking) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
-              <select
-                value={formData.proactiveReactive}
-                onChange={(e) => handleInputChange('proactiveReactive', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white"
-              >
-                <option value="">Select Proactive/Reactive</option>
-                <option value="Proactive">Proactive</option>
-                <option value="Reactive">Reactive</option>
-              </select>
-            </div>
-
-            {/* Admin Priority */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
-              <select
-                value={formData.adminPriority}
-                onChange={(e) => handleInputChange('adminPriority', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white"
-              >
-                <option value="">Select Priority</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-            </div>
-
-            {/* Soft Close */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Soft Close</label>
-              <select
-                value={formData.softClose}
-                onChange={(e) => handleInputChange('softClose', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white"
-              >
-                <option value="">CF1</option>
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </div>
-
-            {/* Reference Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
-              <input
-                type="text"
-                value={formData.refNumber}
-                onChange={(e) => handleInputChange('refNumber', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-              />
-            </div>
-
-            {/* Issue Related To */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Issue Related To</label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.issueRelatedTo.project}
-                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
-                    className="mr-2"
-                  />
-                  Project
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.issueRelatedTo.pm}
-                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
-                    className="mr-2"
-                  />
-                  PM
-                </label>
-              </div>
-            </div>
-
-            {/* Associated To */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.associatedTo.asset}
-                    onChange={(e) => handleCheckboxChange('associatedTo', 'asset', e.target.checked)}
-                    className="mr-2"
-                  />
-                  Asset
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.associatedTo.service}
-                    onChange={(e) => handleCheckboxChange('associatedTo', 'service', e.target.checked)}
-                    className="mr-2"
-                  />
-                  Service
-                </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Review (Tracking)</label>
+              <div className="flex">
+                <Button 
+                  variant="outline" 
+                  className="text-sm border-gray-300 text-blue-600 hover:bg-blue-50"
+                >
+                  Review Date
+                </Button>
               </div>
             </div>
 
@@ -386,7 +330,7 @@ const UpdateTicketsPage: React.FC = () => {
               <select
                 value={formData.categoryType}
                 onChange={(e) => handleInputChange('categoryType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
               >
                 <option value="">Air Conditioner</option>
                 <option value="Air Conditioner">Air Conditioner</option>
@@ -395,27 +339,267 @@ const UpdateTicketsPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Comments */}
-            <div className="col-span-full">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
-              <textarea
-                value={formData.comments}
-                onChange={(e) => handleInputChange('comments', e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                placeholder="Add comment"
+            {/* Row 3 */}
+            {/* Proactive/Reactive */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
+              <select
+                value={formData.proactiveReactive}
+                onChange={(e) => handleInputChange('proactiveReactive', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Select Proactive/Reactive</option>
+                <option value="Proactive">Proactive</option>
+                <option value="Reactive">Reactive</option>
+              </select>
+            </div>
+
+            {/* Sub Category Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sub Category Type</label>
+              <select
+                value={formData.subCategoryType}
+                onChange={(e) => handleInputChange('subCategoryType', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Select Sub Category</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Repair">Repair</option>
+              </select>
+            </div>
+
+            {/* Assign To */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
+              <select
+                value={formData.assignTo}
+                onChange={(e) => handleInputChange('assignTo', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Vinayak Mane</option>
+                {fmUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.firstname} {user.lastname}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Row 4 */}
+            {/* Admin Priority */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
+              <select
+                value={formData.adminPriority}
+                onChange={(e) => handleInputChange('adminPriority', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Select Priority</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            {/* External Priority */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">External Priority</label>
+              <select
+                value={formData.externalPriority}
+                onChange={(e) => handleInputChange('externalPriority', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Select External Priority</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            {/* Mode */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
+              <select
+                value={formData.mode}
+                onChange={(e) => handleInputChange('mode', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Select Complaint Mode</option>
+                <option value="Phone">Phone</option>
+                <option value="Email">Email</option>
+                <option value="App">App</option>
+              </select>
+            </div>
+
+            {/* Row 5 */}
+            {/* Root Cause */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Root Cause</label>
+              <input
+                type="text"
+                value={formData.rootCause}
+                onChange={(e) => handleInputChange('rootCause', e.target.value)}
+                placeholder="ghj"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
               />
-              <div className="mt-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.costInvolved}
-                    onChange={(e) => handleCostInvolvedChange(e.target.checked)}
-                    className="mr-2"
-                  />
-                  Cost Involved
-                </label>
-              </div>
+            </div>
+
+            {/* Impact */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Impact</label>
+              <input
+                type="text"
+                value={formData.impact}
+                onChange={(e) => handleInputChange('impact', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              />
+            </div>
+
+            {/* Correction */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Correction</label>
+              <input
+                type="text"
+                value={formData.correction}
+                onChange={(e) => handleInputChange('correction', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              />
+            </div>
+
+            {/* Row 6 */}
+            {/* Reference Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
+              <input
+                type="text"
+                value={formData.refNumber}
+                onChange={(e) => handleInputChange('refNumber', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              />
+            </div>
+
+            {/* Corrective Action */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Corrective Action</label>
+              <input
+                type="text"
+                value={formData.correctiveAction}
+                onChange={(e) => handleInputChange('correctiveAction', e.target.value)}
+                placeholder="hko"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              />
+            </div>
+
+            {/* Service Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+              <select
+                value={formData.serviceType}
+                onChange={(e) => handleInputChange('serviceType', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Select Service Type</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Repair">Repair</option>
+                <option value="Installation">Installation</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Issue Related To */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Issue Related To</label>
+            <div className="flex gap-6">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="issueRelatedTo"
+                  value="project"
+                  checked={formData.issueRelatedTo.project}
+                  onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
+                  className="mr-2"
+                />
+                Project
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="issueRelatedTo"
+                  value="fm"
+                  checked={formData.issueRelatedTo.pm}
+                  onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
+                  className="mr-2"
+                />
+                FM
+              </label>
+            </div>
+          </div>
+
+          {/* Associated To */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Associated To</label>
+            <div className="flex gap-6">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="associatedTo"
+                  value="asset"
+                  checked={formData.associatedTo.asset}
+                  onChange={(e) => handleCheckboxChange('associatedTo', 'asset', e.target.checked)}
+                  className="mr-2"
+                />
+                Asset
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="associatedTo"
+                  value="service"
+                  checked={formData.associatedTo.service}
+                  onChange={(e) => handleCheckboxChange('associatedTo', 'service', e.target.checked)}
+                  className="mr-2"
+                />
+                Service
+              </label>
+            </div>
+          </div>
+
+          {/* Select Asset */}
+          {formData.associatedTo.asset && (
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Asset</label>
+              <select
+                value={formData.selectedAsset}
+                onChange={(e) => handleInputChange('selectedAsset', e.target.value)}
+                className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+              >
+                <option value="">Select Asset</option>
+                <option value="asset1">Asset 1</option>
+                <option value="asset2">Asset 2</option>
+              </select>
+            </div>
+          )}
+
+          {/* Comments */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
+            <textarea
+              value={formData.comments}
+              onChange={(e) => handleInputChange('comments', e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              placeholder="Add comment"
+            />
+            <div className="mt-2">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.costInvolved}
+                  onChange={(e) => handleCostInvolvedChange(e.target.checked)}
+                  className="mr-2"
+                />
+                Cost Involved
+              </label>
             </div>
           </div>
 
