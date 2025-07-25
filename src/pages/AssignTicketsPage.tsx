@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAllocationData } from '@/hooks/useAllocationData';
 import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/utils/apiClient';
 
 interface SelectedTicket {
   id: number;
@@ -33,6 +34,21 @@ interface SelectedTicket {
   escalation_resolution_name: string | null;
 }
 
+interface ComplaintStatus {
+  id: number;
+  society_id: number;
+  name: string;
+  color_code: string;
+  fixed_state: string;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  position: number;
+  of_phase: string;
+  of_atype: string;
+  email: boolean;
+}
+
 const AssignTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,12 +59,35 @@ const AssignTicketsPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [complaintStatuses, setComplaintStatuses] = useState<ComplaintStatus[]>([]);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
 
   useEffect(() => {
     if (location.state?.selectedTickets) {
       setSelectedTickets(location.state.selectedTickets);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    const fetchComplaintStatuses = async () => {
+      setLoadingStatuses(true);
+      try {
+        const response = await apiClient.get('/pms/admin/complaint_statuses.json');
+        setComplaintStatuses(response.data || []);
+      } catch (error) {
+        console.error('Error fetching complaint statuses:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load complaint statuses.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingStatuses(false);
+      }
+    };
+
+    fetchComplaintStatuses();
+  }, [toast]);
 
   const handleBack = () => {
     navigate(-1);
@@ -237,12 +276,14 @@ const AssignTicketsPage: React.FC = () => {
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
+                disabled={loadingStatuses}
               >
                 <option value="">Select Status</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                {complaintStatuses.map((status) => (
+                  <option key={status.id} value={status.id}>
+                    {status.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
