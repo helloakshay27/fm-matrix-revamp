@@ -331,9 +331,9 @@ export const AddTicketDashboard = () => {
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
         {/* Section 1: Requestor Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
+          <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center mr-3">
+              <span className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center mr-3">
                 <User size={16} />
               </span>
               Requestor Details
