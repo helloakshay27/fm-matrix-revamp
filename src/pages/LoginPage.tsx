@@ -156,7 +156,7 @@ export const LoginPage = () => {
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
-        navigate('/');
+        navigate('/maintenance/asset');
       }, 500);
     } catch (error) {
       console.error("Login error:", error);
