@@ -165,6 +165,13 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Debounce the search input to avoid excessive API calls
   const debouncedSearchInput = useDebounce(searchInput, 100);
 
+  // Update internal search term when debounced input changes
+  useEffect(() => {
+    if (externalSearchTerm === undefined) {
+      setInternalSearchTerm(debouncedSearchInput);
+    }
+  }, [debouncedSearchInput, externalSearchTerm]);
+
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   // Get initial column visibility state from localStorage
@@ -397,7 +404,8 @@ export function EnhancedTable<T extends Record<string, any>>({
           {onFilterClick && (
             <Button
               variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              size="sm"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
