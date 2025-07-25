@@ -376,27 +376,30 @@ export const AddTicketDashboard = () => {
               </div>
             )}
 
-            {/* Name and Department */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Name, Department and third column */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                 <Input
-                  placeholder="Auto-filled"
+                  placeholder="Anamika Singh"
                   value={formData.name}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
                   disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                  className={isFieldsReadOnly ? "bg-gray-50" : ""}
+                  className={`border border-gray-300 rounded-md ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
                 <Input
-                  placeholder="Technology"
+                  placeholder="Technical"
                   value={formData.department}
                   onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                   disabled={isFieldsReadOnly}
-                  className={isFieldsReadOnly ? "bg-gray-50" : ""}
+                  className={`border border-gray-300 rounded-md ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
                 />
+              </div>
+              <div>
+                {/* Third column - empty for now */}
               </div>
             </div>
           </div>
