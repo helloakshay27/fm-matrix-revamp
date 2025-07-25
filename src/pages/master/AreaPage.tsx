@@ -189,8 +189,8 @@ export const AreaPage = () => {
       const response = await apiClient.put(`/pms/areas/${selectedArea.id}.json`, {
         pms_area: {
           name,
-          building_id,
-          wing_id,
+          building_id: buildingId,
+          wing_id: wingId,
           active,
         },
       });
