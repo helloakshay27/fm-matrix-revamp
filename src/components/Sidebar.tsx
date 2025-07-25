@@ -181,49 +181,49 @@ const navigationStructure = {
 
 const modulesByPackage = {
   'Master': [
-   {
-    name: 'Location Master',
-    icon: MapPin,
-    href: '/master/location',
-    subItems: [
-      { name: 'Account', href: '/master/location/account', color: 'text-[#1a1a1a]' },
-      { name: 'Building', href: '/master/location/building', color: 'text-[#1a1a1a]' },
-      { name: 'Wing', href: '/master/location/wing', color: 'text-[#1a1a1a]' },
-      { name: 'Area', href: '/master/location/area', color: 'text-[#1a1a1a]' },
-      { name: 'Floor', href: '/master/location/floor', color: 'text-[#1a1a1a]' },
-      { name: 'Unit', href: '/master/location/unit', color: 'text-[#1a1a1a]' },
-      { name: 'Room', href: '/master/location/room', color: 'text-[#1a1a1a]' }
-    ]
-  },
-  {
-    name: 'User Master',
-    icon: Users,
-    href: '/master/user',
-    subItems: [
-      { name: 'FM User', href: '/master/user/fm-users', color: 'text-[#1a1a1a]' },
-      { name: 'OCCUPANT USERS', href: '/master/user/occupant-users', color: 'text-[#1a1a1a]' }
-    ]
-  },
-  {
-    name: 'Checklist Master',
-    icon: CheckSquare,
-    href: '/master/checklist'
-  },
-  {
-    name: 'Address Master',
-    icon: MapPin,
-    href: '/master/address'
-  },
-  {
-    name: 'Unit Master (By Default)',
-    icon: Package,
-    href: '/master/unit-default'
-  },
-  {
-    name: 'Material Master -> EBom',
-    icon: FileText,
-    href: '/master/material-ebom'
-  },
+    {
+      name: 'Location Master',
+      icon: MapPin,
+      href: '/master/location',
+      subItems: [
+        { name: 'Account', href: '/master/location/account', color: 'text-[#1a1a1a]' },
+        { name: 'Building', href: '/master/location/building', color: 'text-[#1a1a1a]' },
+        { name: 'Wing', href: '/master/location/wing', color: 'text-[#1a1a1a]' },
+        { name: 'Area', href: '/master/location/area', color: 'text-[#1a1a1a]' },
+        { name: 'Floor', href: '/master/location/floor', color: 'text-[#1a1a1a]' },
+        { name: 'Unit', href: '/master/location/unit', color: 'text-[#1a1a1a]' },
+        { name: 'Room', href: '/master/location/room', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'User Master',
+      icon: Users,
+      href: '/master/user',
+      subItems: [
+        { name: 'FM User', href: '/master/user/fm-users', color: 'text-[#1a1a1a]' },
+        { name: 'OCCUPANT USERS', href: '/master/user/occupant-users', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Checklist Master',
+      icon: CheckSquare,
+      href: '/master/checklist'
+    },
+    {
+      name: 'Address Master',
+      icon: MapPin,
+      href: '/master/address'
+    },
+    {
+      name: 'Unit Master (By Default)',
+      icon: Package,
+      href: '/master/unit-default'
+    },
+    {
+      name: 'Material Master -> EBom',
+      icon: FileText,
+      href: '/master/material-ebom'
+    },
   ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
@@ -254,14 +254,14 @@ const modulesByPackage = {
     { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
     { name: 'Services', icon: Wrench, href: '/maintenance/service' },
     { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
-    { 
-      name: 'Inventory', 
-      icon: Package, 
+    {
+      name: 'Inventory',
+      icon: Package,
       href: '/maintenance/inventory',
       subItems: [
-        { name: 'Inventory', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
+        { name: 'Inventory Master', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
         { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' },
-        { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
+        // { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
       ]
     },
     { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
@@ -440,11 +440,11 @@ const modulesByPackage = {
     {
       name: 'Booking',
       icon: Calendar,
-      href: '/vas/booking',
-      subItems: [
-        { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
-        { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
-      ]
+      href: '/vas/booking/list',
+      // subItems: [
+      //   { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
+      //   { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
+      // ]
     },
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
@@ -571,6 +571,13 @@ const modulesByPackage = {
       href: '/settings/vas',
       subItems: [
         {
+          name: 'F&B',
+          href: '/settings/vas/fnb',
+          subItems: [
+            { name: 'Setup', href: '/settings/vas/fnb/setup' },
+          ]
+        },
+        {
           name: 'MOM',
           href: '/settings/vas/mom',
           subItems: [
@@ -614,6 +621,11 @@ export const Sidebar = () => {
   const [selectedDepartment, setSelectedRole] = useState('');
   const [selectedRole, setSelectedDepartment] = useState('');
 
+  // Reset expanded items on page load/refresh
+  React.useEffect(() => {
+    setExpandedItems([]);
+  }, []);
+
   const toggleExpanded = (itemName: string) => {
     setExpandedItems(prev =>
       prev.includes(itemName)
@@ -621,7 +633,7 @@ export const Sidebar = () => {
         : [...prev, itemName]
     );
   };
-  
+
   // Close all expanded items when sidebar is collapsed
   React.useEffect(() => {
     if (isSidebarCollapsed) {
@@ -668,7 +680,7 @@ export const Sidebar = () => {
   const isActiveRoute = (href: string) => {
     const currentPath = location.pathname;
     const isActive = currentPath === href || currentPath.startsWith(href + '/');
-    
+
     // Debug logging for Services
     if (href === '/maintenance/service') {
       console.log('Services route check:', {
@@ -679,7 +691,7 @@ export const Sidebar = () => {
         isActive
       });
     }
-    
+
     return isActive;
   };
 
@@ -690,34 +702,33 @@ export const Sidebar = () => {
       const path = location.pathname;
       const settingsItems = modulesByPackage['Settings'];
       const itemsToExpand = [];
-      
-      // Add all main categories to expanded items
+
+      // Find the active item and its parent
       settingsItems.forEach(item => {
-        itemsToExpand.push(item.name);
-        
-        // If this category's path is in the current path, expand its children
-        if (item.href && path.includes(item.href)) {
-          if (item.subItems) {
-            item.subItems.forEach(subItem => {
-              if (subItem.href && path.includes(subItem.href)) {
-                itemsToExpand.push(subItem.name);
-                
+        if (item.href && path.startsWith(item.href)) {
+          itemsToExpand.push(item.name);
+        }
+        if (item.subItems) {
+          item.subItems.forEach(subItem => {
+            if (subItem.href && path.startsWith(subItem.href)) {
+              itemsToExpand.push(item.name); // Add parent
+              itemsToExpand.push(subItem.name);
+              
+              // If there are nested items
+              if (subItem.subItems) {
+                subItem.subItems.forEach(nestedItem => {
+                  if (nestedItem.href && path.startsWith(nestedItem.href)) {
+                    itemsToExpand.push(subItem.name);
+                  }
+                });
               }
-            });
-          }
+            }
+          });
         }
       });
-      
-      // Update expanded items state
-      setExpandedItems(prev => {
-        const newItems = [...prev];
-        itemsToExpand.forEach(item => {
-          if (!newItems.includes(item)) {
-            newItems.push(item);
-          }
-        });
-        return newItems;
-      });
+
+      // Update expanded items state with only the active path
+      setExpandedItems(itemsToExpand);
     }
   }, [currentSection, location.pathname]);
 
@@ -856,21 +867,56 @@ export const Sidebar = () => {
     );
   };
 
+  const CollapsedMenuItem = ({ module, level = 0 }) => {
+    const hasSubItems = module.subItems && module.subItems.length > 0;
+    const isExpanded = expandedItems.includes(module.name);
+    const active = module.href ? isActiveRoute(module.href) : false;
+
+    return (
+      <>
+        <button
+          key={module.name}
+          onClick={() => {
+            if (hasSubItems) {
+              toggleExpanded(module.name);
+            } else if (module.href) {
+              handleNavigation(module.href, currentSection);
+            }
+          }}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded ? 'bg-[#f0e8dc] shadow-inner' : 'hover:bg-[#DBC2A9]'
+          }`}
+          title={module.name}
+        >
+          {(active || isExpanded) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
+          {level === 0 ? (
+            <module.icon className={`w-5 h-5 ${active || isExpanded ? 'text-[#C72030]' : 'text-[#1a1a1a]'}`} />
+          ) : (
+            <div className={`w-${3 - level} h-${3 - level} rounded-full bg-[#1a1a1a]`}></div>
+          )}
+        </button>
+        {isExpanded && hasSubItems && module.subItems.map(subItem => (
+          <CollapsedMenuItem key={`${module.name}-${subItem.name}`} module={subItem} level={level + 1} />
+        ))}
+      </>
+    );
+  };
+
   return (
     <div
       className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: '4rem', height: '91vh' }}
     >
       <div className={`${isSidebarCollapsed ? 'px-2 py-2' : 'p-2'}`}>
-        <button 
+        <button
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           className="absolute right-2 top-2 p-1 rounded-md hover:bg-[#DBC2A9] z-10"
         >
-          {isSidebarCollapsed ? 
+          {isSidebarCollapsed ?
             <div className="flex justify-center items-center w-8 h-8 bg-[#f6f4ee] border border-[#e5e1d8] mx-auto">
               <ChevronRight className="w-4 h-4" />
             </div>
-            : 
+            :
             <ChevronLeft className="w-4 h-4" />
           }
         </button>
@@ -888,129 +934,13 @@ export const Sidebar = () => {
         <nav className="space-y-2">
           {currentSection === 'Settings' ? (
             isSidebarCollapsed ? (
-              // Collapsed Settings: show only icons, centered, with tooltip
-              <div className="flex flex-col items-center space-y-5 pt-4">
-                {currentModules.map((module) => (
-                  <button
-                    key={module.name}
-                    onClick={() => module.href && handleNavigation(module.href, currentSection)}
-                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-                      isActiveRoute(module.href) 
-                        ? 'bg-[#f0e8dc] shadow-inner' 
-                        : 'hover:bg-[#DBC2A9]'
-                    }`}
-                    title={module.name}
-                  >
-                    {isActiveRoute(module.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
-                    <module.icon className={`w-5 h-5 ${isActiveRoute(module.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}`} />
-                  </button>
+              <div className="flex flex-col items-center space-y-3 pt-4">
+                {currentModules.map(module => (
+                  <CollapsedMenuItem key={module.name} module={module} />
                 ))}
               </div>
             ) : (
-              <div className="space-y-1">
-                {currentModules.map((module) => (
-                  <div key={module.name} className="mb-3">
-                    <button
-                      onClick={() => isSidebarCollapsed ? handleNavigation(module.href || '/settings') : toggleExpanded(module.name)}
-                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'} w-full py-2 ${isSidebarCollapsed ? 'px-1' : 'px-3'} ${!isSidebarCollapsed && 'border-b border-gray-300'}`}
-                      title={isSidebarCollapsed ? module.name : ''}
-                    >
-                      <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-2'}`}>
-                        <module.icon className="w-4 h-4" />
-                        {!isSidebarCollapsed && <span className="font-semibold text-[#1a1a1a] text-sm">{module.name}</span>}
-                      </div>
-                      {!isSidebarCollapsed && (expandedItems.includes(module.name) ? 
-                        <ChevronDown className="w-4 h-4" /> : 
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                    </button>
-                    {expandedItems.includes(module.name) && module.subItems && (
-                      <div className="pl-3 pt-1 space-y-1">
-                        {module.subItems.map((subItem) => (
-                          <div key={subItem.name} className="pl-4">
-                            {subItem.subItems ? (
-                              <div>
-                                <button
-                                  onClick={() => toggleExpanded(subItem.name)}
-                                  className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium"
-                                >
-                                  <span className={isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
-                                    {subItem.name}
-                                  </span>
-                                  {expandedItems.includes(subItem.name) ? 
-                                    <ChevronDown className="w-3 h-3" /> : 
-                                    <ChevronRight className="w-3 h-3" />
-                                  }
-                                </button>
-                                {expandedItems.includes(subItem.name) && subItem.subItems && (
-                                  <div className="pl-3 pt-1">
-                                    {subItem.subItems.map((nestedItem) => (
-                                      <div key={nestedItem.name} className="py-1">
-                                        {nestedItem.subItems ? (
-                                          <div>
-                                            <button
-                                              onClick={() => toggleExpanded(nestedItem.name)}
-                                              className="flex items-center justify-between w-full px-2 text-sm"
-                                            >
-                                              <span className={isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
-                                                {nestedItem.name}
-                                              </span>
-                                              {expandedItems.includes(nestedItem.name) ? 
-                                                <ChevronDown className="w-3 h-3" /> : 
-                                                <ChevronRight className="w-3 h-3" />
-                                              }
-                                            </button>
-                                            {expandedItems.includes(nestedItem.name) && nestedItem.subItems && (
-                                              <div className="pl-3 pt-1">
-                                                {nestedItem.subItems.map((item) => (
-                                                  <button
-                                                    key={item.name}
-                                                    onClick={() => handleNavigation(item.href, currentSection)}
-                                                    className={`block w-full text-left px-2 py-1 text-sm ${
-                                                      isActiveRoute(item.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                                    }`}
-                                                  >
-                                                    {item.name}
-                                                  </button>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <button
-                                            onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                                            className={`block w-full text-left px-2 py-1 text-sm ${
-                                              isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                            }`}
-                                          >
-                                            {nestedItem.name}
-                                          </button>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleNavigation(subItem.href, currentSection)}
-                                className={`block w-full text-left px-2 py-1 text-sm font-medium rounded-md ${
-                                  isActiveRoute(subItem.href) 
-                                    ? 'text-[#C72030] bg-[#f0e8dc] shadow-inner relative pl-3' 
-                                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9]/50'
-                                }`}
-                              >
-                                {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
-                                {subItem.name}
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              currentModules.map((module) => renderMenuItem(module))
             )
           ) : (
             isSidebarCollapsed ? (
@@ -1019,11 +949,10 @@ export const Sidebar = () => {
                   <button
                     key={module.name}
                     onClick={() => module.href && handleNavigation(module.href, currentSection)}
-                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-                      isActiveRoute(module.href) 
-                        ? 'bg-[#f0e8dc] shadow-inner' 
-                        : 'hover:bg-[#DBC2A9]'
-                    }`}
+                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
+                      ? 'bg-[#f0e8dc] shadow-inner'
+                      : 'hover:bg-[#DBC2A9]'
+                      }`}
                     title={module.name}
                   >
                     {isActiveRoute(module.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}

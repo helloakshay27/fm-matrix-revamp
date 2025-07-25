@@ -39,7 +39,7 @@ export const Header = () => {
 
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
-  
+
   // Get user data from localStorage
   const user = getUser() || {
     id: 0,
@@ -100,10 +100,11 @@ export const Header = () => {
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-3">
           {/* Home Dashboard */}
-           <div className="w-10 h-10 bg-[#C72030] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">FM</span>
-            </div>
-            <span className="text-[#1a1a1a] font-semibold text-lg hidden md:block">Facility Management</span>
+            <img
+                src="https://india.lockated.co/wp-content/uploads/lockated-logo-nw.png"
+                alt="Logo"
+                className="h-9 mx-auto"
+              />
 
           {/* Project Dropdown */}
 
@@ -112,7 +113,7 @@ export const Header = () => {
         <div className="flex items-center gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-                            <MapPin className="w-4 h-4" />
+              <MapPin className="w-4 h-4" />
 
               {projectLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -206,9 +207,11 @@ export const Header = () => {
                 <span>Profile Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => {
                   clearAuth();
+                  window.location.reload();
+
                   navigate('/login');
                 }}
                 className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
