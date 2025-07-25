@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Paperclip, X, User, Ticket, FileText } from 'lucide-react';
+import { ArrowLeft, Upload, Paperclip, X, User, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 
@@ -547,12 +547,7 @@ export const AddTicketDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="bg-gray-100 px-6 py-3 border-b border-gray-200">
             <h2 className="text-sm font-medium text-gray-700 flex items-center">
-              <span className="w-6 h-6 text-white rounded-full flex items-center justify-center text-xs mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#C72030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="#C72030"/>
-                  <path d="M14 2V8H20" stroke="#E5E0D3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="#E5E0D3"/>
-                </svg>
-              </span>
+              <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs mr-3">3</span>
               Add Attachments
             </h2>
           </div>
