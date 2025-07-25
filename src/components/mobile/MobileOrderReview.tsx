@@ -54,10 +54,10 @@ export const MobileOrderReview: React.FC = () => {
 
   const handleViewOrderDetails = () => {
     if (isAppUser) {
-      // App users go to my orders
+      // App users go to my orders list page
       navigate('/mobile/orders');
     } else {
-      // External users see order details
+      // External users see order details page
       navigate(`/mobile/orders/${orderDetails.orderId}`);
     }
   };
