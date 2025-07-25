@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useAllocationData } from '@/hooks/useAllocationData';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,15 +36,15 @@ interface SelectedTicket {
 const AssignTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { departments, users, loading } = useAllocationData();
+  const { users, loading } = useAllocationData();
   const { toast } = useToast();
+  
   const [selectedTickets, setSelectedTickets] = useState<SelectedTicket[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Get selected tickets from navigation state
     if (location.state?.selectedTickets) {
       setSelectedTickets(location.state.selectedTickets);
     }
@@ -55,7 +55,6 @@ const AssignTicketsPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    // Validate form
     if (!selectedStatus && !selectedUser) {
       toast({
         title: "Validation Error",
@@ -67,24 +66,15 @@ const AssignTicketsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Implement assignment logic here
       console.log('Updating tickets:', selectedTickets.map(t => t.id));
       console.log('Selected Status:', selectedStatus);
       console.log('Selected User:', selectedUser);
-      
-      // TODO: Make API call to update tickets
-      // await updateTicketsAPI({ 
-      //   ticketIds: selectedTickets.map(t => t.id),
-      //   status: selectedStatus,
-      //   assignedTo: selectedUser 
-      // });
       
       toast({
         title: "Success",
         description: `Successfully updated ${selectedTickets.length} ticket(s).`,
       });
       
-      // Navigate back after successful assignment
       navigate(-1);
     } catch (error) {
       console.error('Error updating tickets:', error);
@@ -240,9 +230,6 @@ const AssignTicketsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-6">Update To</h2>
           
-          {/* Department/User selection */}
-
-          {/* Department/User selection */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div>
               <label className="block text-sm text-gray-500 mb-2">Status</label>
@@ -275,8 +262,6 @@ const AssignTicketsPage: React.FC = () => {
               </select>
             </div>
           </div>
-
-          {/* Submit button */}
 
           {/* Submit button */}
           <div className="flex justify-center">
