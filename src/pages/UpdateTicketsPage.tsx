@@ -166,7 +166,12 @@ const UpdateTicketsPage: React.FC = () => {
         responsiblePerson: ticketData.responsible_person || '',
         issueRelatedTo: ticketData.issue_related_to || '',
         refNumber: ticketData.reference_number || '',
-        correctiveAction: ticketData.corrective_action || ''
+        correctiveAction: ticketData.corrective_action || '',
+        selectedAsset: ticketData.asset_service === 'Asset' ? (ticketData.asset_id || '') : '',
+        associatedTo: {
+          asset: ticketData.asset_service === 'Asset',
+          service: ticketData.asset_service === 'Service'
+        }
       }));
 
       // Set review date if available
