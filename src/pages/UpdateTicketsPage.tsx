@@ -134,6 +134,7 @@ const UpdateTicketsPage: React.FC = () => {
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [reviewDate, setReviewDate] = useState<Date>();
+  const [ticketApiData, setTicketApiData] = useState<any>(null); // Store original API data
 
   // Fetch ticket data for editing
   const fetchTicketData = async (ticketId: string) => {
@@ -145,6 +146,9 @@ const UpdateTicketsPage: React.FC = () => {
       console.log('Received ticket data:', ticketData);
       console.log('Category type:', ticketData.category_type);
       console.log('Sub category type:', ticketData.sub_category_type);
+      
+      // Store original API data for later use
+      setTicketApiData(ticketData);
       
       // Find the category ID that matches the category name from API
       const matchingCategory = helpdeskData?.helpdesk_categories?.find(
@@ -165,7 +169,7 @@ const UpdateTicketsPage: React.FC = () => {
         correction: ticketData.correction || '',
         rootCause: ticketData.root_cause || '',
         categoryType: matchingCategory?.id.toString() || '',
-        subCategoryType: ticketData.sub_category_type || '',
+        subCategoryType: '', // Will be set after subcategories are fetched
         assignTo: ticketData.assigned_to || '',
         mode: ticketData.complaint_mode || '',
         responsiblePerson: ticketData.responsible_person || '',
@@ -325,6 +329,21 @@ const UpdateTicketsPage: React.FC = () => {
       }
       
       setSubCategories(categories);
+
+      // If we have stored ticket API data, find and set the matching subcategory
+      if (ticketApiData?.sub_category_type && categories.length > 0) {
+        const matchingSubCategory = categories.find(
+          subCat => subCat.name === ticketApiData.sub_category_type
+        );
+        
+        if (matchingSubCategory) {
+          setFormData(prev => ({
+            ...prev,
+            subCategoryType: matchingSubCategory.id.toString()
+          }));
+        }
+      }
+      
     } catch (error) {
       console.error('Error fetching sub-categories:', error);
       setSubCategories([]);
