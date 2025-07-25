@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft, Loader2, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Checkbox as MuiCheckbox, FormControlLabel } from '@mui/material';
 import { FileUploadSection } from '@/components/FileUploadSection';
 import { useAppDispatch } from '@/store/hooks';
 import { createRestaurant } from '@/store/slices/f&bSlice';
+import { toast } from 'sonner';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -73,7 +74,6 @@ const initialSchedule: Schedule[] = [
 
 export const AddRestaurantPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const dispatch = useAppDispatch();
 
   const baseUrl = localStorage.getItem('baseUrl');
@@ -112,6 +112,8 @@ export const AddRestaurantPage = () => {
     orderNotAllowedText: ''
   });
 
+  const [loadingSubmit, setLoadingSubmit] = useState(false)
+
   // File states
   const [coverImages, setCoverImages] = useState<File[]>([]);
   const [menuFiles, setMenuFiles] = useState<File[]>([]);
@@ -148,6 +150,7 @@ export const AddRestaurantPage = () => {
   };
 
   const handleSubmit = async () => {
+    setLoadingSubmit(true)
     try {
       const dataToSubmit = new FormData();
 
@@ -221,18 +224,17 @@ export const AddRestaurantPage = () => {
       });
 
       await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();
-      toast({
-        title: "Success",
-        description: "Restaurant saved successfully!",
-      });
-      navigate('/vas/fnb');
+      toast.success('Restaurant added successfully');
+      navigate('/settings/vas/fnb/setup');
     } catch (error) {
       console.log(error)
+    } finally {
+      setLoadingSubmit(false);
     }
   };
 
   const handleBack = () => {
-    navigate('/vas/fnb');
+    navigate('/settings/vas/fnb/setup');
   };
 
   const handleGoBack = () => {
@@ -879,10 +881,11 @@ export const AddRestaurantPage = () => {
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 mt-6">
         <Button
+          disabled={loadingSubmit}
           onClick={handleSubmit}
-          className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
+          className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8 text-center"
         >
-          Save
+          {loadingSubmit ? <Loader className="animate-spin mr-2" /> : 'Save'}
         </Button>
         <Button
           onClick={handleBack}

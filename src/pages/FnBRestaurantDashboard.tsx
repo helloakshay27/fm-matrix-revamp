@@ -63,7 +63,6 @@ export const FnBRestaurantDashboard = () => {
 
     const dataToSubmit = {
       restaurant: {
-        ...restaurantToUpdate,
         booking_allowed: updatedBookingAllowed,
       }
     };
@@ -91,7 +90,6 @@ export const FnBRestaurantDashboard = () => {
 
     const dataToSubmit = {
       restaurant: {
-        ...restaurantToUpdate,
         can_order: updatedOrderAllowed,
       }
     };
@@ -119,7 +117,6 @@ export const FnBRestaurantDashboard = () => {
 
     const dataToSubmit = {
       restaurant: {
-        ...restaurantToUpdate,
         status: isActive,
       }
     };

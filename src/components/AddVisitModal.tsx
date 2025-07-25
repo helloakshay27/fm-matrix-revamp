@@ -63,7 +63,7 @@ interface AMCDetailsDataWithVisits extends AMCDetailsData {
 export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
-  const dispatch = useAppDispatch(); 
+  const dispatch = useAppDispatch();
 
   const [formData, setFormData] = useState({
     vendor: '',
@@ -71,6 +71,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     technician: '',
   });
   const [users, setUsers] = useState([]);
+  const [attachment, setAttachment] = useState(null)
 
   const { data: amcData, loading, error } = useAppSelector(
     (state) => state.amcDetails as {
@@ -166,7 +167,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
           <div className="space-y-4">
             <TextField
               required
-              label="Vendor"
+              label="Visit Number"
               placeholder="Enter Visit Number"
               name="vendor"
               value={formData.vendor}
@@ -213,6 +214,17 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
                 ))}
               </Select>
             </FormControl>
+
+            <TextField
+              label="Attachment"
+              type="file"
+              name="attachment"
+              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
 
           <div className="flex justify-center mt-6">
