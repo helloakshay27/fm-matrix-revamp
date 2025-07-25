@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,8 +16,8 @@ import { AMCSelector } from '@/components/AMCSelector';
 import { RecentAMCSidebar } from '@/components/RecentAMCSidebar';
 import {
   Pagination,
-  PaginationContent,
   PaginationEllipsis,
+  PaginationContent,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -26,6 +25,7 @@ import {
 } from "@/components/ui/pagination";
 import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { toast } from 'sonner';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -60,13 +60,14 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
 interface AMCRecord {
   id: number;
   asset_name: string;
-  resource_type: string;
+  amc_type: string;
   vendor_name: string;
   amc_start_date: string;
   amc_end_date: string;
   amc_first_service: string;
   created_at: string;
   active: boolean;
+  is_flagged?: boolean;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -75,7 +76,7 @@ const columns: ColumnConfig[] = [
   { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
   { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
-  { key: 'resource_type', label: 'Resource Type', sortable: true, defaultVisible: true },
+  { key: 'amc_type', label: 'AMC Type', sortable: true, defaultVisible: true },
   { key: 'vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
   { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
   { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
@@ -90,7 +91,6 @@ export const AMCDashboard = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const siteId = localStorage.getItem('selectedSiteId');
-
   const { data: apiData, loading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,11 +98,11 @@ export const AMCDashboard = () => {
     'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'typeChart', 'resourceChart', 'agingMatrix']);
+  const [filter, setFilter] = useState<string | null>(null); // New state for filter
   const pageSize = 7;
   const [activeTab, setActiveTab] = useState<string>("amclist");
   const [showActionPanel, setShowActionPanel] = useState(false);
-
-
+  const [amcs, setAmcs] = useState<AMCRecord[]>([]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -115,15 +115,43 @@ export const AMCDashboard = () => {
   // Use API data if available, otherwise fallback to initial data
   const amcData = apiData && Array.isArray(apiData.asset_amcs) ? apiData.asset_amcs : initialAmcData;
 
+  // Fetch data based on filter
   useEffect(() => {
-    dispatch(fetchAMCData());
-  }, [dispatch]);
+    const fetchFilteredData = async () => {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
 
-  // Calculate pagination - ensure we always have pagination visible for testing
-  const totalPages = Math.ceil(Math.max(amcData.length, 6) / pageSize); // Ensure minimum pages for testing
+      let url = `https://${baseUrl}/pms/asset_amcs.json?site_id=${siteId}`;
+      if (filter === 'active') {
+        url = `https://${baseUrl}/pms/asset_amcs.json?q[active_eq]=true`;
+      } else if (filter === 'inactive') {
+        url = `https://${baseUrl}/pms/asset_amcs.json?q[active_eq]=false`;
+      } else if (filter === 'flagged') {
+        url = `https://${baseUrl}/pms/asset_amcs.json?q[is_flagged_eq]=true`;
+      }
+
+      try {
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setAmcs(response.data.asset_amcs || []);
+      } catch (error) {
+        console.error('Error fetching AMC data:', error);
+        toast.error('Failed to fetch AMC data');
+      }
+    };
+
+    fetchFilteredData();
+  }, [filter, baseUrl, token, siteId]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(Math.max(amcs.length, 6) / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = amcData.slice(startIndex, startIndex + pageSize);
-
+  const paginatedData = amcs.slice(startIndex, startIndex + pageSize);
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
@@ -135,26 +163,18 @@ export const AMCDashboard = () => {
 
   const handleStatusToggle = async (id: number) => {
     try {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      const siteId = localStorage.getItem('selectedSiteId');
-
       if (!baseUrl || !token || !siteId) {
-        alert('Missing base URL, token, or site ID');
+        toast.error('Missing base URL, token, or site ID');
         return;
       }
 
-      // Find the current AMC record to determine the current status
-      const amcRecord = amcData.find((item) => item.id === id);
+      const amcRecord = amcs.find((item) => item.id === id);
       if (!amcRecord) {
-        alert('AMC record not found');
+        toast.error('AMC record not found');
         return;
       }
 
-      // Toggle the active status
       const updatedStatus = !amcRecord.active;
-
-      // Make the PUT request to update only the active status
       const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
       const response = await axios.put(
         url,
@@ -162,7 +182,6 @@ export const AMCDashboard = () => {
           pms_asset_amc: {
             active: updatedStatus
           }
-
         },
         {
           headers: {
@@ -170,23 +189,25 @@ export const AMCDashboard = () => {
           },
         }
       );
-
       if (response.status === 200) {
-        // Refresh the table by fetching updated data
-        dispatch(fetchAMCData());
-        console.log(`Successfully updated AMC ID ${id} to active: ${updatedStatus}`);
+        setAmcs((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, active: updatedStatus } : item
+          )
+        );
+        toast.success(`AMC ID ${id} status updated`);
       } else {
-        alert('Failed to update AMC status');
+        toast.error('Failed to update AMC status');
       }
     } catch (error) {
       console.error('Error updating AMC status:', error);
-      alert('Failed to update AMC status. Please try again.');
+      toast.error('Failed to update AMC status');
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(amcData.map(item => item.id.toString()));
+      setSelectedItems(amcs.map(item => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -212,23 +233,16 @@ export const AMCDashboard = () => {
 
   const handleExport = async () => {
     try {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      const siteId = localStorage.getItem('selectedSiteId');
-
-      if (!token || !siteId) {
-        alert('Missing token or site ID');
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
         return;
       }
 
       let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
-
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
       }
-
-      console.log('Exporting from URL:', url);
 
       const response = await axios.get(url, {
         responseType: 'blob',
@@ -238,7 +252,7 @@ export const AMCDashboard = () => {
       });
 
       if (!response.data || response.data.size === 0) {
-        alert('Empty file received from server.');
+        toast.error('Empty file received from server');
         return;
       }
 
@@ -256,11 +270,10 @@ export const AMCDashboard = () => {
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Failed to export AMC data. Please try again.');
+      toast.error('Failed to export AMC data');
     }
   };
 
-  // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
@@ -268,7 +281,6 @@ export const AMCDashboard = () => {
       setChartOrder((items) => {
         const oldIndex = items.indexOf(active.id);
         const newIndex = items.indexOf(over.id);
-
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -286,29 +298,24 @@ export const AMCDashboard = () => {
             >
               <Eye className="w-4 h-4" />
             </Button>
-            <div title="Flag ticket">
+            <div title="Flag AMC">
               <Flag
-                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
-                  //  item.is_flagged 
-                  'text-red-500 fill-red-500'
-                  //  : 'text-gray-600'
+                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'
                   }`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  //  handleSingleTicketFlag(item.id, item.is_flagged);
+                  handleSingleAmcFlag(item);
                 }}
               />
             </div>
-
           </div>
-
         );
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
         return item.asset_name || '-';
-      case 'resource_type':
-        return item.resource_type || '-';
+      case 'amc_type':
+        return item.amc_type || '-';
       case 'vendor_name':
         return item.vendor_name || '-';
       case 'amc_start_date':
@@ -339,7 +346,6 @@ export const AMCDashboard = () => {
     }
   };
 
-
   const bulkActions = [
     {
       label: 'Delete Selected',
@@ -348,6 +354,56 @@ export const AMCDashboard = () => {
       onClick: handleBulkDelete,
     },
   ];
+
+  const handleSingleAmcFlag = async (amcItem: AMCRecord) => {
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or token');
+        return;
+      }
+
+      const updatedFlag = !amcItem.is_flagged;
+      const response = await axios.put(
+        `https://${baseUrl}/pms/asset_amcs/${amcItem.id}.json`,
+        {
+          pms_asset_amc: {
+            is_flagged: updatedFlag,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        // Refetch data based on current filter
+        let url = `https://${baseUrl}/pms/asset_amcs.json?site_id=${siteId}`;
+        if (filter === 'active') {
+          url = `https://${baseUrl}/pms/asset_amcs.json?q[active_eq]=true`;
+        } else if (filter === 'inactive') {
+          url = `https://${baseUrl}/pms/asset_amcs.json?q[active_eq]=false`;
+        } else if (filter === 'flagged') {
+          url = `https://${baseUrl}/pms/asset_amcs.json?q[is_flagged_eq]=true`;
+        }
+
+        const fetchResponse = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setAmcs(fetchResponse.data.asset_amcs || []);
+        toast.success(`AMC ID ${amcItem.id} flag updated`);
+      } else {
+        toast.error('Failed to update AMC flag');
+      }
+    } catch (error) {
+      console.error('Flag update error:', error);
+      toast.error('Failed to update AMC flag');
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -358,7 +414,6 @@ export const AMCDashboard = () => {
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
-      // Show first page
       items.push(
         <PaginationItem key={1}>
           <PaginationLink
@@ -370,7 +425,6 @@ export const AMCDashboard = () => {
         </PaginationItem>
       );
 
-      // Show ellipsis or pages 2-3
       if (currentPage > 4) {
         items.push(
           <PaginationItem key="ellipsis1">
@@ -392,7 +446,6 @@ export const AMCDashboard = () => {
         }
       }
 
-      // Show current page area
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
@@ -408,7 +461,6 @@ export const AMCDashboard = () => {
         }
       }
 
-      // Show ellipsis or pages before last
       if (currentPage < totalPages - 3) {
         items.push(
           <PaginationItem key="ellipsis2">
@@ -432,7 +484,6 @@ export const AMCDashboard = () => {
         }
       }
 
-      // Show last page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
@@ -446,7 +497,6 @@ export const AMCDashboard = () => {
         );
       }
     } else {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
@@ -465,8 +515,9 @@ export const AMCDashboard = () => {
   };
 
   // Analytics data calculations
-  const activeAMCs = amcData.filter(amc => amc.active).length;
-  const inactiveAMCs = amcData.length - activeAMCs;
+  const activeAMCs = amcs.filter(amc => amc.active).length;
+  const inactiveAMCs = amcs.length - activeAMCs;
+  const flaggedAMCs = amcs.filter(amc => amc.is_flagged).length;
 
   // Status data for pie chart
   const statusData = [
@@ -475,8 +526,8 @@ export const AMCDashboard = () => {
   ];
 
   // AMC Type data (Reactive vs Proactive equivalent)
-  const reactiveAMCs = Math.floor(amcData.length * 0.7); // Assuming 70% are reactive
-  const proactiveAMCs = amcData.length - reactiveAMCs;
+  const reactiveAMCs = Math.floor(amcs.length * 0.7);
+  const proactiveAMCs = amcs.length - reactiveAMCs;
 
   const typeData = [
     { name: 'Reactive', value: reactiveAMCs, color: '#c6b692' },
@@ -484,8 +535,8 @@ export const AMCDashboard = () => {
   ];
 
   // AMC by resource type
-  const resourceTypeData = amcData.reduce((acc, amc) => {
-    const type = amc.resource_type || 'Unknown';
+  const resourceTypeData = amcs.reduce((acc, amc) => {
+    const type = amc.amc_type || 'Unknown';
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
@@ -500,41 +551,30 @@ export const AMCDashboard = () => {
     { priority: 'P4', '0-30': 1, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 3 }
   ];
 
-  // AMC expiry analysis (upcoming expiries in next 30 days)
+  // AMC expiry analysis
   const today = new Date();
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(today.getDate() + 30);
 
-  const upcomingExpiries = amcData.filter(amc => {
+  const upcomingExpiries = amcs.filter(amc => {
     if (!amc.amc_end_date) return false;
     const endDate = new Date(amc.amc_end_date);
     return endDate >= today && endDate <= thirtyDaysFromNow;
   }).length;
 
-  const expiredAMCs = amcData.filter(amc => {
+  const expiredAMCs = amcs.filter(amc => {
     if (!amc.amc_end_date) return false;
     const endDate = new Date(amc.amc_end_date);
     return endDate < today;
   }).length;
 
-  const validAMCs = amcData.length - upcomingExpiries - expiredAMCs;
+  const validAMCs = amcs.length - upcomingExpiries - expiredAMCs;
 
   const expiryData = [
     { name: 'Valid', value: validAMCs, color: '#4ade80' },
     { name: 'Expiring Soon', value: upcomingExpiries, color: '#fb923c' },
     { name: 'Expired', value: expiredAMCs, color: '#ef4444' }
   ];
-
-  // Stats for cards
-  const totalAMCValue = amcData.length * 50000; // Assuming average AMC value
-  const thisMonthAMCs = amcData.filter(amc => {
-    if (!amc.created_at) return false;
-    const createdDate = new Date(amc.created_at);
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
-  }).length;
-
 
   const handleActionClick = () => {
     setShowActionPanel(true);
@@ -546,7 +586,23 @@ export const AMCDashboard = () => {
 
   const handleImportClick = () => {
     console.log('Import clicked');
-  }
+  };
+
+  // Handlers for card clicks
+  const handleActiveAMCClick = () => {
+    setFilter('active');
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handleInactiveAMCClick = () => {
+    setFilter('inactive');
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handleFlaggedAMCClick = () => {
+    setFilter('flagged');
+    setCurrentPage(1); // Reset to first page
+  };
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
@@ -555,7 +611,6 @@ export const AMCDashboard = () => {
           <div className="text-gray-600">Loading AMC data...</div>
         </div>
       )}
-      {/* Error State */}
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>
@@ -583,10 +638,8 @@ export const AMCDashboard = () => {
                   strokeLinejoin="round"
                 />
               </svg>
-
               AMC List
             </TabsTrigger>
-
             <TabsTrigger
               value="analytics"
               className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
@@ -597,16 +650,11 @@ export const AMCDashboard = () => {
           </TabsList>
 
           <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-            {/* Header with AMC Selector */}
             <div className="flex justify-end">
               <AMCSelector onSelectionChange={handleSelectionChange} />
             </div>
-
-            {/* Main Analytics Layout */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
-              {/* Left Section - Charts */}
               <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-                {/* All Charts with Drag and Drop */}
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -614,7 +662,6 @@ export const AMCDashboard = () => {
                 >
                   <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                     <div className="space-y-4 sm:space-y-6">
-                      {/* Top Row - Two Donut Charts */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                         {chartOrder.filter(id => ['statusChart', 'typeChart'].includes(id)).map((chartId) => {
                           if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
@@ -662,7 +709,7 @@ export const AMCDashboard = () => {
                                     </ResponsiveContainer>
                                     <div className="absolute inset-0 flex items-center justify-center">
                                       <div className="text-center">
-                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcs.length}</div>
                                       </div>
                                     </div>
                                   </div>
@@ -724,7 +771,7 @@ export const AMCDashboard = () => {
                                     </ResponsiveContainer>
                                     <div className="absolute inset-0 flex items-center justify-center">
                                       <div className="text-center">
-                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcData.length}</div>
+                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {amcs.length}</div>
                                       </div>
                                     </div>
                                   </div>
@@ -745,7 +792,6 @@ export const AMCDashboard = () => {
                         })}
                       </div>
 
-                      {/* Bottom Charts - Resource Type and Aging Matrix */}
                       {chartOrder.filter(id => ['resourceChart', 'agingMatrix'].includes(id)).map((chartId) => {
                         if (chartId === 'resourceChart' && visibleSections.includes('resourceChart')) {
                           return (
@@ -786,9 +832,7 @@ export const AMCDashboard = () => {
                                   <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>AMCs Ageing Matrix</h3>
                                   <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
                                 </div>
-
                                 <div className="space-y-4 sm:space-y-6">
-                                  {/* Table - Horizontally scrollable on mobile */}
                                   <div className="overflow-x-auto -mx-3 sm:mx-0">
                                     <div className="min-w-[500px] px-3 sm:px-0">
                                       <table className="w-full border-collapse border border-gray-300">
@@ -833,8 +877,6 @@ export const AMCDashboard = () => {
                   </SortableContext>
                 </DndContext>
               </div>
-
-              {/* Right Sidebar - Recent AMCs */}
               <div className="xl:col-span-4 order-first xl:order-last">
                 <RecentAMCSidebar />
               </div>
@@ -844,48 +886,57 @@ export const AMCDashboard = () => {
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
               <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {apiData.total_amcs_count}
+                    {amcs.length}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total AMC</div>
                 </div>
               </div>
 
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleActiveAMCClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {apiData.active_amcs_count}
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {activeAMCs}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
                 </div>
               </div>
 
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleInactiveAMCClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {apiData.inactive_amcs_count}
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {inactiveAMCs}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
                 </div>
               </div>
 
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleFlaggedAMCClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {apiData.flagged_amcs_count}
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {flaggedAMCs}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
                 </div>
@@ -895,13 +946,10 @@ export const AMCDashboard = () => {
             {showActionPanel && (
               <SelectionPanel
                 onAdd={handleAddClick}
-                // onImport={handleImportClick}
                 onClearSelection={() => setShowActionPanel(false)}
-
               />
             )}
 
-            {/* Enhanced Table */}
             {!loading && (
               <EnhancedTable
                 handleExport={handleExport}
@@ -934,7 +982,6 @@ export const AMCDashboard = () => {
               />
             )}
 
-            {/* Custom Pagination */}
             <div className="flex justify-center mt-6">
               <Pagination>
                 <PaginationContent>
@@ -944,9 +991,7 @@ export const AMCDashboard = () => {
                       className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                     />
                   </PaginationItem>
-
                   {renderPaginationItems()}
-
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
