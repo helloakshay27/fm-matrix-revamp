@@ -65,7 +65,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   console.log('TicketSelectionPanel - Rendering with selected tickets:', selectedTickets);
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#D4C5A9] border border-[#B8A082] shadow-[0px_4px_20px_rgba(0,0,0,0.08)] rounded-none z-50">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#C4B59A] border border-[#A6966E] shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-none z-50">
       <div className="px-8 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
