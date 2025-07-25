@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Clock, AlertCircle, Play, CheckCircle, XCircle, Plus, Filter as FilterIcon, Download, Calendar as CalendarIcon, List, Settings, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Switch } from "@/components/ui/switch";
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { useNavigate } from 'react-router-dom';
 import { StatusCard } from '@/components/maintenance/StatusCard';
@@ -120,6 +130,12 @@ export const ScheduledTaskDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [showTaskFilter, setShowTaskFilter] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<TaskFilters>({});
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [showAll, setShowAll] = useState(true);
 
   // Transform API data to TaskRecord format
   const transformApiDataToTaskRecord = (apiData: ApiTaskOccurrence[]): TaskRecord[] => {
@@ -143,16 +159,17 @@ export const ScheduledTaskDashboard = () => {
   };
 
   // Fetch tasks from API
-  const fetchTasks = async (filters: TaskFilters = {}) => {
+  const fetchTasks = async (filters: TaskFilters = {}, page: number = 1) => {
     setLoading(true);
     setError(null);
     
     try {
       const token = getToken();
       
-      // Build query parameters from filters
+      // Build query parameters from filters and pagination
       const queryParams = new URLSearchParams();
-      queryParams.append('show_all', 'true');
+      queryParams.append('show_all', showAll.toString());
+      queryParams.append('page', page.toString());
       
       if (filters.taskId) queryParams.append('task_id', filters.taskId);
       if (filters.checklist) queryParams.append('checklist', filters.checklist);
@@ -181,6 +198,11 @@ export const ScheduledTaskDashboard = () => {
       const transformedData = transformApiDataToTaskRecord(data.asset_task_occurrences);
       setTaskData(transformedData);
       
+      // Update pagination state
+      setCurrentPage(data.current_page || 1);
+      setTotalPages(data.pages || 1);
+      setTotalCount(data.asset_task_occurrences?.length || 0);
+      
     } catch (error) {
       console.error('Error fetching tasks:', error);
       setError('Failed to fetch tasks. Please try again.');
@@ -191,15 +213,28 @@ export const ScheduledTaskDashboard = () => {
     }
   };
 
-  // Load tasks on component mount
+  // Load tasks on component mount and when showAll changes
   useEffect(() => {
-    fetchTasks(currentFilters);
-  }, [currentFilters]);
+    fetchTasks(currentFilters, currentPage);
+  }, [currentFilters, showAll]);
 
   // Handle filter application
   const handleApplyFilters = (filters: TaskFilters) => {
     setCurrentFilters(filters);
+    setCurrentPage(1); // Reset to first page when filters change
     console.log('Applied filters:', filters);
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchTasks(currentFilters, page);
+  };
+
+  // Handle show all toggle
+  const handleShowAllChange = (checked: boolean) => {
+    setShowAll(checked);
+    setCurrentPage(1); // Reset to first page when show_all changes
   };
 
   // Load calendar events
@@ -321,6 +356,29 @@ export const ScheduledTaskDashboard = () => {
             ))}
           </div>
 
+          {/* Show All Toggle and Pagination Controls */}
+          <div className="flex justify-between items-center bg-white p-4 rounded-lg border">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-all"
+                checked={showAll}
+                onCheckedChange={handleShowAllChange}
+              />
+              <label htmlFor="show-all" className="text-sm font-medium text-gray-700">
+                Show All Tasks
+              </label>
+              <span className="text-xs text-gray-500">
+                ({showAll ? 'Shows all tasks' : 'Paginated view'})
+              </span>
+            </div>
+            
+            {!showAll && (
+              <div className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages} ({totalCount} total tasks)
+              </div>
+            )}
+          </div>
+
           {/* Task Table */}
           <div className="bg-white rounded-lg">
             {loading ? (
@@ -331,7 +389,7 @@ export const ScheduledTaskDashboard = () => {
               <div className="flex items-center justify-center py-8">
                 <div className="text-red-500">{error}</div>
                 <Button 
-                  onClick={() => fetchTasks(currentFilters)} 
+                  onClick={() => fetchTasks(currentFilters, currentPage)} 
                   variant="outline" 
                   className="ml-4"
                 >
@@ -421,6 +479,69 @@ export const ScheduledTaskDashboard = () => {
             />
             )}
           </div>
+
+          {/* Pagination - only show when not showing all tasks */}
+          {!showAll && totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => {
+                        if (currentPage > 1) {
+                          handlePageChange(currentPage - 1);
+                        }
+                      }}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+
+                  {Array.from(
+                    { length: Math.min(totalPages, 10) },
+                    (_, i) => i + 1
+                  ).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  {totalPages > 10 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => {
+                        if (currentPage < totalPages) {
+                          handlePageChange(currentPage + 1);
+                        }
+                      }}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+
+              <div className="text-center mt-2 text-sm text-gray-600">
+                Showing page {currentPage} of {totalPages} ({totalCount} total tasks)
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="calendar" className="mt-4 sm:mt-6">
