@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { X, User, Edit, Download, Loader2 } from 'lucide-react';
+import { X, Move, Trash2, Download, QrCode, Loader2 } from 'lucide-react';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -98,9 +98,9 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             {isGoldenLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <User className="w-4 h-4" />
+              <Move className="w-4 h-4" />
             )}
-            Assign To
+            Move Asset
           </Button>
           
           <Button
@@ -113,9 +113,9 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
             {isFlagLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Edit className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" />
             )}
-            Update
+            Dispose Asset
           </Button>
           
           <Button
@@ -126,6 +126,16 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
           >
             <Download className="w-4 h-4" />
             Export
+          </Button>
+          
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            size="sm"
+            className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+          >
+            <QrCode className="w-4 h-4" />
+            Print QR Code
           </Button>
         </div>
       </div>
