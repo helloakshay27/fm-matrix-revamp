@@ -31,6 +31,7 @@ import { AddTicketDashboard } from './pages/AddTicketDashboard';
 import { TicketDetailsPage } from './pages/TicketDetailsPage';
 import { TicketFeedsPage } from './pages/TicketFeedsPage';
 import { TicketTagVendorPage } from './pages/TicketTagVendorPage';
+import AssignTicketsPage from './pages/AssignTicketsPage';
 
 // Import Fitout pages
 import { FitoutSetupDashboard } from './pages/FitoutSetupDashboard';
@@ -588,6 +589,7 @@ function App() {
                 {/* Ticket Routes */}
                 <Route path="/maintenance/ticket" element={<TicketDashboard />} />
                 <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
+                <Route path="/maintenance/ticket/assign" element={<AssignTicketsPage />} />
                 <Route path="/maintenance/ticket/details/:id" element={<TicketDetailsPage />} />
                 <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
                 <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />

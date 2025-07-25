@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { X, User, Edit, Download, QrCode, Loader2 } from 'lucide-react';
 
@@ -20,19 +21,15 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   onExport,
   onClearSelection
 }) => {
+  const navigate = useNavigate();
   const [isGoldenLoading, setIsGoldenLoading] = useState(false);
   const [isFlagLoading, setIsFlagLoading] = useState(false);
 
-  const handleGoldenTicket = async () => {
-    console.log('TicketSelectionPanel - Golden Ticket clicked for tickets:', selectedTickets);
-    setIsGoldenLoading(true);
-    try {
-      await onGoldenTicket();
-    } catch (error) {
-      console.error('Golden Ticket action failed:', error);
-    } finally {
-      setIsGoldenLoading(false);
-    }
+  const handleGoldenTicket = () => {
+    console.log('TicketSelectionPanel - Assign To clicked for tickets:', selectedTickets);
+    navigate('/maintenance/ticket/assign', {
+      state: { selectedTickets: selectedTicketObjects }
+    });
   };
 
   const handleFlag = async () => {
