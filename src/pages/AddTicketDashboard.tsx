@@ -411,22 +411,22 @@ export const AddTicketDashboard = () => {
             </h2>
           </div>
           <div className="p-6 space-y-6">
-            {/* Ticket Type Radio Buttons */}
-            <div>
-              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-6">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="request" id="request" />
-                  <label htmlFor="request" className="text-sm">Request</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="complaint" id="complaint" />
-                  <label htmlFor="complaint" className="text-sm">Complaint</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="suggestion" id="suggestion" />
-                  <label htmlFor="suggestion" className="text-sm">Suggestion</label>
-                </div>
-              </RadioGroup>
+            {/* Ticket Type Dropdown */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Select value={ticketType} onValueChange={setTicketType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select ticket type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="request">Request</SelectItem>
+                    <SelectItem value="complaint">Complaint</SelectItem>
+                    <SelectItem value="suggestion">Suggestion</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div></div>
+              <div></div>
             </div>
 
             {/* Row 1: Category Type, Sub Category Type, Assigned To */}
