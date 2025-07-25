@@ -165,7 +165,8 @@ const UpdateTicketsPage: React.FC = () => {
         mode: ticketData.complaint_mode || '',
         responsiblePerson: ticketData.responsible_person || '',
         issueRelatedTo: ticketData.issue_related_to || '',
-        refNumber: ticketData.reference_number || ''
+        refNumber: ticketData.reference_number || '',
+        correctiveAction: ticketData.corrective_action || ''
       }));
 
       // Set review date if available
