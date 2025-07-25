@@ -780,14 +780,17 @@ const UpdateTicketsPage: React.FC = () => {
             {/* Row 3 */}
             {/* Proactive/Reactive */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select</label>
               <Select value={formData.proactiveReactive} onValueChange={(value) => handleInputChange('proactiveReactive', value)}>
                 <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:border-primary focus:ring-primary">
-                  <SelectValue placeholder="Select Proactive/Reactive" />
+                  <SelectValue 
+                    placeholder={<span className="text-gray-400">Select</span>}
+                    className="text-gray-900"
+                  />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Proactive">Proactive</SelectItem>
-                  <SelectItem value="Reactive">Reactive</SelectItem>
+                <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <SelectItem value="Proactive" className="text-gray-900 hover:bg-gray-100">Proactive</SelectItem>
+                  <SelectItem value="Reactive" className="text-gray-900 hover:bg-gray-100">Reactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
