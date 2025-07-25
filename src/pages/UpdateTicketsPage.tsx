@@ -915,7 +915,7 @@ const UpdateTicketsPage: React.FC = () => {
                 type="text"
                 value={formData.rootCause}
                 onChange={(e) => handleInputChange('rootCause', e.target.value)}
-                placeholder="ghj"
+                placeholder=""
                 className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
               />
             </div>
