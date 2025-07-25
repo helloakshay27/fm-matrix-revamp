@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { X, User, Edit, Download, Loader2 } from 'lucide-react';
+import { X, Move, Trash2, Download, QrCode, Loader2 } from 'lucide-react';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -91,41 +91,50 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
           <Button
             onClick={handleGoldenTicket}
             disabled={isGoldenLoading}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
             {isGoldenLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin text-black" />
             ) : (
-              <User className="w-4 h-4" />
+              <Move className="w-6 h-6 text-black" />
             )}
-            Assign To
+            <span className="text-xs text-gray-600">Move Asset</span>
           </Button>
           
           <Button
             onClick={handleFlag}
             disabled={isFlagLoading}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
             {isFlagLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin text-black" />
             ) : (
-              <Edit className="w-4 h-4" />
+              <Trash2 className="w-6 h-6 text-black" />
             )}
-            Update
+            <span className="text-xs text-gray-600">Dispose Asset</span>
           </Button>
           
           <Button
             onClick={handleExport}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-2 bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 h-8 px-3 text-xs font-medium"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
-            <Download className="w-4 h-4" />
-            Export
+            <Download className="w-6 h-6 text-black" />
+            <span className="text-xs text-gray-600">Export</span>
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+          >
+            <QrCode className="w-6 h-6 text-black" />
+            <span className="text-xs text-gray-600">Print QR Code</span>
           </Button>
         </div>
       </div>
