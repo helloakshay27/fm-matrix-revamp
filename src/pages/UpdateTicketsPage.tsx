@@ -696,7 +696,7 @@ const UpdateTicketsPage: React.FC = () => {
                 value={formData.preventiveAction}
                 onChange={(e) => handleInputChange('preventiveAction', e.target.value)}
                 placeholder="nn"
-                className="h-10 border-gray-300 focus:border-primary focus:ring-primary"
+                className="h-10 border-gray-300 focus:border-primary focus:ring-primary rounded-md"
               />
             </div>
 
