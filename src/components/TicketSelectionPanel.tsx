@@ -66,7 +66,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
 
   return (
     <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border border-[#C72030] shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-none z-50">
-      <div className="px-8 py-4">
+      <div className="px-8 py-4 bg-[#C4B59A]">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
