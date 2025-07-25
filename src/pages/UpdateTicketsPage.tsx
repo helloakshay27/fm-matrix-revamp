@@ -565,20 +565,18 @@ const UpdateTicketsPage: React.FC = () => {
           </div>
 
           {/* Select Asset */}
-          {formData.associatedTo.asset && (
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Asset</label>
-              <select
-                value={formData.selectedAsset}
-                onChange={(e) => handleInputChange('selectedAsset', e.target.value)}
-                className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Asset</option>
-                <option value="asset1">Asset 1</option>
-                <option value="asset2">Asset 2</option>
-              </select>
-            </div>
-          )}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Asset</label>
+            <select
+              value={formData.selectedAsset}
+              onChange={(e) => handleInputChange('selectedAsset', e.target.value)}
+              className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+            >
+              <option value="">Select Asset</option>
+              <option value="asset1">Asset 1</option>
+              <option value="asset2">Asset 2</option>
+            </select>
+          </div>
 
           {/* Comments */}
           <div className="mt-6">
