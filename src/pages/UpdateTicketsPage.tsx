@@ -670,7 +670,7 @@ const UpdateTicketsPage: React.FC = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-gray-900">COMPLAINT EDIT</h1>
+          <h1 className="text-xl font-semibold text-gray-900">TICKET EDIT</h1>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
