@@ -139,6 +139,14 @@ const UpdateTicketsPage: React.FC = () => {
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [reviewDate, setReviewDate] = useState<Date>();
   const [ticketApiData, setTicketApiData] = useState<any>(null); // Store original API data
+  const [costApprovalRequests, setCostApprovalRequests] = useState<Array<{
+    id: string;
+    amount: string;
+    comments: string;
+    createdOn: string;
+    createdBy: string;
+    attachments: File[];
+  }>>([]);
 
   // Fetch ticket data for editing
   const fetchTicketData = async (ticketId: string) => {
@@ -482,6 +490,19 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleCostPopupSubmit = () => {
+    // Create new cost approval request
+    const newRequest = {
+      id: Date.now().toString(),
+      amount: costPopupData.cost,
+      comments: costPopupData.description,
+      createdOn: new Date().toLocaleDateString(),
+      createdBy: 'Current User', // You can replace this with actual user data
+      attachments: costPopupData.attachments
+    };
+
+    // Add to cost approval requests
+    setCostApprovalRequests(prev => [...prev, newRequest]);
+
     // Update main form data with popup data
     setFormData(prev => ({
       ...prev,
@@ -489,7 +510,10 @@ const UpdateTicketsPage: React.FC = () => {
       description: costPopupData.description
     }));
     setAttachments(prev => [...prev, ...costPopupData.attachments]);
+    
+    // Close popup and reset data
     setShowCostPopup(false);
+    setCostPopupData({ cost: '', description: '', attachments: [] });
   };
 
   const handleCostPopupClose = () => {
@@ -1127,11 +1151,33 @@ const UpdateTicketsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="px-4 py-3 text-gray-500 text-center" colSpan={13}>
-                      No data available
-                    </td>
-                  </tr>
+                  {costApprovalRequests.length > 0 ? (
+                    costApprovalRequests.map((request) => (
+                      <tr key={request.id}>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.id}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.amount}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.comments}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.createdOn}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.createdBy}</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">Pending</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">
+                          {request.attachments.length > 0 ? `${request.attachments.length} file(s)` : '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="px-4 py-3 text-gray-500 text-center" colSpan={13}>
+                        No data available
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
