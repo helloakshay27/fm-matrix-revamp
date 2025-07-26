@@ -824,6 +824,9 @@ export const InventoryDashboard = () => {
                       />
                     )}
                   </div>
+                </SortableContext>
+              </DndContext>
+            </div>
                       {chartOrder
                         .filter((id) =>
                           ["statusChart", "criticalityChart"].includes(id)
@@ -1240,11 +1243,11 @@ export const InventoryDashboard = () => {
                         }
                         return null;
                       })}
-                    </div>
-                    </div>
-                  </div>
-                </SortableContext>
-              </DndContext>
+        </TabsContent>
+        <TabsContent value="list" className="space-y-4 sm:space-y-6">
+          {/* List view content here */}
+        </TabsContent>
+      </Tabs>
             </div>
             {/* Right Sidebar */}
             <div className="w-full xl:w-80 order-1 xl:order-2">
@@ -1391,178 +1394,29 @@ export const InventoryDashboard = () => {
               </div>
             </div>
           </div>
-        </TabsContent>
-        <TabsContent value="list" className="space-y-4 sm:space-y-6">
-          {/* Error handling */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              Error loading inventory data: {error}
-            </div>
-          )}
-          <div className="overflow-x-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
-                dispatch(fetchInventoryData({}))
-              }
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {totalInventories}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Total Inventories
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
-                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': true } }))
-              }
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {activeCount}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Active Inventory
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
-                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': false } }))
-              }
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {inactiveCount}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Inactive
-                  </div>
-                </div>
-              </div>
-              <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(
-                    fetchInventoryData({
-                      filters: { "q[green_product_eq]": true },
-                    })
-                  )
-                }
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {greenInventories || 0}
-                  </div>
-                  <div className="text-xs text-green-600 sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Ecofriendly
-                  </div>
-                </div>
-              </div>
-              {/* <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {2}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
-                </div>
-              </div> */}
-            </div>
-            {showActionPanel && (
-              <SelectionPanel
-                onAdd={handleAddInventory}
-                onImport={handleImportClick}
-                onClearSelection={() => setShowActionPanel(false)}
-              />
-            )}
-            <EnhancedTable
-              handleExport={handleExport}
-              data={paginatedData}
-              columns={columns}
-              renderCell={renderCell}
-              bulkActions={bulkActions}
-              showBulkActions={true}
-              selectable={true}
-              selectedItems={selectedItems}
-              onSelectItem={handleSelectItem}
-              onSelectAll={handleSelectAll}
-              pagination={false}
-              enableExport={true}
-              exportFileName="inventory"
-              onRowClick={handleViewItem}
-              storageKey="inventory-table"
-              loading={loading}
-              emptyMessage={
-                loading
-                  ? "Loading inventory data..."
-                  : "No inventory items found"
-              }
-              leftActions={renderCustomActions()}
-              onFilterClick={handleFiltersClick}
-            />
           </div>
-          {/* Custom Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() =>
-                        setCurrentPage(Math.max(1, currentPage - 1))
-                      }
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                  {renderPaginationItems()}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() =>
-                        setCurrentPage(Math.min(totalPages, currentPage + 1))
-                      }
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </TabsContent>
+      </Tabs>
+
+      {/* Dialogs */}
+      <BulkUploadDialog
+        open={showBulkUpload}
+        onOpenChange={setShowBulkUpload}
+        title="Bulk Upload"
+      />
+      <InventoryFilterDialog
+        open={showFilter}
+        onOpenChange={setShowFilter}
+        onApply={(filters) => console.log("Applied filters:", filters)}
+      />
+      <DateFilterModal
+        open={showDateFilter}
+        onOpenChange={setShowDateFilter}
+        onApply={handleAnalyticsDateApply}
+      />
+    </div>
+  );
+};
       </Tabs>
       <BulkUploadDialog
         open={showBulkUpload}
