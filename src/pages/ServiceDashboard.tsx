@@ -37,6 +37,7 @@ interface ServiceRecord {
   sub_group_name?: string;
   base_uom?: string;
   active?: boolean;
+  is_flagged?: boolean;
 }
 
 interface PaginationData {
@@ -308,9 +309,6 @@ export const ServiceDashboard = () => {
               />
             </div>
           </div>
-
-
-
         );
       case 'serviceName':
         return (
