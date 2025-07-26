@@ -121,7 +121,7 @@ export const ScheduledTaskDashboard = () => {
   const [searchTaskId, setSearchTaskId] = useState('');
   const [searchChecklist, setSearchChecklist] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 3000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [activeTab, setActiveTab] = useState('list');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -374,25 +374,6 @@ if (searchTerm) {
             ))}
           </div>
 
-          {/* Show All Tasks Toggle */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="show-all-tasks"
-                checked={showAll}
-                onCheckedChange={handleShowAllChange}
-              />
-              <label htmlFor="show-all-tasks" className="text-sm font-medium">
-                Show All Tasks (Disable Pagination)
-              </label>
-            </div>
-            {!showAll && totalPages > 1 && (
-              <div className="text-sm text-muted-foreground">
-                Total Pages: {totalPages} | Page {currentPage}
-              </div>
-            )}
-          </div>
-
           {/* Task Table */}
           <div className="bg-white rounded-lg">
             {loading ? (
@@ -476,7 +457,7 @@ if (searchTerm) {
               searchTerm={searchQuery}
               onSearchChange={handleSearch}
               emptyMessage="No scheduled tasks found"
-              searchPlaceholder="Search tasks... (3 second delay)"
+              searchPlaceholder="Search tasks by checklist..."
               exportFileName="scheduled-tasks"
               selectedItems={selectedTasks}
               getItemId={(task) => task.id}
