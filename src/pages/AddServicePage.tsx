@@ -182,8 +182,10 @@ export const AddServicePage = () => {
 
       const response = await dispatch(createService(sendData)).unwrap();
 
+      // Show success toast for both actions
+      toast.success('Service created successfully');
+
       if (action === 'show') {
-        toast.success('Service has been created and saved with details.');
         setFormData({
           serviceName: '',
           executionType: '',
@@ -201,7 +203,6 @@ export const AddServicePage = () => {
         setResetLocationFields(true);
         navigate('/maintenance/service/details/' + response.id);
       } else if (action === 'new') {
-        toast.success('Service has been created. You can now add a new one.');
         setFormData({
           serviceName: '',
           executionType: '',
