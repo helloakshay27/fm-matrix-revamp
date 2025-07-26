@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Clock, AlertCircle, Play, CheckCircle, XCircle, Plus, Filter as FilterIcon, Download, Calendar as CalendarIcon, List, Settings, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   Pagination,
   PaginationContent,
@@ -119,7 +120,8 @@ export const ScheduledTaskDashboard = () => {
   const [dateTo, setDateTo] = useState('31/07/2025');
   const [searchTaskId, setSearchTaskId] = useState('');
   const [searchChecklist, setSearchChecklist] = useState('');
-  const [searchQuery, setSearchQuery] = useState(''); // Add search query state
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [activeTab, setActiveTab] = useState('list');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -175,19 +177,19 @@ export const ScheduledTaskDashboard = () => {
 if (filters.dateFrom) queryParams.append('q[start_date_gteq]', filters.dateFrom);
 if (filters.dateTo) queryParams.append('q[start_date_lteq]', filters.dateTo);
 if (filters.checklist) queryParams.append('q[custom_form_form_name_cont]', filters.checklist);
-if (filters.scheduleType) queryParams.append('q[custom_form_schedule_type_eq]', filters.scheduleType);
+if (filters.scheduleType) queryParams.append('sch_type', filters.scheduleType);
+if (filters.type) queryParams.append('s[custom_form_schedule_type_eq]', filters.type);
 if (filters.assetGroupId) queryParams.append('q[asset_pms_asset_group_id_eq]', filters.assetGroupId);
 if (filters.assetSubGroupId) queryParams.append('q[asset_pms_asset_sub_group_id_eq]', filters.assetSubGroupId);
 if (filters.assignedTo) queryParams.append('q[pms_task_assignments_assigned_to_id_eq]', filters.assignedTo);
 if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filters.supplierId);
 if (filters.taskId) queryParams.append('q[id_eq]', filters.taskId);
 if (filters.status) queryParams.append('q[task_status_eq]', filters.status);
-if (filters.site) queryParams.append('q[asset_pms_site_site_name_cont]', filters.site);
 if (filters.priority) queryParams.append('q[custom_form_priority_eq]', filters.priority);
 
-// Add search functionality - search across multiple fields
+// Add general search functionality (not checklist-specific)
 if (searchTerm) {
-  queryParams.append('q[custom_form_form_name_cont]', searchTerm);
+  queryParams.append('search', searchTerm);
 }
 
       
@@ -225,8 +227,8 @@ if (searchTerm) {
 
   // Load tasks on component mount and when showAll changes
   useEffect(() => {
-    fetchTasks(currentFilters, currentPage, searchQuery);
-  }, [currentFilters, showAll, searchQuery]);
+    fetchTasks(currentFilters, currentPage, debouncedSearchQuery);
+  }, [currentFilters, showAll, debouncedSearchQuery]);
 
   // Handle filter application
   const handleApplyFilters = (filters: TaskFilters) => {
@@ -238,7 +240,7 @@ if (searchTerm) {
   // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchTasks(currentFilters, page, searchQuery);
+    fetchTasks(currentFilters, page, debouncedSearchQuery);
   };
 
   // Handle show all toggle
@@ -251,7 +253,6 @@ if (searchTerm) {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1); // Reset to first page when searching
-    fetchTasks(currentFilters, 1, query);
   };
 
   // Load calendar events
@@ -383,7 +384,7 @@ if (searchTerm) {
               <div className="flex items-center justify-center py-8">
                 <div className="text-red-500">{error}</div>
                 <Button 
-                  onClick={() => fetchTasks(currentFilters, currentPage, searchQuery)} 
+                  onClick={() => fetchTasks(currentFilters, currentPage, debouncedSearchQuery)} 
                   variant="outline" 
                   className="ml-4"
                 >
@@ -452,7 +453,7 @@ if (searchTerm) {
               enableExport={true}
               storageKey="scheduled-tasks-table"
               onFilterClick={() => setShowTaskFilter(true)}
-              handleExport={() => fetchTasks(currentFilters, currentPage, searchQuery)}
+              handleExport={() => fetchTasks(currentFilters, currentPage, debouncedSearchQuery)}
               searchTerm={searchQuery}
               onSearchChange={handleSearch}
               emptyMessage="No scheduled tasks found"

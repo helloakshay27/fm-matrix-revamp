@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
+import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
+import { userService, User } from '@/services/userService';
 
 interface TaskFilterDialogProps {
   isOpen: boolean;
@@ -24,7 +26,7 @@ export interface TaskFilters {
   assignedTo?: string;
   status?: string;
   scheduleType?: string;
-  site?: string;
+  type?: string;
   priority?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -63,7 +65,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
   const [assignedTo, setAssignedTo] = useState('');
   const [status, setStatus] = useState('');
   const [scheduleType, setScheduleType] = useState('');
-  const [site, setSite] = useState('');
+  const [type, setType] = useState('');
   const [priority, setPriority] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -79,10 +81,14 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
   ];
 
   const scheduleTypeOptions = [
+    'asset',
+    'service'
+  ];
+
+  const typeOptions = [
     'PPM',
-    'CBM',
-    'Reactive',
-    'Emergency'
+    'AMC',
+    'Preparedness'
   ];
 
   const priorityOptions = [
@@ -101,7 +107,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
         ...(assignedTo && { assignedTo }),
         ...(status && { status }),
         ...(scheduleType && { scheduleType }),
-        ...(site && { site }),
+        ...(type && { type }),
         ...(priority && { priority }),
         ...(dateFrom && { dateFrom }),
         ...(dateTo && { dateTo }),
@@ -126,7 +132,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     setAssignedTo('');
     setStatus('');
     setScheduleType('');
-    setSite('');
+    setType('');
     setPriority('');
     setDateFrom('');
     setDateTo('');
@@ -134,6 +140,25 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     onApply({});
     onClose();
     toast.success('Filters cleared successfully');
+  };
+
+  // Handle user search for assigned to dropdown
+  const handleUserSearch = async (searchTerm: string) => {
+    try {
+      const users = await userService.searchUsers(searchTerm);
+      return users.map(user => ({
+        value: user.id.toString(),
+        label: user.full_name
+      }));
+    } catch (error) {
+      console.error('Error searching users:', error);
+      return [];
+    }
+  };
+
+  // Handle assigned user selection
+  const handleAssignedUserChange = (selectedOption: { value: string; label: string } | null) => {
+    setAssignedTo(selectedOption?.value || '');
   };
 
   return (
@@ -158,7 +183,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
           {/* Task Details Section */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Task Details</h3>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-6">
               <TextField
                 label="Task ID"
                 placeholder="Enter Task ID"
@@ -179,33 +204,24 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
               />
-              <TextField
-                label="Assigned To"
-                placeholder="Enter Assigned Person"
-                value={assignedTo}
-                onChange={(e) => setAssignedTo(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
-              <TextField
-                label="Site"
-                placeholder="Enter Site Name"
-                value={site}
-                onChange={(e) => setSite(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Assigned To</label>
+                <AsyncSearchableDropdown
+                  placeholder="Search and select user..."
+                  onSearch={handleUserSearch}
+                  onChange={handleAssignedUserChange}
+                  className="w-full"
+                  noOptionsMessage="No users found"
+                  debounceDelay={300}
+                />
+              </div>
             </div>
           </div>
 
           {/* Task Status & Type Section */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Task Status & Type</h3>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-4 gap-6">
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Status</InputLabel>
                 <MuiSelect
@@ -238,9 +254,30 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
-                    <em>All Types</em>
+                    <em>Select Schedule Type</em>
                   </MenuItem>
                   {scheduleTypeOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Type</InputLabel>
+                <MuiSelect
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  label="Type"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Type</em>
+                  </MenuItem>
+                  {typeOptions.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
                     </MenuItem>
