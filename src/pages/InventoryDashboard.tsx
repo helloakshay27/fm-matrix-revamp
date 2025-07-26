@@ -69,6 +69,8 @@ import {
 } from "@/components/ui/pagination";
 import bio from "@/assets/bio.png";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { toast } from "sonner";
+import axios from "axios";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -154,7 +156,7 @@ export const InventoryDashboard = () => {
     inactiveCount,
   } = useSelector((state: RootState) => state.inventory);
 
-  console.log(greenInventories );
+  console.log(greenInventories);
 
   // Local state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -555,7 +557,52 @@ export const InventoryDashboard = () => {
       </Button>
     </div>
   );
+  const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
 
+      let url = `https://${baseUrl}/pms/inventories/export.xlsx?site_id=${siteId}`;
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data || response.data.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'amc_export.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('AMC data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export AMC data');
+    }
+  };
   return (
     <div className="p-2 sm:p-4 lg:p-6">
       <Tabs
@@ -1224,7 +1271,7 @@ export const InventoryDashboard = () => {
                     {activeCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Active Inventory 
+                    Active Inventory
                   </div>
                 </div>
               </div>
@@ -1243,7 +1290,7 @@ export const InventoryDashboard = () => {
                     {inactiveCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Inactive Inventory
+                    Inactive
                   </div>
                 </div>
               </div>
@@ -1292,6 +1339,7 @@ export const InventoryDashboard = () => {
               />
             )}
             <EnhancedTable
+              handleExport={handleExport}
               data={paginatedData}
               columns={columns}
               renderCell={renderCell}

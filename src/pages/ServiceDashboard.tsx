@@ -377,6 +377,54 @@ export const ServiceDashboard = () => {
     </div>
   );
 
+  const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+
+      let url = `https://${baseUrl}/pms/services/export.xlsx?site_id=${siteId}`;
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data || response.data.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'amc_export.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('AMC data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export AMC data');
+    }
+  };
+
+
   return (
     <div className="p-4 sm:p-6">
       {loading && (
@@ -449,6 +497,7 @@ export const ServiceDashboard = () => {
             />
           )}
           <EnhancedTable
+            handleExport={handleExport}
             data={servicesData}
             columns={columns}
             renderCell={renderCell}
