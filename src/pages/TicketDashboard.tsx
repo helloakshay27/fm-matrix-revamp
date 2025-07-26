@@ -254,11 +254,26 @@ export const TicketDashboard = () => {
   const [totalTickets, setTotalTickets] = useState(0);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
   
-  // Analytics data states
-  const [analyticsDateRange, setAnalyticsDateRange] = useState<{startDate: string; endDate: string}>({
-    startDate: '',
-    endDate: ''
-  });
+  // Analytics data states with default dates (last year to today)
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const lastYear = new Date();
+    lastYear.setFullYear(today.getFullYear() - 1);
+    
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    return {
+      startDate: formatDate(lastYear),
+      endDate: formatDate(today)
+    };
+  };
+  
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{startDate: string; endDate: string}>(getDefaultDateRange());
   const [categoryAnalyticsData, setCategoryAnalyticsData] = useState<TicketCategoryData[]>([]);
   const [statusAnalyticsData, setStatusAnalyticsData] = useState<TicketStatusData | null>(null);
   const [agingMatrixAnalyticsData, setAgingMatrixAnalyticsData] = useState<TicketAgingMatrix | null>(null);
@@ -366,6 +381,14 @@ export const TicketDashboard = () => {
     fetchTickets(currentPage);
     fetchTicketSummary();
   }, [currentPage, filters]);
+
+  // Load analytics data with default date range on component mount
+  useEffect(() => {
+    const defaultRange = getDefaultDateRange();
+    const startDate = new Date(defaultRange.startDate.split('/').reverse().join('-'));
+    const endDate = new Date(defaultRange.endDate.split('/').reverse().join('-'));
+    fetchAnalyticsData(startDate, endDate);
+  }, []);
 
   // Use ticket summary data from API
   const openTickets = statusAnalyticsData?.overall.total_open || ticketSummary.open_tickets;
