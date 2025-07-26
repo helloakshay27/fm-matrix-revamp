@@ -245,13 +245,59 @@ export const ServiceDetailsPage = () => {
                     <Button
                       size="sm"
                       className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = doc.document;
-                        link.download = `Document_${doc.id}`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                      onClick={async () => {
+                        if (!doc?.id) {
+                          console.error('Attachment ID is undefined', doc);
+                          const link = document.createElement('a');
+                          link.href = doc.document;
+                          link.download = `Document_${doc.id || 'unknown'}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          return;
+                        }
+
+                        try {
+                          const token = localStorage.getItem('token');
+                          const baseUrl = localStorage.getItem('baseUrl');
+                          if (!token) {
+                            console.error('No token found in localStorage');
+                            return;
+                          }
+
+                          const apiUrl = `https://${baseUrl}/pms/attachfiles/${doc.id}?show_file=true`;
+
+                          const response = await fetch(apiUrl, {
+                            method: 'GET',
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              'Content-Type': 'application/json',
+                            },
+                          });
+
+                          if (!response.ok) {
+                            throw new Error('Failed to fetch the file');
+                          }
+
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `Document_${doc.id}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                        } catch (error) {
+                          console.error('Error downloading file:', error);
+                          // Fallback to direct download on error
+                          const fallbackLink = document.createElement('a');
+                          fallbackLink.href = doc.document;
+                          fallbackLink.download = `Document_${doc.id || 'unknown'}`;
+                          document.body.appendChild(fallbackLink);
+                          fallbackLink.click();
+                          document.body.removeChild(fallbackLink);
+                        }
                       }}
                     >
                       <Download className="w-4 h-4 mr-1" />

@@ -16,8 +16,10 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 interface ServiceRecord {
   id: number;
@@ -37,6 +39,12 @@ interface ServiceRecord {
   active?: boolean;
 }
 
+interface PaginationData {
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
+
 const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
@@ -47,36 +55,25 @@ export const ServiceDashboard = () => {
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
   const [showActionPanel, setShowActionPanel] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined); // Track active filter
-  const pageSize = 7;
 
-  // Fetch data when component mounts or filter changes
+  // Validate siteId on component mount
   useEffect(() => {
-    dispatch(fetchServicesData({ active: activeFilter }));
+    const siteId = localStorage.getItem('siteId');
+    if (!siteId || siteId === 'null') {
+      console.warn('Invalid siteId in localStorage, setting fallback: 2189');
+      localStorage.setItem('siteId', '2189');
+    }
+    const page = apiData?.pagination?.current_page || 1;
+    console.log('Fetching services with:', { active: activeFilter, page }); // Debug log
+    dispatch(fetchServicesData({ active: activeFilter, page }));
   }, [dispatch, activeFilter]);
 
   // Use API data if available, otherwise fallback to initial data
   const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
+  const paginationData: PaginationData = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
 
-  const totalPages = Math.ceil(Math.max(servicesData.length, 6) / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedServices = servicesData.slice(startIndex, startIndex + pageSize);
-
-  console.log('Service Pagination Debug:', {
-    totalItems: servicesData.length,
-    pageSize,
-    totalPages,
-    currentPage,
-    paginatedDataLength: paginatedServices.length,
-    activeFilter,
-  });
-
-  const handleStatusToggle = (id: number) => {
-    console.log('Status toggle for service ID:', id);
-    // In a real implementation, you would make an API call to update the status
-  };
 
   const handleAddClick = () => navigate('/maintenance/service/add');
   const handleImportClick = () => {
@@ -109,19 +106,19 @@ export const ServiceDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(paginatedServices.map((item) => item.id.toString()));
+      setSelectedItems(servicesData.map((item) => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
   };
 
   const handleQRDownload = () => {
-    const selectedServices = paginatedServices.filter((service) =>
+    const selectedServices = servicesData.filter((service) =>
       selectedItems.includes(service.id.toString())
     );
 
     selectedServices.forEach((service, index) => {
-      const qrUrl = (service as any).qr_code;
+      const qrUrl = service.qr_code;
       if (qrUrl) {
         const link = document.createElement('a');
         link.href = qrUrl;
@@ -139,18 +136,62 @@ export const ServiceDashboard = () => {
 
   // Handle card clicks for filtering
   const handleTotalServicesClick = () => {
-    setActiveFilter(undefined); // Reset filter to show all services
-    setCurrentPage(1); // Reset to first page
+    setActiveFilter(undefined);
+    dispatch(fetchServicesData({ active: undefined, page: 1 }));
   };
 
   const handleActiveServicesClick = () => {
-    setActiveFilter(true); // Filter by active services
-    setCurrentPage(1); // Reset to first page
+    setActiveFilter(true);
+    dispatch(fetchServicesData({ active: true, page: 1 }));
   };
 
   const handleInactiveServicesClick = () => {
-    setActiveFilter(false); // Filter by inactive services
-    setCurrentPage(1); // Reset to first page
+    setActiveFilter(false);
+    dispatch(fetchServicesData({ active: false, page: 1 }));
+  };
+
+  const handleStatusToggle = async (id: number) => {
+    const baseUrl = 'fm-uat-api.lockated.com';
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('siteId') || '2189';
+    try {
+      if (!token) {
+        toast.error('Authentication token missing. Please log in again.');
+        navigate('/login');
+        return;
+      }
+
+      const service = servicesData.find((item) => item.id === id);
+      if (!service) {
+        toast.error('Service record not found');
+        return;
+      }
+
+      const updatedStatus = !service.active;
+      const url = `https://${baseUrl}/pms/services/${id}.json?site_id=${siteId}`;
+      const response = await axios.put(
+        url,
+        {
+          pms_service: { active: updatedStatus }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));
+        toast.success(`Service ID ${id} status updated`);
+      } else {
+        toast.error('Failed to update service status');
+      }
+    } catch (error) {
+      console.error('Error updating service status:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to update service status';
+      toast.error(errorMessage);
+    }
   };
 
   const columns = [
@@ -194,7 +235,7 @@ export const ServiceDashboard = () => {
       case 'referenceNumber':
         return item.service_code || '-';
       case 'category':
-        return '-'; // Not available in API
+        return '-';
       case 'group':
         return item.group_name || '-';
       case 'uom':
@@ -212,19 +253,16 @@ export const ServiceDashboard = () => {
       case 'subGroup':
         return item.sub_group_name || '-';
       case 'status':
-        const isActive = item.active === true;
         return (
           <div className="flex items-center">
             <div
               onClick={() => handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                isActive ? 'bg-green-500' : 'bg-gray-400'
-              }`}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'
+                }`}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                  isActive ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </div>
           </div>
@@ -238,12 +276,14 @@ export const ServiceDashboard = () => {
 
   const renderPaginationItems = () => {
     const items = [];
+    const totalPages = paginationData.total_pages;
+    const currentPage = paginationData.current_page;
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
+          <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: 1 }))} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>
@@ -259,7 +299,7 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -271,7 +311,7 @@ export const ServiceDashboard = () => {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -290,7 +330,7 @@ export const ServiceDashboard = () => {
           if (!items.find((item) => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+                <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
                   {i}
                 </PaginationLink>
               </PaginationItem>
@@ -302,7 +342,7 @@ export const ServiceDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
+            <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: totalPages }))} isActive={currentPage === totalPages}>
               {totalPages}
             </PaginationLink>
           </PaginationItem>
@@ -312,7 +352,7 @@ export const ServiceDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+            <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
               {i}
             </PaginationLink>
           </PaginationItem>
@@ -409,7 +449,7 @@ export const ServiceDashboard = () => {
             />
           )}
           <EnhancedTable
-            data={paginatedServices}
+            data={servicesData}
             columns={columns}
             renderCell={renderCell}
             bulkActions={bulkActions}
@@ -421,7 +461,6 @@ export const ServiceDashboard = () => {
             pagination={false}
             enableExport={true}
             exportFileName="services"
-            onRowClick={(service) => handleViewService(service.id)}
             getItemId={(item) => item.id.toString()}
             storageKey="services-table"
             leftActions={renderCustomActions()}
@@ -437,8 +476,8 @@ export const ServiceDashboard = () => {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: Math.max(1, paginationData.current_page - 1) }))}
+                  className={paginationData.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
 
@@ -446,8 +485,8 @@ export const ServiceDashboard = () => {
 
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: Math.min(paginationData.total_pages, paginationData.current_page + 1) }))}
+                  className={paginationData.current_page === paginationData.total_pages ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
             </PaginationContent>

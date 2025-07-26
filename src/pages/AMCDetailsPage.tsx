@@ -325,17 +325,45 @@ export const AMCDetailsPage = () => {
                                     size="icon"
                                     variant="ghost"
                                     className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                    onClick={() => {
-                                      if (isExcel) {
+                                    onClick={async () => {
+                                      if (!doc?.attachment_id) {
+                                        console.error('Attachment ID is undefined', doc);
+                                        return;
+                                      }
+
+                                      try {
+                                        const token = localStorage.getItem('token');
+                                        const baseUrl = localStorage.getItem('baseUrl');
+                                        if (!token) {
+                                          console.error('No token found in local storage');
+                                          return;
+                                        }
+
+                                        const apiUrl = `https://${baseUrl}/attachfiles/${doc.attachment_id}?show_file=true`;
+
+                                        const response = await fetch(apiUrl, {
+                                          method: 'GET',
+                                          headers: {
+                                            Authorization: `Bearer ${token}`,
+                                            'Content-Type': 'application/json',
+                                          },
+                                        });
+
+                                        if (!response.ok) {
+                                          throw new Error('Failed to fetch the file');
+                                        }
+
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
                                         const link = document.createElement('a');
-                                        link.href = doc.document_url;
-                                        link.download = doc.document_name || 'document';
+                                        link.href = url;
+                                        link.download = doc.document_name || `document_${doc.attachment_id}`;
                                         document.body.appendChild(link);
                                         link.click();
                                         document.body.removeChild(link);
-                                      } else {
-                                        setSelectedDoc(doc);
-                                        setIsModalOpen(true);
+                                        window.URL.revokeObjectURL(url);
+                                      } catch (error) {
+                                        console.error('Error downloading file:', error);
                                       }
                                     }}
                                   >
@@ -357,7 +385,7 @@ export const AMCDetailsPage = () => {
                 </div>
 
                 {/* Modal */}
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                {/* <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogContent className="w-full max-w-[90vw] sm:max-w-2xl">
                     <button
                       className="absolute top-3 right-3 text-gray-500 hover:text-black"
@@ -400,7 +428,7 @@ export const AMCDetailsPage = () => {
                       </Button>
                     </div>
                   </DialogContent>
-                </Dialog>
+                </Dialog> */}
               </CardContent>
             </Card>
           </TabsContent>
