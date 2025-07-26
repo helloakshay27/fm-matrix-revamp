@@ -698,40 +698,40 @@ const UpdateTicketsPage: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Row 1 */}
             {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Title</label>
               <Textarea
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Feedback: Tap Faulty, Wc Choked, Hand Dryer Faulty, Tissue Paper Missing"
                 rows={1}
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none resize-none overflow-hidden min-h-[2.5rem] max-h-[2.5rem]"
+                className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
               />
             </div>
 
             {/* Preventive Action */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Preventive Action</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Preventive Action</label>
               <Input
                 type="text"
                 value={formData.preventiveAction}
                 onChange={(e) => handleInputChange('preventiveAction', e.target.value)}
                 placeholder=""
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
+                className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Status</label>
               <Select value={formData.selectedStatus} onValueChange={(value) => handleInputChange('selectedStatus', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Closed</span>}
-                    className="text-gray-900"
+                    placeholder="Closed"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -746,13 +746,13 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Row 2 */}
             {/* Responsible Person */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Responsible Person</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Responsible Person</label>
               <Select value={formData.responsiblePerson} onValueChange={(value) => handleInputChange('responsiblePerson', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select</span>}
-                    className="text-gray-900"
+                    placeholder="Select"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -766,15 +766,15 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* Review (Tracking) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Review (Tracking)</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Review (Tracking)</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none justify-start text-left font-normal"
+                    className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 justify-start text-left font-normal"
                   >
-                    {reviewDate ? format(reviewDate, "MM/dd/yyyy") : <span className="text-gray-400">mm/dd/yyyy</span>}
+                    {reviewDate ? format(reviewDate, "MM/dd/yyyy") : <span className="text-gray-500">mm/dd/yyyy</span>}
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -791,13 +791,13 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* Category Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category Type</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Category Type*</label>
               <Select value={formData.categoryType} onValueChange={(value) => handleInputChange('categoryType', value)} disabled={helpdeskLoading}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select</span>}
-                    className="text-gray-900"
+                    placeholder="Select category"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -812,13 +812,13 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Row 3 */}
             {/* Proactive/Reactive */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Proactive/ Reactive</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Proactive/Reactive</label>
               <Select value={formData.proactiveReactive} onValueChange={(value) => handleInputChange('proactiveReactive', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select</span>}
-                    className="text-gray-900"
+                    placeholder="Select type"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -829,17 +829,17 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* Sub Category Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sub Category Type</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Sub Category Type</label>
               <Select 
                 value={formData.subCategoryType} 
                 onValueChange={(value) => handleInputChange('subCategoryType', value)}
                 disabled={subCategoriesLoading || !formData.categoryType}
               >
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select</span>}
-                    className="text-gray-900"
+                    placeholder="Select Category First"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -853,13 +853,13 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* Assign To */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
               <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Vinayak Mane</span>}
-                    className="text-gray-900"
+                    placeholder="Select engineer"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -874,13 +874,13 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Row 4 */}
             {/* Admin Priority */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Admin Priority</label>
               <Select value={formData.adminPriority} onValueChange={(value) => handleInputChange('adminPriority', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select Priority</span>}
-                    className="text-gray-900"
+                    placeholder="Select priority"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -894,13 +894,13 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* External Priority */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">External Priority</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">External Priority</label>
               <Select value={formData.externalPriority} onValueChange={(value) => handleInputChange('externalPriority', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select</span>}
-                    className="text-gray-900"
+                    placeholder="Select"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -912,13 +912,13 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* Mode */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Mode</label>
               <Select value={formData.mode} onValueChange={(value) => handleInputChange('mode', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select</span>}
-                    className="text-gray-900"
+                    placeholder="Select"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -933,71 +933,72 @@ const UpdateTicketsPage: React.FC = () => {
 
             {/* Row 5 */}
             {/* Root Cause */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Root Cause</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Root Cause</label>
               <Input
                 type="text"
                 value={formData.rootCause}
                 onChange={(e) => handleInputChange('rootCause', e.target.value)}
                 placeholder=""
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
+                className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Impact */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Impact</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Impact</label>
               <Input
                 type="text"
                 value={formData.impact}
                 onChange={(e) => handleInputChange('impact', e.target.value)}
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
+                className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Correction */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Correction</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Correction</label>
               <Input
                 type="text"
                 value={formData.correction}
                 onChange={(e) => handleInputChange('correction', e.target.value)}
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
+                className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Row 6 */}
             {/* Reference Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Reference Number</label>
               <Input
                 type="text"
                 value={formData.refNumber}
                 onChange={(e) => handleInputChange('refNumber', e.target.value)}
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
+                placeholder="Enter reference number"
+                className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Corrective Action */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Corrective Action</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Corrective Action</label>
               <Input
                 type="text"
                 value={formData.correctiveAction}
                 onChange={(e) => handleInputChange('correctiveAction', e.target.value)}
                 placeholder=""
-                className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none"
+                className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Service Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Service Type</label>
               <Select value={formData.serviceType} onValueChange={(value) => handleInputChange('serviceType', value)}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
-                    placeholder={<span className="text-gray-400">Select</span>}
-                    className="text-gray-900"
+                    placeholder="Select"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
@@ -1072,19 +1073,19 @@ const UpdateTicketsPage: React.FC = () => {
 
           {/* Select Asset/Service */}
           {(formData.associatedTo.asset || formData.associatedTo.service) && (
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="mt-6 space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
                 {formData.associatedTo.asset ? 'Select Asset' : 'Select Service'}
               </label>
               <Select value={formData.selectedAsset} onValueChange={(value) => handleInputChange('selectedAsset', value)} disabled={isLoadingAssets || isLoadingServices}>
-                <SelectTrigger className="text-base border rounded h-10 w-full border-gray-300 bg-white px-3 focus:outline-none">
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
                     placeholder={
                       isLoadingAssets || isLoadingServices 
-                        ? <span className="text-gray-400">Loading...</span>
-                        : <span className="text-gray-400">{`Select ${formData.associatedTo.asset ? 'Asset' : 'Service'}`}</span>
+                        ? "Loading..."
+                        : `Select ${formData.associatedTo.asset ? 'Asset' : 'Service'}`
                     }
-                    className="text-gray-900"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
