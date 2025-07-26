@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -118,6 +119,8 @@ export const AMCDashboard = () => {
   const [loading, setLoading] = useState(false); // Local loading state
   const [activeTab, setActiveTab] = useState<string>("amclist");
   const [showActionPanel, setShowActionPanel] = useState(false);
+    const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -253,6 +256,11 @@ export const AMCDashboard = () => {
       console.error('Error updating AMC status:', error);
       toast.error('Failed to update AMC status');
     }
+  };
+
+  const handleImportClick = () => {
+    setShowBulkUploadModal(true);
+    setShowActionPanel(false);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -1016,10 +1024,14 @@ export const AMCDashboard = () => {
                 </div>
               </div>
 
+                    <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
+              
+
               {showActionPanel && (
                 <SelectionPanel
                   onAdd={handleAddClick}
                   onClearSelection={() => setShowActionPanel(false)}
+                  onImport={handleImportClick}
                 />
               )}
 
