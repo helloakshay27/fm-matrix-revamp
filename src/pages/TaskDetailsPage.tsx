@@ -124,9 +124,10 @@ export const TaskDetailsPage = () => {
   const handleUserSearch = async (searchTerm: string) => {
     try {
       const users = await userService.searchUsers(searchTerm);
+      // Map users to show full_name as label but keep ID as value for payload
       return users.map(user => ({
-        value: user.id.toString(),
-        label: user.full_name
+        value: user.id.toString(), // ID for payload
+        label: user.full_name      // Display name for frontend
       }));
     } catch (error) {
       console.error('Error searching users:', error);
@@ -136,11 +137,12 @@ export const TaskDetailsPage = () => {
 
   const handleUserChange = (selectedOption: { value: string; label: string } | null) => {
     if (selectedOption) {
+      // Store both ID and full_name for easy access
       setRescheduleData(prev => ({
         ...prev,
         selectedUser: {
-          id: parseInt(selectedOption.value),
-          full_name: selectedOption.label
+          id: parseInt(selectedOption.value), // Store ID from value
+          full_name: selectedOption.label     // Store display name from label
         }
       }));
     } else {
