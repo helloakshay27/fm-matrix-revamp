@@ -94,6 +94,7 @@ export const ServiceDashboard = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showServiceActionPanel, setShowServiceActionPanel] = useState(false);
   const [selectedService, setSelectedService] = useState<ServiceRecord | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState({});
 
   useEffect(() => {
     const siteId = localStorage.getItem('siteId');
@@ -102,12 +103,14 @@ export const ServiceDashboard = () => {
       localStorage.setItem('siteId', '2189');
     }
     const page = apiData?.pagination?.current_page || 1;
-    console.log('Fetching services with:', { active: activeFilter, page });
-    dispatch(fetchServicesData({ active: activeFilter, page }));
-  }, [dispatch, activeFilter]);
+    console.log('Fetching services with:', { active: activeFilter, page, filters: appliedFilters });
+    dispatch(fetchServicesData({ active: activeFilter, page, filters: appliedFilters }));
+  }, [dispatch, activeFilter, appliedFilters]);
 
   const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
   const paginationData: PaginationData = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
+
+
 
   const handleAddClick = () => navigate('/maintenance/service/add');
   const handleImportClick = () => {
@@ -120,10 +123,53 @@ export const ServiceDashboard = () => {
     setShowActionPanel(false);
   };
 
-  const handleApplyFilters = (filters) => {
+  const handleApplyFilters = async (filters) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('siteId') || '2189'; // Ensure siteId is included
     setShowFilterModal(false);
-    console.log('Applied filters:', filters);
+  
+    const queryParams = {};
+  
+    if (filters.serviceName) {
+      queryParams['q[service_name_cont]'] = filters.serviceName;
+    }
+    if (filters.buildingId) {
+      queryParams['q[building_id_eq]'] = filters.buildingId;
+    }
+    if (filters.areaId) {
+      queryParams['q[area_id_eq]'] = filters.areaId;
+    }
+  
+    // Include active filter and page if needed
+    if (activeFilter !== undefined) {
+      queryParams['q[active_eq]'] = activeFilter;
+    }
+    queryParams['page'] = 1; // Start from page 1 for filtered results
+  
+    const queryString = new URLSearchParams(queryParams).toString();
+    const url = `https://${baseUrl}/pms/services.json${queryString ? `?${queryString}` : ''}`;
+  
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      console.log('Filter Response:', response.data);
+  
+      // Dispatch the filtered data to the Redux store
+      dispatch(fetchServicesData.fulfilled(response.data, 'fetchServicesData', { active: activeFilter, page: 1 }));
+  
+      // Optionally, store the applied filters to maintain them for pagination
+      setAppliedFilters(filters); // Add a new state to store filters (see below)
+    } catch (error) {
+      console.error('Error fetching filtered services:', error);
+      toast.error('Failed to fetch filtered services');
+    }
   };
+  
 
   const handleCloseFilter = () => {
     setShowFilterModal(false);
@@ -263,7 +309,7 @@ export const ServiceDashboard = () => {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
-  
+
       const updatedFlag = !serviceItem.is_flagged;
       const response = await axios.put(
         `https://${baseUrl}/pms/services/${serviceItem.id}.json?site_id=${siteId}`, // Updated endpoint
@@ -278,7 +324,7 @@ export const ServiceDashboard = () => {
           },
         }
       );
-  
+
       if (response.status === 200) {
         console.log('Flag update response:', response.data); // Debug response
         dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));

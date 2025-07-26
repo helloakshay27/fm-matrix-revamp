@@ -56,8 +56,8 @@ export const fetchBuildings = createAsyncThunk(
 export const fetchAreas = createAsyncThunk(
   'serviceFilter/fetchAreas',
   async (wingId: number) => {
-    const response = await apiClient.get(`/pms/wings/${wingId}/areas.json`);
-    return response.data.areas;
+    const response = await apiClient.get(`/pms/buildings/${wingId}/areas.json`);
+    return response.data;
   }
 );
 

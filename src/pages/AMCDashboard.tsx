@@ -233,14 +233,6 @@ export const AMCDashboard = () => {
       queryParams.push(`q[amc_end_date_eq]=${endDateFilter}`);
     }
 
-    if (filterValue === 'active') {
-      queryParams.push('q[active_eq]=true');
-    } else if (filterValue === 'inactive') {
-      queryParams.push('q[active_eq]=false');
-    } else if (filterValue === 'flagged') {
-      queryParams.push('q[is_flagged_eq]=true');
-    }
-
     if (queryParams.length > 0) {
       url += `&${queryParams.join('&')}`;
     }
