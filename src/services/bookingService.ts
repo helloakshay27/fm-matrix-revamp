@@ -3,7 +3,7 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 export interface FacilityBookingResponse {
   id: number;
   book_by: string;
-  book_for?: string;
+  booked_by_name?: string;
   facility_name: string;
   fac_type: string;
   startdate: string;
@@ -31,11 +31,11 @@ export interface BookingData {
 // Helper function to format date from ISO string to "9 June 2025" format
 const formatDate = (dateString: string): string => {
   if (!dateString) return '-';
-  
+
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '-';
-    
+
     return date.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'long',
@@ -56,7 +56,7 @@ const transformBookingData = (apiData: FacilityBookingResponse): BookingData => 
   return {
     id: apiData.id,
     bookedBy: safeValue(apiData.book_by),
-    bookedFor: safeValue(apiData.book_for),
+    bookedFor: safeValue(apiData.booked_by_name),
     companyName: safeValue(apiData.company_name),
     facility: safeValue(apiData.facility_name),
     facilityType: safeValue(apiData.fac_type),
@@ -83,10 +83,10 @@ export const fetchFacilityBookings = async (): Promise<BookingData[]> => {
     }
 
     const data = await response.json();
-    
+
     // Handle both direct array and nested structure
     const bookings = data.facility_bookings || data;
-    
+
     if (!Array.isArray(bookings)) {
       console.error('Expected array of bookings, got:', typeof bookings);
       return [];
