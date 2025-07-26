@@ -3,14 +3,26 @@ import { getBaseUrl, getToken } from '@/utils/auth';
 // API Configuration - Central place for managing API endpoints and tokens
 const getApiConfig = () => {
   const savedToken = getToken();
-    const savedBaseUrl = getBaseUrl();
-console.log('Saved Base URL:', savedBaseUrl);
+  const savedBaseUrl = getBaseUrl();
+  
+  // Fallback base URL - can be overridden by environment variable or login process
+  // In Vite, use import.meta.env instead of process.env
+  const defaultBaseUrl = import.meta.env.VITE_BASE_URL || 'https://fm-uat-api.lockated.com';
+  const finalBaseUrl = savedBaseUrl || defaultBaseUrl;
+  
+  console.log('API Config Debug:', {
+    savedToken: savedToken ? 'Present' : 'Missing',
+    savedBaseUrl: savedBaseUrl || 'Missing',
+    defaultBaseUrl,
+    finalBaseUrl,
+    tokenLength: savedToken?.length || 0,
+    baseUrlValue: finalBaseUrl
+  });
 
   return {
-    BASE_URL: savedBaseUrl,
-    TOKEN: savedToken ,
+    BASE_URL: finalBaseUrl,
+    TOKEN: savedToken,
   };
-
 };
 
 export const API_CONFIG = {
@@ -89,6 +101,8 @@ export const API_CONFIG = {
     ASSET_STATUS: '/pms/assets/assets_status.json',
     // Asset distributions endpoint
     ASSET_DISTRIBUTIONS: '/pms/assets/assets_distributions.json',
+    // Custom forms endpoint
+    CUSTOM_FORMS: '/pms/custom_forms.json',
   },
 } as const
 
@@ -99,12 +113,21 @@ export const TOKEN = API_CONFIG.TOKEN;
 
 // Helper to get full URL
 export const getFullUrl = (endpoint: string): string => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`
+  const baseUrl = API_CONFIG.BASE_URL;
+  if (!baseUrl) {
+    console.warn('Base URL is not configured, this should not happen with fallback');
+    throw new Error('Base URL is not configured. Please check your authentication settings.');
+  }
+  return `${baseUrl}${endpoint}`;
 }
 
 // Helper to get authorization header
 export const getAuthHeader = (): string => {
-  return `Bearer ${API_CONFIG.TOKEN}`
+  const token = API_CONFIG.TOKEN;
+  if (!token) {
+    throw new Error('Authentication token is not available. Please log in again.');
+  }
+  return `Bearer ${token}`;
 }
 
 // Helper to create authenticated fetch options

@@ -329,6 +329,244 @@ export const AddSchedulePage = () => {
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string[]}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // LocalStorage keys
+  const STORAGE_KEYS = {
+    FORM_DATA: 'addSchedule_formData',
+    QUESTION_SECTIONS: 'addSchedule_questionSections',
+    TIME_SETUP_DATA: 'addSchedule_timeSetupData',
+    ACTIVE_STEP: 'addSchedule_activeStep',
+    COMPLETED_STEPS: 'addSchedule_completedSteps',
+    ATTACHMENTS: 'addSchedule_attachments'
+  };
+
+  // Save to localStorage
+  const saveToLocalStorage = (key: string, data: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  // Load from localStorage
+  const loadFromLocalStorage = (key: string) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+      return null;
+    }
+  };
+
+  // Clear specific step data from localStorage and reset to default values
+  const clearStepFromLocalStorage = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0: // Basic Configuration step
+        // Clear only basic configuration related form data
+        const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+        if (savedFormData) {
+          const resetFormData = {
+            ...savedFormData,
+            // Reset only Basic Configuration fields
+            type: 'PPM',
+            scheduleFor: 'Asset',
+            activityName: '',
+            description: '',
+            selectedTemplate: ''
+          };
+          setFormData(resetFormData);
+          saveToLocalStorage(STORAGE_KEYS.FORM_DATA, resetFormData);
+        }
+        break;
+        
+      case 1: // Schedule Setup step
+        // Clear only schedule setup related form data
+        const savedFormDataSchedule = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+        if (savedFormDataSchedule) {
+          const resetFormData = {
+            ...savedFormDataSchedule,
+            // Reset only Schedule Setup fields
+            checklistType: 'Individual',
+            asset: [],
+            service: [],
+            assetGroup: '',
+            assetSubGroup: [],
+            assignTo: '',
+            assignToType: 'user',
+            selectedUsers: [],
+            selectedGroups: [],
+            backupAssignee: '',
+            planDuration: '',
+            planDurationValue: '',
+            emailTriggerRule: '',
+            scanType: '',
+            category: '',
+            submissionTime: '',
+            submissionTimeValue: '',
+            supervisors: '',
+            lockOverdueTask: '',
+            frequency: '',
+            graceTime: '',
+            graceTimeValue: '',
+            endAt: '',
+            supplier: '',
+            startFrom: '',
+            mappings: [],
+            ticketLevel: 'checklist',
+            ticketAssignedTo: '',
+            ticketCategory: ''
+          };
+          setFormData(resetFormData);
+          saveToLocalStorage(STORAGE_KEYS.FORM_DATA, resetFormData);
+        }
+        // Reset asset group selection
+        setSelectedAssetGroup(undefined);
+        setAssetSubGroups([]);
+        break;
+        
+      case 2: // Question Setup step
+        localStorage.removeItem(STORAGE_KEYS.QUESTION_SECTIONS);
+        // Reset question sections to default
+        setQuestionSections([
+          {
+            id: '1',
+            title: 'Questions',
+            autoTicket: false,
+            ticketLevel: 'checklist',
+            ticketAssignedTo: '',
+            ticketCategory: '',
+            tasks: [
+              {
+                id: '1',
+                group: '',
+                subGroup: '',
+                task: '',
+                inputType: '',
+                mandatory: false,
+                helpText: false,
+                helpTextValue: '',
+                autoTicket: false,
+                weightage: '',
+                rating: false,
+                reading: false,
+                dropdownValues: [{label: '', type: 'positive'}],
+                radioValues: [{label: '', type: 'positive'}],
+                checkboxValues: [''],
+                checkboxSelectedStates: [false],
+                optionsInputsValues: ['']
+              }
+            ]
+          }
+        ]);
+        break;
+        
+      case 3: // Time Setup step
+        localStorage.removeItem(STORAGE_KEYS.TIME_SETUP_DATA);
+        // Reset time setup data to default
+        setTimeSetupData({
+          hourMode: 'specific',
+          minuteMode: 'specific',
+          dayMode: 'weekdays',
+          monthMode: 'all',
+          selectedHours: ['12'],
+          selectedMinutes: ['00'],
+          selectedWeekdays: [],
+          selectedDays: [],
+          selectedMonths: [],
+          betweenMinuteStart: '00',
+          betweenMinuteEnd: '59',
+          betweenMonthStart: 'January',
+          betweenMonthEnd: 'December'
+        });
+        break;
+        
+      case 4: // Mapping step
+        // Clear attachments for mapping step
+        localStorage.removeItem(STORAGE_KEYS.ATTACHMENTS);
+        setAttachments([]);
+        break;
+        
+      default:
+        break;
+    }
+  };
+
+  // Clear all form data from localStorage
+  const clearAllFromLocalStorage = () => {
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+  };
+
+  // Initialize component with localStorage data or clear current step if refreshed on that step
+  useEffect(() => {
+    // Load saved data from localStorage
+    const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+    const savedQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
+    const savedTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
+    const savedActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
+    const savedCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
+    const savedAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
+
+    // If page is refreshed, clear only the current step's data
+    if (savedActiveStep !== null) {
+      clearStepFromLocalStorage(savedActiveStep);
+    }
+
+    // Restore all data except for the current step (which was just cleared)
+    if (savedFormData && savedActiveStep !== 0 && savedActiveStep !== 1) {
+      setFormData(savedFormData);
+    }
+    if (savedQuestionSections && savedActiveStep !== 2) {
+      setQuestionSections(savedQuestionSections);
+    }
+    if (savedTimeSetupData && savedActiveStep !== 3) {
+      setTimeSetupData(savedTimeSetupData);
+    }
+    if (savedAttachments && savedActiveStep !== 4) {
+      setAttachments(savedAttachments);
+    }
+
+    // Always restore step navigation data
+    if (savedActiveStep !== null) {
+      setActiveStep(savedActiveStep);
+    }
+    if (savedCompletedSteps) {
+      setCompletedSteps(savedCompletedSteps);
+    }
+  }, []);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
+  }, [formData]);
+
+  // Save question sections to localStorage whenever they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
+  }, [questionSections]);
+
+  // Save time setup data to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
+  }, [timeSetupData]);
+
+  // Save active step to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
+  }, [activeStep]);
+
+  // Save completed steps to localStorage whenever they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
+  }, [completedSteps]);
+
+  // Save attachments to localStorage whenever they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
+  }, [attachments]);
+
   // Load data on component mount
   useEffect(() => {
     // Check URL parameters to set both scheduleFor and type
@@ -811,6 +1049,38 @@ export const AddSchedulePage = () => {
     );
   };
 
+  // Add attachment function
+  const addAttachment = (): void => {
+    // Create a hidden file input and trigger click
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '*/*';
+    input.style.display = 'none';
+
+    input.onchange = (e: Event) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files) {
+        const newAttachments: AttachmentFile[] = [];
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          // For now, just create a local URL for preview; in real app, upload to server
+          newAttachments.push({
+            id: `${Date.now()}-${i}`,
+            name: file.name,
+            url: URL.createObjectURL(file)
+          });
+        }
+        setAttachments(prev => [...prev, ...newAttachments]);
+      }
+    };
+
+    document.body.appendChild(input);
+    input.click();
+    // Clean up after selection
+    input.remove();
+  };
+
   const addQuestionSection = (): void => {
     setQuestionSections(prevSections => [
       ...prevSections,
@@ -844,6 +1114,23 @@ export const AddSchedulePage = () => {
         ]
       }
     ]);
+  };
+
+  const removeQuestionSection = (sectionId: string): void => {
+    setQuestionSections(prevSections => prevSections.filter(section => section.id !== sectionId));
+  };
+
+  const removeTaskFromSection = (sectionId: string, taskId: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+              ...section,
+              tasks: section.tasks.filter(task => task.id !== taskId)
+            }
+          : section
+      )
+    );
   };
 
   // Helper functions for managing dropdown values
@@ -1186,8 +1473,8 @@ export const AddSchedulePage = () => {
                 ...section.tasks,
                 {
                   id: (Date.now() + Math.random()).toString(),
-                  group: '',
-                  subGroup: '',
+                  group: section.tasks[0]?.group || '',
+                  subGroup: section.tasks[0]?.subGroup || '',
                   task: '',
                   inputType: '',
                   mandatory: false,
@@ -1259,6 +1546,27 @@ export const AddSchedulePage = () => {
 
   const handleSave = async () => {
     
+    // Validate current step first
+    if (!validateCurrentStep()) {
+      return;
+    }
+    
+    // Show success message for the current step completion
+    const stepMessages = {
+      0: "Basic Configuration saved successfully!",
+      1: "Schedule Setup saved successfully!",
+      2: "Question Setup saved successfully!",
+      3: "Time Setup saved successfully!",
+      4: "Mapping saved successfully!"
+    };
+    
+    if (stepMessages[activeStep as keyof typeof stepMessages]) {
+      toast({
+        title: "Success",
+        description: stepMessages[activeStep as keyof typeof stepMessages],
+      });
+    }
+    
     // Validate all sections before submission
     const basicErrors = validateBasicConfiguration();
     const scheduleErrors = validateScheduleSetup();
@@ -1299,7 +1607,7 @@ export const AddSchedulePage = () => {
       
       toast({
         title: "Success",
-        description: "Schedule created successfully!",
+        description: "Checklist is scheduled successfully!",
       });
       
       // Check if any task has reading checkbox selected
@@ -1320,6 +1628,7 @@ export const AddSchedulePage = () => {
         }
       } else {
         // No reading tasks found, skip mapping and navigate directly to schedule list
+        clearAllFromLocalStorage(); // Clear all saved data on successful completion
         navigate('/maintenance/schedule');
       }
       
@@ -1345,6 +1654,8 @@ export const AddSchedulePage = () => {
       title: "Success",
       description: "Schedule setup completed successfully!",
     });
+    // Clear all saved data on successful completion
+    clearAllFromLocalStorage();
     // Navigate back to schedule list
     navigate('/maintenance/schedule');
   };
@@ -1624,14 +1935,7 @@ export const AddSchedulePage = () => {
       // Validate each task
       section.tasks.forEach((task, taskIndex) => {
         if (task.task.trim()) {
-          if (!task.group) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`);
-          }
-          
-          if (!task.subGroup) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`);
-          }
-          
+                    
           if (!task.inputType) {
             errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`);
           }
@@ -1797,6 +2101,24 @@ export const AddSchedulePage = () => {
       setCompletedSteps([...completedSteps, activeStep]);
     }
     
+    // Show success message for the completed step
+    const stepMessages = {
+      0: "Basic Configuration completed successfully!",
+      1: "Schedule Setup completed successfully!",
+      2: "Question Setup completed successfully!",
+      3: "Time Setup completed successfully!",
+      4: "Mapping completed successfully!"
+    };
+    
+    // Always show toast for valid steps
+    const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
+    if (currentStepMessage) {
+      toast({
+        title: "Success",
+        description: currentStepMessage,
+      });
+    }
+    
     if (activeStep < steps.length - 1) {
       setActiveStep(activeStep + 1);
     }
@@ -1821,9 +2143,26 @@ export const AddSchedulePage = () => {
       // Going backwards - remove completion status from steps after the clicked step
       setCompletedSteps(completedSteps.filter(stepIndex => stepIndex < step));
     } else if (step > activeStep) {
-      // Going forwards - mark current step as completed
+      // Going forwards - mark current step as completed and show success message
       if (!completedSteps.includes(activeStep)) {
         setCompletedSteps([...completedSteps, activeStep]);
+        
+        // Show success message for the completed step
+        const stepMessages = {
+          0: "Basic Configuration completed successfully!",
+          1: "Schedule Setup completed successfully!",
+          2: "Question Setup completed successfully!",
+          3: "Time Setup completed successfully!",
+          4: "Mapping completed successfully!"
+        };
+        
+        const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
+        if (currentStepMessage) {
+          toast({
+            title: "Success",
+            description: currentStepMessage,
+          });
+        }
       }
     }
     setActiveStep(step);
@@ -2101,37 +2440,6 @@ export const AddSchedulePage = () => {
   const renderSingleStep = (stepIndex: number) => {
     switch (stepIndex) {
       case 0: // Basic Configuration
-        function addAttachment(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-          // Create a hidden file input and trigger click
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.multiple = true;
-          input.accept = '*/*';
-          input.style.display = 'none';
-
-          input.onchange = (e: Event) => {
-            const files = (e.target as HTMLInputElement).files;
-            if (files) {
-              const newAttachments: AttachmentFile[] = [];
-              for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          // For now, just create a local URL for preview; in real app, upload to server
-          newAttachments.push({
-            id: `${Date.now()}-${i}`,
-            name: file.name,
-            url: URL.createObjectURL(file)
-          });
-              }
-              setAttachments(prev => [...prev, ...newAttachments]);
-            }
-          };
-
-          document.body.appendChild(input);
-          input.click();
-          // Clean up after selection
-          input.remove();
-        }
-
         return (
           <SectionCard style={{ padding: '24px', margin: 0, borderRadius:'3px' }} >
             {/* Header with icon and title */}
@@ -2149,7 +2457,7 @@ export const AddSchedulePage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottm:'2'
+                  marginBottom: '2'
                 }}>
                   <Cog size={16} color="white" />
                 </Box>
@@ -2247,14 +2555,97 @@ export const AddSchedulePage = () => {
               sx={{ mb: 3 }}
             />
             
-            {/* Add Attachment Button */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <RedButton 
-                startIcon={<AttachFile />}
-                onClick={addAttachment}
-              >
-                Add Attachment
-              </RedButton>
+            {/* Attachments Section */}
+            <Box sx={{ mb: 3 }}>
+              {/* Display existing attachments as placeholder boxes */}
+              {attachments.length > 0 && (
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
+                  mb: 2,
+                  flexWrap: 'wrap'
+                }}>
+                  {attachments.map((attachment) => (
+                    <Box 
+                      key={attachment.id} 
+                      sx={{ 
+                        width: '120px',
+                        height: '120px',
+                        border: '2px dashed #ccc',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        backgroundColor: '#fafafa',
+                        '&:hover': {
+                          borderColor: '#999'
+                        }
+                      }}
+                    >
+                      {/* Close button */}
+                      <IconButton 
+                        size="small" 
+                        onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+                        sx={{ 
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          backgroundColor: 'white',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                          width: 20,
+                          height: 20,
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5'
+                          }
+                        }}
+                      >
+                        <Close sx={{ fontSize: 12 }} />
+                      </IconButton>
+                      
+                      {/* File icon and name */}
+                      <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          textAlign: 'center',
+                          px: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          width: '100%'
+                        }}
+                      >
+                        {attachment.name}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+              
+              {/* Add Attachment Button */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <MuiButton 
+                  variant="outlined"
+                  // startIcon={<AttachFile />}
+                  onClick={addAttachment}
+                  sx={{
+                    borderColor: '#C72030',
+                    color: '#C72030',
+                    textTransform: 'none',
+                    fontFamily: 'Work Sans, sans-serif',
+                    fontWeight: 500,
+                    borderRadius: '0',
+                    padding: '8px 16px',
+                    '&:hover': {
+                      borderColor: '#B8252F',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                    },
+                  }}
+                >
+                  Add Attachment
+                </MuiButton>
+              </Box>
             </Box>
           </SectionCard>
         );
@@ -3138,12 +3529,10 @@ export const AddSchedulePage = () => {
         return (
           <div>
             {/* Header Outside the Box */}
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
-              <div className=" p-4 sm:p-6 bg-white">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                      <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold">
+                    <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
+                      <Cog className="w-6 h-6" />
                     </span>
                     QUESTION SETUP
                   </div>
@@ -3195,8 +3584,6 @@ export const AddSchedulePage = () => {
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
 
             {/* Conditional Sections based on toggles */}
             
@@ -3299,14 +3686,17 @@ export const AddSchedulePage = () => {
               <div key={section.id} className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
                 <div className=" p-4 sm:p-6 bg-white">
                   <div className="flex justify-between items-center mb-4">
-                    <input
-                      type="text"
-                      value={section.title}
-                      onChange={(e) => updateSectionTitle(section.id, e.target.value)}
-                      className="text-lg font-semibold text-[#C72030] bg-transparent border-none border-b-2 border-[#C72030] focus:outline-none focus:border-[#C72030] px-0"
-                      style={{ fontFamily: 'Work Sans, sans-serif' }}
-                      placeholder="Section Title"
-                    />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                  Section {sectionIndex + 1}
+                </Typography>
+                    {questionSections.length > 1 && (
+                      <IconButton 
+                        onClick={() => removeQuestionSection(section.id)}
+                        sx={{ color: '#C72030' }}
+                      >
+                        <Close />
+                      </IconButton>
+                    )}
                   </div>
                 {/* Individual Auto Ticket Configuration Section */}
                 {section.autoTicket && (
@@ -3378,65 +3768,96 @@ export const AddSchedulePage = () => {
                     </Box>
                   </Box>
                 )}
+                
+                {/* Section Header with Group/Sub-Group */}
+                
+                
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+                  <Box>
+                    <MuiSearchableDropdown
+                      value={section.tasks[0]?.group || ''}
+                      onChange={(value) => {
+                        // Update group for all tasks in this section
+                        section.tasks.forEach(task => {
+                          handleTaskGroupChange(section.id, task.id, value.toString());
+                        });
+                      }}
+                      options={
+                        taskGroups ? taskGroups.map((group) => ({
+                          id: group.id.toString(),
+                          label: group.name,
+                          value: group.id.toString()
+                        })) : []
+                      }
+                      label="Group"
+                      disabled={loading.taskGroups}
+                    />
+                    {loading.taskGroups && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading groups...
+                      </Typography>
+                    )}
+                  </Box>
+                  
+                  <Box>
+                    <MuiSearchableDropdown
+                      value={section.tasks[0]?.subGroup || ''}
+                      onChange={(value) => {
+                        // Update sub-group for all tasks in this section
+                        section.tasks.forEach(task => {
+                          updateTaskInSection(section.id, task.id, 'subGroup', value);
+                        });
+                      }}
+                      options={
+                        section.tasks[0]?.group && taskSubGroups[section.tasks[0].group] ? taskSubGroups[section.tasks[0].group].map((subGroup) => ({
+                          id: subGroup.id.toString(),
+                          label: subGroup.name,
+                          value: subGroup.id.toString()
+                        })) : []
+                      }
+                      label="Sub-Group"
+                      disabled={loading.taskSubGroups || !section.tasks[0]?.group}
+                    />
+                    {loading.taskSubGroups && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading sub-groups...
+                      </Typography>
+                    )}
+                    {!section.tasks[0]?.group && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Please select a group first
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+
                 {section.tasks && section.tasks.map((task, taskIndex) => (
                   <Box key={task.id} sx={{ mb: 3 }}>
-                    
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                      Task {taskIndex + 1}
-                    </Typography>
-                    
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
-                      <MuiSearchableDropdown
-                        value={task.group}
-                        onChange={(value) => handleTaskGroupChange(section.id, task.id, value.toString())}
-                        options={
-                          taskGroups ? taskGroups.map((group) => ({
-                            id: group.id.toString(),
-                            label: group.name,
-                            value: group.id.toString()
-                          })) : []
-                        }
-                        label="Group"
-                        disabled={loading.taskGroups}
-                      />
-                      {loading.taskGroups && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Loading groups...
-                        </Typography>
-                      )}
-                      
-                      <MuiSearchableDropdown
-                        value={task.subGroup}
-                        onChange={(value) => updateTaskInSection(section.id, task.id, 'subGroup', value)}
-                        options={
-                          task.group && taskSubGroups[task.group] ? taskSubGroups[task.group].map((subGroup) => ({
-                            id: subGroup.id.toString(),
-                            label: subGroup.name,
-                            value: subGroup.id.toString()
-                          })) : []
-                        }
-                        label="Sub-Group"
-                        disabled={loading.taskSubGroups || !task.group}
-                      />
-                      {loading.taskSubGroups && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Loading sub-groups...
-                        </Typography>
-                      )}
-                      {!task.group && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Please select a group first
-                        </Typography>
-                      )}
-                    </Box>
                     
                     {/* Dashed Border Section */}
                     <Box sx={{ 
                       border: '2px dashed #E0E0E0', 
                       padding: 2, 
                       borderRadius: 0,
-                      backgroundColor: '#FAFAFA'
+                      backgroundColor: '#FAFAFA',
+                      position: 'relative'
                     }}>
+                      {/* Close button for individual tasks */}
+                      {section.tasks.length > 1 && (
+                        <IconButton 
+                          onClick={() => removeTaskFromSection(section.id, task.id)}
+                          sx={{ 
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            color: '#666',
+                            padding: '4px'
+                          }}
+                          size="small"
+                        >
+                          <Close fontSize="small" />
+                        </IconButton>
+                      )}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                         <Box sx={{ display: 'flex', gap: 4 }}>
                           <FormControlLabel

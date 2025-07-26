@@ -1,5 +1,5 @@
 import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG, getAuthenticatedFetchOptions, ENDPOINTS } from '@/config/apiConfig';
+import { API_CONFIG, getAuthenticatedFetchOptions, ENDPOINTS, getFullUrl } from '@/config/apiConfig';
 
 export interface CustomForm {
   id: number;
@@ -41,7 +41,15 @@ export interface TransformedScheduleData {
 }
 
 export const fetchCustomForms = async (queryParams?: Record<string, string>): Promise<CustomFormsResponse> => {
-  const baseUrl = `${API_CONFIG.BASE_URL}/pms/custom_forms.json`;
+  // Use the endpoint from API config
+  const baseUrl = getFullUrl(ENDPOINTS.CUSTOM_FORMS);
+  
+  console.log('API Config:', {
+    BASE_URL: API_CONFIG.BASE_URL,
+    TOKEN: API_CONFIG.TOKEN ? 'Present' : 'Missing',
+    ENDPOINT: ENDPOINTS.CUSTOM_FORMS,
+    FULL_URL: baseUrl
+  });
   
   // Build URL with query parameters
   const url = new URL(baseUrl);
@@ -53,11 +61,39 @@ export const fetchCustomForms = async (queryParams?: Record<string, string>): Pr
     });
   }
   
+  console.log('Final URL:', url.toString());
+  console.log('Request headers:', getAuthenticatedFetchOptions('GET'));
+  
   const response = await fetch(url.toString(), getAuthenticatedFetchOptions('GET'));
+  
+  console.log('Response status:', response.status);
+  console.log('Response ok:', response.ok);
+  
   if (!response.ok) {
-    throw new Error('Failed to fetch custom forms');
+    const errorText = await response.text();
+    console.error('API Error Response:', errorText);
+    throw new Error(`Failed to fetch custom forms: ${response.status} ${response.statusText}`);
   }
-  return response.json();
+  
+  const data = await response.json();
+  console.log('API Success Response:', data);
+  
+  // Validate the response structure
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid response format: Expected an object');
+  }
+  
+  // Check if custom_forms exists and is an array
+  if (!data.custom_forms) {
+    console.warn('No custom_forms field in response, returning empty array');
+    return { custom_forms: [] };
+  }
+  
+  if (!Array.isArray(data.custom_forms)) {
+    throw new Error('Invalid response format: custom_forms should be an array');
+  }
+  
+  return data;
 };
 
 // Interfaces for checklist master data

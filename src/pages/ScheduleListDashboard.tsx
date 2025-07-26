@@ -12,6 +12,8 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Cell, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } from '@/services/customFormsAPI';
 import { useQuery } from '@tanstack/react-query';
+import { API_CONFIG } from '@/config/apiConfig';
+
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [showImportModal, setShowImportModal] = useState(false);
@@ -49,14 +51,68 @@ export const ScheduleListDashboard = () => {
   const {
     data: customFormsData,
     isLoading,
-    error
+    error,
+    isError
   } = useQuery({
     queryKey: ['custom-forms', filters],
-    queryFn: () => fetchCustomForms(buildQueryParams())
+    queryFn: async () => {
+      try {
+        console.log('Fetching custom forms with params:', buildQueryParams());
+        const result = await fetchCustomForms(buildQueryParams());
+        console.log('API Response:', result);
+        return result;
+      } catch (error) {
+        console.error('API Error:', error);
+        // Re-throw with more context if it's a configuration error
+        if (error instanceof Error && error.message.includes('Base URL is not configured')) {
+          throw new Error('Application not properly configured. Please check your authentication settings.');
+        }
+        if (error instanceof Error && error.message.includes('Authentication token is not available')) {
+          throw new Error('Please log in to access schedules.');
+        }
+        throw error;
+      }
+    },
+    retry: (failureCount, error) => {
+      // Don't retry on configuration errors
+      if (error instanceof Error && 
+          (error.message.includes('Base URL is not configured') || 
+           error.message.includes('Authentication token is not available'))) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    retryDelay: 1000
   });
-
+  
+  console.log('Query State:', { 
+    data: customFormsData, 
+    isLoading, 
+    error, 
+    isError,
+    filters: filters 
+  });
+  
+  // Debug configuration
+  console.log('Configuration Debug:', {
+    hasBaseUrl: !!API_CONFIG.BASE_URL,
+    hasToken: !!API_CONFIG.TOKEN,
+    baseUrl: API_CONFIG.BASE_URL,
+    tokenPresent: API_CONFIG.TOKEN ? 'Present' : 'Missing'
+  });
+  
+  // Debug localStorage
+  console.log('LocalStorage Debug:', {
+    baseUrl: localStorage.getItem('base_url'),
+    token: localStorage.getItem('token'),
+    user: localStorage.getItem('user')
+  });
+  
   // Transform the data
   const schedules = customFormsData ? transformCustomFormsData(customFormsData.custom_forms) : [];
+  
+  console.log('Transformed schedules:', schedules);
+  console.log('Custom forms raw data:', customFormsData?.custom_forms);
   
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   const handleExport = () => navigate('/maintenance/schedule/export');
@@ -470,7 +526,38 @@ export const ScheduleListDashboard = () => {
         </div>
       ) : error ? (
         <div className="flex items-center justify-center h-32">
-          <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
+          <div className="text-center max-w-md">
+            <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
+            <p className="text-xs text-gray-500 mb-3">
+              {error instanceof Error ? error.message : 'Unknown error occurred'}
+            </p>
+            {error instanceof Error && (
+              error.message.includes('Base URL is not configured') || 
+              error.message.includes('Authentication token is not available')
+            ) ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-3">
+                <p className="text-xs text-yellow-800 mb-2">
+                  It appears your session has expired or the application is not properly configured.
+                </p>
+                <button 
+                  onClick={() => {
+                    localStorage.clear();
+                    window.location.href = '/login';
+                  }} 
+                  className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+                >
+                  Go to Login
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <EnhancedTable 
@@ -481,7 +568,6 @@ export const ScheduleListDashboard = () => {
           pagination={true} 
           enableExport={true} 
           exportFileName="schedules" 
-          onRowClick={handleViewSchedule} 
           storageKey="schedules-table" 
           enableSearch={true} 
           searchPlaceholder="Search schedules..." 
