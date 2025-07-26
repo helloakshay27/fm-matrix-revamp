@@ -98,6 +98,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
   const loadFilterData = async () => {
     try {
+      console.log('🔄 Loading filter data...');
       const [
         categoriesData,
         departmentsData,
@@ -114,6 +115,29 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
         ticketManagementAPI.getFMUsers(),
       ]);
 
+      console.log('✅ Filter data loaded successfully:', {
+        categories: categoriesData.length,
+        departments: departmentsData.length,
+        sites: sitesData.length,
+        units: unitsData.length,
+        statuses: statusesData.length,
+        users: usersData.length,
+        usersData: usersData.slice(0, 3), // Show first 3 users for debugging
+        sitesData: sitesData.slice(0, 3) // Show first 3 sites for debugging
+      });
+
+      console.log('🏢 SITES DEBUG:', {
+        sitesArray: sitesData,
+        sitesLength: sitesData.length,
+        firstSite: sitesData[0]
+      });
+
+      console.log('👥 USERS DEBUG:', {
+        usersArray: usersData,
+        usersLength: usersData.length,
+        firstUser: usersData[0]
+      });
+
       setCategories(categoriesData);
       setDepartments(departmentsData);
       setSites(sitesData);
@@ -121,7 +145,11 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
       setStatuses(statusesData);
       setUsers(usersData);
     } catch (error) {
-      console.error('Error loading filter data:', error);
+      console.error('❌ Error loading filter data:', error);
+      console.error('❌ Detailed error:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast({
         title: "Error",
         description: "Failed to load filter options.",
@@ -136,18 +164,46 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   );
 
   const handleSubmit = () => {
+    // Validate date range - both dates must be selected if one is selected
+    if ((dateFrom && !dateTo) || (!dateFrom && dateTo)) {
+      toast({
+        title: "Validation Error",
+        description: "Please select both 'Date From' and 'Date To' for the date range.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const filters: TicketFilters = {};
 
-    // Build date range
+    // Build date range in MM/DD/YYYY - MM/DD/YYYY format
     if (dateFrom && dateTo) {
-      filters.date_range = `${dateFrom}+-+${dateTo}`;
+      // Convert from YYYY-MM-DD to MM/DD/YYYY format
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
+      };
+      
+      const formattedDateFrom = formatDate(dateFrom);
+      const formattedDateTo = formatDate(dateTo);
+      filters.date_range = `${formattedDateFrom} - ${formattedDateTo}`;
     }
 
     // Add other filters
     if (category) filters.category_type_id_eq = Number(category);
     if (subCategory) filters.sub_category_id_eq = Number(subCategory);
     if (department) filters.dept_id_eq = Number(department);
-    if (site) filters.site_id_eq = Number(site);
+    if (site) {
+      filters.site_id_eq = Number(site);
+      console.log('🏢 SITE FILTER APPLIED:', {
+        siteValue: site,
+        siteId: Number(site),
+        filterParameter: 'site_id_eq'
+      });
+    }
     if (unit) filters.unit_id_eq = Number(unit);
     if (status) filters.issue_status_in = [Number(status)];
     if (priority) filters.priority_eq = priority;
@@ -285,11 +341,17 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                     <SelectValue placeholder="Select Site" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
-                    {sites.map((siteItem) => (
-                      <SelectItem key={siteItem.id} value={siteItem.id.toString()}>
-                        {siteItem.site_name}
+                    {sites.length === 0 ? (
+                      <SelectItem value="no-sites" disabled>
+                        No sites available
                       </SelectItem>
-                    ))}
+                    ) : (
+                      sites.map((siteItem) => (
+                        <SelectItem key={siteItem.id} value={siteItem.id.toString()}>
+                          {siteItem.name || siteItem.site_name || `Site ${siteItem.id}`}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -353,11 +415,17 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
                     <SelectValue placeholder="Select Assigned User" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id.toString()}>
-                        {user.name}
+                    {users.length === 0 ? (
+                      <SelectItem value="no-users" disabled>
+                        No users available
                       </SelectItem>
-                    ))}
+                    ) : (
+                      users.map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

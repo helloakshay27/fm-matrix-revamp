@@ -20,8 +20,8 @@ const PRIORITY_OPTIONS = [
 ];
 
 const PROACTIVE_REACTIVE_OPTIONS = [
-  { value: 'proactive', label: 'Proactive' },
-  { value: 'reactive', label: 'Reactive' }
+  { value: 'Proactive',label: 'Proactive' },
+  { value: 'Reactive',label: 'Reactive' }
 ];
 
 // Field styles for Material-UI components

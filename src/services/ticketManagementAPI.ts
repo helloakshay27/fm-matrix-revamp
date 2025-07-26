@@ -50,7 +50,8 @@ export interface DepartmentOption {
 
 export interface SiteOption {
   id: number;
-  site_name: string;
+  name: string;
+  site_name?: string; // Keep for backward compatibility
 }
 
 export interface UnitOption {
@@ -278,8 +279,42 @@ export const ticketManagementAPI = {
   },
 
   async getAllSites(): Promise<SiteOption[]> {
-    const response = await apiClient.get(ENDPOINTS.SITES);
-    return response.data.sites || [];
+    try {
+      console.log('🏢 Fetching sites from:', ENDPOINTS.SITES);
+      const response = await apiClient.get(ENDPOINTS.SITES);
+      console.log('✅ Sites API Response:', {
+        endpoint: ENDPOINTS.SITES,
+        responseData: response.data,
+        sitesArray: response.data.sites,
+        sitesLength: response.data.sites?.length || 0,
+        sampleSites: response.data.sites?.slice(0, 3)
+      });
+      
+      const rawSites = response.data.sites || [];
+      
+      // Map the raw site data to SiteOption format
+      const sites: SiteOption[] = rawSites.map((site: any) => ({
+        id: site.id,
+        name: site.name || site.site_name || `Site ${site.id}`,
+        site_name: site.name || site.site_name // Keep for backward compatibility
+      }));
+      
+      console.log('🔄 Mapped Sites:', {
+        originalCount: rawSites.length,
+        mappedCount: sites.length,
+        sampleMappedSites: sites.slice(0, 3)
+      });
+      
+      if (sites.length === 0) {
+        console.warn('⚠️ No sites found in response');
+      }
+      
+      return sites;
+    } catch (error) {
+      console.error('❌ Error fetching sites:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.SITES);
+      throw error;
+    }
   },
 
   async getUnits(): Promise<UnitOption[]> {
@@ -293,8 +328,40 @@ export const ticketManagementAPI = {
   },
 
   async getFMUsers(): Promise<UserOption[]> {
-    const response = await apiClient.get(ENDPOINTS.FM_USERS);
-    return response.data.fm_users || [];
+    try {
+      console.log('🔍 Fetching FM Users from:', ENDPOINTS.FM_USERS);
+      const response = await apiClient.get(ENDPOINTS.FM_USERS);
+      console.log('✅ FM Users API Response:', {
+        endpoint: ENDPOINTS.FM_USERS,
+        responseData: response.data,
+        fmUsersArray: response.data.fm_users,
+        fmUsersLength: response.data.fm_users?.length || 0
+      });
+      
+      const rawUsers = response.data.fm_users || [];
+      
+      // Map the raw user data to UserOption format
+      const users: UserOption[] = rawUsers.map((user: any) => ({
+        id: user.id,
+        name: `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.email || `User ${user.id}`
+      }));
+      
+      console.log('🔄 Mapped FM Users:', {
+        originalCount: rawUsers.length,
+        mappedCount: users.length,
+        sampleMappedUsers: users.slice(0, 3)
+      });
+      
+      if (users.length === 0) {
+        console.warn('⚠️ No FM users found in response');
+      }
+      
+      return users;
+    } catch (error) {
+      console.error('❌ Error fetching FM Users:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.FM_USERS);
+      throw error;
+    }
   },
 
   async getSuppliers(): Promise<SupplierOption[]> {

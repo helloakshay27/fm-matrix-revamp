@@ -15,6 +15,7 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import apiClient from '@/utils/apiClient';
 import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 import { FormatShapes } from '@mui/icons-material';
+import { toast } from 'sonner';
 
 // Image compression function
 const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
@@ -74,13 +75,17 @@ const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRem
     
     // Check file type
     if (!file.type.startsWith('image/')) {
-      alert('Please upload only image files (JPG, PNG, GIF, etc.)');
+      toast.error('Invalid File Type', {
+        description: 'Please upload only image files (JPG, PNG, GIF, etc.)',
+      });
       return;
     }
     
     // Check file size
     if (file.size > maxFileSize) {
-      alert('Image size should be less than 10MB');
+      toast.error('File Too Large', {
+        description: 'Image size should be less than 10MB',
+      });
       return;
     }
     
@@ -95,7 +100,9 @@ const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRem
       onImageUpload(categoryKey, fileList);
     } catch (error) {
       console.error('Error processing image:', error);
-      alert('Error processing image. Please try again.');
+      toast.error('Processing Error', {
+        description: 'Error processing image. Please try again.',
+      });
     }
   };
 
@@ -525,7 +532,9 @@ const handleFileUpload = async (category: string, files: FileList | null) => {
   for (const file of fileArray) {
     // Check file type
     if (!allowedTypes.includes(file.type)) {
-      alert(`File "${file.name}" is not a supported format. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.`);
+      toast.error('Unsupported File Format', {
+        description: `File "${file.name}" is not supported. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.`,
+      });
       continue;
     }
     
@@ -543,13 +552,17 @@ const handleFileUpload = async (category: string, files: FileList | null) => {
     
     // Check individual file size (after compression)
     if (processedFile.size > maxFileSize) {
-      alert(`File "${file.name}" is too large (${(processedFile.size / 1024 / 1024).toFixed(2)}MB). Maximum file size is 10MB.`);
+      toast.error('File Too Large', {
+        description: `File "${file.name}" is too large (${(processedFile.size / 1024 / 1024).toFixed(2)}MB). Maximum file size is 10MB.`,
+      });
       continue;
     }
     
     // Check total size
     if (totalSize + processedFile.size > maxTotalSize) {
-      alert(`Adding "${file.name}" would exceed the total upload limit of 50MB. Please remove some files first.`);
+      toast.error('Upload Limit Exceeded', {
+        description: `Adding "${file.name}" would exceed the total upload limit of 50MB. Please remove some files first.`,
+      });
       continue;
     }
     
@@ -801,6 +814,25 @@ const [attachments, setAttachments] = useState({
   }
 
   const handleFieldChange: HandleFieldChangeFn = (field, value) => {
+    // Clear validation errors when user starts typing
+    if (validationErrors.length > 0) {
+      const fieldErrorExists = validationErrors.some(error => 
+        error.toLowerCase().includes(field.toLowerCase()) ||
+        (field === 'name' && error.includes('Asset Name')) ||
+        (field === 'model_number' && error.includes('Model No')) ||
+        (field === 'manufacturer' && error.includes('Manufacturer'))
+      );
+      
+      if (fieldErrorExists) {
+        setValidationErrors(prev => prev.filter(error => 
+          !error.toLowerCase().includes(field.toLowerCase()) &&
+          !(field === 'name' && error.includes('Asset Name')) &&
+          !(field === 'model_number' && error.includes('Model No')) &&
+          !(field === 'manufacturer' && error.includes('Manufacturer'))
+        ));
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -1295,7 +1327,102 @@ const [attachments, setAttachments] = useState({
   //     .catch(err => console.error(err));
   // };
 
+  // State for validation errors
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  // Function to check if a field has validation error
+  const hasValidationError = (fieldName: string) => {
+    return validationErrors.some(error => error.toLowerCase().includes(fieldName.toLowerCase()));
+  };
+  const validateMandatoryFields = () => {
+    const errors: string[] = [];
+
+    // Basic Asset Details validation
+    if (!formData.name) errors.push("Asset Name is required");
+    if (!formData.model_number) errors.push("Model No. is required");
+    if (!formData.manufacturer) errors.push("Manufacturer is required");
+    if (!selectedGroup) errors.push("Group is required");
+    if (!formData.pms_asset_sub_group_id) errors.push("Subgroup is required");
+
+    // Purchase Details validation
+    if (!formData.purchase_cost) errors.push("Purchase Cost is required");
+    if (!formData.purchased_on) errors.push("Purchase Date is required");
+    if (!formData.commisioning_date) errors.push("Commissioning Date is required");
+    if (!formData.warranty_expiry) errors.push("Warranty Expires On is required");
+
+    // Location validation (for applicable categories)
+    if (selectedAssetCategory === 'Furniture & Fixtures' ||
+        selectedAssetCategory === 'IT Equipment' ||
+        selectedAssetCategory === 'Machinery & Equipment' ||
+        selectedAssetCategory === 'Meter' ||
+        selectedAssetCategory === 'Tools & Instruments') {
+      if (!selectedLocation.site) errors.push("Site is required");
+      if (!selectedLocation.building) errors.push("Building is required");
+    }
+
+    // Asset Loaned validation (if applicable toggle is on)
+    if (assetLoanedToggle) {
+      if (!selectedLoanedVendorId) errors.push("Vendor Name is required for Asset Loaned");
+      if (!formData.agreement_from_date) errors.push("Agreement Start Date is required for Asset Loaned");
+      if (!formData.agreement_to_date) errors.push("Agreement End Date is required for Asset Loaned");
+    }
+
+    // AMC Details validation (if fields are filled)
+    if (formData.amc_detail.supplier_id || 
+        formData.amc_detail.amc_start_date || 
+        formData.amc_detail.amc_end_date || 
+        formData.amc_detail.amc_cost) {
+      if (!formData.amc_detail.supplier_id) errors.push("AMC Vendor is required");
+      if (!formData.amc_detail.amc_start_date) errors.push("AMC Start Date is required");
+      if (!formData.amc_detail.amc_end_date) errors.push("AMC End Date is required");
+      if (!formData.amc_detail.amc_cost) errors.push("AMC Cost is required");
+    }
+
+    // Depreciation validation (if applicable toggle is on)
+    if (depreciationToggle) {
+      if (!formData.useful_life) errors.push("Useful Life is required for Depreciation");
+      if (!formData.salvage_value) errors.push("Salvage Value is required for Depreciation");
+      if (!formData.depreciation_rate) errors.push("Depreciation Rate is required for Depreciation");
+    }
+
+    // IT Assets validation (if applicable toggle is on)
+    if (selectedAssetCategory === 'IT Equipment' && itAssetsToggle) {
+      // Add specific IT asset validations if needed
+    }
+
+    // Meter Details validation (if applicable toggle is on)
+    if (meterDetailsToggle && meterType) {
+      if (meterType === 'SubMeter' && !selectedParentMeterId) {
+        errors.push("Parent Meter is required for Sub Meter");
+      }
+    }
+
+    return errors;
+  };
+
   const handleSaveAndShow = () => {
+    // Validate mandatory fields
+    const validationErrors = validateMandatoryFields();
+    setValidationErrors(validationErrors);
+    
+    if (validationErrors.length > 0) {
+      // Show validation errors using toast
+      toast.error('Please fill in all required fields', {
+        description: validationErrors.join(' • '),
+        duration: 5000,
+      });
+      
+      // Optional: Scroll to the first error field
+      const firstErrorField = document.querySelector('.MuiTextField-root .Mui-error input, .MuiFormControl-root .Mui-error');
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      return;
+    }
+
+    // Clear validation errors if all fields are valid
+    setValidationErrors([]);
   // Build the complete payload
   const payload = {
     pms_asset: {
@@ -1561,19 +1688,38 @@ const [attachments, setAttachments] = useState({
     })
     .then(response => {
       console.log('Asset created successfully:', response.data);
-      window.location.href = "/maintenance/asset";
+      toast.success('Asset Created Successfully', {
+        description: 'The asset has been created and saved.',
+        duration: 3000,
+      });
+      // Small delay to show the toast before redirect
+      setTimeout(() => {
+        window.location.href = "/maintenance/asset";
+      }, 1000);
     })
     .catch(err => {
       console.error('Error creating asset:', err);
       
       if (err.response?.status === 413) {
-        alert('Upload failed: Request too large. Please reduce the number or size of files and try again.');
+        toast.error('Upload Failed', {
+          description: 'Request too large. Please reduce the number or size of files and try again.',
+          duration: 6000,
+        });
       } else if (err.response?.status === 422) {
-        alert('Upload failed: Validation error. Please check your form data.');
+        toast.error('Validation Error', {
+          description: 'Please check your form data and try again.',
+          duration: 6000,
+        });
       } else if (err.code === 'ECONNABORTED') {
-        alert('Upload failed: Request timeout. Please try with smaller files or better internet connection.');
+        toast.error('Upload Timeout', {
+          description: 'Please try with smaller files or check your internet connection.',
+          duration: 6000,
+        });
       } else {
-        alert('Upload failed: ' + (err.response?.data?.message || err.message || 'Unknown error'));
+        toast.error('Upload Failed', {
+          description: err.response?.data?.message || err.message || 'An unknown error occurred',
+          duration: 6000,
+        });
       }
     });
   } else {
@@ -5597,28 +5743,64 @@ const hasFiles = () => {
               {expandedSections.asset && <div className="p-4 sm:p-6">
                 {/* First row: Asset Name, Model No., Manufacturer */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                  <TextField required label="Asset Name" placeholder="Enter Asset Name" name="assetName" fullWidth variant="outlined" InputLabelProps={{
-                    shrink: true
-                  }} InputProps={{
-                    sx: fieldStyles
-                  }}
+                  <TextField 
+                    required 
+                    label="Asset Name" 
+                    placeholder="Enter Asset Name" 
+                    name="assetName" 
+                    fullWidth 
+                    variant="outlined" 
+                    value={formData.name || ''}
+                    error={hasValidationError('Asset Name')}
+                    helperText={hasValidationError('Asset Name') ? 'Asset Name is required' : ''}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
                     onChange={e => handleFieldChange('name', e.target.value)}
                   />
-                  <TextField required label="Model No." placeholder="Enter Model No" name="modelNo" fullWidth variant="outlined" InputLabelProps={{
-                    shrink: true
-                  }} InputProps={{
-                    sx: fieldStyles
-                  }}
+                  <TextField 
+                    required 
+                    label="Model No." 
+                    placeholder="Enter Model No" 
+                    name="modelNo" 
+                    fullWidth 
+                    variant="outlined" 
+                    value={formData.model_number || ''}
+                    error={hasValidationError('Model No')}
+                    helperText={hasValidationError('Model No') ? 'Model No. is required' : ''}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
                     onChange={e => handleFieldChange('model_number', e.target.value)}
                   />
-                  <TextField required label="Manufacturer" placeholder="Enter Manufacturer" name="manufacturer" fullWidth variant="outlined" InputLabelProps={{
-                    shrink: true
-                  }} InputProps={{
-                    sx: fieldStyles
-                  }}
+                  <TextField 
+                    required 
+                    label="Manufacturer" 
+                    placeholder="Enter Manufacturer" 
+                    name="manufacturer" 
+                    fullWidth 
+                    variant="outlined" 
+                    value={formData.manufacturer || ''}
+                    error={hasValidationError('Manufacturer')}
+                    helperText={hasValidationError('Manufacturer') ? 'Manufacturer is required' : ''}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                    onChange={e => handleFieldChange('manufacturer', e.target.value)}
+                  />
+                  {/* }}
                     onChange={e => handleFieldChange('manufacturer', e.target.value)}
 
-                  />
+                  /> */}
                 </div>
 
                 {/* Second row: Group, Subgroup */}
@@ -5764,11 +5946,11 @@ const hasFiles = () => {
                     {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </div>
                 </div>
-                {expandedSections.warranty && <div className="p-4 sm:p-6">
+                {expandedSections.warranty && <div className={`p-4 sm:p-6 ${!itAssetsToggle ? 'opacity-50 pointer-events-none' : ''}`}>
                   {/* System Details */}
                   <div className="mb-6">
                     <h3 className="font-semibold mb-4" style={{
-                      color: '#C72030'
+                      color: itAssetsToggle ? '#C72030' : '#9CA3AF'
                     }}>SYSTEM DETAILS</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <TextField 
@@ -5779,6 +5961,7 @@ const hasFiles = () => {
                         variant="outlined" 
                         value={itAssetDetails.system_details.os}
                         onChange={(e) => handleItAssetDetailsChange('system_details', 'os', e.target.value)}
+                        disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
                         }} 
@@ -5795,6 +5978,7 @@ const hasFiles = () => {
                         variant="outlined" 
                         value={itAssetDetails.system_details.memory}
                         onChange={(e) => handleItAssetDetailsChange('system_details', 'memory', e.target.value)}
+                        disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
                         }} 
@@ -5810,6 +5994,7 @@ const hasFiles = () => {
                         variant="outlined" 
                         value={itAssetDetails.system_details.processor}
                         onChange={(e) => handleItAssetDetailsChange('system_details', 'processor', e.target.value)}
+                        disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
                         }} 
@@ -5891,6 +6076,7 @@ const hasFiles = () => {
                         variant="outlined" 
                         value={itAssetDetails.hardware.model}
                         onChange={(e) => handleItAssetDetailsChange('hardware', 'model', e.target.value)}
+                        disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
                         }} 
@@ -5906,6 +6092,7 @@ const hasFiles = () => {
                         variant="outlined" 
                         value={itAssetDetails.hardware.serial_no}
                         onChange={(e) => handleItAssetDetailsChange('hardware', 'serial_no', e.target.value)}
+                        disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
                         }} 
@@ -5921,6 +6108,7 @@ const hasFiles = () => {
                         variant="outlined" 
                         value={itAssetDetails.hardware.capacity}
                         onChange={(e) => handleItAssetDetailsChange('hardware', 'capacity', e.target.value)}
+                        disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
                         }} 
@@ -5969,26 +6157,49 @@ const hasFiles = () => {
                     {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </div>
                 </div>
-                {expandedSections.meterCategory && <div className="p-4 sm:p-6">
+                {expandedSections.meterCategory && <div className={`p-4 sm:p-6 ${!meterDetailsToggle ? 'opacity-50 pointer-events-none' : ''}`}>
                   {/* Meter Type */}
                   <div className="mb-6">
                     <div className="flex items-center gap-4 mb-4">
                       <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
                       <div className="flex gap-6">
                         <div className="flex items-center space-x-2">
-                          <input type="radio" id="meter-type-parent" name="meter_tag_type" value="ParentMeter" checked={meterType === 'ParentMeter'} onChange={e => {
-                            setMeterType(e.target.value);
-                            handleFieldChange('meter_tag_type', e.target.value);
-                          }} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                            accentColor: '#C72030'
-                          }} />
-                          <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
+                          <input 
+                            type="radio" 
+                            id="meter-type-parent" 
+                            name="meter_tag_type" 
+                            value="ParentMeter" 
+                            checked={meterType === 'ParentMeter'} 
+                            onChange={e => {
+                              setMeterType(e.target.value);
+                              handleFieldChange('meter_tag_type', e.target.value);
+                            }} 
+                            disabled={!meterDetailsToggle}
+                            className="w-4 h-4 text-[#C72030] border-gray-300" 
+                            style={{
+                              accentColor: '#C72030'
+                            }} 
+                          />
+                          <label htmlFor="meter-type-parent" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Parent</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <input type="radio" id="meter-type-sub" name="meter_tag_type" value="SubMeter" checked={meterType === 'SubMeter'} onChange={e => { setMeterType(e.target.value); handleFieldChange('meter_tag_type', e.target.value); }} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                            accentColor: '#C72030'
-                          }} />
-                          <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
+                          <input 
+                            type="radio" 
+                            id="meter-type-sub" 
+                            name="meter_tag_type" 
+                            value="SubMeter" 
+                            checked={meterType === 'SubMeter'} 
+                            onChange={e => { 
+                              setMeterType(e.target.value); 
+                              handleFieldChange('meter_tag_type', e.target.value); 
+                            }} 
+                            disabled={!meterDetailsToggle}
+                            className="w-4 h-4 text-[#C72030] border-gray-300" 
+                            style={{
+                              accentColor: '#C72030'
+                            }} 
+                          />
+                          <label htmlFor="meter-type-sub" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Sub</label>
                         </div>
                       </div>
                     </div>
@@ -6006,7 +6217,7 @@ const hasFiles = () => {
                           setSelectedParentMeterId(value);
                           handleFieldChange('parent_meter_id', value);
                         }}
-                        disabled={parentMeterLoading}
+                        disabled={parentMeterLoading || !meterDetailsToggle}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={parentMeterLoading ? "Loading..." : "Select Parent Meter"} />
@@ -6286,52 +6497,94 @@ const hasFiles = () => {
                   {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </div>
               </div>
-              {expandedSections.nonConsumption && <div className="p-4 sm:p-6">
+              {expandedSections.nonConsumption && <div className={`p-4 sm:p-6 ${!depreciationToggle ? 'opacity-50 pointer-events-none' : ''}`}>
                 <div className="space-y-6">
                   {/* Method Section */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-4 block">Method</label>
+                    <label className={`text-sm font-medium mb-4 block ${!depreciationToggle ? 'text-gray-400' : 'text-gray-700'}`}>Method</label>
                     <div className="flex gap-8">
                       <div className="flex items-center space-x-2">
-                        <input type="radio" id="straight-line" name="depreciationMethod" value="straight_line" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                          accentColor: '#C72030'
-                        }}
+                        <input 
+                          type="radio" 
+                          id="straight-line" 
+                          name="depreciationMethod" 
+                          value="straight_line" 
+                          defaultChecked 
+                          disabled={!depreciationToggle}
+                          className="w-4 h-4 text-[#C72030] border-gray-300" 
+                          style={{
+                            accentColor: '#C72030'
+                          }}
                           onChange={e => handleFieldChange('depreciation_method', e.target.value)}
                         />
-                        <label htmlFor="straight-line" className="text-sm">Straight Line</label>
+                        <label htmlFor="straight-line" className={`text-sm ${!depreciationToggle ? 'text-gray-400' : ''}`}>Straight Line</label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <input type="radio" id="wdv" name="depreciationMethod" value="wdv" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                          accentColor: '#C72030'
-                        }}
+                        <input 
+                          type="radio" 
+                          id="wdv" 
+                          name="depreciationMethod" 
+                          value="wdv" 
+                          disabled={!depreciationToggle}
+                          className="w-4 h-4 text-[#C72030] border-gray-300" 
+                          style={{
+                            accentColor: '#C72030'
+                          }}
                           onChange={e => handleFieldChange('depreciation_method', e.target.value)}
                         />
-                        <label htmlFor="wdv" className="text-sm">WDV</label>
+                        <label htmlFor="wdv" className={`text-sm ${!depreciationToggle ? 'text-gray-400' : ''}`}>WDV</label>
                       </div>
                     </div>
                   </div>
 
                   {/* Input Fields Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <TextField required label="Useful Life (in yrs)" placeholder="YRS" name="usefulLife" fullWidth variant="outlined" InputLabelProps={{
-                      shrink: true
-                    }} InputProps={{
-                      sx: fieldStyles
-                    }}
+                    <TextField 
+                      required 
+                      label="Useful Life (in yrs)" 
+                      placeholder="YRS" 
+                      name="usefulLife" 
+                      fullWidth 
+                      variant="outlined" 
+                      disabled={!depreciationToggle}
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      InputProps={{
+                        sx: fieldStyles
+                      }}
                       onChange={e => handleFieldChange('useful_life', e.target.value)}
                     />
-                    <TextField required label="Salvage Value" placeholder="Enter Value" name="salvageValue" fullWidth variant="outlined" InputLabelProps={{
-                      shrink: true
-                    }} InputProps={{
-                      sx: fieldStyles
-                    }}
+                    <TextField 
+                      required 
+                      label="Salvage Value" 
+                      placeholder="Enter Value" 
+                      name="salvageValue" 
+                      fullWidth 
+                      variant="outlined" 
+                      disabled={!depreciationToggle}
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      InputProps={{
+                        sx: fieldStyles
+                      }}
                       onChange={e => handleFieldChange('salvage_value', e.target.value)}
                     />
-                    <TextField required label="Depreciation Rate" placeholder="Enter Value" name="depreciationRate" fullWidth variant="outlined" InputLabelProps={{
-                      shrink: true
-                    }} InputProps={{
-                      sx: fieldStyles
-                    }}
+                    <TextField 
+                      required 
+                      label="Depreciation Rate" 
+                      placeholder="Enter Value" 
+                      name="depreciationRate" 
+                      fullWidth 
+                      variant="outlined" 
+                      disabled={!depreciationToggle}
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      InputProps={{
+                        sx: fieldStyles
+                      }}
                       onChange={e => handleFieldChange('depreciation_rate', e.target.value)}
                     />
                   </div>
@@ -6498,7 +6751,7 @@ const hasFiles = () => {
                   {expandedSections.assetLoaned ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </div>
               </div>
-              {expandedSections.assetLoaned && <div className="p-4 sm:p-6">
+              {expandedSections.assetLoaned && <div className={`p-4 sm:p-6 ${!assetLoanedToggle ? 'opacity-50 pointer-events-none' : ''}`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <FormControl fullWidth variant="outlined" sx={{
                     minWidth: 120
@@ -6515,7 +6768,7 @@ const hasFiles = () => {
                       }
                       sx={fieldStyles}
                       required
-                      disabled={vendorsLoading}
+                      disabled={vendorsLoading || !assetLoanedToggle}
                     >
                       <MenuItem value="">
                         <em>{vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}</em>
@@ -6527,19 +6780,39 @@ const hasFiles = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                  <TextField required label="Agreement Start Date*" placeholder="dd/mm/yyyy" name="agreementStartDate" type="date" fullWidth variant="outlined" InputLabelProps={{
-                    shrink: true
-                  }} InputProps={{
-                    sx: fieldStyles
-                  }}
-                  onChange={(e) => handleArrayFieldChange('agreement_from_date', e.target.value)}
+                  <TextField 
+                    required 
+                    label="Agreement Start Date*" 
+                    placeholder="dd/mm/yyyy" 
+                    name="agreementStartDate" 
+                    type="date" 
+                    fullWidth 
+                    variant="outlined" 
+                    disabled={!assetLoanedToggle}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                    onChange={(e) => handleArrayFieldChange('agreement_from_date', e.target.value)}
                   />
-                  <TextField required label="Agreement End Date*" placeholder="dd/mm/yyyy" name="agreementEndDate" type="date" fullWidth variant="outlined" InputLabelProps={{
-                    shrink: true
-                  }} InputProps={{
-                    sx: fieldStyles
-                  }}
-                  onChange={(e) => handleArrayFieldChange('agreement_to_date', e.target.value)}
+                  <TextField 
+                    required 
+                    label="Agreement End Date*" 
+                    placeholder="dd/mm/yyyy" 
+                    name="agreementEndDate" 
+                    type="date" 
+                    fullWidth 
+                    variant="outlined" 
+                    disabled={!assetLoanedToggle}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                    onChange={(e) => handleArrayFieldChange('agreement_to_date', e.target.value)}
                   
                   />
                 </div>

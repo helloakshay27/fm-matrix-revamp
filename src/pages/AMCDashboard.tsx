@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag } from 'lucide-react';
+import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter } from 'lucide-react';
+import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
+import { amcAnalyticsAPI, AMCStatusData } from '@/services/amcAnalyticsAPI';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -121,6 +123,32 @@ export const AMCDashboard = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
     const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   
+  
+  // Analytics states
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
+  
+  // Set default dates: last year to today for analytics
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const lastYear = new Date();
+    lastYear.setFullYear(today.getFullYear() - 1);
+    
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    return {
+      startDate: formatDate(lastYear),
+      endDate: formatDate(today)
+    };
+  };
+  
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{startDate: string; endDate: string}>(getDefaultDateRange());
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -139,14 +167,48 @@ export const AMCDashboard = () => {
     }
   }, [isFilterModalOpen, amcTypeFilter, startDateFilter, endDateFilter]);
 
+  // Fetch AMC analytics data
+  const fetchAMCAnalyticsData = async (startDate: Date, endDate: Date) => {
+    setAnalyticsLoading(true);
+    try {
+      const analyticsData = await amcAnalyticsAPI.getAMCStatusData(startDate, endDate);
+      setAmcAnalyticsData(analyticsData);
+      toast.success('AMC analytics data updated successfully');
+    } catch (error) {
+      console.error('Error fetching AMC analytics data:', error);
+      toast.error('Failed to fetch AMC analytics data');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Handle analytics filter apply
+  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+    setAnalyticsDateRange(filters);
+    
+    // Convert date strings to Date objects
+    const startDate = new Date(filters.startDate.split('/').reverse().join('-')); // Convert DD/MM/YYYY to YYYY-MM-DD
+    const endDate = new Date(filters.endDate.split('/').reverse().join('-'));
+    
+    fetchAMCAnalyticsData(startDate, endDate);
+  };
+
   // Use API data if available, otherwise fallback to initial data
   const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
   const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
-  // Extract counts from API response
-  const totalAMCs = (apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0;
-  const activeAMCs = (apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0;
-  const inactiveAMCs = (apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0;
+  
+  // Extract counts from API response - use analytics data if available
+  const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amc + amcAnalyticsData.inactive_amc) : 
+    ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0);
+  const activeAMCs = amcAnalyticsData?.active_amc || 
+    ((apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0);
+  const inactiveAMCs = amcAnalyticsData?.inactive_amc || 
+    ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
   const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
+  
+  // Service and Asset totals from analytics
+  const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
+  const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
 
   // Filter function to fetch AMC data based on filters
   const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1) => {
@@ -209,6 +271,14 @@ export const AMCDashboard = () => {
       fetchFilteredAMCs(filter, currentPage);
     }
   }, [baseUrl, token, siteId, filter, amcTypeFilter, startDateFilter, endDateFilter, currentPage]);
+
+  // Load analytics data with default date range on component mount
+  useEffect(() => {
+    const defaultRange = getDefaultDateRange();
+    const startDate = new Date(defaultRange.startDate.split('/').reverse().join('-'));
+    const endDate = new Date(defaultRange.endDate.split('/').reverse().join('-'));
+    fetchAMCAnalyticsData(startDate, endDate);
+  }, []);
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
@@ -573,21 +643,20 @@ export const AMCDashboard = () => {
     { name: 'Inactive', value: inactiveAMCs, color: '#d8dcdd' }
   ];
 
-  const reactiveAMCs = Math.floor(totalAMCs * 0.7);
-  const proactiveAMCs = totalAMCs - reactiveAMCs;
-
-  const typeData = [
-    { name: 'Reactive', value: reactiveAMCs, color: '#c6b692' },
-    { name: 'Proactive', value: proactiveAMCs, color: '#d8dcdd' }
+  // Resource type data using analytics API data
+  const resourceTypeData = [
+    { name: 'Services', value: serviceTotalAMCs, color: '#c6b692' },
+    { name: 'Assets', value: assetTotalAMCs, color: '#d8dcdd' }
   ];
 
-  const resourceTypeData = amcData.reduce((acc, amc) => {
+  // AMC Type data for unit resource-wise chart
+  const amcTypeData = amcData.reduce((acc, amc) => {
     const type = amc.amc_type || 'Unknown';
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
 
-  const resourceChartData = Object.entries(resourceTypeData).map(([name, value]) => ({ name, value }));
+  const resourceChartData = Object.entries(amcTypeData).map(([name, value]) => ({ name, value }));
 
   const agingMatrixData = [
     { priority: 'P1', '0-30': 5, '31-60': 2, '61-90': 3, '91-180': 1, '180+': 8 },
@@ -728,8 +797,19 @@ export const AMCDashboard = () => {
             </TabsList>
 
             <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              <div className="flex justify-end">
-                {/* <AMCSelector onSelectionChange={handleSelectionChange} /> */}
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  Analytics Data Range: {analyticsDateRange.startDate} to {analyticsDateRange.endDate}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAnalyticsFilterOpen(true)}
+                  className="flex items-center gap-2"
+                  disabled={analyticsLoading}
+                >
+                  <Filter className="w-4 h-4" />
+                  Filter Analytics
+                </Button>
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
                 <div className="xl:col-span-8 space-y-4 sm:space-y-6">
@@ -809,14 +889,14 @@ export const AMCDashboard = () => {
                                 <SortableChartItem key={chartId} id={chartId}>
                                   <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                                     <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                      <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive AMCs</h3>
+                                      <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Services & Assets AMCs</h3>
                                       <Download className="w-4 h-4 sm:w-5 sm:h-5 text-black cursor-pointer" />
                                     </div>
                                     <div className="relative flex items-center justify-center">
                                       <ResponsiveContainer width="100%" height={200} className="sm:h-[200px]">
                                         <PieChart>
-                                          <Pie
-                                            data={typeData}
+                                           <Pie
+                                             data={resourceTypeData}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={40}
@@ -840,7 +920,7 @@ export const AMCDashboard = () => {
                                             }}
                                             labelLine={false}
                                           >
-                                            {typeData.map((entry, index) => (
+                                            {resourceTypeData.map((entry, index) => (
                                               <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                           </Pie>
@@ -854,7 +934,7 @@ export const AMCDashboard = () => {
                                       </div>
                                     </div>
                                     <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                      {typeData.map((item, index) => (
+                                      {resourceTypeData.map((item, index) => (
                                         <div key={index} className="flex items-center gap-2">
                                           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
                                           <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
@@ -1169,6 +1249,13 @@ export const AMCDashboard = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* AMC Analytics Filter Dialog */}
+          <AMCAnalyticsFilterDialog
+            isOpen={isAnalyticsFilterOpen}
+            onClose={() => setIsAnalyticsFilterOpen(false)}
+            onApplyFilters={handleAnalyticsFilterApply}
+          />
         </>
       )}
     </div>

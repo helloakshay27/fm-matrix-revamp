@@ -1,5 +1,41 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { us  const performSearch = (searchTerm: string) => {
+    console.log('🚀 PERFORMING IMMEDIATE SEARCH:', {
+      searchTerm,
+      timestamp: new Date().toISOString()
+    });
+    
+    const searchFilters: TicketFilters = {
+      ...activeFilters,
+      search_all_fields_cont: searchTerm
+    };
+    
+    // Reset to first page and fetch with search
+    setCurrentPage(1);
+    fetchTickets(1, perPage, searchFilters);
+    fetchTicketSummary(searchFilters);
+  };
+
+  const handleRefresh = () => {
+    console.log('🔄 REFRESHING TICKETS DATA:', {
+      currentPage,
+      searchTerm,
+      activeFilters,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (searchTerm.trim()) {
+      // If searching, refresh with search
+      performSearch(searchTerm.trim());
+    } else {
+      // If not searching, refresh with current filters
+      fetchTickets(currentPage, perPage, activeFilters);
+    }
+    
+    // Also refresh ticket statistics
+    fetchTicketSummary(searchTerm.trim() ? { ...activeFilters, search_all_fields_cont: searchTerm.trim() } : activeFilters);
+  }; 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -12,6 +48,8 @@ import { TicketPagination } from '../components/TicketPagination';
 import { TicketSelectionPanel } from '../components/TicketSelectionPanel';
 import { ticketManagementAPI, TicketResponse, TicketListResponse, TicketFilters } from '../services/ticketManagementAPI';
 import { toast } from 'sonner';
+// Remove useDebounce import as we're using immediate search
+// import { useDebounce } from '@/hooks/useDebounce';
 
 const TruncatedDescription = ({ text }: { text: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -61,7 +99,9 @@ export const TicketListDashboard = () => {
   const [isExporting, setIsExporting] = useState(false);
   const navigate = useNavigate();
 
-  // Handle search with immediate API call (no debouncing) - like asset search
+  
+
+  // Handle search with immediate API call (no debouncing)
   const handleSearch = (term: string) => {
     console.log('🔍 IMMEDIATE SEARCH TRIGGERED:', {
       searchTerm: term,
@@ -73,18 +113,16 @@ export const TicketListDashboard = () => {
     
     if (term.trim()) {
       // Immediate search - call API directly
-      console.log('🚀 CALLING PERFORM SEARCH with term:', term.trim());
       performSearch(term.trim());
     } else {
       // Empty search - fetch all tickets
-      console.log('🧹 EMPTY SEARCH - FETCHING ALL TICKETS');
       fetchTickets(1, perPage, activeFilters);
       setCurrentPage(1);
     }
   };
 
   const performSearch = (searchTerm: string) => {
-    console.log('🚀 PERFORMING IMMEDIATE SEARCH:', {
+    console.log('� PERFORMING IMMEDIATE SEARCH:', {
       searchTerm,
       timestamp: new Date().toISOString()
     });
@@ -94,34 +132,14 @@ export const TicketListDashboard = () => {
       search_all_fields_cont: searchTerm
     };
     
-    console.log('🔧 SEARCH FILTERS CREATED:', searchFilters);
-    
     // Reset to first page and fetch with search
     setCurrentPage(1);
-    console.log('📞 CALLING fetchTickets with search filters...');
     fetchTickets(1, perPage, searchFilters);
     fetchTicketSummary(searchFilters);
   };
 
-  const handleRefresh = () => {
-    console.log('🔄 REFRESHING TICKETS DATA:', {
-      currentPage,
-      searchTerm,
-      activeFilters,
-      timestamp: new Date().toISOString()
-    });
-    
-    if (searchTerm.trim()) {
-      // If searching, refresh with search
-      performSearch(searchTerm.trim());
-    } else {
-      // If not searching, refresh with current filters
-      fetchTickets(currentPage, perPage, activeFilters);
-    }
-    
-    // Also refresh ticket statistics
-    fetchTicketSummary(searchTerm.trim() ? { ...activeFilters, search_all_fields_cont: searchTerm.trim() } : activeFilters);
-  };
+  // Remove debounced search - use direct search instead
+  // const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Memoize the combined filters (simplified without debouncing)
   const combinedFilters = useMemo(() => {
@@ -152,86 +170,42 @@ export const TicketListDashboard = () => {
       page, 
       itemsPerPage, 
       filters,
-      hasSearchFilter: !!filters.search_all_fields_cont,
-      searchValue: filters.search_all_fields_cont || 'none',
       timestamp: new Date().toISOString(),
       isSearchActive: !!filters.search_all_fields_cont
     });
     
     try {
-      console.log('📡 CALLING ticketManagementAPI.getTickets...');
       const response: TicketListResponse = await ticketManagementAPI.getTickets(page, itemsPerPage, filters);
-      console.log('✅ TICKETS API RESPONSE RECEIVED:', {
+      console.log('✅ TICKETS API RESPONSE:', {
         totalRecords: response.pagination?.total_count || 0,
         ticketsReceived: response.complaints?.length || 0,
         searchTerm: filters.search_all_fields_cont || 'none',
-        success: true,
         response
       });
       
       setTickets(response.complaints || []);
       
-      // Enhanced logging for search results
+      // Log first few tickets to see their status values
       if (response.complaints && response.complaints.length > 0) {
-        console.log('📊 DETAILED SEARCH RESULTS:', {
-          totalFound: response.complaints.length,
-          searchTerm: filters.search_all_fields_cont || 'none',
-          currentPage: page,
-          allTicketNumbers: response.complaints.map(t => t.ticket_number),
-          firstFewTickets: response.complaints.slice(0, 5).map(t => ({
-            id: t.id,
-            ticket_number: t.ticket_number,
-            issue_status: t.issue_status,
-            heading: t.heading?.substring(0, 50),
-            description: t.description?.substring(0, 50)
-          }))
-        });
-        
-        // Check if the searched ticket number exists in results
-        if (filters.search_all_fields_cont) {
-          const searchedTicket = response.complaints.find(t => 
-            t.ticket_number?.includes(filters.search_all_fields_cont!) ||
-            t.heading?.includes(filters.search_all_fields_cont!) ||
-            t.description?.includes(filters.search_all_fields_cont!)
-          );
-          console.log('🎯 SEARCHED TICKET FOUND IN RESULTS:', {
-            searchTerm: filters.search_all_fields_cont,
-            foundTicket: searchedTicket ? {
-              id: searchedTicket.id,
-              ticket_number: searchedTicket.ticket_number,
-              heading: searchedTicket.heading?.substring(0, 50)
-            } : null,
-            wasFound: !!searchedTicket
-          });
-        }
+        console.log('Sample ticket statuses:', response.complaints.slice(0, 3).map(t => ({
+          id: t.id,
+          ticket_number: t.ticket_number,
+          issue_status: t.issue_status
+        })));
       } else if (filters.search_all_fields_cont) {
         console.log('⚠️ SEARCH RETURNED NO RESULTS for term:', filters.search_all_fields_cont);
-        console.log('💡 This could mean:');
-        console.log('   - The ticket exists but on a different page');
-        console.log('   - The search term doesn\'t match any records');
-        console.log('   - There\'s an API filtering issue');
       }
       
       if (response.pagination) {
         setTotalPages(response.pagination.total_pages || 1);
         setTotalRecords(response.pagination.total_count || 0);
         setCurrentPage(response.pagination.current_page || 1);
-        console.log('📄 PAGINATION UPDATED:', {
-          totalPages: response.pagination.total_pages,
-          totalRecords: response.pagination.total_count,
-          currentPage: response.pagination.current_page
-        });
       }
     } catch (error) {
       toast.error('Failed to fetch tickets');
       console.error('❌ ERROR FETCHING TICKETS:', error);
-      console.error('❌ ERROR DETAILS:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
     } finally {
       setIsLoading(false);
-      console.log('✅ FETCH TICKETS COMPLETED - Loading set to false');
     }
   }, []);
 
@@ -260,9 +234,6 @@ export const TicketListDashboard = () => {
       currentPage,
       perPage,
       activeFilters,
-      searchTerm,
-      searchTermTrimmed: searchTerm.trim(),
-      willSkipBecauseSearching: !!searchTerm.trim(),
       timestamp: new Date().toISOString(),
       triggerReason: {
         pageChange: true,
@@ -273,11 +244,8 @@ export const TicketListDashboard = () => {
     
     // Only fetch if not searching (search is handled separately)
     if (!searchTerm.trim()) {
-      console.log('✅ NO SEARCH TERM - FETCHING TICKETS WITH FILTERS ONLY');
       fetchTickets(currentPage, perPage, activeFilters);
       fetchTicketSummary(activeFilters);
-    } else {
-      console.log('⏭️ SEARCH TERM EXISTS - SKIPPING useEffect FETCH (search handles this)');
     }
   }, [fetchTickets, fetchTicketSummary, currentPage, perPage, activeFilters]);
 
@@ -306,34 +274,7 @@ export const TicketListDashboard = () => {
   }, []);
 
   const handlePageChange = (page: number) => {
-    console.log('📄 PAGE CHANGE TRIGGERED:', {
-      fromPage: currentPage,
-      toPage: page,
-      searchTerm: searchTerm.trim(),
-      hasActiveSearch: !!searchTerm.trim(),
-      activeFilters,
-      willFetchWithSearch: !!searchTerm.trim(),
-      timestamp: new Date().toISOString()
-    });
-    
     setCurrentPage(page);
-    
-    // If searching, fetch with search filters
-    if (searchTerm.trim()) {
-      const searchFilters: TicketFilters = {
-        ...activeFilters,
-        search_all_fields_cont: searchTerm.trim()
-      };
-      console.log('🔍 PAGINATION WITH SEARCH - Fetching page with search filters:', {
-        page,
-        searchFilters,
-        searchTerm: searchTerm.trim()
-      });
-      fetchTickets(page, perPage, searchFilters);
-    } else {
-      console.log('📑 PAGINATION WITHOUT SEARCH - Fetching page with regular filters');
-      fetchTickets(page, perPage, activeFilters);
-    }
   };
 
   const handlePerPageChange = (newPerPage: number) => {
@@ -730,7 +671,7 @@ export const TicketListDashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleSearch('')}
+              onClick={() => setSearchTerm('')}
               className="text-green-600 border-green-300 hover:bg-green-100"
             >
               Clear Search
@@ -803,10 +744,9 @@ export const TicketListDashboard = () => {
           <Button 
             variant="outline"
             className="border-gray-300 text-gray-600 hover:bg-gray-50"
-            onClick={handleRefresh}
           >
             <Settings className="w-4 h-4 mr-2" />
-            Refresh
+            Columns
           </Button>
         </div>
       </div>
@@ -860,14 +800,6 @@ export const TicketListDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {console.log('🎫 RENDERING TABLE - Current tickets being displayed:', {
-                  ticketsCount: tickets.length,
-                  currentPage,
-                  searchTerm: searchTerm.trim(),
-                  hasSearch: !!searchTerm.trim(),
-                  ticketNumbers: tickets.map(t => t.ticket_number),
-                  timestamp: new Date().toISOString()
-                })}
                 {tickets.map((ticket) => (
                   <TableRow key={ticket.id}>
                     <TableCell>
@@ -948,7 +880,7 @@ export const TicketListDashboard = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleSearch('')}
+                            onClick={() => setSearchTerm('')}
                             className="text-blue-600 border-blue-300 hover:bg-blue-50"
                           >
                             Clear search

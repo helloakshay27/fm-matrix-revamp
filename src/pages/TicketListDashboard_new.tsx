@@ -73,11 +73,9 @@ export const TicketListDashboard = () => {
     
     if (term.trim()) {
       // Immediate search - call API directly
-      console.log('🚀 CALLING PERFORM SEARCH with term:', term.trim());
       performSearch(term.trim());
     } else {
       // Empty search - fetch all tickets
-      console.log('🧹 EMPTY SEARCH - FETCHING ALL TICKETS');
       fetchTickets(1, perPage, activeFilters);
       setCurrentPage(1);
     }
@@ -94,11 +92,8 @@ export const TicketListDashboard = () => {
       search_all_fields_cont: searchTerm
     };
     
-    console.log('🔧 SEARCH FILTERS CREATED:', searchFilters);
-    
     // Reset to first page and fetch with search
     setCurrentPage(1);
-    console.log('📞 CALLING fetchTickets with search filters...');
     fetchTickets(1, perPage, searchFilters);
     fetchTicketSummary(searchFilters);
   };
@@ -152,86 +147,42 @@ export const TicketListDashboard = () => {
       page, 
       itemsPerPage, 
       filters,
-      hasSearchFilter: !!filters.search_all_fields_cont,
-      searchValue: filters.search_all_fields_cont || 'none',
       timestamp: new Date().toISOString(),
       isSearchActive: !!filters.search_all_fields_cont
     });
     
     try {
-      console.log('📡 CALLING ticketManagementAPI.getTickets...');
       const response: TicketListResponse = await ticketManagementAPI.getTickets(page, itemsPerPage, filters);
-      console.log('✅ TICKETS API RESPONSE RECEIVED:', {
+      console.log('✅ TICKETS API RESPONSE:', {
         totalRecords: response.pagination?.total_count || 0,
         ticketsReceived: response.complaints?.length || 0,
         searchTerm: filters.search_all_fields_cont || 'none',
-        success: true,
         response
       });
       
       setTickets(response.complaints || []);
       
-      // Enhanced logging for search results
+      // Log first few tickets to see their status values
       if (response.complaints && response.complaints.length > 0) {
-        console.log('📊 DETAILED SEARCH RESULTS:', {
-          totalFound: response.complaints.length,
-          searchTerm: filters.search_all_fields_cont || 'none',
-          currentPage: page,
-          allTicketNumbers: response.complaints.map(t => t.ticket_number),
-          firstFewTickets: response.complaints.slice(0, 5).map(t => ({
-            id: t.id,
-            ticket_number: t.ticket_number,
-            issue_status: t.issue_status,
-            heading: t.heading?.substring(0, 50),
-            description: t.description?.substring(0, 50)
-          }))
-        });
-        
-        // Check if the searched ticket number exists in results
-        if (filters.search_all_fields_cont) {
-          const searchedTicket = response.complaints.find(t => 
-            t.ticket_number?.includes(filters.search_all_fields_cont!) ||
-            t.heading?.includes(filters.search_all_fields_cont!) ||
-            t.description?.includes(filters.search_all_fields_cont!)
-          );
-          console.log('🎯 SEARCHED TICKET FOUND IN RESULTS:', {
-            searchTerm: filters.search_all_fields_cont,
-            foundTicket: searchedTicket ? {
-              id: searchedTicket.id,
-              ticket_number: searchedTicket.ticket_number,
-              heading: searchedTicket.heading?.substring(0, 50)
-            } : null,
-            wasFound: !!searchedTicket
-          });
-        }
+        console.log('Sample ticket statuses:', response.complaints.slice(0, 3).map(t => ({
+          id: t.id,
+          ticket_number: t.ticket_number,
+          issue_status: t.issue_status
+        })));
       } else if (filters.search_all_fields_cont) {
         console.log('⚠️ SEARCH RETURNED NO RESULTS for term:', filters.search_all_fields_cont);
-        console.log('💡 This could mean:');
-        console.log('   - The ticket exists but on a different page');
-        console.log('   - The search term doesn\'t match any records');
-        console.log('   - There\'s an API filtering issue');
       }
       
       if (response.pagination) {
         setTotalPages(response.pagination.total_pages || 1);
         setTotalRecords(response.pagination.total_count || 0);
         setCurrentPage(response.pagination.current_page || 1);
-        console.log('📄 PAGINATION UPDATED:', {
-          totalPages: response.pagination.total_pages,
-          totalRecords: response.pagination.total_count,
-          currentPage: response.pagination.current_page
-        });
       }
     } catch (error) {
       toast.error('Failed to fetch tickets');
       console.error('❌ ERROR FETCHING TICKETS:', error);
-      console.error('❌ ERROR DETAILS:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
     } finally {
       setIsLoading(false);
-      console.log('✅ FETCH TICKETS COMPLETED - Loading set to false');
     }
   }, []);
 
@@ -260,9 +211,6 @@ export const TicketListDashboard = () => {
       currentPage,
       perPage,
       activeFilters,
-      searchTerm,
-      searchTermTrimmed: searchTerm.trim(),
-      willSkipBecauseSearching: !!searchTerm.trim(),
       timestamp: new Date().toISOString(),
       triggerReason: {
         pageChange: true,
@@ -273,11 +221,8 @@ export const TicketListDashboard = () => {
     
     // Only fetch if not searching (search is handled separately)
     if (!searchTerm.trim()) {
-      console.log('✅ NO SEARCH TERM - FETCHING TICKETS WITH FILTERS ONLY');
       fetchTickets(currentPage, perPage, activeFilters);
       fetchTicketSummary(activeFilters);
-    } else {
-      console.log('⏭️ SEARCH TERM EXISTS - SKIPPING useEffect FETCH (search handles this)');
     }
   }, [fetchTickets, fetchTicketSummary, currentPage, perPage, activeFilters]);
 
@@ -306,34 +251,7 @@ export const TicketListDashboard = () => {
   }, []);
 
   const handlePageChange = (page: number) => {
-    console.log('📄 PAGE CHANGE TRIGGERED:', {
-      fromPage: currentPage,
-      toPage: page,
-      searchTerm: searchTerm.trim(),
-      hasActiveSearch: !!searchTerm.trim(),
-      activeFilters,
-      willFetchWithSearch: !!searchTerm.trim(),
-      timestamp: new Date().toISOString()
-    });
-    
     setCurrentPage(page);
-    
-    // If searching, fetch with search filters
-    if (searchTerm.trim()) {
-      const searchFilters: TicketFilters = {
-        ...activeFilters,
-        search_all_fields_cont: searchTerm.trim()
-      };
-      console.log('🔍 PAGINATION WITH SEARCH - Fetching page with search filters:', {
-        page,
-        searchFilters,
-        searchTerm: searchTerm.trim()
-      });
-      fetchTickets(page, perPage, searchFilters);
-    } else {
-      console.log('📑 PAGINATION WITHOUT SEARCH - Fetching page with regular filters');
-      fetchTickets(page, perPage, activeFilters);
-    }
   };
 
   const handlePerPageChange = (newPerPage: number) => {
@@ -860,14 +778,6 @@ export const TicketListDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {console.log('🎫 RENDERING TABLE - Current tickets being displayed:', {
-                  ticketsCount: tickets.length,
-                  currentPage,
-                  searchTerm: searchTerm.trim(),
-                  hasSearch: !!searchTerm.trim(),
-                  ticketNumbers: tickets.map(t => t.ticket_number),
-                  timestamp: new Date().toISOString()
-                })}
                 {tickets.map((ticket) => (
                   <TableRow key={ticket.id}>
                     <TableCell>
