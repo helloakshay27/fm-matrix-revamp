@@ -298,7 +298,6 @@ export const AddAMCPage = () => {
     setErrors(newErrors);
     return isValid;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -339,7 +338,48 @@ export const AddAMCPage = () => {
       sendData.append('amc_invoices[content][]', file);
     });
 
-    dispatch(createAMC(sendData));
+    // Dispatch the createAMC action and wait for the result
+    const result = await dispatch(createAMC(sendData));
+
+    if (createAMC.fulfilled.match(result)) {
+      // Clear form fields after successful submission
+      setFormData({
+        details: 'Asset',
+        type: 'Individual',
+        assetName: '',
+        asset_ids: [],
+        vendor: '',
+        group: '',
+        subgroup: '',
+        service: '',
+        supplier: '',
+        startDate: '',
+        endDate: '',
+        cost: '',
+        paymentTerms: '',
+        firstService: '',
+        noOfVisits: '',
+        remarks: ''
+      });
+      setAttachments({
+        contracts: [],
+        invoices: []
+      });
+      setErrors({
+        asset_ids: '',
+        vendor: '',
+        group: '',
+        supplier: '',
+        service: '',
+        startDate: '',
+        endDate: '',
+        cost: '',
+        paymentTerms: '',
+        firstService: '',
+        noOfVisits: ''
+      });
+      toast.success("AMC has been successfully created and scheduled.");
+    }
   };
 
   const handleSaveAndSchedule = async () => {
@@ -382,8 +422,107 @@ export const AddAMCPage = () => {
       sendData.append('amc_invoices[content][]', file);
     });
 
-    dispatch(createAMC(sendData));
+    // Dispatch the createAMC action and wait for the result
+    const result = await dispatch(createAMC(sendData));
+
+    if (createAMC.fulfilled.match(result)) {
+      const amcId = result.payload?.id; // Assuming the API returns the created AMC ID
+      if (amcId) {
+        navigate(`/maintenance/amc/details/${amcId}`); // Redirect to the details page
+      } else {
+        toast.error("AMC created, but no ID returned for redirection.");
+      }
+    }
   };
+
+
+
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!validateForm()) {
+  //     toast.error("Please fill all required fields.");
+  //     return;
+  //   }
+
+  //   const sendData = new FormData();
+  //   sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? formData.asset_ids[0] : '');
+  //   sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+  //   sendData.append('pms_asset_amc[pms_site_id]', '1');
+  //   sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+  //   sendData.append('pms_asset_amc[checklist_type]', formData.details);
+  //   sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+  //   sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+  //   sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+  //   sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+  //   sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+  //   sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+  //   sendData.append('pms_asset_amc[remarks]', formData.remarks);
+  //   sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+  //   sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+
+  //   if (formData.type === 'Group') {
+  //     sendData.append('group_id', formData.group);
+  //     sendData.append('sub_group_id', formData.subgroup);
+  //   }
+
+  //   if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
+  //     formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
+  //   }
+
+  //   attachments.contracts.forEach((file) => {
+  //     sendData.append('amc_contracts[content][]', file);
+  //   });
+
+  //   attachments.invoices.forEach((file) => {
+  //     sendData.append('amc_invoices[content][]', file);
+  //   });
+
+  //   dispatch(createAMC(sendData));
+  // };
+
+  // const handleSaveAndSchedule = async () => {
+  //   if (!validateForm()) {
+  //     toast.error("Please fill all required fields.");
+  //     return;
+  //   }
+
+  //   const sendData = new FormData();
+  //   sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? formData.asset_ids[0] : '');
+  //   sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
+  //   sendData.append('pms_asset_amc[pms_site_id]', '1');
+  //   sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+  //   sendData.append('pms_asset_amc[checklist_type]', formData.details);
+  //   sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+  //   sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+  //   sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+  //   sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+  //   sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+  //   sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+  //   sendData.append('pms_asset_amc[remarks]', formData.remarks);
+  //   sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
+  //   sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+  //   sendData.append('pms_asset_amc[schedule_immediately]', 'true');
+
+  //   if (formData.type === 'Group') {
+  //     sendData.append('group_id', formData.group);
+  //     sendData.append('sub_group_id', formData.subgroup);
+  //   }
+
+  //   if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
+  //     formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
+  //   }
+
+  //   attachments.contracts.forEach((file) => {
+  //     sendData.append('amc_contracts[content][]', file);
+  //   });
+
+  //   attachments.invoices.forEach((file) => {
+  //     sendData.append('amc_invoices[content][]', file);
+  //   });
+
+  //   dispatch(createAMC(sendData));
+  // };
 
   // Responsive styles for TextField and Select
   const fieldStyles = {
