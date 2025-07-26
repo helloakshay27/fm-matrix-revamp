@@ -534,7 +534,7 @@ interface Ticket {
 interface TicketCounts {
   open: number;
   closed: number;
-  pending: number;
+  // pending: number;
   complaints: number;
   suggestions: number;
   requests: number;
@@ -544,7 +544,7 @@ interface TicketCounts {
 const statusMapping: Record<string, string> = {
   Open: 'open',
   Closed: 'closed',
-  Pending: 'pending',
+  // Pending: 'pending',
   Complaints: 'complaints',
   Suggestion: 'suggestions',
   Requests: 'requests',
@@ -557,7 +557,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
   const [ticketCounts, setTicketCounts] = useState<TicketCounts>({
     open: 0,
     closed: 0,
-    pending: 0,
+    // pending: 0,
     complaints: 0,
     suggestions: 0,
     requests: 0,
@@ -581,7 +581,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
       setTicketCounts({
         open: data.open || 0,
         closed: data.closed || 0,
-        pending: data.pending || 0,
+        // pending: data.pending || 0,
         complaints: data.complaints || 0,
         suggestions: data.suggestions || 0,
         requests: data.requests || 0,
@@ -631,7 +631,6 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
   const statusCards = [
     { label: 'Open', icon: Lock },
     { label: 'Closed', icon: Lock },
-    { label: 'Pending', icon: RotateCcw },
     { label: 'Complaints', icon: MessageSquareHeart },
     { label: 'Suggestion', icon: AlertTriangle },
     { label: 'Requests', icon: FileText },

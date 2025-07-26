@@ -64,14 +64,16 @@ interface DepreciationTabProps {
   asset: Asset;
 }
 export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) => {
-  const [selectedMonth, setSelectedMonth] = useState('February');
-  const [selectedYear, setSelectedYear] = useState('2022');
+  const currentDate = new Date();
+  const currentMonthName = currentDate.toLocaleString('default', { month: 'long' });
+  const currentYear = currentDate.getFullYear().toString();
+  
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthName);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [depreciationData, setDepreciationData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
-   const [actualCost, setActualCost] = useState<number>(0);
-  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate());
-
-
+  const [actualCost, setActualCost] = useState<number>(0);
+  const [selectedDay, setSelectedDay] = useState<number>(currentDate.getDate());
 
   const chartConfig = {
     value: {
@@ -80,18 +82,65 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
     }
   };
 
-  const calendarDays = [
-    [31, 1, 2, 3, 4, 5, 6],
-    [7, 8, 9, 10, 11, 12, 13],
-    [14, 15, 16, 17, 18, 19, 20],
-    [21, 22, 23, 24, 25, 26, 27],
-    [28, 1, 2, 3, 4, 5, 6]
-  ];
+  // Function to get calendar days for the selected month and year
+  const getCalendarDays = (month: string, year: string) => {
+    const monthIndex = new Date(`${month} 1, 2000`).getMonth();
+    const firstDay = new Date(parseInt(year), monthIndex, 1);
+    const lastDay = new Date(parseInt(year), monthIndex + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    
+    const weeks = [];
+    let currentWeek = [];
+    
+    // Add empty cells for days before the first day of the month
+    const startDay = startingDay === 0 ? 6 : startingDay - 1; // Convert Sunday (0) to be last (6)
+    for (let i = 0; i < startDay; i++) {
+      const prevMonth = monthIndex === 0 ? 11 : monthIndex - 1;
+      const prevYear = monthIndex === 0 ? parseInt(year) - 1 : parseInt(year);
+      const prevMonthDays = new Date(prevYear, prevMonth + 1, 0).getDate();
+      currentWeek.push({
+        day: prevMonthDays - startDay + i + 1,
+        isCurrentMonth: false
+      });
+    }
+    
+    // Add days of the current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      currentWeek.push({
+        day: day,
+        isCurrentMonth: true
+      });
+      
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+    
+    // Fill the last week with days from next month
+    while (currentWeek.length < 7 && currentWeek.length > 0) {
+      currentWeek.push({
+        day: currentWeek.length - startDay + 1,
+        isCurrentMonth: false
+      });
+    }
+    
+    if (currentWeek.length > 0) {
+      weeks.push(currentWeek);
+    }
+    
+    return weeks;
+  };
+
+  const calendarDays = getCalendarDays(selectedMonth, selectedYear);
+  
   function getApiDate(day: number, month: string, year: string) {
     const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1;
     return `${day.toString().padStart(2, '0')}/${monthIndex.toString().padStart(2, '0')}/${year}`;
   }
 
+  // Fetch depreciation data
   useEffect(() => {
     const fetchDepreciationData = async () => {
       try {
@@ -120,35 +169,56 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
 
         setDepreciationData(mapped);
 
-        // ✅ Set chart data based on bookValueEnd (or bookValueStart)
+        // Set chart data based on bookValueEnd
         setChartData(
           mapped.map((item) => ({
             year: item.year,
-            value: item.bookValueEnd, // or item.bookValueStart
+            value: item.bookValueEnd,
           }))
         );
       } catch (error) {
+        console.error("Error fetching depreciation data:", error);
         setDepreciationData([]);
-        setChartData([]); // Also clear chart data on error
+        setChartData([]);
       }
     };
 
-    fetchDepreciationData();
+    if (assetId) {
+      fetchDepreciationData();
+    }
   }, [assetId, selectedMonth, selectedYear]);
+
+  // Fetch actual cost when day, month, or year changes
   useEffect(() => {
-    if (!assetId) return;
-    const apiDate = getApiDate(selectedDay, selectedMonth, selectedYear);
-    axios.get(`${API_CONFIG.BASE_URL}/pms/depreciation_calculator.json`, {
-      params: {
-        id: assetId,
-        date: apiDate,
-      },
-      headers: {
-        Authorization: getAuthHeader(),
-      },
-    }).then(res => {
-      setActualCost(Number(res.data));
-    }).catch(() => setActualCost(0));
+    const fetchActualCost = async () => {
+      if (!assetId) return;
+      
+      try {
+        const apiDate = getApiDate(selectedDay, selectedMonth, selectedYear);
+        console.log("Fetching actual cost for date:", apiDate);
+        
+        const response = await axios.get(
+          `${API_CONFIG.BASE_URL}/pms/depreciation_calculator.json`,
+          {
+            params: {
+              id: assetId,
+              date: apiDate,
+            },
+            headers: {
+              Authorization: getAuthHeader(),
+            },
+          }
+        );
+        
+        console.log("Actual cost response:", response.data);
+        setActualCost(Number(response.data) || 0);
+      } catch (error) {
+        console.error("Error fetching actual cost:", error);
+        setActualCost(0);
+      }
+    };
+
+    fetchActualCost();
   }, [assetId, selectedDay, selectedMonth, selectedYear]);
 
   return (
@@ -255,10 +325,38 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
               <div className="grid grid-cols-2 gap-3 lg:gap-4">
                 {/* Month and Year Selects */}
                 <Select value={selectedMonth} onValueChange={val => { setSelectedMonth(val); setSelectedDay(1); }}>
-                  {/* ...month options... */}
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="January">January</SelectItem>
+                    <SelectItem value="February">February</SelectItem>
+                    <SelectItem value="March">March</SelectItem>
+                    <SelectItem value="April">April</SelectItem>
+                    <SelectItem value="May">May</SelectItem>
+                    <SelectItem value="June">June</SelectItem>
+                    <SelectItem value="July">July</SelectItem>
+                    <SelectItem value="August">August</SelectItem>
+                    <SelectItem value="September">September</SelectItem>
+                    <SelectItem value="October">October</SelectItem>
+                    <SelectItem value="November">November</SelectItem>
+                    <SelectItem value="December">December</SelectItem>
+                  </SelectContent>
                 </Select>
                 <Select value={selectedYear} onValueChange={val => { setSelectedYear(val); setSelectedDay(1); }}>
-                  {/* ...year options... */}
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 21 }, (_, i) => {
+                      const year = (2015 + i).toString();
+                      return (
+                        <SelectItem key={year} value={year}>
+                          {year}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
                 </Select>
               </div>
 
@@ -271,18 +369,21 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
                 </div>
                 {calendarDays.map((week, weekIndex) => (
                   <div key={weekIndex} className="grid grid-cols-7 gap-1 text-center text-sm">
-                    {week.map((day, dayIndex) => (
+                    {week.map((dayObj, dayIndex) => (
                       <div
                         key={dayIndex}
-                        className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${day === selectedDay
+                        className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${
+                          dayObj.day === selectedDay && dayObj.isCurrentMonth
                             ? 'bg-[#C72030] text-white'
-                            : dayIndex === 6
-                              ? 'text-red-500 hover:bg-red-50'
-                              : 'text-gray-700 hover:bg-gray-200'
-                          }`}
-                        onClick={() => setSelectedDay(day)}
+                            : !dayObj.isCurrentMonth
+                              ? 'text-gray-300 hover:bg-gray-100'
+                              : dayIndex === 6
+                                ? 'text-red-500 hover:bg-red-50'
+                                : 'text-gray-700 hover:bg-gray-200'
+                        }`}
+                        onClick={() => dayObj.isCurrentMonth && setSelectedDay(dayObj.day)}
                       >
-                        {day}
+                        {dayObj.day}
                       </div>
                     ))}
                   </div>
