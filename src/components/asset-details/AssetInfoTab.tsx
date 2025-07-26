@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   MapPin,
   QrCode,
@@ -13,7 +13,6 @@ import {
   Clock,
   UserIcon,
   X,
-  Archive,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
@@ -128,34 +127,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
   assetId,
   showEnable,
 }) => {
-  const [attachments, setAttachments] = useState<{
-    assetImage?: File[];
-  }>({});
-
-  const handleFileUpload = (type: string, files: FileList | null) => {
-    if (!files) return;
-    
-    const fileArray = Array.from(files);
-    
-    // For asset image, only allow one file
-    if (type === 'assetImage') {
-      const imageFile = fileArray[0];
-      if (imageFile && imageFile.type.startsWith('image/')) {
-        setAttachments(prev => ({
-          ...prev,
-          [type]: [imageFile]
-        }));
-      }
-    }
-  };
-
-  const removeFile = (type: string, index: number) => {
-    setAttachments(prev => ({
-      ...prev,
-      [type]: prev[type as keyof typeof prev]?.filter((_, i) => i !== index)
-    }));
-  };
-
   return (
     <div className="min-h-full ">
       <Tabs defaultValue="analytics" style={{ width: "100%" }}>
@@ -347,76 +318,26 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                     {/* Right Section - Image */}
                     <div className="lg:col-span-4">
-                      <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">Asset Image</label>
-                      
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                        <input
-                          type="file"
-                          accept=".jpg,.jpeg,.png,.gif,.webp"
-                          className="hidden"
-                          id="asset-image"
-                          onChange={e => handleFileUpload('assetImage', e.target.files)}
-                        />
-                        <label htmlFor="asset-image" className="cursor-pointer">
-                          {attachments.assetImage && attachments.assetImage.length > 0 ? (
-                            <div className="relative">
-                              <img
-                                src={URL.createObjectURL(attachments.assetImage[0])}
-                                alt="Asset Preview"
-                                className="w-full h-48 object-cover rounded"
-                              />
-                              <button 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  removeFile('assetImage', 0);
-                                }} 
-                                className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow-md"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ) : asset.image_url ? (
-                            <div className="relative">
-                              <img
-                                src={asset.image_url}
-                                alt="Asset"
-                                className="w-full h-48 object-cover rounded"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
-                                  if (nextSibling) {
-                                    nextSibling.style.display = "flex";
-                                  }
-                                }}
-                              />
-                              <div className="hidden flex-col items-center justify-center h-48">
-                                <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                                <p className="text-sm text-gray-600">
-                                  Click to upload new image
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  JPG, PNG, GIF up to 10MB
-                                </p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-48">
-                              <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                              <p className="text-sm text-gray-600">
-                                Click to upload asset image
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                JPG, PNG, GIF up to 10MB
-                              </p>
-                            </div>
-                          )}
-                        </label>
-                        
-                        {attachments.assetImage && attachments.assetImage.length > 0 && (
-                          <div className="mt-2 text-xs text-gray-500">
-                            {attachments.assetImage[0].name} - {(attachments.assetImage[0].size / 1024 / 1024).toFixed(2)} MB
-                          </div>
-                        )}
+                      <p className="text-gray-500 mb-2">Asset Image</p>
+                      <div className="w-full h-48 border border-gray-300 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                        {asset.image_url ? (
+                          <img
+                            src={asset.image_url}
+                            alt="Asset"
+                            className="w-full h-full object-cover rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                              const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (nextSibling) {
+                                nextSibling.style.display = "flex";
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <div className={`${asset.image_url ? 'hidden' : 'flex'} flex-col items-center justify-center h-48 text-gray-400 text-sm`}>
+                          <Box className="w-12 h-12 mb-2" />
+                          <span>No Image Available</span>
+                        </div>
                       </div>
                     </div>
                   </div>
