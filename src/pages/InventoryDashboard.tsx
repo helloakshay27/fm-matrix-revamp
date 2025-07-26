@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchInventoryData } from "@/store/slices/inventorySlice";
+import axios from 'axios';
 import { Button } from "@/components/ui/button";
+import { DateFilterModal } from "@/components/DateFilterModal";
 import {
   Upload,
   FileText,
@@ -70,7 +72,6 @@ import {
 import bio from "@/assets/bio.png";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { toast } from "sonner";
-import axios from "axios";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -177,6 +178,20 @@ export const InventoryDashboard = () => {
     "agingMatrix",
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date('2020-01-01'),
+    endDate: new Date('2025-01-01')
+  });
+  const [analyticsData, setAnalyticsData] = useState({
+    categoryData: [],
+    statusData: {
+      activeItems: 0,
+      inactiveItems: 0,
+      criticalItems: 0,
+      nonCriticalItems: 0
+    }
+  });
 
   const pageSize = 15; // Use larger page size for API data
 
@@ -204,47 +219,8 @@ export const InventoryDashboard = () => {
 
   // Analytics calculations
   const totalItems = inventoryData.length;
-  const criticalItems = inventoryData.filter(
-    (item) => item.criticality === "Critical"
-  ).length;
-  const nonCriticalItems = inventoryData.filter(
-    (item) => item.criticality === "Non-Critical"
-  ).length;
-  const activeItems = inventoryData.filter(
-    (item) => item.active === "Active"
-  ).length;
-  const lowStockItems = inventoryData.filter((item) => {
-    const quantity = parseFloat(item.quantity) || 0;
-    const minStock = parseFloat(item.minStockLevel) || 0;
-    return minStock > 0 && quantity <= minStock;
-  }).length;
-  const highValueItems = inventoryData.filter((item) => {
-    const cost = parseFloat(item.cost) || 0;
-    return cost > 10000;
-  }).length;
+  
 
-  // Chart data for donut charts
-  const itemStatusData = [
-    { name: "Active", value: activeItems, fill: "#c6b692" },
-    { name: "Inactive", value: totalItems - activeItems, fill: "#d8dcdd" },
-  ];
-
-  const criticalityData = [
-    { name: "Critical", value: criticalItems, fill: "#c6b692" },
-    { name: "Non-Critical", value: nonCriticalItems, fill: "#d8dcdd" },
-  ];
-
-  // Group data for bar chart
-  const groupData = inventoryData.reduce((acc, item) => {
-    const group = item.group || "Unassigned";
-    acc[group] = (acc[group] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const groupChartData = Object.entries(groupData).map(([name, value]) => ({
-    name,
-    value,
-  }));
 
   // Aging matrix data - simulated based on groups and priorities
   const agingMatrixData = [
@@ -603,6 +579,82 @@ export const InventoryDashboard = () => {
       toast.error('Failed to export AMC data');
     }
   };
+
+  const fetchAnalyticsData = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+
+    if (!baseUrl || !token || !siteId) {
+      toast.error('Missing base URL, token, or site ID');
+      return;
+    }
+
+    try {
+      const fromDate = dateRange.startDate.toISOString().split('T')[0];
+      const toDate = dateRange.endDate.toISOString().split('T')[0];
+
+      // Fetch category wise items
+      const categoryResponse = await axios.get(
+        `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      // Fetch items status
+      const statusResponse = await axios.get(
+        `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      setAnalyticsData({
+        categoryData: categoryResponse.data.category_counts || [],
+        statusData: {
+          activeItems: statusResponse.data.count_of_active_items || 0,
+          inactiveItems: statusResponse.data.count_of_inactive_items || 0,
+          criticalItems: statusResponse.data.count_of_critical_items || 0,
+          nonCriticalItems: statusResponse.data.count_of_non_critical_items || 0
+        }
+      });
+    } catch (error) {
+      console.error('Failed to fetch analytics data:', error);
+      toast.error('Failed to fetch analytics data');
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [dateRange]);
+
+  const handleDateFilter = (dates: { startDate: Date | undefined; endDate: Date | undefined }) => {
+    if (dates.startDate && dates.endDate) {
+      setDateRange({
+        startDate: dates.startDate,
+        endDate: dates.endDate
+      });
+    }
+  };
+
+  // Update the analytics section to use dynamic data
+  const itemStatusData = [
+    { name: "Active", value: analyticsData.statusData.activeItems, fill: "#c6b692" },
+    { name: "Inactive", value: analyticsData.statusData.inactiveItems, fill: "#d8dcdd" },
+  ];
+
+  const criticalityData = [
+    { name: "Critical", value: analyticsData.statusData.criticalItems, fill: "#c6b692" },
+    { name: "Non-Critical", value: analyticsData.statusData.nonCriticalItems, fill: "#d8dcdd" },
+  ];
+
+  // Group data from API
+  const groupChartData = analyticsData.categoryData.map(({ group_name, item_count }) => ({
+    name: group_name,
+    value: item_count
+  }));
+
   return (
     <div className="p-2 sm:p-4 lg:p-6">
       <Tabs
@@ -643,7 +695,14 @@ export const InventoryDashboard = () => {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDateFilter(true)}
+              className="mb-2 sm:mb-0"
+            >
+              Filter by Date
+            </Button>
             <InventorySelector onSelectionChange={handleSelectionChange} />
           </div>
           <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
@@ -1409,6 +1468,14 @@ export const InventoryDashboard = () => {
         open={showFilter}
         onOpenChange={setShowFilter}
         onApply={(filters) => console.log("Applied filters:", filters)}
+      />
+      <DateFilterModal
+        open={showDateFilter}
+        onOpenChange={setShowDateFilter}
+        onApply={(range) => {
+          setDateRange(range);
+          dispatch(fetchInventoryData({ dateRange: range }));
+        }}
       />
     </div>
   );

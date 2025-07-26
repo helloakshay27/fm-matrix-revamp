@@ -70,6 +70,21 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+
+  // Fetch users when component mounts
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const fetchedUsers = await userService.searchUsers('');
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to fetch users');
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const statusOptions = [
     'Scheduled',
@@ -204,17 +219,26 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
               />
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Assigned To</label>
-                <AsyncSearchableDropdown
-                  placeholder="Search and select user..."
-                  onSearch={handleUserSearch}
-                  onChange={handleAssignedUserChange}
-                  className="w-full"
-                  noOptionsMessage="No users found"
-                  debounceDelay={300}
-                />
-              </div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Assigned To</InputLabel>
+                <MuiSelect
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  label="Assigned To"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select User</em>
+                  </MenuItem>
+                  {users.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.full_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
@@ -356,7 +380,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                   </span>
                 </label>
                 <span className="text-xs text-gray-500">
-                  ({showAll ? 'Shows all tasks' : 'Paginated view'})
+                  ({showAll ? 'Shows all tasks' : 'My Task'})
                 </span>
               </div>
             </div>

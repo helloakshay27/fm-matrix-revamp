@@ -476,8 +476,8 @@ if (searchTerm) {
             )}
           </div>
 
-          {/* Pagination - only show when not showing all tasks */}
-          {!showAll && totalPages > 1 && (
+          {/* Pagination */}
+          {totalPages > 1 && (
             <div className="mt-6">
               <Pagination>
                 <PaginationContent>
