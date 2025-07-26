@@ -8,27 +8,112 @@ import { ScheduleFilterDialog } from '@/components/ScheduleFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ScheduleSelector } from '@/components/ScheduleSelector';
 import { RecentSchedulesSidebar } from '@/components/RecentSchedulesSidebar';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Cell, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } from '@/services/customFormsAPI';
 import { useQuery } from '@tanstack/react-query';
+import { API_CONFIG } from '@/config/apiConfig';
+
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>(['checklist', 'technical-checklist', 'non-technical-checklist']);
+  
+  // Add filter state
+  const [filters, setFilters] = useState({
+    activityName: '',
+    type: '',
+    category: ''
+  });
 
-  // Fetch custom forms data
+  // Build query parameters for API
+  const buildQueryParams = () => {
+    const params: Record<string, string> = {};
+    
+    if (filters.activityName) {
+      params['q[form_name_cont]'] = filters.activityName;
+    }
+    
+    if (filters.type) {
+      params['q[schedule_type_eq]'] = filters.type.toUpperCase();
+    }
+    
+    if (filters.category) {
+      params['q[tasks_category_eq]'] = filters.category.charAt(0).toUpperCase() + filters.category.slice(1).toLowerCase();
+    }
+    
+    return params;
+  };
+
+  // Fetch custom forms data with filters
   const {
     data: customFormsData,
     isLoading,
-    error
+    error,
+    isError
   } = useQuery({
-    queryKey: ['custom-forms'],
-    queryFn: fetchCustomForms
+    queryKey: ['custom-forms', filters],
+    queryFn: async () => {
+      try {
+        console.log('Fetching custom forms with params:', buildQueryParams());
+        const result = await fetchCustomForms(buildQueryParams());
+        console.log('API Response:', result);
+        return result;
+      } catch (error) {
+        console.error('API Error:', error);
+        // Re-throw with more context if it's a configuration error
+        if (error instanceof Error && error.message.includes('Base URL is not configured')) {
+          throw new Error('Application not properly configured. Please check your authentication settings.');
+        }
+        if (error instanceof Error && error.message.includes('Authentication token is not available')) {
+          throw new Error('Please log in to access schedules.');
+        }
+        throw error;
+      }
+    },
+    retry: (failureCount, error) => {
+      // Don't retry on configuration errors
+      if (error instanceof Error && 
+          (error.message.includes('Base URL is not configured') || 
+           error.message.includes('Authentication token is not available'))) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    retryDelay: 1000
   });
-
+  
+  console.log('Query State:', { 
+    data: customFormsData, 
+    isLoading, 
+    error, 
+    isError,
+    filters: filters 
+  });
+  
+  // Debug configuration
+  console.log('Configuration Debug:', {
+    hasBaseUrl: !!API_CONFIG.BASE_URL,
+    hasToken: !!API_CONFIG.TOKEN,
+    baseUrl: API_CONFIG.BASE_URL,
+    tokenPresent: API_CONFIG.TOKEN ? 'Present' : 'Missing'
+  });
+  
+  // Debug localStorage
+  console.log('LocalStorage Debug:', {
+    baseUrl: localStorage.getItem('base_url'),
+    token: localStorage.getItem('token'),
+    user: localStorage.getItem('user')
+  });
+  
   // Transform the data
   const schedules = customFormsData ? transformCustomFormsData(customFormsData.custom_forms) : [];
+  
+  console.log('Transformed schedules:', schedules);
+  console.log('Custom forms raw data:', customFormsData?.custom_forms);
+  
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   const handleExport = () => navigate('/maintenance/schedule/export');
   const handleToggleActive = (scheduleId: string) => {
@@ -37,7 +122,41 @@ export const ScheduleListDashboard = () => {
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
-  const handleViewSchedule = (item: TransformedScheduleData) => navigate(`/maintenance/schedule/view/${item.id}`);
+  const handleViewSchedule = (item: TransformedScheduleData) => {
+    // Get the form_code from the original custom forms data
+    const customForm = customFormsData?.custom_forms.find(form => form.id.toString() === item.id);
+    const formCode = customForm?.custom_form_code;
+    navigate(`/maintenance/schedule/view/${item.id}`, { 
+      state: { formCode } 
+    });
+  };
+
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+  
+  // Selection actions for the action panel
+  const selectionActions = [
+    {
+      label: 'Filter',
+      icon: Filter,
+      onClick: () => setShowFilterDialog(true),
+      variant: 'outline' as const,
+    },
+    {
+      label: 'Export',
+      icon: Download,
+      onClick: handleExport,
+      variant: 'outline' as const,
+    },
+    // Add any additional bulk actions here if needed
+    // {
+    //   label: 'Bulk Update',
+    //   icon: Clock,
+    //   onClick: handleBulkUpdate,
+    //   variant: 'outline' as const,
+    // },
+  ];
   const columns = [{
     key: 'actions',
     label: 'Actions',
@@ -83,30 +202,27 @@ export const ScheduleListDashboard = () => {
     label: 'Created On',
     sortable: true
   }];
-  const renderCustomActions = () => <div className="flex flex-wrap gap-2 sm:gap-3">
-      <Button onClick={handleAddSchedule} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium">
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Action
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-2 sm:gap-3">
+      <Button 
+        onClick={handleActionClick}
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+      >
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+        Action
       </Button>
-      <Button onClick={() => setShowImportModal(true)} variant="outline" className="text-sm">
-        <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Import
-      </Button>
-      <Button onClick={() => setShowFilterDialog(true)} variant="outline" className="text-sm">
-        <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Filters
-      </Button>
-      <Button onClick={handleExport} variant="outline" className="text-sm">
-        <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Export
-      </Button>
-    </div>;
+    </div>
+  );
   const renderCell = (item: TransformedScheduleData, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item.id)}>
+          {/* <Button v`ariant="ghost" size="sm" onClick={() => handleEditSchedule(item.id)}>
             <Edit className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item.id)}>
+          </Button>` */}
+          {/* <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item.id)}>
             <Copy className="w-4 h-4" />
-          </Button>
+          </Button> */}
           <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)}>
             <Eye className="w-4 h-4" />
           </Button>
@@ -390,30 +506,109 @@ export const ScheduleListDashboard = () => {
         </div>
       </div>
     </div>;
-  const renderListTab = () => <div className="space-y-4">
+  const renderListTab = () => (
+    <div className="space-y-4">
+      {showActionPanel && (
+        <SelectionPanel
+          actions={selectionActions}
+          onAdd={handleAddSchedule}
+          onClearSelection={() => setShowActionPanel(false)}
+          onImport={() => setShowImportModal(true)}
+        />
+      )}
 
-      {isLoading ? <div className="flex items-center justify-center h-32">
+      {isLoading ? (
+        <div className="flex items-center justify-center h-32">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
           </div>
-        </div> : error ? <div className="flex items-center justify-center h-32">
-          <p className="text-sm text-red-600">Error loading schedules. Please try again.</p>
-        </div> : <EnhancedTable data={schedules} columns={columns} renderCell={renderCell} selectable={true} pagination={true} enableExport={true} exportFileName="schedules" onRowClick={handleViewSchedule} storageKey="schedules-table" enableSearch={true} searchPlaceholder="Search schedules..." leftActions={renderCustomActions()} />}
-    </div>;
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center max-w-md">
+            <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
+            <p className="text-xs text-gray-500 mb-3">
+              {error instanceof Error ? error.message : 'Unknown error occurred'}
+            </p>
+            {error instanceof Error && (
+              error.message.includes('Base URL is not configured') || 
+              error.message.includes('Authentication token is not available')
+            ) ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-3">
+                <p className="text-xs text-yellow-800 mb-2">
+                  It appears your session has expired or the application is not properly configured.
+                </p>
+                <button 
+                  onClick={() => {
+                    localStorage.clear();
+                    window.location.href = '/login';
+                  }} 
+                  className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+                >
+                  Go to Login
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <EnhancedTable 
+          data={schedules} 
+          columns={columns} 
+          renderCell={renderCell} 
+          // selectable={true} 
+          pagination={true} 
+          enableExport={true} 
+          exportFileName="schedules" 
+          storageKey="schedules-table" 
+          enableSearch={true} 
+          searchPlaceholder="Search schedules..." 
+          leftActions={renderCustomActions()} 
+        />
+      )}
+    </div>
+  );
+  function handleApplyFilters(filters: { activityName: string; type: string; category: string; }): void {
+    setFilters(filters);
+    setShowFilterDialog(false);
+  }
+
+  function handleResetFilters(): void {
+    setFilters({
+      activityName: '',
+      type: '',
+      category: ''
+    });
+    setShowFilterDialog(false);
+  }
+
   return <div className="p-2 sm:p-4 lg:p-6">
-      <div className="mb-4 sm:mb-6">
+      {/* <div className="mb-4 sm:mb-6">
         <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Schedule Dashboard</h1>
-      </div>
+      </div> */}
 
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+          <TabsTrigger 
+            value="analytics" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <BarChart3 className="w-4 h-4" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="list" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+          <TabsTrigger 
+            value="list" 
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <Calendar className="w-4 h-4" />
             Schedule List
           </TabsTrigger>
         </TabsList>
@@ -428,6 +623,12 @@ export const ScheduleListDashboard = () => {
       </Tabs>
 
       <BulkUploadDialog open={showImportModal} onOpenChange={setShowImportModal} title="Bulk Upload" />
-      <ScheduleFilterDialog open={showFilterDialog} onOpenChange={setShowFilterDialog} />
+      <ScheduleFilterDialog 
+        open={showFilterDialog} 
+        onOpenChange={setShowFilterDialog}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
     </div>;
 };
