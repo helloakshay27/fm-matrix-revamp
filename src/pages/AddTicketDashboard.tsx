@@ -526,7 +526,7 @@ export const AddTicketDashboard = () => {
             </div>
 
             {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl
                 fullWidth
                 variant="outlined"
