@@ -7,6 +7,7 @@ import { MobileItemsDetails } from '@/components/mobile/MobileItemsDetails';
 import { MobileContactForm } from '@/components/mobile/MobileContactForm';
 import { MobileOrderReview } from '@/components/mobile/MobileOrderReview';
 import { useToast } from '@/hooks/use-toast';
+import { restaurantApi } from '@/services/restaurantApi';
 
 // Mock data - replace with actual API calls
 const mockRestaurants = [
@@ -56,8 +57,8 @@ export const MobileRestaurantPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
-  const [restaurants, setRestaurants] = useState(mockRestaurants);
-  const [loading, setLoading] = useState(false);
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Determine the view type based on QR scan source
   const scanSource = searchParams.get('source'); // 'app' or 'external'
@@ -70,20 +71,24 @@ export const MobileRestaurantPage: React.FC = () => {
   const fetchRestaurants = async () => {
     setLoading(true);
     try {
-      // Use the API service
-      // const restaurants = await restaurantApi.getRestaurantsBySite('2189');
-      // setRestaurants(restaurants);
-      
-      // For now, use mock data with a delay to simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setRestaurants(mockRestaurants);
+      // For this specific restaurant ID, fetch directly
+      if (restaurantId) {
+        const restaurant = await restaurantApi.getRestaurantById(restaurantId);
+        setRestaurants([restaurant]);
+      } else {
+        // Use restaurant ID 49 from the API URL provided
+        const restaurant = await restaurantApi.getRestaurantById('49');
+        setRestaurants([restaurant]);
+      }
     } catch (error) {
       console.error('Error fetching restaurants:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load restaurants. Please try again."
+        description: "Failed to load restaurant. Please try again."
       });
+      // Fallback to mock data
+      setRestaurants(mockRestaurants);
     } finally {
       setLoading(false);
     }

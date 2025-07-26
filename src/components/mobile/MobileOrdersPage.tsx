@@ -78,7 +78,33 @@ export const MobileOrdersPage: React.FC = () => {
   };
 
   const handleOrderClick = (orderId: string) => {
-    navigate(`/mobile/orders/${orderId}`);
+    // Find the order to get its details
+    const order = mockOrders.find(o => o.id === orderId);
+    if (order) {
+      // Create mock data to match order review format
+      const mockItems = [
+        { id: '1', name: order.itemName, description: 'Delicious food item', price: 250, image: '', quantity: 1 }
+      ];
+      const mockRestaurant = {
+        id: '1',
+        name: order.restaurantName,
+        location: 'Andheri West',
+        rating: 4.1,
+        timeRange: '60-65 mins',
+        discount: '20% OFF',
+        image: ''
+      };
+      
+      // Navigate to order review page with order data and flag indicating it's already placed
+      navigate('/mobile/restaurant/1/order-review', {
+        state: {
+          items: mockItems,
+          restaurant: mockRestaurant,
+          note: 'Previous order details',
+          isExistingOrder: true
+        }
+      });
+    }
   };
 
   const handleRestaurantTab = () => {
@@ -131,8 +157,7 @@ export const MobileOrdersPage: React.FC = () => {
             <div
               key={order.id}
               onClick={() => handleOrderClick(order.id)}
-              className="bg-white bg-opacity-80 rounded-xl p-4 border border-gray-100 cursor-pointer"
-              style={{ backgroundColor: '#f5f5f0' }}
+              className="bg-[#E8E2D3] rounded-lg p-4 cursor-pointer hover:shadow-sm transition-shadow"
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
@@ -144,7 +169,7 @@ export const MobileOrdersPage: React.FC = () => {
                   </p>
                 </div>
                 <span
-                  className={`px-3 py-1 rounded-lg text-sm font-medium ${getStatusBadgeColor(
+                  className={`px-3 py-1 rounded text-sm font-medium ${getStatusBadgeColor(
                     order.status
                   )}`}
                 >

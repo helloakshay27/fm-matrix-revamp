@@ -129,52 +129,52 @@ export const MobileRestaurantDetails: React.FC<MobileRestaurantDetailsProps> = (
       {/* Menu Items */}
       <div className="p-4 space-y-4">
         {menuItems.map((item) => (
-          <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
-            <div className="flex">
+          <div key={item.id} className="bg-[#E8E2D3] rounded-lg overflow-hidden relative">
+            <div className="flex p-4">
               {/* Item Details */}
-              <div className="flex-1 p-4">
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.name}</h3>
-                <p className="text-gray-600 text-sm mb-4">{item.description}</p>
+                <p className="text-gray-600 text-sm">{item.description}</p>
               </div>
 
               {/* Item Image */}
-              <div className="w-24 h-24 bg-gray-200 rounded-lg m-4 overflow-hidden relative">
+              <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden relative">
                 <img 
-                  src={item.image} 
+                  src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200" 
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />
-              </div>
-            </div>
-            
-            {/* Add/Quantity Controls - Positioned at bottom right */}
-            <div className="absolute bottom-3 right-3">
-              {!item.quantity || item.quantity === 0 ? (
-                <Button
-                  onClick={() => addItem(item.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg border border-red-700"
-                >
-                  Add
-                </Button>
-              ) : (
-                <div className="flex items-center border border-red-600 rounded-lg bg-white shadow-lg">
-                  <button
-                    onClick={() => updateQuantity(item.id, -1)}
-                    className="p-2 text-red-600 hover:bg-red-50"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="px-3 py-2 text-gray-900 font-medium min-w-[35px] text-center">
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => updateQuantity(item.id, 1)}
-                    className="p-2 text-red-600 hover:bg-red-50"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                
+                {/* Add Button - Fully visible below image */}
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                  {!item.quantity || item.quantity === 0 ? (
+                    <Button
+                      onClick={() => addItem(item.id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg border border-red-700"
+                    >
+                      Add
+                    </Button>
+                  ) : (
+                    <div className="flex items-center border-2 border-red-600 rounded-lg bg-white shadow-lg">
+                      <button
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="px-2 py-1 text-red-600 hover:bg-red-50 text-lg font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="px-3 py-1 text-gray-900 font-medium min-w-[30px] text-center text-sm">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="px-2 py-1 text-red-600 hover:bg-red-50 text-lg font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         ))}

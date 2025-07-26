@@ -4,12 +4,12 @@ import { getBaseUrl, getToken } from '@/utils/auth';
 const getApiConfig = () => {
   const savedToken = getToken();
   const savedBaseUrl = getBaseUrl();
-  
+
   // Fallback base URL - can be overridden by environment variable or login process
   // In Vite, use import.meta.env instead of process.env
   const defaultBaseUrl = import.meta.env.VITE_BASE_URL || 'https://fm-uat-api.lockated.com';
   const finalBaseUrl = savedBaseUrl || defaultBaseUrl;
-  
+
   console.log('API Config Debug:', {
     savedToken: savedToken ? 'Present' : 'Missing',
     savedBaseUrl: savedBaseUrl || 'Missing',
@@ -111,6 +111,13 @@ export const API_CONFIG = {
     CHECKLIST_SAMPLE_FORMAT: '/assets/checklist.xlsx',
     // Bulk upload for custom forms
     CUSTOM_FORMS_BULK_UPLOAD: '/pms/custom_forms/bulk_upload',
+    // Asset dashboard endpoints
+    // ASSET_STATISTICS: '/pms/asset_statistics.json',
+    // ASSET_STATUS: '/pms/asset_status.json',
+    // ASSET_DISTRIBUTIONS: '/pms/asset_distributions.json',
+    // Restaurant endpoints
+    RESTAURANTS: '/pms/admin/restaurants',
+    RESTAURANT_MENU: '/pms/admin/restaurants',
   },
 } as const
 

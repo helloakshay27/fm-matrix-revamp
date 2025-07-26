@@ -42,11 +42,13 @@ import {
 import { apiClient } from "@/utils/apiClient";
 import { ImportDataModal } from '@/components/ImportDataModal';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { AddAreaDialog } from '@/components/AddAreaDialog';
 
 export const AreaPage = () => {
   const [areas, setAreas] = useState<any[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedArea, setSelectedArea] = useState<any | null>(null);
   const [name, setName] = useState('');
   const [buildingId, setBuildingId] = useState('');
@@ -234,7 +236,11 @@ export const AreaPage = () => {
       </div>
 
       <div className="mb-6 flex items-center justify-between">
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:opacity-90 flex items-center gap-2">
+        <Button 
+          onClick={() => setIsAddModalOpen(true)}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:opacity-90 flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Add
         </Button>
@@ -286,6 +292,13 @@ export const AreaPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Add Area Dialog */}
+      <AddAreaDialog 
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onAreaAdded={fetchAreas}
+      />
 
       {/* Edit Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
