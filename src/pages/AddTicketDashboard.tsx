@@ -451,7 +451,7 @@ export const AddTicketDashboard = () => {
             </RadioGroup>
 
             {/* Form fields in exact layout as per image */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Row 1: Category Type, Sub Category Type, Assigned To */}
               <FormControl
                 fullWidth
