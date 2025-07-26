@@ -1248,9 +1248,9 @@ export const InventoryDashboard = () => {
           {/* List view content here */}
         </TabsContent>
       </Tabs>
-            </div>
-            {/* Right Sidebar */}
-            <div className="w-full xl:w-80 order-1 xl:order-2">
+        </div>
+        {/* Right Sidebar */}
+          <div className="w-full xl:w-80 order-1 xl:order-2">
               <div className="w-full bg-[#C4B89D]/25 border xl:border-l border-gray-200 rounded-lg xl:rounded-none p-3 sm:p-4 h-auto xl:h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="mb-4 sm:mb-6">
@@ -1394,9 +1394,7 @@ export const InventoryDashboard = () => {
               </div>
             </div>
           </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
 
       {/* Dialogs */}
       <BulkUploadDialog
