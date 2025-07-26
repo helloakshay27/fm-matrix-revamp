@@ -10,6 +10,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { editFacilityBookingSetup } from "@/store/slices/facilityBookingsSlice";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 
 interface BookingSetup {
   id: string;
@@ -33,6 +34,7 @@ export const BookingSetupDashboard = () => {
   const [bookingSetupData, setBookingSetupData] = useState<BookingSetup[]>([]);
   const [bookingData, setBookingData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const handleFilterApply = (filters: any) => {
     console.log("Applied booking setup filters:", filters);
@@ -269,11 +271,11 @@ export const BookingSetupDashboard = () => {
   const leftActions = (
     <div className="flex items-center gap-2">
       <Button
-        onClick={handleAddBooking}
+        onClick={() => setShowActionPanel(true)}
         className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
       >
         <Plus className="w-4 h-4" />
-        Add
+        Action
       </Button>
       {/* <Button
         variant="outline"
@@ -288,6 +290,13 @@ export const BookingSetupDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={handleAddBooking}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
         <EnhancedTable
           data={bookingSetupData}

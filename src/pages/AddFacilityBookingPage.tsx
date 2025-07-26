@@ -12,6 +12,7 @@ import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchFacilitySetups } from '@/store/slices/facilitySetupsSlice';
 import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -137,30 +138,19 @@ export const AddFacilityBookingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    alert('Form submitted! Check console for details.');
-    console.log('=== FORM SUBMITTED - START ===');
-
     try {
       // Validate required fields first
-      if (!selectedUser) {
-        alert('Please select a user');
+      if (!selectedCompany) {
+        toast.error('Please select a company');
         return;
-      }
-      if (!selectedFacility) {
-        alert('Please select a facility');
+      } else if (!selectedUser) {
+        toast.error('Please select a user');
         return;
-      }
-      if (!selectedDate) {
-        alert('Please select a date');
+      } else if (!selectedFacility) {
+        toast.error('Please select a facility');
         return;
-      }
-      if (!paymentMethod) {
-        alert('Please select a payment method');
-        return;
-      }
-      if (selectedSlots.length === 0) {
-        alert('Please select at least one slot');
+      } else if (!selectedDate) {
+        toast.error('Please select a date');
         return;
       }
 
@@ -225,7 +215,7 @@ export const AddFacilityBookingPage = () => {
 
       if (response.status === 200 || response.status === 201) {
         console.log('Booking created successfully:', response.data);
-        alert('Booking created successfully!');
+        toast.success('Booking created successfully!');
         navigate('/vas/booking/list');
       }
     } catch (error: any) {
@@ -234,7 +224,7 @@ export const AddFacilityBookingPage = () => {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
       }
-      alert('Error creating booking. Please check the console for details.');
+      toast.error('Error creating booking. Please check the console for details.');
     }
   };
 
@@ -308,7 +298,7 @@ export const AddFacilityBookingPage = () => {
           <div className="space-y-2">
             <TextField
               select
-              label="Company"
+              label="Company*"
               value={selectedCompany}
               onChange={(e) => setSelectedCompany(e.target.value)}
               variant="outlined"
@@ -341,7 +331,7 @@ export const AddFacilityBookingPage = () => {
           <div className="space-y-2">
             <TextField
               select
-              label="User"
+              label="User*"
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
               variant="outlined"
@@ -374,7 +364,7 @@ export const AddFacilityBookingPage = () => {
           <div className="space-y-2">
             <TextField
               select
-              label="Facility"
+              label="Facility*"
               value={selectedFacility}
               onChange={(e) => handleFacilityChange(e.target.value)}
               variant="outlined"
@@ -407,7 +397,7 @@ export const AddFacilityBookingPage = () => {
           <div className="space-y-2">
             <TextField
               type="date"
-              label="Date"
+              label="Date*"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               variant="outlined"

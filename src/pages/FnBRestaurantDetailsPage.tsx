@@ -314,10 +314,12 @@ export const FnBRestaurantDetailsPage = () => {
     },
   };
 
-  const timeOptions = Array.from({ length: 24 }, (_, i) => {
-    const hour = i.toString().padStart(2, '0');
-    return `${hour}:00`;
+  const timeOptions = Array.from({ length: 24 * 60 }, (_, i) => {
+    const hours = String(Math.floor(i / 60)).padStart(2, '0');
+    const minutes = String(i % 60).padStart(2, '0');
+    return `${hours}:${minutes}`;
   });
+
 
   return (
     <div className="p-6">
@@ -468,15 +470,16 @@ export const FnBRestaurantDetailsPage = () => {
                               <span>{dayData.day_name}</span>
                             </div>
                           </td>
+
                           <td className="p-3">
                             <Select
                               value={dayData.start_time}
                               onValueChange={(value) => handleScheduleChange(index, 'start_time', value)}
                             >
-                              <SelectTrigger className="w-20 bg-transparent">
-                                <SelectValue />
+                              <SelectTrigger className="w-24 bg-transparent">
+                                <SelectValue placeholder="Select time" />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="max-h-64 overflow-auto">
                                 {timeOptions.map((time) => (
                                   <SelectItem key={time} value={time}>
                                     {time}
@@ -485,6 +488,7 @@ export const FnBRestaurantDetailsPage = () => {
                               </SelectContent>
                             </Select>
                           </td>
+
                           <td className="p-3">
                             <Select
                               value={dayData.end_time}

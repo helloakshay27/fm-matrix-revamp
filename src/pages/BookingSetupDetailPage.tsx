@@ -238,7 +238,7 @@ export const BookingSetupDetailPage = () => {
         complimentary: response.complementary,
         gstPercentage: response.gst,
         sgstPercentage: response.sgst,
-        perSlotCharge: response.per_slot_charge,
+        perSlotCharge: response.facility_charge.per_slot_charge,
         bookingAllowedBefore: {
           day: response.bb_dhm.d,
           hour: response.bb_dhm.h,

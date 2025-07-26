@@ -10,6 +10,7 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 interface Category {
   id: number;
@@ -29,6 +30,7 @@ export const CategoriesSetupTable = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -135,7 +137,7 @@ export const CategoriesSetupTable = () => {
     <div className="flex flex-wrap gap-2">
       <Button
         className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
-        onClick={() => setIsAddModalOpen(true)}
+        onClick={() => setShowActionPanel(true)}
       >
         <Plus className="w-4 h-4" />
         Action
@@ -145,6 +147,13 @@ export const CategoriesSetupTable = () => {
 
   return (
     <div className="space-y-4">
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
       <EnhancedTable
         data={[...categories].reverse()}
         columns={columns}

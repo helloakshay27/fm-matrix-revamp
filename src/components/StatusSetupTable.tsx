@@ -12,6 +12,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { createRestaurantStatus, deleteRestaurantStatus, editRestaurantStatus, fetchRestaurantStatuses } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 export interface StatusItem {
   id: number;
@@ -47,6 +48,7 @@ export const StatusSetupTable = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusItem | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const fetchStatus = async () => {
     try {
@@ -193,6 +195,14 @@ export const StatusSetupTable = () => {
         </Button>
       </div> */}
 
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+
       <EnhancedTable
         data={statusItems}
         columns={columns}
@@ -207,10 +217,10 @@ export const StatusSetupTable = () => {
           <div className="flex flex-wrap gap-2">
             <Button
               className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => setShowActionPanel(true)}
             >
               <Plus className="w-4 h-4" />
-              Add
+              Action
             </Button>
           </div>
         }

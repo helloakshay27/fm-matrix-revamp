@@ -11,6 +11,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { createMenu, fetchMenu } from '@/store/slices/f&bSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 interface MenuItem {
   id: number;
@@ -49,6 +50,7 @@ export const RestaurantMenuTable = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const fetchMenuItems = async () => {
     try {
@@ -227,23 +229,31 @@ export const RestaurantMenuTable = () => {
     <div className="flex gap-2">
       <Button
         className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
-        onClick={() => setIsAddModalOpen(true)}
+        // onClick={() => setIsAddModalOpen(true)}
+        onClick={() => setShowActionPanel(true)}
       >
         <Plus className="w-4 h-4" />
-        Add
+        Actions
       </Button>
-      <Button
+      {/* <Button
         onClick={() => setIsImportModalOpen(true)}
         className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
       >
         <Upload className="w-4 h-4" />
         Import
-      </Button>
+      </Button> */}
     </div>
   );
 
   return (
     <div className="space-y-4">
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
       <EnhancedTable
         data={[...menuItems].reverse()}
         columns={columns}

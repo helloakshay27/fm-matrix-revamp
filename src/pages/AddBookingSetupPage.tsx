@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { getAuthHeader } from "@/config/apiConfig";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { toast } from "sonner";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -85,13 +86,14 @@ export const AddBookingSetupPage = () => {
   const [selectedBookingFiles, setSelectedBookingFiles] = useState<File[]>([]);
 
   const [additionalOpen, setAdditionalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
     isRequest: false,
-    active: "Select",
-    department: "Select Department",
+    active: "",
+    department: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
@@ -215,7 +217,33 @@ export const AddBookingSetupPage = () => {
     }
   };
 
+  const validateForm = () => {
+    if (!formData.facilityName) {
+      toast.error("Please enter Facility Name");
+      return false;
+    } else if (!formData.active) {
+      toast.error("Please select Active");
+      return false;
+    }
+    else if (!formData.department) {
+      toast.error("Please select a department");
+      return false;
+    } else if (!formData.description) {
+      toast.error("Please enter Description");
+      return false;
+    } else if (!formData.termsConditions) {
+      toast.error("Please enter Terms and Conditions");
+      return false;
+    } else if (!formData.cancellationText) {
+      toast.error("Please enter Cancellation Policies");
+      return false;
+    }
+    return true
+  }
+
   const handleSave = async () => {
+    if (!validateForm()) return;
+    setIsSubmitting(true);
     try {
       const formDataToSend = new FormData();
 
@@ -463,13 +491,15 @@ export const AddBookingSetupPage = () => {
       );
 
       if (response.ok) {
-        console.log("Booking setup saved successfully");
+        toast.success("Booking setup saved successfully");
         navigate("/settings/vas/booking/setup");
       } else {
         console.error("Failed to save booking setup:", response.statusText);
       }
     } catch (error) {
       console.error("Error saving booking setup:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -531,6 +561,7 @@ export const AddBookingSetupPage = () => {
                         setFormData({ ...formData, active: e.target.value })
                       }
                       label="Active*"
+                      defaultValue="Select"
                     >
                       <MenuItem value="Select">Select</MenuItem>
                       <MenuItem value="1">Yes</MenuItem>
@@ -538,7 +569,7 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                   <FormControl>
-                    <InputLabel>Department</InputLabel>
+                    <InputLabel>Department*</InputLabel>
                     <Select
                       value={formData.department}
                       onChange={(e) =>
@@ -546,6 +577,7 @@ export const AddBookingSetupPage = () => {
                       }
                       onFocus={fetchDepartments}
                       label="Department"
+                      defaultValue="Select Department"
                     >
                       <MenuItem value="Select Department">
                         {loadingDepartments ? "Loading..." : "Select Department"}
@@ -1719,6 +1751,7 @@ export const AddBookingSetupPage = () => {
               <Button
                 onClick={handleSave}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
+                disabled={isSubmitting}
               >
                 Save
               </Button>

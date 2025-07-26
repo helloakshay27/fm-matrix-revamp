@@ -11,6 +11,7 @@ import { createSubcategory, deleteSubCategory, fetchSubcategory } from '@/store/
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 export interface SubCategory {
   id: number;
@@ -40,6 +41,7 @@ export const SubCategoriesSetupTable = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -139,6 +141,14 @@ export const SubCategoriesSetupTable = () => {
         </Button>
       </div> */}
 
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+
       <EnhancedTable
         data={[...subCategories].reverse()}
         columns={columns}
@@ -153,7 +163,7 @@ export const SubCategoriesSetupTable = () => {
           <div className="flex flex-wrap gap-2">
             <Button
               className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => setShowActionPanel(true)}
             >
               <Plus className="w-4 h-4" />
               Add
