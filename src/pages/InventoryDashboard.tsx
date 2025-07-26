@@ -1249,7 +1249,8 @@ export const InventoryDashboard = () => {
         </TabsContent>
       </Tabs>
       </div>
-      {/* Right Sidebar */}
+      <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
+        {/* Right Sidebar */}
         <div className="w-full xl:w-80 order-1 xl:order-2">
               <div className="w-full bg-[#C4B89D]/25 border xl:border-l border-gray-200 rounded-lg xl:rounded-none p-3 sm:p-4 h-auto xl:h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
                 {/* Header */}
@@ -1392,6 +1393,7 @@ export const InventoryDashboard = () => {
                   ))}
                 </div>
         </div>
+        </div>
       </div>
 
       {/* Dialogs */}
@@ -1410,6 +1412,7 @@ export const InventoryDashboard = () => {
         onOpenChange={setShowDateFilter}
         onApply={handleAnalyticsDateApply}
       />
+      </div>{/* Close wrapper div */}
     </div>
   );
 };
