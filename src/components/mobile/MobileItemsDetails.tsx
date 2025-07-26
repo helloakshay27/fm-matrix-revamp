@@ -139,9 +139,11 @@ export const MobileItemsDetails: React.FC = () => {
       <div className="mx-4 mt-4">
         <button
           onClick={() => setShowNoteDialog(true)}
-          className="w-full bg-white border border-gray-200 rounded-xl p-4 text-left text-gray-500"
+          className="w-full bg-white border border-gray-200 rounded-xl p-4 text-left"
         >
-          Add a note for the restaurant
+          <span className={note ? "text-gray-900" : "text-gray-500"}>
+            {note || "Add a note for the restaurant"}
+          </span>
         </button>
       </div>
 
