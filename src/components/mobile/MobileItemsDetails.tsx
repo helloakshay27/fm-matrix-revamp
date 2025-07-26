@@ -137,14 +137,27 @@ export const MobileItemsDetails: React.FC = () => {
 
       {/* Note Section */}
       <div className="mx-4 mt-4">
-        <button
-          onClick={() => setShowNoteDialog(true)}
-          className="w-full bg-white border border-gray-200 rounded-xl p-4 text-left"
-        >
-          <span className={note ? "text-gray-900" : "text-gray-500"}>
-            {note || "Add a note for the restaurant"}
-          </span>
-        </button>
+        <div className="bg-white rounded-xl p-4">
+          <div className="flex items-center mb-3">
+            <div className="w-5 h-5 bg-gray-900 rounded-sm flex items-center justify-center mr-2">
+              <span className="text-white text-xs">📝</span>
+            </div>
+            <span className="font-semibold text-gray-900">Note for the restaurant</span>
+          </div>
+          {note && (
+            <div className="text-gray-600 border-b border-dashed border-gray-400 pb-1">
+              {note}
+            </div>
+          )}
+          {!note && (
+            <button
+              onClick={() => setShowNoteDialog(true)}
+              className="text-gray-500 text-sm"
+            >
+              Add a note for the restaurant
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Place Order Button */}
