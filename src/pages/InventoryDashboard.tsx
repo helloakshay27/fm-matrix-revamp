@@ -151,13 +151,14 @@ export const InventoryDashboard = () => {
     loading,
     error,
     totalPages: reduxTotalPages,
-    totalInventories,
-    activeCount,
-    greenInventories,
-    inactiveCount,
+    totalCount,
   } = useSelector((state: RootState) => state.inventory);
 
-  console.log(greenInventories);
+  // Calculate derived data from inventory items
+  const totalInventories = totalCount;
+  const activeCount = inventoryItems.filter(item => item.active).length;
+  const inactiveCount = inventoryItems.filter(item => !item.active).length;
+  const greenInventories = inventoryItems.filter(item => item.green_product).length;
 
   // Local state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -1474,7 +1475,7 @@ export const InventoryDashboard = () => {
         onOpenChange={setShowDateFilter}
         onApply={(range) => {
           setDateRange(range);
-          dispatch(fetchInventoryData({ dateRange: range }));
+          dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
         }}
       />
     </div>
