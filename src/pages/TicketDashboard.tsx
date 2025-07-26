@@ -1147,7 +1147,7 @@ export const TicketDashboard = () => {
               icon: Settings
             }].map((item, i) => {
               const IconComponent = item.icon;
-              return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] h-[100px] sm:h-[132px] flex items-center gap-3 sm:gap-4 bg-[#f6f4ee]">
+              return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
                 <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
                   <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
                 </div>
