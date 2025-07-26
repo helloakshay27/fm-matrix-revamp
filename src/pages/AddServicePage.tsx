@@ -7,7 +7,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 import { LocationSelector } from '@/components/service/LocationSelector';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
-import { createService } from '@/store/slices/serviceSlice';
+import { createService, resetServiceState } from '@/store/slices/serviceSlice';
 
 export const AddServicePage = () => {
   const navigate = useNavigate();
@@ -182,10 +182,8 @@ export const AddServicePage = () => {
 
       const response = await dispatch(createService(sendData)).unwrap();
 
-      // Show success toast for both actions
-      toast.success('Service created successfully');
-
       if (action === 'show') {
+        toast.success('Service has been created and saved with details.');
         setFormData({
           serviceName: '',
           executionType: '',
@@ -201,8 +199,10 @@ export const AddServicePage = () => {
         });
         setSelectedFiles([]);
         setResetLocationFields(true);
-        navigate('/maintenance/service/details/' + response.id);
+        dispatch(resetServiceState());
+        window.location.href = `/maintenance/service/details/${response.id}`;
       } else if (action === 'new') {
+        toast.success('Service has been created. You can now add a new one.');
         setFormData({
           serviceName: '',
           executionType: '',
@@ -218,15 +218,16 @@ export const AddServicePage = () => {
         });
         setSelectedFiles([]);
         setResetLocationFields(true);
-        // Reset resetLocationFields after a short delay to allow the reset to process
-        setTimeout(() => setResetLocationFields(false), 0);
+        dispatch(resetServiceState());
+        setTimeout(() => {
+          setResetLocationFields(false);
+        }, 300);
       }
     } catch (error) {
       console.error('Error creating service:', error);
       toast.error('Failed to create service. Please try again.');
     }
   };
-
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
