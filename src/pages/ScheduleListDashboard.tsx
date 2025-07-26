@@ -14,7 +14,7 @@ import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } f
 import { useQuery } from '@tanstack/react-query';
 import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
 import { apiClient } from '@/utils/apiClient';
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -169,6 +169,15 @@ export const ScheduleListDashboard = () => {
       const currentSchedule = schedules.find(schedule => schedule.id === scheduleId);
       if (!currentSchedule) {
         console.error('Schedule not found:', scheduleId);
+        toast.error('Schedule not found.', {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#ef4444',
+            color: 'white',
+            border: 'none',
+          },
+        });
         return;
       }
 
@@ -181,11 +190,28 @@ export const ScheduleListDashboard = () => {
       });
 
       console.log('Schedule active status updated:', response.data);
-      
+      toast.success(`Schedule ${newActiveStatus ? 'activated' : 'deactivated'} successfully.`, {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
       // Refetch the data to update the UI
       refetch();
     } catch (error) {
       console.error('Error updating schedule active status:', error);
+      toast.error('Failed to update schedule status. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     }
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
@@ -652,6 +678,8 @@ export const ScheduleListDashboard = () => {
   }
 
   return <div className="p-2 sm:p-4 lg:p-6">
+      {/* Sonner Toaster for notifications */}
+      <Toaster position="top-right" richColors closeButton />
       {/* <div className="mb-4 sm:mb-6">
         <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Schedule Dashboard</h1>
       </div> */}
