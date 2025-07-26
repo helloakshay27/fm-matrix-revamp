@@ -733,7 +733,6 @@ export const AddAMCPage = () => {
                   }
                   placeholder="Start Date"
                   className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
-                  views={['year', 'month', 'day']} 
                 />
 
                 {errors.startDate && <FormHelperText error>{errors.startDate}</FormHelperText>}

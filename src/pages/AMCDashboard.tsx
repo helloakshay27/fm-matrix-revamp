@@ -12,7 +12,6 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
 import {
   Pagination,
   PaginationEllipsis,
@@ -112,6 +111,9 @@ export const AMCDashboard = () => {
   const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null); // For AMC Type filter
   const [startDateFilter, setStartDateFilter] = useState<string | null>(null); // For Start Date filter
   const [endDateFilter, setEndDateFilter] = useState<string | null>(null); // For End Date filter
+  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null); // Temporary state for modal
+  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null); // Temporary state for modal
+  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null); // Temporary state for modal
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // For filter modal
   const [loading, setLoading] = useState(false); // Local loading state
   const [activeTab, setActiveTab] = useState<string>("amclist");
@@ -124,6 +126,15 @@ export const AMCDashboard = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Initialize temporary filters when modal opens
+  useEffect(() => {
+    if (isFilterModalOpen) {
+      setTempAmcTypeFilter(amcTypeFilter);
+      setTempStartDateFilter(startDateFilter);
+      setTempEndDateFilter(endDateFilter);
+    }
+  }, [isFilterModalOpen, amcTypeFilter, startDateFilter, endDateFilter]);
 
   // Use API data if available, otherwise fallback to initial data
   const amcData = apiData && Array.isArray(apiData.asset_amcs) ? apiData.asset_amcs : initialAmcData;
@@ -549,13 +560,11 @@ export const AMCDashboard = () => {
   };
 
   // Analytics data calculations
-  // Status data for pie chart
   const statusData = [
     { name: 'Active', value: activeAMCs, color: '#c6b692' },
     { name: 'Inactive', value: inactiveAMCs, color: '#d8dcdd' }
   ];
 
-  // AMC Type data (Reactive vs Proactive equivalent)
   const reactiveAMCs = Math.floor(totalAMCs * 0.7);
   const proactiveAMCs = totalAMCs - reactiveAMCs;
 
@@ -564,7 +573,6 @@ export const AMCDashboard = () => {
     { name: 'Proactive', value: proactiveAMCs, color: '#d8dcdd' }
   ];
 
-  // AMC by resource type
   const resourceTypeData = amcData.reduce((acc, amc) => {
     const type = amc.amc_type || 'Unknown';
     acc[type] = (acc[type] || 0) + 1;
@@ -573,7 +581,6 @@ export const AMCDashboard = () => {
 
   const resourceChartData = Object.entries(resourceTypeData).map(([name, value]) => ({ name, value }));
 
-  // AMC Aging Matrix (Placeholder, as it was hardcoded)
   const agingMatrixData = [
     { priority: 'P1', '0-30': 5, '31-60': 2, '61-90': 3, '91-180': 1, '180+': 8 },
     { priority: 'P2', '0-30': 3, '31-60': 1, '61-90': 2, '91-180': 0, '180+': 2 },
@@ -581,7 +588,6 @@ export const AMCDashboard = () => {
     { priority: 'P4', '0-30': 1, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 3 }
   ];
 
-  // AMC expiry analysis
   const today = new Date();
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(today.getDate() + 30);
@@ -615,6 +621,9 @@ export const AMCDashboard = () => {
   };
 
   const handleApplyFilters = () => {
+    setAmcTypeFilter(tempAmcTypeFilter);
+    setStartDateFilter(tempStartDateFilter);
+    setEndDateFilter(tempEndDateFilter);
     setIsFilterModalOpen(false);
     setCurrentPage(1);
     fetchFilteredAMCs(filter, 1);
@@ -622,6 +631,9 @@ export const AMCDashboard = () => {
   };
 
   const handleResetFilters = () => {
+    setTempAmcTypeFilter(null);
+    setTempStartDateFilter(null);
+    setTempEndDateFilter(null);
     setAmcTypeFilter(null);
     setStartDateFilter(null);
     setEndDateFilter(null);
@@ -632,11 +644,6 @@ export const AMCDashboard = () => {
     toast.success('Filters reset');
   };
 
-  const handleCloseModal = () => {
-    setIsFilterModalOpen(false);
-  };
-
-  // Handlers for card clicks
   const handleTotalAMCClick = () => {
     setFilter(null);
     setAmcTypeFilter(null);
@@ -664,7 +671,6 @@ export const AMCDashboard = () => {
     fetchFilteredAMCs('flagged', 1);
   };
 
-  // Get unique AMC types for the dropdown
   const uniqueAmcTypes = Array.from(new Set(amcData.map(amc => amc.amc_type).filter(type => type))).sort();
 
   return (
@@ -1099,8 +1105,8 @@ export const AMCDashboard = () => {
                 </Label>
                 <div className="grid grid-cols-4 items-center gap-4 w-full">
                   <Select
-                    value={amcTypeFilter || 'all'}
-                    onValueChange={(value) => setAmcTypeFilter(value === 'all' ? null : value)}
+                    value={tempAmcTypeFilter || 'all'}
+                    onValueChange={(value) => setTempAmcTypeFilter(value === 'all' ? null : value)}
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select AMC Type" />
@@ -1122,8 +1128,8 @@ export const AMCDashboard = () => {
                     <Input
                       id="start-date"
                       type="date"
-                      value={startDateFilter || ''}
-                      onChange={(e) => setStartDateFilter(e.target.value || null)}
+                      value={tempStartDateFilter || ''}
+                      onChange={(e) => setTempStartDateFilter(e.target.value || null)}
                     />
                   </div>
                   <div>
@@ -1131,8 +1137,8 @@ export const AMCDashboard = () => {
                     <Input
                       id="end-date"
                       type="date"
-                      value={endDateFilter || ''}
-                      onChange={(e) => setEndDateFilter(e.target.value || null)}
+                      value={tempEndDateFilter || ''}
+                      onChange={(e) => setTempEndDateFilter(e.target.value || null)}
                     />
                   </div>
                 </div>
