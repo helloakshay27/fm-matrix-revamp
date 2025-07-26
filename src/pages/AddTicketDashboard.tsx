@@ -473,15 +473,15 @@ export const AddTicketDashboard = () => {
             {/* Radio buttons for ticket type */}
             <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="request" id="request" className="text-red-500 border-red-500" />
+                <RadioGroupItem value="request" id="request" className="border-[#C72030] text-[#C72030] data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]" />
                 <label htmlFor="request" className="text-sm font-medium">Request</label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="complaint" id="complaint" className="text-red-500 border-red-500" />
+                <RadioGroupItem value="complaint" id="complaint" className="border-[#C72030] text-[#C72030] data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]" />
                 <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="suggestion" id="suggestion" className="text-red-500 border-red-500" />
+                <RadioGroupItem value="suggestion" id="suggestion" className="border-[#C72030] text-[#C72030] data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]" />
                 <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
               </div>
             </RadioGroup>
