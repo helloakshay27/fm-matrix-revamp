@@ -24,6 +24,8 @@ import { calendarService, CalendarEvent } from '@/services/calendarService';
 import { getToken } from '@/utils/auth';
 import { getFullUrl } from '@/config/apiConfig';
 import { TaskFilterDialog, TaskFilters } from '@/components/TaskFilterDialog';
+import { taskService } from '@/services/taskService';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskRecord {
   id: string;
@@ -116,6 +118,7 @@ const statusCards = [
 
 export const ScheduledTaskDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [dateFrom, setDateFrom] = useState('01/07/2025');
   const [dateTo, setDateTo] = useState('31/07/2025');
   const [searchTaskId, setSearchTaskId] = useState('');
@@ -317,10 +320,24 @@ if (searchTerm) {
 
   const handleExport = async () => {
     try {
-      // Implementation for exporting tasks
-      console.log('Exporting tasks...');
+      toast({
+        title: "Exporting...",
+        description: "Preparing task export file..."
+      });
+      
+      await taskService.downloadTaskExport();
+      
+      toast({
+        title: "Success",
+        description: "Tasks exported successfully!"
+      });
     } catch (error) {
       console.error('Failed to export tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export tasks. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -453,7 +470,7 @@ if (searchTerm) {
               enableExport={true}
               storageKey="scheduled-tasks-table"
               onFilterClick={() => setShowTaskFilter(true)}
-              handleExport={() => fetchTasks(currentFilters, currentPage, debouncedSearchQuery)}
+              handleExport={handleExport}
               searchTerm={searchQuery}
               onSearchChange={handleSearch}
               emptyMessage="No scheduled tasks found"

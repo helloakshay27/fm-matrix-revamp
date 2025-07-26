@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
 import { userService, User } from '@/services/userService';
+import { taskService, TaskOccurrence } from '@/services/taskService';
 
 export const TaskDetailsPage = () => {
   const {
@@ -22,6 +23,8 @@ export const TaskDetailsPage = () => {
   const [activeTab, setActiveTab] = useState('Help Text');
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Form states for Submit Task
   const [formData, setFormData] = useState({
@@ -59,21 +62,29 @@ export const TaskDetailsPage = () => {
   const handleBack = () => {
     navigate('/maintenance/task');
   };
-  const taskDetails = {
-    id: id || '17598329',
-    task: 'Test Ladies washroom Checklists',
-    associatedWith: 'Service',
-    assetServiceName: 'Test Ladies washroom Service',
-    assetServiceCode: '66c8b32d5d12d96fd07f',
-    assetServiceCode2: '66c8b32d5d12d96fd07f',
-    scheduleOn: '17/06/2025, 11:00 PM',
-    assignedTo: 'Vinayak Mane',
-    taskDuration: 'NA',
-    createdOn: '23/01/2023, 02:56 PM',
-    createdBy: 'Robert Day2',
-    location: 'Site -> Lockated / Building -> Ideal Landmark / Wing -> A / Floor -> NA / Area -> NA / Room -> NA',
-    status: 'Open'
-  };
+
+  useEffect(() => {
+    const fetchTaskDetails = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const details = await taskService.getTaskDetails(id);
+        setTaskDetails(details);
+      } catch (error) {
+        console.error('Error fetching task details:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load task details",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTaskDetails();
+  }, [id, toast]);
   const handleSubmitTask = () => {
     setShowSubmitForm(true);
   };
@@ -179,6 +190,36 @@ export const TaskDetailsPage = () => {
       }
     }
   };
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p>Loading task details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!taskDetails) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <p>Task not found</p>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'open': return 'bg-blue-100 text-blue-700';
+      case 'scheduled': return 'bg-green-100 text-green-700';
+      case 'overdue': return 'bg-red-100 text-red-700';
+      case 'completed': return 'bg-gray-100 text-gray-700';
+      case 'in progress': return 'bg-yellow-100 text-yellow-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   return <>
       <div className="p-6 bg-white min-h-screen">
         {/* Header */}
@@ -192,16 +233,20 @@ export const TaskDetailsPage = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-[#1a1a1a]">Task Details</h1>
             <div className="flex gap-3">
-              <Button onClick={handleSubmitTask} style={{
-              backgroundColor: '#C72030'
-            }} className="text-white hover:bg-[#C72030]/90">
-                Submit Task
-              </Button>
-              <Button onClick={handleTaskReschedule} style={{
-              backgroundColor: '#C72030'
-            }} className="text-white hover:bg-[#C72030]/90">
-                Task Reschedule
-              </Button>
+              {taskDetails.actions.can_submit_task && (
+                <Button onClick={handleSubmitTask} style={{
+                backgroundColor: '#C72030'
+              }} className="text-white hover:bg-[#C72030]/90">
+                  Submit Task
+                </Button>
+              )}
+              {taskDetails.actions.can_reschedule && (
+                <Button onClick={handleTaskReschedule} style={{
+                backgroundColor: '#C72030'
+              }} className="text-white hover:bg-[#C72030]/90">
+                  Task Reschedule
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -223,57 +268,59 @@ export const TaskDetailsPage = () => {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-600">ID</label>
-                  <p className="font-medium">{taskDetails.id}</p>
+                  <p className="font-medium">{taskDetails.task_details.id}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Associated With</label>
-                  <p className="font-medium">{taskDetails.associatedWith}</p>
+                  <p className="font-medium">{taskDetails.task_details.associated_with}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Asset/Service Code</label>
-                  <p className="font-medium">{taskDetails.assetServiceCode}</p>
+                  <p className="font-medium">{taskDetails.task_details.asset_service_code}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Schedule on</label>
-                  <p className="font-medium">{taskDetails.scheduleOn}</p>
+                  <p className="font-medium">{taskDetails.task_details.scheduled_on}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Task Duration</label>
-                  <p className="font-medium">{taskDetails.taskDuration}</p>
+                  <p className="font-medium">{taskDetails.task_details.task_duration}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Created By</label>
-                  <p className="font-medium">{taskDetails.createdBy}</p>
+                  <p className="font-medium">{taskDetails.task_details.created_by}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Status</label>
-                  <Badge className="bg-green-100 text-green-700">{taskDetails.status}</Badge>
+                  <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                    {taskDetails.task_details.status.display_name}
+                  </Badge>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-600">Task</label>
-                  <p className="font-medium">{taskDetails.task}</p>
+                  <p className="font-medium">{taskDetails.task_details.task_name}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Asset/Service Name</label>
-                  <p className="font-medium">{taskDetails.assetServiceName}</p>
+                  <p className="font-medium">{taskDetails.task_details.asset_service_name}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600">Asset/Service Code</label>
-                  <p className="font-medium">{taskDetails.assetServiceCode2}</p>
+                  <label className="text-sm text-gray-600">Supplier</label>
+                  <p className="font-medium">{taskDetails.task_details.supplier}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Assigned to</label>
-                  <p className="font-medium">{taskDetails.assignedTo}</p>
+                  <p className="font-medium">{taskDetails.task_details.assigned_to}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Created on</label>
-                  <p className="font-medium">{taskDetails.createdOn}</p>
+                  <p className="font-medium">{taskDetails.task_details.created_on}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Location</label>
-                  <p className="font-medium text-sm">{taskDetails.location}</p>
+                  <p className="font-medium text-sm">{taskDetails.task_details.location.full_location}</p>
                 </div>
               </div>
             </div>
@@ -303,11 +350,21 @@ export const TaskDetailsPage = () => {
             {/* Tab Content */}
             <div className="p-6">
               {activeTab === 'Help Text' && <div className="space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-gray-800">Washroom - Ladies Washroom</h3>
-                    <p className="text-gray-600">Is Floor Clean ?</p>
-                    <p className="text-sm text-gray-500">Lift/Lift lobby</p>
-                  </div>
+                  {taskDetails.activity.ungrouped_content.map((content, index) => (
+                    <div key={index} className="space-y-2">
+                      <h3 className="font-medium text-gray-800">{content.label}</h3>
+                      <div className="space-y-2">
+                        {content.values.map((value, valueIndex) => (
+                          <div key={valueIndex} className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600">{value.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {taskDetails.activity.ungrouped_content.length === 0 && (
+                    <p className="text-gray-600">No activity content available.</p>
+                  )}
                 </div>}
               {activeTab === 'Activities' && <div className="space-y-4">
                   <p className="text-gray-600">Activity details and progress tracking will be displayed here.</p>
