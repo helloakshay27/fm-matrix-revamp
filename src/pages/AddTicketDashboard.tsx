@@ -367,58 +367,94 @@ export const AddTicketDashboard = () => {
           <div className="p-6 space-y-6">
             {/* Create Ticket On Behalf Of with Name and Department in same row */}
             <div className="grid grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket on Behalf of</label>
-                <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600" style={{backgroundColor: '#C4B89D59'}}>
-                    <SelectValue placeholder="Select behalf option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="self">Self</SelectItem>
-                    <SelectItem value="occupant-user">Occupant User</SelectItem>
-                    <SelectItem value="fm-user">FM User</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                <Input
-                  placeholder="Anamika Singh"
-                  value={formData.name}
-                  onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
-                  disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                  className={`h-10 border border-gray-300 rounded text-gray-600 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                <Input
-                  placeholder="Technical"
-                  value={formData.department}
-                  onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
-                  disabled={isFieldsReadOnly}
-                  className={`h-10 border border-gray-300 rounded text-gray-600 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
-                />
-              </div>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Create Ticket on Behalf of</InputLabel>
+                <MuiSelect
+                  value={onBehalfOf}
+                  onChange={(e) => setOnBehalfOf(e.target.value)}
+                  label="Create Ticket on Behalf of"
+                  notched
+                  displayEmpty
+                  sx={{ backgroundColor: '#C4B89D59' }}
+                >
+                  <MenuItem value="self">Self</MenuItem>
+                  <MenuItem value="occupant-user">Occupant User</MenuItem>
+                  <MenuItem value="fm-user">FM User</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                label="Name"
+                placeholder="Anamika Singh"
+                value={formData.name}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
+                disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                  },
+                }}
+              />
+              <TextField
+                label="Department"
+                placeholder="Technical"
+                value={formData.department}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
+                disabled={isFieldsReadOnly}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                  },
+                }}
+              />
             </div>
 
             {/* User Selection Dropdown for behalf of others */}
             {onBehalfOf !== 'self' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
-                <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
-                    <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getUsersForDropdown().map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Select User</InputLabel>
+                <MuiSelect
+                  value={selectedUser}
+                  onChange={(e) => handleUserSelection(e.target.value)}
+                  label="Select User"
+                  notched
+                  displayEmpty
+                  disabled={loadingUsers}
+                >
+                  <MenuItem value="">
+                    {loadingUsers ? "Loading users..." : "Select User"}
+                  </MenuItem>
+                  {getUsersForDropdown().map(user => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             )}
           </div>
         </div>
