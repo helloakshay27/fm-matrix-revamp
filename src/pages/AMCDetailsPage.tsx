@@ -28,7 +28,7 @@ interface AMCDetailsData {
   payment_term: string;
   no_of_visits: number;
   remarks: string;
-  asset_name?: string; // Optional field for asset name
+  asset_name?: string;
 }
 
 interface Technician {
@@ -66,7 +66,7 @@ export const AMCDetailsPage = () => {
   const amcVisitData = amcData?.amc_visit_logs?.map((visit) => visit) ?? [];
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState('supplier-information');
+  const [activeTab, setActiveTab] = useState('amc-information'); // Changed default to 'amc-information'
 
   useEffect(() => {
     if (id) {
@@ -156,16 +156,16 @@ export const AMCDetailsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Tabs defaultValue="supplier-information" className="w-full">
+        <Tabs defaultValue="amc-information" className="w-full">
           <TabsList
             className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm"
           >
             {[
-              { label: 'Supplier Information', value: 'supplier-information' },
-              { label: 'Asset Information', value: 'asset-information' },
               { label: 'AMC Information', value: 'amc-information' },
+              { label: 'Supplier Information', value: 'supplier-information' },
               { label: 'Attachments', value: 'attachments' },
               { label: 'AMC Visits', value: 'amc-visits' },
+              { label: 'Asset Information', value: 'asset-information' },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -176,70 +176,6 @@ export const AMCDetailsPage = () => {
               </TabsTrigger>
             ))}
           </TabsList>
-
-
-          {/* Supplier Information */}
-          <TabsContent value="supplier-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Truck className="h-4 w-4" />
-                  </div>
-                  SUPPLIER INFORMATION
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><strong>Name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
-                  <div><strong>Email:</strong> {amcDetails.amc_vendor_email || '—'}</div>
-                  <div><strong>Mobile1:</strong> {amcDetails.amc_vendor_mobile || '—'}</div>
-                  <div><strong>Mobile2:</strong> —</div>
-                  <div><strong>Company name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Asset Information */}
-          <TabsContent value="asset-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Boxes className="h-4 w-4" />
-                  </div>
-                  ASSET INFORMATION
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Under Warranty</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow className="bg-white">
-                        <TableCell>{amcDetails.asset_name ? `${amcDetails.asset_name}` : '—'}</TableCell>
-                        <TableCell>—</TableCell>
-                        <TableCell>No</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 text-xs rounded ${amcDetails.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {amcDetails.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* AMC Information */}
           <TabsContent value="amc-information" className="p-3 sm:p-6">
@@ -262,6 +198,29 @@ export const AMCDetailsPage = () => {
                   <div><strong>No. of Visits:</strong> {amcDetails.no_of_visits || '—'}</div>
                   <div><strong>Payment Terms:</strong> {amcDetails.payment_term || '—'}</div>
                   <div className="md:col-span-2"><strong>Remarks:</strong> {amcDetails.remarks || '—'}</div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Supplier Information */}
+          <TabsContent value="supplier-information" className="p-3 sm:p-6">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Truck className="h-4 w-4" />
+                  </div>
+                  SUPPLIER INFORMATION
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div><strong>Name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
+                  <div><strong>Email:</strong> {amcDetails.amc_vendor_email || '—'}</div>
+                  <div><strong>Mobile1:</strong> {amcDetails.amc_vendor_mobile || '—'}</div>
+                  <div><strong>Mobile2:</strong> —</div>
+                  <div><strong>Company name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
                 </div>
               </CardContent>
             </Card>
@@ -293,6 +252,60 @@ export const AMCDetailsPage = () => {
                               const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(doc.document_url);
                               const isPdf = /\.pdf$/i.test(doc.document_url);
                               const isExcel = /\.(xls|xlsx|csv)$/i.test(doc.document_url);
+                              const isWord = /\.(doc|docx)$/i.test(doc.document_url);
+                              const isDownloadable = isPdf || isExcel || isWord;
+
+                              const handleFileAction = async () => {
+                                if (!doc?.attachment_id) {
+                                  console.error('Attachment ID is undefined', doc);
+                                  return;
+                                }
+
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  const baseUrl = localStorage.getItem('baseUrl');
+                                  if (!token) {
+                                    console.error('No token found in local storage');
+                                    return;
+                                  }
+
+                                  const apiUrl = `https://${baseUrl}/attachfiles/${doc.attachment_id}?show_file=true`;
+
+                                  const response = await fetch(apiUrl, {
+                                    method: 'GET',
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                      'Content-Type': 'application/json',
+                                    },
+                                  });
+
+                                  if (!response.ok) {
+                                    throw new Error('Failed to fetch the file');
+                                  }
+
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+
+                                  if (isImage) {
+                                    setSelectedDoc({
+                                      document_url: url,
+                                      document_name: doc.document_name || `document_${doc.attachment_id}`,
+                                      blob: blob
+                                    });
+                                    setIsModalOpen(true);
+                                  } else {
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = doc.document_name || `document_${doc.attachment_id}`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                  }
+                                } catch (error) {
+                                  console.error('Error handling file:', error);
+                                }
+                              };
 
                               return (
                                 <div
@@ -303,7 +316,8 @@ export const AMCDetailsPage = () => {
                                     <img
                                       src={doc.document_url}
                                       alt={doc.document_name}
-                                      className="w-14 h-14 object-cover rounded-md border mb-2"
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={handleFileAction}
                                     />
                                   ) : isPdf ? (
                                     <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
@@ -313,6 +327,10 @@ export const AMCDetailsPage = () => {
                                     <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
                                       <FileSpreadsheet className="w-6 h-6" />
                                     </div>
+                                  ) : isWord ? (
+                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                      <FileText className="w-6 h-6" />
+                                    </div>
                                   ) : (
                                     <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
                                       <FileText className="w-6 h-6" />
@@ -321,54 +339,16 @@ export const AMCDetailsPage = () => {
                                   <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                                     {doc.document_name || `Document_${doc.id}`}
                                   </span>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                    onClick={async () => {
-                                      if (!doc?.attachment_id) {
-                                        console.error('Attachment ID is undefined', doc);
-                                        return;
-                                      }
-
-                                      try {
-                                        const token = localStorage.getItem('token');
-                                        const baseUrl = localStorage.getItem('baseUrl');
-                                        if (!token) {
-                                          console.error('No token found in local storage');
-                                          return;
-                                        }
-
-                                        const apiUrl = `https://${baseUrl}/attachfiles/${doc.attachment_id}?show_file=true`;
-
-                                        const response = await fetch(apiUrl, {
-                                          method: 'GET',
-                                          headers: {
-                                            Authorization: `Bearer ${token}`,
-                                            'Content-Type': 'application/json',
-                                          },
-                                        });
-
-                                        if (!response.ok) {
-                                          throw new Error('Failed to fetch the file');
-                                        }
-
-                                        const blob = await response.blob();
-                                        const url = window.URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.download = doc.document_name || `document_${doc.attachment_id}`;
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                        window.URL.revokeObjectURL(url);
-                                      } catch (error) {
-                                        console.error('Error downloading file:', error);
-                                      }
-                                    }}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </Button>
+                                  {isDownloadable && (
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                      onClick={handleFileAction}
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </Button>
+                                  )}
                                 </div>
                               );
                             }) ?? []
@@ -384,13 +364,18 @@ export const AMCDetailsPage = () => {
                   })}
                 </div>
 
-                {/* Modal */}
-                {/* <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogContent className="w-full max-w-[90vw] sm:max-w-2xl">
                     <button
                       className="absolute top-3 right-3 text-gray-500 hover:text-black"
                       aria-label="Close"
-                      onClick={() => setIsModalOpen(false)}
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        if (selectedDoc?.document_url) {
+                          window.URL.revokeObjectURL(selectedDoc.document_url);
+                        }
+                        setSelectedDoc(null);
+                      }}
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -398,29 +383,26 @@ export const AMCDetailsPage = () => {
                       <DialogTitle className="text-center">{selectedDoc?.document_name}</DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col items-center justify-center gap-4">
-                      {selectedDoc?.document_url &&
-                        /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(selectedDoc.document_url) ? (
+                      {selectedDoc?.document_url && (
                         <img
                           src={selectedDoc.document_url}
                           alt={selectedDoc.document_name}
                           className="max-w-full max-h-[400px] rounded-md border"
                         />
-                      ) : selectedDoc?.document_url && /\.pdf$/i.test(selectedDoc.document_url) ? (
-                        <iframe
-                          src={selectedDoc.document_url}
-                          className="w-full h-[500px] rounded border"
-                          title={selectedDoc.document_name}
-                        ></iframe>
-                      ) : null}
+                      )}
                       <Button
                         onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = selectedDoc?.document_url;
-                          link.download = selectedDoc?.document_name || 'document';
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          setIsModalOpen(false);
+                          if (selectedDoc?.document_url) {
+                            const link = document.createElement('a');
+                            link.href = selectedDoc.document_url;
+                            link.download = selectedDoc.document_name || 'document';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            setIsModalOpen(false);
+                            window.URL.revokeObjectURL(selectedDoc.document_url);
+                            setSelectedDoc(null);
+                          }
                         }}
                       >
                         <Download className="mr-2 w-4 h-4" />
@@ -428,7 +410,7 @@ export const AMCDetailsPage = () => {
                       </Button>
                     </div>
                   </DialogContent>
-                </Dialog> */}
+                </Dialog>
               </CardContent>
             </Card>
           </TabsContent>
@@ -478,9 +460,48 @@ export const AMCDetailsPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Asset Information */}
+          <TabsContent value="asset-information" className="p-3 sm:p-6">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Boxes className="h-4 w-4" />
+                  </div>
+                  ASSET INFORMATION
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Under Warranty</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow className="bg-white">
+                        <TableCell>{amcDetails.asset_name ? `${amcDetails.asset_name}` : '—'}</TableCell>
+                        <TableCell>—</TableCell>
+                        <TableCell>No</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 text-xs rounded ${amcDetails.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {amcDetails.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
-
 
       <AddVisitModal
         isOpen={showAddVisitModal}
