@@ -297,7 +297,8 @@ export const AddTicketDashboard = () => {
         wing_id: 1,
         area_id: 1,
         floor_id: 1,
-        // Add sel_id_user for behalf of others
+        // Add sel_id_user parameter
+        ...(onBehalfOf === 'self' && userAccount?.id && { sel_id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && { sel_id_user: selectedUserId }),
         // Optional fields
         ...(selectedUser && { id_user: parseInt(selectedUser) }),
