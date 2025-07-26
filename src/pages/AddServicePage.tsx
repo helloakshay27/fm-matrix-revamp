@@ -11,6 +11,7 @@ import { createService, resetServiceState } from '@/store/slices/serviceSlice';
 
 export const AddServicePage = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const [formData, setFormData] = useState({
     serviceName: '',
@@ -28,17 +29,50 @@ export const AddServicePage = () => {
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [resetLocationFields, setResetLocationFields] = useState(false);
-
-  const dispatch = useAppDispatch();
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added to prevent multiple submissions
 
   const [errors, setErrors] = useState({
     serviceName: false,
+    executionType: false,
+    siteId: false,
+    buildingId: false,
+    wingId: false,
+    areaId: false,
+    floorId: false,
+    groupId: false,
+    subGroupId: false,
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (field === 'serviceName' && value.trim() !== '') {
+
+    // Clear errors for the field being updated
+    if (field === 'serviceName' && value.toString().trim() !== '') {
       setErrors(prev => ({ ...prev, serviceName: false }));
+    }
+    if (field === 'executionType' && value !== '') {
+      setErrors(prev => ({ ...prev, executionType: false }));
+    }
+    if (field === 'siteId' && value !== null) {
+      setErrors(prev => ({ ...prev, siteId: false }));
+    }
+    if (field === 'buildingId' && value !== null) {
+      setErrors(prev => ({ ...prev, buildingId: false }));
+    }
+    if (field === 'wingId' && value !== null) {
+      setErrors(prev => ({ ...prev, wingId: false }));
+    }
+    if (field === 'areaId' && value !== null) {
+      setErrors(prev => ({ ...prev, areaId: false }));
+    }
+    if (field === 'floorId' && value !== null) {
+      setErrors(prev => ({ ...prev, floorId: false }));
+    }
+    if (field === 'groupId' && value !== null) {
+      setErrors(prev => ({ ...prev, groupId: false }));
+    }
+    if (field === 'subGroupId' && value !== null) {
+      setErrors(prev => ({ ...prev, subGroupId: false }));
     }
   };
 
@@ -47,115 +81,101 @@ export const AddServicePage = () => {
       ...prev,
       ...location
     }));
+    // Clear errors for location fields when valid values are provided
+    setErrors(prev => ({
+      ...prev,
+      siteId: location.siteId !== null ? false : prev.siteId,
+      buildingId: location.buildingId !== null ? false : prev.buildingId,
+      wingId: location.wingId !== null ? false : prev.wingId,
+      areaId: location.areaId !== null ? false : prev.areaId,
+      floorId: location.floorId !== null ? false : prev.floorId,
+      groupId: location.groupId !== null ? false : prev.groupId,
+      subGroupId: location.subGroupId !== null ? false : prev.subGroupId,
+    }));
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const newFiles = Array.from(files);
-
       setSelectedFiles(prevFiles => {
         const existingNames = new Set(prevFiles.map(f => f.name));
         const filteredNewFiles = newFiles.filter(f => !existingNames.has(f.name));
         return [...prevFiles, ...filteredNewFiles];
       });
-
       event.target.value = '';
     }
   };
-
-
-  // const handleSubmit = async (action: 'show' | 'new') => {
-  //   const hasServiceNameError = formData.serviceName.trim() === '';
-
-  //   if (hasServiceNameError) {
-  //     setErrors({ serviceName: true });
-  //     toast.info("Please enter Service Name before submitting");
-  //     return;
-  //   }
-
-  //   setErrors({ serviceName: false });
-  //   const sendData = new FormData();
-
-  //   try {
-  //     sendData.append('pms_service[service_name]', formData.serviceName);
-  //     sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
-  //     sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
-  //     sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
-  //     sendData.append('pms_service[area_id]', formData.areaId?.toString() || '');
-  //     sendData.append('pms_service[floor_id]', formData.floorId?.toString() || '');
-  //     sendData.append('pms_service[room_id]', formData.roomId?.toString() || '');
-  //     sendData.append('pms_service[pms_asset_group_id]', formData.groupId?.toString() || '');
-  //     sendData.append('pms_service[pms_asset_sub_group_id]', formData.subGroupId?.toString() || '');
-  //     sendData.append('pms_service[active]', 'true');
-  //     sendData.append('pms_service[description]', formData.serviceDescription || '');
-  //     sendData.append('pms_service[execution_type]', formData.executionType || '');
-  //     sendData.append('pms_service[service_category]', '');
-  //     sendData.append('pms_service[service_group]', '');
-  //     sendData.append('pms_service[service_code]', '');
-  //     sendData.append('pms_service[ext_code]', '');
-  //     sendData.append('pms_service[rate_contract_vendor_code]', '');
-  //     sendData.append('subaction', 'save');
-
-  //     selectedFiles.forEach(file => {
-  //       sendData.append('attachments[]', file);
-  //     });
-
-  //     const response = await dispatch(createService(sendData)).unwrap();
-
-  //     if (action === 'show') {
-  //       toast.success('Service has been created and saved with details.');
-  //       setFormData({
-  //         serviceName: '',
-  //         executionType: '',
-  //         serviceDescription: '',
-  //         siteId: null,
-  //         buildingId: null,
-  //         wingId: null,
-  //         areaId: null,
-  //         floorId: null,
-  //         roomId: null,
-  //         groupId: null,
-  //         subGroupId: null,
-  //       });
-  //       setSelectedFiles([]);
-  //       setResetLocationFields(true);
-  //       navigate('/maintenance/service/details/' + response.id);
-
-  //     } else if (action === 'new') {
-  //       toast.success('Service has been created. You can now add a new one.');
-  //       setFormData({
-  //         serviceName: '',
-  //         executionType: '',
-  //         serviceDescription: '',
-  //         siteId: null,
-  //         buildingId: null,
-  //         wingId: null,
-  //         areaId: null,
-  //         floorId: null,
-  //         roomId: null,
-  //         groupId: null,
-  //         subGroupId: null,
-  //       });
-  //       setSelectedFiles([]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error creating service:', error);
-  //     toast.error('Failed to create service. Please try again.');
-  //   }
-  // };
   const handleSubmit = async (action: 'show' | 'new') => {
-    const hasServiceNameError = formData.serviceName.trim() === '';
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    if (hasServiceNameError) {
-      setErrors({ serviceName: true });
-      toast.info("Please enter Service Name before submitting");
+    // Validation
+    const hasServiceNameError = formData.serviceName.trim() === '';
+    const hasExecutionTypeError = formData.executionType === '';
+    const hasSiteIdError = formData.siteId === null;
+    const hasBuildingIdError = formData.buildingId === null;
+    const hasWingIdError = formData.wingId === null;
+    const hasAreaIdError = formData.areaId === null;
+    const hasFloorIdError = formData.floorId === null;
+    const hasGroupIdError = formData.groupId === null;
+    const hasSubGroupIdError = formData.subGroupId === null;
+
+    if (
+      hasServiceNameError ||
+      hasExecutionTypeError ||
+      hasSiteIdError ||
+      hasBuildingIdError ||
+      hasWingIdError ||
+      hasAreaIdError ||
+      hasFloorIdError ||
+      hasGroupIdError ||
+      hasSubGroupIdError
+    ) {
+      setErrors({
+        serviceName: hasServiceNameError,
+        executionType: hasExecutionTypeError,
+        siteId: hasSiteIdError,
+        buildingId: hasBuildingIdError,
+        wingId: hasWingIdError,
+        areaId: hasAreaIdError,
+        floorId: hasFloorIdError,
+        groupId: hasGroupIdError,
+        subGroupId: hasSubGroupIdError,
+      });
+
+      const errorFields = [];
+      if (hasServiceNameError) errorFields.push('Service Name');
+      if (hasExecutionTypeError) errorFields.push('Execution Type');
+      if (hasSiteIdError) errorFields.push('Site');
+      if (hasBuildingIdError) errorFields.push('Building');
+      if (hasWingIdError) errorFields.push('Wing');
+      if (hasAreaIdError) errorFields.push('Area');
+      if (hasFloorIdError) errorFields.push('Floor');
+      if (hasGroupIdError) errorFields.push('Group');
+      if (hasSubGroupIdError) errorFields.push('Sub-Group');
+
+      toast.info(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
+        duration: 5000,
+      });
+
+      setIsSubmitting(false);
       return;
     }
 
-    setErrors({ serviceName: false });
-    const sendData = new FormData();
+    setErrors({
+      serviceName: false,
+      executionType: false,
+      siteId: false,
+      buildingId: false,
+      wingId: false,
+      areaId: false,
+      floorId: false,
+      groupId: false,
+      subGroupId: false,
+    });
 
+    const sendData = new FormData();
     try {
       sendData.append('pms_service[service_name]', formData.serviceName);
       sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
@@ -176,58 +196,63 @@ export const AddServicePage = () => {
       sendData.append('pms_service[rate_contract_vendor_code]', '');
       sendData.append('subaction', 'save');
 
-      selectedFiles.forEach(file => {
+      selectedFiles.forEach((file) => {
         sendData.append('attachments[]', file);
       });
 
       const response = await dispatch(createService(sendData)).unwrap();
+      console.log('Service creation response:', response);
 
+      // ✅ Show toast first
       if (action === 'show') {
-        toast.success('Service has been created and saved with details.');
-        setFormData({
-          serviceName: '',
-          executionType: '',
-          serviceDescription: '',
-          siteId: null,
-          buildingId: null,
-          wingId: null,
-          areaId: null,
-          floorId: null,
-          roomId: null,
-          groupId: null,
-          subGroupId: null,
+        toast.success('Service has been created and saved with details.', {
+          duration: 3000,
+          style: { background: '#4caf50', color: '#fff' },
         });
-        setSelectedFiles([]);
-        setResetLocationFields(true);
-        dispatch(resetServiceState());
-        window.location.href = `/maintenance/service/details/${response.id}`;
-      } else if (action === 'new') {
-        toast.success('Service has been created. You can now add a new one.');
-        setFormData({
-          serviceName: '',
-          executionType: '',
-          serviceDescription: '',
-          siteId: null,
-          buildingId: null,
-          wingId: null,
-          areaId: null,
-          floorId: null,
-          roomId: null,
-          groupId: null,
-          subGroupId: null,
-        });
-        setSelectedFiles([]);
-        setResetLocationFields(true);
-        dispatch(resetServiceState());
+
+        // ✅ Delay redirect so toast can be seen
         setTimeout(() => {
-          setResetLocationFields(false);
-        }, 300);
+          window.location.href = `/maintenance/service/details/${response.id}`;
+        }, 1500);
+      } else if (action === 'new') {
+        toast.success('Service created successfully! Ready to add a new service.', {
+          duration: 3000,
+          style: { background: '#4caf50', color: '#fff' },
+        });
+
+        // ✅ Reset form after short delay
+        setTimeout(() => {
+          setFormData({
+            serviceName: '',
+            executionType: '',
+            serviceDescription: '',
+            siteId: null,
+            buildingId: null,
+            wingId: null,
+            areaId: null,
+            floorId: null,
+            roomId: null,
+            groupId: null,
+            subGroupId: null,
+          });
+          setSelectedFiles([]);
+          setResetLocationFields(true);
+          dispatch(resetServiceState());
+          setTimeout(() => setResetLocationFields(false), 300);
+        }, 500);
       }
-    } catch (error) {
-      console.error('Error creating service:', error);
-      toast.error('Failed to create service. Please try again.');
+    } catch (error: any) {
+      console.error('Error creating service:', error.message || error);
+      toast.error(`Failed to create service: ${error.message || 'Unknown error'}`, {
+        duration: 5000,
+        style: { background: '#f44336', color: '#fff' },
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -244,10 +269,10 @@ export const AddServicePage = () => {
             size="sm"
             onClick={() => navigate('/maintenance/service')}
             className="p-1 hover:bg-gray-100 mr-2"
+            disabled={isSubmitting} // Disable during submission
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-
         </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
@@ -279,11 +304,13 @@ export const AddServicePage = () => {
               InputProps={{
                 sx: fieldStyles,
               }}
+              disabled={isSubmitting} // Disable during submission
             />
             <FormControl
               fullWidth
               variant="outlined"
               required
+              error={errors.executionType}
               sx={{ '& .MuiInputBase-root': fieldStyles }}
             >
               <InputLabel shrink>Execution Type</InputLabel>
@@ -293,15 +320,42 @@ export const AddServicePage = () => {
                 label="Execution Type"
                 notched
                 displayEmpty
+                disabled={isSubmitting} // Disable during submission
               >
                 <MenuItem value="">Select Execution Type</MenuItem>
                 <MenuItem value="internal">Internal</MenuItem>
                 <MenuItem value="external">External</MenuItem>
                 <MenuItem value="both">Both</MenuItem>
               </MuiSelect>
+              {errors.executionType && (
+                <p className="text-red-600 text-xs mt-1">Execution Type is required</p>
+              )}
             </FormControl>
           </div>
-          <LocationSelector fieldStyles={fieldStyles} onLocationChange={handleLocationChange} resetTrigger={resetLocationFields} />
+          <LocationSelector
+            fieldStyles={fieldStyles}
+            onLocationChange={handleLocationChange}
+            resetTrigger={resetLocationFields}
+            errors={{
+              siteId: errors.siteId,
+              buildingId: errors.buildingId,
+              wingId: errors.wingId,
+              areaId: errors.areaId,
+              floorId: errors.floorId,
+              groupId: errors.groupId,
+              subGroupId: errors.subGroupId,
+            }}
+            helperTexts={{
+              siteId: errors.siteId ? 'Site is required' : '',
+              buildingId: errors.buildingId ? 'Building is required' : '',
+              wingId: errors.wingId ? 'Wing is required' : '',
+              areaId: errors.areaId ? 'Area is required' : '',
+              floorId: errors.floorId ? 'Floor is required' : '',
+              groupId: errors.groupId ? 'Group is required' : '',
+              subGroupId: errors.subGroupId ? 'Sub-Group is required' : '',
+            }}
+            disabled={isSubmitting} 
+          />
         </CardContent>
       </Card>
 
@@ -329,6 +383,7 @@ export const AddServicePage = () => {
                 },
               }
             }}
+            disabled={isSubmitting} // Disable during submission
           />
         </CardContent>
       </Card>
@@ -350,36 +405,33 @@ export const AddServicePage = () => {
                 id="file-upload"
                 onChange={handleFileUpload}
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+                disabled={isSubmitting} // Disable during submission
               />
-
               <label
                 htmlFor="file-upload"
-                className="text-[#C72030] cursor-pointer"
+                className={`text-[#C72030] ${isSubmitting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
               >
                 Choose File
               </label>
-
               <span className="ml-2 text-gray-500">
                 {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No file chosen'}
               </span>
-
               <div className="mt-4">
                 <button
                   type="button"
                   onClick={() => document.getElementById('file-upload')?.click()}
-                  className="bg-[#f6f4ee] text-[#C72030] px-6 py-2 rounded  flex items-center justify-center mx-auto"
+                  className={`bg-[#f6f4ee] text-[#C72030] px-6 py-2 rounded flex items-center justify-center mx-auto ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isSubmitting}
                 >
                   <span className="text-lg mr-2">+</span> Upload Files
                 </button>
               </div>
             </div>
           </div>
-
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
             {selectedFiles.map((file, index) => {
               const isImage = file.type.startsWith('image/');
               const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
-
               return (
                 <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50">
                   {isImage ? (
@@ -409,6 +461,7 @@ export const AddServicePage = () => {
           onClick={() => handleSubmit('show')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
+          disabled={isSubmitting} // Disable during submission
         >
           Save & show details
         </Button>
@@ -416,6 +469,7 @@ export const AddServicePage = () => {
           onClick={() => handleSubmit('new')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
+          disabled={isSubmitting}
         >
           Save & Create New Service
         </Button>
