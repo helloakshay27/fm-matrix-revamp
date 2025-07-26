@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building2, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getOrganizationsByEmail, loginUser, saveUser, saveToken, saveBaseUrl, Organization } from '@/utils/auth';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const muiFieldStyles = {
   width: "100%",
@@ -26,7 +28,6 @@ const muiFieldStyles = {
   },
   "& .MuiInputLabel-root": {
     color: "#64748b",
-    fontSize: "15px",
     "&.Mui-focused": {
       color: "#C72030",
     },
@@ -45,15 +46,17 @@ const muiFieldStyles = {
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [selectedOrganization, setSelectedOrganization] =
     useState<Organization | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginMethod, setLoginMethod] = useState("email");
+
 
   const validateEmail = (email: string) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
@@ -61,19 +64,16 @@ export const LoginPage = () => {
 
   const handleEmailSubmit = async () => {
     if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Email Required",
-        description: "Please enter your email address.",
+      toast.error("Email Required", {
+        description: "Please enter your email address."
       });
       return;
     }
 
+
     if (!validateEmail(email)) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
+      toast.error("Invalid Email", {
+        description: "Please enter a valid email address."
       });
       return;
     }
@@ -84,17 +84,39 @@ export const LoginPage = () => {
       setOrganizations(orgs);
       setCurrentStep(2);
       if (orgs.length === 0) {
-        toast({
-          variant: "destructive",
-          title: "No Organizations Found",
-          description: "No organizations found for this email address.",
+        toast.error("No Organizations Found", {
+          description: "No organizations found for this email address."
         });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch organizations. Please try again.",
+      toast.error("Error", {
+        description: "Failed to fetch organizations. Please try again."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handlePhoneSubmit = async () => {
+    if (!phone) {
+      toast.error("Phone Number Required", {
+        description: "Please enter your phone number."
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const orgs = await getOrganizationsByEmail(phone);
+      setOrganizations(orgs);
+      setCurrentStep(2);
+      if (orgs.length === 0) {
+        toast.error("No Organizations Found", {
+          description: "No organizations found for this phone number."
+        });
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description: "Failed to fetch organizations. Please try again."
       });
     } finally {
       setIsLoading(false);
@@ -112,19 +134,15 @@ export const LoginPage = () => {
 
   const handleLogin = async () => {
     if (!email || !password || !selectedOrganization) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please enter all required information.",
+      toast.error("Missing Information", {
+        description: "Please enter all required information."
       });
       return;
     }
 
     if (password.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Password",
-        description: "Password must be at least 6 characters long.",
+      toast.error("Invalid Password", {
+        description: "Password must be at least 6 characters long."
       });
       return;
     }
@@ -148,10 +166,8 @@ export const LoginPage = () => {
       saveToken(response.access_token);
       saveBaseUrl(baseUrl);
 
-      toast({
-        title: "Login Successful",
-        description: `Welcome back, ${response.firstname}!`,
-        duration: 3000,
+      toast.success("Login Successful", {
+        description: `Welcome back, ${response.firstname}!`
       });
 
       // Add a slight delay for better UX, then redirect to dashboard
@@ -160,11 +176,8 @@ export const LoginPage = () => {
       }, 500);
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
-        duration: 5000,
+      toast.error("Login Failed", {
+        description: "Invalid email or password. Please try again."
       });
     } finally {
       setLoginLoading(false);
@@ -213,21 +226,43 @@ export const LoginPage = () => {
 
   const renderEmailStep = () => (
     <>
-      <h2 className="text-lg font-medium text-[#1a1a1a] mb-4">
-        Enter your email address
-      </h2>
+
+      <RadioGroup value={loginMethod} onValueChange={setLoginMethod} className="flex gap-4 mb-6">
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="email" id="email" />
+          <Label htmlFor="email" className="text-gray-700 font-medium cursor-pointer">
+            Login with Email
+          </Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="phone" id="phone" />
+          <Label htmlFor="phone" className="text-gray-700 font-medium cursor-pointer">
+            Login with Phone no.
+          </Label>
+        </div>
+      </RadioGroup>
+
+      {/* Input Field */}
       <TextField
         variant="outlined"
-        placeholder="Enter your email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        sx={muiFieldStyles}
-        onKeyPress={(e) => e.key === "Enter" && handleEmailSubmit()}
+        placeholder={loginMethod === 'email' ? 'Enter your email' : 'Enter your phone number'}
+        type={loginMethod === 'email' ? 'email' : 'tel'}
+        value={loginMethod === 'email' ? email : phone}
+        onChange={(e) => loginMethod === 'email' ? setEmail(e.target.value) : setPhone(e.target.value)}
+        onKeyPress={(e) => e.key === 'Enter' && (loginMethod === 'email' ? handleEmailSubmit() : handlePhoneSubmit())}
+        sx={{
+          ...muiFieldStyles,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '0.5rem',
+          },
+        }}
+        fullWidth
       />
+
+      {/* Submit Button */}
       <Button
-        onClick={handleEmailSubmit}
-        disabled={!email || isLoading}
+        onClick={loginMethod === 'email' ? handleEmailSubmit : handlePhoneSubmit}
+        disabled={isLoading || (loginMethod === 'email' ? !email : !phone)}
         className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-medium rounded-lg text-base mt-2"
       >
         {isLoading ? (
@@ -236,7 +271,7 @@ export const LoginPage = () => {
             <span>Finding Organizations...</span>
           </div>
         ) : (
-          "Continue"
+          'Continue'
         )}
       </Button>
     </>
@@ -244,7 +279,7 @@ export const LoginPage = () => {
 
   const renderOrganizationStep = () => (
     <>
-      <div className="flex items-center mb-4">
+      <div className="flex items-center mb-4 ">
         <Button
           onClick={handleBack}
           variant="ghost"
@@ -258,15 +293,15 @@ export const LoginPage = () => {
         </h2>
       </div>
       <p className="text-black-400 text-sm mb-6">
-        Email: <span className="text-white">{email}</span>
+        Email: <span className="text-black-300">{email}</span>
       </p>
 
-      <div className="space-y-3 mb-6 max-h-[200px] overflow-y-auto no-scrollbar">
+      <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto scrollbar">
         {organizations && organizations.map((org) => (
           <div
             key={org.id}
             onClick={() => handleOrganizationSelect(org)}
-            className="bg-white shadow-md rounded-xl p-4 cursor-pointer hover:bg-gray-50 transition-all duration-200 transform hover:scale-[1.02] border border-gray-100 hover:border-[#C72030]"
+            className="bg-white shadow-md rounded-xl p-4 cursor-pointer hover:bg-gray-50 border border-gray-100 hover:border-[#C72030]"
           >
             <div className="flex items-center">
               <div className="w-12 h-12 bg-[#C72030] bg-opacity-10 rounded-lg flex items-center justify-center mr-4">
@@ -390,39 +425,44 @@ export const LoginPage = () => {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80')`
-        }}
-      />
+    <div className="min-h-screen flex">
+      {/* Left Side - Background Image */}
+      <div className="flex-1 relative">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('/lovable-uploads/02d5802a-cd33-44e2-a858-a1e149cace5f.png')`,
+          }}
+        />
+      </div>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+      {/* Right Side - Forgot Password Form */}
+      <div className="w-full max-w-lg bg-white/90 backdrop-blur-lg p-4 rounded-xl flex flex-col justify-center px-12 py-12">
+        {/* Logo and Branding */}
 
-      {/* Login Card */}
-      <div className="relative z-10 bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl backdrop-blur-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-3">
-            <div className="w-14 h-14 bg-[#C72030] rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
-              <span className="text-white font-bold text-xl">FM</span>
+        {/* Title and Description */}
+        <div className="w-full max-w-md">
+          <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
+            {/* Logo */}
+            <div className="text-center mb-6 flex flex-col items-center space-y-2">
+              <img
+                src="https://india.lockated.co/wp-content/uploads/lockated-logo-nw.png"
+                alt="Logo"
+                className="h-12 mx-auto"
+              />
+              <p className="text-gray-600 text-sm font-medium">
+                Sign in to your account
+              </p>
+            </div>
+
+
+            {/* Step Form */}
+            <div className="mt-8 space-y-5">
+              {currentStep === 1 && renderEmailStep()}
+              {currentStep === 2 && renderOrganizationStep()}
+              {currentStep === 3 && renderPasswordStep()}
             </div>
           </div>
-          <h1 className="text-[#1a1a1a] text-2xl font-bold tracking-tight">Facility Management</h1>
-          <p className="text-gray-500 text-sm mt-2 font-medium">Sign in to your account</p>
-        </div>
-
-        {/* Step Indicator */}
-        {renderStepIndicator()}
-
-        {/* Form Content */}
-        <div className="space-y-4 mt-6">
-          {currentStep === 1 && renderEmailStep()}
-          {currentStep === 2 && renderOrganizationStep()}
-          {currentStep === 3 && renderPasswordStep()}
         </div>
       </div>
     </div>

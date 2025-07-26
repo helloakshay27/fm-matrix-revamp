@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
+import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
@@ -17,7 +18,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   onDateRangeChange,
   onFiltersChange
 }) => {
-  const [view, setView] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'day' | 'agenda' | 'work_week' | 'year'>('month');
+  const navigate = useNavigate();
   const [date, setDate] = useState(new Date());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<CalendarFilters>({
@@ -73,6 +75,14 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     value !== '' && value !== '01/07/2025' && value !== '31/07/2025'
   ).length;
 
+  // Handle event click to navigate to task detail
+  const handleSelectEvent = (event: any) => {
+    const taskId = event.resource?.task?.id || event.id;
+    if (taskId) {
+      navigate(`/task-details/${taskId}`);
+    }
+  };
+
   // Custom event style
   const eventStyleGetter = (event: any) => {
     const backgroundColor = event.color || '#fdbb0b';
@@ -84,7 +94,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         fontSize: '11px',
         padding: '2px 4px',
         borderRadius: '2px',
-        border: 'none'
+        border: 'none',
+        cursor: 'pointer'
       }
     };
   };
@@ -116,8 +127,14 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         <Button variant={view === 'week' ? 'default' : 'outline'} size="sm" onClick={() => onView('week')} className="px-3 py-1 h-8">
           week
         </Button>
+        <Button variant={view === 'work_week' ? 'default' : 'outline'} size="sm" onClick={() => onView('work_week')} className="px-3 py-1 h-8">
+          52-week
+        </Button>
         <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => onView('day')} className="px-3 py-1 h-8">
           day
+        </Button>
+        <Button variant={view === 'year' ? 'default' : 'outline'} size="sm" onClick={() => onView('year')} className="px-3 py-1 h-8">
+          year
         </Button>
         <Button variant={view === 'agenda' ? 'default' : 'outline'} size="sm" onClick={() => onView('agenda')} className="px-3 py-1 h-8">
           list
@@ -188,22 +205,31 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       <div className="bg-white border rounded-lg p-4" style={{
       height: '600px'
     }}>
-        <Calendar localizer={localizer} events={calendarEvents} startAccessor="start" endAccessor="end" style={{
-        height: '100%'
-      }} view={view} onView={handleViewChange} date={date} onNavigate={handleNavigate} eventPropGetter={eventStyleGetter} components={{
-        toolbar: CustomToolbar
-      }} views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]} step={60} showMultiDayTimes formats={{
-        timeGutterFormat: 'HH:mm',
-        eventTimeRangeFormat: ({
-          start,
-          end
-        }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
-        agendaTimeFormat: 'HH:mm',
-        agendaTimeRangeFormat: ({
-          start,
-          end
-        }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
-      }} />
+        <Calendar 
+          localizer={localizer} 
+          events={calendarEvents} 
+          startAccessor="start" 
+          endAccessor="end" 
+          style={{ height: '100%' }} 
+          view={view} 
+          onView={handleViewChange} 
+          date={date} 
+          onNavigate={handleNavigate} 
+          onSelectEvent={handleSelectEvent}
+          eventPropGetter={eventStyleGetter} 
+          components={{ toolbar: CustomToolbar }}
+          views={[Views.MONTH, Views.WEEK, Views.WORK_WEEK, Views.DAY, Views.AGENDA]}
+          step={60} 
+          showMultiDayTimes 
+          formats={{
+            timeGutterFormat: 'HH:mm',
+            eventTimeRangeFormat: ({ start, end }: any) => 
+              `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
+            agendaTimeFormat: 'HH:mm',
+            agendaTimeRangeFormat: ({ start, end }: any) => 
+              `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
+          }} 
+        />
       </div>
 
       {/* Filter Modal */}
