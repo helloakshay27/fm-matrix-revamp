@@ -13,9 +13,9 @@ const ticketOptions = [
   { id: 'reactive-proactive', label: 'Tickets Categorywise Proactive', checked: true, chartSection: 'reactiveChart' },
   { id: 'category-wise', label: 'Category-wise Tickets', checked: true, chartSection: 'categoryChart' },
   { id: 'aging-matrix', label: 'Ticket ageing matrix', checked: true, chartSection: 'agingMatrix' },
-  { id: 'unitCategoryWise', label: 'Unit Category Wise', checked: false, chartSection: 'unitCategoryWise' },
-  { id: 'responseTat', label: 'Response Tat', checked: false, chartSection: 'responseTat' },
-  { id: 'resolutionTat', label: 'Resolution tat', checked: false, chartSection: 'resolutionTat' },
+  { id: 'unitCategoryWise', label: 'Unit Category Wise', checked: true, chartSection: 'unitCategoryWise' },
+  { id: 'responseTat', label: 'Response Tat', checked: true, chartSection: 'responseTat' },
+  { id: 'resolutionTat', label: 'Resolution tat', checked: true, chartSection: 'resolutionTat' },
 ];
 
 interface TicketSelectorProps {

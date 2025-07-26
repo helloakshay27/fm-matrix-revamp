@@ -246,7 +246,7 @@ export const TicketDashboard = () => {
   } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
+  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix', 'unitCategoryWise', 'responseTat', 'resolutionTat']);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix', 'unitCategoryWise', 'responseTat', 'resolutionTat']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1052,9 +1052,9 @@ export const TicketDashboard = () => {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                   <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Two Donut Charts */}
+                    {/* Top Row - Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
+                      {chartOrder.filter(id => ['statusChart', 'reactiveChart', 'unitCategoryWise', 'responseTat'].includes(id)).map(chartId => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
@@ -1160,7 +1160,7 @@ export const TicketDashboard = () => {
                     </div>
 
                     {/* Bottom Charts - Category and Aging Matrix */}
-                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix'].includes(id)).map(chartId => {
+                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix', 'resolutionTat'].includes(id)).map(chartId => {
                       if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
                         return <SortableChartItem key={chartId} id={chartId}>
                           <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
