@@ -4,10 +4,9 @@ import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Filter as FilterIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CalendarEvent } from '@/services/calendarService';
-import { CalendarFilterDialog, CalendarFilters } from '@/components/CalendarFilterDialog';
 const localizer = momentLocalizer(moment);
 interface ScheduledTaskCalendarProps {
   events?: CalendarEvent[];
@@ -25,8 +24,6 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const [dateTo, setDateTo] = useState('31/07/2025');
   const [amc, setAmc] = useState('');
   const [service, setService] = useState('');
-  const [showCalendarFilter, setShowCalendarFilter] = useState(false);
-  const [currentFilters, setCurrentFilters] = useState<CalendarFilters>({});
 
   // Convert API events to calendar events
   const calendarEvents = useMemo(() => {
@@ -75,30 +72,6 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   };
   const handleExport = () => {
     console.log('Export calendar data');
-  };
-
-  // Handle calendar filter application
-  const handleApplyCalendarFilters = (filters: CalendarFilters) => {
-    setCurrentFilters(filters);
-    
-    // Update local state from filters if provided
-    if (filters.startDate) setDateFrom(filters.startDate);
-    if (filters.endDate) setDateTo(filters.endDate);
-    if (filters.amc) setAmc(filters.amc);
-    if (filters.service) setService(filters.service);
-    
-    // Call parent callbacks
-    if (onDateRangeChange) {
-      onDateRangeChange(
-        filters.startDate || dateFrom, 
-        filters.endDate || dateTo
-      );
-    }
-    if (onFiltersChange) {
-      onFiltersChange(filters);
-    }
-    
-    console.log('Applied calendar filters:', filters);
   };
 
   // Custom event style
@@ -192,14 +165,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         <Button onClick={handleReset} variant="outline" className="px-6">
           Reset
         </Button>
-        <Button 
-          onClick={() => setShowCalendarFilter(true)} 
-          variant="outline" 
-          className="px-6 flex items-center gap-2"
-        >
-          <FilterIcon className="w-4 h-4" />
-          Advanced Filter
-        </Button>
+        
       </div>
 
       {/* Legends */}
@@ -248,12 +214,5 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
       }} />
       </div>
-
-      {/* Calendar Filter Dialog */}
-      <CalendarFilterDialog
-        isOpen={showCalendarFilter}
-        onClose={() => setShowCalendarFilter(false)}
-        onApply={handleApplyCalendarFilters}
-      />
     </div>;
 };
