@@ -171,7 +171,7 @@ export const ScheduledTaskDashboard = () => {
       
       // Build query parameters from filters and pagination
       const queryParams = new URLSearchParams();
-      queryParams.append('show_all', showAll.toString());
+      // queryParams.append('show_all', showAll.toString());
       queryParams.append('page', page.toString());
 
 if (filters.dateFrom) queryParams.append('q[start_date_gteq]', filters.dateFrom);
