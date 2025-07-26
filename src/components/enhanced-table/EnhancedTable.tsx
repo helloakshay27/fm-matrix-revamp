@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import {
   DndContext,
@@ -175,6 +174,21 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
+  // Get initial column visibility state from localStorage
+  const getSavedColumnVisibility = () => {
+    if (storageKey) {
+      const savedVisibility = localStorage.getItem(`${storageKey}-columns`);
+      if (savedVisibility) {
+        try {
+          return JSON.parse(savedVisibility);
+        } catch (e) {
+          console.error('Error parsing saved column visibility:', e);
+        }
+      }
+    }
+    return null;
+  };
+
   const {
     sortedData: baseSortedData,
     sortState,
@@ -187,8 +201,42 @@ export function EnhancedTable<T extends Record<string, any>>({
   } = useEnhancedTable({
     data,
     columns,
-    storageKey
+    storageKey,
+    initialColumnVisibility: getSavedColumnVisibility()
   });
+
+  // Wrap resetToDefaults to handle localStorage
+  const handleResetToDefaults = () => {
+    resetToDefaults();
+    if (storageKey) {
+      // Remove all stored column state
+      localStorage.removeItem(`${storageKey}-columns`);
+      localStorage.removeItem(`${storageKey}-column-order`);
+      
+      // Set default column visibility state
+      const defaultVisibility = columns.reduce((acc, column) => ({
+        ...acc,
+        [column.key]: column.defaultVisible !== false
+      }), {});
+      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(defaultVisibility));
+      
+      // Set default column order
+      const defaultOrder = columns.map(column => column.key);
+      localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(defaultOrder));
+    }
+  };
+
+  // Wrap toggleColumnVisibility to handle localStorage
+  const handleToggleColumnVisibility = (columnKey: string) => {
+    toggleColumnVisibility(columnKey);
+    if (storageKey) {
+      const updatedVisibility = {
+        ...columnVisibility,
+        [columnKey]: !columnVisibility[columnKey]
+      };
+      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(updatedVisibility));
+    }
+  };
 
   // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
@@ -229,6 +277,13 @@ export function EnhancedTable<T extends Record<string, any>>({
 
     if (over && active.id !== over.id) {
       reorderColumns(String(active.id), String(over.id));
+      // Save the new column order to localStorage
+      if (storageKey) {
+        const newOrder = columnIds.filter(id => id !== active.id);
+        const overIndex = newOrder.indexOf(String(over.id));
+        newOrder.splice(overIndex, 0, String(active.id));
+        localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(newOrder));
+      }
     }
   };
 
@@ -361,8 +416,8 @@ export function EnhancedTable<T extends Record<string, any>>({
             <ColumnVisibilityMenu
               columns={columns}
               columnVisibility={columnVisibility}
-              onToggleVisibility={toggleColumnVisibility}
-              onResetToDefaults={resetToDefaults}
+              onToggleVisibility={handleToggleColumnVisibility}
+              onResetToDefaults={handleResetToDefaults}
             />
           )}
 
