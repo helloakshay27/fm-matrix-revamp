@@ -67,12 +67,12 @@ export const restaurantApi = {
       const restaurant = response.data;
       
       // Transform API response to match our interface
-      const menuItems = restaurant.menu_items ? restaurant.menu_items.map((item: any) => ({
+      const menuItems = restaurant.restaurant_menu ? restaurant.restaurant_menu.map((item: any) => ({
         id: item.id?.toString() || Math.random().toString(),
         name: item.name || 'Unknown Item',
         description: item.description || '',
-        price: parseFloat(item.price) || 0,
-        image: item.image_url || item.image || '/placeholder.svg',
+        price: parseFloat(item.display_price || item.master_price) || 0,
+        image: item.images && item.images.length > 0 ? item.images[0] : '/placeholder.svg',
         quantity: 0
       })) : [];
 
