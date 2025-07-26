@@ -147,6 +147,8 @@ export const SubCategoriesSetupTable = () => {
         enableSelection={true}
         enableExport={true}
         storageKey="subcategories-table"
+        pagination={true}
+        pageSize={5}
         leftActions={
           <div className="flex flex-wrap gap-2">
             <Button

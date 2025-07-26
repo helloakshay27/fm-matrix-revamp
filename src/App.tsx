@@ -875,7 +875,7 @@ function App() {
                 <Route path="/vas/booking/list" element={<BookingListDashboard />} />
                 <Route path="/vas/booking/add" element={<AddFacilityBookingPage />} />
                 <Route path="/vas/bookings/details/:id" element={<BookingDetailsPage />} />
-                <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} />
+                {/* <Route path="/vas/booking/setup" element={<BookingSetupDashboard />} /> */}
                 <Route path="/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
 
                 {/* Master Location Routes */}
@@ -927,6 +927,7 @@ function App() {
                 <Route path="/settings/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
                 <Route path="/settings/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
+                <Route path="/settings/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
               </Route>
 

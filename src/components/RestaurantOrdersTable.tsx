@@ -180,12 +180,12 @@ export const RestaurantOrdersTable = () => {
         return item.payment_status ? (
           <span
             className={`px-2 py-1 rounded-full text-xs ${item.payment_status === 'Paid'
-                ? 'bg-green-100 text-green-800'
-                : item.payment_status === 'Pending'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : item.payment_status === 'Unpaid'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-gray-100 text-gray-500'
+              ? 'bg-green-100 text-green-800'
+              : item.payment_status === 'Pending'
+                ? 'bg-yellow-100 text-yellow-800'
+                : item.payment_status === 'Unpaid'
+                  ? 'bg-red-100 text-red-800'
+                  : 'bg-gray-100 text-gray-500'
               }`}
           >
             {item.payment_status}
@@ -236,6 +236,8 @@ export const RestaurantOrdersTable = () => {
         enableSearch={true}
         enableSelection={false}
         hideTableExport={true}
+        pagination={true}
+        pageSize={10}
       />
     </div>
   );

@@ -201,6 +201,14 @@ export const RestaurantOrderDetailPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/vas/fnb')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Order List
+        </Button>
         {/* Restaurant Header */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="flex items-center justify-between bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
@@ -219,16 +227,6 @@ export const RestaurantOrderDetailPage = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-8 px-6 py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
-            {/* Left Column - Delivery Address */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Delivery Address:</h3>
-              <div className="space-y-2">
-                <div className="font-medium">{order.delivery_address.name}</div>
-                <div className="text-gray-600">{order.delivery_address.site_name}</div>
-                <div className="text-gray-600">{order.delivery_address.phone}</div>
-              </div>
-            </div>
-
             {/* Right Column - Order Details */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Order ID: {order.order_details.order_id}</h3>
@@ -238,6 +236,16 @@ export const RestaurantOrderDetailPage = () => {
                 <div><span className="font-medium">Payment Status:</span> {order.order_details.payment_status}</div>
                 <div><span className="font-medium">Transaction ID:</span> {order.order_details.transaction_id}</div>
                 <div><span className="font-medium">Preferred Time:</span> {order.order_details.preferred_time}</div>
+              </div>
+            </div>
+
+            {/* Left Column - Delivery Address */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Delivery Address:</h3>
+              <div className="space-y-2">
+                <div className="font-medium">{order.delivery_address.name}</div>
+                <div className="text-gray-600">{order.delivery_address.site_name}</div>
+                <div className="text-gray-600">{order.delivery_address.phone}</div>
               </div>
             </div>
           </div>

@@ -157,6 +157,8 @@ export const CategoriesSetupTable = () => {
         enableSearch={true}
         enableSelection={false}
         hideTableExport={true}
+        pagination={true}
+        pageSize={5}
       />
 
       <AddCategoryModal

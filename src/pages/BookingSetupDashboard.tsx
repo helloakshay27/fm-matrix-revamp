@@ -136,10 +136,8 @@ export const BookingSetupDashboard = () => {
     }
   };
 
-  console.log(bookingData)
-
   const handleViewDetails = (id: string) => {
-    navigate(`/vas/booking/setup/details/${id}`);
+    navigate(`/settings/vas/booking/setup/details/${id}`);
   };
 
   const columns: ColumnConfig[] = [
@@ -245,6 +243,10 @@ export const BookingSetupDashboard = () => {
     }
   };
 
+  // const handdleEditDetails = (id: string) => {
+  //   navigate(`/settings/vas/booking/setup/edit/${id}`);
+  // }
+
   const renderActions = (booking: BookingSetup) => (
     <div className="flex items-center gap-2">
       <Button
@@ -254,13 +256,13 @@ export const BookingSetupDashboard = () => {
       >
         <Eye className="w-4 h-4" />
       </Button>
-      <Button
+      {/* <Button
         size="sm"
         variant="ghost"
-        onClick={() => handleViewDetails(booking.id)}
+        onClick={() => handdleEditDetails(booking.id)}
       >
         <Pencil className="w-4 h-4" />
-      </Button>
+      </Button> */}
     </div>
   );
 
@@ -300,6 +302,8 @@ export const BookingSetupDashboard = () => {
           // onFilterClick={() => setIsFilterOpen(true)}
           enableSelection={false}
           hideTableExport={true}
+          pagination={true}
+          pageSize={10}
         />
 
         <BookingSetupFilterModal

@@ -201,6 +201,8 @@ export const StatusSetupTable = () => {
         enableSelection={true}
         enableExport={true}
         storageKey="status-table"
+        pagination={true}
+        pageSize={5}
         leftActions={
           <div className="flex flex-wrap gap-2">
             <Button

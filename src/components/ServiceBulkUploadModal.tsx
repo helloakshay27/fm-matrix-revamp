@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface ServiceBulkUploadModalProps {
   isOpen: boolean;
@@ -40,16 +41,15 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
     }
 
     const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('type', uploadType); // 'upload' or 'update'
+    formData.append('pms_services_file', selectedFile);// 'upload' or 'update'
 
-    const yourToken = localStorage.getItem('token'); // or however you're storing your token
+    const token = localStorage.getItem('token'); // or however you're storing your token
 
     try {
-      const response = await fetch('https://fm-uat-api.lockated.com/pms/services/upload_services.json', {
+      const response = await fetch(`https://${localStorage.getItem('baseUrl')}/pms/services/upload_services.json`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${yourToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -61,7 +61,7 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
 
       const data = await response.json();
       console.log('Upload successful:', data);
-      alert(`${uploadType === 'upload' ? 'Bulk Upload' : 'Bulk Update'} completed successfully!`);
+      toast.success('Upload successful');
       onClose();
     } catch (error) {
       console.error('Upload failed:', error);

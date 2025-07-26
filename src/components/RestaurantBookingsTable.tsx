@@ -171,6 +171,8 @@ export const RestaurantBookingsTable = () => {
         enableSearch={true}
         enableSelection={false}
         hideTableExport={true}
+        pagination={true}
+        pageSize={10}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

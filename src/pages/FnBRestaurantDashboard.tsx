@@ -263,6 +263,8 @@ export const FnBRestaurantDashboard = () => {
         enableSearch={true}
         enableSelection={false}
         hideTableExport={true}
+        pagination={true}
+        pageSize={10}
       />
     </div>
   );

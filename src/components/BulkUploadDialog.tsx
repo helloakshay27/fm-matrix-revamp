@@ -31,12 +31,12 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       // Validate file type
       const allowedTypes = ['.csv', '.xlsx', '.xls'];
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      
+
       if (!allowedTypes.includes(fileExtension)) {
         toast.error('Please select a valid file format (CSV, Excel)');
         return;
       }
-      
+
       setSelectedFile(file);
       console.log('File selected:', file.name);
     }
@@ -45,18 +45,18 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragOver(false);
-    
+
     const file = event.dataTransfer.files[0];
     if (file) {
       // Validate file type
       const allowedTypes = ['.csv', '.xlsx', '.xls'];
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      
+
       if (!allowedTypes.includes(fileExtension)) {
         toast.error('Please select a valid file format (CSV, Excel)');
         return;
       }
-      
+
       setSelectedFile(file);
       console.log('File dropped:', file.name);
     }
@@ -73,13 +73,13 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
 
   const handleDownloadSample = async () => {
     console.log('Downloading sample format...');
-    
+
     try {
       // Call the API to download the sample file
       const response = await apiClient.get('/assets/asset.xlsx', {
         responseType: 'blob'
       });
-      
+
       // Create blob URL and trigger download
       const blob = response.data;
       const url = window.URL.createObjectURL(blob);
@@ -90,7 +90,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       toast.success('Sample format downloaded successfully');
     } catch (error) {
       console.error('Error downloading sample file:', error);
@@ -109,8 +109,8 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
 
     try {
       // Determine the API endpoint based on upload type
-      const endpoint = uploadType === "upload" 
-        ? "/pms/assets/asset_import" 
+      const endpoint = uploadType === "upload"
+        ? "/pms/assets/asset_import"
         : "/pms/assets/update_assets";
 
       // Create FormData for file upload
@@ -125,17 +125,17 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       });
 
       console.log('Import response:', response.data);
-      
+
       if (onImport) {
         onImport(selectedFile);
       }
-      
+
       // Reset state
       setSelectedFile(null);
       onOpenChange(false);
-      
+
       toast.success(`${uploadType === "upload" ? "Import" : "Update"} completed successfully`);
-      
+
     } catch (error) {
       console.error('Import failed:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Import failed. Please try again.';
@@ -170,15 +170,14 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
             </Button>
           </div>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* File Upload Area */}
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              dragOver 
-                ? 'border-[#C72030] bg-red-50' 
-                : 'border-[#C72030] bg-[#ffff]'
-            }`}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragOver
+              ? 'border-[#C72030] bg-red-50'
+              : 'border-[#C72030] bg-[#ffff]'
+              }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -218,7 +217,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <Button 
+            <Button
               onClick={handleDownloadSample}
               variant="outline"
               className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
@@ -226,7 +225,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
             >
               Download Sample Format
             </Button>
-            <Button 
+            <Button
               onClick={handleImport}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90 flex-1"

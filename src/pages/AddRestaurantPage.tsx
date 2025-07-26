@@ -149,7 +149,55 @@ export const AddRestaurantPage = () => {
     setBlockedDays(prev => prev.filter((_, i) => i !== index));
   };
 
+  const validateForm = () => {
+    if (!formData.restaurantName) {
+      toast.error('Please enter Restaurant Name');
+      return false;
+    } else if (!formData.costForTwo) {
+      toast.error('Please enter Cost For Two');
+      return false;
+    } else if (!formData.mobileNumber || !/^\d{10}$/.test(formData.mobileNumber)) {
+      toast.error('Please enter a valid 10-digit Mobile Number');
+      return false;
+    } else if (formData.anotherMobileNumber && !/^\d{10}$/.test(formData.anotherMobileNumber)) {
+      toast.error('Alternate number must be 10 digits');
+      return false;
+    } else if (!formData.landlineNumber || !/^\d{6}$/.test(formData.landlineNumber)) {
+      toast.error('Please enter a valid 6-digit Landline Number');
+      return false;
+    } else if (!formData.deliveryTime) {
+      toast.error('Please enter Delivery Time');
+      return false;
+    } else if (!formData.servesAlcohol) {
+      toast.error('Please enter Serves Alcohol');
+      return false;
+    } else if (!formData.wheelchairAccessible) {
+      toast.error('Please enter Wheelchair Accessible');
+      return false;
+    } else if (!formData.cashOnDelivery) {
+      toast.error('Please enter Cash On Delivery');
+      return false;
+    } else if (!formData.pureVeg) {
+      toast.error('Please enter Pure Veg');
+      return false;
+    } else if (!formData.address) {
+      toast.error('Please enter Address');
+      return false;
+    } else if (!formData.tAndC) {
+      toast.error('Please enter Terms and Conditions');
+      return false;
+    } else if (!formData.disclaimer) {
+      toast.error('Please enter Disclaimer');
+      return false;
+    } else if (!formData.closingMessage) {
+      toast.error('Please enter Closing Message');
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
     setLoadingSubmit(true)
     try {
       const dataToSubmit = new FormData();
@@ -292,8 +340,20 @@ export const AddRestaurantPage = () => {
               <TextField
                 label="Cost For Two"
                 required
+                type="number"
                 value={formData.costForTwo}
-                onChange={(e) => setFormData(prev => ({ ...prev, costForTwo: e.target.value }))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || parseFloat(value) >= 0) {
+                    setFormData((prev) => ({ ...prev, costForTwo: value }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ min: 0 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -304,9 +364,24 @@ export const AddRestaurantPage = () => {
               <TextField
                 label="Mobile Number"
                 required
+                type="text"
                 placeholder="Enter Number"
                 value={formData.mobileNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, mobileNumber: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  if (onlyDigits.length <= 10) {
+                    setFormData((prev) => ({ ...prev, mobileNumber: onlyDigits }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.'].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ maxLength: 10 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -316,10 +391,24 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Another Mobile Number"
-                required
                 placeholder="Enter Number"
+                type="text"
                 value={formData.anotherMobileNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, anotherMobileNumber: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  if (onlyDigits.length <= 10) {
+                    setFormData((prev) => ({ ...prev, anotherMobileNumber: onlyDigits }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ maxLength: 10 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -331,8 +420,23 @@ export const AddRestaurantPage = () => {
                 label="Landline Number"
                 required
                 placeholder="Enter Number"
+                type="text"
                 value={formData.landlineNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, landlineNumber: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  if (onlyDigits.length <= 10) {
+                    setFormData((prev) => ({ ...prev, landlineNumber: onlyDigits }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ maxLength: 10 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -342,9 +446,23 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Delivery Time"
+                required
                 placeholder="Mins"
+                type="text"
                 value={formData.deliveryTime}
-                onChange={(e) => setFormData(prev => ({ ...prev, deliveryTime: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  setFormData((prev) => ({ ...prev, deliveryTime: onlyDigits }));
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ inputMode: 'numeric' }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -424,6 +542,7 @@ export const AddRestaurantPage = () => {
             <div className="md:col-span-3">
               <TextField
                 label="Address"
+                required
                 value={formData.address}
                 onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 fullWidth
@@ -437,6 +556,7 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="T&C"
+                required
                 value={formData.tAndC}
                 onChange={(e) => setFormData(prev => ({ ...prev, tAndC: e.target.value }))}
                 fullWidth
@@ -450,6 +570,7 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Disclaimer"
+                required
                 value={formData.disclaimer}
                 onChange={(e) => setFormData(prev => ({ ...prev, disclaimer: e.target.value }))}
                 fullWidth
@@ -463,6 +584,7 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Closing Message"
+                required
                 value={formData.closingMessage}
                 onChange={(e) => setFormData(prev => ({ ...prev, closingMessage: e.target.value }))}
                 fullWidth
@@ -737,7 +859,19 @@ export const AddRestaurantPage = () => {
                 <TextField
                   label="Min Person"
                   value={tableBooking.minPerson}
-                  onChange={(e) => setTableBooking(prev => ({ ...prev, minPerson: e.target.value }))}
+                  onChange={(e) => {
+                    const digitsOnly = e.target.value.replace(/\D/g, '');
+                    setTableBooking((prev) => ({ ...prev, minPerson: digitsOnly }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                      (e.key.length === 1 && !/\d/.test(e.key))
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
+                  inputProps={{ inputMode: 'numeric' }}
                   fullWidth
                   variant="outlined"
                   sx={fieldStyles}
