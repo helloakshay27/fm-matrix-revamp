@@ -5,8 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { MaterialDatePicker } from '@/components/ui/material-date-picker';
-import { Label } from '@/components/ui/label';
 interface CalendarFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -92,50 +90,28 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
         
         <div className="space-y-6">
           {/* Date Range Section */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">Date Range</h3>
+          <div>
+            <h3 className="text-lg font-medium mb-4">Date Range</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">From Date</Label>
-                <MaterialDatePicker 
-                  value={filters.dateFrom} 
-                  onChange={(value) => handleFilterChange('dateFrom', value)} 
-                  placeholder="Select start date"
-                  className="h-10"
-                />
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">From Date</label>
+                <Input placeholder="01/07/2025" value={filters.dateFrom} onChange={e => handleFilterChange('dateFrom', e.target.value)} className="h-10" />
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">To Date</Label>
-                <MaterialDatePicker 
-                  value={filters.dateTo} 
-                  onChange={(value) => handleFilterChange('dateTo', value)} 
-                  placeholder="Select end date"
-                  className="h-10"
-                />
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">To Date</label>
+                <Input placeholder="31/07/2025" value={filters.dateTo} onChange={e => handleFilterChange('dateTo', e.target.value)} className="h-10" />
               </div>
             </div>
           </div>
 
           {/* Task Details Section */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">Task Details</h3>
+          <div>
+            <h3 className="text-lg font-medium mb-4">Task Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">AMC</Label>
-                <Select value={filters.amc} onValueChange={value => handleFilterChange('amc', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select AMC" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="amc1">AMC Contract 1</SelectItem>
-                    <SelectItem value="amc2">AMC Contract 2</SelectItem>
-                    <SelectItem value="amc3">AMC Contract 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Service</Label>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Service</label>
                 <Select value={filters.service} onValueChange={value => handleFilterChange('service', value)}>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Service" />
@@ -143,37 +119,24 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                   <SelectContent>
                     <SelectItem value="maintenance">Maintenance</SelectItem>
                     <SelectItem value="cleaning">Cleaning</SelectItem>
-                    <SelectItem value="security">Security</SelectItem>
+                    
                     <SelectItem value="hvac">HVAC</SelectItem>
                     <SelectItem value="electrical">Electrical</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Status</Label>
-                <Select value={filters.status} onValueChange={value => handleFilterChange('status', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Schedule Type</Label>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Schedule Type</label>
                 <Select value={filters.scheduleType} onValueChange={value => handleFilterChange('scheduleType', value)}>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
+                    
                     <SelectItem value="monthly">Monthly</SelectItem>
                     <SelectItem value="quarterly">Quarterly</SelectItem>
                     <SelectItem value="annual">Annual</SelectItem>
@@ -181,98 +144,11 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Priority</Label>
-                <Select value={filters.priority} onValueChange={value => handleFilterChange('priority', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
             </div>
           </div>
 
           {/* Location Details Section */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">Location Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Building</Label>
-                <Select value={filters.building} onValueChange={value => handleFilterChange('building', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="building-a">Building A</SelectItem>
-                    <SelectItem value="building-b">Building B</SelectItem>
-                    <SelectItem value="building-c">Building C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Wing</Label>
-                <Select value={filters.wing} onValueChange={value => handleFilterChange('wing', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="north">North Wing</SelectItem>
-                    <SelectItem value="south">South Wing</SelectItem>
-                    <SelectItem value="east">East Wing</SelectItem>
-                    <SelectItem value="west">West Wing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Floor</Label>
-                <Select value={filters.floor} onValueChange={value => handleFilterChange('floor', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ground">Ground Floor</SelectItem>
-                    <SelectItem value="1">1st Floor</SelectItem>
-                    <SelectItem value="2">2nd Floor</SelectItem>
-                    <SelectItem value="3">3rd Floor</SelectItem>
-                    <SelectItem value="4">4th Floor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Area</Label>
-                <Select value={filters.area} onValueChange={value => handleFilterChange('area', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lobby">Lobby</SelectItem>
-                    <SelectItem value="office">Office Space</SelectItem>
-                    <SelectItem value="cafeteria">Cafeteria</SelectItem>
-                    <SelectItem value="parking">Parking</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Room</Label>
-                <Input 
-                  placeholder="Enter room number" 
-                  value={filters.room} 
-                  onChange={e => handleFilterChange('room', e.target.value)} 
-                  className="h-10" 
-                />
-              </div>
-            </div>
-          </div>
           
         </div>
 
