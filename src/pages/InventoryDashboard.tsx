@@ -1224,7 +1224,7 @@ export const InventoryDashboard = () => {
                     {activeCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Active Count
+                    Active Inventory 
                   </div>
                 </div>
               </div>
@@ -1243,7 +1243,7 @@ export const InventoryDashboard = () => {
                     {inactiveCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Inactive Count
+                    Inactive Inventory
                   </div>
                 </div>
               </div>
