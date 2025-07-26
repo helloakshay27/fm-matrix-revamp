@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +25,14 @@ interface TicketSelectorProps {
 export function TicketSelector({ onSelectionChange }: TicketSelectorProps) {
   const [options, setOptions] = useState(ticketOptions);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Initialize with current visible sections
+  useEffect(() => {
+    const visibleSections = options
+      .filter(opt => opt.checked)
+      .map(opt => opt.chartSection);
+    onSelectionChange?.(visibleSections);
+  }, []);
 
   const toggleOption = (id: string) => {
     setOptions(prev => {

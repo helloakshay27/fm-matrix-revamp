@@ -1155,6 +1155,29 @@ export const TicketDashboard = () => {
                             </div>
                           </SortableChartItem>;
                         }
+
+                        if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
+                          return <SortableChartItem key={chartId} id={chartId}>
+                            <TicketAnalyticsCard
+                              title="Unit Category Wise"
+                              data={unitCategorywiseData}
+                              type="unitCategoryWise"
+                              className="h-full"
+                            />
+                          </SortableChartItem>
+                        }
+
+                        if (chartId === 'responseTat' && visibleSections.includes('responseTat')) {
+                          return <SortableChartItem key={chartId} id={chartId}>
+                            <TicketAnalyticsCard
+                              title="Response TAT"
+                              data={responseTATData}
+                              type="tatResponse"
+                              className="h-full"
+                            />
+                          </SortableChartItem>
+                        }
+
                         return null;
                       })}
                     </div>
