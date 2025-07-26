@@ -265,7 +265,7 @@ export const ServiceDetailsPage = () => {
                             return;
                           }
 
-                          const apiUrl = `https://${baseUrl}/pms/attachfiles/${doc.id}?show_file=true`;
+                          const apiUrl = `https://${baseUrl}/attachfiles/${doc.id}?show_file=true`;
 
                           const response = await fetch(apiUrl, {
                             method: 'GET',
@@ -283,7 +283,7 @@ export const ServiceDetailsPage = () => {
                           const url = window.URL.createObjectURL(blob);
                           const link = document.createElement('a');
                           link.href = url;
-                          link.download = `Document_${doc.id}`;
+                          link.download = `Document_${doc.id}`; // Use id-based name or adjust as needed
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
