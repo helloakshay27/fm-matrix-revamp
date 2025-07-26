@@ -256,6 +256,11 @@ export const fetchCustomFormDetails = async (formCode: string): Promise<CustomFo
   return response.json();
 };
 
+export const fetchCustomFormById = async (id: string): Promise<CustomForm> => {
+  const response = await apiClient.get(`${ENDPOINTS.CUSTOM_FORM_DETAILS}/${id}.json`);
+  return response.data;
+};
+
 export const transformCustomFormsData = (forms: CustomForm[]): TransformedScheduleData[] => {
   return forms.map(form => {
     // Split checklist_for to get type and schedule type

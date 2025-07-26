@@ -47,6 +47,9 @@ import {
   ArrowBack
 } from '@mui/icons-material';
 import { Cog, ArrowLeft } from 'lucide-react';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User, Supplier } from '../services/assetService';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { MuiSearchableDropdown } from '@/components/MuiSearchableDropdown';
@@ -325,8 +328,8 @@ export const AddSchedulePage = () => {
   const [checklistMappings, setChecklistMappings] = useState<ChecklistMappingsData | null>(null);
   const [loadingMappings, setLoadingMappings] = useState(false);
 
-  // Add validation states
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: string[]}>({});
+  // Add validation states - changed to field-level errors
+  const [fieldErrors, setFieldErrors] = useState<{[fieldName: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // LocalStorage keys
@@ -1060,7 +1063,7 @@ export const AddSchedulePage = () => {
 
     input.onchange = (e: Event) => {
       const files = (e.target as HTMLInputElement).files;
-      if (files) {
+      if (files && files.length > 0) {
         const newAttachments: AttachmentFile[] = [];
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
@@ -1072,7 +1075,22 @@ export const AddSchedulePage = () => {
           });
         }
         setAttachments(prev => [...prev, ...newAttachments]);
+        
+        // Show success toast
+        toast({
+          title: "Success",
+          description: `${files.length} file(s) attached successfully!`,
+        });
       }
+    };
+
+    input.onerror = () => {
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "Failed to attach files. Please try again.",
+        variant: "destructive"
+      });
     };
 
     document.body.appendChild(input);
@@ -1522,27 +1540,34 @@ export const AddSchedulePage = () => {
 
   // Add effect to validate current step whenever form data changes
   useEffect(() => {
-    let errors: string[] = [];
-    
+    // Clear existing errors for the current step and re-validate
+    setFieldErrors(prev => {
+      const clearedErrors = { ...prev };
+      // Clear all errors since we're re-validating everything
+      Object.keys(clearedErrors).forEach(key => {
+        delete clearedErrors[key];
+      });
+      return clearedErrors;
+    });
+
+    // Re-validate current step silently (without toast)
     switch (activeStep) {
       case 0:
-        errors = validateBasicConfiguration();
+        validateBasicConfiguration();
         break;
       case 1:
-        errors = validateScheduleSetup();
+        validateScheduleSetup();
         break;
       case 2:
-        errors = validateQuestionSetup();
+        validateQuestionSetup();
+        break;
+      case 3:
+        validateTimeSetup();
         break;
       default:
-        errors = [];
+        break;
     }
-    
-    setValidationErrors(prev => ({
-      ...prev,
-      [activeStep]: errors
-    }));
-  }, [activeStep, formData, questionSections, weightage, autoTicket]);
+  }, [activeStep, formData, questionSections, timeSetupData, weightage, autoTicket]);
 
   const handleSave = async () => {
     
@@ -1753,6 +1778,13 @@ export const AddSchedulePage = () => {
           title: "Success",
           description: `Template "${templateData.form_name}" loaded successfully!`,
         });
+      } else {
+        // Handle case when template data is empty or invalid
+        toast({
+          title: "Warning",
+          description: "Template data is empty or invalid.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Failed to load template data:', error);
@@ -1791,271 +1823,298 @@ export const AddSchedulePage = () => {
     setAssetSubGroups([]);
   };
 
-  // Validation functions for each section
+  // Validation functions for each section - updated for field-level errors
   const validateBasicConfiguration = (): string[] => {
-    const errors: string[] = [];
+    const errors: {[key: string]: string} = {};
     
     if (!formData.type) {
-      errors.push('Type selection is required');
+      errors['type'] = 'Type selection is required';
     }
     if (!formData.activityName.trim()) {
-      errors.push('Activity Name is required');
+      errors['activityName'] = 'Activity Name is required';
     }
     if (!formData.description.trim()) {
-      errors.push('Description is required');
+      errors['description'] = 'Description is required';
     }
     
-    return errors;
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+    
+    return Object.values(errors);
   };
 
   const validateScheduleSetup = (): string[] => {
-    const errors: string[] = [];
+    const errors: {[key: string]: string} = {};
     
     if (!formData.checklistType) {
-      errors.push('Checklist Type is required');
+      errors['checklistType'] = 'Checklist Type is required';
     }
     
     // Asset/Service validation based on scheduleFor and checklist type
     if (formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && formData.asset.length === 0) {
-      errors.push('At least one asset must be selected for Individual checklist type');
+      errors['asset'] = 'At least one asset must be selected for Individual checklist type';
     }
     
     if (formData.scheduleFor === 'Service' && formData.service.length === 0) {
-      errors.push('At least one service must be selected');
+      errors['service'] = 'At least one service must be selected';
     }
     
     if (formData.checklistType === 'Asset Group') {
       if (!formData.assetGroup) {
-        errors.push('Asset Group selection is required');
+        errors['assetGroup'] = 'Asset Group selection is required';
       }
       if (formData.assetSubGroup.length === 0) {
-        errors.push('At least one Asset Sub-Group must be selected');
+        errors['assetSubGroup'] = 'At least one Asset Sub-Group must be selected';
       }
     }
     
     // Assignment validation
     if (!formData.assignToType) {
-      errors.push('Assign To type is required');
+      errors['assignToType'] = 'Assign To type is required';
     }
     
     if (formData.assignToType === 'user' && formData.selectedUsers.length === 0) {
-      errors.push('At least one user must be selected');
+      errors['selectedUsers'] = 'At least one user must be selected';
     }
     
     if (formData.assignToType === 'group' && formData.selectedGroups.length === 0) {
-      errors.push('At least one group must be selected');
+      errors['selectedGroups'] = 'At least one group must be selected';
     }
     
     if (!formData.backupAssignee) {
-      errors.push('Backup Assignee is required');
+      errors['backupAssignee'] = 'Backup Assignee is required';
     }
     
     // Plan duration validation
     if (!formData.planDuration) {
-      errors.push('Plan Duration type is required');
+      errors['planDuration'] = 'Plan Duration type is required';
     }
     if (formData.planDuration && !formData.planDurationValue) {
-      errors.push('Plan Duration value is required when duration type is selected');
+      errors['planDurationValue'] = 'Plan Duration value is required when duration type is selected';
     }
     
     if (!formData.emailTriggerRule) {
-      errors.push('Email Trigger Rule is required');
+      errors['emailTriggerRule'] = 'Email Trigger Rule is required';
     }
     
     if (!formData.scanType) {
-      errors.push('Scan Type is required');
+      errors['scanType'] = 'Scan Type is required';
     }
     
     if (!formData.category) {
-      errors.push('Category is required');
+      errors['category'] = 'Category is required';
     }
     
     // Submission time validation
     if (!formData.submissionTime) {
-      errors.push('Submission Time type is required');
+      errors['submissionTime'] = 'Submission Time type is required';
     }
     if (formData.submissionTime && !formData.submissionTimeValue) {
-      errors.push('Submission Time value is required when time type is selected');
+      errors['submissionTimeValue'] = 'Submission Time value is required when time type is selected';
     }
     
     if (!formData.supervisors) {
-      errors.push('Supervisors selection is required');
+      errors['supervisors'] = 'Supervisors selection is required';
     }
     
     if (!formData.lockOverdueTask) {
-      errors.push('Lock Overdue Task selection is required');
+      errors['lockOverdueTask'] = 'Lock Overdue Task selection is required';
     }
     
     if (!formData.frequency) {
-      errors.push('Frequency is required');
+      errors['frequency'] = 'Frequency is required';
     }
     
     // Grace time validation
     if (!formData.graceTime) {
-      errors.push('Grace Time type is required');
+      errors['graceTime'] = 'Grace Time type is required';
     }
     if (formData.graceTime && !formData.graceTimeValue) {
-      errors.push('Grace Time value is required when time type is selected');
+      errors['graceTimeValue'] = 'Grace Time value is required when time type is selected';
     }
     
     if (!formData.supplier) {
-      errors.push('Supplier selection is required');
+      errors['supplier'] = 'Supplier selection is required';
     }
     
     if (!formData.startFrom) {
-      errors.push('Start From date is required');
+      errors['startFrom'] = 'Start From date is required';
     }
     
     if (!formData.endAt) {
-      errors.push('End At date is required');
+      errors['endAt'] = 'End At date is required';
     }
     
     // Date validation
     if (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom) {
-      errors.push('End date cannot be before start date');
+      errors['endAt'] = 'End date cannot be before start date';
     }
     
-    return errors;
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+    
+    return Object.values(errors);
   };
 
   const validateQuestionSetup = (): string[] => {
-    const errors: string[] = [];
+    const errors: {[key: string]: string} = {};
     
     // Validate each section has at least one valid task
     questionSections.forEach((section, sectionIndex) => {
       if (!section.title.trim()) {
-        errors.push(`Section ${sectionIndex + 1} title is required`);
+        errors[`section_${sectionIndex}_title`] = `Section ${sectionIndex + 1} title is required`;
       }
       
       const validTasks = section.tasks.filter(task => task.task.trim());
       if (validTasks.length === 0) {
-        errors.push(`Section ${sectionIndex + 1} must have at least one task with content`);
+        errors[`section_${sectionIndex}_tasks`] = `Section ${sectionIndex + 1} must have at least one task with content`;
       }
       
       // Validate each task
       section.tasks.forEach((task, taskIndex) => {
         if (task.task.trim()) {
-                    
           if (!task.inputType) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_inputType`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`;
           }
           
           if (task.helpText && !task.helpTextValue.trim()) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_helpTextValue`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`;
           }
           
           if (weightage && task.rating && !task.weightage) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} weightage is required when rating is enabled`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_weightage`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} weightage is required when rating is enabled`;
           }
           
           // Validate input type specific values
           if (task.inputType === 'dropdown' && task.dropdownValues.some(val => !val.label.trim())) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} dropdown must have all option values filled`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_dropdownValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} dropdown must have all option values filled`;
           }
           
           if (task.inputType === 'radio' && task.radioValues.some(val => !val.label.trim())) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} radio must have all option values filled`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_radioValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} radio must have all option values filled`;
           }
           
           if (task.inputType === 'checkbox' && task.checkboxValues.some(val => !val.trim())) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} checkbox must have all option values filled`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_checkboxValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} checkbox must have all option values filled`;
           }
           
           if (task.inputType === 'options-inputs' && task.optionsInputsValues.some(val => !val.trim())) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} options & inputs must have all values filled`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_optionsInputsValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} options & inputs must have all values filled`;
           }
         } else if (section.tasks.length === 1) {
           // If there's only one task and it's empty, require it to be filled
-          errors.push(`Section ${sectionIndex + 1} must have at least one task filled`);
+          errors[`section_${sectionIndex}_task_${taskIndex}_task`] = `Section ${sectionIndex + 1} must have at least one task filled`;
         }
       });
       
       // Auto ticket validation
       if (section.autoTicket) {
         if (!section.ticketAssignedTo) {
-          errors.push(`Section ${sectionIndex + 1} auto ticket assigned to is required`);
+          errors[`section_${sectionIndex}_ticketAssignedTo`] = `Section ${sectionIndex + 1} auto ticket assigned to is required`;
         }
         if (!section.ticketCategory) {
-          errors.push(`Section ${sectionIndex + 1} auto ticket category is required`);
+          errors[`section_${sectionIndex}_ticketCategory`] = `Section ${sectionIndex + 1} auto ticket category is required`;
         }
       }
     });
     
-    return errors;
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+    
+    return Object.values(errors);
   };
 
-  const validateTimeSetup = (): string[] => {
-    const errors: string[] = [];
+  const validateTimeSetup = (): boolean => {
+    const errors: {[key: string]: string} = {};
     
     // Validate hour settings
     if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length === 0) {
-      errors.push('At least one hour must be selected when using specific hours');
+      errors['timeSetup_hours'] = 'At least one hour must be selected when using specific hours';
     }
     
     // Validate minute settings
     if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length === 0) {
-      errors.push('At least one minute must be selected when using specific minutes');
+      errors['timeSetup_minutes'] = 'At least one minute must be selected when using specific minutes';
     }
     
     if (timeSetupData.minuteMode === 'between') {
       if (!timeSetupData.betweenMinuteStart || !timeSetupData.betweenMinuteEnd) {
-        errors.push('Both start and end minutes are required for between minute range');
+        errors['timeSetup_minuteRange'] = 'Both start and end minutes are required for between minute range';
       }
     }
     
     // Validate day settings
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length === 0) {
-      errors.push('At least one weekday must be selected when using specific weekdays');
+      errors['timeSetup_weekdays'] = 'At least one weekday must be selected when using specific weekdays';
     }
     
     if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length === 0) {
-      errors.push('At least one day must be selected when using specific days');
+      errors['timeSetup_days'] = 'At least one day must be selected when using specific days';
     }
     
     // Validate month settings
     if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length === 0) {
-      errors.push('At least one month must be selected when using specific months');
+      errors['timeSetup_months'] = 'At least one month must be selected when using specific months';
     }
     
     if (timeSetupData.monthMode === 'between') {
       if (!timeSetupData.betweenMonthStart || !timeSetupData.betweenMonthEnd) {
-        errors.push('Both start and end months are required for between month range');
+        errors['timeSetup_monthRange'] = 'Both start and end months are required for between month range';
       }
     }
     
-    return errors;
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+    
+    return Object.keys(errors).length === 0;
   };
 
   const validateCurrentStep = (): boolean => {
-    let errors: string[] = [];
+    // Clear existing field errors for current step
+    setFieldErrors(prev => {
+      const clearedErrors = { ...prev };
+      Object.keys(clearedErrors).forEach(key => {
+        // Clear errors that might be related to current step
+        delete clearedErrors[key];
+      });
+      return clearedErrors;
+    });
+
+    let isValid = true;
     
     switch (activeStep) {
       case 0:
-        errors = validateBasicConfiguration();
+        isValid = validateBasicConfiguration().length === 0;
         break;
       case 1:
-        errors = validateScheduleSetup();
+        isValid = validateScheduleSetup().length === 0;
         break;
       case 2:
-        errors = validateQuestionSetup();
+        isValid = validateQuestionSetup().length === 0;
         break;
       case 3:
-        errors = validateTimeSetup();
+        isValid = validateTimeSetup();
         break;
       default:
-        errors = [];
+        isValid = true;
     }
     
-    // Always update validation errors for the current step
-    setValidationErrors(prev => ({
-      ...prev,
-      [activeStep]: errors
-    }));
-    
-    if (errors.length > 0) {
+    if (!isValid) {
       toast({
         title: "Validation Error",
-        description: errors[0],
+        description: "Please fix the errors highlighted below and try again.",
         variant: "destructive"
       });
       return false;
@@ -2063,33 +2122,6 @@ export const AddSchedulePage = () => {
     
     return true;
   };
-
-  // Add effect to validate current step whenever form data changes
-  useEffect(() => {
-    let errors: string[] = [];
-    
-    switch (activeStep) {
-      case 0:
-        errors = validateBasicConfiguration();
-        break;
-      case 1:
-        errors = validateScheduleSetup();
-        break;
-      case 2:
-        errors = validateQuestionSetup();
-        break;
-      case 3:
-        errors = validateTimeSetup();
-        break;
-      default:
-        errors = [];
-    }
-    
-    setValidationErrors(prev => ({
-      ...prev,
-      [activeStep]: errors
-    }));
-  }, [activeStep, formData, questionSections, timeSetupData, weightage, autoTicket]);
 
   const handleNext = () => {
     if (!validateCurrentStep()) {
@@ -2495,7 +2527,9 @@ export const AddSchedulePage = () => {
 
             {/* Type section */}
             <Box sx={{ my: 3 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Type</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                Type
+              </Typography>
               <RadioGroup
                 row
                 value={formData.type}
@@ -2536,7 +2570,11 @@ export const AddSchedulePage = () => {
             </Box>
             
             <TextField
-              label="Activity Name"
+              label={
+                <span>
+                  Activity Name
+                </span>
+              }
               placeholder="Enter Activity Name"
               fullWidth
               value={formData.activityName}
@@ -2694,7 +2732,9 @@ export const AddSchedulePage = () => {
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Checklist Type
+              </Typography>
               {stepIndex < activeStep && (
                 <MuiButton
                   variant="outlined"
@@ -2755,7 +2795,11 @@ export const AddSchedulePage = () => {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Select Assets"
+                          label={
+                            <span>
+                              Select Assets
+                            </span>
+                          }
                           placeholder="Search and select assets..."
                         />
                       )}
@@ -2793,7 +2837,11 @@ export const AddSchedulePage = () => {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Select Services"
+                          label={
+                            <span>
+                              Select Services
+                            </span>
+                          }
                           placeholder="Search and select services..."
                         />
                       )}
@@ -2842,7 +2890,11 @@ export const AddSchedulePage = () => {
                         renderInput={(params) => (
                           <TextField
                             {...params}
-                            label="Asset Group"
+                            label={
+                              <span>
+                                Asset Group
+                              </span>
+                            }
                             placeholder="Select Asset Group"
                             fullWidth
                           />
@@ -2912,7 +2964,11 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Assign To"
+                        label={
+                          <span>
+                            Assign To
+                          </span>
+                        }
                         placeholder="Select Assign To"
                         fullWidth
                       />
@@ -2934,7 +2990,11 @@ export const AddSchedulePage = () => {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Select Users"
+                          label={
+                            <span>
+                              Select Users
+                            </span>
+                          }
                           placeholder="Search and select users..."
                         />
                       )}
@@ -2957,7 +3017,9 @@ export const AddSchedulePage = () => {
                 {/* Multi-select Groups - Show when assignToType is 'group' */}
                 {formData.assignToType === 'group' && (
                   <FormControl fullWidth>
-                    <InputLabel>Select Groups</InputLabel>
+                    <InputLabel>
+                      Select Groups
+                    </InputLabel>
                     <Select
                       multiple
                       value={formData.selectedGroups}
@@ -3291,7 +3353,11 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Frequency"
+                        label={
+                          <span>
+                            Frequency
+                          </span>
+                        }
                         placeholder="Select Frequency"
                         fullWidth
                       />
@@ -3379,55 +3445,69 @@ export const AddSchedulePage = () => {
                   )}
                 </Box>
 
-                <TextField
-                  label="Start From"
-                  type="date"
-                  fullWidth
-                  value={formData.startFrom}
-                  onChange={(e) => {
-                    const newStartDate = e.target.value;
-                    // If end date exists and new start date is after end date, clear end date
-                    if (formData.endAt && newStartDate > formData.endAt) {
-                      setFormData({...formData, startFrom: newStartDate, endAt: ''});
-                    } else {
-                      setFormData({...formData, startFrom: newStartDate});
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label={
+                      <span>
+                        Start From
+                      </span>
                     }
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  inputProps={{
-                    max: formData.endAt || undefined
-                  }}
-                />
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        variant: 'outlined',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }
+                      }
+                    }}
+                    value={formData.startFrom ? new Date(formData.startFrom) : null}
+                    onChange={(date) => {
+                      const newStartDate = date ? date.toISOString().split('T')[0] : '';
+                      // If end date exists and new start date is after end date, clear end date
+                      if (formData.endAt && newStartDate > formData.endAt) {
+                        setFormData({...formData, startFrom: newStartDate, endAt: ''});
+                      } else {
+                        setFormData({...formData, startFrom: newStartDate});
+                      }
+                    }}
+                    maxDate={formData.endAt ? new Date(formData.endAt) : undefined}
+                  />
+                </LocalizationProvider>
                 
-                <TextField
-                  label="End At"
-                  type="date"
-                  fullWidth
-                  value={formData.endAt}
-                  onChange={(e) => {
-                    const newEndDate = e.target.value;
-                    // If start date exists and new end date is before start date, clear start date
-                    if (formData.startFrom && newEndDate < formData.startFrom) {
-                      setFormData({...formData, endAt: newEndDate, startFrom: ''});
-                    } else {
-                      setFormData({...formData, endAt: newEndDate});
-                    }
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  inputProps={{
-                    min: formData.startFrom || undefined
-                  }}
-                  error={formData.startFrom && formData.endAt && formData.endAt < formData.startFrom}
-                  helperText={
-                    formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
-                      ? "End date cannot be before start date"
-                      : ""
-                  }
-                />
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="End At"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        variant: 'outlined',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        },
+                        error: formData.startFrom && formData.endAt && formData.endAt < formData.startFrom,
+                        helperText: formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
+                          ? "End date cannot be before start date"
+                          : ""
+                      }
+                    }}
+                    value={formData.endAt ? new Date(formData.endAt) : null}
+                    onChange={(date) => {
+                      const newEndDate = date ? date.toISOString().split('T')[0] : '';
+                      // If start date exists and new end date is before start date, clear start date
+                      if (formData.startFrom && newEndDate < formData.startFrom) {
+                        setFormData({...formData, endAt: newEndDate, startFrom: ''});
+                      } else {
+                        setFormData({...formData, endAt: newEndDate});
+                      }
+                    }}
+                    minDate={formData.startFrom ? new Date(formData.startFrom) : undefined}
+                  />
+                </LocalizationProvider>
               </Box>
             </SectionCard>
         );
@@ -3755,7 +3835,7 @@ export const AddSchedulePage = () => {
         return (
           <div>
             {/* Header Outside the Box */}
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center p-6">
                   <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold">
                     <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
                       <Cog className="w-6 h-6" />
@@ -4000,23 +4080,35 @@ export const AddSchedulePage = () => {
                 
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
                   <Box>
-                    <MuiSearchableDropdown
-                      value={section.tasks[0]?.group || ''}
-                      onChange={(value) => {
+                    <Autocomplete
+                      options={taskGroups ? taskGroups.map((group) => ({
+                        id: group.id,
+                        label: group.name,
+                        value: group.id.toString()
+                      })) : []}
+                      getOptionLabel={(option) => option.label}
+                      value={taskGroups ? taskGroups.map((group) => ({
+                        id: group.id,
+                        label: group.name,
+                        value: group.id.toString()
+                      })).find(option => option.value === (section.tasks[0]?.group || '')) || null : null}
+                      onChange={(event, newValue) => {
+                        const selectedValue = newValue ? newValue.value : '';
                         // Update group for all tasks in this section
                         section.tasks.forEach(task => {
-                          handleTaskGroupChange(section.id, task.id, value.toString());
+                          handleTaskGroupChange(section.id, task.id, selectedValue);
                         });
                       }}
-                      options={
-                        taskGroups ? taskGroups.map((group) => ({
-                          id: group.id.toString(),
-                          label: group.name,
-                          value: group.id.toString()
-                        })) : []
-                      }
-                      label="Group"
                       disabled={loading.taskGroups}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Group"
+                          placeholder="Select Group"
+                          fullWidth
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
                     />
                     {loading.taskGroups && (
                       <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
@@ -4026,23 +4118,35 @@ export const AddSchedulePage = () => {
                   </Box>
                   
                   <Box>
-                    <MuiSearchableDropdown
-                      value={section.tasks[0]?.subGroup || ''}
-                      onChange={(value) => {
+                    <Autocomplete
+                      options={section.tasks[0]?.group && taskSubGroups[section.tasks[0].group] ? taskSubGroups[section.tasks[0].group].map((subGroup) => ({
+                        id: subGroup.id,
+                        label: subGroup.name,
+                        value: subGroup.id.toString()
+                      })) : []}
+                      getOptionLabel={(option) => option.label}
+                      value={section.tasks[0]?.group && taskSubGroups[section.tasks[0].group] ? taskSubGroups[section.tasks[0].group].map((subGroup) => ({
+                        id: subGroup.id,
+                        label: subGroup.name,
+                        value: subGroup.id.toString()
+                      })).find(option => option.value === (section.tasks[0]?.subGroup || '')) || null : null}
+                      onChange={(event, newValue) => {
+                        const selectedValue = newValue ? newValue.value : '';
                         // Update sub-group for all tasks in this section
                         section.tasks.forEach(task => {
-                          updateTaskInSection(section.id, task.id, 'subGroup', value);
+                          updateTaskInSection(section.id, task.id, 'subGroup', selectedValue);
                         });
                       }}
-                      options={
-                        section.tasks[0]?.group && taskSubGroups[section.tasks[0].group] ? taskSubGroups[section.tasks[0].group].map((subGroup) => ({
-                          id: subGroup.id.toString(),
-                          label: subGroup.name,
-                          value: subGroup.id.toString()
-                        })) : []
-                      }
-                      label="Sub-Group"
                       disabled={loading.taskSubGroups || !section.tasks[0]?.group}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Sub-Group"
+                          placeholder="Select Sub-Group"
+                          fullWidth
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
                     />
                     {loading.taskSubGroups && (
                       <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
@@ -4543,15 +4647,6 @@ export const AddSchedulePage = () => {
         
       case 3: // Time Setup
         return (
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
-              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
-                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                  <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
-                </span>
-                TIME SETUP
-              </div>
-
               <TimeSetupStep
                 data={timeSetupData}
                 onChange={(field, value) => {
@@ -4560,8 +4655,6 @@ export const AddSchedulePage = () => {
                 isCompleted={false}
                 isCollapsed={false}
               />
-            </div>
-          </div>
         );
 
       case 4: // Mapping
@@ -4612,7 +4705,7 @@ export const AddSchedulePage = () => {
               {activeStep === 3 ? ( // Time Setup step
                 <button
                   onClick={handleSave}
-                  disabled={isSubmitting || validationErrors[activeStep]?.length > 0}
+                  disabled={isSubmitting || Object.keys(fieldErrors).length > 0}
                   className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                   style={{ fontFamily: 'Work Sans, sans-serif' }}
                 >
@@ -4621,7 +4714,7 @@ export const AddSchedulePage = () => {
               ) : (
                 <button
                   onClick={handleNext}
-                  disabled={validationErrors[activeStep]?.length > 0}
+                  disabled={Object.keys(fieldErrors).length > 0}
                   className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                   style={{ fontFamily: 'Work Sans, sans-serif' }}
                 >
@@ -4887,7 +4980,7 @@ export const AddSchedulePage = () => {
               {activeStep === 3 ? ( // Time Setup step
                 <button
                   onClick={handleSave}
-                  disabled={isSubmitting || validationErrors[activeStep]?.length > 0}
+                  disabled={isSubmitting || Object.keys(fieldErrors).length > 0}
                   className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                   style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
                 >
@@ -4896,7 +4989,7 @@ export const AddSchedulePage = () => {
               ) : (
                 <button
                   onClick={handleNext}
-                  disabled={validationErrors[activeStep]?.length > 0}
+                  disabled={Object.keys(fieldErrors).length > 0}
                   className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                   style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
                 >
@@ -4918,22 +5011,6 @@ export const AddSchedulePage = () => {
 
       {/* Completed Sections */}
       {renderCompletedSections()}
-
-      {/* Validation Errors Display */}
-      {validationErrors[activeStep]?.length > 0 && (
-        <div className="bg-red-50 border border-red-300 rounded-md p-3 mt-4">
-          <h4 className="text-red-800 font-semibold text-sm mb-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>
-            Please fix the following errors:
-          </h4>
-          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
-            {validationErrors[activeStep].map((error, index) => (
-              <li key={index} style={{ fontFamily: 'Work Sans, sans-serif' }}>
-                {error}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 

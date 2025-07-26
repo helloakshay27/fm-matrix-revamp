@@ -91,10 +91,22 @@ export const API_CONFIG = {
     TASK_SUB_GROUPS: '/pms/assets/get_asset_group_sub_group.json', // Will append ?group_id=
     TICKETS_SUMMARY: '/pms/admin/ticket_summary',
     TICKETS_EXPORT_EXCEL: '/pms/admin/complaints.xlsx',
-    // Asset dashboard endpoints
-    ASSET_STATISTICS: '/pms/asset_statistics.json',
-    ASSET_STATUS: '/pms/asset_status.json',
-    ASSET_DISTRIBUTIONS: '/pms/asset_distributions.json',
+    // Checklist master endpoint
+    CHECKLIST_MASTER: '/master_checklist_list.json',
+    // Checklist creation endpoint
+    CREATE_CHECKLIST: '/pms/custom_forms/checklist_create_pms.json',
+    // Asset statistics endpoint
+    ASSET_STATISTICS: '/pms/assets/assets_statictics.json',
+    // Asset status endpoint
+    ASSET_STATUS: '/pms/assets/assets_status.json',
+    // Asset distributions endpoint
+    ASSET_DISTRIBUTIONS: '/pms/assets/assets_distributions.json',
+    // Custom forms endpoint
+    CUSTOM_FORMS: '/pms/custom_forms.json',
+    // Custom form details endpoint
+    CUSTOM_FORM_DETAILS: '/pms/custom_forms', // Base path, will append /:id.json
+    // Update custom form endpoint
+    UPDATE_CUSTOM_FORM: '/pms/custom_forms', // Base path, will append /:id
   },
 } as const
 

@@ -12,7 +12,8 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Cell, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } from '@/services/customFormsAPI';
 import { useQuery } from '@tanstack/react-query';
-import { API_CONFIG } from '@/config/apiConfig';
+import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
+import { apiClient } from '@/utils/apiClient';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -52,7 +53,8 @@ export const ScheduleListDashboard = () => {
     data: customFormsData,
     isLoading,
     error,
-    isError
+    isError,
+    refetch
   } = useQuery({
     queryKey: ['custom-forms', filters],
     queryFn: async () => {
@@ -116,9 +118,31 @@ export const ScheduleListDashboard = () => {
   
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   const handleExport = () => navigate('/maintenance/schedule/export');
-  const handleToggleActive = (scheduleId: string) => {
-    // This would typically make an API call to update the active status
-    console.log('Toggle active for schedule:', scheduleId);
+  
+  const handleToggleActive = async (scheduleId: string) => {
+    try {
+      // Find the current schedule to get its current active status
+      const currentSchedule = schedules.find(schedule => schedule.id === scheduleId);
+      if (!currentSchedule) {
+        console.error('Schedule not found:', scheduleId);
+        return;
+      }
+
+      // Toggle the active status
+      const newActiveStatus = !currentSchedule.active;
+
+      // Make PUT API call to update the active status with .json extension
+      const response = await apiClient.put(`${ENDPOINTS.UPDATE_CUSTOM_FORM}/${scheduleId}.json`, {
+        active: newActiveStatus ? 1 : 0
+      });
+
+      console.log('Schedule active status updated:', response.data);
+      
+      // Refetch the data to update the UI
+      refetch();
+    } catch (error) {
+      console.error('Error updating schedule active status:', error);
+    }
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
