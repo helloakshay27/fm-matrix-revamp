@@ -77,12 +77,9 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
   // Handle event click to navigate to task detail
   const handleSelectEvent = (event: any) => {
-    if (event.resource?.details_url) {
-      // Use the details_url from the API response
-      window.open(event.resource.details_url, '_blank');
-    } else {
-      // Fallback to task detail page
-      navigate(`/task/${event.resource?.task?.id || event.id}`);
+    const taskId = event.resource?.task?.id || event.id;
+    if (taskId) {
+      navigate(`/task-details/${taskId}`);
     }
   };
 
