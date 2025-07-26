@@ -526,7 +526,7 @@ export const AddTicketDashboard = () => {
                   displayEmpty
                   disabled={loadingSubcategories || !formData.categoryType}
                 >
-                  <MenuItem value="">
+                  <MenuItem value="" sx={{ fontSize: '14px' }}>
                     {loadingSubcategories ? "Loading..." : 
                      !formData.categoryType ? "Select Category First" : 
                      "Select Sub Category Type"}
