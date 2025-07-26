@@ -5,13 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
-
 interface CalendarFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (filters: CalendarFilters) => void;
 }
-
 export interface CalendarFilters {
   dateFrom: string;
   dateTo: string;
@@ -26,7 +24,6 @@ export interface CalendarFilters {
   area: string;
   room: string;
 }
-
 export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   isOpen,
   onClose,
@@ -46,16 +43,13 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     area: '',
     room: ''
   });
-
   const [isLoading, setIsLoading] = useState(false);
-
   const handleFilterChange = (key: keyof CalendarFilters, value: string) => {
     setFilters(prev => ({
       ...prev,
       [key]: value
     }));
   };
-
   const handleApply = async () => {
     setIsLoading(true);
     try {
@@ -68,7 +62,6 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       setIsLoading(false);
     }
   };
-
   const handleClear = () => {
     const clearedFilters: CalendarFilters = {
       dateFrom: '01/07/2025',
@@ -89,9 +82,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     onClose();
     toast.success('Filters cleared successfully');
   };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+  return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Filter Calendar Tasks</DialogTitle>
@@ -104,21 +95,11 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">From Date</label>
-                <Input
-                  placeholder="01/07/2025"
-                  value={filters.dateFrom}
-                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                  className="h-10"
-                />
+                <Input placeholder="01/07/2025" value={filters.dateFrom} onChange={e => handleFilterChange('dateFrom', e.target.value)} className="h-10" />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">To Date</label>
-                <Input
-                  placeholder="31/07/2025"
-                  value={filters.dateTo}
-                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                  className="h-10"
-                />
+                <Input placeholder="31/07/2025" value={filters.dateTo} onChange={e => handleFilterChange('dateTo', e.target.value)} className="h-10" />
               </div>
             </div>
           </div>
@@ -127,23 +108,11 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
           <div>
             <h3 className="text-lg font-medium mb-4">Task Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">AMC</label>
-                <Select value={filters.amc} onValueChange={(value) => handleFilterChange('amc', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select AMC" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="amc1">AMC 1</SelectItem>
-                    <SelectItem value="amc2">AMC 2</SelectItem>
-                    <SelectItem value="amc3">AMC 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Service</label>
-                <Select value={filters.service} onValueChange={(value) => handleFilterChange('service', value)}>
+                <Select value={filters.service} onValueChange={value => handleFilterChange('service', value)}>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Service" />
                   </SelectTrigger>
@@ -157,25 +126,11 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Status</label>
-                <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Schedule Type</label>
-                <Select value={filters.scheduleType} onValueChange={(value) => handleFilterChange('scheduleType', value)}>
+                <Select value={filters.scheduleType} onValueChange={value => handleFilterChange('scheduleType', value)}>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
@@ -189,119 +144,23 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Priority</label>
-                <Select value={filters.priority} onValueChange={(value) => handleFilterChange('priority', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
             </div>
           </div>
 
           {/* Location Details Section */}
-          <div>
-            <h3 className="text-lg font-medium mb-4">Location Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Building</label>
-                <Select value={filters.building} onValueChange={(value) => handleFilterChange('building', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="building-a">Building A</SelectItem>
-                    <SelectItem value="building-b">Building B</SelectItem>
-                    <SelectItem value="building-c">Building C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Wing</label>
-                <Select value={filters.wing} onValueChange={(value) => handleFilterChange('wing', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="north">North Wing</SelectItem>
-                    <SelectItem value="south">South Wing</SelectItem>
-                    <SelectItem value="east">East Wing</SelectItem>
-                    <SelectItem value="west">West Wing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Floor</label>
-                <Select value={filters.floor} onValueChange={(value) => handleFilterChange('floor', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ground">Ground Floor</SelectItem>
-                    <SelectItem value="1">1st Floor</SelectItem>
-                    <SelectItem value="2">2nd Floor</SelectItem>
-                    <SelectItem value="3">3rd Floor</SelectItem>
-                    <SelectItem value="4">4th Floor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Area</label>
-                <Select value={filters.area} onValueChange={(value) => handleFilterChange('area', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lobby">Lobby</SelectItem>
-                    <SelectItem value="common-area">Common Area</SelectItem>
-                    <SelectItem value="parking">Parking</SelectItem>
-                    <SelectItem value="rooftop">Rooftop</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Room</label>
-                <Input
-                  placeholder="Enter room number"
-                  value={filters.room}
-                  onChange={(e) => handleFilterChange('room', e.target.value)}
-                  className="h-10"
-                />
-              </div>
-            </div>
-          </div>
+          
         </div>
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClear}
-            disabled={isLoading}
-            className="px-6"
-          >
+          <Button variant="outline" onClick={handleClear} disabled={isLoading} className="px-6">
             Clear All
           </Button>
-          <Button
-            onClick={handleApply}
-            disabled={isLoading}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6"
-          >
+          <Button onClick={handleApply} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700 text-white px-6">
             {isLoading ? 'Applying...' : 'Apply Filter'}
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
