@@ -31,4 +31,23 @@ apiClient.interceptors.response.use(
   }
 )
 
+export const apiClientUtil = {
+  put: async <T>(endpoint: string, data: any): Promise<T> => {
+    const response = await fetch(getFullUrl(endpoint), {
+      method: 'PUT',
+      headers: {
+        Authorization: getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return response.json()
+  },
+}
+
 export default apiClient

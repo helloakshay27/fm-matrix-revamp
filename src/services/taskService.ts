@@ -1,4 +1,5 @@
 import { apiClient } from '@/utils/apiClient';
+import { API_BASE_URL, API_ENDPOINTS, getHeaders } from '@/config/api';
 
 export interface TaskOccurrence {
   id: number;
@@ -199,9 +200,20 @@ export const taskService = {
     }
   },
 
-  // Reschedule task
-  async rescheduleTask(id: string, payload: any): Promise<void> {
-    const url = `/pms/asset_task_occurrences/${id}/reschedule`;
-    await apiClient.post(url, payload);
-  }
+  rescheduleTask: async (id: string, data: {
+    start_date: string;
+    user_ids: number[];
+    email: boolean;
+    sms: boolean;
+  }) => {
+    try {
+      return await apiClient.put(
+        `/pms/asset_task_occurrences/${id}/update_task_date.json`,
+        data
+      );
+    } catch (error) {
+      console.error('Error rescheduling task:', error);
+      throw new Error('Failed to reschedule task');
+    }
+  },
 };
