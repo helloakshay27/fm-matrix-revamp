@@ -261,6 +261,7 @@ export const TicketDashboard = () => {
     requests: 0
   });
   const [filters, setFilters] = useState<TicketFilters>({});
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
   const perPage = 20;
@@ -271,9 +272,9 @@ export const TicketDashboard = () => {
   }));
 
   // Fetch ticket summary from API
-  const fetchTicketSummary = async () => {
+  const fetchTicketSummary = async (statusFilters?: TicketFilters) => {
     try {
-      const summary = await ticketManagementAPI.getTicketSummary();
+      const summary = await ticketManagementAPI.getTicketSummary(statusFilters);
       setTicketSummary(summary);
     } catch (error) {
       console.error('Error fetching ticket summary:', error);
@@ -310,7 +311,7 @@ export const TicketDashboard = () => {
   };
   useEffect(() => {
     fetchTickets(currentPage);
-    fetchTicketSummary();
+    fetchTicketSummary(filters);
   }, [currentPage, filters]);
 
   // Use ticket summary data from API
@@ -480,6 +481,45 @@ export const TicketDashboard = () => {
   const handleClearSelection = () => {
     console.log('TicketDashboard - Clearing selection');
     setSelectedTickets([]);
+  };
+
+  // Handle status card click to filter tickets
+  const handleStatusCardClick = (status: string) => {
+    let statusIds: number[] = [];
+    
+    // Map status names to their corresponding IDs based on typical status configurations
+    switch (status) {
+      case 'Open':
+        statusIds = [323]; // Typically Open status ID
+        break;
+      case 'In Progress':
+        statusIds = [324]; // Typically In Progress status ID  
+        break;
+      case 'Pending':
+        statusIds = [325]; // Typically Pending status ID
+        break;
+      case 'Closed':
+        statusIds = [326]; // Typically Closed status ID
+        break;
+      case 'Total Tickets':
+        // Clear filter to show all tickets
+        statusIds = [];
+        break;
+      default:
+        statusIds = [];
+    }
+
+    setActiveStatusFilter(status);
+    
+    const newFilters = { ...filters };
+    if (statusIds.length > 0) {
+      newFilters.issue_status_in = statusIds;
+    } else {
+      delete newFilters.issue_status_in;
+    }
+    
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filtering
   };
   const handleGoldenTicket = async () => {
     console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
@@ -1147,13 +1187,32 @@ export const TicketDashboard = () => {
               icon: Settings
             }].map((item, i) => {
               const IconComponent = item.icon;
-              return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] h-[100px] sm:h-[132px] flex items-center gap-3 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
-                  <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
+              const isActive = activeStatusFilter === item.label;
+              return <div 
+                key={i} 
+                className={`p-3 sm:p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] h-[100px] sm:h-[132px] flex items-center gap-3 sm:gap-4 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                  isActive 
+                    ? 'bg-[#C72030] text-white' 
+                    : 'bg-[#f6f4ee] hover:bg-[#f0ede3]'
+                }`}
+                onClick={() => handleStatusCardClick(item.label)}
+              >
+                <div className={`w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  isActive 
+                    ? 'bg-white/20' 
+                    : 'bg-[rgba(199,32,48,0.08)]'
+                }`}>
+                  <IconComponent className={`w-5 h-5 sm:w-6 sm:h-6 ${
+                    isActive ? 'text-white' : 'text-[#C72030]'
+                  }`} />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">{item.value}</div>
-                  <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
+                  <div className={`text-xl sm:text-2xl font-bold leading-tight truncate mb-1 ${
+                    isActive ? 'text-white' : 'text-gray-600'
+                  }`}>{item.value}</div>
+                  <div className={`text-xs sm:text-sm font-medium leading-tight ${
+                    isActive ? 'text-white/90' : 'text-gray-600'
+                  }`}>{item.label}</div>
                 </div>
               </div>;
             })}
