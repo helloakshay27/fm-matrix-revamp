@@ -118,6 +118,8 @@ export const API_CONFIG = {
     // Restaurant endpoints
     RESTAURANTS: '/pms/admin/restaurants',
     RESTAURANT_MENU: '/pms/admin/restaurants',
+    COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals',
+    EXPORT_TICKETS_MULTIPLE: '/pms/admin/complaints.xlsx?q[id_in]=1,2,3',
   },
 } as const
 

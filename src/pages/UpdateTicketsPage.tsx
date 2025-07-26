@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload, X, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Upload, X, CalendarIcon, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
-import { getToken } from '@/utils/auth';
+import { getToken, getUser } from '@/utils/auth';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 import { format } from "date-fns";
@@ -117,7 +117,8 @@ const UpdateTicketsPage: React.FC = () => {
     selectedStatus: '',
     rootCause: '',
     correction: '',
-    selectedAsset: ''
+    selectedAsset: '',
+    selectedService: ''
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,21 +146,32 @@ const UpdateTicketsPage: React.FC = () => {
     comments: string;
     createdOn: string;
     createdBy: string;
-    attachments: File[];
+    attachments: File[] | any[];
+    approvals?: {
+      L1: string;
+      L2: string;
+      L3: string;
+      L4: string;
+      L5: string;
+    };
+    masterStatus?: string;
+    cancelledBy?: string;
+    action?: any;
+    isFromAPI?: boolean; // Add flag to distinguish API data from new requests
   }>>([]);
 
   // Fetch ticket data for editing
   const fetchTicketData = async (ticketId: string) => {
     try {
-      console.log('Fetching ticket data for ID:', ticketId);
+      console.log('🎯 Fetching ticket data for ID:', ticketId);
       const response = await apiClient.get(`/pms/admin/complaints/${ticketId}.json`);
       const ticketData = response.data;
       
-      console.log('Received ticket data:', ticketData);
-      console.log('Category type:', ticketData.category_type);
-      console.log('Sub category type:', ticketData.sub_category_type);
+      console.log('📥 Received ticket data:', ticketData);
+      console.log('📋 Category type:', ticketData.category_type);
+      console.log('📋 Sub category type:', ticketData.sub_category_type);
       
-      // Store original API data for later use
+      // Store original API data for later use FIRST
       setTicketApiData(ticketData);
       
       // Find the category ID that matches the category name from API
@@ -177,13 +189,33 @@ const UpdateTicketsPage: React.FC = () => {
         status => status.name === ticketData.issue_status
       );
 
+      // Find the responsible person ID that matches the name from API
+      console.log('👤 Looking for responsible_person match:', ticketData.responsible_person);
+      const matchingResponsiblePerson = fmUsers.find(user => {
+        const fullName = `${user.firstname} ${user.lastname}`;
+        const apiResponsiblePerson = ticketData.responsible_person?.trim() || '';
+        console.log('🔍 Comparing responsible person:', fullName, 'with:', apiResponsiblePerson);
+        
+        // Try exact match first
+        if (fullName === apiResponsiblePerson) return true;
+        
+        // Try partial matches
+        if (apiResponsiblePerson.includes(fullName) || fullName.includes(apiResponsiblePerson)) return true;
+        
+        // Try case-insensitive match
+        if (fullName.toLowerCase() === apiResponsiblePerson.toLowerCase()) return true;
+        
+        return false;
+      });
+      console.log('✅ Found matching responsible person:', matchingResponsiblePerson);
+
       // Find the user ID that matches the assigned_to name from API
-      console.log('Looking for assigned_to match:', ticketData.assigned_to);
-      console.log('Available fmUsers:', fmUsers);
+      console.log('👤 Looking for assigned_to match:', ticketData.assigned_to);
+      console.log('👥 Available fmUsers:', fmUsers);
       const matchingUser = fmUsers.find(user => {
         const fullName = `${user.firstname} ${user.lastname}`;
         const apiAssignedTo = ticketData.assigned_to?.trim() || '';
-        console.log('Comparing:', fullName, 'with:', apiAssignedTo);
+        console.log('🔍 Comparing:', fullName, 'with:', apiAssignedTo);
         
         // Try exact match first
         if (fullName === apiAssignedTo) return true;
@@ -196,7 +228,7 @@ const UpdateTicketsPage: React.FC = () => {
         
         return false;
       });
-      console.log('Found matching user:', matchingUser);
+      console.log('✅ Found matching user:', matchingUser);
 
       // Populate form with API data
       setFormData(prev => ({
@@ -215,16 +247,19 @@ const UpdateTicketsPage: React.FC = () => {
         subCategoryType: '', // Will be set after subcategories are fetched
         assignTo: matchingUser?.id.toString() || '',
         mode: matchingMode?.id.toString() || '',
-        responsiblePerson: ticketData.responsible_person || '',
+        responsiblePerson: matchingResponsiblePerson?.id.toString() || '',
         issueRelatedTo: ticketData.issue_related_to || '',
         refNumber: ticketData.reference_number || '',
         correctiveAction: ticketData.corrective_action || '',
-        selectedAsset: ticketData.asset_service === 'Asset' ? (ticketData.asset_id || '') : '',
+        selectedAsset: '', // Will be set after fetching assets/services if needed
+        selectedService: '', // Will be set after fetching assets/services if needed
         associatedTo: {
           asset: ticketData.asset_service === 'Asset',
           service: ticketData.asset_service === 'Service'
         }
       }));
+
+      console.log('💾 Stored subcategory for later matching:', ticketData.sub_category_type);
 
       // Set review date if available
       console.log('Review tracking from API:', ticketData.review_tracking);
@@ -257,7 +292,68 @@ const UpdateTicketsPage: React.FC = () => {
 
       // Fetch sub-categories if category is set
       if (matchingCategory?.id) {
-        fetchSubCategories(matchingCategory.id.toString());
+        console.log('🔄 Fetching subcategories for category ID:', matchingCategory.id);
+        console.log('🎯 Target subcategory to match:', ticketData.sub_category_type);
+        
+        // Pass the target subcategory name to fetchSubCategories
+        await fetchSubCategories(matchingCategory.id.toString(), ticketData.sub_category_type);
+      } else {
+        console.log('❌ No matching category found for:', ticketData.category_type);
+      }
+
+      // Fetch assets/services if associated to asset or service
+      console.log('🏢 Asset service type from API:', ticketData.asset_service);
+      console.log('🆔 Asset or service ID from API:', ticketData.asset_or_service_id);
+      
+      if (ticketData.asset_service === 'Asset') {
+        console.log('🔄 Fetching assets for Asset selection');
+        await fetchAssets();
+        // Asset matching is now handled inside fetchAssets function
+      } else if (ticketData.asset_service === 'Service') {
+        console.log('🔄 Fetching services for Service selection');
+        await fetchServices();
+        // Service matching is now handled inside fetchServices function
+      }
+
+      // Handle cost approval requests if available
+      console.log('💰 Cost approval data from API:', ticketData.requests);
+      if (ticketData.requests && Array.isArray(ticketData.requests)) {
+        const formattedRequests = ticketData.requests.map((request: any) => ({
+          id: request.id.toString(),
+          amount: request.amount.toString(),
+          comments: request.comment || '',
+          createdOn: request.created_on || '',
+          createdBy: request.created_by || '',
+          attachments: request.attachments || [],
+          approvals: request.approvals || {
+            L1: "Na",
+            L2: "Na", 
+            L3: "Na",
+            L4: "Na",
+            L5: "Na"
+          },
+          masterStatus: request.master_status || 'Pending',
+          cancelledBy: request.cancelled_by || 'NA',
+          action: request.action || null,
+          isFromAPI: true // Mark as API data
+        }));
+        
+        console.log('💰 Formatted cost approval requests from API:', formattedRequests);
+        
+        // Only set API requests, don't add to existing array to avoid duplicates
+        setCostApprovalRequests(formattedRequests);
+        
+        // Set cost involved to true if there are any requests
+        if (formattedRequests.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            costInvolved: true
+          }));
+        }
+      } else {
+        console.log('💰 No cost approval requests found in API data');
+        // Only clear if no API data, preserve any new user-added requests
+        setCostApprovalRequests(prev => prev.filter(req => !req.isFromAPI));
       }
       
     } catch (error) {
@@ -329,8 +425,39 @@ const UpdateTicketsPage: React.FC = () => {
     
     setIsLoadingAssets(true);
     try {
+      console.log('🔄 Fetching assets from API...');
       const response = await apiClient.get('/pms/assets/get_assets.json');
-      setAssetOptions(response.data || []);
+      const assets = response.data || [];
+      console.log('📦 Assets received:', assets.length, 'items');
+      console.log('📦 Sample assets:', assets.slice(0, 3).map(a => ({ id: a.id, name: a.name })));
+      
+      setAssetOptions(assets);
+
+      // If we have ticket data with asset_or_service_id, match it after setting the options
+      if (ticketApiData?.asset_service === 'Asset' && ticketApiData?.asset_or_service_id) {
+        console.log('🔍 Looking for asset with ID:', ticketApiData.asset_or_service_id);
+        console.log('🔍 Asset type:', typeof ticketApiData.asset_or_service_id);
+        
+        const targetId = ticketApiData.asset_or_service_id.toString();
+        const matchingAsset = assets.find(asset => {
+          const assetId = asset.id.toString();
+          console.log('🔍 Comparing asset ID:', assetId, 'with target:', targetId);
+          return assetId === targetId;
+        });
+        
+        console.log('✅ Found matching asset:', matchingAsset);
+        
+        if (matchingAsset) {
+          console.log('📦 Setting selectedAsset to ID:', matchingAsset.id, 'Name:', matchingAsset.name);
+          setFormData(prev => ({
+            ...prev,
+            selectedAsset: matchingAsset.id.toString()
+          }));
+        } else {
+          console.log('❌ No matching asset found for ID:', targetId);
+          console.log('📋 Available asset IDs:', assets.map(a => a.id.toString()));
+        }
+      }
     } catch (error) {
       console.error('Error fetching assets:', error);
       toast({
@@ -349,8 +476,39 @@ const UpdateTicketsPage: React.FC = () => {
     
     setIsLoadingServices(true);
     try {
+      console.log('🔄 Fetching services from API...');
       const response = await apiClient.get('/pms/services/get_services.json');
-      setServiceOptions(response.data || []);
+      const services = response.data || [];
+      console.log('📦 Services received:', services.length, 'items');
+      console.log('📦 Sample services:', services.slice(0, 3).map(s => ({ id: s.id, name: s.name })));
+      
+      setServiceOptions(services);
+
+      // If we have ticket data with asset_or_service_id, match it after setting the options
+      if (ticketApiData?.asset_service === 'Service' && ticketApiData?.asset_or_service_id) {
+        console.log('🔍 Looking for service with ID:', ticketApiData.asset_or_service_id);
+        console.log('🔍 Service type:', typeof ticketApiData.asset_or_service_id);
+        
+        const targetId = ticketApiData.asset_or_service_id.toString();
+        const matchingService = services.find(service => {
+          const serviceId = service.id.toString();
+          console.log('🔍 Comparing service ID:', serviceId, 'with target:', targetId);
+          return serviceId === targetId;
+        });
+        
+        console.log('✅ Found matching service:', matchingService);
+        
+        if (matchingService) {
+          console.log('📦 Setting selectedService to ID:', matchingService.id, 'Name:', matchingService.name);
+          setFormData(prev => ({
+            ...prev,
+            selectedService: matchingService.id.toString()
+          }));
+        } else {
+          console.log('❌ No matching service found for ID:', targetId);
+          console.log('📋 Available service IDs:', services.map(s => s.id.toString()));
+        }
+      }
     } catch (error) {
       console.error('Error fetching services:', error);
       toast({
@@ -372,18 +530,21 @@ const UpdateTicketsPage: React.FC = () => {
 
     // Fetch sub-categories when category changes
     if (field === 'categoryType' && value) {
-      fetchSubCategories(value);
+      fetchSubCategories(value); // No target subcategory for manual changes
     } else if (field === 'categoryType' && !value) {
       setSubCategories([]);
       setFormData(prev => ({ ...prev, subCategoryType: '' }));
     }
   };
 
-  const fetchSubCategories = async (categoryId: string) => {
+  const fetchSubCategories = async (categoryId: string, targetSubCategoryName?: string) => {
     try {
       setSubCategoriesLoading(true);
+      console.log('🔍 Fetching subcategories for category ID:', categoryId);
+      console.log('🎯 Target subcategory to match:', targetSubCategoryName);
+      
       const response = await apiClient.get(`/pms/admin/get_sub_categories.json?category_type_id=${categoryId}`);
-      console.log('Sub-categories API response:', response.data);
+      console.log('📋 Sub-categories API response:', response.data);
       
       // Handle different possible response structures
       let categories = [];
@@ -395,20 +556,42 @@ const UpdateTicketsPage: React.FC = () => {
         categories = response.data.subcategories;
       }
       
+      console.log('📝 Processed subcategories:', categories);
       setSubCategories(categories);
 
-      // If we have stored ticket API data, find and set the matching subcategory
-      if (ticketApiData?.sub_category_type && categories.length > 0) {
+      // Use the passed targetSubCategoryName or fall back to ticketApiData
+      const subCategoryToMatch = targetSubCategoryName || ticketApiData?.sub_category_type;
+      
+      // If we have a subcategory name to match and categories are available
+      if (subCategoryToMatch && categories.length > 0) {
+        console.log('🔎 Looking for subcategory match:', subCategoryToMatch);
+        console.log('🔎 Available subcategories:', categories.map(c => ({ id: c.id, name: c.name })));
+        
         const matchingSubCategory = categories.find(
-          subCat => subCat.name === ticketApiData.sub_category_type
+          subCat => {
+            const subCatName = subCat.name?.trim().toLowerCase();
+            const targetName = subCategoryToMatch?.trim().toLowerCase();
+            console.log('🔍 Comparing:', subCatName, 'vs', targetName);
+            return subCatName === targetName;
+          }
         );
         
+        console.log('✅ Found matching subcategory:', matchingSubCategory);
+        
         if (matchingSubCategory) {
+          console.log('📌 Setting subcategory ID:', matchingSubCategory.id);
           setFormData(prev => ({
             ...prev,
             subCategoryType: matchingSubCategory.id.toString()
           }));
+        } else {
+          console.log('❌ No matching subcategory found for:', subCategoryToMatch);
+          console.log('📋 Available names:', categories.map(c => c.name));
         }
+      } else {
+        console.log('⚠️ No subcategory to match or no categories available');
+        console.log('⚠️ subCategoryToMatch:', subCategoryToMatch);
+        console.log('⚠️ categories.length:', categories.length);
       }
       
     } catch (error) {
@@ -432,7 +615,8 @@ const UpdateTicketsPage: React.FC = () => {
           asset: field === 'asset' ? checked : false,
           service: field === 'service' ? checked : false
         },
-        selectedAsset: '' // Reset selected asset when switching between asset/service
+        selectedAsset: field === 'asset' && checked ? prev.selectedAsset : '', // Keep asset if asset is selected, reset otherwise
+        selectedService: field === 'service' && checked ? prev.selectedService : '' // Keep service if service is selected, reset otherwise
       }));
 
       // Fetch data based on selection
@@ -469,6 +653,8 @@ const UpdateTicketsPage: React.FC = () => {
     if (checked) {
       setShowCostPopup(true);
     } else {
+      // Only clear new requests, keep API requests
+      setCostApprovalRequests(prev => prev.filter(req => req.isFromAPI));
       setCostPopupData({ cost: '', description: '', attachments: [] });
     }
   };
@@ -490,18 +676,42 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleCostPopupSubmit = () => {
+    console.log('💰 Cost popup submit - data:', costPopupData);
+    
+    // Get current user information
+    const currentUser = getUser();
+    const currentUserName = currentUser ? `${currentUser.firstname} ${currentUser.lastname}` : 'Current User';
+    console.log('👤 Current user for cost approval:', currentUserName);
+    
     // Create new cost approval request
     const newRequest = {
       id: Date.now().toString(),
       amount: costPopupData.cost,
       comments: costPopupData.description,
       createdOn: new Date().toLocaleDateString(),
-      createdBy: 'Current User', // You can replace this with actual user data
-      attachments: costPopupData.attachments
+      createdBy: currentUserName,
+      attachments: costPopupData.attachments,
+      approvals: {
+        L1: "Na",
+        L2: "Na",
+        L3: "Na", 
+        L4: "Na",
+        L5: "Na"
+      },
+      masterStatus: 'Pending',
+      cancelledBy: 'NA',
+      action: null,
+      isFromAPI: false // Mark as user-created
     };
 
+    console.log('💰 Creating new cost approval request:', newRequest);
+
     // Add to cost approval requests
-    setCostApprovalRequests(prev => [...prev, newRequest]);
+    setCostApprovalRequests(prev => {
+      const updated = [...prev, newRequest];
+      console.log('💰 Updated cost approval requests:', updated);
+      return updated;
+    });
 
     // Update main form data with popup data
     setFormData(prev => ({
@@ -509,7 +719,11 @@ const UpdateTicketsPage: React.FC = () => {
       cost: costPopupData.cost,
       description: costPopupData.description
     }));
-    setAttachments(prev => [...prev, ...costPopupData.attachments]);
+    
+    // Don't add to main attachments array to avoid conflicts
+    // setAttachments(prev => [...prev, ...costPopupData.attachments]);
+    
+    console.log('✅ Cost popup submitted successfully');
     
     // Close popup and reset data
     setShowCostPopup(false);
@@ -520,6 +734,56 @@ const UpdateTicketsPage: React.FC = () => {
     setShowCostPopup(false);
     setFormData(prev => ({ ...prev, costInvolved: false }));
     setCostPopupData({ cost: '', description: '', attachments: [] });
+  };
+
+  const handleDownloadAttachment = (attachment: any, fileName?: string) => {
+    console.log('📥 Downloading attachment:', attachment);
+    
+    try {
+      if (typeof attachment === 'string') {
+        // If attachment is a URL string, download directly
+        const link = document.createElement('a');
+        link.href = attachment;
+        link.download = fileName || 'attachment';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else if (attachment.url) {
+        // If attachment is an object with URL property
+        const link = document.createElement('a');
+        link.href = attachment.url;
+        link.download = fileName || attachment.name || 'attachment';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else if (attachment instanceof File) {
+        // If attachment is a File object (for new uploads)
+        const url = URL.createObjectURL(attachment);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = attachment.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        console.error('Unknown attachment format:', attachment);
+        toast({
+          title: "Error",
+          description: "Unable to download attachment - unknown format",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download attachment",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSubmit = async () => {
@@ -576,7 +840,7 @@ const UpdateTicketsPage: React.FC = () => {
       // Complaint data
       formDataToSend.append('complaint[complaint_type]', 'Request');
       formDataToSend.append('complaint[preventive_action]', formData.preventiveAction || '');
-      formDataToSend.append('complaint[person_id]', '');
+      formDataToSend.append('complaint[person_id]', formData.responsiblePerson || '');
       
       // Format review tracking date properly
       if (reviewDate) {
@@ -602,23 +866,71 @@ const UpdateTicketsPage: React.FC = () => {
       formDataToSend.append('complaint[cost_involved]', formData.costInvolved ? 'true' : 'false');
       
       // Add cost approval data if cost is involved
-      if (formData.costInvolved && costPopupData.cost) {
-        const timestamp = Date.now();
-        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][created_by_id]`, '12437');
-        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][cost]`, costPopupData.cost);
-        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][comment]`, costPopupData.description || '');
-        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][_destroy]`, 'false');
+      console.log('💰 Cost involved:', formData.costInvolved);
+      console.log('💰 All cost approval requests:', costApprovalRequests);
+      
+      // Filter only new requests (not from API) for submission
+      const newCostApprovalRequests = costApprovalRequests.filter(request => !request.isFromAPI);
+      console.log('💰 New cost approval requests to submit:', newCostApprovalRequests);
+      
+      if (formData.costInvolved && newCostApprovalRequests.length > 0) {
+        // Get current user ID from localStorage
+        const currentUser = getUser();
+        const currentUserId = currentUser?.id?.toString() || '12437'; // Fallback to default if user not found
+        console.log('👤 Current user ID for cost approval:', currentUserId);
         
-        // Add attachments if any
-        costPopupData.attachments.forEach((file, index) => {
-          const attachmentTimestamp = Date.now() + index;
-          formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][attachments_attributes][${attachmentTimestamp}][_destroy]`, 'false');
+        // Process each NEW cost approval request (not the ones from API)
+        newCostApprovalRequests.forEach((request) => {
+          const timestamp = request.id; // Use the request ID as timestamp
+          console.log('💰 Adding NEW cost approval request:', request);
+          
+          // Add cost approval request attributes
+          formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][created_by_id]`, currentUserId);
+          formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][cost]`, request.amount);
+          formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][comment]`, request.comments || '');
+          formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][_destroy]`, 'false');
+          
+          // Add attachments for this cost approval request with correct parameter format
+          if (request.attachments && Array.isArray(request.attachments)) {
+            request.attachments.forEach((file, index) => {
+              if (file && file.name) { // Only add if it's a proper File object
+                const attachmentTimestamp = Date.now() + index; // Unique timestamp for each attachment
+                console.log('📎 Adding cost approval attachment:', file.name, 'with timestamp:', attachmentTimestamp);
+                formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][attachments_attributes][${attachmentTimestamp}][document]`, file);
+              }
+            });
+          }
         });
       }
       
-      formDataToSend.append('checklist_type', 'Asset');
-      formDataToSend.append('asset_id', formData.selectedAsset || '');
-      formDataToSend.append('service_id', '');
+      // Handle asset/service selection properly
+      console.log('🏢 Asset/Service selection debug:', {
+        associatedTo: formData.associatedTo,
+        selectedAsset: formData.selectedAsset,
+        selectedService: formData.selectedService
+      });
+      
+      if (formData.associatedTo.asset) {
+        console.log('📦 Setting Asset parameters');
+        formDataToSend.append('checklist_type', 'Asset');
+        formDataToSend.append('asset_id', formData.selectedAsset || '');
+        formDataToSend.append('service_id', '');
+        // Add default complaint_comment[] parameter for asset
+        formDataToSend.append('complaint_comment', '');
+      } else if (formData.associatedTo.service) {
+        console.log('🔧 Setting Service parameters');
+        formDataToSend.append('checklist_type', 'Service');
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', formData.selectedService || '');
+        // Add default complaint_comment[] parameter for service
+        formDataToSend.append('complaint_comment', '');
+      } else {
+        console.log('❌ No asset/service selected');
+        // Default case when neither is selected
+        formDataToSend.append('checklist_type', '');
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', '');
+      }
       
       // Add file attachments if any
       attachments.forEach((file) => {
@@ -756,7 +1068,7 @@ const UpdateTicketsPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
                   {fmUsers.map((user) => (
-                    <SelectItem key={user.id} value={`${user.firstname} ${user.lastname}`} className="text-gray-900 hover:bg-gray-100">
+                    <SelectItem key={user.id} value={user.id.toString()} className="text-gray-900 hover:bg-gray-100">
                       {user.firstname} {user.lastname}
                     </SelectItem>
                   ))}
@@ -1076,7 +1388,17 @@ const UpdateTicketsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700">
                 {formData.associatedTo.asset ? 'Select Asset' : 'Select Service'}
               </label>
-              <Select value={formData.selectedAsset} onValueChange={(value) => handleInputChange('selectedAsset', value)} disabled={isLoadingAssets || isLoadingServices}>
+              <Select 
+                value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService} 
+                onValueChange={(value) => {
+                  if (formData.associatedTo.asset) {
+                    handleInputChange('selectedAsset', value);
+                  } else {
+                    handleInputChange('selectedService', value);
+                  }
+                }} 
+                disabled={isLoadingAssets || isLoadingServices}
+              >
                 <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <SelectValue 
                     placeholder={
@@ -1105,7 +1427,7 @@ const UpdateTicketsPage: React.FC = () => {
 
           {/* Comments */}
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Add Comments</label>
             <Textarea
               value={formData.comments}
               onChange={(e) => handleInputChange('comments', e.target.value)}
@@ -1159,15 +1481,52 @@ const UpdateTicketsPage: React.FC = () => {
                         <td className="px-4 py-3 text-gray-900 border-b">{request.comments}</td>
                         <td className="px-4 py-3 text-gray-900 border-b">{request.createdOn}</td>
                         <td className="px-4 py-3 text-gray-900 border-b">{request.createdBy}</td>
-                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
-                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
-                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
-                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
-                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
-                        <td className="px-4 py-3 text-gray-900 border-b">Pending</td>
-                        <td className="px-4 py-3 text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">{request.approvals?.L1 || '-'}</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">{request.approvals?.L2 || '-'}</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">{request.approvals?.L3 || '-'}</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">{request.approvals?.L4 || '-'}</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">{request.approvals?.L5 || '-'}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.masterStatus || 'Pending'}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.cancelledBy || '-'}</td>
                         <td className="px-4 py-3 text-gray-900 border-b">
-                          {request.attachments.length > 0 ? `${request.attachments.length} file(s)` : '-'}
+                          {request.attachments && request.attachments.length > 0 ? (
+                            <div className="flex flex-col gap-1 max-w-xs">
+                              {request.attachments.map((attachment, index) => {
+                                const fileName = attachment.name || 
+                                  (attachment.url ? attachment.url.split('/').pop() : `Attachment ${index + 1}`);
+                                
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={() => {
+                                      if (attachment.url) {
+                                        // API attachment with URL
+                                        handleDownloadAttachment(attachment.url, fileName);
+                                      } else if (attachment instanceof File) {
+                                        // File object (new upload)
+                                        handleDownloadAttachment(attachment);
+                                      } else {
+                                        // Fallback for other formats
+                                        handleDownloadAttachment(attachment, fileName);
+                                      }
+                                    }}
+                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded px-2 py-1 text-sm text-left transition-colors"
+                                    title="Download attachment"
+                                  >
+                                    <Download className="w-4 h-4 flex-shrink-0" />
+                                    <span className="truncate">{fileName}</span>
+                                  </button>
+                                );
+                              })}
+                              {request.attachments.length > 1 && (
+                                <span className="text-xs text-gray-500 mt-1">
+                                  {request.attachments.length} file(s) total
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            '-'
+                          )}
                         </td>
                       </tr>
                     ))
