@@ -197,5 +197,11 @@ export const taskService = {
       console.error('Error downloading task export:', error);
       throw error;
     }
+  },
+
+  // Reschedule task
+  async rescheduleTask(id: string, payload: any): Promise<void> {
+    const url = `/pms/asset_task_occurrences/${id}/reschedule`;
+    await apiClient.post(url, payload);
   }
 };

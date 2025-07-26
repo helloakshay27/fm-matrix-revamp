@@ -20,7 +20,7 @@ export const TaskDetailsPage = () => {
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
 
   // Submit task form state
   const [formData, setFormData] = useState({

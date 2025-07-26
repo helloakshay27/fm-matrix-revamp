@@ -118,6 +118,48 @@ export interface RecentTicketsResponse {
   complaints: RecentTicket[];
 }
 
+export interface UnitCategorywiseData {
+  success: number;
+  message: string;
+  response: {
+    tickets_category: string[];
+    open_tickets: number[];
+    closed_tickets: number[];
+    total_tickets: number[];
+  };
+  info: string;
+}
+
+export interface ResponseTATData {
+  success: number;
+  message: string;
+  response: {
+    resolution: {
+      breached: number;
+      achieved: number;
+    };
+    response: {
+      breached: number;
+      achieved: number;
+    };
+  };
+  info: string;
+}
+
+export interface ResolutionTATReportData {
+  success: number;
+  message: string;
+  response: {
+    categories: string[];
+    breached: number[];
+    achieved: number[];
+    total: number[];
+    percentage_breached: number[];
+    percentage_achieved: number[];
+  };
+  info: string;
+}
+
 // Format date for API (YYYY-MM-DD)
 const formatDateForAPI = (date: Date): string => {
   const year = date.getFullYear();
@@ -189,6 +231,42 @@ export const ticketAnalyticsAPI = {
   // Get recent tickets
   async getRecentTickets(): Promise<RecentTicketsResponse> {
     const url = `/pms/admin/complaints/recent_tickets`;
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Get unit categorywise data
+  async getUnitCategorywiseData(fromDate: Date, toDate: Date): Promise<UnitCategorywiseData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    
+    const url = `/pms/admin/complaints/chart_unit_categorywise.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Get response TAT data
+  async getResponseTATData(fromDate: Date, toDate: Date): Promise<ResponseTATData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    
+    const url = `/pms/admin/complaints/chart_response_tat.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Get resolution TAT report data
+  async getResolutionTATReportData(fromDate: Date, toDate: Date): Promise<ResolutionTATReportData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    
+    const url = `/pms/admin/complaints/chart_resolution_tat_report.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     
     const response = await apiClient.get(url);
     return response.data;
