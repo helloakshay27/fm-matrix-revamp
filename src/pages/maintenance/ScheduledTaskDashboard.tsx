@@ -24,6 +24,8 @@ import { calendarService, CalendarEvent } from '@/services/calendarService';
 import { getToken } from '@/utils/auth';
 import { getFullUrl } from '@/config/apiConfig';
 import { TaskFilterDialog, TaskFilters } from '@/components/TaskFilterDialog';
+import { taskService } from '@/services/taskService';
+
 
 interface TaskRecord {
   id: string;
@@ -121,7 +123,7 @@ export const ScheduledTaskDashboard = () => {
   const [searchTaskId, setSearchTaskId] = useState('');
   const [searchChecklist, setSearchChecklist] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 800);
   const [activeTab, setActiveTab] = useState('list');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -133,7 +135,7 @@ export const ScheduledTaskDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [showTaskFilter, setShowTaskFilter] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<TaskFilters>({});
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -165,34 +167,33 @@ export const ScheduledTaskDashboard = () => {
   const fetchTasks = async (filters: TaskFilters = {}, page: number = 1, searchTerm: string = '') => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const token = getToken();
-      
+
       // Build query parameters from filters and pagination
       const queryParams = new URLSearchParams();
       // queryParams.append('show_all', showAll.toString());
       queryParams.append('page', page.toString());
 
-if (filters.dateFrom) queryParams.append('q[start_date_gteq]', filters.dateFrom);
-if (filters.dateTo) queryParams.append('q[start_date_lteq]', filters.dateTo);
-if (filters.checklist) queryParams.append('q[custom_form_form_name_cont]', filters.checklist);
-if (filters.scheduleType) queryParams.append('sch_type', filters.scheduleType);
-if (filters.type) queryParams.append('s[custom_form_schedule_type_eq]', filters.type);
-if (filters.assetGroupId) queryParams.append('q[asset_pms_asset_group_id_eq]', filters.assetGroupId);
-if (filters.assetSubGroupId) queryParams.append('q[asset_pms_asset_sub_group_id_eq]', filters.assetSubGroupId);
-if (filters.assignedTo) queryParams.append('q[pms_task_assignments_assigned_to_id_eq]', filters.assignedTo);
-if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filters.supplierId);
-if (filters.taskId) queryParams.append('q[id_eq]', filters.taskId);
-if (filters.status) queryParams.append('q[task_status_eq]', filters.status);
-if (filters.priority) queryParams.append('q[custom_form_priority_eq]', filters.priority);
+      if (filters.dateFrom) queryParams.append('q[start_date_gteq]', filters.dateFrom);
+      if (filters.dateTo) queryParams.append('q[start_date_lteq]', filters.dateTo);
+      if (filters.checklist) queryParams.append('q[custom_form_form_name_cont]', filters.checklist);
+      if (filters.scheduleType) queryParams.append('sch_type', filters.scheduleType);
+      if (filters.type) queryParams.append('s[custom_form_schedule_type_eq]', filters.type);
+      if (filters.assetGroupId) queryParams.append('q[asset_pms_asset_group_id_eq]', filters.assetGroupId);
+      if (filters.assetSubGroupId) queryParams.append('q[asset_pms_asset_sub_group_id_eq]', filters.assetSubGroupId);
+      if (filters.assignedTo) queryParams.append('q[pms_task_assignments_assigned_to_id_eq]', filters.assignedTo);
+      if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filters.supplierId);
+      if (filters.taskId) queryParams.append('q[id_eq]', filters.taskId);
+      if (filters.status) queryParams.append('q[task_status_eq]', filters.status);
+      if (filters.priority) queryParams.append('q[custom_form_priority_eq]', filters.priority);
 
-// Add general search functionality (not checklist-specific)
-if (searchTerm) {
-  queryParams.append('search', searchTerm);
-}
+      // Add general search functionality for checklist and asset
+      if (searchTerm) {
+        queryParams.append('q[checklist_or_asset_cont]', searchTerm);
+      }
 
-      
       const apiUrl = getFullUrl(`/all_tasks_listing.json?${queryParams.toString()}`);
       const response = await fetch(apiUrl, {
         method: 'GET',
@@ -209,12 +210,12 @@ if (searchTerm) {
       const data: ApiTaskResponse = await response.json();
       const transformedData = transformApiDataToTaskRecord(data.asset_task_occurrences);
       setTaskData(transformedData);
-      
+
       // Update pagination state
       setCurrentPage(data.current_page || 1);
       setTotalPages(data.pages || 1);
       setTotalCount(data.asset_task_occurrences?.length || 0);
-      
+
     } catch (error) {
       console.error('Error fetching tasks:', error);
       setError('Failed to fetch tasks. Please try again.');
@@ -324,6 +325,15 @@ if (searchTerm) {
     }
   };
 
+  const downloadTaskExport = async () => {
+    try {
+      await taskService.downloadTaskExport();
+    } catch (error) {
+      console.error('Error downloading task export:', error);
+      // You might want to show a toast or alert here
+    }
+  };
+
   const selectionActions = [
     { label: 'Assign Task', icon: Play },
     { label: 'Change Status', icon: CheckCircle },
@@ -383,96 +393,96 @@ if (searchTerm) {
             ) : error ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-red-500">{error}</div>
-                <Button 
-                  onClick={() => fetchTasks(currentFilters, currentPage, debouncedSearchQuery)} 
-                  variant="outline" 
+                <Button
+                  onClick={() => fetchTasks(currentFilters, currentPage, debouncedSearchQuery)}
+                  variant="outline"
                   className="ml-4"
                 >
                   Retry
                 </Button>
               </div>
             ) : (
-            <EnhancedTable
-              data={taskData}
-              columns={[
-                { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
-                { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
-                { key: 'checklist', label: 'Checklist', sortable: true, hideable: true, draggable: true },
-                { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
-                { key: 'schedule', label: 'Schedule', sortable: true, hideable: true, draggable: true },
-                { key: 'assignTo', label: 'Assign to', sortable: true, hideable: true, draggable: true },
-                { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
-                { key: 'scheduleFor', label: 'Schedule For', sortable: true, hideable: true, draggable: true },
-                { key: 'assetsServices', label: 'Assets/Services', sortable: true, hideable: true, draggable: true },
-                { key: 'site', label: 'Site', sortable: true, hideable: true, draggable: true },
-                { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
-                { key: 'supplier', label: 'Supplier', sortable: true, hideable: true, draggable: true },
-                { key: 'graceTime', label: 'Grace Time', sortable: true, hideable: true, draggable: true },
-                { key: 'duration', label: 'Duration', sortable: true, hideable: true, draggable: true },
-                { key: 'percentage', label: '%', sortable: true, hideable: true, draggable: true }
-              ]}
-              renderRow={(task) => ({
-                actions: (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewTask(task.id);
-                    }}
-                    className="p-2 h-8 w-8 hover:bg-accent"
-                  >
-                    <Eye className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                ),
-                id: task.id,
-                checklist: task.checklist,
-                type: task.type,
-                schedule: task.schedule,
-                assignTo: task.assignTo || '-',
-                status: (
-                  <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
-                    {task.status}
-                  </span>
-                ),
-                scheduleFor: task.scheduleFor,
-                assetsServices: task.assetsServices,
-                site: task.site,
-                location: (
-                  <div className="max-w-xs truncate" title={task.location}>
-                    {task.location}
-                  </div>
-                ),
-                supplier: task.supplier || '-',
-                graceTime: task.graceTime,
-                duration: task.duration || '-',
-                percentage: task.percentage || '-'
-              })}
-              enableSearch={true}
-              enableSelection={true}
-              enableExport={true}
-              storageKey="scheduled-tasks-table"
-              onFilterClick={() => setShowTaskFilter(true)}
-              handleExport={() => fetchTasks(currentFilters, currentPage, debouncedSearchQuery)}
-              searchTerm={searchQuery}
-              onSearchChange={handleSearch}
-              emptyMessage="No scheduled tasks found"
-              searchPlaceholder="Search tasks by checklist..."
-              exportFileName="scheduled-tasks"
-              selectedItems={selectedTasks}
-              getItemId={(task) => task.id}
-              onSelectItem={(taskId, checked) => {
-                const newSelected = checked
-                  ? [...selectedTasks, taskId]
-                  : selectedTasks.filter(id => id !== taskId);
-                setSelectedTasks(newSelected);
-                setShowSelectionPanel(newSelected.length > 0);
-              }}
-              onSelectAll={(checked) => {
-                setSelectedTasks(checked ? taskData.map(task => task.id) : []);
-                setShowSelectionPanel(checked && taskData.length > 0);
-              }}
-            />
+              <EnhancedTable
+                data={taskData}
+                columns={[
+                  { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
+                  { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+                  { key: 'checklist', label: 'Checklist', sortable: true, hideable: true, draggable: true },
+                  { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
+                  { key: 'schedule', label: 'Schedule', sortable: true, hideable: true, draggable: true },
+                  { key: 'assignTo', label: 'Assign to', sortable: true, hideable: true, draggable: true },
+                  { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+                  { key: 'scheduleFor', label: 'Schedule For', sortable: true, hideable: true, draggable: true },
+                  { key: 'assetsServices', label: 'Assets/Services', sortable: true, hideable: true, draggable: true },
+                  { key: 'site', label: 'Site', sortable: true, hideable: true, draggable: true },
+                  { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
+                  { key: 'supplier', label: 'Supplier', sortable: true, hideable: true, draggable: true },
+                  { key: 'graceTime', label: 'Grace Time', sortable: true, hideable: true, draggable: true },
+                  { key: 'duration', label: 'Duration', sortable: true, hideable: true, draggable: true },
+                  { key: 'percentage', label: '%', sortable: true, hideable: true, draggable: true }
+                ]}
+                renderRow={(task) => ({
+                  actions: (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewTask(task.id);
+                      }}
+                      className="p-2 h-8 w-8 hover:bg-accent"
+                    >
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  ),
+                  id: task.id,
+                  checklist: task.checklist,
+                  type: task.type,
+                  schedule: task.schedule,
+                  assignTo: task.assignTo || '-',
+                  status: (
+                    <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-600 font-medium">
+                      {task.status}
+                    </span>
+                  ),
+                  scheduleFor: task.scheduleFor,
+                  assetsServices: task.assetsServices,
+                  site: task.site,
+                  location: (
+                    <div className="max-w-xs truncate" title={task.location}>
+                      {task.location}
+                    </div>
+                  ),
+                  supplier: task.supplier || '-',
+                  graceTime: task.graceTime,
+                  duration: task.duration || '-',
+                  percentage: task.percentage || '-'
+                })}
+                enableSearch={true}
+                enableSelection={true}
+                enableExport={true}
+                storageKey="scheduled-tasks-table"
+                onFilterClick={() => setShowTaskFilter(true)}
+                handleExport={() => downloadTaskExport()}
+                searchTerm={searchQuery}
+                onSearchChange={handleSearch}
+                emptyMessage="No scheduled tasks found"
+                searchPlaceholder="Search tasks by checklist..."
+                exportFileName="scheduled-tasks"
+                selectedItems={selectedTasks}
+                getItemId={(task) => task.id}
+                onSelectItem={(taskId, checked) => {
+                  const newSelected = checked
+                    ? [...selectedTasks, taskId]
+                    : selectedTasks.filter(id => id !== taskId);
+                  setSelectedTasks(newSelected);
+                  setShowSelectionPanel(newSelected.length > 0);
+                }}
+                onSelectAll={(checked) => {
+                  setSelectedTasks(checked ? taskData.map(task => task.id) : []);
+                  setShowSelectionPanel(checked && taskData.length > 0);
+                }}
+              />
             )}
           </div>
 

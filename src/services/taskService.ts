@@ -197,5 +197,22 @@ export const taskService = {
       console.error('Error downloading task export:', error);
       throw error;
     }
-  }
+  },
+
+  rescheduleTask: async (id: string, data: {
+    start_date: string;
+    user_ids: number[];
+    email: boolean;
+    sms: boolean;
+  }) => {
+    try {
+      return await apiClient.put(
+        `/pms/asset_task_occurrences/${id}/update_task_date.json`,
+        data
+      );
+    } catch (error) {
+      console.error('Error rescheduling task:', error);
+      throw new Error('Failed to reschedule task');
+    }
+  },
 };
