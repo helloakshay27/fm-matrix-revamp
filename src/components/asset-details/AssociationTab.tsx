@@ -96,6 +96,12 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!assetId) {
+      alert("Invalid asset ID. Please close and reopen the modal.");
+      return;
+    }
+    
     if (parentId === assetId || childIds.includes(assetId as number)) {
       alert("You cannot associate an asset with itself.");
       return;
@@ -110,6 +116,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: getAuthHeader(),
           },
           body: JSON.stringify({
             associate: {
@@ -247,7 +254,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
             <div className="flex justify-center pt-4">
               <Button
                 type="submit"
-                disabled={submitting || (!parentId && childIds.length === 0)}
+                disabled={submitting || !assetId || (!parentId && childIds.length === 0)}
                 className="px-6 py-2 bg-purple-600 hover:bg-purple-700"
               >
                 {submitting ? 'Processing...' : 'Done'}
@@ -274,6 +281,11 @@ export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }
 
   const openModal = (id: number, name: string) => {
     setSelectedAsset({ id, name });
+    setShowModal(true);
+  };
+
+  const openModalForCurrentAsset = () => {
+    setSelectedAsset({ id: assetId, name: asset?.name || 'Current Asset' });
     setShowModal(true);
   };
 
@@ -368,7 +380,7 @@ export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Asset Associations</h3>
         <Button
-          onClick={() => setShowModal(true)}
+          onClick={openModalForCurrentAsset}
           className="bg-purple-600 hover:bg-purple-700 text-white"
         >
           Associate Asset
