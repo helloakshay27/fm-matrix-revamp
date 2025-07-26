@@ -290,7 +290,7 @@ const AssignTicketsPage: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.sub_category_type || 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.posted_by || 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.assigned_to || 'Unassigned'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 w-32">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         {ticket.issue_status}
                       </span>
