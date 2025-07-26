@@ -152,8 +152,8 @@ const inventorySlice = createSlice({
         // ✅ Add these:
         state.activeCount = action.payload.active_count
         state.inactiveCount = action.payload.inactive_count
-        state.greenInventories = action.payload.green_inventories
-        state.totalInventories = action.payload.total
+        state.greenInventories = action.payload.green_product_count
+        state.totalInventories = action.payload.total_count
       })
       .addCase(fetchInventoryData.rejected, (state, action) => {
         state.loading = false

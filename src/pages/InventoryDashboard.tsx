@@ -154,6 +154,8 @@ export const InventoryDashboard = () => {
     inactiveCount,
   } = useSelector((state: RootState) => state.inventory);
 
+  console.log(greenInventories );
+
   // Local state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
@@ -1263,9 +1265,9 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {greenInventories}
+                    {greenInventories || 0}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                  <div className="text-xs text-green-600 sm:text-sm text-muted-foreground font-medium leading-tight">
                     Ecofriendly
                   </div>
                 </div>

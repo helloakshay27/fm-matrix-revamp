@@ -126,34 +126,44 @@ const InventoryConsumptionViewPage = () => {
       </div>
 
       {/* Controls */}
-      <div className="flex items-center gap-4">
-        <TextField
-          label="Select Date Range"
-          placeholder="Select Date Range"
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          variant="outlined"
-          sx={{
-            width: '300px',
-            '& .MuiOutlinedInput-root': {
-              height: '48px',
-              borderRadius: '8px',
-              '& fieldset': { borderColor: '#D1D5DB' },
-              '&:hover fieldset': { borderColor: '#9CA3AF' },
-              '&.Mui-focused fieldset': { borderColor: '#C72030' },
-            },
-            '& .MuiInputLabel-root': {
-              color: '#9CA3AF',
-              fontSize: '14px',
-              '&.Mui-focused': { color: '#C72030' },
-            },
-          }}
-          InputProps={{
-            endAdornment: <Calendar className="w-4 h-4 text-gray-400" />,
-          }}
-        />
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    {/* Inventory Name */}
+    <div className="text-lg font-semibold text-gray-800">
+      Inventory Name: <span className="text-gray-900 font-bold">{inventory?.name}</span>
+    </div>
 
-        <Button
+    {/* Controls */}
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap">
+      {/* Date Range Picker */}
+      {/* <TextField
+        label="Select Date Range"
+        placeholder="Select Date Range"
+        value={dateRange}
+        onChange={(e) => setDateRange(e.target.value)}
+        variant="outlined"
+        sx={{
+          width: '280px',
+          '& .MuiOutlinedInput-root': {
+            height: '48px',
+            borderRadius: '8px',
+            '& fieldset': { borderColor: '#D1D5DB' },
+            '&:hover fieldset': { borderColor: '#9CA3AF' },
+            '&.Mui-focused fieldset': { borderColor: '#C72030' },
+          },
+          '& .MuiInputLabel-root': {
+            color: '#9CA3AF',
+            fontSize: '14px',
+            '&.Mui-focused': { color: '#C72030' },
+          },
+        }}
+        InputProps={{
+          endAdornment: <Calendar className="w-4 h-4 text-gray-400" />,
+        }}
+      /> */}
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-2">
+        {/* <Button
           onClick={handleSubmit}
           className="bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-lg px-6 py-3 h-12 font-medium"
         >
@@ -166,7 +176,7 @@ const InventoryConsumptionViewPage = () => {
           className="border border-gray-400 text-gray-700 hover:bg-gray-50 rounded-lg px-6 py-3 h-12 font-medium"
         >
           Reset
-        </Button>
+        </Button> */}
 
         <Button
           onClick={handleAddConsume}
@@ -175,6 +185,8 @@ const InventoryConsumptionViewPage = () => {
           Add/Consume
         </Button>
       </div>
+    </div>
+  </div>
 
       {/* Consumption History Table */}
       <Card>

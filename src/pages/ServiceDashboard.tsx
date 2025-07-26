@@ -49,14 +49,16 @@ export const ServiceDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined); // Track active filter
   const pageSize = 7;
+
+  // Fetch data when component mounts or filter changes
+  useEffect(() => {
+    dispatch(fetchServicesData({ active: activeFilter }));
+  }, [dispatch, activeFilter]);
 
   // Use API data if available, otherwise fallback to initial data
   const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
-
-  useEffect(() => {
-    dispatch(fetchServicesData());
-  }, [dispatch]);
 
   const totalPages = Math.ceil(Math.max(servicesData.length, 6) / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -67,7 +69,8 @@ export const ServiceDashboard = () => {
     pageSize,
     totalPages,
     currentPage,
-    paginatedDataLength: paginatedServices.length
+    paginatedDataLength: paginatedServices.length,
+    activeFilter,
   });
 
   const handleStatusToggle = (id: number) => {
@@ -79,41 +82,41 @@ export const ServiceDashboard = () => {
   const handleImportClick = () => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
-  }
+  };
   const handleImportLocationsClick = () => setShowImportLocationsModal(true);
   const handleFiltersClick = () => {
     setShowFilterModal(true);
     setShowActionPanel(false);
+  };
 
-  }
-
-  const handleApplyFilters = filters => {
+  const handleApplyFilters = (filters) => {
     setShowFilterModal(false);
     console.log('Applied filters:', filters);
   };
 
   const handleCloseFilter = () => {
-    setShowFilterModal(false);         // Just close the modal
-    setSelectedItems([]);              // Also clear selected items
+    setShowFilterModal(false);
+    setSelectedItems([]);
   };
+
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
+      setSelectedItems((prev) => [...prev, itemId]);
     } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(paginatedServices.map(item => item.id.toString()));
+      setSelectedItems(paginatedServices.map((item) => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
   };
 
   const handleQRDownload = () => {
-    const selectedServices = paginatedServices.filter(service =>
+    const selectedServices = paginatedServices.filter((service) =>
       selectedItems.includes(service.id.toString())
     );
 
@@ -134,6 +137,22 @@ export const ServiceDashboard = () => {
 
   const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
 
+  // Handle card clicks for filtering
+  const handleTotalServicesClick = () => {
+    setActiveFilter(undefined); // Reset filter to show all services
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handleActiveServicesClick = () => {
+    setActiveFilter(true); // Filter by active services
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handleInactiveServicesClick = () => {
+    setActiveFilter(false); // Filter by inactive services
+    setCurrentPage(1); // Reset to first page
+  };
+
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'serviceName', label: 'Service Name', sortable: true },
@@ -149,15 +168,15 @@ export const ServiceDashboard = () => {
     { key: 'floor', label: 'Floor', sortable: true },
     { key: 'room', label: 'Room', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
-    { key: 'createdOn', label: 'Created On', sortable: true }
+    { key: 'createdOn', label: 'Created On', sortable: true },
   ];
 
   const bulkActions = [
     {
       label: 'Print QR Codes',
       icon: FileText,
-      onClick: () => handleQRDownload()
-    }
+      onClick: () => handleQRDownload(),
+    },
   ];
 
   const renderCell = (item: ServiceRecord, columnKey: string) => {
@@ -179,7 +198,7 @@ export const ServiceDashboard = () => {
       case 'group':
         return item.group_name || '-';
       case 'uom':
-        return item.base_uom || '-'; // Not available in API
+        return item.base_uom || '-';
       case 'building':
         return item.building || '-';
       case 'wing':
@@ -190,7 +209,7 @@ export const ServiceDashboard = () => {
         return item.floor || '-';
       case 'room':
         return item.room || '-';
-      case 'SubGroup':
+      case 'subGroup':
         return item.sub_group_name || '-';
       case 'status':
         const isActive = item.active === true;
@@ -198,12 +217,14 @@ export const ServiceDashboard = () => {
           <div className="flex items-center">
             <div
               onClick={() => handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-400'
-                }`}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                isActive ? 'bg-green-500' : 'bg-gray-400'
+              }`}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                  isActive ? 'translate-x-6' : 'translate-x-1'
+                }`}
               />
             </div>
           </div>
@@ -220,19 +241,14 @@ export const ServiceDashboard = () => {
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
-      // Show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink
-            onClick={() => setCurrentPage(1)}
-            isActive={currentPage === 1}
-          >
+          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>
       );
 
-      // Show ellipsis or pages 2-3
       if (currentPage > 4) {
         items.push(
           <PaginationItem key="ellipsis1">
@@ -243,10 +259,7 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
+              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -254,15 +267,11 @@ export const ServiceDashboard = () => {
         }
       }
 
-      // Show current page area
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
+              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -270,7 +279,6 @@ export const ServiceDashboard = () => {
         }
       }
 
-      // Show ellipsis or pages before last
       if (currentPage < totalPages - 3) {
         items.push(
           <PaginationItem key="ellipsis2">
@@ -279,13 +287,10 @@ export const ServiceDashboard = () => {
         );
       } else {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => item.key === i)) {
+          if (!items.find((item) => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink
-                  onClick={() => setCurrentPage(i)}
-                  isActive={currentPage === i}
-                >
+                <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                   {i}
                 </PaginationLink>
               </PaginationItem>
@@ -294,28 +299,20 @@ export const ServiceDashboard = () => {
         }
       }
 
-      // Show last page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink
-              onClick={() => setCurrentPage(totalPages)}
-              isActive={currentPage === totalPages}
-            >
+            <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
               {totalPages}
             </PaginationLink>
           </PaginationItem>
         );
       }
     } else {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink
-              onClick={() => setCurrentPage(i)}
-              isActive={currentPage === i}
-            >
+            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
               {i}
             </PaginationLink>
           </PaginationItem>
@@ -326,18 +323,11 @@ export const ServiceDashboard = () => {
     return items;
   };
 
-  const selectionActions = [
-    // {
-    //   label: "Print",
-    //   icon: FileText,
-    //   onClick: handleQRDownload,
-    //   variant: 'destructive' as const,
-    // }
-  ];
+  const selectionActions = [];
+
   const handleActionClick = () => {
     setShowActionPanel(true);
   };
-
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-3">
@@ -355,20 +345,20 @@ export const ServiceDashboard = () => {
         </div>
       )}
 
-      {/* Error State */}
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>
         </div>
       )}
 
-
-      {/* Enhanced Table */}
       {!loading && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+            <div
+              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+              onClick={handleTotalServicesClick}
+            >
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
               </div>
               <div className="flex flex-col min-w-0">
@@ -379,24 +369,30 @@ export const ServiceDashboard = () => {
               </div>
             </div>
 
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+            <div
+              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+              onClick={handleActiveServicesClick}
+            >
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
               </div>
               <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                   {apiData.active_services_count}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
               </div>
             </div>
 
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+            <div
+              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+              onClick={handleInactiveServicesClick}
+            >
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
               </div>
               <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                   {apiData.inactive_services_count}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
@@ -410,7 +406,6 @@ export const ServiceDashboard = () => {
               onAdd={handleAddClick}
               onImport={handleImportClick}
               onClearSelection={() => setShowActionPanel(false)}
-
             />
           )}
           <EnhancedTable
@@ -432,13 +427,10 @@ export const ServiceDashboard = () => {
             leftActions={renderCustomActions()}
             searchPlaceholder="Search..."
             onFilterClick={handleFiltersClick}
-
           />
         </>
-
       )}
 
-      {/* Custom Pagination - Always show for debugging */}
       {!loading && (
         <div className="flex justify-center mt-6">
           <Pagination>
