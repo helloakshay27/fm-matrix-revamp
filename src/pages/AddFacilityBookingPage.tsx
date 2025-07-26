@@ -539,6 +539,7 @@ import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchFacilitySetups } from '@/store/slices/facilitySetupsSlice';
 import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -667,28 +668,26 @@ export const AddFacilityBookingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Form submitted! Check console for details.');
-    console.log('=== FORM SUBMITTED - START ===');
 
     try {
       if (!selectedUser) {
-        alert('Please select a user');
+        toast.error('Please select a user');
         return;
       }
       if (!selectedFacility) {
-        alert('Please select a facility');
+        toast.error('Please select a facility');
         return;
       }
       if (!selectedDate) {
-        alert('Please select a date');
+        toast.error('Please select a date');
         return;
       }
       if (!paymentMethod) {
-        alert('Please select a payment method');
+        toast.error('Please select a payment method');
         return;
       }
       if (selectedSlots.length === 0) {
-        alert('Please select at least one slot');
+        toast.error('Please select at least one slot');
         return;
       }
 
@@ -749,7 +748,7 @@ export const AddFacilityBookingPage = () => {
 
       if (response.status === 200 || response.status === 201) {
         console.log('Booking created successfully:', response.data);
-        alert('Booking created successfully!');
+        toast.error('Booking created successfully!');
         navigate('/vas/booking/list');
       }
     } catch (error: any) {
@@ -758,7 +757,7 @@ export const AddFacilityBookingPage = () => {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
       }
-      alert('Error creating booking. Please check the console for details.');
+      toast.error('Error creating booking. Please check the console for details.');
     }
   };
 
