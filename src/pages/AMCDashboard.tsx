@@ -137,13 +137,13 @@ export const AMCDashboard = () => {
   }, [isFilterModalOpen, amcTypeFilter, startDateFilter, endDateFilter]);
 
   // Use API data if available, otherwise fallback to initial data
-  const amcData = apiData && Array.isArray(apiData.asset_amcs) ? apiData.asset_amcs : initialAmcData;
-  const pagination = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
+  const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
+  const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
   // Extract counts from API response
-  const totalAMCs = apiData?.total_amcs_count || pagination.total_count || 0;
-  const activeAMCs = apiData?.active_amcs_count || 0;
-  const inactiveAMCs = apiData?.inactive_amcs_count || 0;
-  const flaggedAMCs = apiData?.flagged_amcs_count || 0;
+  const totalAMCs = (apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0;
+  const activeAMCs = (apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0;
+  const inactiveAMCs = (apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0;
+  const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
 
   // Filter function to fetch AMC data based on filters
   const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1) => {
@@ -189,11 +189,11 @@ export const AMCDashboard = () => {
       });
       const fetchedData = response.data;
       // Dispatch to Redux store
-      dispatch(fetchAMCData.fulfilled(fetchedData, 'fetchAMCData', { url }));
+      dispatch(fetchAMCData.fulfilled(fetchedData, 'fetchAMCData', undefined));
       setCurrentPage(fetchedData.pagination.current_page);
     } catch (error) {
       console.error('Error fetching AMC data:', error);
-      dispatch(fetchAMCData.rejected(error, 'fetchAMCData', { url }));
+      dispatch(fetchAMCData.rejected(error as any, 'fetchAMCData', undefined));
       toast.error('Failed to fetch AMC data');
     } finally {
       setLoading(false);
@@ -1114,8 +1114,8 @@ export const AMCDashboard = () => {
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
                       {uniqueAmcTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
+                        <SelectItem key={String(type)} value={String(type)}>
+                          {String(type)}
                         </SelectItem>
                       ))}
                     </SelectContent>

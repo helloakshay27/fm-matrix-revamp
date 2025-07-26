@@ -4,23 +4,22 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Download } from 'lucide-react';
 
 interface DonutChartGridProps {
-  assetStatusData?: Array<{ name: string; value: number; color: string }>;
-  assetTypeData?: Array<{ name: string; value: number; color: string }>;
+  assetStatusData?: Array<{ name: string; value: number; color: string; }>;
+  assetTypeData?: Array<{ name: string; value: number; color: string; }>;
   loading?: boolean;
 }
 
-const DonutChartGrid = ({ 
-  assetStatusData, 
-  assetTypeData, 
-  loading = false 
-}: DonutChartGridProps) => {
-  // Default fallback data
-  const defaultAssetStatusData = [
+const DonutChartGrid: React.FC<DonutChartGridProps> = ({
+  assetStatusData: propAssetStatusData,
+  assetTypeData: propAssetTypeData, 
+  loading = false
+}) => {
+  const assetStatusData = propAssetStatusData || [
     { name: 'In Use', value: 3, color: '#c6b692' },
     { name: 'Breakdown', value: 2, color: '#d8dcdd' }
   ];
 
-  const defaultAssetTypeData = [
+  const assetTypeData = propAssetTypeData || [
     { name: 'IT Equipment', value: 1, color: '#d8dcdd' },
     { name: 'Non-IT Equipment', value: 4, color: '#c6b692' }
   ];

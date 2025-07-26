@@ -9,12 +9,20 @@ import {
 } from "lucide-react";
 
 interface AssetStatsProps {
-  stats: any;
+  stats: {
+    total: number;
+    total_value: string;
+    nonItAssets: number;
+    itAssets: number;
+    inUse: number;
+    breakdown: number;
+    in_store: number;
+    dispose: number;
+  };
   onCardClick?: (filterType: string) => void;
 }
 
-export const AssetStats = ({ stats, onCardClick }: AssetStatsProps) => {
-  console.log("Asset Stats:", stats);
+export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) => {
   const statData = [
     {
       label: "Total Assets",
