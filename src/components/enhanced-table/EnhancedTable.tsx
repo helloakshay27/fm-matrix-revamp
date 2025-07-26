@@ -157,20 +157,13 @@ export function EnhancedTable<T extends Record<string, any>>({
   onFilterClick,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
-  const [searchInput, setSearchInput] = useState(externalSearchTerm || '');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
   // Debounce the search input to avoid excessive API calls
-  const debouncedSearchInput = useDebounce(searchInput, 300);
-
-  // Update search input when external search term changes
-  useEffect(() => {
-    if (externalSearchTerm !== undefined) {
-      setSearchInput(externalSearchTerm);
-    }
-  }, [externalSearchTerm]);
+  const debouncedSearchInput = useDebounce(searchInput, 100);
 
   // Update internal search term when debounced input changes
   useEffect(() => {
@@ -327,16 +320,8 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   const handleSearchInputChange = (value: string) => {
     setSearchInput(value);
-    // Don't call onSearchChange immediately to avoid excessive re-renders
-    // The debounced value will trigger the actual search
+    onSearchChange?.(value);
   };
-
-  // Handle debounced search change
-  useEffect(() => {
-    if (onSearchChange && externalSearchTerm === undefined) {
-      onSearchChange(debouncedSearchInput);
-    }
-  }, [debouncedSearchInput, onSearchChange, externalSearchTerm]);
 
   const handleClearSearch = () => {
     setSearchInput('');
