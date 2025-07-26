@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, X, Plus } from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
+import { userService, User } from '@/services/userService';
 
 export const TaskDetailsPage = () => {
   const {
@@ -40,9 +42,9 @@ export const TaskDetailsPage = () => {
 
   // Reschedule form state
   const [rescheduleData, setRescheduleData] = useState({
-    scheduleDate: '06/17/2025',
-    time: '--:--',
-    selectUsers: '',
+    scheduleDate: new Date().toISOString().split('T')[0],
+    time: '',
+    selectedUser: null as User | null,
     email: false,
     sms: false
   });
@@ -86,13 +88,69 @@ export const TaskDetailsPage = () => {
       description: "Task submitted successfully!"
     });
   };
-  const handleRescheduleSubmit = () => {
-    console.log('Reschedule submitted:', rescheduleData);
-    setShowRescheduleDialog(false);
-    toast({
-      title: "Success",
-      description: "Task rescheduled successfully!"
-    });
+  const handleRescheduleSubmit = async () => {
+    if (!rescheduleData.selectedUser || !rescheduleData.scheduleDate || !rescheduleData.time) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await userService.rescheduleTask(id!, {
+        scheduleDate: rescheduleData.scheduleDate,
+        time: rescheduleData.time,
+        userId: rescheduleData.selectedUser.id,
+        email: rescheduleData.email,
+        sms: rescheduleData.sms
+      });
+      
+      setShowRescheduleDialog(false);
+      toast({
+        title: "Success",
+        description: "Task rescheduled successfully!"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reschedule task. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUserSearch = async (searchTerm: string) => {
+    try {
+      const users = await userService.searchUsers(searchTerm);
+      // Map users to show full_name as label but keep ID as value for payload
+      return users.map(user => ({
+        value: user.id.toString(), // ID for payload
+        label: user.full_name      // Display name for frontend
+      }));
+    } catch (error) {
+      console.error('Error searching users:', error);
+      return [];
+    }
+  };
+
+  const handleUserChange = (selectedOption: { value: string; label: string } | null) => {
+    if (selectedOption) {
+      // Store both ID and full_name for easy access
+      setRescheduleData(prev => ({
+        ...prev,
+        selectedUser: {
+          id: parseInt(selectedOption.value), // Store ID from value
+          full_name: selectedOption.label     // Store display name from label
+        }
+      }));
+    } else {
+      setRescheduleData(prev => ({
+        ...prev,
+        selectedUser: null
+      }));
+    }
   };
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fileKey: string) => {
     const file = event.target.files?.[0];
@@ -587,92 +645,124 @@ export const TaskDetailsPage = () => {
 
       {/* Task Reschedule Dialog */}
       <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle>Task Reschedule</DialogTitle>
-            <button onClick={() => setShowRescheduleDialog(false)} className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100  disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+            <DialogTitle className="text-lg font-semibold">Task Reschedule</DialogTitle>
+            <button onClick={() => setShowRescheduleDialog(false)} className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </button>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-6 p-4">
             <div>
-              <h3 className="font-medium mb-4" style={{
-              color: '#C72030'
-            }}>New Schedule</h3>
+              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+                New Schedule
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <TextField label="Schedule Date" type="date" value={rescheduleData.scheduleDate} onChange={e => setRescheduleData(prev => ({
-                  ...prev,
-                  scheduleDate: e.target.value
-                }))} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                  <TextField 
+                    label="Schedule Date" 
+                    type="date" 
+                    value={rescheduleData.scheduleDate} 
+                    onChange={e => setRescheduleData(prev => ({
+                      ...prev,
+                      scheduleDate: e.target.value
+                    }))} 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{ shrink: true }} 
+                    InputProps={{ sx: fieldStyles }} 
+                    sx={{ mt: 1 }} 
+                    required
+                  />
                 </div>
                 <div>
-                  <TextField label="Time" type="time" value={rescheduleData.time} onChange={e => setRescheduleData(prev => ({
-                  ...prev,
-                  time: e.target.value
-                }))} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                  <TextField 
+                    label="Time" 
+                    type="time" 
+                    value={rescheduleData.time} 
+                    onChange={e => setRescheduleData(prev => ({
+                      ...prev,
+                      time: e.target.value
+                    }))} 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{ shrink: true }} 
+                    InputProps={{ sx: fieldStyles }} 
+                    sx={{ mt: 1 }} 
+                    required
+                  />
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="font-medium mb-2" style={{
-              color: '#C72030'
-            }}>Notify Users</h3>
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" sx={{
-                mt: 1
-              }}>
-                  <InputLabel id="select-users-label" shrink>Select Users</InputLabel>
-                  <MuiSelect labelId="select-users-label" label="Select Users" displayEmpty value={rescheduleData.selectUsers} onChange={e => setRescheduleData(prev => ({
-                  ...prev,
-                  selectUsers: e.target.value
-                }))} sx={fieldStyles}>
-                    <MenuItem value=""><em>Select Users</em></MenuItem>
-                    <MenuItem value="user1">User 1</MenuItem>
-                    <MenuItem value="user2">User 2</MenuItem>
-                  </MuiSelect>
-                </FormControl>
+              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+                Assign to User
+              </h3>
+              <div className="space-y-4">
+                <AsyncSearchableDropdown
+                  placeholder="Search and select user..."
+                  onSearch={handleUserSearch}
+                  onChange={handleUserChange}
+                  className="w-full"
+                  isSearchable={true}
+                  isClearable={true}
+                  noOptionsMessage="No users found"
+                  debounceDelay={300}
+                />
               </div>
-              <div className="space-y-2 mt-4">
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="email" checked={rescheduleData.email} onCheckedChange={checked => setRescheduleData(prev => ({
-                    ...prev,
-                    email: !!checked
-                  }))} />
-                    <label htmlFor="email">Email</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="sms" checked={rescheduleData.sms} onCheckedChange={checked => setRescheduleData(prev => ({
-                    ...prev,
-                    sms: !!checked
-                  }))} />
-                    <label htmlFor="sms">SMS</label>
-                  </div>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+                Notification Preferences
+              </h3>
+              <div className="flex gap-6">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="email" 
+                    checked={rescheduleData.email} 
+                    onCheckedChange={checked => setRescheduleData(prev => ({
+                      ...prev,
+                      email: !!checked
+                    }))} 
+                  />
+                  <label htmlFor="email" className="text-sm font-medium">
+                    Email Notification
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="sms" 
+                    checked={rescheduleData.sms} 
+                    onCheckedChange={checked => setRescheduleData(prev => ({
+                      ...prev,
+                      sms: !!checked
+                    }))} 
+                  />
+                  <label htmlFor="sms" className="text-sm font-medium">
+                    SMS Notification
+                  </label>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-center pt-4">
-              <Button onClick={handleRescheduleSubmit} style={{
-              backgroundColor: '#C72030'
-            }} className="text-white hover:bg-[#C72030]/90 px-8">
-                Submit
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowRescheduleDialog(false)}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleRescheduleSubmit} 
+                style={{ backgroundColor: '#C72030' }} 
+                className="text-white hover:bg-[#C72030]/90 px-6"
+              >
+                Reschedule Task
               </Button>
             </div>
           </div>
