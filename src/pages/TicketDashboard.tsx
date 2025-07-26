@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
+import { TicketAnalyticsFilterDialog } from '@/components/TicketAnalyticsFilterDialog';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -15,6 +16,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
+import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix } from '@/services/ticketAnalyticsAPI';
 import { useToast } from '@/hooks/use-toast';
 
 const ticketData = [{
@@ -242,6 +244,7 @@ export const TicketDashboard = () => {
     toast
   } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
@@ -250,6 +253,16 @@ export const TicketDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+  
+  // Analytics data states
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{startDate: string; endDate: string}>({
+    startDate: '',
+    endDate: ''
+  });
+  const [categoryAnalyticsData, setCategoryAnalyticsData] = useState<TicketCategoryData[]>([]);
+  const [statusAnalyticsData, setStatusAnalyticsData] = useState<TicketStatusData | null>(null);
+  const [agingMatrixAnalyticsData, setAgingMatrixAnalyticsData] = useState<TicketAgingMatrix | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   
   const [ticketSummary, setTicketSummary] = useState({
     total_tickets: 0,
@@ -269,6 +282,47 @@ export const TicketDashboard = () => {
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, {
     coordinateGetter: sortableKeyboardCoordinates
   }));
+
+  // Fetch analytics data from API
+  const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
+    setAnalyticsLoading(true);
+    try {
+      const [categoryData, statusData, agingData] = await Promise.all([
+        ticketAnalyticsAPI.getTicketsCategorywiseData(startDate, endDate),
+        ticketAnalyticsAPI.getTicketStatusData(startDate, endDate),
+        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate)
+      ]);
+      
+      setCategoryAnalyticsData(categoryData);
+      setStatusAnalyticsData(statusData);
+      setAgingMatrixAnalyticsData(agingData);
+      
+      toast({
+        title: "Success",
+        description: "Analytics data updated successfully"
+      });
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch analytics data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Handle analytics filter apply
+  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+    setAnalyticsDateRange(filters);
+    
+    // Convert date strings to Date objects
+    const startDate = new Date(filters.startDate.split('/').reverse().join('-')); // Convert DD/MM/YYYY to YYYY-MM-DD
+    const endDate = new Date(filters.endDate.split('/').reverse().join('-'));
+    
+    fetchAnalyticsData(startDate, endDate);
+  };
 
   // Fetch ticket summary from API
   const fetchTicketSummary = async () => {
@@ -314,12 +368,12 @@ export const TicketDashboard = () => {
   }, [currentPage, filters]);
 
   // Use ticket summary data from API
-  const openTickets = ticketSummary.open_tickets;
-  const inProgressTickets = ticketSummary.in_progress_tickets;
-  const closedTickets = ticketSummary.closed_tickets;
-  const totalSummaryTickets = ticketSummary.total_tickets;
+  const openTickets = statusAnalyticsData?.overall.total_open || ticketSummary.open_tickets;
+  const inProgressTickets = statusAnalyticsData?.overall.total_wip || ticketSummary.in_progress_tickets;
+  const closedTickets = statusAnalyticsData?.overall.total_closed || ticketSummary.closed_tickets;
+  const totalSummaryTickets = (openTickets + inProgressTickets + closedTickets) || ticketSummary.total_tickets;
 
-  // Analytics data with updated colors matching design
+  // Analytics data with updated colors matching design using real API data
   const statusData = [{
     name: 'Open',
     value: openTickets,
@@ -372,58 +426,91 @@ export const TicketDashboard = () => {
     color: 'bg-indigo-500'
   }];
 
-  // Calculate category data from tickets
-  const safeTickets = tickets || [];
-  const categoryData = safeTickets.reduce((acc, ticket) => {
-    const category = ticket.category_type;
-    if (category) {
-      acc[category] = (acc[category] || 0) + 1;
-    }
-    return acc;
-  }, {});
-  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({
-    name,
-    value
-  }));
-  const agingMatrixData = [{
-    priority: 'P1',
-    '0-10': 20,
-    '11-20': 3,
-    '21-30': 4,
-    '31-40': 0,
-    '41-50': Math.max(203, openTickets)
-  }, {
-    priority: 'P2',
-    '0-10': 2,
-    '11-20': 0,
-    '21-30': 0,
-    '31-40': 0,
-    '41-50': 4
-  }, {
-    priority: 'P3',
-    '0-10': 1,
-    '11-20': 0,
-    '21-30': 1,
-    '31-40': 0,
-    '41-50': 7
-  }, {
-    priority: 'P4',
-    '0-10': 1,
-    '11-20': 0,
-    '21-30': 0,
-    '31-40': 0,
-    '41-50': 5
-  }];
-  const reactiveTickets = Math.floor(safeTickets.length * 0.7);
-  const proactiveTickets = safeTickets.length - reactiveTickets;
+  // Calculate category data from API analytics data or fallback to tickets
+  const categoryChartData = categoryAnalyticsData.length > 0 
+    ? categoryAnalyticsData.map(item => ({
+        name: item.category,
+        proactive: item.proactive.Open + item.proactive.Closed,
+        reactive: item.reactive.Open + item.reactive.Closed,
+        value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
+      }))
+    : (() => {
+        const safeTickets = tickets || [];
+        const categoryData = safeTickets.reduce((acc, ticket) => {
+          const category = ticket.category_type;
+          if (category) {
+            acc[category] = (acc[category] || 0) + 1;
+          }
+          return acc;
+        }, {});
+        return Object.entries(categoryData).map(([name, value]) => ({
+          name,
+          value
+        }));
+      })();
+
+  // Aging matrix data from API or fallback
+  const agingMatrixData = agingMatrixAnalyticsData?.response.matrix 
+    ? Object.entries(agingMatrixAnalyticsData.response.matrix).map(([priority, data]) => ({
+        priority,
+        'T1': data.T1 || 0,
+        'T2': data.T2 || 0,
+        'T3': data.T3 || 0,
+        'T4': data.T4 || 0,
+        'T5': data.T5 || 0
+      }))
+    : [{
+        priority: 'P1',
+        'T1': 20,
+        'T2': 3,
+        'T3': 4,
+        'T4': 0,
+        'T5': Math.max(203, openTickets)
+      }, {
+        priority: 'P2',
+        'T1': 2,
+        'T2': 0,
+        'T3': 0,
+        'T4': 0,
+        'T5': 4
+      }, {
+        priority: 'P3',
+        'T1': 1,
+        'T2': 0,
+        'T3': 1,
+        'T4': 0,
+        'T5': 7
+      }, {
+        priority: 'P4',
+        'T1': 1,
+        'T2': 0,
+        'T3': 0,
+        'T4': 0,
+        'T5': 5
+      }];
+
+  // Proactive vs Reactive data from API analytics
+  const proactiveOpenTickets = statusAnalyticsData?.proactive_reactive.proactive.open || 0;
+  const proactiveClosedTickets = statusAnalyticsData?.proactive_reactive.proactive.closed || 0;
+  const reactiveOpenTickets = statusAnalyticsData?.proactive_reactive.reactive.open || 0;
+  const reactiveClosedTickets = statusAnalyticsData?.proactive_reactive.reactive.closed || 0;
+
   const typeData = [{
-    name: 'Open',
-    value: reactiveTickets,
+    name: 'Proactive Open',
+    value: proactiveOpenTickets,
     color: '#c6b692'
   }, {
-    name: 'Closed',
-    value: proactiveTickets,
+    name: 'Proactive Closed',
+    value: proactiveClosedTickets,
     color: '#d8dcdd'
+  }, {
+    name: 'Reactive Open',
+    value: reactiveOpenTickets,
+    color: '#f59e0b'
+  }, {
+    name: 'Reactive Closed',
+    value: reactiveClosedTickets,
+    color: '#10b981'
   }];
   const handleSelectionChange = (selectedSections: string[]) => {
     setVisibleSections(selectedSections);
@@ -893,8 +980,27 @@ export const TicketDashboard = () => {
 
 
 
-          {/* Header with Ticket Selector */}
-          <div className="flex justify-end">
+          {/* Header with Filter and Ticket Selector */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsAnalyticsFilterOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+                disabled={analyticsLoading}
+              >
+                <Filter className="w-4 h-4" />
+                Filter Analytics
+              </Button>
+              {analyticsDateRange.startDate && analyticsDateRange.endDate && (
+                <span className="text-sm text-gray-600">
+                  {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+                </span>
+              )}
+              {analyticsLoading && (
+                <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
+              )}
+            </div>
             <TicketSelector onSelectionChange={handleSelectionChange} />
           </div>
 
@@ -994,7 +1100,7 @@ export const TicketDashboard = () => {
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex items-center justify-center">
                                   <div className="text-center">
-                                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {reactiveTickets + proactiveTickets}</div>
+                                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {proactiveOpenTickets + proactiveClosedTickets + reactiveOpenTickets + reactiveClosedTickets}</div>
                                   </div>
                                 </div>
                               </div>
@@ -1082,14 +1188,14 @@ export const TicketDashboard = () => {
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {agingMatrixData.map((row, index) => <tr key={index} className="bg-white">
-                                        <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
-                                      </tr>)}
+                                       {agingMatrixData.map((row, index) => <tr key={index} className="bg-white">
+                                         <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T1}</td>
+                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T2}</td>
+                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T3}</td>
+                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T4}</td>
+                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T5}</td>
+                                       </tr>)}
                                     </tbody>
                                   </table>
                                 </div>
@@ -1100,8 +1206,10 @@ export const TicketDashboard = () => {
                                 <div className="rounded-lg p-4 sm:p-8 text-center" style={{
                                   backgroundColor: '#EDE4D8'
                                 }}>
-                                  <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">569 Days</div>
-                                  <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
+                                   <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
+                                     {agingMatrixAnalyticsData?.average_days || 569} Days
+                                   </div>
+                                   <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                                 </div>
                               </div>
                             </div>
@@ -1169,7 +1277,7 @@ export const TicketDashboard = () => {
             ) : (
               <>
                 <EnhancedTable
-                  data={safeTickets}
+                  data={tickets || []}
                   columns={columns}
                   renderCell={renderCell}
                   selectable={true}
@@ -1302,6 +1410,13 @@ export const TicketDashboard = () => {
           fetchTickets(currentPage);
           setSelectedTicketForEdit(null);
         }}
+      />
+
+      {/* Analytics Filter Dialog */}
+      <TicketAnalyticsFilterDialog
+        isOpen={isAnalyticsFilterOpen}
+        onClose={() => setIsAnalyticsFilterOpen(false)}
+        onApplyFilters={handleAnalyticsFilterApply}
       />
 
       {/* Ticket Selection Panel */}
