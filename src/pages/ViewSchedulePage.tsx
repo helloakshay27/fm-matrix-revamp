@@ -882,13 +882,13 @@ export const ViewSchedulePage = () => {
           >
             Back to List
           </Button>
-          <Button 
+          {/* <Button 
             onClick={() => navigate(`/maintenance/schedule/edit/${id}`)}
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90 px-8"
           >
             Edit Schedule
-          </Button>
+          </Button> */}
         </div>
       </div>
 

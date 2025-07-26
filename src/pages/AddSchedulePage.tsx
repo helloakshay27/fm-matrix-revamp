@@ -2821,21 +2821,40 @@ export const AddSchedulePage = () => {
                 {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
                 {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
                   <>
-                    <MuiSearchableDropdown
-                      label="Asset Group"
-                      value={formData.assetGroup || ''}
-                      onChange={(value) => handleAssetGroupChange(value.toString())}
-                      options={assetGroups.map(group => ({
-                        id: group.id,
-                        label: group.name,
-                        value: group.id.toString()
-                      }))}
-                      placeholder="Select Asset Group"
-                      disabled={loading.groups}
-                      loading={loading.groups}
-                      loadingText="Loading asset groups..."
-                      fullWidth
-                    />
+                    <Box>
+                      <Autocomplete
+                        options={assetGroups.map(group => ({
+                          id: group.id,
+                          label: group.name,
+                          value: group.id.toString()
+                        }))}
+                        getOptionLabel={(option) => option.label}
+                        value={assetGroups.map(group => ({
+                          id: group.id,
+                          label: group.name,
+                          value: group.id.toString()
+                        })).find(option => option.value === formData.assetGroup) || null}
+                        onChange={(event, newValue) => {
+                          const selectedValue = newValue ? newValue.value : '';
+                          handleAssetGroupChange(selectedValue);
+                        }}
+                        disabled={loading.groups}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Asset Group"
+                            placeholder="Select Asset Group"
+                            fullWidth
+                          />
+                        )}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                      />
+                      {loading.groups && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading asset groups...
+                        </Typography>
+                      )}
+                    </Box>
 
                     {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
                     {selectedAssetGroup && (
@@ -2875,17 +2894,32 @@ export const AddSchedulePage = () => {
                 )}
 
                 {/* Assign To Type Selection */}
-                <MuiSearchableDropdown
-                  label="Assign To"
-                  value={formData.assignToType}
-                  onChange={(value) => setFormData({...formData, assignToType: value.toString(), selectedUsers: [], selectedGroups: []})}
-                  options={[
-                    { id: 'user', label: 'User', value: 'user' },
-                    { id: 'group', label: 'Group', value: 'group' }
-                  ]}
-                  placeholder="Select Assign To"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'user', label: 'User', value: 'user' },
+                      { id: 'group', label: 'Group', value: 'group' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'user', label: 'User', value: 'user' },
+                      { id: 'group', label: 'Group', value: 'group' }
+                    ].find(option => option.value === formData.assignToType) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, assignToType: selectedValue, selectedUsers: [], selectedGroups: []});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Assign To"
+                        placeholder="Select Assign To"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
 
                 {/* Multi-select Users - Show when assignToType is 'user' */}
                 {formData.assignToType === 'user' && (
@@ -2955,37 +2989,74 @@ export const AddSchedulePage = () => {
                   </FormControl>
                 )}
                 
-                <MuiSearchableDropdown
-                  label="Backup Assignee"
-                  value={formData.backupAssignee}
-                  onChange={(value) => setFormData({...formData, backupAssignee: value.toString()})}
-                  options={users ? users.map(user => ({
-                    id: user.id,
-                    label: user.full_name,
-                    value: user.id.toString()
-                  })) : []}
-                  placeholder="Select Backup Assignee"
-                  disabled={loading.users}
-                  loading={loading.users}
-                  loadingText="Loading users..."
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={users ? users.map(user => ({
+                      id: user.id,
+                      label: user.full_name,
+                      value: user.id.toString()
+                    })) : []}
+                    getOptionLabel={(option) => option.label}
+                    value={users ? users.map(user => ({
+                      id: user.id,
+                      label: user.full_name,
+                      value: user.id.toString()
+                    })).find(option => option.value === formData.backupAssignee) || null : null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, backupAssignee: selectedValue});
+                    }}
+                    disabled={loading.users}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Backup Assignee"
+                        placeholder="Select Backup Assignee"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                  {loading.users && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading users...
+                    </Typography>
+                  )}
+                </Box>
                 
                 {/* Plan Duration with conditional input */}
-                <MuiSearchableDropdown
-                  label="Plan Duration"
-                  value={formData.planDuration}
-                  onChange={(value) => setFormData({...formData, planDuration: value.toString(), planDurationValue: ''})}
-                  options={[
-                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
-                    { id: 'hour', label: 'Hour', value: 'hour' },
-                    { id: 'day', label: 'Day', value: 'day' },
-                    { id: 'week', label: 'Week', value: 'week' },
-                    { id: 'month', label: 'Month', value: 'month' }
-                  ]}
-                  placeholder="Select Plan Duration"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                      { id: 'hour', label: 'Hour', value: 'hour' },
+                      { id: 'day', label: 'Day', value: 'day' },
+                      { id: 'week', label: 'Week', value: 'week' },
+                      { id: 'month', label: 'Month', value: 'month' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                      { id: 'hour', label: 'Hour', value: 'hour' },
+                      { id: 'day', label: 'Day', value: 'day' },
+                      { id: 'week', label: 'Week', value: 'week' },
+                      { id: 'month', label: 'Month', value: 'month' }
+                    ].find(option => option.value === formData.planDuration) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, planDuration: selectedValue, planDurationValue: ''});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Plan Duration"
+                        placeholder="Select Plan Duration"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
 
                 {/* Plan Duration Value Input - Show when duration type is selected */}
                 {needsValueInput(formData.planDuration) && (
@@ -2999,60 +3070,126 @@ export const AddSchedulePage = () => {
                   />
                 )}
                 
-                <MuiSearchableDropdown
-                  label="Email Trigger Rule"
-                  value={formData.emailTriggerRule}
-                  onChange={(value) => setFormData({...formData, emailTriggerRule: value.toString()})}
-                  options={emailRules.map(rule => ({
-                    id: rule.id,
-                    label: rule.rule_name,
-                    value: rule.id.toString()
-                  }))}
-                  placeholder="Select Email Trigger Rule"
-                  disabled={loading.emailRules}
-                  loading={loading.emailRules}
-                  loadingText="Loading email rules..."
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={emailRules.map(rule => ({
+                      id: rule.id,
+                      label: rule.rule_name,
+                      value: rule.id.toString()
+                    }))}
+                    getOptionLabel={(option) => option.label}
+                    value={emailRules.map(rule => ({
+                      id: rule.id,
+                      label: rule.rule_name,
+                      value: rule.id.toString()
+                    })).find(option => option.value === formData.emailTriggerRule) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, emailTriggerRule: selectedValue});
+                    }}
+                    disabled={loading.emailRules}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Email Trigger Rule"
+                        placeholder="Select Email Trigger Rule"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                  {loading.emailRules && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading email rules...
+                    </Typography>
+                  )}
+                </Box>
                 
-                <MuiSearchableDropdown
-                  label="Scan Type"
-                  value={formData.scanType}
-                  onChange={(value) => setFormData({...formData, scanType: value.toString()})}
-                  options={[
-                    { id: 'qr', label: 'QR', value: 'qr' },
-                    { id: 'nfc', label: 'NFC', value: 'nfc' }
-                  ]}
-                  placeholder="Select Scan Type"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'qr', label: 'QR', value: 'qr' },
+                      { id: 'nfc', label: 'NFC', value: 'nfc' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'qr', label: 'QR', value: 'qr' },
+                      { id: 'nfc', label: 'NFC', value: 'nfc' }
+                    ].find(option => option.value === formData.scanType) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, scanType: selectedValue});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Scan Type"
+                        placeholder="Select Scan Type"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
                 
-                <MuiSearchableDropdown
-                  label="Category"
-                  value={formData.category}
-                  onChange={(value) => setFormData({...formData, category: value.toString()})}
-                  options={[
-                    { id: 'technical', label: 'Technical', value: 'technical' },
-                    { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
-                  ]}
-                  placeholder="Select Category"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'technical', label: 'Technical', value: 'technical' },
+                      { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'technical', label: 'Technical', value: 'technical' },
+                      { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                    ].find(option => option.value === formData.category) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, category: selectedValue});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Category"
+                        placeholder="Select Category"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
                 
                 {/* Submission Time with conditional input */}
-                <MuiSearchableDropdown
-                  label="Submission Time"
-                  value={formData.submissionTime}
-                  onChange={(value) => setFormData({...formData, submissionTime: value.toString(), submissionTimeValue: ''})}
-                  options={[
-                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
-                    { id: 'hour', label: 'Hour', value: 'hour' },
-                    { id: 'day', label: 'Day', value: 'day' },
-                    { id: 'week', label: 'Week', value: 'week' }
-                  ]}
-                  placeholder="Select Submission Time"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                      { id: 'hour', label: 'Hour', value: 'hour' },
+                      { id: 'day', label: 'Day', value: 'day' },
+                      { id: 'week', label: 'Week', value: 'week' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                      { id: 'hour', label: 'Hour', value: 'hour' },
+                      { id: 'day', label: 'Day', value: 'day' },
+                      { id: 'week', label: 'Week', value: 'week' }
+                    ].find(option => option.value === formData.submissionTime) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, submissionTime: selectedValue, submissionTimeValue: ''});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Submission Time"
+                        placeholder="Select Submission Time"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
 
                 {/* Submission Time Value Input - Show when time type is selected */}
                 {needsValueInput(formData.submissionTime) && (
@@ -3066,64 +3203,134 @@ export const AddSchedulePage = () => {
                   />
                 )}
                 
-                <MuiSearchableDropdown
-                  label="Supervisors"
-                  value={formData.supervisors}
-                  onChange={(value) => setFormData({...formData, supervisors: value.toString()})}
-                  options={users ? users.map(user => ({
-                    id: user.id,
-                    label: user.full_name,
-                    value: user.id.toString()
-                  })) : []}
-                  placeholder="Select Supervisors"
-                  disabled={loading.users}
-                  loading={loading.users}
-                  loadingText="Loading users..."
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={users ? users.map(user => ({
+                      id: user.id,
+                      label: user.full_name,
+                      value: user.id.toString()
+                    })) : []}
+                    getOptionLabel={(option) => option.label}
+                    value={users ? users.map(user => ({
+                      id: user.id,
+                      label: user.full_name,
+                      value: user.id.toString()
+                    })).find(option => option.value === formData.supervisors) || null : null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, supervisors: selectedValue});
+                    }}
+                    disabled={loading.users}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Supervisors"
+                        placeholder="Select Supervisors"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                  {loading.users && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading users...
+                    </Typography>
+                  )}
+                </Box>
                 
-                <MuiSearchableDropdown
-                  label="Lock Overdue Task"
-                  value={formData.lockOverdueTask}
-                  onChange={(value) => setFormData({...formData, lockOverdueTask: value.toString()})}
-                  options={[
-                    { id: 'true', label: 'Yes', value: 'true' },
-                    { id: 'false', label: 'No', value: 'false' }
-                  ]}
-                  placeholder="Select Lock Status"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'true', label: 'Yes', value: 'true' },
+                      { id: 'false', label: 'No', value: 'false' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'true', label: 'Yes', value: 'true' },
+                      { id: 'false', label: 'No', value: 'false' }
+                    ].find(option => option.value === formData.lockOverdueTask) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, lockOverdueTask: selectedValue});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Lock Overdue Task"
+                        placeholder="Select Lock Status"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
                 
-                <MuiSearchableDropdown
-                  label="Frequency"
-                  value={formData.frequency}
-                  onChange={(value) => setFormData({...formData, frequency: value.toString()})}
-                  options={[
-                    { id: 'Daily', label: 'Daily', value: 'Daily' },
-                    { id: 'Weekly', label: 'Weekly', value: 'Weekly' },
-                    { id: 'Monthly', label: 'Monthly', value: 'Monthly' },
-                    { id: 'Quarterly', label: 'Quarterly', value: 'Quarterly' },
-                    { id: 'Half Yearly', label: 'Half Yearly', value: 'Half Yearly' },
-                    { id: 'Yearly', label: 'Yearly', value: 'Yearly' }
-                  ]}
-                  placeholder="Select Frequency"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'Daily', label: 'Daily', value: 'Daily' },
+                      { id: 'Weekly', label: 'Weekly', value: 'Weekly' },
+                      { id: 'Monthly', label: 'Monthly', value: 'Monthly' },
+                      { id: 'Quarterly', label: 'Quarterly', value: 'Quarterly' },
+                      { id: 'Half Yearly', label: 'Half Yearly', value: 'Half Yearly' },
+                      { id: 'Yearly', label: 'Yearly', value: 'Yearly' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'Daily', label: 'Daily', value: 'Daily' },
+                      { id: 'Weekly', label: 'Weekly', value: 'Weekly' },
+                      { id: 'Monthly', label: 'Monthly', value: 'Monthly' },
+                      { id: 'Quarterly', label: 'Quarterly', value: 'Quarterly' },
+                      { id: 'Half Yearly', label: 'Half Yearly', value: 'Half Yearly' },
+                      { id: 'Yearly', label: 'Yearly', value: 'Yearly' }
+                    ].find(option => option.value === formData.frequency) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, frequency: selectedValue});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Frequency"
+                        placeholder="Select Frequency"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
                 
                 {/* Grace Time with conditional input */}
-                <MuiSearchableDropdown
-                  label="Grace Time"
-                  value={formData.graceTime}
-                  onChange={(value) => setFormData({...formData, graceTime: value.toString(), graceTimeValue: ''})}
-                  options={[
-                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
-                    { id: 'hour', label: 'Hour', value: 'hour' },
-                    { id: 'day', label: 'Day', value: 'day' },
-                    { id: 'week', label: 'Week', value: 'week' }
-                  ]}
-                  placeholder="Select Grace Time"
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={[
+                      { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                      { id: 'hour', label: 'Hour', value: 'hour' },
+                      { id: 'day', label: 'Day', value: 'day' },
+                      { id: 'week', label: 'Week', value: 'week' }
+                    ]}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                      { id: 'hour', label: 'Hour', value: 'hour' },
+                      { id: 'day', label: 'Day', value: 'day' },
+                      { id: 'week', label: 'Week', value: 'week' }
+                    ].find(option => option.value === formData.graceTime) || null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, graceTime: selectedValue, graceTimeValue: ''});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Grace Time"
+                        placeholder="Select Grace Time"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                </Box>
 
                 {/* Grace Time Value Input - Show when time type is selected */}
                 {needsValueInput(formData.graceTime) && (
@@ -3137,21 +3344,40 @@ export const AddSchedulePage = () => {
                   />
                 )}
                 
-                <MuiSearchableDropdown
-                  label="Supplier"
-                  value={formData.supplier}
-                  onChange={(value) => setFormData({...formData, supplier: value.toString()})}
-                  options={suppliers ? suppliers.map(supplier => ({
-                    id: supplier.id,
-                    label: supplier.name,
-                    value: supplier.id.toString()
-                  })) : []}
-                  placeholder="Select Supplier"
-                  disabled={loading.suppliers}
-                  loading={loading.suppliers}
-                  loadingText="Loading suppliers..."
-                  fullWidth
-                />
+                <Box>
+                  <Autocomplete
+                    options={suppliers ? suppliers.map(supplier => ({
+                      id: supplier.id,
+                      label: supplier.name,
+                      value: supplier.id.toString()
+                    })) : []}
+                    getOptionLabel={(option) => option.label}
+                    value={suppliers ? suppliers.map(supplier => ({
+                      id: supplier.id,
+                      label: supplier.name,
+                      value: supplier.id.toString()
+                    })).find(option => option.value === formData.supplier) || null : null}
+                    onChange={(event, newValue) => {
+                      const selectedValue = newValue ? newValue.value : '';
+                      setFormData({...formData, supplier: selectedValue});
+                    }}
+                    disabled={loading.suppliers}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Supplier"
+                        placeholder="Select Supplier"
+                        fullWidth
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                  />
+                  {loading.suppliers && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading suppliers...
+                    </Typography>
+                  )}
+                </Box>
 
                 <TextField
                   label="Start From"
@@ -3842,8 +4068,8 @@ export const AddSchedulePage = () => {
                       backgroundColor: '#FAFAFA',
                       position: 'relative'
                     }}>
-                      {/* Close button for individual tasks */}
-                      {section.tasks.length > 1 && (
+                      {/* Close button for individual tasks - show for all tasks except the first task in the first section */}
+                      {!(sectionIndex === 0 && taskIndex === 0) && (
                         <IconButton 
                           onClick={() => removeTaskFromSection(section.id, task.id)}
                           sx={{ 
@@ -3851,7 +4077,12 @@ export const AddSchedulePage = () => {
                             top: 8,
                             right: 8,
                             color: '#666',
-                            padding: '4px'
+                            padding: '4px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 255, 255, 1)',
+                              color: '#C72030'
+                            }
                           }}
                           size="small"
                         >
