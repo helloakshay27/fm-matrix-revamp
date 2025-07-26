@@ -101,7 +101,7 @@ export const BookingDetailsPage = () => {
                     <span className="text-[#1A1A1A80] w-32 text-14">Booked by</span>
                     <span className="font-medium text-16">
                       {" "}
-                      {bookings.booked_by_name}
+                      {bookings.created_by_name}
                     </span>
                   </div>
 

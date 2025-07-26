@@ -24,6 +24,7 @@ export interface FacilityBookingDetails {
   gst: number;
   payment_method: string;
   facility_name: string;
+  created_by_name: string;
 }
 
 export interface FacilityBookingResponse {

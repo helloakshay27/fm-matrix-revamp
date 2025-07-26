@@ -2,7 +2,7 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 export interface FacilityBookingResponse {
   id: number;
-  book_by: string;
+  created_by_name: string;
   booked_by_name?: string;
   facility_name: string;
   fac_type: string;
@@ -55,7 +55,7 @@ const safeValue = (value: any): string => {
 const transformBookingData = (apiData: FacilityBookingResponse): BookingData => {
   return {
     id: apiData.id,
-    bookedBy: safeValue(apiData.book_by),
+    bookedBy: safeValue(apiData.created_by_name),
     bookedFor: safeValue(apiData.booked_by_name),
     companyName: safeValue(apiData.company_name),
     facility: safeValue(apiData.facility_name),
