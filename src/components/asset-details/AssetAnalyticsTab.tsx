@@ -88,11 +88,11 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
     // "Analytics",
     "AMC Details",
     "PPM",
-    "Ebom",
+    "EBom",
     // "Attachments",
     "Readings",
     // "History Card",
-    "Depriciation",
+    "Depreciation",
     "Tickets",
   ];
 

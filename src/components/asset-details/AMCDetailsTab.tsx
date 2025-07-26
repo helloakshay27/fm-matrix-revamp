@@ -32,7 +32,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
 
           const historyData = Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0
             ? amc.amc_visit_logs.map((visit: any) => ({
-                srNo: visit.visit_number ?? '-',
+               
                 visitDate: visit.visit_date || '-',
                 technicianName: visit.technician_name || '-',
                 remarks: visit.remark || '-',
@@ -126,7 +126,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                       {historyData.length > 0 ? (
                         historyData.map((row, idx) => (
                           <TableRow key={idx}>
-                            <TableCell>{row.srNo}</TableCell>
+                            <TableCell>{idx + 1}</TableCell>
                             <TableCell>{row.visitDate}</TableCell>
                             <TableCell>{row.technicianName}</TableCell>
                             <TableCell>{row.remarks}</TableCell>

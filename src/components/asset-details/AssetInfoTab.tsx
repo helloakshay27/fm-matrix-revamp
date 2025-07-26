@@ -52,6 +52,10 @@ interface Asset {
   vendor_name: string;
   warranty_period?: number; // <-- Added property
   image_url?: string; // <-- Added property
+  asset_image?: {
+    document: string;
+    document_name: string;
+  };
   supplier_detail?: {
     company_name: string;
     email: string;
@@ -177,6 +181,28 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
         <TabsContent value="assetDetails" className="space-y-8 ">
           {showEnable ? (
             <>
+              {asset?.asset_image?.document && (
+                <div className="w-full bg-white rounded-lg shadow-sm border">
+                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <CreditCard
+                        className="w-8 h-8 "
+                        style={{ color: "#C72030" }}
+                      />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-black">
+                      Asset Image
+                    </h3>
+                  </div>
+                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 flex items-center justify-center">
+                    <img
+                      src={asset.asset_image.document}
+                      alt={asset.asset_image.document_name || "Asset Image"}
+                      className="max-h-[200px] max-w-full w-auto h-auto rounded-md shadow object-contain"
+                    />
+                  </div>
+                </div>
+              )}
               {Object.entries(asset.extra_fields_grouped).map(
                 ([groupName, fields]) => (
                   <div className="w-full bg-white rounded-lg shadow-sm border">
@@ -319,22 +345,32 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     {/* Right Section - Image */}
                     <div className="lg:col-span-4">
                       <p className="text-gray-500 mb-2">Asset Image</p>
-                      <div className="w-full h-48 border border-gray-300 rounded-lg bg-white flex items-center justify-center overflow-hidden">
-                        {asset.image_url ? (
+
+                      <div className="w-full aspect-square max-w-xs border border-gray-300 rounded-lg bg-white flex items-center justify-center overflow-hidden relative">
+                        {asset.asset_image?.document || asset.image_url ? (
                           <img
-                            src={asset.image_url}
-                            alt="Asset"
-                            className="w-full h-full object-cover rounded"
+                            src={asset.asset_image?.document || asset.image_url}
+                            alt={
+                              asset.asset_image?.document_name || "Asset Image"
+                            }
+                            className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
-                              const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
-                              if (nextSibling) {
-                                nextSibling.style.display = "flex";
-                              }
+                              const fallback = e.currentTarget
+                                .nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = "flex";
                             }}
                           />
                         ) : null}
-                        <div className={`${asset.image_url ? 'hidden' : 'flex'} flex-col items-center justify-center h-48 text-gray-400 text-sm`}>
+
+                        {/* Fallback when image is not available */}
+                        <div
+                          className={`absolute inset-0 ${
+                            asset.asset_image?.document || asset.image_url
+                              ? "hidden"
+                              : "flex"
+                          } flex-col items-center justify-center text-gray-400 text-sm`}
+                        >
                           <Box className="w-12 h-12 mb-2" />
                           <span>No Image Available</span>
                         </div>
