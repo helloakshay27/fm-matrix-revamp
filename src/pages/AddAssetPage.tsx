@@ -16,6 +16,169 @@ import apiClient from '@/utils/apiClient';
 import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 import { FormatShapes } from '@mui/icons-material';
 
+// Image compression function
+const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx?.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          } else {
+            reject(new Error('Failed to compress image'));
+          }
+        },
+        file.type,
+        quality
+      );
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+// Asset Image Upload Component
+const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRemove, images = [] }: {
+  categoryName: string;
+  categoryKey: string;
+  onImageUpload: (key: string, files: FileList | null) => void;
+  onImageRemove: (key: string, index: number) => void;
+  images: File[];
+}) => {
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0]; // Only allow one image per asset
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload only image files (JPG, PNG, GIF, etc.)');
+      return;
+    }
+    
+    // Check file size
+    if (file.size > maxFileSize) {
+      alert('Image size should be less than 10MB');
+      return;
+    }
+    
+    try {
+      // Compress image if needed
+      const compressedFile = await compressImage(file, 1200, 0.8);
+      // Create a FileList-like object with the compressed file
+      const fileList = Object.assign([compressedFile], {
+        item: (index: number) => index === 0 ? compressedFile : null,
+        length: 1
+      }) as unknown as FileList;
+      onImageUpload(categoryKey, fileList);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Error processing image. Please try again.');
+    }
+  };
+
+  return (
+    <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+      <div className="border-l-4 border-l-[#C72030] p-4 bg-white">
+        <div className="flex items-center gap-2 text-[#C72030] text-sm font-semibold mb-4">
+          <span className="bg-[#C72030] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+            <Package className="w-3 h-3" />
+          </span>
+          {categoryName.toUpperCase()} ASSET IMAGE
+        </div>
+        
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+          {images.length > 0 ? (
+            <div className="space-y-4">
+              <div className="relative inline-block">
+                <img 
+                  src={URL.createObjectURL(images[0])} 
+                  alt="Asset preview" 
+                  className="max-w-full h-48 object-cover rounded-lg shadow-md"
+                />
+                <button
+                  onClick={() => onImageRemove(categoryKey, 0)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p className="font-medium">{images[0].name}</p>
+                <p className="text-xs text-gray-500">
+                  {(images[0].size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e.target.files)}
+                  className="hidden"
+                  id={`${categoryKey}-image-replace`}
+                />
+                <label
+                  htmlFor={`${categoryKey}-image-replace`}
+                  className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-100 cursor-pointer transition-colors"
+                >
+                  <Package className="w-4 h-4" />
+                  Replace Image
+                </label>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e.target.files)}
+                className="hidden"
+                id={`${categoryKey}-image-upload`}
+              />
+              <label htmlFor={`${categoryKey}-image-upload`} className="cursor-pointer">
+                <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-medium text-gray-700 mb-2">Upload Asset Image</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  Click to upload an image of your {categoryName.toLowerCase()}
+                </p>
+                <div className="inline-flex items-center gap-2 bg-[#f6f4ee] text-[#C72030] px-6 py-3 rounded-md hover:bg-[#f0ebe0] transition-colors">
+                  <Package className="w-5 h-5" />
+                  Choose Image
+                </div>
+                <p className="text-xs text-gray-400 mt-3">
+                  Supported formats: JPG, PNG, GIF (Max 10MB)
+                </p>
+              </label>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AddAssetPage = () => {
   const navigate = useNavigate();
 
@@ -495,10 +658,21 @@ const [attachments, setAttachments] = useState({
   itEquipmentAttachments: [],    // IT Equipment documents
   machineryAttachments: [],      // Machinery & Equipment documents
   toolsAttachments: [],          // Tools & Instruments documents
+  meterAttachments: [],          // Meter documents
   manualsUpload: [],             // Asset manuals
   insuranceDetails: [],          // Insurance documents
   purchaseInvoice: [],           // Purchase invoices
-  amc: []                        // AMC documents
+  amc: [],                       // AMC documents
+  // Add asset images for each category
+  landAssetImage: [],
+  vehicleAssetImage: [],
+  leaseholdAssetImage: [],
+  buildingAssetImage: [],
+  furnitureAssetImage: [],
+  itEquipmentAssetImage: [],
+  machineryAssetImage: [],
+  toolsAssetImage: [],
+  meterAssetImage: []
 });
   const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
 
@@ -1321,6 +1495,9 @@ const [attachments, setAttachments] = useState({
     attachments.toolsAttachments.forEach(file => 
       formDataObj.append("tools_attachments[]", file)
     );
+    attachments.meterAttachments.forEach(file => 
+      formDataObj.append("meter_attachments[]", file)
+    );
     attachments.manualsUpload.forEach(file => 
       formDataObj.append("asset_manuals[]", file)
     );
@@ -1333,6 +1510,35 @@ const [attachments, setAttachments] = useState({
     attachments.amc.forEach(file => 
       formDataObj.append("asset_other_uploads[]", file)
     );
+
+    // Add asset images
+    if (attachments.landAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.landAssetImage[0]);
+    }
+    if (attachments.vehicleAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.vehicleAssetImage[0]);
+    }
+    if (attachments.leaseholdAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.leaseholdAssetImage[0]);
+    }
+    if (attachments.buildingAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.buildingAssetImage[0]);
+    }
+    if (attachments.furnitureAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.furnitureAssetImage[0]);
+    }
+    if (attachments.itEquipmentAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.itEquipmentAssetImage[0]);
+    }
+    if (attachments.machineryAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.machineryAssetImage[0]);
+    }
+    if (attachments.toolsAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.toolsAssetImage[0]);
+    }
+    if (attachments.meterAssetImage.length > 0) {
+      formDataObj.append("pms_asset[asset_image]", attachments.meterAssetImage[0]);
+    }
 
     // Debug: Log FormData contents
     console.log('FormData contents:');
@@ -1396,10 +1602,21 @@ const hasFiles = () => {
     attachments.itEquipmentAttachments.length > 0 ||
     attachments.machineryAttachments.length > 0 ||
     attachments.toolsAttachments.length > 0 ||
+    attachments.meterAttachments.length > 0 ||
     attachments.manualsUpload.length > 0 ||
     attachments.insuranceDetails.length > 0 ||
     attachments.purchaseInvoice.length > 0 ||
-    attachments.amc.length > 0
+    attachments.amc.length > 0 ||
+    // Add asset images to file check
+    attachments.landAssetImage.length > 0 ||
+    attachments.vehicleAssetImage.length > 0 ||
+    attachments.leaseholdAssetImage.length > 0 ||
+    attachments.buildingAssetImage.length > 0 ||
+    attachments.furnitureAssetImage.length > 0 ||
+    attachments.itEquipmentAssetImage.length > 0 ||
+    attachments.machineryAssetImage.length > 0 ||
+    attachments.toolsAssetImage.length > 0 ||
+    attachments.meterAssetImage.length > 0
   );
 };
   // ...existing code...
@@ -1505,6 +1722,15 @@ const hasFiles = () => {
       {selectedAssetCategory === 'Land' && (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
+            {/* Asset Image Upload */}
+            <AssetImageUpload
+              categoryName="Land"
+              categoryKey="landAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.landAssetImage}
+            />
+
             {/* Basic Identification */}
             <Card>
               <CardHeader>
@@ -2225,6 +2451,15 @@ const hasFiles = () => {
       {selectedAssetCategory === 'Leasehold Improvement' && (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
+            {/* Asset Image Upload */}
+            <AssetImageUpload
+              categoryName="Leasehold Improvement"
+              categoryKey="leaseholdAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.leaseholdAssetImage}
+            />
+
             {/* Basic Identification */}
             <Card>
               <CardHeader>
@@ -3034,6 +3269,15 @@ const hasFiles = () => {
       {selectedAssetCategory === 'Vehicle' && (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
+            {/* Asset Image Upload */}
+            <AssetImageUpload
+              categoryName="Vehicle"
+              categoryKey="vehicleAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.vehicleAssetImage}
+            />
+
             {/* Basic Identification */}
             <Card>
               <CardHeader>
@@ -4048,6 +4292,15 @@ const hasFiles = () => {
       {selectedAssetCategory === 'Building' && (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
+            {/* Asset Image Upload */}
+            <AssetImageUpload
+              categoryName="Building"
+              categoryKey="buildingAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.buildingAssetImage}
+            />
+
             {/* Basic Identification */}
             <Card>
               <CardHeader>
@@ -5103,6 +5356,8 @@ const hasFiles = () => {
         selectedAssetCategory === 'Machinery & Equipment' || selectedAssetCategory === 'Meter' ||
         selectedAssetCategory === 'Tools & Instruments') && (
           <>
+            
+
             {/* Location Details */}
             <div className="bg-white shadow-sm rounded-lg overflow-hidden">
               <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
@@ -6373,6 +6628,56 @@ const hasFiles = () => {
                 </div>
               </div>}
             </div>
+            {/* Asset Image Upload for these categories */}
+            {selectedAssetCategory === 'Furniture & Fixtures' && (
+              <AssetImageUpload
+                categoryName="Furniture & Fixtures"
+                categoryKey="furnitureAssetImage"
+                onImageUpload={handleFileUpload}
+                onImageRemove={removeFile}
+                images={attachments.furnitureAssetImage}
+              />
+            )}
+            
+            {selectedAssetCategory === 'IT Equipment' && (
+              <AssetImageUpload
+                categoryName="IT Equipment"
+                categoryKey="itEquipmentAssetImage"
+                onImageUpload={handleFileUpload}
+                onImageRemove={removeFile}
+                images={attachments.itEquipmentAssetImage}
+              />
+            )}
+            
+            {selectedAssetCategory === 'Machinery & Equipment' && (
+              <AssetImageUpload
+                categoryName="Machinery & Equipment"
+                categoryKey="machineryAssetImage"
+                onImageUpload={handleFileUpload}
+                onImageRemove={removeFile}
+                images={attachments.machineryAssetImage}
+              />
+            )}
+            
+            {selectedAssetCategory === 'Tools & Instruments' && (
+              <AssetImageUpload
+                categoryName="Tools & Instruments"
+                categoryKey="toolsAssetImage"
+                onImageUpload={handleFileUpload}
+                onImageRemove={removeFile}
+                images={attachments.toolsAssetImage}
+              />
+            )}
+            
+            {selectedAssetCategory === 'Meter' && (
+              <AssetImageUpload
+                categoryName="Meter"
+                categoryKey="meterAssetImage"
+                onImageUpload={handleFileUpload}
+                onImageRemove={removeFile}
+                images={attachments.meterAssetImage}
+              />
+            )}
 
             {/* Attachments */}
             <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -6439,53 +6744,7 @@ const hasFiles = () => {
                   </div>)}
                 </div>
               </div>}
-                 <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">Asset Image</label>
 
-               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    className="hidden"
-                    id="land-attachments"
-                    onChange={e => handleFileUpload('landAttachments', e.target.files)}
-                  />
-                  <label htmlFor="land-attachments" className="cursor-pointer">
-                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      Click to upload attachments
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Upload deed copy, layout, map, lease, etc.
-                    </p>
-                    <p className="text-xs text-yellow-600 mt-1">
-                      Max 10MB per file, 50MB total. Images will be compressed automatically.
-                    </p>
-                  </label>
-                  {attachments.landAttachments && attachments.landAttachments.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {attachments.landAttachments.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                          <div className="flex flex-col truncate">
-                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </span>
-                          </div>
-                          <button onClick={() => removeFile('landAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                      <div className="text-xs text-gray-500 mt-1">
-                        Total: {attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
-                          ? `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
-                          : `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
-                        }
-                      </div>
-                    </div>
-                  )}
-                </div>
             </div>
           </>
         )}

@@ -4,7 +4,7 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 export interface Asset {
   id: string;
   name: string;
-  serialNumber: string;
+  serialNumber: number;
   assetNumber: string;
   status: 'in_use' | 'in_storage' | 'breakdown' | 'disposed';
   siteName: string;
