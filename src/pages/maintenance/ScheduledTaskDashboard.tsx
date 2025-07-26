@@ -186,8 +186,6 @@ export const ScheduledTaskDashboard = () => {
       if (filters.assignedTo) queryParams.append('q[pms_task_assignments_assigned_to_id_eq]', filters.assignedTo);
       if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filters.supplierId);
       if (filters.taskId) queryParams.append('q[id_eq]', filters.taskId);
-      if (filters.status) queryParams.append('q[task_status_eq]', filters.status);
-      if (filters.priority) queryParams.append('q[custom_form_priority_eq]', filters.priority);
 
       // Add general search functionality for checklist and asset
       if (searchTerm) {

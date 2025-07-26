@@ -11,6 +11,7 @@ import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
 import { userService, User } from '@/services/userService';
+import { assetService } from '@/services/assetService';
 
 interface TaskFilterDialogProps {
   isOpen: boolean;
@@ -24,10 +25,8 @@ export interface TaskFilters {
   taskId?: string;
   checklist?: string;
   assignedTo?: string;
-  status?: string;
   scheduleType?: string;
   type?: string;
-  priority?: string;
   dateFrom?: string;
   dateTo?: string;
   assetGroupId?: string;
@@ -63,37 +62,57 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
   const [taskId, setTaskId] = useState('');
   const [checklist, setChecklist] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
-  const [status, setStatus] = useState('');
   const [scheduleType, setScheduleType] = useState('');
   const [type, setType] = useState('');
-  const [priority, setPriority] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [assetGroupId, setAssetGroupId] = useState('');
+  const [assetSubGroupId, setAssetSubGroupId] = useState('');
+  const [supplierId, setSupplierId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [assetGroups, setAssetGroups] = useState<any[]>([]);
+  const [assetSubGroups, setAssetSubGroups] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
 
-  // Fetch users when component mounts
+  // Fetch initial data when component mounts
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchInitialData = async () => {
       try {
-        const fetchedUsers = await userService.searchUsers('');
+        const [fetchedUsers, fetchedAssetGroups, fetchedSuppliers] = await Promise.all([
+          userService.searchUsers(''),
+          assetService.getAssetGroups(),
+          assetService.getSuppliers()
+        ]);
         setUsers(fetchedUsers);
+        setAssetGroups(fetchedAssetGroups);
+        setSuppliers(fetchedSuppliers);
       } catch (error) {
-        console.error('Error fetching users:', error);
-        toast.error('Failed to fetch users');
+        console.error('Error fetching initial data:', error);
+        toast.error('Failed to fetch initial data');
       }
     };
-    fetchUsers();
+    fetchInitialData();
   }, []);
 
-  const statusOptions = [
-    'Scheduled',
-    'Open', 
-    'In Progress',
-    'Completed',
-    'Overdue',
-    'Cancelled'
-  ];
+  // Fetch sub groups when asset group changes
+  useEffect(() => {
+    const fetchSubGroups = async () => {
+      if (assetGroupId) {
+        try {
+          const fetchedSubGroups = await assetService.getAssetSubGroups(assetGroupId);
+          setAssetSubGroups(fetchedSubGroups);
+        } catch (error) {
+          console.error('Error fetching sub groups:', error);
+          toast.error('Failed to fetch sub groups');
+        }
+      } else {
+        setAssetSubGroups([]);
+        setAssetSubGroupId('');
+      }
+    };
+    fetchSubGroups();
+  }, [assetGroupId]);
 
   const scheduleTypeOptions = [
     'asset',
@@ -106,13 +125,6 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     'Preparedness'
   ];
 
-  const priorityOptions = [
-    'Low',
-    'Medium', 
-    'High',
-    'Critical'
-  ];
-
   const handleApply = async () => {
     setIsLoading(true);
     try {
@@ -120,12 +132,13 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
         ...(taskId && { taskId }),
         ...(checklist && { checklist }),
         ...(assignedTo && { assignedTo }),
-        ...(status && { status }),
         ...(scheduleType && { scheduleType }),
         ...(type && { type }),
-        ...(priority && { priority }),
         ...(dateFrom && { dateFrom }),
         ...(dateTo && { dateTo }),
+        ...(assetGroupId && { assetGroupId }),
+        ...(assetSubGroupId && { assetSubGroupId }),
+        ...(supplierId && { supplierId }),
       };
 
       console.log('Applying task filters:', filters);
@@ -145,12 +158,13 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     setTaskId('');
     setChecklist('');
     setAssignedTo('');
-    setStatus('');
     setScheduleType('');
     setType('');
-    setPriority('');
     setDateFrom('');
     setDateTo('');
+    setAssetGroupId('');
+    setAssetSubGroupId('');
+    setSupplierId('');
     
     onApply({});
     onClose();
@@ -242,31 +256,10 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
             </div>
           </div>
 
-          {/* Task Status & Type Section */}
+          {/* Task Type & Asset Information Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Task Status & Type</h3>
-            <div className="grid grid-cols-4 gap-6">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Status</InputLabel>
-                <MuiSelect
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  label="Status"
-                  displayEmpty
-                  MenuProps={selectMenuProps}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="">
-                    <em>All Status</em>
-                  </MenuItem>
-                  {statusOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">Task Type & Asset Information</h3>
+            <div className="grid grid-cols-2 gap-6">
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Schedule Type</InputLabel>
                 <MuiSelect
@@ -308,23 +301,72 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                   ))}
                 </MuiSelect>
               </FormControl>
+            </div>
+          </div>
 
+          {/* Asset Groups & Supplier Section */}
+          <div>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">Asset Groups & Supplier</h3>
+            <div className="grid grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Priority</InputLabel>
+                <InputLabel shrink>Asset Group</InputLabel>
                 <MuiSelect
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                  label="Priority"
+                  value={assetGroupId}
+                  onChange={(e) => setAssetGroupId(e.target.value)}
+                  label="Asset Group"
                   displayEmpty
                   MenuProps={selectMenuProps}
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
-                    <em>All Priorities</em>
+                    <em>Select Asset Group</em>
                   </MenuItem>
-                  {priorityOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
+                  {assetGroups.map((group) => (
+                    <MenuItem key={group.id} value={group.id}>
+                      {group.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Asset Sub Group</InputLabel>
+                <MuiSelect
+                  value={assetSubGroupId}
+                  onChange={(e) => setAssetSubGroupId(e.target.value)}
+                  label="Asset Sub Group"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                  disabled={!assetGroupId}
+                >
+                  <MenuItem value="">
+                    <em>Select Asset Sub Group</em>
+                  </MenuItem>
+                  {assetSubGroups.map((subGroup) => (
+                    <MenuItem key={subGroup.id} value={subGroup.id}>
+                      {subGroup.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Supplier</InputLabel>
+                <MuiSelect
+                  value={supplierId}
+                  onChange={(e) => setSupplierId(e.target.value)}
+                  label="Supplier"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Supplier</em>
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>
