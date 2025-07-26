@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, Minus, Edit3 } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,7 +33,7 @@ export const MobileItemsDetails: React.FC = () => {
 
   const [items, setItems] = useState<MenuItem[]>(initialItems);
   const [note, setNote] = useState<string>('');
-  const [showNoteInput, setShowNoteInput] = useState<boolean>(false);
+  const [showNoteDialog, setShowNoteDialog] = useState<boolean>(false);
 
   const handleBack = () => {
     navigate(-1);
@@ -58,30 +58,22 @@ export const MobileItemsDetails: React.FC = () => {
   };
 
   const handlePlaceOrder = () => {
-    // Check if user is logged in (scanned through app)
-    const isLoggedIn = localStorage.getItem('user'); // Assuming user data is stored in localStorage
-    
-    if (isLoggedIn) {
-      // User is logged in, proceed directly to order confirmation
-      navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
-        state: { 
-          items, 
-          restaurant, 
-          note, 
-          isAppUser: true 
-        }
-      });
-    } else {
-      // User scanned from external camera, show contact form
-      navigate(`/mobile/restaurant/${restaurant.id}/contact-form`, {
-        state: { 
-          items, 
-          restaurant, 
-          note,
-          isAppUser: false 
-        }
-      });
-    }
+    navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
+      state: { 
+        items, 
+        restaurant, 
+        note
+      }
+    });
+  };
+
+  const handleSaveNote = () => {
+    setShowNoteDialog(false);
+  };
+
+  const handleClearNote = () => {
+    setNote('');
+    setShowNoteDialog(false);
   };
 
   return (
@@ -105,70 +97,52 @@ export const MobileItemsDetails: React.FC = () => {
       </div>
 
       {/* Items List */}
-      <div className="bg-white mx-4 mt-4 rounded-xl border border-gray-100 overflow-hidden">
-        <div className="divide-y divide-gray-100">
+      <div className="bg-[#E8E2D3] mx-4 mt-4 rounded-lg overflow-hidden">
+        <div className="p-4 space-y-4">
           {items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center p-4">
+            <div key={item.id} className="flex justify-between items-center">
               <span className="text-gray-900 font-medium">{item.name}</span>
-              <div className="flex items-center border border-red-600 rounded-lg">
+              <div className="flex items-center border-2 border-red-600 rounded-lg bg-white">
                 <button
                   onClick={() => updateQuantity(item.id, -1)}
-                  className="p-2 text-red-600 hover:bg-red-50"
+                  className="px-3 py-1 text-red-600 hover:bg-red-50 text-lg font-bold"
                 >
-                  <Minus className="w-4 h-4" />
+                  -
                 </button>
-                <span className="px-4 py-2 text-gray-900 font-medium min-w-[40px] text-center">
+                <span className="px-4 py-1 text-gray-900 font-medium min-w-[40px] text-center">
                   {item.quantity}
                 </span>
                 <button
                   onClick={() => updateQuantity(item.id, 1)}
-                  className="p-2 text-red-600 hover:bg-red-50"
+                  className="px-3 py-1 text-red-600 hover:bg-red-50 text-lg font-bold"
                 >
-                  <Plus className="w-4 h-4" />
+                  +
                 </button>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Add More Items */}
-        <div className="p-4 border-t border-gray-100">
-          <button
-            onClick={addMoreItems}
-            className="text-red-600 font-medium text-sm flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add more items
-          </button>
+          
+          {/* Add More Items */}
+          <div className="pt-2">
+            <button
+              onClick={addMoreItems}
+              className="text-red-600 font-medium text-sm flex items-center"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add more items
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Note Section */}
       <div className="mx-4 mt-4">
-        {!showNoteInput ? (
-          <button
-            onClick={() => setShowNoteInput(true)}
-            className="w-full bg-white border border-gray-200 rounded-xl p-4 text-left text-gray-500 flex items-center"
-          >
-            Add a note for the restaurant
-          </button>
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="flex items-center p-4 border-b border-gray-100">
-              <Edit3 className="w-5 h-5 text-gray-600 mr-2" />
-              <span className="font-medium text-gray-900">Note for the restaurant</span>
-            </div>
-            <div className="p-4">
-              <Textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Do not add egg in the noodles"
-                className="w-full border-0 resize-none focus:ring-0 text-gray-600"
-                rows={3}
-              />
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => setShowNoteDialog(true)}
+          className="w-full bg-white border border-gray-200 rounded-xl p-4 text-left text-gray-500"
+        >
+          Add a note for the restaurant
+        </button>
       </div>
 
       {/* Place Order Button */}
@@ -181,6 +155,49 @@ export const MobileItemsDetails: React.FC = () => {
           Place Order
         </Button>
       </div>
+
+      {/* Note Dialog */}
+      {showNoteDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#E8E2D3] rounded-lg w-full max-w-md">
+            {/* Dialog Header */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-300">
+              <h3 className="text-lg font-semibold text-gray-900">Add a note for the restaurant</h3>
+              <button onClick={() => setShowNoteDialog(false)}>
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="p-4">
+              <Textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="do not add egg in the noodles"
+                className="w-full border-0 bg-white rounded-lg p-3 resize-none focus:ring-0 text-gray-600"
+                rows={4}
+              />
+            </div>
+
+            {/* Dialog Actions */}
+            <div className="p-4 flex gap-3">
+              <Button
+                onClick={handleClearNote}
+                variant="outline"
+                className="flex-1 border-2 border-red-600 text-red-600 bg-transparent hover:bg-red-50 py-3 rounded-lg font-medium"
+              >
+                Clear
+              </Button>
+              <Button
+                onClick={handleSaveNote}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium"
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

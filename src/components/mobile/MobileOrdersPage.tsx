@@ -131,8 +131,7 @@ export const MobileOrdersPage: React.FC = () => {
             <div
               key={order.id}
               onClick={() => handleOrderClick(order.id)}
-              className="bg-white bg-opacity-80 rounded-xl p-4 border border-gray-100 cursor-pointer"
-              style={{ backgroundColor: '#f5f5f0' }}
+              className="bg-[#E8E2D3] rounded-lg p-4 cursor-pointer hover:shadow-sm transition-shadow"
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
@@ -144,7 +143,7 @@ export const MobileOrdersPage: React.FC = () => {
                   </p>
                 </div>
                 <span
-                  className={`px-3 py-1 rounded-lg text-sm font-medium ${getStatusBadgeColor(
+                  className={`px-3 py-1 rounded text-sm font-medium ${getStatusBadgeColor(
                     order.status
                   )}`}
                 >

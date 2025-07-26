@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Check } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 interface MenuItem {
@@ -22,43 +22,33 @@ interface Restaurant {
   image: string;
 }
 
-interface ContactDetails {
-  contactNumber: string;
-  name: string;
-  email: string;
-}
-
 export const MobileOrderReview: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { items, restaurant, note, contactDetails, isAppUser } = location.state as {
+  const [searchParams] = useSearchParams();
+  
+  // Check if user is from external scan (Google Lens, etc.)
+  const isExternalScan = searchParams.get('source') === 'external';
+  
+  const { items, restaurant, note } = location.state as {
     items: MenuItem[];
     restaurant: Restaurant;
-    note: string;
-    contactDetails?: ContactDetails;
-    isAppUser: boolean;
+    note?: string;
   };
 
   const [showSuccess, setShowSuccess] = useState(false);
-  const [orderDetails, setOrderDetails] = useState({
-    orderId: '#32416',
-    status: 'Pending',
-    customerName: isAppUser ? 'Abdul Ghaffar' : contactDetails?.name || '',
-    contactNumber: isAppUser ? '9876567891' : contactDetails?.contactNumber || '',
-    deliveryLocation: 'Room no-402, Floor 2\nWorli (W), 400028'
-  });
 
   const handleBack = () => {
     navigate(-1);
   };
 
   const handleViewOrderDetails = () => {
-    if (isAppUser) {
+    if (isExternalScan) {
+      // External users stay on order review page
+      navigate('/mobile/restaurant/order-history');
+    } else {
       // App users go to my orders list page
       navigate('/mobile/orders');
-    } else {
-      // External users see order details page
-      navigate(`/mobile/orders/${orderDetails.orderId}`);
     }
   };
 
@@ -66,16 +56,29 @@ export const MobileOrderReview: React.FC = () => {
     return items.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const handleConfirmOrder = () => {
+    setShowSuccess(true);
+    
+    // Show success for 5 seconds
+    setTimeout(() => {
+      if (!isExternalScan) {
+        // App user goes to My Orders
+        navigate('/mobile/orders');
+      }
+      // External scan users stay on success page
+    }, 5000);
+  };
+
   // Auto-redirect app users after 5 seconds
   useEffect(() => {
-    if (showSuccess && isAppUser) {
+    if (showSuccess && !isExternalScan) {
       const timer = setTimeout(() => {
         navigate('/mobile/orders');
       }, 5000);
       
       return () => clearTimeout(timer);
     }
-  }, [showSuccess, isAppUser, navigate]);
+  }, [showSuccess, isExternalScan, navigate]);
 
   if (showSuccess) {
     return (
@@ -91,23 +94,21 @@ export const MobileOrderReview: React.FC = () => {
         </div>
 
         {/* Success Message */}
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 text-center max-w-sm mx-auto">
-            <div className="w-20 h-20 bg-white border-2 border-gray-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check className="w-10 h-10 text-gray-900" strokeWidth={3} />
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="bg-[#E8E2D3] rounded-lg p-8 mx-4 text-center">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-gray-400">
+              <Check className="w-8 h-8 text-gray-900" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Order Placed Successfully
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900">Order Placed Successfully</h2>
           </div>
         </div>
 
         {/* View Order Details Button */}
-        <div className="p-4">
+        <div className="fixed bottom-0 left-0 right-0 p-4">
           <Button
             onClick={handleViewOrderDetails}
             variant="outline"
-            className="w-full border-red-600 text-red-600 hover:bg-red-50 py-4 rounded-xl text-lg font-semibold"
+            className="w-full border-2 border-red-600 text-red-600 bg-white hover:bg-red-50 py-4 rounded-xl text-lg font-medium"
           >
             View Order Details
           </Button>
@@ -129,71 +130,58 @@ export const MobileOrderReview: React.FC = () => {
       </div>
 
       {/* Order Summary */}
-      <div className="p-4">
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
-              <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm font-medium">
-                {orderDetails.status}
-              </span>
-            </div>
+      <div className="bg-[#E8E2D3] mx-4 mt-4 rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
+          <span className="bg-gray-400 text-white px-3 py-1 rounded text-sm">Pending</span>
+        </div>
+        
+        <div className="border-t border-gray-400 border-dashed pt-4 mb-4">
+          <div className="flex justify-between items-center mb-3">
+            <span className="font-semibold text-gray-900">Order ID</span>
+            <span className="font-semibold text-gray-900">#32416</span>
+          </div>
+          
+          <div className="flex justify-between items-center mb-4">
+            <span className="font-semibold text-gray-900">{restaurant.name}</span>
+            <span className="text-gray-600">Total Items - {getTotalItems()}</span>
           </div>
 
-          <div className="p-4 space-y-4">
-            {/* Order ID */}
-            <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-              <span className="text-gray-600">Order ID</span>
-              <span className="font-semibold text-gray-900">{orderDetails.orderId}</span>
+          {/* Items List */}
+          {items.map((item) => (
+            <div key={item.id} className="flex justify-between items-center mb-2">
+              <span className="text-gray-900">{item.name}</span>
+              <span className="text-gray-900 font-medium">0{item.quantity}</span>
             </div>
+          ))}
+        </div>
 
-            {/* Restaurant Info */}
-            <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-              <span className="text-gray-600">{restaurant.name}</span>
-              <span className="text-gray-600">Total Items - {getTotalItems()}</span>
+        <div className="border-t border-gray-400 border-dashed pt-4">
+          <h3 className="font-semibold text-gray-900 mb-3">Details</h3>
+          <div className="border-t border-gray-400 border-dashed pt-3 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-900">Customer Name</span>
+              <span className="text-gray-900">Abdul Ghaffar</span>
             </div>
-
-            {/* Items List */}
-            <div className="space-y-2 border-b border-gray-100 pb-4">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center">
-                  <span className="text-gray-900">{item.name}</span>
-                  <span className="text-gray-600 text-sm">
-                    {item.quantity.toString().padStart(2, '0')}
-                  </span>
-                </div>
-              ))}
+            <div className="flex justify-between">
+              <span className="text-gray-900">Contact Number</span>
+              <span className="text-gray-900">9876567891</span>
             </div>
-
-            {/* Details Section */}
-            <div>
-              <h3 className="text-gray-900 font-semibold mb-3">Details</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-start">
-                  <span className="text-gray-600">Customer Name</span>
-                  <span className="text-gray-900 text-right">{orderDetails.customerName}</span>
-                </div>
-                <div className="flex justify-between items-start">
-                  <span className="text-gray-600">Contact Number</span>
-                  <span className="text-gray-900 text-right">{orderDetails.contactNumber}</span>
-                </div>
-                <div className="flex justify-between items-start">
-                  <span className="text-gray-600">Delivery Location</span>
-                  <span className="text-gray-900 text-right whitespace-pre-line">
-                    {orderDetails.deliveryLocation}
-                  </span>
-                </div>
+            <div className="flex justify-between">
+              <span className="text-gray-900">Delivery Location</span>
+              <div className="text-right">
+                <div className="text-gray-900">Room no-402, Floor 2</div>
+                <div className="text-gray-900">Worli (W), 400028</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* This would normally be a confirmation step, but based on your flow, 
-          it automatically shows success after the order summary */}
-      <div className="p-4">
+      {/* Confirm Order Button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
         <Button
-          onClick={() => setShowSuccess(true)}
+          onClick={handleConfirmOrder}
           className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold"
         >
           Confirm Order
