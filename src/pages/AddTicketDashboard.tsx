@@ -297,10 +297,12 @@ export const AddTicketDashboard = () => {
         wing_id: 1,
         area_id: 1,
         floor_id: 1,
-        // Add sel_id_user for behalf of others
-        ...(onBehalfOf !== 'self' && selectedUserId && { sel_id_user: selectedUserId }),
-        // Optional fields
-        ...(selectedUser && { id_user: parseInt(selectedUser) }),
+        // Add user parameters based on selection type
+        ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
+        ...(onBehalfOf !== 'self' && selectedUserId && { 
+          sel_id_user: selectedUserId,
+          id_user: selectedUserId 
+        }),
         ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
         ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
         ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) })
