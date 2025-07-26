@@ -250,10 +250,12 @@ const modulesByPackage = {
     }
   ],
   'Maintenance': [
-    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
-    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
+    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
+    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
+    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
     { name: 'Services', icon: Wrench, href: '/maintenance/service' },
-    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
+    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
+
     {
       name: 'Inventory',
       icon: Package,
@@ -264,9 +266,10 @@ const modulesByPackage = {
         // { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
-    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
-    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
+    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
+    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
+
+
     {
       name: 'Audit',
       icon: Clipboard,
@@ -713,7 +716,7 @@ export const Sidebar = () => {
             if (subItem.href && path.startsWith(subItem.href)) {
               itemsToExpand.push(item.name); // Add parent
               itemsToExpand.push(subItem.name);
-              
+
               // If there are nested items
               if ((subItem as any).subItems) {
                 (subItem as any).subItems.forEach((nestedItem: any) => {
@@ -883,9 +886,8 @@ export const Sidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-            active || isExpanded ? 'bg-[#f0e8dc] shadow-inner' : 'hover:bg-[#DBC2A9]'
-          }`}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded ? 'bg-[#f0e8dc] shadow-inner' : 'hover:bg-[#DBC2A9]'
+            }`}
           title={module.name}
         >
           {(active || isExpanded) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
