@@ -123,53 +123,58 @@ export const ServiceDashboard = () => {
     setShowActionPanel(false);
   };
 
-  const handleApplyFilters = async (filters) => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('siteId') || '2189'; // Ensure siteId is included
+  // const handleApplyFilters = async (filters) => {
+  //   const baseUrl = localStorage.getItem('baseUrl');
+  //   const token = localStorage.getItem('token');
+  //   const siteId = localStorage.getItem('siteId') || '2189'; // Ensure siteId is included
+  //   setShowFilterModal(false);
+
+  //   const queryParams = {};
+
+  //   if (filters.serviceName) {
+  //     queryParams['q[service_name_cont]'] = filters.serviceName;
+  //   }
+  //   if (filters.buildingId) {
+  //     queryParams['q[building_id_eq]'] = filters.buildingId;
+  //   }
+  //   if (filters.areaId) {
+  //     queryParams['q[area_id_eq]'] = filters.areaId;
+  //   }
+
+  //   // Include active filter and page if needed
+  //   if (activeFilter !== undefined) {
+  //     queryParams['q[active_eq]'] = activeFilter;
+  //   }
+  //   queryParams['page'] = 1; // Start from page 1 for filtered results
+
+  //   const queryString = new URLSearchParams(queryParams).toString();
+  //   const url = `https://${baseUrl}/pms/services.json${queryString ? `?${queryString}` : ''}`;
+
+  //   try {
+  //     const response = await axios.get(url, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     console.log('Filter Response:', response.data);
+
+  //     // Dispatch the filtered data to the Redux store
+  //     dispatch(fetchServicesData.fulfilled(response.data, 'fetchServicesData', { active: activeFilter, page: 1 }));
+
+  //     // Optionally, store the applied filters to maintain them for pagination
+  //     setAppliedFilters(filters); // Add a new state to store filters (see below)
+  //   } catch (error) {
+  //     console.error('Error fetching filtered services:', error);
+  //     toast.error('Failed to fetch filtered services');
+  //   }
+  // };
+
+  const handleApplyFilters = (filters: FilterState) => {
+    setAppliedFilters(filters);
     setShowFilterModal(false);
-  
-    const queryParams = {};
-  
-    if (filters.serviceName) {
-      queryParams['q[service_name_cont]'] = filters.serviceName;
-    }
-    if (filters.buildingId) {
-      queryParams['q[building_id_eq]'] = filters.buildingId;
-    }
-    if (filters.areaId) {
-      queryParams['q[area_id_eq]'] = filters.areaId;
-    }
-  
-    // Include active filter and page if needed
-    if (activeFilter !== undefined) {
-      queryParams['q[active_eq]'] = activeFilter;
-    }
-    queryParams['page'] = 1; // Start from page 1 for filtered results
-  
-    const queryString = new URLSearchParams(queryParams).toString();
-    const url = `https://${baseUrl}/pms/services.json${queryString ? `?${queryString}` : ''}`;
-  
-    try {
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      console.log('Filter Response:', response.data);
-  
-      // Dispatch the filtered data to the Redux store
-      dispatch(fetchServicesData.fulfilled(response.data, 'fetchServicesData', { active: activeFilter, page: 1 }));
-  
-      // Optionally, store the applied filters to maintain them for pagination
-      setAppliedFilters(filters); // Add a new state to store filters (see below)
-    } catch (error) {
-      console.error('Error fetching filtered services:', error);
-      toast.error('Failed to fetch filtered services');
-    }
-  };
-  
+  }
+
 
   const handleCloseFilter = () => {
     setShowFilterModal(false);

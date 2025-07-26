@@ -21,11 +21,11 @@ export const fetchServicesData = createAsyncThunk(
       if (filters.serviceName) {
         params['q[service_name_cont]'] = filters.serviceName;
       }
-      if (filters.buildingId) {
-        params['q[building_id_eq]'] = filters.buildingId;
+      if (filters.building) {
+        params['q[building_id_eq]'] = filters.building;
       }
-      if (filters.areaId) {
-        params['q[area_id_eq]'] = filters.areaId;
+      if (filters.area) {
+        params['q[area_id_eq]'] = filters.area;
       }
 
       console.log('fetchServicesData params:', params);
