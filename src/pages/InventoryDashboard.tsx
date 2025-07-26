@@ -72,9 +72,6 @@ import {
 import bio from "@/assets/bio.png";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { toast } from "sonner";
-import { inventoryAnalyticsAPI } from '@/services/inventoryAnalyticsAPI';
-import { InventoryAnalyticsSelector } from '@/components/InventoryAnalyticsSelector';
-import { InventoryAnalyticsCards } from '@/components/InventoryAnalyticsCards';
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -169,20 +166,17 @@ export const InventoryDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [visibleSections, setVisibleSections] = useState<string[]>([
-    "items-status",
+    "statusChart",
+    "criticalityChart",
+    "categoryChart",
+    "agingMatrix",
   ]);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([
-    "items-status",
-    "critical-non-critical",
-    "category-wise",
-    "aging-matrix",
-    "low-stock",
-    "high-value",
-    "consumable",
-    "non-consumable",
-    "critical-priority",
-    "maintenance-due",
+    "statusChart",
+    "criticalityChart",
+    "categoryChart",
+    "agingMatrix",
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -190,8 +184,15 @@ export const InventoryDashboard = () => {
     startDate: new Date('2020-01-01'),
     endDate: new Date('2025-01-01')
   });
-  const [analyticsData, setAnalyticsData] = useState<any>({});
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState({
+    categoryData: [],
+    statusData: {
+      activeItems: 0,
+      inactiveItems: 0,
+      criticalItems: 0,
+      nonCriticalItems: 0
+    }
+  });
 
   const pageSize = 15; // Use larger page size for API data
 
@@ -201,77 +202,7 @@ export const InventoryDashboard = () => {
   // Fetch inventory data on component mount
   useEffect(() => {
     dispatch(fetchInventoryData({ page: currentPage }));
-    fetchAnalyticsData(dateRange.startDate, dateRange.endDate);
   }, [dispatch, currentPage]);
-
-  // Fetch analytics data from API
-  const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
-    setAnalyticsLoading(true);
-    try {
-      const [
-        itemsStatusData,
-        categoryWiseData,
-        greenConsumptionData,
-        consumptionGreenData,
-        consumptionNonGreenData,
-        minimumStockGreenData,
-        minimumStockNonGreenData,
-        lowStockData,
-        highValueData,
-        consumableData,
-        nonConsumableData,
-        criticalPriorityData,
-        maintenanceDueData,
-        agingMatrixData
-      ] = await Promise.all([
-        inventoryAnalyticsAPI.getItemsStatusData(startDate, endDate),
-        inventoryAnalyticsAPI.getCategoryWiseData(startDate, endDate),
-        inventoryAnalyticsAPI.getGreenConsumptionData(startDate, endDate),
-        inventoryAnalyticsAPI.getConsumptionReportGreenData(startDate, endDate),
-        inventoryAnalyticsAPI.getConsumptionReportNonGreenData(startDate, endDate),
-        inventoryAnalyticsAPI.getCurrentMinimumStockGreenData(startDate, endDate),
-        inventoryAnalyticsAPI.getCurrentMinimumStockNonGreenData(startDate, endDate),
-        inventoryAnalyticsAPI.getLowStockItems(startDate, endDate),
-        inventoryAnalyticsAPI.getHighValueItems(startDate, endDate),
-        inventoryAnalyticsAPI.getConsumableItems(startDate, endDate),
-        inventoryAnalyticsAPI.getNonConsumableItems(startDate, endDate),
-        inventoryAnalyticsAPI.getCriticalPriorityItems(startDate, endDate),
-        inventoryAnalyticsAPI.getMaintenanceDueItems(startDate, endDate),
-        inventoryAnalyticsAPI.getItemsAgingMatrix(startDate, endDate)
-      ]);
-      
-      setAnalyticsData({
-        itemsStatus: itemsStatusData,
-        categoryWise: categoryWiseData,
-        greenConsumption: greenConsumptionData,
-        consumptionGreen: consumptionGreenData,
-        consumptionNonGreen: consumptionNonGreenData,
-        minimumStockGreen: minimumStockGreenData,
-        minimumStockNonGreen: minimumStockNonGreenData,
-        lowStock: lowStockData,
-        highValue: highValueData,
-        consumable: consumableData,
-        nonConsumable: nonConsumableData,
-        criticalPriority: criticalPriorityData,
-        maintenanceDue: maintenanceDueData,
-        agingMatrix: agingMatrixData
-      });
-      
-      toast({
-        title: "Success",
-        description: "Analytics data updated successfully"
-      });
-    } catch (error) {
-      console.error('Error fetching analytics data:', error);
-      toast({
-        title: "Error", 
-        description: "Failed to fetch analytics data. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setAnalyticsLoading(false);
-    }
-  };
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -370,14 +301,6 @@ export const InventoryDashboard = () => {
 
   const handleAddInventory = () => {
     navigate("/maintenance/inventory/add");
-  };
-
-  // Handle analytics date filter apply
-  const handleAnalyticsDateApply = (dates: { startDate: Date | undefined; endDate: Date | undefined }) => {
-    if (dates.startDate && dates.endDate) {
-      setDateRange({ startDate: dates.startDate, endDate: dates.endDate });
-      fetchAnalyticsData(dates.startDate, dates.endDate);
-    }
   };
 
   // Handle drag end for chart reordering
@@ -781,10 +704,7 @@ export const InventoryDashboard = () => {
             >
               Filter by Date
             </Button>
-            <InventoryAnalyticsSelector 
-              onSelectionChange={handleSelectionChange} 
-              dateRange={dateRange}
-            />
+            <InventorySelector onSelectionChange={handleSelectionChange} />
           </div>
           <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
             {/* Main Content */}
@@ -800,33 +720,8 @@ export const InventoryDashboard = () => {
                   strategy={rectSortingStrategy}
                 >
                   <div className="space-y-4 sm:space-y-6">
-                    {analyticsLoading ? (
-                      <div className="flex items-center justify-center p-8">
-                        <div className="text-lg">Loading analytics data...</div>
-                      </div>
-                    ) : (
-                      <InventoryAnalyticsCards
-                        itemsStatus={analyticsData.itemsStatus}
-                        categoryWise={analyticsData.categoryWise}
-                        greenConsumption={analyticsData.greenConsumption}
-                        consumptionGreen={analyticsData.consumptionGreen}
-                        consumptionNonGreen={analyticsData.consumptionNonGreen}
-                        minimumStockGreen={analyticsData.minimumStockGreen}
-                        minimumStockNonGreen={analyticsData.minimumStockNonGreen}
-                        lowStock={analyticsData.lowStock}
-                        highValue={analyticsData.highValue}
-                        consumable={analyticsData.consumable}
-                        nonConsumable={analyticsData.nonConsumable}
-                        criticalPriority={analyticsData.criticalPriority}
-                        maintenanceDue={analyticsData.maintenanceDue}
-                        agingMatrix={analyticsData.agingMatrix}
-                        visibleSections={visibleSections}
-                      />
-                    )}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
+                    {/* Top Row - Two Donut Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       {chartOrder
                         .filter((id) =>
                           ["statusChart", "criticalityChart"].includes(id)
@@ -1243,15 +1138,12 @@ export const InventoryDashboard = () => {
                         }
                         return null;
                       })}
-        </TabsContent>
-        <TabsContent value="list" className="space-y-4 sm:space-y-6">
-          {/* List view content here */}
-        </TabsContent>
-      </Tabs>
-      </div>
-      <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
-        {/* Right Sidebar */}
-        <div className="w-full xl:w-80 order-1 xl:order-2">
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+            {/* Right Sidebar */}
+            <div className="w-full xl:w-80 order-1 xl:order-2">
               <div className="w-full bg-[#C4B89D]/25 border xl:border-l border-gray-200 rounded-lg xl:rounded-none p-3 sm:p-4 h-auto xl:h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="mb-4 sm:mb-6">
@@ -1392,11 +1284,182 @@ export const InventoryDashboard = () => {
                     </div>
                   ))}
                 </div>
-        </div>
-        </div>
-      </div>
-
-      {/* Dialogs */}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="list" className="space-y-4 sm:space-y-6">
+          {/* Error handling */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              Error loading inventory data: {error}
+            </div>
+          )}
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
+                dispatch(fetchInventoryData({}))
+              }
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings
+                    className="w-4 h-4 sm:w-6 sm:h-6"
+                    style={{ color: "#C72030" }}
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {totalInventories}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                    Total Inventories
+                  </div>
+                </div>
+              </div>
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
+                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': true } }))
+              }
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings
+                    className="w-4 h-4 sm:w-6 sm:h-6"
+                    style={{ color: "#C72030" }}
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {activeCount}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                    Active Inventory
+                  </div>
+                </div>
+              </div>
+              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
+                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': false } }))
+              }
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings
+                    className="w-4 h-4 sm:w-6 sm:h-6"
+                    style={{ color: "#C72030" }}
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {inactiveCount}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                    Inactive
+                  </div>
+                </div>
+              </div>
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                onClick={() =>
+                  dispatch(
+                    fetchInventoryData({
+                      filters: { "q[green_product_eq]": true },
+                    })
+                  )
+                }
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings
+                    className="w-4 h-4 sm:w-6 sm:h-6"
+                    style={{ color: "#C72030" }}
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {greenInventories || 0}
+                  </div>
+                  <div className="text-xs text-green-600 sm:text-sm text-muted-foreground font-medium leading-tight">
+                    Ecofriendly
+                  </div>
+                </div>
+              </div>
+              {/* <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                    {2}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
+                </div>
+              </div> */}
+            </div>
+            {showActionPanel && (
+              <SelectionPanel
+                onAdd={handleAddInventory}
+                onImport={handleImportClick}
+                onClearSelection={() => setShowActionPanel(false)}
+              />
+            )}
+            <EnhancedTable
+              handleExport={handleExport}
+              data={paginatedData}
+              columns={columns}
+              renderCell={renderCell}
+              bulkActions={bulkActions}
+              showBulkActions={true}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectItem={handleSelectItem}
+              onSelectAll={handleSelectAll}
+              pagination={false}
+              enableExport={true}
+              exportFileName="inventory"
+              onRowClick={handleViewItem}
+              storageKey="inventory-table"
+              loading={loading}
+              emptyMessage={
+                loading
+                  ? "Loading inventory data..."
+                  : "No inventory items found"
+              }
+              leftActions={renderCustomActions()}
+              onFilterClick={handleFiltersClick}
+            />
+          </div>
+          {/* Custom Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                  {renderPaginationItems()}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setCurrentPage(Math.min(totalPages, currentPage + 1))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
       <BulkUploadDialog
         open={showBulkUpload}
         onOpenChange={setShowBulkUpload}
@@ -1410,9 +1473,11 @@ export const InventoryDashboard = () => {
       <DateFilterModal
         open={showDateFilter}
         onOpenChange={setShowDateFilter}
-        onApply={handleAnalyticsDateApply}
+        onApply={(range) => {
+          setDateRange(range);
+          dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
+        }}
       />
-      </div>{/* Close wrapper div */}
     </div>
   );
 };
