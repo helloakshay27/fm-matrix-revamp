@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, FileText, Filter, Eye, Settings, AlertCircle, Trash2, Clock, Download } from 'lucide-react';
+import { Plus, Upload, FileText, Filter, Eye, Settings, AlertCircle, Trash2, Clock, Download, X, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
@@ -45,6 +45,40 @@ interface PaginationData {
   total_pages: number;
 }
 
+interface ServiceActionPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  service: ServiceRecord | null;
+  onQRDownload: (serviceId: string) => void;
+}
+
+const ServiceActionPanel: React.FC<ServiceActionPanelProps> = ({ isOpen, onClose, service, onQRDownload }) => {
+  if (!isOpen || !service) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Actions for {service.service_name}</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Button
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => onQRDownload(service.id.toString())}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Download QR Code
+          </Button>
+          {/* Add more actions here as needed */}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
@@ -57,8 +91,9 @@ export const ServiceDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showServiceActionPanel, setShowServiceActionPanel] = useState(false);
+  const [selectedService, setSelectedService] = useState<ServiceRecord | null>(null);
 
-  // Validate siteId on component mount
   useEffect(() => {
     const siteId = localStorage.getItem('siteId');
     if (!siteId || siteId === 'null') {
@@ -66,14 +101,12 @@ export const ServiceDashboard = () => {
       localStorage.setItem('siteId', '2189');
     }
     const page = apiData?.pagination?.current_page || 1;
-    console.log('Fetching services with:', { active: activeFilter, page }); // Debug log
+    console.log('Fetching services with:', { active: activeFilter, page });
     dispatch(fetchServicesData({ active: activeFilter, page }));
   }, [dispatch, activeFilter]);
 
-  // Use API data if available, otherwise fallback to initial data
   const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
   const paginationData: PaginationData = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
-
 
   const handleAddClick = () => navigate('/maintenance/service/add');
   const handleImportClick = () => {
@@ -112,12 +145,12 @@ export const ServiceDashboard = () => {
     }
   };
 
-  const handleQRDownload = () => {
-    const selectedServices = servicesData.filter((service) =>
-      selectedItems.includes(service.id.toString())
-    );
+  const handleQRDownload = (serviceId?: string) => {
+    const servicesToDownload = serviceId
+      ? servicesData.filter((service) => service.id.toString() === serviceId)
+      : servicesData.filter((service) => selectedItems.includes(service.id.toString()));
 
-    selectedServices.forEach((service, index) => {
+    servicesToDownload.forEach((service) => {
       const qrUrl = service.qr_code;
       if (qrUrl) {
         const link = document.createElement('a');
@@ -128,13 +161,13 @@ export const ServiceDashboard = () => {
         document.body.removeChild(link);
       } else {
         console.warn(`QR code not available for service ID ${service.id}`);
+        toast.error(`QR code not available for service ID ${service.id}`);
       }
     });
   };
 
   const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
 
-  // Handle card clicks for filtering
   const handleTotalServicesClick = () => {
     setActiveFilter(undefined);
     dispatch(fetchServicesData({ active: undefined, page: 1 }));
@@ -220,16 +253,77 @@ export const ServiceDashboard = () => {
     },
   ];
 
+  const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or token');
+        return;
+      }
+
+      const updatedFlag = !serviceItem.is_flagged;
+      const response = await axios.put(
+        `https://${baseUrl}/pms/asset_amcs/${serviceItem.id}.json`,
+        {
+          pms_asset_amc: {
+            is_flagged: updatedFlag,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));
+        toast.success(`Service ID ${serviceItem.id} flag updated`);
+      } else {
+        toast.error('Failed to update AMC flag');
+      }
+    } catch (error) {
+      console.error('Flag update error:', error);
+      toast.error('Failed to update AMC flag');
+    }
+  };
+
   const renderCell = (item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
-          <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
-            <Eye className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
+              <Eye className="w-4 h-4" />
+            </Button>
+            <div title="Flag AMC">
+              <Flag
+                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'
+                  }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSingleAmcFlag(item);
+                }}
+              />
+            </div>
+          </div>
+
+
+
         );
       case 'serviceName':
-        return item.service_name || '-';
+        return (
+          <span
+            className="cursor-pointer hover:underline"
+            onClick={() => {
+              setSelectedService(item);
+              setShowServiceActionPanel(true);
+            }}
+          >
+            {item.service_name || '-'}
+          </span>
+        );
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'referenceNumber':
@@ -363,8 +457,6 @@ export const ServiceDashboard = () => {
     return items;
   };
 
-  const selectionActions = [];
-
   const handleActionClick = () => {
     setShowActionPanel(true);
   };
@@ -423,7 +515,6 @@ export const ServiceDashboard = () => {
       toast.error('Failed to export AMC data');
     }
   };
-
 
   return (
     <div className="p-4 sm:p-6">
@@ -490,7 +581,7 @@ export const ServiceDashboard = () => {
 
           {showActionPanel && (
             <SelectionPanel
-              actions={selectionActions}
+              actions={[]}
               onAdd={handleAddClick}
               onImport={handleImportClick}
               onClearSelection={() => setShowActionPanel(false)}
@@ -515,6 +606,15 @@ export const ServiceDashboard = () => {
             leftActions={renderCustomActions()}
             searchPlaceholder="Search..."
             onFilterClick={handleFiltersClick}
+          />
+          <ServiceActionPanel
+            isOpen={showServiceActionPanel}
+            onClose={() => {
+              setShowServiceActionPanel(false);
+              setSelectedService(null);
+            }}
+            service={selectedService}
+            onQRDownload={handleQRDownload}
           />
         </>
       )}
