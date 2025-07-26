@@ -23,6 +23,7 @@ interface SelectionPanelProps {
   onImport?: () => void;
   onChecklist?: () => void;
   onClearSelection?: () => void;
+  loading?: boolean;
 }
 
 export const SelectionPanel: React.FC<SelectionPanelProps> = ({
@@ -31,6 +32,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   onImport,
   onChecklist,
   onClearSelection,
+  loading
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -49,15 +51,14 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
     ...(onImport ? [{ label: 'Import', icon: Upload, onClick: onImport }] : []),
     ...actions,
   ];
-    const { isSidebarCollapsed } = useLayout();
-  
+  const { isSidebarCollapsed } = useLayout();
+
 
   return (
-<div
-  className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${
-    isSidebarCollapsed ? 'left-16' : 'left-64'
-  } right-0 bottom-0`}
->      {/* Main panel + right bar container */}
+    <div
+      className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${isSidebarCollapsed ? 'left-16' : 'left-64'
+        } right-0 bottom-0`}
+    >      {/* Main panel + right bar container */}
       <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
         {/* Right vertical bar */}
         <div className="hidden sm:flex w-8 bg-[#C4B89D54] items-center justify-center text-red-600 font-semibold text-sm">
@@ -69,14 +70,15 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
             {defaultActions.map((action, index) => {
               const Icon = action.icon;
               return (
-                <div
+                <button
                   key={index}
                   onClick={action.onClick}
+                  disabled={action.loading}
                   className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
                 >
                   <Icon className="w-6 h-6 mb-1" />
                   <span className="text-sm font-medium text-center">{action.label}</span>
-                </div>
+                </button>
               );
             })}
 
