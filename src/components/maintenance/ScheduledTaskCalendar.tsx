@@ -2,11 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CalendarEvent } from '@/services/calendarService';
+import { CalendarFilterModal, CalendarFilters } from '@/components/CalendarFilterModal';
 const localizer = momentLocalizer(moment);
 interface ScheduledTaskCalendarProps {
   events?: CalendarEvent[];
@@ -20,10 +19,21 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 }) => {
   const [view, setView] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
   const [date, setDate] = useState(new Date());
-  const [dateFrom, setDateFrom] = useState('01/07/2025');
-  const [dateTo, setDateTo] = useState('31/07/2025');
-  const [amc, setAmc] = useState('');
-  const [service, setService] = useState('');
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<CalendarFilters>({
+    dateFrom: '01/07/2025',
+    dateTo: '31/07/2025',
+    amc: '',
+    service: '',
+    status: '',
+    scheduleType: '',
+    priority: '',
+    building: '',
+    wing: '',
+    floor: '',
+    area: '',
+    room: ''
+  });
 
   // Convert API events to calendar events
   const calendarEvents = useMemo(() => {
@@ -44,35 +54,24 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const handleViewChange = (newView: any) => {
     setView(newView);
   };
-  const handleApply = () => {
+  const handleApplyFilters = (filters: CalendarFilters) => {
+    setActiveFilters(filters);
     if (onDateRangeChange) {
-      onDateRangeChange(dateFrom, dateTo);
+      onDateRangeChange(filters.dateFrom, filters.dateTo);
     }
     if (onFiltersChange) {
-      onFiltersChange({
-        amc,
-        service
-      });
+      onFiltersChange(filters);
     }
   };
-  const handleReset = () => {
-    setDateFrom('01/07/2025');
-    setDateTo('31/07/2025');
-    setAmc('');
-    setService('');
-    if (onDateRangeChange) {
-      onDateRangeChange('01/07/2025', '31/07/2025');
-    }
-    if (onFiltersChange) {
-      onFiltersChange({
-        amc: '',
-        service: ''
-      });
-    }
-  };
+
   const handleExport = () => {
     console.log('Export calendar data');
   };
+
+  // Count active filters
+  const activeFilterCount = Object.values(activeFilters).filter(value => 
+    value !== '' && value !== '01/07/2025' && value !== '31/07/2025'
+  ).length;
 
   // Custom event style
   const eventStyleGetter = (event: any) => {
@@ -135,37 +134,29 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       {/* Tab Navigation */}
       
 
-      {/* Filters */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Input placeholder="01/07/2025" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-32" />
-        <Input placeholder="31/07/2025" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-32" />
-        <Select value={amc} onValueChange={setAmc}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="AMC" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="amc1">AMC 1</SelectItem>
-            <SelectItem value="amc2">AMC 2</SelectItem>
-            <SelectItem value="amc3">AMC 3</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={service} onValueChange={setService}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Service" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
-            <SelectItem value="cleaning">Cleaning</SelectItem>
-            <SelectItem value="security">Security</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button onClick={handleApply} className="bg-purple-600 hover:bg-purple-700 text-white px-6">
-          Apply
-        </Button>
-        <Button onClick={handleReset} variant="outline" className="px-6">
-          Reset
+      {/* Filter Button */}
+      <div className="flex items-center justify-between">
+        <Button
+          onClick={() => setIsFilterModalOpen(true)}
+          variant="outline"
+          className="flex items-center gap-2 px-4 py-2 h-10"
+        >
+          <Filter className="h-4 w-4" />
+          Filter
+          {activeFilterCount > 0 && (
+            <span className="ml-1 px-2 py-1 text-xs bg-purple-600 text-white rounded-full">
+              {activeFilterCount}
+            </span>
+          )}
         </Button>
         
+        <Button 
+          onClick={handleExport} 
+          variant="outline" 
+          className="px-4 py-2 h-10"
+        >
+          Export
+        </Button>
       </div>
 
       {/* Legends */}
@@ -214,5 +205,12 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
       }} />
       </div>
+
+      {/* Filter Modal */}
+      <CalendarFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApplyFilters={handleApplyFilters}
+      />
     </div>;
 };
