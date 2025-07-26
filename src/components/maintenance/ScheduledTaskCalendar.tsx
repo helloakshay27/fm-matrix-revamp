@@ -28,6 +28,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     status: '',
     scheduleType: '',
     priority: '',
+    site: '',
     building: '',
     wing: '',
     floor: '',
