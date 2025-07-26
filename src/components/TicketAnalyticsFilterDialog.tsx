@@ -16,8 +16,28 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
   onClose,
   onApplyFilters
 }) => {
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  // Set default dates: last year to today
+  const getDefaultDates = () => {
+    const today = new Date();
+    const lastYear = new Date();
+    lastYear.setFullYear(today.getFullYear() - 1);
+    
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    return {
+      startDate: formatDate(lastYear),
+      endDate: formatDate(today)
+    };
+  };
+
+  const defaultDates = getDefaultDates();
+  const [startDate, setStartDate] = useState<string>(defaultDates.startDate);
+  const [endDate, setEndDate] = useState<string>(defaultDates.endDate);
 
   const handleSubmit = () => {
     if (startDate && endDate) {

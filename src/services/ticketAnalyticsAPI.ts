@@ -126,10 +126,27 @@ const formatDateForAPI = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// Get current site ID dynamically
+// Get current site ID dynamically from localStorage or header
 const getCurrentSiteId = (): string => {
-  // You can get this from localStorage, context, or any other state management
-  return localStorage.getItem('currentSiteId') || '7'; // Default to 7 if not found
+  // First try to get from localStorage with different possible keys
+  const siteId = localStorage.getItem('currentSiteId') || 
+                localStorage.getItem('site_id') || 
+                localStorage.getItem('siteId') ||
+                localStorage.getItem('selectedSiteId');
+  
+  // If not found in localStorage, try to get from URL or other sources
+  if (!siteId) {
+    // Check if there's a site ID in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSiteId = urlParams.get('site_id');
+    if (urlSiteId) return urlSiteId;
+    
+    // Default fallback
+    console.warn('Site ID not found in localStorage or URL, using default: 7');
+    return '7';
+  }
+  
+  return siteId;
 };
 
 export const ticketAnalyticsAPI = {
