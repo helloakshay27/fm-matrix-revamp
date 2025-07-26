@@ -46,6 +46,51 @@ export const TicketDetailsPage = () => {
     navigate(`/maintenance/ticket/${id}/tag-vendor`);
   };
 
+  const handleViewDocument = (documentUrl) => {
+    if (documentUrl) {
+      window.open(documentUrl, '_blank');
+    } else {
+      toast.error('Document URL not available');
+    }
+  };
+
+  const handleDownloadDocument = async (documentUrl, fileName) => {
+    if (!documentUrl) {
+      toast.error('Document URL not available');
+      return;
+    }
+
+    try {
+      const response = await fetch(documentUrl);
+      const blob = await response.blob();
+      
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName || 'document';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Document downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast.error('Failed to download document');
+    }
+  };
+
+  const getFileNameFromUrl = (url) => {
+    if (!url) return 'document';
+    const urlParts = url.split('/');
+    return urlParts[urlParts.length - 1] || 'document';
+  };
+
   const handleCreateTask = async () => {
     if (!id) {
       console.error('No ticket ID available');
@@ -482,29 +527,45 @@ export const TicketDetailsPage = () => {
         <CardContent className="p-6">
           {ticketData.documents && ticketData.documents.length > 0 ? (
             <div className="space-y-3">
-              {ticketData.documents.map((document, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <Paperclip className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <p className="font-medium text-sm">{document.name || `Document ${index + 1}`}</p>
-                      <p className="text-xs text-gray-500">
-                        Attachment
-                      </p>
+              {ticketData.documents.map((document, index) => {
+                const fileName = getFileNameFromUrl(document.document);
+                const fileSize = document.document_file_size ? `${(document.document_file_size / 1024).toFixed(1)} KB` : '';
+                
+                return (
+                  <div key={document.id || index} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <Paperclip className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <p className="font-medium text-sm">{fileName}</p>
+                        <p className="text-xs text-gray-500">
+                          {document.doctype && fileSize ? `${document.doctype} • ${fileSize}` : 
+                           document.doctype || fileSize || 'Attachment'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewDocument(document.document)}
+                        disabled={!document.document}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewDocument(document.document, fileName)}
+                        disabled={!document.document}
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Download
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="w-4 h-4 mr-1" />
-                      View
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Download className="w-4 h-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-gray-500 text-center py-8">No attachments found</p>

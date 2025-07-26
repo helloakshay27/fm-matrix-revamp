@@ -17,198 +17,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
 
-const ticketData = [{
-  id: '2189-11106',
-  taskNumber: 'test',
-  description: 'Test description',
-  category: 'Air Conditioner',
-  subCategory: 'test',
-  createdBy: 'Abhishek Sharma',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'Wings',
-  floor: '1',
-  area: '',
-  room: '',
-  priority: 'p1',
-  status: 'Pending',
-  createdOn: '16/06/2025 5:17 PM',
-  mode: 'Call'
-}, {
-  id: '2189-11105',
-  taskNumber: 'Test 1234',
-  description: 'Another test',
-  category: 'FIRE SYSTEM',
-  subCategory: 'NA',
-  createdBy: 'Vishal Vora',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'Wings',
-  floor: '1',
-  area: '',
-  room: '',
-  priority: 'p2',
-  status: 'Closed',
-  createdOn: '15/06/2025 3:30 PM',
-  mode: 'Email'
-}, {
-  id: '2189-11104',
-  taskNumber: 'Cleaning Request',
-  description: 'Office cleaning',
-  category: 'Cleaning',
-  subCategory: 'Office',
-  createdBy: 'John Doe',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'East',
-  floor: '2',
-  area: '',
-  room: '',
-  priority: 'p3',
-  status: 'Pending',
-  createdOn: '14/06/2025 10:15 AM',
-  mode: 'Web'
-}, {
-  id: '2189-11103',
-  taskNumber: 'Electrical Issue',
-  description: 'Power outage in conference room',
-  category: 'Electrical',
-  subCategory: 'Power',
-  createdBy: 'Sarah Johnson',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'West',
-  floor: '3',
-  area: 'Conference Room',
-  room: 'CR-301',
-  priority: 'p1',
-  status: 'In Progress',
-  createdOn: '13/06/2025 2:45 PM',
-  mode: 'App'
-}, {
-  id: '2189-11102',
-  taskNumber: 'Plumbing Fix',
-  description: 'Leaky faucet in restroom',
-  category: 'Plumbing',
-  subCategory: 'Faucet',
-  createdBy: 'Mike Wilson',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'North',
-  floor: '1',
-  area: 'Restroom',
-  room: 'RR-101',
-  priority: 'p2',
-  status: 'Open',
-  createdOn: '12/06/2025 11:30 AM',
-  mode: 'Call'
-}, {
-  id: '2189-11101',
-  taskNumber: 'HVAC Maintenance',
-  description: 'Routine HVAC system check',
-  category: 'HVAC',
-  subCategory: 'Maintenance',
-  createdBy: 'Lisa Chen',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'Central',
-  floor: '2',
-  area: 'Mechanical Room',
-  room: 'MR-201',
-  priority: 'p3',
-  status: 'Pending',
-  createdOn: '11/06/2025 9:00 AM',
-  mode: 'Web'
-}, {
-  id: '2189-11100',
-  taskNumber: 'Security Issue',
-  description: 'Broken door lock',
-  category: 'Security',
-  subCategory: 'Lock',
-  createdBy: 'Robert Davis',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'South',
-  floor: '3',
-  area: 'Office',
-  room: 'OF-305',
-  priority: 'p1',
-  status: 'Closed',
-  createdOn: '10/06/2025 4:20 PM',
-  mode: 'Email'
-}, {
-  id: '2189-11099',
-  taskNumber: 'Network Issue',
-  description: 'Internet connectivity problem',
-  category: 'IT',
-  subCategory: 'Network',
-  createdBy: 'Emma Brown',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'East',
-  floor: '1',
-  area: 'IT Room',
-  room: 'IT-101',
-  priority: 'p2',
-  status: 'In Progress',
-  createdOn: '09/06/2025 1:15 PM',
-  mode: 'App'
-}, {
-  id: '2189-11098',
-  taskNumber: 'Furniture Repair',
-  description: 'Broken office chair',
-  category: 'Furniture',
-  subCategory: 'Chair',
-  createdBy: 'David Miller',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'West',
-  floor: '2',
-  area: 'Workspace',
-  room: 'WS-201',
-  priority: 'p3',
-  status: 'Open',
-  createdOn: '08/06/2025 10:45 AM',
-  mode: 'Call'
-}, {
-  id: '2189-11097',
-  taskNumber: 'Lighting Fix',
-  description: 'Flickering lights in hallway',
-  category: 'Electrical',
-  subCategory: 'Lighting',
-  createdBy: 'Jennifer Taylor',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'North',
-  floor: '2',
-  area: 'Hallway',
-  room: '',
-  priority: 'p2',
-  status: 'Pending',
-  createdOn: '07/06/2025 3:00 PM',
-  mode: 'Web'
-}];
-
 // Sortable Chart Item Component
 const SortableChartItem = ({
   id,
@@ -249,6 +57,7 @@ export const TicketDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
+  const [initialTotalTickets, setInitialTotalTickets] = useState(0); // Store unfiltered total
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
   
   const [ticketSummary, setTicketSummary] = useState({
@@ -258,7 +67,8 @@ export const TicketDashboard = () => {
     closed_tickets: 0,
     complaints: 0,
     suggestions: 0,
-    requests: 0
+    requests: 0,
+    pending_tickets: 0
   });
   const [filters, setFilters] = useState<TicketFilters>({});
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
@@ -275,6 +85,11 @@ export const TicketDashboard = () => {
     try {
       const summary = await ticketManagementAPI.getTicketSummary();
       setTicketSummary(summary);
+      
+      // Store initial total count only if not already stored and no filters are applied
+      if (Object.keys(filters).length === 0 && initialTotalTickets === 0) {
+        setInitialTotalTickets(summary.total_tickets);
+      }
     } catch (error) {
       console.error('Error fetching ticket summary:', error);
       toast({
@@ -313,11 +128,23 @@ export const TicketDashboard = () => {
     fetchTicketSummary();
   }, [currentPage, filters]);
 
+  // Initialize with unfiltered total on first load
+  useEffect(() => {
+    if (Object.keys(filters).length === 0) {
+      fetchTicketSummary();
+    }
+  }, []);
+
   // Use ticket summary data from API
   const openTickets = ticketSummary.open_tickets;
   const inProgressTickets = ticketSummary.in_progress_tickets;
   const closedTickets = ticketSummary.closed_tickets;
   const totalSummaryTickets = ticketSummary.total_tickets;
+  const pendingTickets = ticketSummary.pending_tickets;
+
+  // Use initial total for display (unfiltered count)
+  const displayTotalTickets = initialTotalTickets || totalSummaryTickets;
+
 
   // Analytics data with updated colors matching design
   const statusData = [{
@@ -332,7 +159,12 @@ export const TicketDashboard = () => {
     name: 'Closed',
     value: closedTickets,
     color: '#d8dcdd'
-  }];
+  }, {
+    name: 'Pending',
+    value: pendingTickets,
+    color: '#d8dcdd'
+  }
+];
 
   // Ticket type breakdown cards
   const ticketTypeCards = [{
@@ -370,7 +202,13 @@ export const TicketDashboard = () => {
     value: ticketSummary.requests,
     icon: Ticket,
     color: 'bg-indigo-500'
-  }];
+  },{
+    title: 'Pending Tickets',
+    value: ticketSummary.pending_tickets,
+    icon: Ticket,
+    color: 'bg-indigo-500'
+  }
+];
 
   // Calculate category data from tickets
   const safeTickets = tickets || [];
@@ -459,7 +297,7 @@ export const TicketDashboard = () => {
   // Selection handlers
   const handleTicketSelection = (ticketIdString: string, isSelected: boolean) => {
     const ticketId = parseInt(ticketIdString);
-    console.log('TicketDashboard - Ticket selection changed:', ticketId, isSelected);
+    // console.log('TicketDashboard - Ticket selection changed:', ticketId, isSelected);
     setSelectedTickets(prev => {
       if (isSelected) {
         return [...prev, ticketId];
@@ -469,7 +307,7 @@ export const TicketDashboard = () => {
     });
   };
   const handleSelectAll = (isSelected: boolean) => {
-    console.log('TicketDashboard - Select all changed:', isSelected);
+    // console.log('TicketDashboard - Select all changed:', isSelected);
     if (isSelected) {
       const allTicketIds = tickets.map(ticket => ticket.id);
       setSelectedTickets(allTicketIds);
@@ -478,11 +316,11 @@ export const TicketDashboard = () => {
     }
   };
   const handleClearSelection = () => {
-    console.log('TicketDashboard - Clearing selection');
+   // console.log('TicketDashboard - Clearing selection');
     setSelectedTickets([]);
   };
   const handleGoldenTicket = async () => {
-    console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
+    // console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
     try {
       await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
       toast({
@@ -501,7 +339,7 @@ export const TicketDashboard = () => {
     }
   };
   const handleFlag = async () => {
-    console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
+    // console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
     if (selectedTickets.length === 0) {
       toast({
         title: "No tickets selected",
@@ -530,7 +368,7 @@ export const TicketDashboard = () => {
   };
 
   const handleSingleTicketFlag = async (ticketId: number, currentFlagStatus: boolean) => {
-    console.log('TicketDashboard - Single flag action for ticket:', ticketId);
+    // console.log('TicketDashboard - Single flag action for ticket:', ticketId);
     try {
       const response = await ticketManagementAPI.markAsFlagged([ticketId]);
 
@@ -561,7 +399,7 @@ export const TicketDashboard = () => {
   };
 
   const handleSingleTicketGoldenTicket = async (ticketId: number, currentGoldenStatus: boolean) => {
-    console.log('TicketDashboard - Single golden ticket action for ticket:', ticketId);
+    // console.log('TicketDashboard - Single golden ticket action for ticket:', ticketId);
     try {
       const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
 
@@ -614,6 +452,67 @@ export const TicketDashboard = () => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
+  };
+
+  // Handle status card click for filtering
+  const handleStatusCardClick = (cardType: string) => {
+    console.log('Status card clicked:', cardType);
+    let newFilters: TicketFilters = {};
+    
+    if (cardType === 'total') {
+      // Clear all filters to show all records
+     // console.log('Clearing all filters to show all tickets');
+      setFilters({});
+      setCurrentPage(1);
+      return;
+    }
+    
+    if (cardType !== 'total') {
+      // Use the correct API parameter format for status filtering
+      if (cardType === 'open') {
+        newFilters.complaint_status_name_eq = 'Open';
+       // console.log('Setting Open filter with complaint_status_name_eq=Open');
+      } else if (cardType === 'pending') {
+        newFilters.complaint_status_name_eq = 'Pending';
+      //  console.log('Setting Pending filter with complaint_status_name_eq=Pending');
+      } else if (cardType === 'in_progress') {
+        newFilters.complaint_status_name_eq = 'In Progress';
+      //  console.log('Setting In Progress filter with complaint_status_name_eq=In Progress');
+      } else if (cardType === 'closed') {
+        newFilters.complaint_status_name_eq = 'Closed';
+        console.log('Setting Closed filter with complaint_status_name_eq=Closed');
+      }
+    }
+    
+    console.log('Setting filters:', newFilters);
+    setFilters(newFilters);
+    setCurrentPage(1);
+    
+    // Log what the resulting URL will look like
+    const testParams = new URLSearchParams();
+    testParams.append('page', '1');
+    testParams.append('per_page', '20');
+    if (newFilters.complaint_status_name_eq) {
+      testParams.append('q[complaint_status_name_eq]', newFilters.complaint_status_name_eq);
+    }
+    console.log('Expected API URL will be:', `/pms/admin/complaints.json?${testParams.toString()}`);
+  };
+
+  // Helper function to check if a status card is currently active
+  const isStatusCardActive = (cardType: string) => {
+    if (cardType === 'total') return false;
+    
+    if (cardType === 'open') {
+      return filters.complaint_status_name_eq === 'Open';
+    } else if (cardType === 'pending') {
+      return filters.complaint_status_name_eq === 'Pending';
+    } else if (cardType === 'in_progress') {
+      return filters.complaint_status_name_eq === 'In Progress';
+    } else if (cardType === 'closed') {
+      return filters.complaint_status_name_eq === 'Closed';
+    }
+    
+    return false;
   };
 
   // Handle drag end for chart reordering
@@ -1127,35 +1026,62 @@ export const TicketDashboard = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
             {[{
               label: 'Total Tickets',
-              value: totalTickets,
-              icon: Settings
+              value: displayTotalTickets,
+              icon: Settings,
+              type: 'total',
+              clickable: true // Make total tickets clickable to clear filters
             }, {
               label: 'Open',
               value: openTickets,
-              icon: Settings
+              icon: Settings,
+              type: 'open',
+              clickable: true
             }, {
               label: 'In Progress',
               value: inProgressTickets,
-              icon: Settings
+              icon: Settings,
+              type: 'in_progress',
+              clickable: true
             }, {
               label: 'Pending',
-              value: inProgressTickets,
-              icon: Settings
+              value: pendingTickets,
+              icon: Settings,
+              type: 'pending',
+              clickable: true
             }, {
               label: 'Closed',
               value: closedTickets,
-              icon: Settings
+              icon: Settings,
+              type: 'closed',
+              clickable: true
             }].map((item, i) => {
               const IconComponent = item.icon;
-              return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-                <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
-                  <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
+              const isActive = isStatusCardActive(item.type);
+              return (
+                <div 
+                  key={i} 
+                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 transition-all ${
+                    isActive 
+                      ? "" 
+                      : "bg-[#f6f4ee]"
+                  } ${
+                    item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""
+                  }`}
+                  onClick={() => {
+                    if (item.clickable) {
+                      handleStatusCardClick(item.type);
+                    }
+                  }}
+                >
+                  <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
+                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">{item.value}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
+                  </div>
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">{item.value}</div>
-                  <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
-                </div>
-              </div>;
+              );
             })}
           </div>
 
