@@ -206,6 +206,7 @@ export interface CreateTicketFormData {
 }
 
 export interface UserAccountResponse {
+  id: number;
   firstname: string;
   lastname: string;
   department_name: string;
