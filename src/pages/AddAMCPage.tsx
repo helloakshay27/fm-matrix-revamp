@@ -726,26 +726,43 @@ export const AddAMCPage = () => {
               </div>
 
               <div>
-                <ResponsiveDatePicker
-                  value={formData.startDate ? new Date(formData.startDate) : undefined}
-                  onChange={(date) =>
-                    handleInputChange('startDate', date ? date.toISOString().split('T')[0] : '')
-                  }
-                  placeholder="Start Date"
-                  className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+                <TextField
+                  fullWidth
+                  label="Start Date"
+                  type="date"
+                  value={formData.startDate || ''}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  error={!!errors.startDate}
+                  helperText={errors.startDate}
+                  sx={{
+                    height: '45px',
+                    '& .MuiInputBase-root': {
+                      height: '45px',
+                    },
+                  }}
                 />
-
-                {errors.startDate && <FormHelperText error>{errors.startDate}</FormHelperText>}
               </div>
 
               <div>
-                <ResponsiveDatePicker
-                  value={formData.firstService ? new Date(formData.firstService) : undefined}
-                  onChange={(date) => handleInputChange('firstService', date ? date.toISOString().split('T')[0] : '')}
-                  placeholder="First Service Date"
-                  className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+                <TextField
+                  fullWidth
+                  label="First Service Date"
+                  type="date"
+                  value={formData.firstService || ''}
+                  onChange={(e) => handleInputChange('firstService', e.target.value)}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  error={!!errors.firstService}
+                  helperText={errors.firstService}
+                  sx={{
+                    height: '45px',
+                    '& .MuiInputBase-root': {
+                      height: '45px',
+                    },
+                  }}
                 />
-                {errors.firstService && <FormHelperText error>{errors.firstService}</FormHelperText>}
               </div>
 
               <div>
@@ -770,14 +787,26 @@ export const AddAMCPage = () => {
               </div>
 
               <div>
-                <ResponsiveDatePicker
-                  value={formData.endDate ? new Date(formData.endDate) : undefined}
-                  onChange={(date) => handleInputChange('endDate', date ? date.toISOString().split('T')[0] : '')}
-                  placeholder="End Date"
-                  className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
-                  minDate={formData.startDate ? new Date(formData.startDate) : undefined}
+                <TextField
+                  fullWidth
+                  label="End Date"
+                  type="date"
+                  value={formData.endDate || ''}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  error={!!errors.endDate}
+                  helperText={errors.endDate}
+                  inputProps={{
+                    min: formData.startDate || undefined, // enforce minDate
+                  }}
+                  sx={{
+                    height: '45px',
+                    '& .MuiInputBase-root': {
+                      height: '45px',
+                    },
+                  }}
                 />
-                {errors.endDate && <FormHelperText error>{errors.endDate}</FormHelperText>}
               </div>
 
               <div>
