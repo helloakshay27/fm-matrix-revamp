@@ -30,10 +30,11 @@ export const MobileOrderReview: React.FC = () => {
   // Check if user is from external scan (Google Lens, etc.)
   const isExternalScan = searchParams.get('source') === 'external';
   
-  const { items, restaurant, note } = location.state as {
+  const { items, restaurant, note, isExistingOrder } = location.state as {
     items: MenuItem[];
     restaurant: Restaurant;
     note?: string;
+    isExistingOrder?: boolean;
   };
 
   const [showSuccess, setShowSuccess] = useState(false);
@@ -178,15 +179,17 @@ export const MobileOrderReview: React.FC = () => {
         </div>
       </div>
 
-      {/* Confirm Order Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-        <Button
-          onClick={handleConfirmOrder}
-          className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold"
-        >
-          Confirm Order
-        </Button>
-      </div>
+      {/* Confirm Order Button - Only show for new orders */}
+      {!isExistingOrder && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+          <Button
+            onClick={handleConfirmOrder}
+            className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold"
+          >
+            Confirm Order
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -95,12 +95,13 @@ export const MobileOrdersPage: React.FC = () => {
         image: ''
       };
       
-      // Navigate to order review page with order data
+      // Navigate to order review page with order data and flag indicating it's already placed
       navigate('/mobile/restaurant/1/order-review', {
         state: {
           items: mockItems,
           restaurant: mockRestaurant,
-          note: 'Previous order details'
+          note: 'Previous order details',
+          isExistingOrder: true
         }
       });
     }
