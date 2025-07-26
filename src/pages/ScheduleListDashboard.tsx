@@ -167,12 +167,12 @@ export const ScheduleListDashboard = () => {
       onClick: () => setShowFilterDialog(true),
       variant: 'outline' as const,
     },
-    {
-      label: 'Export',
-      icon: Download,
-      onClick: handleExport,
-      variant: 'outline' as const,
-    },
+    // {
+    //   label: 'Export',
+    //   icon: Download,
+    //   onClick: handleExport,
+    //   variant: 'outline' as const,
+    // },
     // Add any additional bulk actions here if needed
     // {
     //   label: 'Bulk Update',
