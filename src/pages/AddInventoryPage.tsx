@@ -102,8 +102,8 @@ export const AddInventoryPage = () => {
         newErrors.quantity = !value
           ? 'Quantity is required'
           : !isValidPositiveNumber(value)
-          ? 'Quantity must be a valid number'
-          : '';
+            ? 'Quantity must be a valid number'
+            : '';
         break;
       case 'cost':
         newErrors.cost = value && !isValidPositiveNumber(value) ? 'Cost must be a valid number' : '';
@@ -112,8 +112,8 @@ export const AddInventoryPage = () => {
         newErrors.minStockLevel = !value
           ? 'Min Stock Level is required'
           : !isValidPositiveNumber(value)
-          ? 'Min Stock Level must be a valid number'
-          : '';
+            ? 'Min Stock Level must be a valid number'
+            : '';
         break;
       case 'maxStockLevel':
         newErrors.maxStockLevel = value && !isValidPositiveNumber(value) ? 'Max Stock Level must be a valid number' : '';
@@ -154,13 +154,13 @@ export const AddInventoryPage = () => {
     newErrors.quantity = !formData.quantity
       ? 'Quantity is required'
       : !isNaN(parseFloat(formData.quantity)) && parseFloat(formData.quantity) >= 0
-      ? ''
-      : 'Quantity must be a valid number';
+        ? ''
+        : 'Quantity must be a valid number';
     newErrors.minStockLevel = !formData.minStockLevel
       ? 'Min Stock Level is required'
       : !isNaN(parseFloat(formData.minStockLevel)) && parseFloat(formData.minStockLevel) >= 0
-      ? ''
-      : 'Min Stock Level must be a valid number';
+        ? ''
+        : 'Min Stock Level must be a valid number';
     newErrors.maxStockLevel = formData.maxStockLevel && (isNaN(parseFloat(formData.maxStockLevel)) || parseFloat(formData.maxStockLevel) < 0)
       ? 'Max Stock Level must be a valid number'
       : '';
@@ -593,16 +593,26 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <ResponsiveDatePicker
-                    value={formData.expiryDate ? new Date(formData.expiryDate) : undefined}
-                    onChange={(date) => handleInputChange('expiryDate', date ? date.toISOString().split('T')[0] : '')}
-                    placeholder="Expiry Date"
-                    className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+                  <TextField
+                    label="Expiry Date"
+                    type="date"
+                    value={formData.expiryDate || ''}
+                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    InputLabelProps={{
+                      shrink: true, // ensures the label floats above the field
+                    }}
+                    fullWidth
+                    error={Boolean(errors.expiryDate)}
+                    helperText={errors.expiryDate}
+                    sx={{
+                      height: '45px',
+                      '& .MuiInputBase-root': {
+                        height: '45px',
+                      },
+                    }}
                   />
-                  {errors.expiryDate && (
-                    <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
-                  )}
                 </div>
+
 
                 <div>
                   <FormControl fullWidth variant="outlined" sx={selectStyles}>

@@ -568,15 +568,15 @@ export const InventoryDashboard = () => {
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = 'amc_export.xlsx';
+      link.download = 'inventories.xlsx';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-      toast.success('AMC data exported successfully');
+      toast.success('Inventory data exported successfully');
     } catch (error) {
       console.error('Export failed:', error);
-      toast.error('Failed to export AMC data');
+      toast.error('Failed to export inventory data');
     }
   };
 
