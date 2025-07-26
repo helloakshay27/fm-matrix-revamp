@@ -1723,14 +1723,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-            <AssetImageUpload
-              categoryName="Land"
-              categoryKey="landAssetImage"
-              onImageUpload={handleFileUpload}
-              onImageRemove={removeFile}
-              images={attachments.landAssetImage}
-            />
-
+           
             {/* Basic Identification */}
             <Card>
               <CardHeader>
@@ -2420,9 +2413,13 @@ const hasFiles = () => {
                           : `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
                         }
                       </div>
+                        
+
                     </div>
+                    
                   )}
                 </div>
+
 
                 {/* Custom Fields */}
                 {customFields.miscellaneous.map((field) => (
@@ -2452,6 +2449,13 @@ const hasFiles = () => {
                 ))}
               </CardContent>
             </Card>
+            <AssetImageUpload
+                categoryName="Land"
+                categoryKey="landAssetImage"
+                onImageUpload={handleFileUpload}
+                onImageRemove={removeFile}
+                images={attachments.landAssetImage}
+              />
           </div>
         </LocalizationProvider>
       )}
@@ -2461,13 +2465,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-            <AssetImageUpload
-              categoryName="Leasehold Improvement"
-              categoryKey="leaseholdAssetImage"
-              onImageUpload={handleFileUpload}
-              onImageRemove={removeFile}
-              images={attachments.leaseholdAssetImage}
-            />
+          
 
             {/* Basic Identification */}
             <Card>
@@ -2863,15 +2861,17 @@ const hasFiles = () => {
                     <MuiSelect
                       label="Depreciation Method"
                       defaultValue=""
-                      onChange={(e) =>
+                      onChange={(e) =>{
                         handleExtraFieldChange(
                           'depreciation_method',
                           (e.target as HTMLInputElement).value,
                           'select',
                           'leaseholdFinancial',
                           'Depreciation Method'
-                        )
+                        );
+                        handleFieldChange('depreciation_method', e.target.value);
                       }
+                    }
                     >
                       <MenuItem value="">Select Method</MenuItem>
                       <MenuItem value="straight">Straight Line</MenuItem>
@@ -2889,15 +2889,18 @@ const hasFiles = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={(e) =>
+                    onChange={(e) =>{
                       handleExtraFieldChange(
                         'useful_life_years',
                         (e.target as HTMLInputElement).value,
                         'number',
                         'leaseholdFinancial',
                         'Useful Life (Years)'
-                      )
+                      );
+                       handleFieldChange('useful_life', e.target.value);
+
                     }
+                  }
                   />
                   <TextField
                     label="Depreciation Rate (%)"
@@ -2913,6 +2916,17 @@ const hasFiles = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
+                    onChange={(e) =>{
+                      handleExtraFieldChange(
+                        'depreciation_rate',
+                        (e.target as HTMLInputElement).value,
+                        'number',
+                        'leaseholdFinancial',
+                        'Depreciation Rate'
+                      );
+                       handleFieldChange('depreciation_rate', e.target.value)
+                    }
+                    }
                   />
                   <TextField
                     label="Current Book Value (INR)"
@@ -3270,6 +3284,13 @@ const hasFiles = () => {
                 </div>
               </CardContent>
             </Card>
+           <AssetImageUpload
+              categoryName="Leasehold Improvement"
+              categoryKey="leaseholdAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.leaseholdAssetImage}
+            />
           </div>
         </LocalizationProvider>
       )}
@@ -3279,13 +3300,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-            <AssetImageUpload
-              categoryName="Vehicle"
-              categoryKey="vehicleAssetImage"
-              onImageUpload={handleFileUpload}
-              onImageRemove={removeFile}
-              images={attachments.vehicleAssetImage}
-            />
+            
 
             {/* Basic Identification */}
             <Card>
@@ -3719,149 +3734,144 @@ const hasFiles = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <DatePicker
-                    label="Date of Purchase"
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        variant: 'outlined',
-                        sx: {
-                          '& .MuiOutlinedInput-root': {
-                            height: { xs: '36px', md: '45px' }
-                          }
-                        }
+                  label="Date of Purchase"
+                  slotProps={{
+                    textField: {
+                    fullWidth: true,
+                    variant: 'outlined',
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
                       }
-                    }}
-                    onChange={(date) =>
-                      handleExtraFieldChange(
-                        'purchase_date',
-                        date,
-                        'date',
-                        'vehicleFinancial',
-                        'Date of Purchase'
-                      )
                     }
+                    }
+                  }}
+                  onChange={date => {
+                    handleExtraFieldChange(
+                    'purchase_date',
+                    date,
+                    'date',
+                    'vehicleFinancial',
+                    'Date of Purchase'
+                    );
+                    handleFieldChange('commisioning_date', date);
+                  }}
                   />
                   <div className="flex gap-2">
-                    <FormControl
-                      sx={{
-                        minWidth: 80,
-                        '& .MuiOutlinedInput-root': {
-                          height: { xs: '36px', md: '45px' }
-                        }
-                      }}
+                  <FormControl
+                    sx={{
+                    minWidth: 80,
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
+                    }
+                    }}
+                  >
+                    <InputLabel>Currency</InputLabel>
+                    <MuiSelect
+                    label="Currency"
+                    defaultValue="inr"
+                    onChange={e => {
+                      handleExtraFieldChange(
+                      'currency',
+                      (e.target as HTMLInputElement).value,
+                      'select',
+                      'vehicleFinancial',
+                      'Currency'
+                      );
+                    }}
                     >
-                      <InputLabel>Currency</InputLabel>
-                      <MuiSelect
-                        label="Currency"
-                        defaultValue="inr"
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            'currency',
-                            (e.target as HTMLInputElement).value,
-                            'select',
-                            'vehicleFinancial',
-                            'Currency'
-                          )
-                        }
-                      >
-                        <MenuItem value="inr">INR</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                    <TextField
-                      label="Purchase Cost"
-                      placeholder="Enter purchase cost"
-                      variant="outlined"
-                      type="number"
-                      sx={{
-                        flexGrow: 1,
-                        '& .MuiOutlinedInput-root': {
-                          height: { xs: '36px', md: '45px' }
-                        }
-                      }}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                      }}
-                      onChange={e => handleFieldChange('purchase_cost', e.target.value)}
-
-                    />
+                    <MenuItem value="inr">INR</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                  <TextField
+                    label="Purchase Cost"
+                    placeholder="Enter purchase cost"
+                    variant="outlined"
+                    type="number"
+                    sx={{
+                    flexGrow: 1,
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
+                    }
+                    }}
+                    InputProps={{
+                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                    }}
+                    onChange={e => handleFieldChange('purchase_cost', e.target.value)}
+                  />
                   </div>
                   <TextField
-                    label="Depreciation Rate (%)"
-                    placeholder="Linked to depreciation module"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        height: { xs: '36px', md: '45px' }
-                      }
-                    }}
-                    onChange={(e) =>
-                      handleExtraFieldChange(
-                        'depreciation_rate',
-                        (e.target as HTMLInputElement).value,
-                        'number',
-                        'vehicleFinancial',
-                        'Depreciation Rate'
-                      )
+                  label="Depreciation Rate (%)"
+                  placeholder="Linked to depreciation module"
+                  variant="outlined"
+                  fullWidth
+                  type="number"
+                  InputProps={{
+                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                    height: { xs: '36px', md: '45px' }
                     }
+                  }}
+                  onChange={e =>
+                    handleExtraFieldChange(
+                    'depreciation_rate',
+                    (e.target as HTMLInputElement).value,
+                    'number',
+                    'vehicleFinancial',
+                    'Depreciation Rate'
+                    )
+                  }
                   />
                   <TextField
-                    label="Current Book Value (INR)"
-                    placeholder="Calculated or manually entered"
-                    variant="outlined"
-                    fullWidth
-                    type="number"
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        height: { xs: '36px', md: '45px' }
-                      }
-                    }}
-                    onChange={(e) =>
-                      handleExtraFieldChange(
-                        'current_book_value',
-                        (e.target as HTMLInputElement).value,
-                        'number',
-                        'vehicleFinancial',
-                        'Current Book Value'
-                      )
+                  label="Current Book Value (INR)"
+                  placeholder="Calculated or manually entered"
+                  variant="outlined"
+                  fullWidth
+                  type="number"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                    height: { xs: '36px', md: '45px' }
                     }
+                  }}
+                  onChange={e =>
+                    handleExtraFieldChange(
+                    'current_book_value',
+                    (e.target as HTMLInputElement).value,
+                    'number',
+                    'vehicleFinancial',
+                    'Current Book Value'
+                    )
+                  }
                   />
 
                   {/* Custom Fields */}
-                  {customFields.vehicleTechnicalSpecs.map((field) => (
-                    <div key={field.id} className="relative">
-                      <TextField
-                        label={field.name}
-                        placeholder={`Enter ${field.name}`}
-                        variant="outlined"
-                        fullWidth
-                        value={field.value}
-                        // onChange={(e) => handleCustomFieldChange('vehicleTechnicalSpecs', field.id, e.target.value)}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            height: { xs: '36px', md: '45px' }
-                          }
-                        }}
-                        onChange={(e) => {
-
-                          handleCustomFieldChange('vehicleTechnicalSpecs', field.id, e.target.value);
-                        }}
-
-                      />
-                      <button
-                        onClick={() => removeCustomField('vehicleTechnicalSpecs', field.id)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
+                  {customFields.vehicleFinancial.map(field => (
+                  <div key={field.id} className="relative">
+                    <TextField
+                    label={field.name}
+                    placeholder={`Enter ${field.name}`}
+                    variant="outlined"
+                    fullWidth
+                    value={field.value}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
+                      }
+                    }}
+                    onChange={e => handleCustomFieldChange('vehicleFinancial', field.id, e.target.value)}
+                    />
+                    <button
+                    onClick={() => removeCustomField('vehicleFinancial', field.id)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                    >
+                    <X className="w-3 h-3" />
+                    </button>
+                  </div>
                   ))}
                 </div>
               </CardContent>
@@ -4293,6 +4303,13 @@ const hasFiles = () => {
                 ))}
               </CardContent>
             </Card>
+          <AssetImageUpload
+              categoryName="Vehicle"
+              categoryKey="vehicleAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.vehicleAssetImage}
+            />
           </div>
         </LocalizationProvider>
       )}
@@ -4302,13 +4319,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-            <AssetImageUpload
-              categoryName="Building"
-              categoryKey="buildingAssetImage"
-              onImageUpload={handleFileUpload}
-              onImageRemove={removeFile}
-              images={attachments.buildingAssetImage}
-            />
+            
 
             {/* Basic Identification */}
             <Card>
@@ -5355,6 +5366,13 @@ const hasFiles = () => {
                 ))}
               </CardContent>
             </Card>
+            <AssetImageUpload
+              categoryName="Building"
+              categoryKey="buildingAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.buildingAssetImage}
+            />
           </div>
         </LocalizationProvider>
       )}

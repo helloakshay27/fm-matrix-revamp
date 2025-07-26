@@ -118,7 +118,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                         <TableHead className="text-gray-600 font-medium">Sr. No.</TableHead>
                         <TableHead className="text-gray-600 font-medium">Visit Date</TableHead>
                         <TableHead className="text-gray-600 font-medium">Technician Name</TableHead>
-                        <TableHead className="text-gray-600 font-medium">Remarks</TableHead>
+                        {/* <TableHead className="text-gray-600 font-medium">Remarks</TableHead> */}
                         <TableHead className="text-gray-600 font-medium">AMC Period</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -129,7 +129,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                             <TableCell>{idx + 1}</TableCell>
                             <TableCell>{row.visitDate}</TableCell>
                             <TableCell>{row.technicianName}</TableCell>
-                            <TableCell>{row.remarks}</TableCell>
+                            {/* <TableCell>{row.remarks}</TableCell> */}
                             <TableCell>{row.amcPeriod}</TableCell>
                           </TableRow>
                         ))
