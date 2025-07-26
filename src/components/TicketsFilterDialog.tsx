@@ -136,11 +136,32 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   );
 
   const handleSubmit = () => {
+    // Validate date range - both dates must be selected if one is selected
+    if ((dateFrom && !dateTo) || (!dateFrom && dateTo)) {
+      toast({
+        title: "Validation Error",
+        description: "Please select both 'Date From' and 'Date To' for the date range.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const filters: TicketFilters = {};
 
-    // Build date range
+    // Build date range in MM/DD/YYYY - MM/DD/YYYY format
     if (dateFrom && dateTo) {
-      filters.date_range = `${dateFrom}+-+${dateTo}`;
+      // Convert from YYYY-MM-DD to MM/DD/YYYY format
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
+      };
+      
+      const formattedDateFrom = formatDate(dateFrom);
+      const formattedDateTo = formatDate(dateTo);
+      filters.date_range = `${formattedDateFrom} - ${formattedDateTo}`;
     }
 
     // Add other filters
