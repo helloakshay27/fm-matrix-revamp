@@ -299,7 +299,10 @@ export const AddTicketDashboard = () => {
         floor_id: 1,
         // Add user parameters based on selection type
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
-        ...(onBehalfOf !== 'self' && selectedUserId && { sel_id_user: selectedUserId }),
+        ...(onBehalfOf !== 'self' && selectedUserId && { 
+          sel_id_user: selectedUserId,
+          id_user: selectedUserId 
+        }),
         ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
         ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
         ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) })
