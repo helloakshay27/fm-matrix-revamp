@@ -225,28 +225,67 @@ export const LoginPage = () => {
   const renderEmailStep = () => (
     <>
 
-      <div className="flex gap-6 items-center">
-        <label className="flex items-center space-x-2 cursor-pointer">
+      <div className="flex gap-4 mb-6">
+        <label
+          className={`flex-1 relative p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+            loginMethod === 'email'
+              ? 'border-[#C72030] bg-[#C72030]/5'
+              : 'border-gray-200 hover:border-gray-300 bg-white'
+          }`}
+        >
           <input
             type="radio"
             name="loginMethod"
             value="email"
             checked={loginMethod === 'email'}
             onChange={() => setLoginMethod('email')}
-            className="accent-[#C72030]"
+            className="sr-only" // Hide default radio button
           />
-          <span className="text-sm sm:text-base text-gray-700">Login with Email</span>
+          <div className="flex items-center gap-3">
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              loginMethod === 'email' ? 'border-[#C72030]' : 'border-gray-300'
+            }`}>
+              {loginMethod === 'email' && (
+                <div className="w-3 h-3 rounded-full bg-[#C72030]" />
+              )}
+            </div>
+            <span className={`font-medium ${
+              loginMethod === 'email' ? 'text-[#C72030]' : 'text-gray-700'
+            }`}>
+              Login with Email
+            </span>
+          </div>
         </label>
-        <label className="flex items-center space-x-2 cursor-pointer">
+
+        <label
+          className={`flex-1 relative p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+            loginMethod === 'phone'
+              ? 'border-[#C72030] bg-[#C72030]/5'
+              : 'border-gray-200 hover:border-gray-300 bg-white'
+          }`}
+        >
           <input
             type="radio"
             name="loginMethod"
             value="phone"
             checked={loginMethod === 'phone'}
             onChange={() => setLoginMethod('phone')}
-            className="accent-[#C72030]"
+            className="sr-only" // Hide default radio button
           />
-          <span className="text-sm sm:text-base text-gray-700">Login with Phone no.</span>
+          <div className="flex items-center gap-3">
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              loginMethod === 'phone' ? 'border-[#C72030]' : 'border-gray-300'
+            }`}>
+              {loginMethod === 'phone' && (
+                <div className="w-3 h-3 rounded-full bg-[#C72030]" />
+              )}
+            </div>
+            <span className={`font-medium ${
+              loginMethod === 'phone' ? 'text-[#C72030]' : 'text-gray-700'
+            }`}>
+              Login with Phone
+            </span>
+          </div>
         </label>
       </div>
 
@@ -445,7 +484,7 @@ export const LoginPage = () => {
       </div>
 
       {/* Right Side - Forgot Password Form */}
-      <div className="w-full max-w-lg  bg-opacity-90 flex flex-col justify-center px-12 py-12">
+      <div className="w-full max-w-lg bg-[#F6F4EE]/70 backdrop-blur-lg p-4 rounded-xl flex flex-col justify-center px-12 py-12">
         {/* Logo and Branding */}
 
         {/* Title and Description */}
