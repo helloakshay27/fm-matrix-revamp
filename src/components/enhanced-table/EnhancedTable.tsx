@@ -370,14 +370,29 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport || (() => {
-                // Download Excel file from API
-                const link = document.createElement('a');
-                link.href = 'https://fm-uat-api.lockated.com/admin/complaints.xlsx';
-                link.download = 'complaints.xlsx';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+              onClick={handleExport || (async () => {
+                try {
+                  const response = await fetch('https://fm-uat-api.lockated.com/admin/complaints.xlsx', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                  });
+                  
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'complaints.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  }
+                } catch (error) {
+                  console.error('Export failed:', error);
+                }
               })}
               className="flex items-center gap-2"
             >
