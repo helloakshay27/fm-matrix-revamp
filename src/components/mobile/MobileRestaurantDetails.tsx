@@ -145,17 +145,17 @@ export const MobileRestaurantDetails: React.FC<MobileRestaurantDetailsProps> = (
                   className="w-full h-full object-cover"
                 />
                 
-                {/* Add Button - Half cut below image */}
-                <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
+                {/* Add Button - Fully visible below image */}
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
                   {!item.quantity || item.quantity === 0 ? (
                     <Button
                       onClick={() => addItem(item.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg border border-red-700 h-8"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg border border-red-700"
                     >
                       Add
                     </Button>
                   ) : (
-                    <div className="flex items-center border-2 border-red-600 rounded-lg bg-white shadow-lg h-8">
+                    <div className="flex items-center border-2 border-red-600 rounded-lg bg-white shadow-lg">
                       <button
                         onClick={() => updateQuantity(item.id, -1)}
                         className="px-2 py-1 text-red-600 hover:bg-red-50 text-lg font-bold"
