@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { ArrowLeft, Upload, X, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
+import { getToken } from '@/utils/auth';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SelectedTicket {
   id: number;
@@ -60,9 +72,20 @@ interface ComplaintMode {
   name: string;
 }
 
+interface AssetOption {
+  id: number;
+  name: string;
+}
+
+interface ServiceOption {
+  id: number;
+  service_name: string;
+}
+
 const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
   const { toast } = useToast();
   const dispatch = useAppDispatch();
   const { data: helpdeskData, loading: helpdeskLoading } = useAppSelector(state => state.helpdeskCategories);
@@ -75,7 +98,7 @@ const UpdateTicketsPage: React.FC = () => {
     adminPriority: '',
     softClose: '',
     refNumber: '',
-    issueRelatedTo: { project: false, pm: false },
+    issueRelatedTo: '',
     associatedTo: { asset: false, service: false },
     comments: '',
     cost: '',
@@ -110,11 +133,151 @@ const UpdateTicketsPage: React.FC = () => {
     description: '',
     attachments: [] as File[]
   });
+  const [assetOptions, setAssetOptions] = useState<AssetOption[]>([]);
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [reviewDate, setReviewDate] = useState<Date>();
+  const [ticketApiData, setTicketApiData] = useState<any>(null); // Store original API data
+  const [costApprovalRequests, setCostApprovalRequests] = useState<Array<{
+    id: string;
+    amount: string;
+    comments: string;
+    createdOn: string;
+    createdBy: string;
+    attachments: File[];
+  }>>([]);
+
+  // Fetch ticket data for editing
+  const fetchTicketData = async (ticketId: string) => {
+    try {
+      console.log('Fetching ticket data for ID:', ticketId);
+      const response = await apiClient.get(`/pms/admin/complaints/${ticketId}.json`);
+      const ticketData = response.data;
+      
+      console.log('Received ticket data:', ticketData);
+      console.log('Category type:', ticketData.category_type);
+      console.log('Sub category type:', ticketData.sub_category_type);
+      
+      // Store original API data for later use
+      setTicketApiData(ticketData);
+      
+      // Find the category ID that matches the category name from API
+      const matchingCategory = helpdeskData?.helpdesk_categories?.find(
+        category => category.name === ticketData.category_type
+      );
+
+      // Find the complaint mode ID that matches the mode name from API
+      const matchingMode = complaintModes.find(
+        mode => mode.name === ticketData.complaint_mode
+      );
+
+      // Find the status ID that matches the status name from API
+      const matchingStatus = complaintStatuses.find(
+        status => status.name === ticketData.issue_status
+      );
+
+      // Find the user ID that matches the assigned_to name from API
+      console.log('Looking for assigned_to match:', ticketData.assigned_to);
+      console.log('Available fmUsers:', fmUsers);
+      const matchingUser = fmUsers.find(user => {
+        const fullName = `${user.firstname} ${user.lastname}`;
+        const apiAssignedTo = ticketData.assigned_to?.trim() || '';
+        console.log('Comparing:', fullName, 'with:', apiAssignedTo);
+        
+        // Try exact match first
+        if (fullName === apiAssignedTo) return true;
+        
+        // Try partial matches
+        if (apiAssignedTo.includes(fullName) || fullName.includes(apiAssignedTo)) return true;
+        
+        // Try case-insensitive match
+        if (fullName.toLowerCase() === apiAssignedTo.toLowerCase()) return true;
+        
+        return false;
+      });
+      console.log('Found matching user:', matchingUser);
+
+      // Populate form with API data
+      setFormData(prev => ({
+        ...prev,
+        title: ticketData.heading || '',
+        adminPriority: ticketData.priority || '',
+        selectedStatus: matchingStatus?.id.toString() || '',
+        proactiveReactive: ticketData.proactive_reactive || '',
+        serviceType: ticketData.service_type || '',
+        externalPriority: ticketData.external_priority || '',
+        preventiveAction: ticketData.preventive_action || '',
+        impact: ticketData.impact || '',
+        correction: ticketData.correction || '',
+        rootCause: ticketData.root_cause || '',
+        categoryType: matchingCategory?.id.toString() || '',
+        subCategoryType: '', // Will be set after subcategories are fetched
+        assignTo: matchingUser?.id.toString() || '',
+        mode: matchingMode?.id.toString() || '',
+        responsiblePerson: ticketData.responsible_person || '',
+        issueRelatedTo: ticketData.issue_related_to || '',
+        refNumber: ticketData.reference_number || '',
+        correctiveAction: ticketData.corrective_action || '',
+        selectedAsset: ticketData.asset_service === 'Asset' ? (ticketData.asset_id || '') : '',
+        associatedTo: {
+          asset: ticketData.asset_service === 'Asset',
+          service: ticketData.asset_service === 'Service'
+        }
+      }));
+
+      // Set review date if available
+      console.log('Review tracking from API:', ticketData.review_tracking);
+      if (ticketData.review_tracking && ticketData.review_tracking !== null) {
+        // Check if it's in DD/MM/YYYY format
+        const dateMatch = ticketData.review_tracking.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (dateMatch) {
+          const [, day, month, year] = dateMatch;
+          const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          if (!isNaN(parsedDate.getTime())) {
+            setReviewDate(parsedDate);
+            console.log('Set review date from DD/MM/YYYY format:', parsedDate);
+          } else {
+            console.log('Invalid date parsed from DD/MM/YYYY:', parsedDate);
+          }
+        } else {
+          // Try ISO format as fallback
+          const date = new Date(ticketData.review_tracking);
+          if (!isNaN(date.getTime())) {
+            setReviewDate(date);
+            console.log('Set review date from ISO format:', date);
+          } else {
+            console.log('Invalid date value:', ticketData.review_tracking);
+          }
+        }
+      } else {
+        console.log('No review tracking date available');
+        setReviewDate(undefined);
+      }
+
+      // Fetch sub-categories if category is set
+      if (matchingCategory?.id) {
+        fetchSubCategories(matchingCategory.id.toString());
+      }
+      
+    } catch (error) {
+      console.error('Error fetching ticket data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load ticket data.",
+        variant: "destructive"
+      });
+    }
+  };
 
   useEffect(() => {
-    if (location.state?.selectedTickets) {
+    // If we have an ID from the URL, fetch the ticket data
+    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0 && fmUsers.length > 0 && complaintStatuses.length > 0) {
+      fetchTicketData(id);
+    }
+    // If we have selected tickets from navigation state, use the first one
+    else if (location.state?.selectedTickets) {
       setSelectedTickets(location.state.selectedTickets);
-      // Pre-populate form with first ticket's data if available
       const firstTicket = location.state.selectedTickets[0];
       if (firstTicket) {
         setFormData(prev => ({
@@ -129,7 +292,7 @@ const UpdateTicketsPage: React.FC = () => {
         }));
       }
     }
-  }, [location.state]);
+  }, [id, location.state, helpdeskData, complaintModes, fmUsers, complaintStatuses]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -159,6 +322,46 @@ const UpdateTicketsPage: React.FC = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const fetchAssets = async () => {
+    if (isLoadingAssets) return;
+    
+    setIsLoadingAssets(true);
+    try {
+      const response = await apiClient.get('/pms/assets/get_assets.json');
+      setAssetOptions(response.data || []);
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch assets",
+        variant: "destructive"
+      });
+      setAssetOptions([]);
+    } finally {
+      setIsLoadingAssets(false);
+    }
+  };
+
+  const fetchServices = async () => {
+    if (isLoadingServices) return;
+    
+    setIsLoadingServices(true);
+    try {
+      const response = await apiClient.get('/pms/services/get_services.json');
+      setServiceOptions(response.data || []);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch services",
+        variant: "destructive"
+      });
+      setServiceOptions([]);
+    } finally {
+      setIsLoadingServices(false);
+    }
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -193,6 +396,21 @@ const UpdateTicketsPage: React.FC = () => {
       }
       
       setSubCategories(categories);
+
+      // If we have stored ticket API data, find and set the matching subcategory
+      if (ticketApiData?.sub_category_type && categories.length > 0) {
+        const matchingSubCategory = categories.find(
+          subCat => subCat.name === ticketApiData.sub_category_type
+        );
+        
+        if (matchingSubCategory) {
+          setFormData(prev => ({
+            ...prev,
+            subCategoryType: matchingSubCategory.id.toString()
+          }));
+        }
+      }
+      
     } catch (error) {
       console.error('Error fetching sub-categories:', error);
       setSubCategories([]);
@@ -207,13 +425,33 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleCheckboxChange = (group: string, field: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [group]: {
-        ...prev[group as keyof typeof prev] as any,
-        [field]: checked
+    if (group === 'associatedTo') {
+      setFormData(prev => ({
+        ...prev,
+        associatedTo: {
+          asset: field === 'asset' ? checked : false,
+          service: field === 'service' ? checked : false
+        },
+        selectedAsset: '' // Reset selected asset when switching between asset/service
+      }));
+
+      // Fetch data based on selection
+      if (checked) {
+        if (field === 'asset') {
+          fetchAssets();
+        } else if (field === 'service') {
+          fetchServices();
+        }
       }
-    }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [group]: {
+          ...prev[group as keyof typeof prev] as any,
+          [field]: checked
+        }
+      }));
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,6 +490,19 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleCostPopupSubmit = () => {
+    // Create new cost approval request
+    const newRequest = {
+      id: Date.now().toString(),
+      amount: costPopupData.cost,
+      comments: costPopupData.description,
+      createdOn: new Date().toLocaleDateString(),
+      createdBy: 'Current User', // You can replace this with actual user data
+      attachments: costPopupData.attachments
+    };
+
+    // Add to cost approval requests
+    setCostApprovalRequests(prev => [...prev, newRequest]);
+
     // Update main form data with popup data
     setFormData(prev => ({
       ...prev,
@@ -259,7 +510,10 @@ const UpdateTicketsPage: React.FC = () => {
       description: costPopupData.description
     }));
     setAttachments(prev => [...prev, ...costPopupData.attachments]);
+    
+    // Close popup and reset data
     setShowCostPopup(false);
+    setCostPopupData({ cost: '', description: '', attachments: [] });
   };
 
   const handleCostPopupClose = () => {
@@ -269,21 +523,157 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('=== HANDLE SUBMIT STARTED ===');
+    console.log('handleSubmit called');
+    console.log('Current selectedTickets:', selectedTickets);
+    console.log('URL ID parameter:', id);
+    console.log('Form data state:', formData);
+    
     setIsSubmitting(true);
+    
     try {
-      // Here you would implement the actual update API call
-      // For now, just showing success message
+      // Use the URL ID parameter if selectedTickets is empty
+      let ticketId: number;
+      
+      if (selectedTickets.length > 0) {
+        ticketId = selectedTickets[0].id;
+        console.log('Using ticketId from selectedTickets:', ticketId);
+      } else if (id) {
+        ticketId = parseInt(id);
+        console.log('Using ticketId from URL parameter:', ticketId);
+      } else {
+        console.error('No ticket ID available - selectedTickets empty and no URL id');
+        toast({
+          title: "Error",
+          description: "No ticket ID found for update.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('Final ticket ID to use:', ticketId);
+
+      // Get the first selected ticket for the complaint ID
+      console.log('Form Data before API call:', formData);
+      console.log('Review Date before API call:', reviewDate);
+      
+      // Prepare form data for API
+      const formDataToSend = new FormData();
+      
+      // Complaint Log data
+      formDataToSend.append('complaint_log[complaint_id]', ticketId.toString());
+      formDataToSend.append('complaint_log[society_staff_type]', 'User');
+      formDataToSend.append('complaint_log[status_reason]', '');
+      formDataToSend.append('complaint_log[expected_date]', '');
+      formDataToSend.append('complaint_log[complaint_status_id]', formData.selectedStatus || '');
+      formDataToSend.append('complaint_log[assigned_to]', formData.assignTo || '');
+      formDataToSend.append('complaint_log[priority]', formData.adminPriority || '');
+      formDataToSend.append('complaint_log[comment]', formData.comments || '');
+      formDataToSend.append('save_and_show_detail', 'true');
+      formDataToSend.append('custom_redirect', `/pms/admin/complaints/${ticketId}`);
+      
+      // Complaint data
+      formDataToSend.append('complaint[complaint_type]', 'Request');
+      formDataToSend.append('complaint[preventive_action]', formData.preventiveAction || '');
+      formDataToSend.append('complaint[person_id]', '');
+      
+      // Format review tracking date properly
+      if (reviewDate) {
+        const formattedDate = format(reviewDate, 'yyyy-MM-dd');
+        formDataToSend.append('complaint[review_tracking_date]', formattedDate);
+        console.log('Review date formatted:', formattedDate);
+      } else {
+        formDataToSend.append('complaint[review_tracking_date]', '');
+      }
+      
+      formDataToSend.append('complaint[category_type_id]', formData.categoryType || '');
+      formDataToSend.append('complaint[proactive_reactive]', formData.proactiveReactive || '');
+      formDataToSend.append('complaint[sub_category_id]', formData.subCategoryType || '');
+      formDataToSend.append('complaint[external_priority]', formData.externalPriority || '');
+      formDataToSend.append('complaint[complaint_mode_id]', formData.mode || '');
+      formDataToSend.append('complaint[root_cause]', formData.rootCause || '');
+      formDataToSend.append('complaint[impact]', formData.impact || '');
+      formDataToSend.append('complaint[correction]', formData.correction || '');
+      formDataToSend.append('complaint[reference_number]', formData.refNumber || '');
+      formDataToSend.append('complaint[corrective_action]', formData.correctiveAction || '');
+      formDataToSend.append('complaint[service_type]', formData.serviceType || '');
+      formDataToSend.append('complaint[issue_related_to]', formData.issueRelatedTo || '');
+      formDataToSend.append('complaint[cost_involved]', formData.costInvolved ? 'true' : 'false');
+      
+      // Add cost approval data if cost is involved
+      if (formData.costInvolved && costPopupData.cost) {
+        const timestamp = Date.now();
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][created_by_id]`, '12437');
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][cost]`, costPopupData.cost);
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][comment]`, costPopupData.description || '');
+        formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][_destroy]`, 'false');
+        
+        // Add attachments if any
+        costPopupData.attachments.forEach((file, index) => {
+          const attachmentTimestamp = Date.now() + index;
+          formDataToSend.append(`complaint[cost_approval_requests_attributes][${timestamp}][attachments_attributes][${attachmentTimestamp}][_destroy]`, 'false');
+        });
+      }
+      
+      formDataToSend.append('checklist_type', 'Asset');
+      formDataToSend.append('asset_id', formData.selectedAsset || '');
+      formDataToSend.append('service_id', '');
+      
+      // Add file attachments if any
+      attachments.forEach((file) => {
+        formDataToSend.append('attachments[]', file);
+      });
+
+      // Log FormData contents for debugging
+      console.log('FormData contents:');
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(key, value);
+      }
+
+      // Get token
+      const token = getToken();
+      console.log('Token available:', !!token);
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      console.log('Making API call to:', 'https://fm-uat-api.lockated.com/complaint_logs.json');
+
+      // Make API call
+      const response = await fetch('https://fm-uat-api.lockated.com/complaint_logs.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formDataToSend
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('API Response:', result);
+      
       toast({
         title: "Success",
-        description: `Successfully updated ${selectedTickets.length} ticket(s).`,
+        description: `Successfully updated ticket ${ticketId}.`,
       });
       
-      navigate(-1);
+      // Redirect to ticket list page
+      navigate('/maintenance/ticket');
     } catch (error) {
       console.error('Error updating tickets:', error);
       toast({
         title: "Error",
-        description: "Failed to update tickets. Please try again.",
+        description: `Failed to update tickets: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -292,8 +682,8 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="w-full p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button
@@ -304,274 +694,318 @@ const UpdateTicketsPage: React.FC = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-gray-900">COMPLAINT EDIT</h1>
+          <h1 className="text-xl font-semibold text-gray-900">TICKET EDIT</h1>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Row 1 */}
             {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-              <textarea
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <Textarea
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Feedback: Tap Faulty, Wc Choked, Hand Dryer Faulty, Tissue Paper Missing"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                rows={1}
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
               />
             </div>
 
             {/* Preventive Action */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Preventive Action</label>
-              <input
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Preventive Action</label>
+              <Input
                 type="text"
                 value={formData.preventiveAction}
                 onChange={(e) => handleInputChange('preventiveAction', e.target.value)}
-                placeholder="nn"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                placeholder=""
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={formData.selectedStatus}
-                onChange={(e) => handleInputChange('selectedStatus', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Closed</option>
-                {complaintStatuses.map((status) => (
-                  <option key={status.id} value={status.id}>
-                    {status.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <Select value={formData.selectedStatus} onValueChange={(value) => handleInputChange('selectedStatus', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Closed"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  {complaintStatuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {status.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 2 */}
             {/* Responsible Person */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Responsible Person</label>
-              <select
-                value={formData.responsiblePerson}
-                onChange={(e) => handleInputChange('responsiblePerson', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Responsible Person Name</option>
-                {fmUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.firstname} {user.lastname}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Responsible Person</label>
+              <Select value={formData.responsiblePerson} onValueChange={(value) => handleInputChange('responsiblePerson', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  {fmUsers.map((user) => (
+                    <SelectItem key={user.id} value={`${user.firstname} ${user.lastname}`} className="text-gray-900 hover:bg-gray-100">
+                      {user.firstname} {user.lastname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Review (Tracking) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Review (Tracking)</label>
-              <div className="flex">
-                <Button 
-                  variant="outline" 
-                  className="text-sm border-gray-300 text-blue-600 hover:bg-blue-50"
-                >
-                  Review Date
-                </Button>
-              </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Review (Tracking)</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 justify-start text-left font-normal"
+                  >
+                    {reviewDate ? format(reviewDate, "MM/dd/yyyy") : <span className="text-gray-500">mm/dd/yyyy</span>}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={reviewDate || undefined}
+                    onSelect={(date) => setReviewDate(date || null)}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Category Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category Type</label>
-              <select
-                value={formData.categoryType}
-                onChange={(e) => handleInputChange('categoryType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-                disabled={helpdeskLoading}
-              >
-                <option value="">Select Category Type</option>
-                {helpdeskData?.helpdesk_categories?.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Category Type*</label>
+              <Select value={formData.categoryType} onValueChange={(value) => handleInputChange('categoryType', value)} disabled={helpdeskLoading}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select category"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  {helpdeskData?.helpdesk_categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 3 */}
             {/* Proactive/Reactive */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
-              <select
-                value={formData.proactiveReactive}
-                onChange={(e) => handleInputChange('proactiveReactive', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Proactive/Reactive</option>
-                <option value="Proactive">Proactive</option>
-                <option value="Reactive">Reactive</option>
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Proactive/Reactive</label>
+              <Select value={formData.proactiveReactive} onValueChange={(value) => handleInputChange('proactiveReactive', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select type"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  <SelectItem value="Proactive" className="text-gray-900 hover:bg-gray-100">Proactive</SelectItem>
+                  <SelectItem value="Reactive" className="text-gray-900 hover:bg-gray-100">Reactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Sub Category Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sub Category Type</label>
-              <select
-                value={formData.subCategoryType}
-                onChange={(e) => handleInputChange('subCategoryType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Sub Category Type</label>
+              <Select 
+                value={formData.subCategoryType} 
+                onValueChange={(value) => handleInputChange('subCategoryType', value)}
                 disabled={subCategoriesLoading || !formData.categoryType}
               >
-                <option value="">Select Sub Category</option>
-                {Array.isArray(subCategories) && subCategories.map((subCategory) => (
-                  <option key={subCategory.id} value={subCategory.id}>
-                    {subCategory.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select Category First"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  {Array.isArray(subCategories) && subCategories.map((subCategory) => (
+                    <SelectItem key={subCategory.id} value={subCategory.id.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {subCategory.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Assign To */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
-              <select
-                value={formData.assignTo}
-                onChange={(e) => handleInputChange('assignTo', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Vinayak Mane</option>
-                {fmUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.firstname} {user.lastname}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
+              <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select engineer"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  {fmUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {user.firstname} {user.lastname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 4 */}
             {/* Admin Priority */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
-              <select
-                value={formData.adminPriority}
-                onChange={(e) => handleInputChange('adminPriority', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Priority</option>
-                <option value="p1">P1 - Critical</option>
-                <option value="p2">P2 - Very High</option>
-                <option value="p3">P3 - High</option>
-                <option value="p4">P4 - Medium</option>
-                <option value="p5">P5 - Low</option>
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Admin Priority</label>
+              <Select value={formData.adminPriority} onValueChange={(value) => handleInputChange('adminPriority', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select priority"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  <SelectItem value="p1" className="text-gray-900 hover:bg-gray-100">P1 - Critical</SelectItem>
+                  <SelectItem value="p2" className="text-gray-900 hover:bg-gray-100">P2 - Very High</SelectItem>
+                  <SelectItem value="p3" className="text-gray-900 hover:bg-gray-100">P3 - High</SelectItem>
+                  <SelectItem value="p4" className="text-gray-900 hover:bg-gray-100">P4 - Medium</SelectItem>
+                  <SelectItem value="p5" className="text-gray-900 hover:bg-gray-100">P5 - Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* External Priority */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">External Priority</label>
-              <select
-                value={formData.externalPriority}
-                onChange={(e) => handleInputChange('externalPriority', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select External Priority</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">External Priority</label>
+              <Select value={formData.externalPriority} onValueChange={(value) => handleInputChange('externalPriority', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  <SelectItem value="High" className="text-gray-900 hover:bg-gray-100">High</SelectItem>
+                  <SelectItem value="Medium" className="text-gray-900 hover:bg-gray-100">Medium</SelectItem>
+                  <SelectItem value="Low" className="text-gray-900 hover:bg-gray-100">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Mode */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
-              <select
-                value={formData.mode}
-                onChange={(e) => handleInputChange('mode', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Complaint Mode</option>
-                {complaintModes.map((mode) => (
-                  <option key={mode.id} value={mode.id}>
-                    {mode.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Mode</label>
+              <Select value={formData.mode} onValueChange={(value) => handleInputChange('mode', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  {complaintModes.map((mode) => (
+                    <SelectItem key={mode.id} value={mode.id.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {mode.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Row 5 */}
             {/* Root Cause */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Root Cause</label>
-              <input
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Root Cause</label>
+              <Input
                 type="text"
                 value={formData.rootCause}
                 onChange={(e) => handleInputChange('rootCause', e.target.value)}
-                placeholder="ghj"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                placeholder=""
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Impact */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Impact</label>
-              <input
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Impact</label>
+              <Input
                 type="text"
                 value={formData.impact}
                 onChange={(e) => handleInputChange('impact', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Correction */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Correction</label>
-              <input
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Correction</label>
+              <Input
                 type="text"
                 value={formData.correction}
                 onChange={(e) => handleInputChange('correction', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Row 6 */}
             {/* Reference Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
-              <input
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Reference Number</label>
+              <Input
                 type="text"
                 value={formData.refNumber}
                 onChange={(e) => handleInputChange('refNumber', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                placeholder="Enter reference number"
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Corrective Action */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Corrective Action</label>
-              <input
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Corrective Action</label>
+              <Input
                 type="text"
                 value={formData.correctiveAction}
                 onChange={(e) => handleInputChange('correctiveAction', e.target.value)}
-                placeholder="hko"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                placeholder=""
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Service Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
-              <select
-                value={formData.serviceType}
-                onChange={(e) => handleInputChange('serviceType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-              >
-                <option value="">Select Service Type</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Repair">Repair</option>
-                <option value="Installation">Installation</option>
-              </select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Service Type</label>
+              <Select value={formData.serviceType} onValueChange={(value) => handleInputChange('serviceType', value)}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder="Select"
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  <SelectItem value="product" className="text-gray-900 hover:bg-gray-100">Product</SelectItem>
+                  <SelectItem value="service" className="text-gray-900 hover:bg-gray-100">Service</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -584,9 +1018,9 @@ const UpdateTicketsPage: React.FC = () => {
                   <input
                     type="radio"
                     name="issueRelatedTo"
-                    value="project"
-                    checked={formData.issueRelatedTo.project}
-                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'project', e.target.checked)}
+                    value="Projects"
+                    checked={formData.issueRelatedTo === 'Projects'}
+                    onChange={(e) => handleInputChange('issueRelatedTo', e.target.value)}
                     className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">Project</span>
@@ -595,9 +1029,9 @@ const UpdateTicketsPage: React.FC = () => {
                   <input
                     type="radio"
                     name="issueRelatedTo"
-                    value="fm"
-                    checked={formData.issueRelatedTo.pm}
-                    onChange={(e) => handleCheckboxChange('issueRelatedTo', 'pm', e.target.checked)}
+                    value="FM"
+                    checked={formData.issueRelatedTo === 'FM'}
+                    onChange={(e) => handleInputChange('issueRelatedTo', e.target.value)}
                     className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
                   <span className="text-sm text-gray-700">FM</span>
@@ -637,28 +1071,47 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Select Asset */}
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Asset</label>
-            <select
-              value={formData.selectedAsset}
-              onChange={(e) => handleInputChange('selectedAsset', e.target.value)}
-              className="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] bg-white text-sm"
-            >
-              <option value="">Select Asset</option>
-              <option value="asset1">Asset 1</option>
-              <option value="asset2">Asset 2</option>
-            </select>
-          </div>
+          {/* Select Asset/Service */}
+          {(formData.associatedTo.asset || formData.associatedTo.service) && (
+            <div className="mt-6 space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                {formData.associatedTo.asset ? 'Select Asset' : 'Select Service'}
+              </label>
+              <Select value={formData.selectedAsset} onValueChange={(value) => handleInputChange('selectedAsset', value)} disabled={isLoadingAssets || isLoadingServices}>
+                <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <SelectValue 
+                    placeholder={
+                      isLoadingAssets || isLoadingServices 
+                        ? "Loading..."
+                        : `Select ${formData.associatedTo.asset ? 'Asset' : 'Service'}`
+                    }
+                    className="text-gray-500"
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
+                  {formData.associatedTo.asset && assetOptions.map((asset) => (
+                    <SelectItem key={asset.id} value={asset.id.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {asset.name}
+                    </SelectItem>
+                  ))}
+                  {formData.associatedTo.service && serviceOptions.map((service) => (
+                    <SelectItem key={service.id} value={service.id.toString()} className="text-gray-900 hover:bg-gray-100">
+                      {service.service_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Comments */}
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
-            <textarea
+            <Textarea
               value={formData.comments}
               onChange={(e) => handleInputChange('comments', e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+              className="text-base border rounded min-h-[100px] w-full border-gray-300 bg-white px-3 py-2 focus:outline-none"
               placeholder="Add comment"
             />
             <div className="mt-2">
@@ -678,9 +1131,6 @@ const UpdateTicketsPage: React.FC = () => {
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-6">
             <div className="px-6 py-3 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-900">Cost Approval Requests</h3>
-              <button className="bg-[#C72030] text-white px-4 py-2 rounded text-sm hover:bg-[#C72030]/90">
-                Add
-              </button>
             </div>
             <div className="overflow-x-auto bg-white rounded-lg border">
               <table className="w-full text-sm">
@@ -702,11 +1152,33 @@ const UpdateTicketsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="px-4 py-3 text-gray-500 text-center" colSpan={13}>
-                      No data available
-                    </td>
-                  </tr>
+                  {costApprovalRequests.length > 0 ? (
+                    costApprovalRequests.map((request) => (
+                      <tr key={request.id}>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.id}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.amount}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.comments}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.createdOn}</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">{request.createdBy}</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-center text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">Pending</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">-</td>
+                        <td className="px-4 py-3 text-gray-900 border-b">
+                          {request.attachments.length > 0 ? `${request.attachments.length} file(s)` : '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="px-4 py-3 text-gray-500 text-center" colSpan={13}>
+                        No data available
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -714,7 +1186,11 @@ const UpdateTicketsPage: React.FC = () => {
           {/* Submit Button */}
           <div className="flex justify-center mt-8">
             <Button
-              onClick={handleSubmit}
+              onClick={() => {
+                console.log('=== SAVE BUTTON CLICKED ===');
+                console.log('Button clicked, calling handleSubmit');
+                handleSubmit();
+              }}
               className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
               disabled={isSubmitting}
             >

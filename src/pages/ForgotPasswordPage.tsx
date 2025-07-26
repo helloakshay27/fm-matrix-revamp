@@ -66,10 +66,11 @@ export const ForgotPasswordPage = () => {
       <div className="w-full max-w-lg bg-white bg-opacity-90 flex flex-col justify-center px-12 py-12">
         {/* Logo and Branding */}
         <div className="mb-12">
-          <h1 className="text-3xl font-bold">
-            <span className="text-red-600">go</span>
-            <span className="text-black">Phygital.work</span>
-          </h1>
+           <img
+                src="https://india.lockated.co/wp-content/uploads/lockated-logo-nw.png"
+                alt="Logo"
+                className="h-12 mx-auto"
+              />
         </div>
 
         {/* Title and Description */}

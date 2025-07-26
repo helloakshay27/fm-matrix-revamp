@@ -100,10 +100,11 @@ export const Header = () => {
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-3">
           {/* Home Dashboard */}
-          <div className="w-10 h-10 bg-[#C72030] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">FM</span>
-          </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg hidden md:block">Facility Management</span>
+            <img
+                src="https://india.lockated.co/wp-content/uploads/lockated-logo-nw.png"
+                alt="Logo"
+                className="h-9 mx-auto"
+              />
 
           {/* Project Dropdown */}
 

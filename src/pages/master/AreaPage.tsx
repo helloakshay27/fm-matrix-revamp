@@ -1,433 +1,396 @@
-
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  fetchAreas, 
-  createArea, 
-  setSelectedBuilding, 
-  setSelectedWing,
-  updateArea
-} from '@/store/slices/locationSlice';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Edit, Trash2, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { apiClient } from "@/utils/apiClient";
+import { ImportDataModal } from '@/components/ImportDataModal';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 
-export function AreaPage() {
-  const dispatch = useAppDispatch();
-  const { buildings, wings, areas, selectedBuilding, selectedWing } = useAppSelector((state) => state.location);
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [entriesPerPage, setEntriesPerPage] = useState('25');
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [newAreaName, setNewAreaName] = useState('');
-  const [editingArea, setEditingArea] = useState(null);
-  const [editAreaName, setEditAreaName] = useState('');
-  const [editAreaStatus, setEditAreaStatus] = useState(true);
+export const AreaPage = () => {
+  const [areas, setAreas] = useState<any[]>([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<any | null>(null);
+  const [name, setName] = useState('');
+  const [buildingId, setBuildingId] = useState('');
+  const [wingId, setWingId] = useState('');
+  const [active, setActive] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [buildings, setBuildings] = useState<any[]>([]);
+  const [wings, setWings] = useState<any[]>([]);
 
-  useEffect(() => {
-    dispatch(fetchBuildings());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (selectedBuilding) {
-      dispatch(fetchWings(selectedBuilding));
-    }
-  }, [dispatch, selectedBuilding]);
-
-  useEffect(() => {
-    if (selectedBuilding && selectedWing) {
-      dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
-    }
-  }, [dispatch, selectedBuilding, selectedWing]);
-
-  const filteredAreas = areas.data.filter(area =>
-    area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.building?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.wing?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Limit results based on entries per page selection
-  const displayedAreas = filteredAreas.slice(0, parseInt(entriesPerPage));
-
-  const handleBuildingChange = (buildingId: string) => {
-    dispatch(setSelectedBuilding(parseInt(buildingId)));
-  };
-
-  const handleWingChange = (wingId: string) => {
-    dispatch(setSelectedWing(parseInt(wingId)));
-  };
-
-  const handleAddArea = async () => {
-    if (selectedBuilding && selectedWing && newAreaName.trim()) {
-      try {
-        await dispatch(createArea({
-          name: newAreaName,
-          building_id: selectedBuilding,
-          wing_id: selectedWing
-        }));
-        toast.success('Area created successfully');
-        setNewAreaName('');
-        setShowAddDialog(false);
-        dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
-      } catch (error) {
-        toast.error('Failed to create area');
-      }
-    }
-  };
-
-  const toggleStatus = async (areaId: number) => {
+  const fetchAreas = async () => {
     try {
-      const area = areas.data.find(a => a.id === areaId);
-      if (!area) return;
-
-      await dispatch(updateArea({
-        id: areaId,
-        updates: { active: !area.active }
-      }));
-      
-      toast.success('Area status updated successfully');
+      const response = await apiClient.get('/pms/areas.json');
+      setAreas(response.data.areas || []);
     } catch (error) {
-      toast.error('Failed to update area status');
+      console.error('Error fetching areas:', error);
+      toast.error('Failed to fetch areas');
     }
   };
 
-  const handleEditArea = (area) => {
-    setEditingArea(area);
-    setEditAreaName(area.name);
-    setEditAreaStatus(area.active);
-    setShowEditDialog(true);
+  const fetchBuildings = async () => {
+    try {
+      const response = await apiClient.get('/buildings.json');
+      setBuildings(response.data);
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+      toast.error('Failed to fetch buildings');
+    }
   };
 
-  const handleSaveChanges = async () => {
-    if (!editingArea || !editAreaName.trim()) {
-      toast.error('Please enter a valid area name');
+  const fetchWings = async () => {
+    try {
+      const response = await apiClient.get('/pms/wings.json');
+      setWings(response.data.wings || []);
+    } catch (error) {
+      console.error('Error fetching wings:', error);
+      toast.error('Failed to fetch wings');
+    }
+  };
+
+  useEffect(() => {
+    fetchAreas();
+    fetchBuildings();
+    fetchWings();
+  }, []);
+
+  const handleEdit = (area: any) => {
+    setSelectedArea(area);
+    setName(area.name);
+    setBuildingId(area.building_id);
+    setWingId(area.wing_id);
+    setActive(area.active);
+    setIsEditModalOpen(true);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      console.log('File selected:', file.name);
+    }
+  };
+
+  const handleImportAreas = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file to import');
       return;
     }
 
+    setIsImporting(true);
+    console.log('Starting area import process for file:', selectedFile.name);
+
     try {
-      await dispatch(updateArea({
-        id: editingArea.id,
-        updates: { 
-          name: editAreaName,
-          active: editAreaStatus
-        }
-      }));
-      
-      toast.success('Area updated successfully');
-      setShowEditDialog(false);
-      setEditingArea(null);
-      setEditAreaName('');
-      setEditAreaStatus(true);
-      
-      // Refresh areas list
-      if (selectedBuilding && selectedWing) {
-        dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('type', 'areas');
+
+      // Make API call to import areas
+      const response = await apiClient.post('/pms/areas/bulk_import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        toast.success('Areas imported successfully');
+        setSelectedFile(null);
+        setIsImportModalOpen(false);
+        await fetchAreas(); // Refresh the areas list
+      } else {
+        toast.error(response.data.message || 'Import failed');
       }
     } catch (error) {
+      console.error('Import error:', error);
+      toast.error('Failed to import areas. Please check the file format.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleDownloadSampleFormat = () => {
+    console.log('Downloading sample format for areas...');
+    
+    // Create sample CSV data for areas
+    const sampleData = [
+      ['Area Name', 'Building ID', 'Wing ID', 'Status'],
+      ['Reception Area', '1', '1', 'active'],
+      ['Conference Room', '1', '2', 'active'],
+      ['Lobby', '2', '3', 'active'],
+      ['Storage Room', '2', '4', 'inactive']
+    ];
+
+    // Convert to CSV format
+    const csvContent = sampleData.map(row => 
+      row.map(cell => `"${cell}"`).join(',')
+    ).join('\n');
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'areas_sample_format.csv');
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+    toast.success('Sample format downloaded successfully');
+  };
+
+  const handleUpdateArea = async () => {
+    if (!selectedArea) return;
+
+    try {
+      const response = await apiClient.put(`/pms/areas/${selectedArea.id}.json`, {
+        pms_area: {
+          name,
+          building_id: buildingId,
+          wing_id: wingId,
+          active,
+        },
+      });
+
+      if (response.status === 200) {
+        toast.success('Area updated successfully');
+        setIsEditModalOpen(false);
+        fetchAreas();
+      } else {
+        toast.error('Failed to update area');
+      }
+    } catch (error) {
+      console.error('Error updating area:', error);
       toast.error('Failed to update area');
     }
   };
 
+  const handleDeleteArea = async (id: string) => {
+    try {
+      const response = await apiClient.delete(`/pms/areas/${id}.json`);
+
+      if (response.status === 200) {
+        toast.success('Area deleted successfully');
+        fetchAreas();
+      } else {
+        toast.error('Failed to delete area');
+      }
+    } catch (error) {
+      console.error('Error deleting area:', error);
+      toast.error('Failed to delete area');
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
-        
-        <h1 className="text-2xl font-bold">AREA</h1>
-      </div>
-
-
-      {/* Actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button 
-            onClick={() => setShowAddDialog(true)} 
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Add Area
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Show</span>
-            <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-sm">entries</span>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-6">
+        <div>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Master &gt; Area</p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">AREA</h1>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg">
+      <div className="mb-6 flex items-center justify-between">
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:opacity-90 flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Add
+        </Button>
+
+        <Button onClick={() => setIsImportModalOpen(true)} style={{ backgroundColor: '#C72030' }} className="text-white hover:opacity-90 flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Import
+        </Button>
+      </div>
+
+      <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Building</TableHead>
-              <TableHead>Wing</TableHead>
-              <TableHead>Area</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold text-gray-700">Name</TableHead>
+              <TableHead className="font-semibold text-gray-700">Building</TableHead>
+              <TableHead className="font-semibold text-gray-700">Wing</TableHead>
+              <TableHead className="font-semibold text-gray-700">Status</TableHead>
+              <TableHead className="text-right"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!selectedBuilding || !selectedWing ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  Please select building and wing to view areas
+            {areas.map((area) => (
+              <TableRow key={area.id}>
+                <TableCell className="font-medium">{area.name}</TableCell>
+                <TableCell>{area.building_id}</TableCell>
+                <TableCell>{area.wing_id}</TableCell>
+                <TableCell>{area.active ? 'Active' : 'Inactive'}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0 data-[state=open]:bg-muted/50">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[160px]">
+                      <DropdownMenuItem onClick={() => handleEdit(area)} >
+                        <Edit className="mr-2 h-4 w-4" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteArea(area.id)}>
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ) : areas.loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  Loading areas...
-                </TableCell>
-              </TableRow>
-            ) : displayedAreas.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  No areas found
-                </TableCell>
-              </TableRow>
-            ) : (
-              displayedAreas.map((area, index) => (
-                <TableRow key={area.id}>
-                  <TableCell>{area.building?.name || 'N/A'}</TableCell>
-                  <TableCell>{area.wing?.name || 'N/A'}</TableCell>
-                  <TableCell>{area.name}</TableCell>
-                  <TableCell>
-                     <button
-                       onClick={() => toggleStatus(area.id)}
-                       className={`w-12 h-6 rounded-full transition-colors duration-200 ${
-                         area.active ? 'bg-green-500' : 'bg-gray-300'
-                       }`}
-                     >
-                      <div
-                        className={`w-4 h-4 bg-white rounded-full transform transition-transform duration-200 ${
-                          area.active ? 'translate-x-7' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditArea(area)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>
 
-      {/* Add Area Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl">
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>ADD AREA</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4"
-              onClick={() => setShowAddDialog(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <DialogTitle>Edit Area</DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 p-6">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Building</label>
-                <Select value={selectedBuilding?.toString() || ''} onValueChange={(value) => dispatch(setSelectedBuilding(parseInt(value)))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buildings.data.map((building) => (
-                      <SelectItem key={building.id} value={building.id.toString()}>
-                        {building.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Wing</label>
-                <Select value={selectedWing?.toString() || ''} onValueChange={(value) => dispatch(setSelectedWing(parseInt(value)))} disabled={!selectedBuilding}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {wings.data.map((wing) => (
-                      <SelectItem key={wing.id} value={wing.id.toString()}>
-                        {wing.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Area Name</label>
-                <Input
-                  value={newAreaName}
-                  onChange={(e) => setNewAreaName(e.target.value)}
-                  placeholder="Enter Area Name"
-                  className="w-full"
-                />
-              </div>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
             </div>
-            
-            <div className="flex justify-end gap-3 pt-4">
-              <Button 
-                onClick={handleAddArea} 
-                disabled={!selectedBuilding || !selectedWing || !newAreaName.trim()}
-                className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
-              >
-                Submit
-              </Button>
-              <Button 
-                variant="outline" 
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
-                onClick={() => toast.info('Sample format functionality')}
-              >
-                Sample Format
-              </Button>
-              <Button 
-                variant="outline" 
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
-                onClick={() => toast.info('Import functionality')}
-              >
-                Import
-              </Button>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="building" className="text-right">
+                Building
+              </Label>
+              <Select value={buildingId} onValueChange={setBuildingId} >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a building" />
+                </SelectTrigger>
+                <SelectContent>
+                  {buildings.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="wing" className="text-right">
+                Wing
+              </Label>
+              <Select value={wingId} onValueChange={setWingId}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a wing" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wings.map((wing) => (
+                    <SelectItem key={wing.id} value={wing.id.toString()}>
+                      {wing.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="active" className="text-right">
+                Status
+              </Label>
+              <Switch id="active" checked={active} onCheckedChange={setActive} className="col-span-3" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={handleUpdateArea} style={{ backgroundColor: '#C72030' }} className="text-white hover:opacity-90">Update Area</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Area Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl">
+      {/* Import Modal */}
+      <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Area - {editingArea?.name}</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4"
-              onClick={() => setShowEditDialog(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <DialogTitle>Import Areas</DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 p-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Building</label>
-                <Select value={editingArea?.building_id?.toString() || ''} onValueChange={(value) => dispatch(setSelectedBuilding(parseInt(value)))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buildings.data.map((building) => (
-                      <SelectItem key={building.id} value={building.id.toString()}>
-                        {building.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Wing</label>
-                <Select value={editingArea?.wing_id?.toString() || ''} onValueChange={(value) => dispatch(setSelectedWing(parseInt(value)))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {wings.data.map((wing) => (
-                      <SelectItem key={wing.id} value={wing.id.toString()}>
-                        {wing.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Area Name</label>
-                <Input
-                  value={editAreaName}
-                  onChange={(e) => setEditAreaName(e.target.value)}
-                  placeholder="Enter area name"
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <div className="flex items-center gap-2 pt-2">
-                  <input
-                    type="checkbox"
-                    id="editAreaStatus"
-                    checked={editAreaStatus}
-                    onChange={(e) => setEditAreaStatus(e.target.checked)}
-                    className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
-                  />
-                  <label htmlFor="editAreaStatus" className="text-sm text-gray-700">
-                    Active
-                  </label>
+          
+          <div className="space-y-4">
+            {/* File Upload Area */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="area-file-upload"
+              />
+              <label htmlFor="area-file-upload" className="cursor-pointer">
+                <div className="text-gray-600">
+                  <span className="text-[#C72030] font-medium">Choose File</span>
+                  <p className="text-sm mt-1">
+                    {selectedFile ? selectedFile.name : 'No file chosen'}
+                  </p>
                 </div>
-              </div>
+              </label>
             </div>
-            
+
+            {/* Action Buttons */}
             <div className="flex justify-end gap-3 pt-4">
-              <Button 
-                variant="outline" 
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
-                onClick={() => setShowEditDialog(false)}
+              <Button
+                onClick={handleDownloadSampleFormat}
+                variant="outline"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                disabled={isImporting}
               >
-                Cancel
+                Download Sample Format
               </Button>
-              <Button 
-                onClick={handleSaveChanges} 
-                disabled={!editAreaName.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+              <Button
+                onClick={handleImportAreas}
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90"
+                disabled={!selectedFile || isImporting}
               >
-                Save Changes
+                {isImporting ? 'Importing...' : 'Import'}
               </Button>
             </div>
           </div>
@@ -435,4 +398,4 @@ export function AreaPage() {
       </Dialog>
     </div>
   );
-}
+};

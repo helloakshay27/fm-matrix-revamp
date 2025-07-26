@@ -290,8 +290,8 @@ const AssignTicketsPage: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.sub_category_type || 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.posted_by || 'N/A'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.assigned_to || 'Unassigned'}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <td className="px-4 py-3 w-32">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
                         {ticket.issue_status}
                       </span>
                     </td>
@@ -328,33 +328,45 @@ const AssignTicketsPage: React.FC = () => {
           <h2 className="text-lg font-medium text-gray-900 mb-6">Update To</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm text-gray-500 mb-2">Status</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Status</label>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white z-50 relative"
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer shadow-sm"
                 disabled={loadingStatuses}
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 8px center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '16px'
+                }}
               >
-                <option value="">Select Status</option>
+                <option value="" className="text-gray-500">Select Status</option>
                 {complaintStatuses.map((status) => (
-                  <option key={status.id} value={status.id}>
+                  <option key={status.id} value={status.id} className="text-gray-900 py-2">
                     {status.name}
                   </option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm text-gray-500 mb-2">Assign To</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
               <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white z-50 relative"
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer shadow-sm"
                 disabled={loadingUsers}
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 8px center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '16px'
+                }}
               >
-                <option value="">Select User</option>
+                <option value="" className="text-gray-500">Select engineer</option>
                 {fmUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
+                  <option key={user.id} value={user.id} className="text-gray-900 py-2">
                     {user.firstname} {user.lastname}
                   </option>
                 ))}
