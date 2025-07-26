@@ -1,5 +1,4 @@
 import { apiClient } from '@/utils/apiClient';
-import { API_BASE_URL, API_ENDPOINTS, getHeaders } from '@/config/api';
 
 export interface TaskOccurrence {
   id: number;

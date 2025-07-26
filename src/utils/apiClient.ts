@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
+import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig'
 
 // Create configured axios instance
 export const apiClient = axios.create({

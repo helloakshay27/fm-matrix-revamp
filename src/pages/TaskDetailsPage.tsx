@@ -463,7 +463,7 @@ export const TaskDetailsPage = () => {
                       </span>
                     </td>
                     <td className="p-3 border-b">
-                      {taskDetails.taskOccurrence?.attachments.blob_store_files.length > 0
+                      {taskDetails?.attachments.blob_store_files.length > 0
                         ? 'Has Attachments'
                         : 'No attachments'}
                     </td>
