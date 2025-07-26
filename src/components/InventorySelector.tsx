@@ -8,16 +8,16 @@ import {
 } from '@/components/ui/popover';
 
 const inventoryOptions = [
-  { id: 'items', label: 'Items', checked: true, chartSection: 'statusChart' },
-  { id: 'critical-items', label: 'Critical Non-Critical Items', checked: true, chartSection: 'criticalityChart' },
-  { id: 'category-wise', label: 'Unit Category-wise Items', checked: true, chartSection: 'categoryChart' },
-  { id: 'aging-matrix', label: 'Items Aging Matrix', checked: true, chartSection: 'agingMatrix' },
-  { id: 'low-stock', label: 'Low Stock Items', checked: false, chartSection: 'lowStockChart' },
-  { id: 'high-value', label: 'High Value Items', checked: false, chartSection: 'highValueChart' },
-  { id: 'consumable', label: 'Consumable Items', checked: false, chartSection: 'consumableChart' },
-  { id: 'non-consumable', label: 'Non-Consumable Items', checked: false, chartSection: 'nonConsumableChart' },
-  { id: 'critical-priority', label: 'Critical Priority Items', checked: false, chartSection: 'criticalPriorityChart' },
-  { id: 'maintenance-due', label: 'Maintenance Due Items', checked: false, chartSection: 'maintenanceDueChart' },
+  { id: 'items-status', label: 'Items Status (Active/Inactive/Critical)', checked: true, chartSection: 'items-status' },
+  { id: 'critical-non-critical', label: 'Critical Non-Critical Items', checked: false, chartSection: 'critical-non-critical' },
+  { id: 'category-wise', label: 'Unit Category-wise Items', checked: false, chartSection: 'category-wise' },
+  { id: 'aging-matrix', label: 'Items Aging Matrix', checked: false, chartSection: 'aging-matrix' },
+  { id: 'low-stock', label: 'Low Stock Items', checked: false, chartSection: 'low-stock' },
+  { id: 'high-value', label: 'High Value Items', checked: false, chartSection: 'high-value' },
+  { id: 'consumable', label: 'Consumable Items', checked: false, chartSection: 'consumable' },
+  { id: 'non-consumable', label: 'Non-Consumable Items', checked: false, chartSection: 'non-consumable' },
+  { id: 'critical-priority', label: 'Critical Priority Items', checked: false, chartSection: 'critical-priority' },
+  { id: 'maintenance-due', label: 'Maintenance Due Items', checked: false, chartSection: 'maintenance-due' },
 ];
 
 interface InventorySelectorProps {

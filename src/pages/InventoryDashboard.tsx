@@ -72,6 +72,9 @@ import {
 import bio from "@/assets/bio.png";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { toast } from "sonner";
+import { inventoryAnalyticsAPI } from '@/services/inventoryAnalyticsAPI';
+import { InventoryAnalyticsSelector } from '@/components/InventoryAnalyticsSelector';
+import { InventoryAnalyticsCards } from '@/components/InventoryAnalyticsCards';
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -166,17 +169,20 @@ export const InventoryDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [visibleSections, setVisibleSections] = useState<string[]>([
-    "statusChart",
-    "criticalityChart",
-    "categoryChart",
-    "agingMatrix",
+    "items-status",
   ]);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([
-    "statusChart",
-    "criticalityChart",
-    "categoryChart",
-    "agingMatrix",
+    "items-status",
+    "critical-non-critical",
+    "category-wise",
+    "aging-matrix",
+    "low-stock",
+    "high-value",
+    "consumable",
+    "non-consumable",
+    "critical-priority",
+    "maintenance-due",
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -184,15 +190,8 @@ export const InventoryDashboard = () => {
     startDate: new Date('2020-01-01'),
     endDate: new Date('2025-01-01')
   });
-  const [analyticsData, setAnalyticsData] = useState({
-    categoryData: [],
-    statusData: {
-      activeItems: 0,
-      inactiveItems: 0,
-      criticalItems: 0,
-      nonCriticalItems: 0
-    }
-  });
+  const [analyticsData, setAnalyticsData] = useState<any>({});
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const pageSize = 15; // Use larger page size for API data
 
@@ -202,7 +201,77 @@ export const InventoryDashboard = () => {
   // Fetch inventory data on component mount
   useEffect(() => {
     dispatch(fetchInventoryData({ page: currentPage }));
+    fetchAnalyticsData(dateRange.startDate, dateRange.endDate);
   }, [dispatch, currentPage]);
+
+  // Fetch analytics data from API
+  const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
+    setAnalyticsLoading(true);
+    try {
+      const [
+        itemsStatusData,
+        categoryWiseData,
+        greenConsumptionData,
+        consumptionGreenData,
+        consumptionNonGreenData,
+        minimumStockGreenData,
+        minimumStockNonGreenData,
+        lowStockData,
+        highValueData,
+        consumableData,
+        nonConsumableData,
+        criticalPriorityData,
+        maintenanceDueData,
+        agingMatrixData
+      ] = await Promise.all([
+        inventoryAnalyticsAPI.getItemsStatusData(startDate, endDate),
+        inventoryAnalyticsAPI.getCategoryWiseData(startDate, endDate),
+        inventoryAnalyticsAPI.getGreenConsumptionData(startDate, endDate),
+        inventoryAnalyticsAPI.getConsumptionReportGreenData(startDate, endDate),
+        inventoryAnalyticsAPI.getConsumptionReportNonGreenData(startDate, endDate),
+        inventoryAnalyticsAPI.getCurrentMinimumStockGreenData(startDate, endDate),
+        inventoryAnalyticsAPI.getCurrentMinimumStockNonGreenData(startDate, endDate),
+        inventoryAnalyticsAPI.getLowStockItems(startDate, endDate),
+        inventoryAnalyticsAPI.getHighValueItems(startDate, endDate),
+        inventoryAnalyticsAPI.getConsumableItems(startDate, endDate),
+        inventoryAnalyticsAPI.getNonConsumableItems(startDate, endDate),
+        inventoryAnalyticsAPI.getCriticalPriorityItems(startDate, endDate),
+        inventoryAnalyticsAPI.getMaintenanceDueItems(startDate, endDate),
+        inventoryAnalyticsAPI.getItemsAgingMatrix(startDate, endDate)
+      ]);
+      
+      setAnalyticsData({
+        itemsStatus: itemsStatusData,
+        categoryWise: categoryWiseData,
+        greenConsumption: greenConsumptionData,
+        consumptionGreen: consumptionGreenData,
+        consumptionNonGreen: consumptionNonGreenData,
+        minimumStockGreen: minimumStockGreenData,
+        minimumStockNonGreen: minimumStockNonGreenData,
+        lowStock: lowStockData,
+        highValue: highValueData,
+        consumable: consumableData,
+        nonConsumable: nonConsumableData,
+        criticalPriority: criticalPriorityData,
+        maintenanceDue: maintenanceDueData,
+        agingMatrix: agingMatrixData
+      });
+      
+      toast({
+        title: "Success",
+        description: "Analytics data updated successfully"
+      });
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to fetch analytics data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -301,6 +370,14 @@ export const InventoryDashboard = () => {
 
   const handleAddInventory = () => {
     navigate("/maintenance/inventory/add");
+  };
+
+  // Handle analytics date filter apply
+  const handleAnalyticsDateApply = (dates: { startDate: Date | undefined; endDate: Date | undefined }) => {
+    if (dates.startDate && dates.endDate) {
+      setDateRange({ startDate: dates.startDate, endDate: dates.endDate });
+      fetchAnalyticsData(dates.startDate, dates.endDate);
+    }
   };
 
   // Handle drag end for chart reordering
@@ -704,7 +781,10 @@ export const InventoryDashboard = () => {
             >
               Filter by Date
             </Button>
-            <InventorySelector onSelectionChange={handleSelectionChange} />
+            <InventoryAnalyticsSelector 
+              onSelectionChange={handleSelectionChange} 
+              dateRange={dateRange}
+            />
           </div>
           <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
             {/* Main Content */}
@@ -720,8 +800,30 @@ export const InventoryDashboard = () => {
                   strategy={rectSortingStrategy}
                 >
                   <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Two Donut Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    {analyticsLoading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="text-lg">Loading analytics data...</div>
+                      </div>
+                    ) : (
+                      <InventoryAnalyticsCards
+                        itemsStatus={analyticsData.itemsStatus}
+                        categoryWise={analyticsData.categoryWise}
+                        greenConsumption={analyticsData.greenConsumption}
+                        consumptionGreen={analyticsData.consumptionGreen}
+                        consumptionNonGreen={analyticsData.consumptionNonGreen}
+                        minimumStockGreen={analyticsData.minimumStockGreen}
+                        minimumStockNonGreen={analyticsData.minimumStockNonGreen}
+                        lowStock={analyticsData.lowStock}
+                        highValue={analyticsData.highValue}
+                        consumable={analyticsData.consumable}
+                        nonConsumable={analyticsData.nonConsumable}
+                        criticalPriority={analyticsData.criticalPriority}
+                        maintenanceDue={analyticsData.maintenanceDue}
+                        agingMatrix={analyticsData.agingMatrix}
+                        visibleSections={visibleSections}
+                      />
+                    )}
+                  </div>
                       {chartOrder
                         .filter((id) =>
                           ["statusChart", "criticalityChart"].includes(id)
@@ -1138,6 +1240,8 @@ export const InventoryDashboard = () => {
                         }
                         return null;
                       })}
+                    </div>
+                    </div>
                   </div>
                 </SortableContext>
               </DndContext>
@@ -1473,10 +1577,7 @@ export const InventoryDashboard = () => {
       <DateFilterModal
         open={showDateFilter}
         onOpenChange={setShowDateFilter}
-        onApply={(range) => {
-          setDateRange(range);
-          dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
-        }}
+        onApply={handleAnalyticsDateApply}
       />
     </div>
   );
