@@ -2295,6 +2295,15 @@ const hasFiles = () => {
                       }
                     }
                     }
+                    onChange={e =>
+                        handleExtraFieldChange(
+                          'reaponsible_department',
+                          (e.target as HTMLInputElement).value,
+                          'select',
+                          'landUsageDevelopment',
+                          'Responsible Department'
+                        )
+                      }
                   />
 
                   {/* Custom Fields */}
