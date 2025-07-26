@@ -588,15 +588,30 @@ export const AddTicketDashboard = () => {
             </div>
 
             {/* Description - Full width */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Descriptions</label>
-              <Textarea
-                placeholder="Enter description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="min-h-[80px] w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 resize-none"
-              />
-            </div>
+            <TextField
+              label="Descriptions"
+              placeholder="Enter description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={3}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  ...fieldStyles,
+                  height: 'auto',
+                  '& .MuiOutlinedInput-root': {
+                    height: 'auto',
+                  },
+                },
+              }}
+            />
           </div>
         </div>
 
