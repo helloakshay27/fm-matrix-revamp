@@ -6971,7 +6971,7 @@ const hasFiles = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
-        <button onClick={handleSaveAndShow} className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base">
+        <button onClick={handleSaveAndShow} className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base">
           Save & Show Details
         </button>
         <button onClick={handleSaveAndCreate} className="px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base bg-[#f6f4ee] text-red-700">

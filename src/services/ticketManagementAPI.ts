@@ -241,10 +241,12 @@ export interface TicketFilters {
   site_id_eq?: number;
   unit_id_eq?: number;
   issue_status_in?: number[];
+  issue_status_eq?: string;
   priority_eq?: string;
   user_firstname_or_user_lastname_cont?: string;
   search_all_fields_cont?: string;
   assigned_to_in?: number[];
+  complaint_status_name_eq?: string;
 }
 
 // Helper function to format date for API (DD/MM/YYYY)
@@ -379,7 +381,10 @@ export const ticketManagementAPI = {
       });
     }
 
-    const response = await apiClient.get(`/pms/admin/complaints.json?${queryParams.toString()}`);
+    const url = `/pms/admin/complaints.json?${queryParams.toString()}`;
+    console.log('API URL:', url);
+    console.log('Query parameters:', Object.fromEntries(queryParams.entries()));
+    const response = await apiClient.get(url);
     return {
       complaints: response.data.complaints || [],
       pagination: response.data.pagination
@@ -705,6 +710,7 @@ export const ticketManagementAPI = {
   async getTicketSummary(filters?: TicketFilters): Promise<{
     total_tickets: number;
     open_tickets: number;
+    pending_tickets: number;
     in_progress_tickets: number;
     closed_tickets: number;
     complaints: number;
@@ -735,7 +741,21 @@ export const ticketManagementAPI = {
 
     const url = `${ENDPOINTS.TICKETS_SUMMARY}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await apiClient.get(url);
-    return response.data;
+    
+    // Ensure pending_tickets is included even if not returned by API
+    const summary = {
+      total_tickets: 0,
+      open_tickets: 0,
+      pending_tickets: 0,
+      in_progress_tickets: 0,
+      closed_tickets: 0,
+      complaints: 0,
+      suggestions: 0,
+      requests: 0,
+      ...response.data
+    };
+    
+    return summary;
   },
 
   // Export tickets with filters in Excel format

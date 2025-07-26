@@ -37,6 +37,7 @@ interface ServiceRecord {
   sub_group_name?: string;
   base_uom?: string;
   active?: boolean;
+  is_flagged?: boolean;
 }
 
 interface PaginationData {
@@ -256,17 +257,18 @@ export const ServiceDashboard = () => {
   const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('siteId') || '2189'; // Ensure siteId is included
     try {
-      if (!baseUrl || !token) {
-        toast.error('Missing base URL or token');
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
         return;
       }
-
+  
       const updatedFlag = !serviceItem.is_flagged;
       const response = await axios.put(
-        `https://${baseUrl}/pms/asset_amcs/${serviceItem.id}.json`,
+        `https://${baseUrl}/pms/services/${serviceItem.id}.json?site_id=${siteId}`, // Updated endpoint
         {
-          pms_asset_amc: {
+          pms_service: {
             is_flagged: updatedFlag,
           },
         },
@@ -276,15 +278,16 @@ export const ServiceDashboard = () => {
           },
         }
       );
-
+  
       if (response.status === 200) {
+        console.log('Flag update response:', response.data); // Debug response
         dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));
         toast.success(`Service ID ${serviceItem.id} flag updated`);
       } else {
         toast.error('Failed to update AMC flag');
       }
     } catch (error) {
-      console.error('Flag update error:', error);
+      console.error('Flag update error:', error.response?.data || error.message);
       toast.error('Failed to update AMC flag');
     }
   };
@@ -308,9 +311,6 @@ export const ServiceDashboard = () => {
               />
             </div>
           </div>
-
-
-
         );
       case 'serviceName':
         return (

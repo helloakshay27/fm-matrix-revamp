@@ -1579,36 +1579,6 @@ export const AddSchedulePage = () => {
     return 'Asset'; // default
   };
 
-  // Add effect to validate current step whenever form data changes
-  useEffect(() => {
-    // Clear existing errors for the current step and re-validate
-    setFieldErrors(prev => {
-      const clearedErrors = { ...prev };
-      // Clear all errors since we're re-validating everything
-      Object.keys(clearedErrors).forEach(key => {
-        delete clearedErrors[key];
-      });
-      return clearedErrors;
-    });
-
-    // Re-validate current step silently (without toast)
-    switch (activeStep) {
-      case 0:
-        validateBasicConfiguration();
-        break;
-      case 1:
-        validateScheduleSetup();
-        break;
-      case 2:
-        validateQuestionSetup();
-        break;
-      case 3:
-        validateTimeSetup();
-        break;
-      default:
-        break;
-    }
-  }, [activeStep, formData, questionSections, timeSetupData, weightage, autoTicket]);
 
   const handleSave = async () => {
     
@@ -1638,26 +1608,6 @@ export const AddSchedulePage = () => {
       });
     }
     
-    // Validate all sections before submission
-    const basicErrors = validateBasicConfiguration();
-    const scheduleErrors = validateScheduleSetup();
-    const questionErrors = validateQuestionSetup();
-    
-    const allErrors = [...basicErrors, ...scheduleErrors, ...questionErrors];
-    
-    if (allErrors.length > 0) {
-      toast.error(`Please fix the following errors: ${allErrors.join(', ')}`, {
-        position: 'top-right',
-        duration: 5000,
-        style: {
-          background: '#ef4444',
-          color: 'white',
-          border: 'none',
-        },
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     
     try {
@@ -2165,18 +2115,9 @@ export const AddSchedulePage = () => {
     }
     
     if (!isValid) {
-      toast.error("Please fix the errors highlighted below and try again.", {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#ef4444',
-          color: 'white',
-          border: 'none',
-        },
-      });
+      // No error toast, just rely on field-level errors and star on labels
       return false;
     }
-    
     return true;
   };
 
@@ -2637,11 +2578,7 @@ export const AddSchedulePage = () => {
             </Box>
             
             <TextField
-              label={
-                <span>
-                  Activity Name
-                </span>
-              }
+              label={<span>Activity Name <span style={{ color: 'currentColor' }}>*</span></span>}
               placeholder="Enter Activity Name"
               fullWidth
               value={formData.activityName}
@@ -2650,7 +2587,7 @@ export const AddSchedulePage = () => {
             />
             
             <TextField
-              label="Description"
+              label={<span>Description <span style={{ color: 'currentColor' }}>*</span></span>}
               placeholder="Enter Description/SOP"
               fullWidth
               multiline
@@ -2864,7 +2801,7 @@ export const AddSchedulePage = () => {
                           {...params}
                           label={
                             <span>
-                              Select Assets
+                              Select Assets <span style={{ color: 'currentColor' }}>*</span>
                             </span>
                           }
                           placeholder="Search and select assets..."
@@ -2906,7 +2843,7 @@ export const AddSchedulePage = () => {
                           {...params}
                           label={
                             <span>
-                              Select Services
+                              Select Services <span style={{ color: 'currentColor' }}>*</span>
                             </span>
                           }
                           placeholder="Search and select services..."
@@ -2957,11 +2894,11 @@ export const AddSchedulePage = () => {
                         renderInput={(params) => (
                           <TextField
                             {...params}
-                            label={
-                              <span>
-                                Asset Group
-                              </span>
-                            }
+                          label={
+                            <span>
+                              Asset Group <span style={{ color: 'currentColor' }}>*</span>
+                            </span>
+                          }
                             placeholder="Select Asset Group"
                             fullWidth
                           />
@@ -2978,7 +2915,9 @@ export const AddSchedulePage = () => {
                     {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
                     {selectedAssetGroup && (
                       <FormControl fullWidth>
-                        <InputLabel>Select Asset Sub-Groups</InputLabel>
+                        <InputLabel>
+                          Select Asset Sub-Groups <span style={{ color: 'currentColor' }}>*</span>
+                        </InputLabel>
                         <Select
                           multiple
                           value={formData.assetSubGroup}
@@ -3033,7 +2972,7 @@ export const AddSchedulePage = () => {
                         {...params}
                         label={
                           <span>
-                            Assign To
+                            Assign To <span style={{ color: 'currentColor' }}>*</span>
                           </span>
                         }
                         placeholder="Select Assign To"
@@ -3059,7 +2998,7 @@ export const AddSchedulePage = () => {
                           {...params}
                           label={
                             <span>
-                              Select Users
+                              Select Users <span style={{ color: 'currentColor' }}>*</span>
                             </span>
                           }
                           placeholder="Search and select users..."
@@ -3085,7 +3024,7 @@ export const AddSchedulePage = () => {
                 {formData.assignToType === 'group' && (
                   <FormControl fullWidth>
                     <InputLabel>
-                      Select Groups
+                      Select Groups <span style={{ color: 'currentColor' }}>*</span>
                     </InputLabel>
                     <Select
                       multiple
@@ -3139,7 +3078,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Backup Assignee"
+                        label={<span>Backup Assignee <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Backup Assignee"
                         fullWidth
                       />
@@ -3178,7 +3117,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Plan Duration"
+                        label={<span>Plan Duration <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Plan Duration"
                         fullWidth
                       />
@@ -3190,7 +3129,7 @@ export const AddSchedulePage = () => {
                 {/* Plan Duration Value Input - Show when duration type is selected */}
                 {needsValueInput(formData.planDuration) && (
                   <TextField
-                    label={`Plan Duration (${formData.planDuration})`}
+                    label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'currentColor' }}>*</span></span>}
                     type="number"
                     fullWidth
                     value={formData.planDurationValue}
@@ -3220,7 +3159,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Email Trigger Rule"
+                        label={<span>Email Trigger Rule <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Email Trigger Rule"
                         fullWidth
                       />
@@ -3252,7 +3191,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Scan Type"
+                        label={<span>Scan Type <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Scan Type"
                         fullWidth
                       />
@@ -3279,7 +3218,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Category"
+                        label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Category"
                         fullWidth
                       />
@@ -3311,7 +3250,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Submission Time"
+                        label={<span>Submission Time <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Submission Time"
                         fullWidth
                       />
@@ -3323,7 +3262,7 @@ export const AddSchedulePage = () => {
                 {/* Submission Time Value Input - Show when time type is selected */}
                 {needsValueInput(formData.submissionTime) && (
                   <TextField
-                    label={`Submission Time (${formData.submissionTime})`}
+                    label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'currentColor' }}>*</span></span>}
                     type="number"
                     fullWidth
                     value={formData.submissionTimeValue}
@@ -3353,7 +3292,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Supervisors"
+                        label={<span>Supervisors <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Supervisors"
                         fullWidth
                       />
@@ -3385,7 +3324,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Lock Overdue Task"
+                        label={<span>Lock Overdue Task <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Lock Status"
                         fullWidth
                       />
@@ -3422,7 +3361,7 @@ export const AddSchedulePage = () => {
                         {...params}
                         label={
                           <span>
-                            Frequency
+                            Frequency <span style={{ color: 'currentColor' }}>*</span>
                           </span>
                         }
                         placeholder="Select Frequency"
@@ -3456,7 +3395,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Grace Time"
+                        label={<span>Grace Time <span style={{ color: 'currentColor' }}>*</span></span>}
                         placeholder="Select Grace Time"
                         fullWidth
                       />
@@ -4316,36 +4255,14 @@ export const AddSchedulePage = () => {
                       
                       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: weightage ? '2fr 1fr 1fr' : '2fr 1fr' }, gap: 2 }}>
                         <TextField
-                          label="Task"
+                          label={<span>Task{task.mandatory && <span style={{color: 'inherit'}}>&nbsp;*</span>}</span>}
                           placeholder="Enter Task"
                           fullWidth
                           value={task.task}
                           onChange={(e) => updateTaskInSection(section.id, task.id, 'task', e.target.value)}
                         />
                         
-                        <MuiSearchableDropdown
-                          value={task.inputType}
-                          onChange={(value) => {
-                            // Prevent changing input type if reading is checked and no template is selected
-                            if (task.reading && !formData.selectedTemplate) {
-                              return;
-                            }
-                            updateTaskInSection(section.id, task.id, 'inputType', value);
-                            // Reset values when changing input type
-                            if (value !== 'dropdown') {
-                              updateTaskInSection(section.id, task.id, 'dropdownValues', [{label: '', type: 'positive'}]);
-                            }
-                            if (value !== 'radio') {
-                              updateTaskInSection(section.id, task.id, 'radioValues', [{label: '', type: 'positive'}]);
-                            }
-                            if (value !== 'checkbox') {
-                              updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
-                              updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
-                            }
-                            if (value !== 'options-inputs') {
-                              updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
-                            }
-                          }}
+                        <Autocomplete
                           options={[
                             { id: '', label: 'Select Input Type', value: '' },
                             { id: 'text', label: 'Text', value: 'text' },
@@ -4355,13 +4272,47 @@ export const AddSchedulePage = () => {
                             { id: 'radio', label: 'Radio', value: 'radio' },
                             { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
                           ]}
-                          label="Input Type"
+                          getOptionLabel={(option) => option.label}
+                          value={[
+                            { id: '', label: 'Select Input Type', value: '' },
+                            { id: 'text', label: 'Text', value: 'text' },
+                            { id: 'number', label: 'Numeric', value: 'number' },
+                            { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
+                            { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
+                            { id: 'radio', label: 'Radio', value: 'radio' },
+                            { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                          ].find(option => option.value === task.inputType) || null}
+                          onChange={(event, newValue) => {
+                            if (!newValue) return;
+                            // Prevent changing input type if reading is checked and no template is selected
+                            if (task.reading && !formData.selectedTemplate) {
+                              return;
+                            }
+                            updateTaskInSection(section.id, task.id, 'inputType', newValue.value);
+                            // Reset values when changing input type
+                            if (newValue.value !== 'dropdown') {
+                              updateTaskInSection(section.id, task.id, 'dropdownValues', [{label: '', type: 'positive'}]);
+                            }
+                            if (newValue.value !== 'radio') {
+                              updateTaskInSection(section.id, task.id, 'radioValues', [{label: '', type: 'positive'}]);
+                            }
+                            if (newValue.value !== 'checkbox') {
+                              updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
+                              updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
+                            }
+                            if (newValue.value !== 'options-inputs') {
+                              updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <TextField {...params} label={<span>Input Type{task.mandatory && <span style={{color: 'inherit'}}>&nbsp;*</span>}</span>} fullWidth />
+                          )}
                           disabled={task.reading && !formData.selectedTemplate}
                         />
 
                         {weightage && (
                           <TextField
-                            label="Weightage"
+                            label={<span>Weightage{task.mandatory && <span style={{color: 'inherit'}}>&nbsp;*</span>}</span>}
                             type="number"
                             fullWidth
                             value={task.weightage}
@@ -4404,6 +4355,7 @@ export const AddSchedulePage = () => {
                                   placeholder="Enter option value"
                                   value={value.label}
                                   onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
+                                  label={<span>Option{task.mandatory && <span style={{color: 'inherit'}}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'
@@ -4489,6 +4441,7 @@ export const AddSchedulePage = () => {
                                   placeholder="Enter option value"
                                   value={value.label}
                                   onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
+                                  label={<span>Option{task.mandatory && <span style={{color: 'inherit'}}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'
@@ -4497,7 +4450,9 @@ export const AddSchedulePage = () => {
                                 />
                                 
                                 <FormControl size="small" sx={{ minWidth: 80 }}>
-                                  <InputLabel>Type</InputLabel>
+                                  <InputLabel>
+                                    Type <span style={{ color: 'currentColor' }}>*</span>
+                                  </InputLabel>
                                   <Select
                                     value={value.type}
                                     onChange={(e) => updateRadioType(section.id, task.id, valueIndex, e.target.value)}
@@ -4581,6 +4536,7 @@ export const AddSchedulePage = () => {
                                   placeholder="Enter option value"
                                   value={value}
                                   onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
+                                  label={<span>Option{task.mandatory && <span style={{color: 'inherit'}}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'
@@ -4645,6 +4601,7 @@ export const AddSchedulePage = () => {
                                   placeholder=""
                                   value={value}
                                   onChange={(e) => updateOptionsInputsValue(section.id, task.id, valueIndex, e.target.value)}
+                                  label={<span>Option{task.mandatory && <span style={{color: 'inherit'}}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'

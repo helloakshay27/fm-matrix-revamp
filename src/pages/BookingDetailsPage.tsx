@@ -65,9 +65,11 @@ export const BookingDetailsPage = () => {
                     <span className="text-[#1A1A1A80] w-32 text-14">Booking ID</span>
                     <span className="font-medium text-16"> {bookings.id}</span>
                   </div>
-                  <div className="flex text-wrap">
+                  <div className="flex">
                     <span className="text-[#1A1A1A80] w-32 text-14">Comment</span>
-                    <span className="font-medium text-16"> {bookings.comment}</span>
+                    <span className="font-medium text-16 truncate max-w-[200px] overflow-hidden whitespace-nowrap" title={bookings.comment}>
+                      {bookings.comment}
+                    </span>
                   </div>
 
                   <div className="flex">

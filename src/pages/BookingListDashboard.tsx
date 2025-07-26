@@ -358,24 +358,13 @@ const BookingListDashboard = () => {
   };
 
   const selectionActions = [
-    // {
-    //   label: 'Import',
-    //   icon: Upload,
-    //   // onClick: handleExport,
-    //   variant: 'outline' as const,
-    // },
-    // {
-    //   label: 'Export',
-    //   icon: Download,
-    //   // onClick: handleExport,
-    //   variant: 'outline' as const,
-    // },
-    // {
-    //   label: 'Delete',
-    //   icon: Trash2,
-    //   // onClick: () => handleBulkDelete(selectedAMCObjects),
-    //   variant: 'destructive' as const,
-    // },
+    {
+      label: 'Export',
+      icon: Download,
+      onClick: handleDownload,
+      variant: 'outline' as const,
+      loading: exportLoading,
+    }
   ];
 
   return (
@@ -412,6 +401,7 @@ const BookingListDashboard = () => {
         pagination={true}
         pageSize={5}
         loading={loading}
+        onFilterClick={() => setIsFilterModalOpen(true)}
         emptyMessage={loading ? 'Loading bookings...' : 'No bookings found'}
         leftActions={
           <div className="flex flex-wrap gap-2">
@@ -426,7 +416,7 @@ const BookingListDashboard = () => {
         }
       />
 
-      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen} modal={false} >
+      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen} >
         <DialogContent className="sm:max-w-md [&>button]:hidden">
           <ThemeProvider theme={muiTheme}>
             <div>
@@ -498,7 +488,7 @@ const BookingListDashboard = () => {
                           />
                         </div>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-white border shadow-lg z-50" align="start" sideOffset={4}>
+                      <PopoverContent className="w-auto top-[50%] p-0 bg-white border shadow-lg z-50" align="start" >
                         <div className="p-4">
                           <Calendar
                             mode="range"

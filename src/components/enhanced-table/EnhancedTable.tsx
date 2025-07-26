@@ -49,7 +49,7 @@ const exportToExcel = <T extends Record<string, any>>(
   const headers = columns.map(col => col.label).join(',');
   const csvContent = [
     headers,
-    ...data.map(row => 
+    ...data.map(row =>
       columns.map(col => {
         const value = row[col.key];
         // Handle values that might contain commas or quotes
@@ -212,14 +212,14 @@ export function EnhancedTable<T extends Record<string, any>>({
       // Remove all stored column state
       localStorage.removeItem(`${storageKey}-columns`);
       localStorage.removeItem(`${storageKey}-column-order`);
-      
+
       // Set default column visibility state
       const defaultVisibility = columns.reduce((acc, column) => ({
         ...acc,
         [column.key]: column.defaultVisible !== false
       }), {});
       localStorage.setItem(`${storageKey}-columns`, JSON.stringify(defaultVisibility));
-      
+
       // Set default column order
       const defaultOrder = columns.map(column => column.key);
       localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(defaultOrder));
