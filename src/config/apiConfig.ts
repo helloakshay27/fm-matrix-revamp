@@ -6,7 +6,7 @@ const getApiConfig = () => {
 
   return {
     BASE_URL: 'https://fm-uat-api.lockated.com',
-    TOKEN: savedToken || 'ujP2uYLsfNTej4gIrK2bKAQrfL3ZdZBQxqkFULvTXUk',
+    TOKEN: savedToken || 'WzsvAV9ZPDWxXK-e0sJK0Sda6HDnQ1aTLaYnjXuWthU',
   };
 };
 
@@ -80,6 +80,9 @@ export const API_CONFIG = {
     ASSET_STATISTICS: '/pms/asset_statistics.json',
     ASSET_STATUS: '/pms/asset_status.json',
     ASSET_DISTRIBUTIONS: '/pms/asset_distributions.json',
+    // Restaurant endpoints
+    RESTAURANTS: '/pms/admin/restaurants',
+    RESTAURANT_MENU: '/pms/admin/restaurants',
   },
 } as const
 

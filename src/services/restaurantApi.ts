@@ -56,48 +56,7 @@ export const restaurantApi = {
       return response.data;
     } catch (error) {
       console.error('Error fetching restaurants:', error);
-      // Return mock data for now
-      return [
-        {
-          id: '1',
-          name: 'The Bawa Kitchen',
-          location: 'Andheri West',
-          rating: 4.1,
-          timeRange: '60-65 mins',
-          discount: '20% OFF',
-          image: '/placeholder.svg',
-          menuItems: [
-            {
-              id: '1',
-              name: 'Chicken Noodles',
-              description: 'Noodles + Manchurian + Sauces',
-              price: 250,
-              image: '/placeholder.svg'
-            },
-            {
-              id: '2',
-              name: 'Veggie Burger',
-              description: 'Plant-based patty + Lettuce + Tomato',
-              price: 180,
-              image: '/placeholder.svg'
-            },
-            {
-              id: '3',
-              name: 'Grilled Salmon',
-              description: 'Salmon fillet + Garlic butter + Lemon',
-              price: 450,
-              image: '/placeholder.svg'
-            },
-            {
-              id: '4',
-              name: 'Spicy Tacos',
-              description: 'Chicken + Spices + Fresh salsa',
-              price: 220,
-              image: '/placeholder.svg'
-            }
-          ]
-        }
-      ];
+      throw new Error('Failed to fetch restaurants');
     }
   },
 
@@ -105,7 +64,28 @@ export const restaurantApi = {
   async getRestaurantById(restaurantId: string): Promise<Restaurant> {
     try {
       const response = await apiClient.get(`/pms/admin/restaurants/${restaurantId}.json`);
-      return response.data;
+      const restaurant = response.data;
+      
+      // Transform API response to match our interface
+      const menuItems = restaurant.menu_items ? restaurant.menu_items.map((item: any) => ({
+        id: item.id?.toString() || Math.random().toString(),
+        name: item.name || 'Unknown Item',
+        description: item.description || '',
+        price: parseFloat(item.price) || 0,
+        image: item.image_url || item.image || '/placeholder.svg',
+        quantity: 0
+      })) : [];
+
+      return {
+        id: restaurant.id?.toString() || restaurantId,
+        name: restaurant.name || 'Unknown Restaurant',
+        location: restaurant.address || restaurant.location || 'Unknown Location',
+        rating: restaurant.rating || 4.0,
+        timeRange: restaurant.delivery_time || '30-40 mins',
+        discount: restaurant.discount || '10% OFF',
+        image: restaurant.image_url || restaurant.image || '/placeholder.svg',
+        menuItems
+      };
     } catch (error) {
       console.error('Error fetching restaurant details:', error);
       throw new Error('Failed to fetch restaurant details');
@@ -116,7 +96,17 @@ export const restaurantApi = {
   async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
     try {
       const response = await apiClient.get(`/pms/admin/restaurants/${restaurantId}/menu_items.json`);
-      return response.data;
+      const menuItems = response.data;
+      
+      // Transform menu items to match our interface
+      return menuItems.map((item: any) => ({
+        id: item.id?.toString() || Math.random().toString(),
+        name: item.name || 'Unknown Item',
+        description: item.description || '',
+        price: parseFloat(item.price) || 0,
+        image: item.image_url || item.image || '/placeholder.svg',
+        quantity: 0
+      }));
     } catch (error) {
       console.error('Error fetching menu items:', error);
       throw new Error('Failed to fetch menu items');
