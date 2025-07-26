@@ -35,7 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
+import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUploadModal';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -1024,7 +1024,7 @@ export const AMCDashboard = () => {
                 </div>
               </div>
 
-                    <ServiceBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
+                    <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
               
 
               {showActionPanel && (
