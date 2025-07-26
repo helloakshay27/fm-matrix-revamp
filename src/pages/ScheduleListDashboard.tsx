@@ -14,6 +14,7 @@ import { fetchCustomForms, transformCustomFormsData, TransformedScheduleData } f
 import { useQuery } from '@tanstack/react-query';
 import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
 import { apiClient } from '@/utils/apiClient';
+import { toast } from "sonner";
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -117,6 +118,49 @@ export const ScheduleListDashboard = () => {
   console.log('Custom forms raw data:', customFormsData?.custom_forms);
   
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
+  
+  const handleDownloadSampleFormat = async () => {
+    console.log('Downloading checklist sample format...');
+
+    try {
+      // Call the API to download the sample file
+      const response = await apiClient.get(ENDPOINTS.CHECKLIST_SAMPLE_FORMAT, {
+        responseType: 'blob'
+      });
+
+      // Create blob URL and trigger download
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'checklist_sample_format.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Sample format downloaded successfully', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      toast.error('Failed to download sample file. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    }
+  };
   const handleExport = () => navigate('/maintenance/schedule/export');
   
   const handleToggleActive = async (scheduleId: string) => {
@@ -171,13 +215,6 @@ export const ScheduleListDashboard = () => {
     //   label: 'Export',
     //   icon: Download,
     //   onClick: handleExport,
-    //   variant: 'outline' as const,
-    // },
-    // Add any additional bulk actions here if needed
-    // {
-    //   label: 'Bulk Update',
-    //   icon: Clock,
-    //   onClick: handleBulkUpdate,
     //   variant: 'outline' as const,
     // },
   ];
@@ -646,7 +683,12 @@ export const ScheduleListDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      <BulkUploadDialog open={showImportModal} onOpenChange={setShowImportModal} title="Bulk Upload" />
+      <BulkUploadDialog 
+        open={showImportModal} 
+        onOpenChange={setShowImportModal} 
+        title="Bulk Upload" 
+        context="custom_forms"
+      />
       <ScheduleFilterDialog 
         open={showFilterDialog} 
         onOpenChange={setShowFilterDialog}

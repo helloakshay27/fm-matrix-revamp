@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { MappingStep } from '@/components/schedule/MappingStep';
 import {TimeSetupStep}  from '@/components/schedule/TimeSetupStep'
 import {
@@ -184,7 +184,6 @@ interface ChecklistMappingsData {
 
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   // Stepper state
   const [customCode, setCustomCode] = useState('');
@@ -631,10 +630,14 @@ export const AddSchedulePage = () => {
       setAssets(data);
     } catch (error) {
       console.error('Failed to load assets:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load assets. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load assets. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, assets: false }));
@@ -650,10 +653,14 @@ export const AddSchedulePage = () => {
       setAssetGroups(data.asset_groups);
     } catch (error) {
       console.error('Failed to load asset groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load asset groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load asset groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, groups: false }));
@@ -669,10 +676,14 @@ export const AddSchedulePage = () => {
       setAssetSubGroups(data.asset_groups);
     } catch (error) {
       console.error('Failed to load asset sub-groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load asset sub-groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load asset sub-groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, subGroups: false }));
@@ -688,10 +699,14 @@ export const AddSchedulePage = () => {
       setEmailRules(data);
     } catch (error) {
       console.error('Failed to load email rules:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load email rules. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load email rules. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, emailRules: false }));
@@ -721,10 +736,14 @@ export const AddSchedulePage = () => {
       setUsers(data.users || []);
     } catch (error) {
       console.error('Failed to load users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load users. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load users. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep fallback mock data
       const mockUsers = [
@@ -747,10 +766,14 @@ export const AddSchedulePage = () => {
       setSuppliers(data);
     } catch (error) {
       console.error('Failed to load suppliers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load suppliers. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load suppliers. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, suppliers: false }));
@@ -778,10 +801,14 @@ export const AddSchedulePage = () => {
       setServices(data);
     } catch (error) {
       console.error('Failed to load services:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load services. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load services. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, services: false }));
@@ -816,10 +843,14 @@ export const AddSchedulePage = () => {
       setGroups(groupsArray);
     } catch (error) {
       console.error('Failed to load user groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load user groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load user groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockGroups = [
@@ -854,10 +885,14 @@ export const AddSchedulePage = () => {
       setTemplates(templateData);
     } catch (error) {
       console.error('Failed to load templates:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load templates. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load templates. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockTemplates = [
@@ -899,10 +934,14 @@ export const AddSchedulePage = () => {
     } catch (error) {
       
       console.error('Failed to load helpdesk categories:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load helpdesk categories. Using fallback data.",
-        variant: "destructive"
+      toast.error("Error: Failed to load helpdesk categories. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockCategories = [
@@ -943,10 +982,14 @@ export const AddSchedulePage = () => {
       setTaskGroups(groupsArray);
     } catch (error) {
       console.error('Failed to load task groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load task groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load task groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockTaskGroups = [
@@ -992,10 +1035,14 @@ export const AddSchedulePage = () => {
       }));
     } catch (error) {
       console.error('Failed to load task sub-groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load task sub-groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load task sub-groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockSubGroups = [
@@ -1077,19 +1124,13 @@ export const AddSchedulePage = () => {
         setAttachments(prev => [...prev, ...newAttachments]);
         
         // Show success toast
-        toast({
-          title: "Success",
-          description: `${files.length} file(s) attached successfully!`,
-        });
+        toast(`${files.length} file(s) attached successfully!`);
       }
     };
 
     input.onerror = () => {
       // Show error toast
-      toast({
-        title: "Error",
-        description: "Failed to attach files. Please try again.",
-        variant: "destructive"
+      toast("Failed to attach files. Please try again.", {
       });
     };
 
@@ -1586,9 +1627,14 @@ export const AddSchedulePage = () => {
     };
     
     if (stepMessages[activeStep as keyof typeof stepMessages]) {
-      toast({
-        title: "Success",
-        description: stepMessages[activeStep as keyof typeof stepMessages],
+      toast.success(stepMessages[activeStep as keyof typeof stepMessages], {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
       });
     }
     
@@ -1600,10 +1646,14 @@ export const AddSchedulePage = () => {
     const allErrors = [...basicErrors, ...scheduleErrors, ...questionErrors];
     
     if (allErrors.length > 0) {
-      toast({
-        title: "Validation Error",
-        description: `Please fix the following errors: ${allErrors.join(', ')}`,
-        variant: "destructive"
+      toast.error(`Please fix the following errors: ${allErrors.join(', ')}`, {
+        position: 'top-right',
+        duration: 5000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       return;
     }
@@ -1630,9 +1680,14 @@ export const AddSchedulePage = () => {
       const result = await response.json();
       setCustomCode(result.custom_form_code);
       
-      toast({
-        title: "Success",
-        description: "Checklist is scheduled successfully!",
+      toast.success("Checklist is scheduled successfully!", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
       });
       
       // Check if any task has reading checkbox selected
@@ -1659,10 +1714,14 @@ export const AddSchedulePage = () => {
       
     } catch (error) {
       console.error('Failed to create schedule:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create schedule. Please try again.",
-        variant: "destructive"
+      toast.error("Failed to create schedule. Please try again.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setIsSubmitting(false);
@@ -1675,9 +1734,14 @@ export const AddSchedulePage = () => {
 
 
   const handleFinish = () => {
-    toast({
-      title: "Success",
-      description: "Schedule setup completed successfully!",
+    toast.success("Schedule setup completed successfully!", {
+      position: 'top-right',
+      duration: 4000,
+      style: {
+        background: '#10b981',
+        color: 'white',
+        border: 'none',
+      },
     });
     // Clear all saved data on successful completion
     clearAllFromLocalStorage();
@@ -1774,25 +1838,14 @@ export const AddSchedulePage = () => {
           scheduleFor: mapChecklistFor(templateData.checklist_for)
         }));
         
-        toast({
-          title: "Success",
-          description: `Template "${templateData.form_name}" loaded successfully!`,
-        });
+        toast(`Template "${templateData.form_name}" loaded successfully!`);
       } else {
         // Handle case when template data is empty or invalid
-        toast({
-          title: "Warning",
-          description: "Template data is empty or invalid.",
-          variant: "destructive"
-        });
+        toast("Template data is empty or invalid.");
       }
     } catch (error) {
       console.error('Failed to load template data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load template data.",
-        variant: "destructive"
-      });
+      toast("Failed to load template data.");
     } finally {
       setLoading(prev => ({ ...prev, templates: false }));
     }
@@ -2112,10 +2165,14 @@ export const AddSchedulePage = () => {
     }
     
     if (!isValid) {
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors highlighted below and try again.",
-        variant: "destructive"
+      toast.error("Please fix the errors highlighted below and try again.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       return false;
     }
@@ -2145,9 +2202,14 @@ export const AddSchedulePage = () => {
     // Always show toast for valid steps
     const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
     if (currentStepMessage) {
-      toast({
-        title: "Success",
-        description: currentStepMessage,
+      toast.success(currentStepMessage, {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
       });
     }
     
@@ -2190,9 +2252,14 @@ export const AddSchedulePage = () => {
         
         const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
         if (currentStepMessage) {
-          toast({
-            title: "Success",
-            description: currentStepMessage,
+          toast.success(currentStepMessage, {
+            position: 'top-right',
+            duration: 4000,
+            style: {
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+            },
           });
         }
       }
@@ -4866,10 +4933,14 @@ export const AddSchedulePage = () => {
       setChecklistMappings(data);
     } catch (error) {
       console.error('Failed to load checklist mappings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load checklist mappings.",
-        variant: "destructive"
+      toast.error("Failed to load checklist mappings.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoadingMappings(false);

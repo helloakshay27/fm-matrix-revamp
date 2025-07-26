@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -953,6 +954,19 @@ function App() {
                 <Route path="/qr-test" element={<QRTestPage />} />
               </Routes>
             <Toaster />
+            <SonnerToaster 
+              position="top-right"
+              richColors
+              closeButton
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  color: '#374151',
+                },
+              }}
+            />
           </LayoutProvider>
         </QueryClientProvider>
       </Router>

@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { X, Upload } from 'lucide-react';
 import { toast } from "sonner";
 import { apiClient } from '@/utils/apiClient';
+import { ENDPOINTS } from '@/config/apiConfig';
 
 interface BulkUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   uploadType?: "upload" | "update";
+  context?: "assets" | "custom_forms"; // New prop to determine context
   onImport?: (file: File) => void;
 }
 
@@ -19,6 +21,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
   onOpenChange,
   title,
   uploadType = "upload",
+  context = "assets", // Default to assets for backward compatibility
   onImport
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -33,7 +36,15 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
 
       if (!allowedTypes.includes(fileExtension)) {
-        toast.error('Please select a valid file format (CSV, Excel)');
+        toast.error('Please select a valid file format (CSV, Excel)', {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+          },
+        });
         return;
       }
 
@@ -53,7 +64,15 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
 
       if (!allowedTypes.includes(fileExtension)) {
-        toast.error('Please select a valid file format (CSV, Excel)');
+        toast.error('Please select a valid file format (CSV, Excel)', {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+          },
+        });
         return;
       }
 
@@ -75,8 +94,13 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
     console.log('Downloading sample format...');
 
     try {
+      // Determine the endpoint based on context
+      const endpoint = context === "custom_forms" 
+        ? ENDPOINTS.CHECKLIST_SAMPLE_FORMAT 
+        : '/assets/asset.xlsx';
+      
       // Call the API to download the sample file
-      const response = await apiClient.get('/assets/asset.xlsx', {
+      const response = await apiClient.get(endpoint, {
         responseType: 'blob'
       });
 
@@ -85,22 +109,48 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'asset_sample_format.xlsx';
+      a.download = context === "custom_forms" 
+        ? 'checklist_sample_format.xlsx' 
+        : 'asset_sample_format.xlsx';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success('Sample format downloaded successfully');
+      toast.success('Sample format downloaded successfully', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
     } catch (error) {
       console.error('Error downloading sample file:', error);
-      toast.error('Failed to download sample file. Please try again.');
+      toast.error('Failed to download sample file. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     }
   };
 
   const handleImport = async () => {
     if (!selectedFile) {
-      toast.error('Please select a file to import');
+      toast.error('Please select a file to import', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#f59e0b',
+          color: 'white',
+          border: 'none',
+        },
+      });
       return;
     }
 
@@ -108,14 +158,22 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
     console.log('Starting import process for:', selectedFile.name);
 
     try {
-      // Determine the API endpoint based on upload type
-      const endpoint = uploadType === "upload"
-        ? "/pms/assets/asset_import"
-        : "/pms/assets/update_assets";
+      // Determine the API endpoint and parameters based on context
+      let endpoint: string;
+      let formData: FormData;
 
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+      if (context === "custom_forms") {
+        endpoint = ENDPOINTS.CUSTOM_FORMS_BULK_UPLOAD;
+        formData = new FormData();
+        formData.append('custom_form_file', selectedFile); // Use specific parameter name
+      } else {
+        // Default assets context
+        endpoint = uploadType === "upload"
+          ? "/pms/assets/asset_import"
+          : "/pms/assets/update_assets";
+        formData = new FormData();
+        formData.append('file', selectedFile);
+      }
 
       // Call the API with the selected file
       const response = await apiClient.post(endpoint, formData, {
@@ -134,12 +192,28 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       setSelectedFile(null);
       onOpenChange(false);
 
-      toast.success(`${uploadType === "upload" ? "Import" : "Update"} completed successfully`);
+      toast.success(`${uploadType === "upload" ? "Import" : "Update"} completed successfully`, {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
 
     } catch (error) {
       console.error('Import failed:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Import failed. Please try again.';
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-right',
+        duration: 5000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     } finally {
       setIsUploading(false);
     }

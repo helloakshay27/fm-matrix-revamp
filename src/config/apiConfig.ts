@@ -107,6 +107,10 @@ export const API_CONFIG = {
     CUSTOM_FORM_DETAILS: '/pms/custom_forms', // Base path, will append /:id.json
     // Update custom form endpoint
     UPDATE_CUSTOM_FORM: '/pms/custom_forms', // Base path, will append /:id
+    // Checklist sample format download
+    CHECKLIST_SAMPLE_FORMAT: '/assets/checklist.xlsx',
+    // Bulk upload for custom forms
+    CUSTOM_FORMS_BULK_UPLOAD: '/pms/custom_forms/bulk_upload',
   },
 } as const
 
