@@ -78,7 +78,32 @@ export const MobileOrdersPage: React.FC = () => {
   };
 
   const handleOrderClick = (orderId: string) => {
-    navigate(`/mobile/orders/${orderId}`);
+    // Find the order to get its details
+    const order = mockOrders.find(o => o.id === orderId);
+    if (order) {
+      // Create mock data to match order review format
+      const mockItems = [
+        { id: '1', name: order.itemName, description: 'Delicious food item', price: 250, image: '', quantity: 1 }
+      ];
+      const mockRestaurant = {
+        id: '1',
+        name: order.restaurantName,
+        location: 'Andheri West',
+        rating: 4.1,
+        timeRange: '60-65 mins',
+        discount: '20% OFF',
+        image: ''
+      };
+      
+      // Navigate to order review page with order data
+      navigate('/mobile/restaurant/1/order-review', {
+        state: {
+          items: mockItems,
+          restaurant: mockRestaurant,
+          note: 'Previous order details'
+        }
+      });
+    }
   };
 
   const handleRestaurantTab = () => {
