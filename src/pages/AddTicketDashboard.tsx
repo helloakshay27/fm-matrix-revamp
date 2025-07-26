@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Upload, Paperclip, X, User, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const PRIORITY_OPTIONS = [
   { value: 'P1', label: 'P1 - Critical' },
@@ -22,6 +23,30 @@ const PROACTIVE_REACTIVE_OPTIONS = [
   { value: 'proactive', label: 'Proactive' },
   { value: 'reactive', label: 'Reactive' }
 ];
+
+// Field styles for Material-UI components
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
 
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
@@ -342,58 +367,94 @@ export const AddTicketDashboard = () => {
           <div className="p-6 space-y-6">
             {/* Create Ticket On Behalf Of with Name and Department in same row */}
             <div className="grid grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket on Behalf of</label>
-                <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600" style={{backgroundColor: '#C4B89D59'}}>
-                    <SelectValue placeholder="Select behalf option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="self">Self</SelectItem>
-                    <SelectItem value="occupant-user">Occupant User</SelectItem>
-                    <SelectItem value="fm-user">FM User</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                <Input
-                  placeholder="Anamika Singh"
-                  value={formData.name}
-                  onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
-                  disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                  className={`h-10 border border-gray-300 rounded text-gray-600 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                <Input
-                  placeholder="Technical"
-                  value={formData.department}
-                  onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
-                  disabled={isFieldsReadOnly}
-                  className={`h-10 border border-gray-300 rounded text-gray-600 ${isFieldsReadOnly ? "bg-gray-50" : ""}`}
-                />
-              </div>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Create Ticket on Behalf of</InputLabel>
+                <MuiSelect
+                  value={onBehalfOf}
+                  onChange={(e) => setOnBehalfOf(e.target.value)}
+                  label="Create Ticket on Behalf of"
+                  notched
+                  displayEmpty
+                  sx={{ backgroundColor: '#C4B89D59' }}
+                >
+                  <MenuItem value="self">Self</MenuItem>
+                  <MenuItem value="occupant-user">Occupant User</MenuItem>
+                  <MenuItem value="fm-user">FM User</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                label="Name"
+                placeholder="Anamika Singh"
+                value={formData.name}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
+                disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                  },
+                }}
+              />
+              <TextField
+                label="Department"
+                placeholder="Technical"
+                value={formData.department}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
+                disabled={isFieldsReadOnly}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                  },
+                }}
+              />
             </div>
 
             {/* User Selection Dropdown for behalf of others */}
             {onBehalfOf !== 'self' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
-                <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
-                    <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getUsersForDropdown().map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Select User</InputLabel>
+                <MuiSelect
+                  value={selectedUser}
+                  onChange={(e) => handleUserSelection(e.target.value)}
+                  label="Select User"
+                  notched
+                  displayEmpty
+                  disabled={loadingUsers}
+                >
+                  <MenuItem value="">
+                    {loadingUsers ? "Loading users..." : "Select User"}
+                  </MenuItem>
+                  {getUsersForDropdown().map(user => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             )}
           </div>
         </div>
@@ -426,116 +487,167 @@ export const AddTicketDashboard = () => {
             </RadioGroup>
 
             {/* Form fields in exact layout as per image */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Row 1: Category Type, Sub Category Type, Assigned To */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category Type*</label>
-                <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
-                    <SelectValue placeholder={loadingCategories ? "Loading..." : "Select category"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sub Category Type</label>
-                <Select 
-                  value={formData.subCategoryType} 
-                  onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Category Type</InputLabel>
+                <MuiSelect
+                  value={formData.categoryType}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  label="Category Type"
+                  notched
+                  displayEmpty
+                  disabled={loadingCategories}
+                >
+                  <MenuItem value="">Select Category Type</MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Sub Category Type</InputLabel>
+                <MuiSelect
+                  value={formData.subCategoryType}
+                  onChange={(e) => setFormData({ ...formData, subCategoryType: e.target.value })}
+                  label="Sub Category Type"
+                  notched
+                  displayEmpty
                   disabled={loadingSubcategories || !formData.categoryType}
                 >
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
-                    <SelectValue placeholder={
-                      loadingSubcategories ? "Loading..." : 
-                      !formData.categoryType ? "Select Category First" : 
-                      "Select subcategory"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subcategories.map((subcategory) => (
-                      <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
-                        {subcategory.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
-                <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
-                    <SelectValue placeholder="Select engineer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fmUsers.map((user) => (
-                      <SelectItem key={user.id} value={user.id.toString()}>
-                        {user.firstname} {user.lastname}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <MenuItem value="" sx={{ fontSize: '14px' }}>
+                    {loadingSubcategories ? "Loading..." : 
+                     !formData.categoryType ? "Select Category First" : 
+                     "Select Sub Category Type"}
+                  </MenuItem>
+                  {subcategories.map((subcategory) => (
+                    <MenuItem key={subcategory.id} value={subcategory.id.toString()}>
+                      {subcategory.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Assigned To</InputLabel>
+                <MuiSelect
+                  value={formData.assignedTo}
+                  onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                  label="Assigned To"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Assigned To</MenuItem>
+                  {fmUsers.map((user) => (
+                    <MenuItem key={user.id} value={user.id.toString()}>
+                      {user.firstname} {user.lastname}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             </div>
 
             {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Proactive/Reactive</label>
-                <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Admin Priority</label>
-                <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
-                  <SelectTrigger className="h-10 border border-gray-300 rounded text-gray-600">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIORITY_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Reference Number</label>
-                <Input
-                  placeholder="Enter reference number"
-                  value={formData.referenceNumber}
-                  onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
-                  className="h-10 px-3 border border-gray-300 rounded bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Proactive/Reactive</InputLabel>
+                <MuiSelect
+                  value={formData.proactiveReactive}
+                  onChange={(e) => setFormData({ ...formData, proactiveReactive: e.target.value })}
+                  label="Proactive/Reactive"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Proactive/Reactive</MenuItem>
+                  {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Admin Priority</InputLabel>
+                <MuiSelect
+                  value={formData.adminPriority}
+                  onChange={(e) => setFormData({ ...formData, adminPriority: e.target.value })}
+                  label="Admin Priority"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Admin Priority</MenuItem>
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                label="Reference Number"
+                placeholder="Enter Reference Number"
+                value={formData.referenceNumber}
+                onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
             </div>
 
             {/* Description - Full width */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Descriptions</label>
-              <Textarea
-                placeholder="Enter description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="min-h-[80px] w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 resize-none"
-              />
-            </div>
+            <TextField
+              label="Descriptions"
+              placeholder="Enter description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={3}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  ...fieldStyles,
+                  height: 'auto',
+                  '& .MuiOutlinedInput-root': {
+                    height: 'auto',
+                  },
+                },
+              }}
+            />
           </div>
         </div>
 

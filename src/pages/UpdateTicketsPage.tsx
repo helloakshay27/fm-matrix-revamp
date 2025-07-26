@@ -707,8 +707,7 @@ const UpdateTicketsPage: React.FC = () => {
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Feedback: Tap Faulty, Wc Choked, Hand Dryer Faulty, Tissue Paper Missing"
-                rows={1}
-                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
+                className="h-10 min-h-[2.5rem] w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
               />
             </div>
 
@@ -772,7 +771,7 @@ const UpdateTicketsPage: React.FC = () => {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 justify-start text-left font-normal"
+                    className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 justify-start text-left font-normal text-black"
                   >
                     {reviewDate ? format(reviewDate, "MM/dd/yyyy") : <span className="text-gray-500">mm/dd/yyyy</span>}
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
