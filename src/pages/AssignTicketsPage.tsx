@@ -328,33 +328,33 @@ const AssignTicketsPage: React.FC = () => {
           <h2 className="text-lg font-medium text-gray-900 mb-6">Update To</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm text-gray-500 mb-2">Status</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Status</label>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white z-50 relative"
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 disabled={loadingStatuses}
               >
-                <option value="">Select Status</option>
+                <option value="" className="text-gray-500">Select Status</option>
                 {complaintStatuses.map((status) => (
-                  <option key={status.id} value={status.id}>
+                  <option key={status.id} value={status.id} className="text-gray-900">
                     {status.name}
                   </option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm text-gray-500 mb-2">Assign To</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
               <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white z-50 relative"
+                className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 disabled={loadingUsers}
               >
-                <option value="">Select User</option>
+                <option value="" className="text-gray-500">Select engineer</option>
                 {fmUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
+                  <option key={user.id} value={user.id} className="text-gray-900">
                     {user.firstname} {user.lastname}
                   </option>
                 ))}
