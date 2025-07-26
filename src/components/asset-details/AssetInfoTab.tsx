@@ -253,9 +253,9 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                 {/* Body */}
                 <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-10 text-sm text-gray-800">
                   {/* Asset Details */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start p-6 bg-[#F9F9F6] rounded-lg border">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start p-10 bg-[#F9F9F6] rounded-lg border">
                     {/* Left Section - Asset Info */}
-                    <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
+                    <div className="lg:col-span-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
                       {/* Asset No */}
                       <div className="flex items-start">
                         <span className="w-32 text-gray-500">Asset No</span>
@@ -343,7 +343,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     </div>
 
                     {/* Right Section - Image */}
-                    <div className="lg:col-span-4">
+                    <div className="lg:col-span-2">
                       <p className="text-gray-500 mb-2">Asset Image</p>
 
                       <div className="w-full aspect-square max-w-xs border border-gray-300 rounded-lg bg-white flex items-center justify-center overflow-hidden relative">
