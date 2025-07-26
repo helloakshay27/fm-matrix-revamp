@@ -210,6 +210,10 @@ export const TicketDashboard = () => {
   const inProgressTickets = statusAnalyticsData?.overall.total_wip || ticketSummary.in_progress_tickets;
   const closedTickets = statusAnalyticsData?.overall.total_closed || ticketSummary.closed_tickets;
   const totalSummaryTickets = (openTickets + inProgressTickets + closedTickets) || ticketSummary.total_tickets;
+  const pendingTickets = statusAnalyticsData?.overall.total_pending || ticketSummary.pending_tickets;
+  const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
+   const displayTotalTickets = totalTicketsCount.toLocaleString();
+
 
   // Analytics data with updated colors matching design using real API data
   const statusData = [{
