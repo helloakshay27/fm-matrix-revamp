@@ -17,7 +17,7 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   const dispatch = useDispatch<AppDispatch>();
   const serviceFilterState = useSelector((state: RootState) => state.serviceFilter);
   const { buildings = [], areas = [], loading = { buildings: false, areas: false }, error = { buildings: null, areas: null } } = serviceFilterState || {};
-  
+
   const [filters, setFilters] = useState({
     serviceName: '',
     building: '',
@@ -37,12 +37,12 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   const handleInputChange = (field: string, value: string) => {
     setFilters(prev => {
       const updated = { ...prev, [field]: value };
-      
+
       // Clear areas when building changes
       if (field === 'building') {
         updated.area = '';
         dispatch(clearAreas());
-        
+
         if (value) {
           const wingId = parseInt(value);
           if (!isNaN(wingId)) {
@@ -114,7 +114,7 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             </Button>
           </div>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Service Details */}
           <div>
@@ -204,8 +204,8 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                       </MenuItem>
                     ) : (
                       areas.map((area) => (
-                        <MenuItem key={area.id} value={area.id.toString()}>
-                          {area.name}
+                        <MenuItem key={area.areas.id} value={area.areas.id.toString()}>
+                          {area.areas.name}
                         </MenuItem>
                       ))
                     )}
@@ -217,14 +217,14 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
 
           {/* Action buttons */}
           <div className="flex justify-end gap-4">
-            <Button 
+            <Button
               variant="outline"
               onClick={handleReset}
               className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Reset
             </Button>
-            <Button 
+            <Button
               onClick={handleApply}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"

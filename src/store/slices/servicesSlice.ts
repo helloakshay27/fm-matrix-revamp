@@ -6,15 +6,33 @@ import { ENDPOINTS } from '@/config/apiConfig';
 // Services API call
 export const fetchServicesData = createAsyncThunk(
   'services/fetchServicesData',
-  async ({ active, page }: { active?: boolean; page: number }, { rejectWithValue }) => {
+  async (
+    { active, page, filters = {} }: { active?: boolean; page: number; filters?: any },
+    { rejectWithValue }
+  ) => {
     try {
-      const params = { page: page.toString() }
+      const params: any = { page: page.toString(), 'site_id': localStorage.getItem('siteId') || '2189' };
+
       if (active !== undefined) {
-        params.active = active.toString();
+        params['q[active_eq]'] = active.toString();
       }
+
+      // Add filter parameters
+      if (filters.serviceName) {
+        params['q[service_name_cont]'] = filters.serviceName;
+      }
+      if (filters.buildingId) {
+        params['q[building_id_eq]'] = filters.buildingId;
+      }
+      if (filters.areaId) {
+        params['q[area_id_eq]'] = filters.areaId;
+      }
+
       console.log('fetchServicesData params:', params);
+
       const response = await apiClient.get(ENDPOINTS.SERVICES, { params });
-      console.log('API response:', response.data); 
+      console.log('API response:', response.data);
+
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Failed to fetch services data';
