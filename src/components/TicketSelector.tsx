@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,18 +9,13 @@ import {
 } from '@/components/ui/popover';
 
 const ticketOptions = [
-  { id: 'tickets', label: 'Tickets', checked: true, chartSection: 'statusChart' },
-  { id: 'reactive-proactive', label: 'Reactive Proactive Tickets', checked: true, chartSection: 'reactiveChart' },
+  { id: 'tickets', label: 'Overall Tickets First 2 chart', checked: true, chartSection: 'statusChart' },
+  { id: 'reactive-proactive', label: 'Tickets Categorywise Proactive', checked: true, chartSection: 'reactiveChart' },
   { id: 'category-wise', label: 'Category-wise Tickets', checked: true, chartSection: 'categoryChart' },
-  { id: 'category-proactive', label: 'Category-wise Proactive Tickets', checked: false, chartSection: 'categoryProactiveChart' },
-  { id: 'aging-matrix', label: 'Aging Matrix', checked: true, chartSection: 'agingMatrix' },
-  { id: 'pending', label: 'Pending Tickets', checked: false, chartSection: 'pendingChart' },
-  { id: 'inprogress', label: 'In Progress Tickets', checked: false, chartSection: 'inProgressChart' },
-  { id: 'closed', label: 'Closed Tickets', checked: false, chartSection: 'closedChart' },
-  { id: 'overdue', label: 'Overdue Tickets', checked: false, chartSection: 'overdueChart' },
-  { id: 'highpriority', label: 'High Priority (P1)', checked: false, chartSection: 'p1Chart' },
-  { id: 'medpriority', label: 'Medium Priority (P2)', checked: false, chartSection: 'p2Chart' },
-  { id: 'lowpriority', label: 'Low Priority (P3)', checked: false, chartSection: 'p3Chart' },
+  { id: 'aging-matrix', label: 'Ticket ageing matrix', checked: true, chartSection: 'agingMatrix' },
+  { id: 'unitCategoryWise', label: 'Unit Category Wise', checked: true, chartSection: 'unitCategoryWise' },
+  { id: 'responseTat', label: 'Response Tat', checked: true, chartSection: 'responseTat' },
+  { id: 'resolutionTat', label: 'Resolution tat', checked: true, chartSection: 'resolutionTat' },
 ];
 
 interface TicketSelectorProps {
@@ -30,6 +25,14 @@ interface TicketSelectorProps {
 export function TicketSelector({ onSelectionChange }: TicketSelectorProps) {
   const [options, setOptions] = useState(ticketOptions);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Initialize with current visible sections
+  useEffect(() => {
+    const visibleSections = options
+      .filter(opt => opt.checked)
+      .map(opt => opt.chartSection);
+    onSelectionChange?.(visibleSections);
+  }, []);
 
   const toggleOption = (id: string) => {
     setOptions(prev => {

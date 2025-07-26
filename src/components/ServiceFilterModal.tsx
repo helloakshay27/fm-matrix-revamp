@@ -55,12 +55,12 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   };
 
   const handleApply = () => {
-    if (filters.serviceName.trim() === '') {
-      setErrors({ serviceName: true });
-    } else {
+    // if (filters.serviceName.trim() === '') {
+    //   setErrors({ serviceName: true });
+    // } else {
       onApply(filters);
       onClose();
-    }
+    // }
   };
 
   const handleReset = () => {
@@ -135,8 +135,8 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                   InputProps={{
                     sx: fieldStyles
                   }}
-                  error={errors.serviceName}
-                  helperText={errors.serviceName && "Service Name is required"}
+                  // error={errors.serviceName}
+                  // helperText={errors.serviceName && "Service Name is required"}
                 />
               </div>
             </div>

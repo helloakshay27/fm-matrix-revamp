@@ -622,11 +622,9 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
-  console.log(selectedFacility)
-
-  // Fetch available slots
   const fetchSlots = async (facilityId: string, date: string, userId: string) => {
     try {
+      // Convert date from YYYY-MM-DD to YYYY/MM/DD format
       const formattedDate = date.replace(/-/g, '/');
       const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
         params: {
@@ -637,7 +635,7 @@ export const AddFacilityBookingPage = () => {
 
       if (response.data && response.data.slots) {
         setSlots(response.data.slots);
-        setSelectedSlots([]);
+        setSelectedSlots([]); // Reset selected slots when new slots are fetched
       }
     } catch (error) {
       console.error('Error fetching slots:', error);
@@ -645,10 +643,10 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
-  // Effect to fetch slots when facility, date, and user are selected
+  // Effect to fetch slots when facility, date, and user are all selected
   useEffect(() => {
     if (selectedFacility && selectedDate && selectedUser) {
-      fetchSlots(selectedFacility, selectedDate, selectedUser);
+      fetchSlots(selectedFacility.id, selectedDate, selectedUser);
     } else {
       setSlots([]);
       setSelectedSlots([]);
@@ -724,7 +722,7 @@ export const AddFacilityBookingPage = () => {
           resource_id: selectedSiteId,
           book_by_id: selectedSlots[0],
           book_by: 'slot',
-          facility_id: selectedFacility,
+          facility_id: selectedFacility.id,
           startdate: selectedDate.replace(/-/g, '/'),
           comment: comment || '',
           payment_method: paymentMethod,

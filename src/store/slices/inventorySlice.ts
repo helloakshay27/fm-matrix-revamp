@@ -22,6 +22,7 @@ export interface InventoryItem {
   max_stock_level: number
   min_stock_level: number
   min_order_level: number
+  green_product?: boolean
 }
 
 interface InventoryState {

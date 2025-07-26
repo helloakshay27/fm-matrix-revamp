@@ -231,12 +231,12 @@ export const ScheduleListDashboard = () => {
   
   // Selection actions for the action panel
   const selectionActions = [
-    {
-      label: 'Filter',
-      icon: Filter,
-      onClick: () => setShowFilterDialog(true),
-      variant: 'outline' as const,
-    },
+    // {
+    //   label: 'Filter',
+    //   icon: Filter,
+    //   onClick: () => setShowFilterDialog(true),
+    //   variant: 'outline' as const,
+    // },
     // {
     //   label: 'Export',
     //   icon: Download,
@@ -659,6 +659,7 @@ export const ScheduleListDashboard = () => {
           enableSearch={true} 
           searchPlaceholder="Search schedules..." 
           leftActions={renderCustomActions()} 
+          onFilterClick={() => setShowFilterDialog(true)}
         />
       )}
     </div>

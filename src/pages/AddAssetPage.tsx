@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive, Calendar, DollarSign, CheckCircle, Wrench, Car, Cog, Users2, TrendingUp as Performance, ShieldCheck, Edit3, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings, ArrowLeft, Layers, FileText, Building2, Ruler, Construction, Archive, Calendar, DollarSign, CheckCircle, Wrench, Car, Cog, Users2, TrendingUp as Performance, ShieldCheck, Edit3, Check, Info } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Autocomplete, InputAdornment } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -16,6 +16,7 @@ import apiClient from '@/utils/apiClient';
 import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 import { FormatShapes } from '@mui/icons-material';
 import { toast } from 'sonner';
+import { assetFieldsConfig } from '../config/assetFieldsConfig';
 
 // Image compression function
 const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
@@ -107,82 +108,83 @@ const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRem
   };
 
   return (
-    <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
-      <div className="border-l-4 border-l-[#C72030] p-4 bg-white">
-        <div className="flex items-center gap-2 text-[#C72030] text-sm font-semibold mb-4">
-          <span className="bg-[#C72030] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-            <Package className="w-3 h-3" />
-          </span>
-          {categoryName.toUpperCase()} ASSET IMAGE
-        </div>
+    <>  </>
+    // <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+    //   <div className="border-l-4 border-l-[#C72030] p-4 bg-white">
+    //     <div className="flex items-center gap-2 text-[#C72030] text-sm font-semibold mb-4">
+    //       <span className="bg-[#C72030] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+    //         <Package className="w-3 h-3" />
+    //       </span>
+    //       {categoryName.toUpperCase()} ASSET IMAGE
+    //     </div>
         
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-          {images.length > 0 ? (
-            <div className="space-y-4">
-              <div className="relative inline-block">
-                <img 
-                  src={URL.createObjectURL(images[0])} 
-                  alt="Asset preview" 
-                  className="max-w-full h-48 object-cover rounded-lg shadow-md"
-                />
-                <button
-                  onClick={() => onImageRemove(categoryKey, 0)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="text-sm text-gray-600">
-                <p className="font-medium">{images[0].name}</p>
-                <p className="text-xs text-gray-500">
-                  {(images[0].size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e.target.files)}
-                  className="hidden"
-                  id={`${categoryKey}-image-replace`}
-                />
-                <label
-                  htmlFor={`${categoryKey}-image-replace`}
-                  className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-100 cursor-pointer transition-colors"
-                >
-                  <Package className="w-4 h-4" />
-                  Replace Image
-                </label>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e.target.files)}
-                className="hidden"
-                id={`${categoryKey}-image-upload`}
-              />
-              <label htmlFor={`${categoryKey}-image-upload`} className="cursor-pointer">
-                <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium text-gray-700 mb-2">Upload Asset Image</p>
-                <p className="text-sm text-gray-500 mb-4">
-                  Click to upload an image of your {categoryName.toLowerCase()}
-                </p>
-                <div className="inline-flex items-center gap-2 bg-[#f6f4ee] text-[#C72030] px-6 py-3 rounded-md hover:bg-[#f0ebe0] transition-colors">
-                  <Package className="w-5 h-5" />
-                  Choose Image
-                </div>
-                <p className="text-xs text-gray-400 mt-3">
-                  Supported formats: JPG, PNG, GIF (Max 10MB)
-                </p>
-              </label>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    //     {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+    //       {images.length > 0 ? (
+    //         <div className="space-y-4">
+    //           <div className="relative inline-block">
+    //             <img 
+    //               src={URL.createObjectURL(images[0])} 
+    //               alt="Asset preview" 
+    //               className="max-w-full h-48 object-cover rounded-lg shadow-md"
+    //             />
+    //             <button
+    //               onClick={() => onImageRemove(categoryKey, 0)}
+    //               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+    //             >
+    //               <X className="w-4 h-4" />
+    //             </button>
+    //           </div>
+    //           <div className="text-sm text-gray-600">
+    //             <p className="font-medium">{images[0].name}</p>
+    //             <p className="text-xs text-gray-500">
+    //               {(images[0].size / 1024 / 1024).toFixed(2)} MB
+    //             </p>
+    //           </div>
+    //           <div>
+    //             <input
+    //               type="file"
+    //               accept="image/*"
+    //               onChange={(e) => handleImageUpload(e.target.files)}
+    //               className="hidden"
+    //               id={`${categoryKey}-image-replace`}
+    //             />
+    //             <label
+    //               htmlFor={`${categoryKey}-image-replace`}
+    //               className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-100 cursor-pointer transition-colors"
+    //             >
+    //               <Package className="w-4 h-4" />
+    //               Replace Image
+    //             </label>
+    //           </div>
+    //         </div>
+    //       ) : (
+    //         <div>
+    //           <input
+    //             type="file"
+    //             accept="image/*"
+    //             onChange={(e) => handleImageUpload(e.target.files)}
+    //             className="hidden"
+    //             id={`${categoryKey}-image-upload`}
+    //           />
+    //           <label htmlFor={`${categoryKey}-image-upload`} className="cursor-pointer">
+    //             <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+    //             <p className="text-lg font-medium text-gray-700 mb-2">Upload Asset Image</p>
+    //             <p className="text-sm text-gray-500 mb-4">
+    //               Click to upload an image of your {categoryName.toLowerCase()}
+    //             </p>
+    //             <div className="inline-flex items-center gap-2 bg-[#f6f4ee] text-[#C72030] px-6 py-3 rounded-md hover:bg-[#f0ebe0] transition-colors">
+    //               <Package className="w-5 h-5" />
+    //               Choose Image
+    //             </div>
+    //             <p className="text-xs text-gray-400 mt-3">
+    //               Supported formats: JPG, PNG, GIF (Max 10MB)
+    //             </p>
+    //           </label>
+    //         </div>
+    //       )}
+    //     </div> */}
+    //   </div>
+    // </div>
   );
 };
 
@@ -263,8 +265,8 @@ const AddAssetPage = () => {
   // ...existing code...
 
   // Group and Subgroup state
-  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [groups, setGroups] = useState([]);
   const [subgroups, setSubgroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState('');
@@ -346,7 +348,7 @@ const AddAssetPage = () => {
     pms_supplier_id: '',
     salvage_value: '',
     depreciation_rate: '',
-    depreciation_method: '',
+    depreciation_method: 'wdv',
     it_asset: false,
     it_meter: false,
     meter_tag_type: '',
@@ -368,7 +370,7 @@ const AddAssetPage = () => {
     sub_group_id: '',
     consumption_pms_asset_measures_attributes: [],
     non_consumption_pms_asset_measures_attributes: [],
-    allocation_ids: [],
+    allocation_id: '',
     asset_move_to: {
       site_id: '',
       building_id: '',
@@ -626,6 +628,26 @@ const removeFile = (category, index) => {
     buildingUsage: [],
     buildingMaintenance: [],
     buildingMiscellaneous: [],
+    // Furniture & Fixtures sections
+    furnitureBasicDetails: [],
+    furnitureSpecifications: [],
+    furnitureMaintenance: [],
+    // IT Equipment sections
+    itEquipmentBasicDetails: [],
+    itEquipmentSpecifications: [],
+    itEquipmentMaintenance: [],
+    // Machinery & Equipment sections
+    machineryBasicDetails: [],
+    machinerySpecifications: [],
+    machineryMaintenance: [],
+    // Tools & Instruments sections
+    toolsBasicDetails: [],
+    toolsSpecifications: [],
+    toolsMaintenance: [],
+    // Meter sections
+    meterBasicDetails: [],
+    meterSpecifications: [],
+    meterMaintenance: [],
     // General sections
     locationDetails: [],
     purchaseDetails: [],
@@ -663,6 +685,7 @@ const removeFile = (category, index) => {
   console.log('It Assets Custom Fields:', itAssetsCustomFields);
 
 const [attachments, setAttachments] = useState({
+  // Category-specific attachments (existing category documents)
   landAttachments: [],           // Land documents  
   vehicleAttachments: [],        // Vehicle documents (RC, insurance, etc.)
   leaseholdAttachments: [],      // Leasehold improvement documents
@@ -672,19 +695,71 @@ const [attachments, setAttachments] = useState({
   machineryAttachments: [],      // Machinery & Equipment documents
   toolsAttachments: [],          // Tools & Instruments documents
   meterAttachments: [],          // Meter documents
-  manualsUpload: [],             // Asset manuals
-  insuranceDetails: [],          // Insurance documents
-  purchaseInvoice: [],           // Purchase invoices
-  amc: [],                       // AMC documents
-  // Add asset images for each category
+  
+  // Common sections for all categories - Asset Manuals
+  landManualsUpload: [],             // Land - Asset manuals
+  vehicleManualsUpload: [],          // Vehicle - Asset manuals
+  leaseholdimprovementManualsUpload: [], // Leasehold Improvement - Asset manuals
+  buildingManualsUpload: [],         // Building - Asset manuals
+  furniturefixturesManualsUpload: [], // Furniture & Fixtures - Asset manuals
+  itequipmentManualsUpload: [],      // IT Equipment - Asset manuals
+  machineryequipmentManualsUpload: [], // Machinery & Equipment - Asset manuals
+  toolsinstrumentsManualsUpload: [], // Tools & Instruments - Asset manuals
+  meterManualsUpload: [],            // Meter - Asset manuals
+  
+  // Common sections for all categories - Insurance Details
+  landInsuranceDetails: [],          // Land - Insurance documents
+  vehicleInsuranceDetails: [],       // Vehicle - Insurance documents
+  leaseholdimprovementInsuranceDetails: [], // Leasehold Improvement - Insurance documents
+  buildingInsuranceDetails: [],      // Building - Insurance documents
+  furniturefixturesInsuranceDetails: [], // Furniture & Fixtures - Insurance documents
+  itequipmentInsuranceDetails: [],   // IT Equipment - Insurance documents
+  machineryequipmentInsuranceDetails: [], // Machinery & Equipment - Insurance documents
+  toolsinstrumentsInsuranceDetails: [], // Tools & Instruments - Insurance documents
+  meterInsuranceDetails: [],         // Meter - Insurance documents
+  
+  // Common sections for all categories - Purchase Invoices
+  landPurchaseInvoice: [],           // Land - Purchase invoices
+  vehiclePurchaseInvoice: [],        // Vehicle - Purchase invoices
+  leaseholdimprovementPurchaseInvoice: [], // Leasehold Improvement - Purchase invoices
+  buildingPurchaseInvoice: [],       // Building - Purchase invoices
+  furniturefixturesPurchaseInvoice: [], // Furniture & Fixtures - Purchase invoices
+  itequipmentPurchaseInvoice: [],    // IT Equipment - Purchase invoices
+  machineryequipmentPurchaseInvoice: [], // Machinery & Equipment - Purchase invoices
+  toolsinstrumentsPurchaseInvoice: [], // Tools & Instruments - Purchase invoices
+  meterPurchaseInvoice: [],          // Meter - Purchase invoices
+  
+  // Common sections for all categories - Other Documents
+  landOtherDocuments: [],            // Land - Other documents
+  vehicleOtherDocuments: [],         // Vehicle - Other documents
+  leaseholdimprovementOtherDocuments: [], // Leasehold Improvement - Other documents
+  buildingOtherDocuments: [],        // Building - Other documents
+  furniturefixturesOtherDocuments: [], // Furniture & Fixtures - Other documents
+  itequipmentOtherDocuments: [],     // IT Equipment - Other documents
+  machineryequipmentOtherDocuments: [], // Machinery & Equipment - Other documents
+  toolsinstrumentsOtherDocuments: [], // Tools & Instruments - Other documents
+  meterOtherDocuments: [],           // Meter - Other documents
+  
+  // AMC documents for all categories
+  landAmc: [],                       // Land - AMC documents
+  vehicleAmc: [],                    // Vehicle - AMC documents
+  leaseholdimprovementAmc: [],       // Leasehold Improvement - AMC documents
+  buildingAmc: [],                   // Building - AMC documents
+  furniturefixturesAmc: [],          // Furniture & Fixtures - AMC documents
+  itequipmentAmc: [],                // IT Equipment - AMC documents
+  machineryequipmentAmc: [],         // Machinery & Equipment - AMC documents
+  toolsinstrumentsAmc: [],           // Tools & Instruments - AMC documents
+  meterAmc: [],                      // Meter - AMC documents
+  
+  // Asset images for each category
   landAssetImage: [],
   vehicleAssetImage: [],
-  leaseholdAssetImage: [],
+  leaseholdimprovementAssetImage: [],
   buildingAssetImage: [],
-  furnitureAssetImage: [],
-  itEquipmentAssetImage: [],
-  machineryAssetImage: [],
-  toolsAssetImage: [],
+  furniturefixturesAssetImage: [],
+  itequipmentAssetImage: [],
+  machineryequipmentAssetImage: [],
+  toolsinstrumentsAssetImage: [],
   meterAssetImage: []
 });
   const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
@@ -833,6 +908,33 @@ const [attachments, setAttachments] = useState({
       }
     }
 
+    // Provide instant positive feedback when required fields are filled
+    if (value && value.toString().trim()) {
+      const fieldDisplayNames = {
+        name: 'Asset Name',
+        model_number: 'Model No.',
+        manufacturer: 'Manufacturer',
+        purchase_cost: 'Purchase Cost',
+        purchased_on: 'Purchase Date',
+        commisioning_date: 'Commissioning Date',
+        warranty_expiry: 'Warranty Expiry',
+        useful_life: 'Useful Life',
+        salvage_value: 'Salvage Value',
+        depreciation_rate: 'Depreciation Rate'
+      };
+
+      if (fieldDisplayNames[field]) {
+        // Show a subtle success toast for required fields when they're filled
+        const existingToastContent = document.querySelector('[data-sonner-toast]');
+        if (!existingToastContent || !existingToastContent.textContent?.includes('completed')) {
+          toast.success(`${fieldDisplayNames[field]} completed`, {
+            duration: 1500,
+            style: { backgroundColor: '#f0f9ff', borderColor: '#38bdf8' }
+          });
+        }
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -852,11 +954,19 @@ const [attachments, setAttachments] = useState({
     }));
   };
 
-  // --- For array fields like asset_ids, allocation_ids ---
+  // --- For array fields like asset_ids ---
   const handleArrayFieldChange = (field, valueArray) => {
     setFormData(prev => ({
       ...prev,
       [field]: valueArray
+    }));
+  };
+
+  // --- For single field changes like allocation_id ---
+  const handleSingleFieldChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
     }));
   };
 
@@ -877,7 +987,7 @@ const [attachments, setAttachments] = useState({
     
     // Custom fields
     Object.keys(customFields).forEach(sectionKey => {
-      customFields[sectionKey].forEach(field => {
+      (customFields[sectionKey] || []).forEach(field => {
         extraFields.push({
           field_name: field.name,
           field_value: field.value,
@@ -890,7 +1000,7 @@ const [attachments, setAttachments] = useState({
 
     // IT Assets custom fields
     Object.keys(itAssetsCustomFields).forEach(sectionKey => {
-      itAssetsCustomFields[sectionKey].forEach(field => {
+      (itAssetsCustomFields[sectionKey] || []).forEach(field => {
         extraFields.push({
           field_name: field.name,
           field_value: field.value,
@@ -926,6 +1036,7 @@ const [attachments, setAttachments] = useState({
 
   const handleItAssetsToggleChange = checked => {
     setItAssetsToggle(checked);
+    handleFieldChange('it_asset', checked);
     setExpandedSections(prev => ({
       ...prev,
       warranty: checked
@@ -933,6 +1044,7 @@ const [attachments, setAttachments] = useState({
   };
   const handleMeterDetailsToggleChange = checked => {
     setMeterDetailsToggle(checked);
+    handleFieldChange('is_meter', checked);
     setExpandedSections(prev => ({
       ...prev,
       meterCategory: checked
@@ -940,6 +1052,7 @@ const [attachments, setAttachments] = useState({
   };
   const handleAssetLoanedToggleChange = checked => {
     setAssetLoanedToggle(checked);
+    handleFieldChange('asset_loaned', checked);
     setExpandedSections(prev => ({
       ...prev,
       assetLoaned: checked
@@ -947,6 +1060,7 @@ const [attachments, setAttachments] = useState({
   };
   const handleDepreciationToggleChange = checked => {
     setDepreciationToggle(checked);
+    handleFieldChange('depreciation_applicable', checked);
     setExpandedSections(prev => ({
       ...prev,
       nonConsumption: checked
@@ -1122,7 +1236,7 @@ const [attachments, setAttachments] = useState({
       };
       setCustomFields(prev => ({
         ...prev,
-        [currentSection]: [...prev[currentSection], newField]
+        [currentSection]: [...(prev[currentSection] || []), newField]
       }));
       setNewFieldName('');
       setCustomFieldModalOpen(false);
@@ -1132,7 +1246,7 @@ const [attachments, setAttachments] = useState({
   const handleCustomFieldChange = (section, id, value) => {
     setCustomFields(prev => ({
       ...prev,
-      [section]: prev[section].map(field =>
+      [section]: (prev[section] || []).map(field =>
         field.id === id ? { ...field, value } : field
       )
     }));
@@ -1147,13 +1261,13 @@ const [attachments, setAttachments] = useState({
   const removeCustomField = (section, id) => {
     setCustomFields(prev => ({
       ...prev,
-      [section]: prev[section].filter(field => field.id !== id)
+      [section]: (prev[section] || []).filter(field => field.id !== id)
     }));
 
     // Remove from extraFormFields as well
     setExtraFormFields(prev => {
       // Find the field name to remove
-      const fieldToRemove = customFields[section].find(field => field.id === id);
+      const fieldToRemove = (customFields[section] || []).find(field => field.id === id);
       if (!fieldToRemove) return prev;
       const newFields = { ...prev };
       delete newFields[fieldToRemove.name];
@@ -1187,7 +1301,7 @@ const [attachments, setAttachments] = useState({
   const handleItAssetsCustomFieldChange = (section, id, value) => {
     setItAssetsCustomFields(prev => ({
       ...prev,
-      [section]: prev[section].map(field => field.id === id ? {
+      [section]: (prev[section] || []).map(field => field.id === id ? {
         ...field,
         value
       } : field)
@@ -1196,7 +1310,7 @@ const [attachments, setAttachments] = useState({
   const removeItAssetsCustomField = (section, id) => {
     setItAssetsCustomFields(prev => ({
       ...prev,
-      [section]: prev[section].filter(field => field.id !== id)
+      [section]: (prev[section] || []).filter(field => field.id !== id)
     }));
   };
 
@@ -1334,95 +1448,572 @@ const [attachments, setAttachments] = useState({
   const hasValidationError = (fieldName: string) => {
     return validationErrors.some(error => error.toLowerCase().includes(fieldName.toLowerCase()));
   };
+  // Function to check if a category-specific section is completed
+  const isSectionCompleted = (sectionType: string) => {
+    if (!selectedAssetCategory) return false;
+
+    // Get the validation rules for the current category
+    const baseValidationRules = {
+      baseFields: ['name','asset_code'],
+      groupFields: ['pms_asset_group_id', 'pms_asset_sub_group_id'],
+      purchaseFields: ['purchase_cost', 'purchased_on'],
+      // datesFields: ['commisioning_date'],
+    };
+
+    const categoryRules = {
+      'Land': {
+        ...baseValidationRules,
+        locationFields: [],
+        warrantyFields: [],
+        categorySpecificFields: ['land_type', 'location', 'area']
+      },
+      'Building': {
+        ...baseValidationRules,
+        locationFields: [],
+        warrantyFields: [],
+        categorySpecificFields: ['building_type', 'location', 'built_up_area']
+      },
+      'Leasehold Improvement': {
+        ...baseValidationRules,
+        locationFields: [],
+        warrantyFields: [],
+        categorySpecificFields: ['improvement_description', 'location_site']
+      },
+      'Vehicle': {
+        ...baseValidationRules,
+        locationFields: [],
+        warrantyFields: ['warranty_expiry'],
+        categorySpecificFields: ['vehicle_type', 'make_model', 'registration_number']
+      },
+      'Furniture & Fixtures': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'],
+        warrantyFields: ['warranty_expiry'],
+        categorySpecificFields: []
+      },
+      'IT Equipment': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'],
+        warrantyFields: ['warranty_expiry'],
+        categorySpecificFields: []
+      },
+      'Machinery & Equipment': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'],
+        warrantyFields: ['warranty_expiry'],
+        categorySpecificFields: []
+      },
+      'Tools & Instruments': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'],
+        warrantyFields: ['warranty_expiry'],
+        categorySpecificFields: []
+      },
+      'Meter': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'],
+        warrantyFields: ['warranty_expiry'],
+        categorySpecificFields: []
+      }
+    };
+
+    const rules = categoryRules[selectedAssetCategory];
+    if (!rules) return false;
+
+    const checkFieldsCompleted = (fields: string[] = [], checkExtraFields = false) => {
+      for (const field of fields) {
+        if (checkExtraFields) {
+          // Check in extraFormFields for category-specific fields
+          const extraField = extraFormFields[field];
+          if (!extraField || !extraField.value || !extraField.value.toString().trim()) {
+            return false;
+          }
+        } else if (field === 'pms_asset_group_id') {
+          if (!selectedGroup) return false;
+        } else if (field.startsWith('site') || field.startsWith('building')) {
+          // For location fields, check selectedLocation
+          const locationField = field === 'site' ? 'site' : field === 'building' ? 'building' : field;
+          if (!selectedLocation[locationField]) return false;
+        } else {
+          // Check in formData
+          if (!formData[field]) return false;
+        }
+      }
+      return true;
+    };
+
+    switch (sectionType) {
+      case 'basic':
+        return checkFieldsCompleted(rules.baseFields || []) && 
+               checkFieldsCompleted(rules.categorySpecificFields || [], true);
+      case 'group':
+        return checkFieldsCompleted(rules.groupFields || []);
+      case 'location':
+        return checkFieldsCompleted(rules.locationFields || []);
+      case 'purchase':
+        return checkFieldsCompleted(rules.purchaseFields || []);
+      case 'dates':
+        return checkFieldsCompleted(rules.datesFields || []);
+      case 'warranty':
+        return checkFieldsCompleted(rules.warrantyFields || []);
+      default:
+        return false;
+    }
+  };
+
+  // Function to get completion status icon
+  const getCompletionStatusIcon = (sectionType: string) => {
+    const isCompleted = isSectionCompleted(sectionType);
+    return isCompleted ? 
+      <CheckCircle className="w-4 h-4 text-green-600" /> : 
+      <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>;
+  };
+
+  // Function to get category-specific validation summary
+  const getCategoryValidationSummary = (category: string) => {
+    const validationSummaries = {
+      'Land': {
+        description: 'Land assets require basic identification (Land Type, Location, Area), group selection, and purchase details. Location selection and warranty fields are not required as land is a location itself.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Land Type', 'Location', 'Area (sq ft)', 'Purchase Details', 'Commissioning Date']
+      },
+      'Building': {
+        description: 'Building assets require basic identification (Building Type, Location, Built-up Area), group selection, and purchase details. Buildings serve as locations themselves so location selection is not required.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Building Type', 'Location', 'Built-up Area', 'Purchase Details', 'Commissioning Date']
+      },
+      'Leasehold Improvement': {
+        description: 'Leasehold improvement assets require basic identification (Improvement Description, Location Site), group selection, and purchase details. They are tied to specific leased properties.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Improvement Description', 'Location Site', 'Purchase Details', 'Commissioning Date']
+      },
+      'Vehicle': {
+        description: 'Vehicle assets require basic identification (Vehicle Type, Make & Model, Registration Number), group selection, purchase details, and warranty information. Location is not required as vehicles are mobile.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Vehicle Type', 'Make & Model', 'Registration Number', 'Purchase Details', 'Commissioning Date', 'Warranty Expiry']
+      },
+      'Furniture & Fixtures': {
+        description: 'Furniture assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) as they are fixed to specific locations.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Location (Site & Building)', 'Purchase Details', 'Commissioning Date', 'Warranty Expiry']
+      },
+      'IT Equipment': {
+        description: 'IT Equipment requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for proper asset tracking.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Location (Site & Building)', 'Purchase Details', 'Commissioning Date', 'Warranty Expiry']
+      },
+      'Machinery & Equipment': {
+        description: 'Machinery requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for maintenance and tracking.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Location (Site & Building)', 'Purchase Details', 'Commissioning Date', 'Warranty Expiry']
+      },
+      'Tools & Instruments': {
+        description: 'Tools require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for inventory management.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Location (Site & Building)', 'Purchase Details', 'Commissioning Date', 'Warranty Expiry']
+      },
+      'Meter': {
+        description: 'Meter assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for utility monitoring and maintenance.',
+        requiredSections: ['Asset Name', 'Group & Subgroup', 'Location (Site & Building)', 'Purchase Details', 'Commissioning Date', 'Warranty Expiry']
+      }
+    };
+
+    return validationSummaries[category] || {
+      description: 'Please select a category to see validation requirements.',
+      requiredSections: []
+    };
+  };
+
+  // Helper function to get category-specific attachment arrays
+  const getCategoryAttachments = () => {
+    if (!selectedAssetCategory) return {};
+    
+    const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
+    
+    return {
+      asset_image: attachments[`${categoryKey}AssetImage`] || [],
+      asset_manuals: attachments[`${categoryKey}ManualsUpload`] || [],
+      asset_insurances: attachments[`${categoryKey}InsuranceDetails`] || [],
+      asset_purchases: attachments[`${categoryKey}PurchaseInvoice`] || [],
+      asset_other_uploads: attachments[`${categoryKey}OtherDocuments`] || [],
+      amc_documents: attachments[`${categoryKey}Amc`] || [],
+      // Category-specific documents (if any)
+      category_attachments: attachments[`${categoryKey}Attachments`] || []
+    };
+  };
+
   const validateMandatoryFields = () => {
     const errors: string[] = [];
 
-    // Basic Asset Details validation
-    if (!formData.name) errors.push("Asset Name is required");
-    if (!formData.model_number) errors.push("Model No. is required");
-    if (!formData.manufacturer) errors.push("Manufacturer is required");
-    if (!selectedGroup) errors.push("Group is required");
-    if (!formData.pms_asset_sub_group_id) errors.push("Subgroup is required");
+    // Base validation rules for all categories
+    const baseValidationRules = {
+      // Common required fields across all categories
+      baseFields: ['name'],  // Asset name is always required
+      // groupFields: ['pms_asset_group_id', 'pms_asset_sub_group_id'], // Group and subgroup always required
+      // purchaseFields: ['purchase_cost', 'purchased_on'], // Purchase details always required
+      // datesFields: ['commisioning_date'], // Commissioning date always required
+    };
 
-    // Purchase Details validation
-    if (!formData.purchase_cost) errors.push("Purchase Cost is required");
-    if (!formData.purchased_on) errors.push("Purchase Date is required");
-    if (!formData.commisioning_date) errors.push("Commissioning Date is required");
-    if (!formData.warranty_expiry) errors.push("Warranty Expires On is required");
+    // Category-specific validation rules based on actual field configs
+    const categoryValidationRules = {
+      'Land': {
+        ...baseValidationRules,
+        locationFields: [], // Land doesn't require location selection as it IS a location
+        warrantyFields: [], // Land typically doesn't have warranty
+        categorySpecificFields: [
+          // From assetFieldsConfig - required fields for Land
+          // 'land_type', // From Basic Identification (required: true)
+          'location', // From Location & Ownership (required: true) 
+          'area' // From Land Size and Value (required: true) - using 'area' as defined in config
+        ]
+      },
+      'Building': {
+        ...baseValidationRules,
+        locationFields: [], // Buildings are locations themselves
+        warrantyFields: [], // Buildings typically don't have warranty expiry
+        categorySpecificFields: [
+          // From assetFieldsConfig - required fields for Building
+          'building_type', // From Basic Identification (required: true)
+          'location', // From Location & Ownership (required: true)
+          'built_up_area' // From Construction Details (required: true)
+        ]
+      },
+      'Leasehold Improvement': {
+        ...baseValidationRules,
+        locationFields: [], // Improvements are tied to specific leased properties
+        warrantyFields: [], // Improvements typically don't have warranty expiry
+        categorySpecificFields: [
+          // From assetFieldsConfig - required fields for Leasehold Improvement
+          'improvement_description', // From Basic Identification (required: true)
+          'location_site' // From Location & Association (required: true)
+        ]
+      },
+      'Vehicle': {
+        ...baseValidationRules,
+        locationFields: [], // Vehicles are mobile, don't require fixed location
+        warrantyFields: ['warranty_expiry'], // Vehicles typically have warranty
+        categorySpecificFields: [
+          // From assetFieldsConfig - required fields for Vehicle
+          'vehicle_type', // From Basic Identification (required: true)
+          'make_model', // From Basic Identification (required: true)
+          'registration_number' // From Basic Identification (required: true)
+        ]
+      },
+      'Furniture & Fixtures': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'], // Furniture needs location
+        warrantyFields: ['warranty_expiry'], // Furniture typically has warranty
+        categorySpecificFields: [] // No specific required fields beyond base ones
+      },
+      'IT Equipment': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'], // IT Equipment needs location
+        warrantyFields: ['warranty_expiry'], // IT Equipment typically has warranty
+        categorySpecificFields: [] // No specific required fields beyond base ones
+      },
+      'Machinery & Equipment': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'], // Machinery needs location
+        warrantyFields: ['warranty_expiry'], // Machinery typically has warranty
+        categorySpecificFields: [] // No specific required fields beyond base ones
+      },
+      'Tools & Instruments': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'], // Tools need location
+        warrantyFields: ['warranty_expiry'], // Tools typically have warranty
+        categorySpecificFields: [] // No specific required fields beyond base ones
+      },
+      'Meter': {
+        ...baseValidationRules,
+        locationFields: ['site', 'building'], // Meters need location
+        warrantyFields: ['warranty_expiry'], // Meters typically have warranty
+        categorySpecificFields: [] // No specific required fields beyond base ones
+      }
+    };
 
-    // Location validation (for applicable categories)
-    if (selectedAssetCategory === 'Furniture & Fixtures' ||
-        selectedAssetCategory === 'IT Equipment' ||
-        selectedAssetCategory === 'Machinery & Equipment' ||
-        selectedAssetCategory === 'Meter' ||
-        selectedAssetCategory === 'Tools & Instruments') {
-      if (!selectedLocation.site) errors.push("Site is required");
-      if (!selectedLocation.building) errors.push("Building is required");
+    // Get validation rules for current category
+    const currentCategoryRules = categoryValidationRules[selectedAssetCategory];
+    
+    if (!currentCategoryRules) {
+      toast.error('Category Not Selected', {
+        description: 'Please select an asset category to continue.',
+        duration: 4000,
+      });
+      return ['Asset category is required'];
+    }
+
+    // Field display names mapping
+    const fieldDisplayNames = {
+      // Base fields
+      name: 'Asset Name',
+      asset_code: 'Asset Code',
+      pms_asset_group_id: 'Group',
+      pms_asset_sub_group_id: 'Subgroup',
+      purchase_cost: 'Purchase Cost',
+      purchased_on: 'Purchase Date',
+      commisioning_date: 'Commissioning Date',
+      warranty_expiry: 'Warranty Expiry Date',
+      
+      // Location fields
+      site: 'Site',
+      building: 'Building',
+      wing: 'Wing',
+      area: 'Area',
+      floor: 'Floor',
+      room: 'Room',
+
+      // Category-specific field display names from assetFieldsConfig
+      // Land fields
+      land_type: 'Land Type',
+      location: 'Location',
+      land_area: 'Area (sq ft)', // Using land_area to avoid conflict
+      
+      // Building fields
+      building_type: 'Building Type',
+      built_up_area: 'Built-up Area (sq ft)',
+      
+      // Leasehold Improvement fields
+      improvement_description: 'Improvement Description',
+      location_site: 'Location Site',
+      
+      // Vehicle fields
+      vehicle_type: 'Vehicle Type',
+      make_model: 'Make & Model',
+      registration_number: 'Registration Number',
+      
+      // Generic fallback
+      model_number: 'Model Number',
+      manufacturer: 'Manufacturer'
+    };
+
+    // Helper function to validate fields from extraFormFields (dynamic fields)
+    const validateExtraField = (fieldName: string, displayName: string) => {
+      const extraField = extraFormFields[fieldName];
+      if (!extraField || !extraField.value || !extraField.value.toString().trim()) {
+        toast.error(`${displayName} Required`, {
+          description: `Please enter the ${displayName.toLowerCase()} for ${selectedAssetCategory}.`,
+          duration: 4000,
+        });
+        return [`${displayName} is required for ${selectedAssetCategory}`];
+      }
+      return [];
+    };
+
+    // 1. Validate base fields (common to all categories)
+    for (const field of currentCategoryRules.baseFields || []) {
+      if (!formData[field]) {
+        const fieldDisplayName = fieldDisplayNames[field] || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        toast.error(`${fieldDisplayName} Required`, {
+          description: `Please enter the ${fieldDisplayName.toLowerCase()} to continue.`,
+          duration: 4000,
+        });
+        return [`${fieldDisplayName} is required`];
+      }
+    }
+
+    // 2. Validate group fields
+    // for (const field of currentCategoryRules.groupFields) {
+      // if (field === 'pms_asset_group_id' && !selectedGroup) {
+      //   toast.error(`${fieldDisplayNames[field]} Required`, {
+      //     description: `Please select an asset ${fieldDisplayNames[field].toLowerCase()} to continue.`,
+      //     duration: 4000,
+      //   });
+      //   return [`${fieldDisplayNames[field]} is required`];
+      // }
+    //   if (field === 'pms_asset_sub_group_id' && !formData[field]) {
+    //     toast.error(`${fieldDisplayNames[field]} Required`, {
+    //       description: `Please select an asset ${fieldDisplayNames[field].toLowerCase()} to continue.`,
+    //       duration: 4000,
+    //     });
+    //     return [`${fieldDisplayNames[field]} is required`];
+    //   }
+    // }
+
+    // 3. Validate location fields (category-specific)
+    for (const locationField of currentCategoryRules.locationFields || []) {
+      if (!selectedLocation[locationField]) {
+        const fieldDisplayName = fieldDisplayNames[locationField] || locationField.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        toast.error(`${fieldDisplayName} Required`, {
+          description: `Please select a ${fieldDisplayName.toLowerCase()} for ${selectedAssetCategory}.`,
+          duration: 4000,
+        });
+        return [`${fieldDisplayName} is required for ${selectedAssetCategory}`];
+      }
+    }
+
+    // // 4. Validate purchase fields
+    // for (const field of currentCategoryRules.purchaseFields) {
+    //   if (!formData[field]) {
+    //     toast.error(`${fieldDisplayNames[field]} Required`, {
+    //       description: `Please ${field.includes('date') ? 'select' : 'enter'} the ${fieldDisplayNames[field].toLowerCase()} to continue.`,
+    //       duration: 4000,
+    //     });
+    //     return [`${fieldDisplayNames[field]} is required`];
+    //   }
+    // }
+
+    // 5. Validate date fields
+    for (const field of currentCategoryRules.datesFields || []) {
+      if (!formData[field]) {
+        const fieldDisplayName = fieldDisplayNames[field] || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        toast.error(`${fieldDisplayName} Required`, {
+          description: `Please select the ${fieldDisplayName.toLowerCase()} to continue.`,
+          duration: 4000,
+        });
+        return [`${fieldDisplayName} is required`];
+      }
+    }
+
+    // 6. Validate warranty fields (category-specific)
+    for (const field of currentCategoryRules.warrantyFields || []) {
+      if (!formData[field]) {
+        const fieldDisplayName = fieldDisplayNames[field] || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        toast.error(`${fieldDisplayName} Required`, {
+          description: `Please select the ${fieldDisplayName.toLowerCase()} for ${selectedAssetCategory}.`,
+          duration: 4000,
+        });
+        return [`${fieldDisplayName} is required for ${selectedAssetCategory}`];
+      }
+    }
+
+    // 7. Validate category-specific required fields from assetFieldsConfig
+    for (const fieldName of currentCategoryRules.categorySpecificFields || []) {
+      const displayName = fieldDisplayNames[fieldName] || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      
+      // Check if field is in extraFormFields (dynamic fields from the category forms)
+      const validationError = validateExtraField(fieldName, displayName);
+      if (validationError.length > 0) {
+        return validationError;
+      }
     }
 
     // Asset Loaned validation (if applicable toggle is on)
     if (assetLoanedToggle) {
-      if (!selectedLoanedVendorId) errors.push("Vendor Name is required for Asset Loaned");
-      if (!formData.agreement_from_date) errors.push("Agreement Start Date is required for Asset Loaned");
-      if (!formData.agreement_to_date) errors.push("Agreement End Date is required for Asset Loaned");
-    }
+      if (!selectedLoanedVendorId) {
+        toast.error('Vendor Required for Asset Loaned', {
+          description: 'Please select a vendor since Asset Loaned is enabled.',
+          duration: 4000,
+        });
+        return ['Vendor Name is required for Asset Loaned'];
+      }
 
-    // AMC Details validation (if fields are filled)
-    if (formData.amc_detail.supplier_id || 
-        formData.amc_detail.amc_start_date || 
-        formData.amc_detail.amc_end_date || 
-        formData.amc_detail.amc_cost) {
-      if (!formData.amc_detail.supplier_id) errors.push("AMC Vendor is required");
-      if (!formData.amc_detail.amc_start_date) errors.push("AMC Start Date is required");
-      if (!formData.amc_detail.amc_end_date) errors.push("AMC End Date is required");
-      if (!formData.amc_detail.amc_cost) errors.push("AMC Cost is required");
+      if (!formData.agreement_from_date) {
+        toast.error('Agreement Start Date Required', {
+          description: 'Please select the agreement start date for Asset Loaned.',
+          duration: 4000,
+        });
+        return ['Agreement Start Date is required for Asset Loaned'];
+      }
+
+      if (!formData.agreement_to_date) {
+        toast.error('Agreement End Date Required', {
+          description: 'Please select the agreement end date for Asset Loaned.',
+          duration: 4000,
+        });
+        return ['Agreement End Date is required for Asset Loaned'];
+      }
     }
 
     // Depreciation validation (if applicable toggle is on)
     if (depreciationToggle) {
-      if (!formData.useful_life) errors.push("Useful Life is required for Depreciation");
-      if (!formData.salvage_value) errors.push("Salvage Value is required for Depreciation");
-      if (!formData.depreciation_rate) errors.push("Depreciation Rate is required for Depreciation");
-    }
+      if (!formData.useful_life) {
+        toast.error('Useful Life Required', {
+          description: 'Please enter the useful life since Depreciation is enabled.',
+          duration: 4000,
+        });
+        return ['Useful Life is required for Depreciation'];
+      }
 
-    // IT Assets validation (if applicable toggle is on)
-    if (selectedAssetCategory === 'IT Equipment' && itAssetsToggle) {
-      // Add specific IT asset validations if needed
-    }
+      if (!formData.salvage_value) {
+        toast.error('Salvage Value Required', {
+          description: 'Please enter the salvage value since Depreciation is enabled.',
+          duration: 4000,
+        });
+        return ['Salvage Value is required for Depreciation'];
+      }
 
-    // Meter Details validation (if applicable toggle is on)
-    if (meterDetailsToggle && meterType) {
-      if (meterType === 'SubMeter' && !selectedParentMeterId) {
-        errors.push("Parent Meter is required for Sub Meter");
+      if (!formData.depreciation_rate) {
+        toast.error('Depreciation Rate Required', {
+          description: 'Please enter the depreciation rate since Depreciation is enabled.',
+          duration: 4000,
+        });
+        return ['Depreciation Rate is required for Depreciation'];
       }
     }
 
-    return errors;
+    // Meter Details validation (if applicable toggle is on)
+    if (meterDetailsToggle && meterType === 'SubMeter' && !selectedParentMeterId) {
+      toast.error('Parent Meter Required', {
+        description: 'Please select a parent meter for Sub Meter type.',
+        duration: 4000,
+      });
+      return ['Parent Meter is required for Sub Meter'];
+    }
+
+    // AMC Details validation (if any AMC field is filled, all are required)
+    if (formData.amc_detail.supplier_id || 
+        formData.amc_detail.amc_start_date || 
+        formData.amc_detail.amc_end_date || 
+        formData.amc_detail.amc_cost) {
+      
+      if (!formData.amc_detail.supplier_id) {
+        toast.error('AMC Vendor Required', {
+          description: 'Please select an AMC vendor since AMC details are being filled.',
+          duration: 4000,
+        });
+        return ['AMC Vendor is required'];
+      }
+
+      if (!formData.amc_detail.amc_start_date) {
+        toast.error('AMC Start Date Required', {
+          description: 'Please select the AMC start date.',
+          duration: 4000,
+        });
+        return ['AMC Start Date is required'];
+      }
+
+      if (!formData.amc_detail.amc_end_date) {
+        toast.error('AMC End Date Required', {
+          description: 'Please select the AMC end date.',
+          duration: 4000,
+        });
+        return ['AMC End Date is required'];
+      }
+
+      if (!formData.amc_detail.amc_cost) {
+        toast.error('AMC Cost Required', {
+          description: 'Please enter the AMC cost.',
+          duration: 4000,
+        });
+        return ['AMC Cost is required'];
+      }
+    }
+
+    // If we reach here, all validations passed
+    return [];
   };
 
   const handleSaveAndShow = () => {
-    // Validate mandatory fields
+    // Validate mandatory fields one by one
     const validationErrors = validateMandatoryFields();
     setValidationErrors(validationErrors);
     
     if (validationErrors.length > 0) {
-      // Show validation errors using toast
-      toast.error('Please fill in all required fields', {
-        description: validationErrors.join(' • '),
-        duration: 5000,
-      });
-      
-      // Optional: Scroll to the first error field
-      const firstErrorField = document.querySelector('.MuiTextField-root .Mui-error input, .MuiFormControl-root .Mui-error');
-      if (firstErrorField) {
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      
+      // Since we're showing individual toasts in validateMandatoryFields, 
+      // we just need to scroll to the first error field and return
+      setTimeout(() => {
+        const firstErrorField = document.querySelector('.MuiTextField-root .Mui-error input, .MuiFormControl-root .Mui-error, input:invalid');
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Focus the field if it's an input
+          if (firstErrorField instanceof HTMLInputElement || firstErrorField instanceof HTMLSelectElement) {
+            firstErrorField.focus();
+          }
+        }
+      }, 100);
       return;
     }
 
     // Clear validation errors if all fields are valid
     setValidationErrors([]);
+    
+    // Show success message before proceeding
+    toast.success('Validation Complete', {
+      description: 'All required fields are filled. Creating asset...',
+      duration: 2000,
+    });
   // Build the complete payload
   const payload = {
     pms_asset: {
@@ -1487,8 +2078,10 @@ const [attachments, setAttachments] = useState({
       allocation_type: formData.allocation_type,
       
       // Array fields
-      allocation_ids: formData.allocation_ids,
       asset_ids: formData.asset_ids,
+      
+      // Single allocation field
+      allocation_id: formData.allocation_id,
       
       // Nested objects
       asset_move_to: formData.asset_move_to,
@@ -1529,16 +2122,19 @@ const [attachments, setAttachments] = useState({
         _destroy: false
       })),
       
-      // File attachments (if sending as arrays)
-      asset_manuals: formData.asset_manuals,
-      asset_insurances: formData.asset_insurances,
-      asset_purchases: formData.asset_purchases,
-      asset_other_uploads: formData.asset_other_uploads,
-      land_attachments: attachments.landAttachments
+      // Category-specific file attachments
+      ...getCategoryAttachments()
     }
   };
 
   console.log('Final payload:', payload);
+  console.log('AMC Detail being sent:', payload.pms_asset.amc_detail);
+  console.log('Loan details - loaned_from_vendor_id:', payload.pms_asset.loaned_from_vendor_id);
+  console.log('Loan details - agreement_from_date:', payload.pms_asset.agreement_from_date);
+  console.log('Loan details - agreement_to_date:', payload.pms_asset.agreement_to_date);
+  console.log('Loan details - asset_loaned flag:', payload.pms_asset.asset_loaned);
+  console.log('Selected Loaned Vendor ID State:', selectedLoanedVendorId);
+  console.log('Asset Loaned Toggle State:', assetLoanedToggle);
   console.log('Extra fields attributes being sent:', payload.pms_asset.extra_fields_attributes);
   console.log('Using FormData:', hasFiles());
 
@@ -1548,7 +2144,7 @@ const [attachments, setAttachments] = useState({
     
     // Add all non-file fields
     Object.entries(payload.pms_asset).forEach(([key, value]) => {
-      if (!['asset_manuals', 'asset_insurances', 'asset_purchases', 'asset_other_uploads', 'land_attachments', 'extra_fields_attributes', 'consumption_pms_asset_measures_attributes', 'non_consumption_pms_asset_measures_attributes'].includes(key)) {
+      if (!['asset_manuals', 'asset_insurances', 'asset_purchases', 'asset_other_uploads', 'land_attachments', 'extra_fields_attributes', 'consumption_pms_asset_measures_attributes', 'non_consumption_pms_asset_measures_attributes', 'amc_detail', 'asset_move_to'].includes(key)) {
         if (typeof value === 'object' && value !== null) {
           formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
         } else {
@@ -1569,6 +2165,25 @@ const [attachments, setAttachments] = useState({
         }
       }
     });
+
+    // Handle nested objects specially for FormData - flatten them
+    // Handle amc_detail
+    if (payload.pms_asset.amc_detail && typeof payload.pms_asset.amc_detail === 'object') {
+      Object.entries(payload.pms_asset.amc_detail).forEach(([fieldKey, fieldValue]) => {
+        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+          formDataObj.append(`pms_asset[amc_detail][${fieldKey}]`, String(fieldValue));
+        }
+      });
+    }
+
+    // Handle asset_move_to
+    if (payload.pms_asset.asset_move_to && typeof payload.pms_asset.asset_move_to === 'object') {
+      Object.entries(payload.pms_asset.asset_move_to).forEach(([fieldKey, fieldValue]) => {
+        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+          formDataObj.append(`pms_asset[asset_move_to][${fieldKey}]`, String(fieldValue));
+        }
+      });
+    }
     
     // Handle extra_fields_attributes specially for FormData
     if (payload.pms_asset.extra_fields_attributes && Array.isArray(payload.pms_asset.extra_fields_attributes)) {
@@ -1597,81 +2212,69 @@ const [attachments, setAttachments] = useState({
       });
     }
     
-    // Add files
-    attachments.landAttachments.forEach(file => 
-      formDataObj.append("land_attachments[]", file)
-    );
-    attachments.vehicleAttachments.forEach(file => 
-      formDataObj.append("vehicle_attachments[]", file)
-    );
-    attachments.leaseholdAttachments.forEach(file => 
-      formDataObj.append("leasehold_attachments[]", file)
-    );
-    attachments.buildingAttachments.forEach(file => 
-      formDataObj.append("building_attachments[]", file)
-    );
-    attachments.furnitureAttachments.forEach(file => 
-      formDataObj.append("furniture_attachments[]", file)
-    );
-    attachments.itEquipmentAttachments.forEach(file => 
-      formDataObj.append("it_equipment_attachments[]", file)
-    );
-    attachments.machineryAttachments.forEach(file => 
-      formDataObj.append("machinery_attachments[]", file)
-    );
-    attachments.toolsAttachments.forEach(file => 
-      formDataObj.append("tools_attachments[]", file)
-    );
-    attachments.meterAttachments.forEach(file => 
-      formDataObj.append("meter_attachments[]", file)
-    );
-    attachments.manualsUpload.forEach(file => 
-      formDataObj.append("asset_manuals[]", file)
-    );
-    attachments.insuranceDetails.forEach(file => 
-      formDataObj.append("asset_insurances[]", file)
-    );
-    attachments.purchaseInvoice.forEach(file => 
-      formDataObj.append("asset_purchases[]", file)
-    );
-    attachments.amc.forEach(file => 
-      formDataObj.append("asset_other_uploads[]", file)
-    );
-
-    // Add asset images
-    if (attachments.landAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.landAssetImage[0]);
+    // Add category-specific files dynamically
+    if (selectedAssetCategory) {
+      const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
+      const categoryAttachments = getCategoryAttachments();
+      
+      // Add asset image
+      if (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) {
+        formDataObj.append("pms_asset[asset_image]", categoryAttachments.asset_image[0]);
+      }
+      
+      // Add category-specific documents
+      if (categoryAttachments.asset_manuals) {
+        categoryAttachments.asset_manuals.forEach(file => 
+          formDataObj.append("asset_manuals[]", file)
+        );
+      }
+      
+      if (categoryAttachments.asset_insurances) {
+        categoryAttachments.asset_insurances.forEach(file => 
+          formDataObj.append("asset_insurances[]", file)
+        );
+      }
+      
+      if (categoryAttachments.asset_purchases) {
+        categoryAttachments.asset_purchases.forEach(file => 
+          formDataObj.append("asset_purchases[]", file)
+        );
+      }
+      
+      if (categoryAttachments.asset_other_uploads) {
+        categoryAttachments.asset_other_uploads.forEach(file => 
+          formDataObj.append("asset_other_uploads[]", file)
+        );
+      }
+      
+      if (categoryAttachments.amc_documents) {
+        categoryAttachments.amc_documents.forEach(file => 
+          formDataObj.append("amc_documents[]", file)
+        );
+      }
+      
+      // Add category-specific attachments (if any)
+      if (categoryAttachments.category_attachments) {
+        categoryAttachments.category_attachments.forEach(file => 
+          formDataObj.append(`${categoryKey}_attachments[]`, file)
+        );
+      }
     }
-    if (attachments.vehicleAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.vehicleAssetImage[0]);
-    }
-    if (attachments.leaseholdAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.leaseholdAssetImage[0]);
-    }
-    if (attachments.buildingAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.buildingAssetImage[0]);
-    }
-    if (attachments.furnitureAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.furnitureAssetImage[0]);
-    }
-    if (attachments.itEquipmentAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.itEquipmentAssetImage[0]);
-    }
-    if (attachments.machineryAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.machineryAssetImage[0]);
-    }
-    if (attachments.toolsAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.toolsAssetImage[0]);
-    }
-    if (attachments.meterAssetImage.length > 0) {
-      formDataObj.append("pms_asset[asset_image]", attachments.meterAssetImage[0]);
-    }
-
     // Debug: Log FormData contents
     console.log('FormData contents:');
+    const amcKeys = [];
+    const loanKeys = [];
     for (let [key, value] of formDataObj.entries()) {
+      if (key.includes('amc_detail')) {
+        amcKeys.push(`${key}: ${value}`);
+      }
+      if (key.includes('loaned_from_vendor') || key.includes('agreement_') || key.includes('asset_loaned')) {
+        loanKeys.push(`${key}: ${value}`);
+      }
       console.log(key, value);
     }
+    console.log('AMC FormData entries:', amcKeys);
+    console.log('Loan FormData entries:', loanKeys);
 
     // Submit with FormData
     apiClient.post('pms/assets.json', formDataObj, {
@@ -1739,30 +2342,18 @@ const [attachments, setAttachments] = useState({
 
 // Helper function to check if there are files to upload
 const hasFiles = () => {
+  if (!selectedAssetCategory) return false;
+  
+  const categoryAttachments = getCategoryAttachments();
+  
   return (
-    attachments.landAttachments.length > 0 ||
-    attachments.vehicleAttachments.length > 0 ||
-    attachments.leaseholdAttachments.length > 0 ||
-    attachments.buildingAttachments.length > 0 ||
-    attachments.furnitureAttachments.length > 0 ||
-    attachments.itEquipmentAttachments.length > 0 ||
-    attachments.machineryAttachments.length > 0 ||
-    attachments.toolsAttachments.length > 0 ||
-    attachments.meterAttachments.length > 0 ||
-    attachments.manualsUpload.length > 0 ||
-    attachments.insuranceDetails.length > 0 ||
-    attachments.purchaseInvoice.length > 0 ||
-    attachments.amc.length > 0 ||
-    // Add asset images to file check
-    attachments.landAssetImage.length > 0 ||
-    attachments.vehicleAssetImage.length > 0 ||
-    attachments.leaseholdAssetImage.length > 0 ||
-    attachments.buildingAssetImage.length > 0 ||
-    attachments.furnitureAssetImage.length > 0 ||
-    attachments.itEquipmentAssetImage.length > 0 ||
-    attachments.machineryAssetImage.length > 0 ||
-    attachments.toolsAssetImage.length > 0 ||
-    attachments.meterAssetImage.length > 0
+    (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) ||
+    (categoryAttachments.asset_manuals && categoryAttachments.asset_manuals.length > 0) ||
+    (categoryAttachments.asset_insurances && categoryAttachments.asset_insurances.length > 0) ||
+    (categoryAttachments.asset_purchases && categoryAttachments.asset_purchases.length > 0) ||
+    (categoryAttachments.asset_other_uploads && categoryAttachments.asset_other_uploads.length > 0) ||
+    (categoryAttachments.amc_documents && categoryAttachments.amc_documents.length > 0) ||
+    (categoryAttachments.category_attachments && categoryAttachments.category_attachments.length > 0)
   );
 };
   // ...existing code...
@@ -1861,6 +2452,40 @@ const hasFiles = () => {
               ))}
             </RadioGroup>
           </div>
+
+          {/* Validation Requirements Info - Show when category is selected */}
+          {/* {selectedAssetCategory && (
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <Info className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                    {selectedAssetCategory} - Required Fields
+                  </h4>
+                  <p className="text-sm text-blue-800 mb-3">
+                    {getCategoryValidationSummary(selectedAssetCategory).description}
+                  </p>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-blue-700">Required Sections:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {getCategoryValidationSummary(selectedAssetCategory).requiredSections.map((section, index) => (
+                        <span 
+                          key={index}
+                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {section}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )} */}
         </div>
       </div>
 
@@ -1944,7 +2569,7 @@ const hasFiles = () => {
                     </MuiSelect>
                   </FormControl>
                   {/* Custom Fields */}
-                  {customFields.basicIdentification.map((field) => (
+                  {(customFields.basicIdentification || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -2119,7 +2744,7 @@ const hasFiles = () => {
                   </FormControl>
 
                   {/* Custom Fields */}
-                  {customFields.locationOwnership.map((field) => (
+                  {(customFields.locationOwnership || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -2315,7 +2940,7 @@ const hasFiles = () => {
                   />
                 </div>
                 {/* Custom Fields */}
-                {customFields.landSizeValue.map((field) => (
+                {(customFields.landSizeValue || []).map((field) => (
                   <div key={field.id} className="relative">
                     <TextField
                       label={field.name}
@@ -2446,7 +3071,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.landUsageDevelopment.map((field) => (
+                  {(customFields.landUsageDevelopment || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -2517,7 +3142,7 @@ const hasFiles = () => {
                     )
                   }
                 />
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                   <input
                     type="file"
                     multiple
@@ -2564,11 +3189,11 @@ const hasFiles = () => {
                     </div>
                     
                   )}
-                </div>
+                </div> */}
 
 
                 {/* Custom Fields */}
-                {customFields.miscellaneous.map((field) => (
+                {(customFields.miscellaneous || []).map((field) => (
                   <div key={field.id} className="relative">
                     <TextField
                       label={field.name}
@@ -2658,7 +3283,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.leaseholdBasicId.map((field) => (
+                  {(customFields.leaseholdBasicId || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -2770,7 +3395,7 @@ const hasFiles = () => {
                   /> */}
 
                   {/* Custom Fields */}
-                  {customFields.leaseholdLocationAssoc.map((field) => (
+                  {(customFields.leaseholdLocationAssoc || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -2946,7 +3571,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.improvementDetails.map((field) => (
+                  {(customFields.improvementDetails || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -3123,7 +3748,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.leaseholdFinancial.map((field) => (
+                  {(customFields.leaseholdFinancial || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -3250,7 +3875,7 @@ const hasFiles = () => {
                   </FormControl>
 
                   {/* Custom Fields */}
-                  {customFields.leaseholdLease.map((field) => (
+                  {(customFields.leaseholdLease || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -3353,7 +3978,7 @@ const hasFiles = () => {
                       }
                     />
                   </div>
-                  <div className="md:col-span-2">
+                  {/* <div className="md:col-span-2">
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                       <input
                         type="file"
@@ -3399,10 +4024,10 @@ const hasFiles = () => {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Custom Fields */}
-                  {customFields.leaseholdOversight.map((field) => (
+                  {(customFields.leaseholdOversight || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -3430,13 +4055,7 @@ const hasFiles = () => {
                 </div>
               </CardContent>
             </Card>
-           <AssetImageUpload
-              categoryName="Leasehold Improvement"
-              categoryKey="leaseholdAssetImage"
-              onImageUpload={handleFileUpload}
-              onImageRemove={removeFile}
-              images={attachments.leaseholdAssetImage}
-            />
+           
           </div>
         </LocalizationProvider>
       )}
@@ -3567,7 +4186,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.vehicleBasicId.map((field) => (
+                  {(customFields.vehicleBasicId || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -3828,7 +4447,7 @@ const hasFiles = () => {
                   </FormControl>
 
                   {/* Custom Fields */}
-                  {customFields.vehicleOwnership.map((field) => (
+                  {(customFields.vehicleOwnership || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -3996,7 +4615,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.vehicleFinancial.map(field => (
+                  {(customFields.vehicleFinancial || []).map(field => (
                   <div key={field.id} className="relative">
                     <TextField
                     label={field.name}
@@ -4299,7 +4918,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.vehicleLegal.map((field) => (
+                  {(customFields.vehicleLegal || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -4370,7 +4989,7 @@ const hasFiles = () => {
                     )
                   }
                 />
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                   <input
                     type="file"
                     multiple
@@ -4388,7 +5007,7 @@ const hasFiles = () => {
                       Upload RC copy, insurance, permit, fitness, PUC, etc.
                     </p>
                   </label>
-                </div>
+                </div> */}
 
                 {/* Display uploaded vehicle attachments */}
                 {attachments.vehicleAttachments && attachments.vehicleAttachments.length > 0 && (
@@ -4420,7 +5039,7 @@ const hasFiles = () => {
                 )}
 
                 {/* Custom Fields */}
-                {customFields.vehicleMiscellaneous.map((field) => (
+                {(customFields.vehicleMiscellaneous || []).map((field) => (
                   <div key={field.id} className="relative">
                     <TextField
                       label={field.name}
@@ -4449,13 +5068,7 @@ const hasFiles = () => {
                 ))}
               </CardContent>
             </Card>
-          <AssetImageUpload
-              categoryName="Vehicle"
-              categoryKey="vehicleAssetImage"
-              onImageUpload={handleFileUpload}
-              onImageRemove={removeFile}
-              images={attachments.vehicleAssetImage}
-            />
+        
           </div>
         </LocalizationProvider>
       )}
@@ -4542,7 +5155,7 @@ const hasFiles = () => {
                   </FormControl>
 
                   {/* Custom Fields */}
-                  {customFields.buildingBasicId.map((field) => (
+                  {(customFields.buildingBasicId || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -4663,7 +5276,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.buildingLocation.map((field) => (
+                  {(customFields.buildingLocation || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -4837,7 +5450,7 @@ const hasFiles = () => {
                   />
 
                   {/* Custom Fields */}
-                  {customFields.buildingConstruction.map((field) => (
+                  {(customFields.buildingConstruction || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -5070,7 +5683,7 @@ const hasFiles = () => {
                   </div>
 
                   {/* Custom Fields */}
-                  {customFields.buildingAcquisition.map((field) => (
+                  {(customFields.buildingAcquisition || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -5257,7 +5870,7 @@ const hasFiles = () => {
                   </FormControl>
 
                   {/* Custom Fields */}
-                  {customFields.buildingUsage.map((field) => (
+                  {(customFields.buildingUsage || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -5364,7 +5977,7 @@ const hasFiles = () => {
                   </FormControl>
 
                   {/* Custom Fields */}
-                  {customFields.buildingMaintenance.map((field) => (
+                  {(customFields.buildingMaintenance || []).map((field) => (
                     <div key={field.id} className="relative">
                       <TextField
                         label={field.name}
@@ -5436,7 +6049,7 @@ const hasFiles = () => {
                     )
                   }
                 />
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                   <input
                     type="file"
                     multiple
@@ -5480,10 +6093,10 @@ const hasFiles = () => {
                       </div>
                     </div>
                   )}
-                </div>
+                </div> */}
 
                 {/* Custom Fields */}
-                {customFields.buildingMiscellaneous.map((field) => (
+                {(customFields.buildingMiscellaneous || []).map((field) => (
                   <div key={field.id} className="relative">
                     <TextField
                       label={field.name}
@@ -5512,13 +6125,7 @@ const hasFiles = () => {
                 ))}
               </CardContent>
             </Card>
-            <AssetImageUpload
-              categoryName="Building"
-              categoryKey="buildingAssetImage"
-              onImageUpload={handleFileUpload}
-              onImageRemove={removeFile}
-              images={attachments.buildingAssetImage}
-            />
+
           </div>
         </LocalizationProvider>
       )}
@@ -5694,7 +6301,7 @@ const hasFiles = () => {
                 </div>
 
                 {/* Custom Fields */}
-                {customFields.locationDetails.map((field) => (
+                {(customFields.locationDetails || []).map((field) => (
                   <div key={field.id} className="flex items-center gap-2 mb-2">
                     <TextField
                       label={field.name}
@@ -5730,13 +6337,13 @@ const hasFiles = () => {
                   ASSET DETAILS
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => openCustomFieldModal('assetDetails')} className="px-3 py-1 rounded text-sm flex items-center gap-1" style={{
+                  {/* <button onClick={() => openCustomFieldModal('assetDetails')} className="px-3 py-1 rounded text-sm flex items-center gap-1" style={{
                     backgroundColor: '#F6F4EE',
                     color: '#C72030'
                   }}>
                     <Plus className="w-4 h-4" />
                     Custom Field
-                  </button>
+                  </button> */}
                   {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </div>
               </div>
@@ -6004,7 +6611,7 @@ const hasFiles = () => {
                       />
 
                       {/* Custom Fields for System Details */}
-                      {itAssetsCustomFields['System Details'].map(field => <div key={field.id} className="relative">
+                      {(itAssetsCustomFields['System Details'] || []).map(field => <div key={field.id} className="relative">
                         <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('System Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
                           shrink: true
                         }} InputProps={{
@@ -6118,7 +6725,7 @@ const hasFiles = () => {
                       />
 
                       {/* Custom Fields for Hardware Details */}
-                      {itAssetsCustomFields['Hardware Details'].map(field => <div key={field.id} className="relative">
+                      {(itAssetsCustomFields['Hardware Details'] || []).map(field => <div key={field.id} className="relative">
                         <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItAssetsCustomFieldChange('Hardware Details', field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
                           shrink: true
                         }} InputProps={{
@@ -6440,7 +7047,9 @@ const hasFiles = () => {
                 </div>
 
                 {/* Custom Fields */}
-                {customFields.purchaseDetails.map((field) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+
+                {(customFields.purchaseDetails || []).map((field) => (
                   <div key={field.id} className="flex items-center gap-2 mb-2">
                     <TextField
                       label={field.name}
@@ -6462,6 +7071,9 @@ const hasFiles = () => {
                     </button>
                   </div>
                 ))}
+                </div>
+                
+                
               </div>}
             </div>
 
@@ -6614,7 +7226,7 @@ const hasFiles = () => {
                   </div>
 
                   {/* Custom Fields */}
-                  {customFields.depreciationRule.map((field) => (
+                  {(customFields.depreciationRule || []).map((field) => (
                     <div key={field.id} className="flex items-center gap-2 mb-2">
                       <TextField
                         label={field.name}
@@ -6658,13 +7270,25 @@ const hasFiles = () => {
                     <label className="text-sm font-medium text-gray-700 mb-4 block">Based On</label>
                     <div className="flex gap-8">
                       <div className="flex items-center space-x-2">
-                        <input type="radio" id="allocation-department" name="allocationBasedOn" value="department" checked={allocationBasedOn === 'department'} onChange={e => setAllocationBasedOn(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                        <input type="radio" id="allocation-department" name="allocationBasedOn" value="department" checked={allocationBasedOn === 'department'} onChange={e => {
+                          setAllocationBasedOn(e.target.value);
+                          // Clear selection when switching
+                          setSelectedDepartmentId('');
+                          setSelectedUserId('');
+                          handleSingleFieldChange('allocation_id', '');
+                        }} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                           accentColor: '#C72030'
                         }} />
                         <label htmlFor="allocation-department" className="text-sm">Department</label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <input type="radio" id="allocation-users" name="allocationBasedOn" value="users" checked={allocationBasedOn === 'users'} onChange={e => setAllocationBasedOn(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                        <input type="radio" id="allocation-users" name="allocationBasedOn" value="users" checked={allocationBasedOn === 'users'} onChange={e => {
+                          setAllocationBasedOn(e.target.value);
+                          // Clear selection when switching
+                          setSelectedDepartmentId('');
+                          setSelectedUserId('');
+                          handleSingleFieldChange('allocation_id', '');
+                        }} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
                           accentColor: '#C72030'
                         }} />
                         <label htmlFor="allocation-users" className="text-sm">Users</label>
@@ -6684,17 +7308,17 @@ const hasFiles = () => {
                         labelId="allocation-select-label"
                         label={allocationBasedOn === 'department' ? 'Department' : 'Users'}
                         displayEmpty
-                        multiple
-                        value={allocationBasedOn === 'department' ? selectedDepartmentIds : selectedUserIds}
+                        value={allocationBasedOn === 'department' ? selectedDepartmentId : selectedUserId}
                         onChange={e => {
-                          const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                          const value = e.target.value;
                           if (allocationBasedOn === 'department') {
-                            setSelectedDepartmentIds(value);
-                            handleArrayFieldChange('allocation_ids', value);
-                            
+                            setSelectedDepartmentId(value);
+                            handleSingleFieldChange('allocation_id', value);
+                            handleFieldChange('allocation_type', 'department');
                           } else {
-                            setSelectedUserIds(value);
-                            handleArrayFieldChange('allocation_ids', value);
+                            setSelectedUserId(value);
+                            handleSingleFieldChange('allocation_id', value);
+                            handleFieldChange('allocation_type', 'users');
                           }
                         }}
                         sx={fieldStyles}
@@ -6711,12 +7335,12 @@ const hasFiles = () => {
                         </MenuItem>
                         {allocationBasedOn === 'department'
                           ? departments.map((department) => (
-                            <MenuItem key={department.id} value={department.id}>
+                            <MenuItem key={department.id} value={department.id.toString()}>
                               {department.department_name}
                             </MenuItem>
                           ))
                           : users.map((user) => (
-                            <MenuItem key={user.id} value={user.id}>
+                            <MenuItem key={user.id} value={user.id.toString()}>
                               {user.full_name}
                             </MenuItem>
                           ))
@@ -6762,10 +7386,10 @@ const hasFiles = () => {
                       label="Vendor Name"
                       displayEmpty
                       value={selectedLoanedVendorId}
-                      onChange={(e) => {setSelectedLoanedVendorId(e.target.value);
-                         handleArrayFieldChange('loaned_from_vendor_id', e.target.value);}
-                            
-                      }
+                      onChange={(e) => {
+                        setSelectedLoanedVendorId(e.target.value);
+                        handleFieldChange('loaned_from_vendor_id', e.target.value);
+                      }}
                       sx={fieldStyles}
                       required
                       disabled={vendorsLoading || !assetLoanedToggle}
@@ -6795,7 +7419,7 @@ const hasFiles = () => {
                     InputProps={{
                       sx: fieldStyles
                     }}
-                    onChange={(e) => handleArrayFieldChange('agreement_from_date', e.target.value)}
+                    onChange={(e) => handleFieldChange('agreement_from_date', e.target.value)}
                   />
                   <TextField 
                     required 
@@ -6812,7 +7436,7 @@ const hasFiles = () => {
                     InputProps={{
                       sx: fieldStyles
                     }}
-                    onChange={(e) => handleArrayFieldChange('agreement_to_date', e.target.value)}
+                    onChange={(e) => handleFieldChange('agreement_to_date', e.target.value)}
                   
                   />
                 </div>
@@ -6929,123 +7553,14 @@ const hasFiles = () => {
               </div>}
             </div>
             {/* Asset Image Upload for these categories */}
-            {selectedAssetCategory === 'Furniture & Fixtures' && (
-              <AssetImageUpload
-                categoryName="Furniture & Fixtures"
-                categoryKey="furnitureAssetImage"
-                onImageUpload={handleFileUpload}
-                onImageRemove={removeFile}
-                images={attachments.furnitureAssetImage}
-              />
-            )}
+          
+
+
             
-            {selectedAssetCategory === 'IT Equipment' && (
-              <AssetImageUpload
-                categoryName="IT Equipment"
-                categoryKey="itEquipmentAssetImage"
-                onImageUpload={handleFileUpload}
-                onImageRemove={removeFile}
-                images={attachments.itEquipmentAssetImage}
-              />
-            )}
-            
-            {selectedAssetCategory === 'Machinery & Equipment' && (
-              <AssetImageUpload
-                categoryName="Machinery & Equipment"
-                categoryKey="machineryAssetImage"
-                onImageUpload={handleFileUpload}
-                onImageRemove={removeFile}
-                images={attachments.machineryAssetImage}
-              />
-            )}
-            
-            {selectedAssetCategory === 'Tools & Instruments' && (
-              <AssetImageUpload
-                categoryName="Tools & Instruments"
-                categoryKey="toolsAssetImage"
-                onImageUpload={handleFileUpload}
-                onImageRemove={removeFile}
-                images={attachments.toolsAssetImage}
-              />
-            )}
-            
-            {selectedAssetCategory === 'Meter' && (
-              <AssetImageUpload
-                categoryName="Meter"
-                categoryKey="meterAssetImage"
-                onImageUpload={handleFileUpload}
-                onImageRemove={removeFile}
-                images={attachments.meterAssetImage}
-              />
-            )}
+      
 
             {/* Attachments */}
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                    <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </span>
-                  ATTACHMENTS
-                </div>
-                {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-              </div>
-              {expandedSections.attachments && <div className="p-4 sm:p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {[{
-                    label: 'Manuals Upload',
-                    id: 'manuals-upload',
-                    category: 'manualsUpload',
-                    accept: '.pdf,.doc,.docx,.txt'
-                  }, {
-                    label: 'Insurance Details',
-                    id: 'insurance-upload',
-                    category: 'insuranceDetails',
-                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }, {
-                    label: 'Purchase Invoice',
-                    id: 'invoice-upload',
-                    category: 'purchaseInvoice',
-                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }, {
-                    label: 'AMC',
-                    id: 'amc-upload',
-                    category: 'amc',
-                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }].map(field => <div key={field.id}>
-                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <input type="file" multiple accept={field.accept} onChange={e => handleFileUpload(field.category, e.target.files)} className="hidden" id={field.id} />
-                      <label htmlFor={field.id} className="cursor-pointer block">
-                        <div className="flex items-center justify-center space-x-2 mb-2">
-                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
-                          <span className="text-gray-500 text-xs sm:text-sm">
-                            {attachments[field.category].length > 0 ? `${attachments[field.category].length} file(s) selected` : 'No file chosen'}
-                          </span>
-                        </div>
-                      </label>
-                      {attachments[field.category].length > 0 && <div className="mt-2 space-y-1">
-                        {attachments[field.category].map((file, index) => <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                          <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                          <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>)}
-                      </div>}
-                      <div className="mt-2">
-                        <label htmlFor={field.id}>
-                          <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
-                            <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
-                            Upload Files
-                          </button>
-                        </label>
-                      </div>
-                    </div>
-                  </div>)}
-                </div>
-              </div>}
-
-            </div>
+           
           </>
         )}
 
@@ -7241,6 +7756,141 @@ const hasFiles = () => {
           </div>
         </div>
       )} */}
+       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+              <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                    <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </span>
+                  ATTACHMENTS
+                </div>
+                {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </div>
+              {expandedSections.attachments && <div className="p-4 sm:p-6">
+                {/* Category-specific Asset Image */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Asset Image</h3>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <input 
+                      type="file" 
+                      accept=".jpg,.jpeg,.png,.gif" 
+                      onChange={e => handleFileUpload(`${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`, e.target.files)} 
+                      className="hidden" 
+                      id="asset-image-upload" 
+                    />
+                    <label htmlFor="asset-image-upload" className="cursor-pointer block">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose Asset Image</span>
+                        <span className="text-gray-500 text-xs sm:text-sm">
+                          {(() => {
+                            const categoryKey = `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`;
+                            return attachments[categoryKey]?.length > 0 ? `${attachments[categoryKey].length} image(s) selected` : 'No image chosen';
+                          })()}
+                        </span>
+                      </div>
+                    </label>
+                    {(() => {
+                      const categoryKey = `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`;
+                      return attachments[categoryKey]?.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {attachments[categoryKey].map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                              <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                              <button onClick={() => removeFile(categoryKey, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    <div className="mt-2">
+                      <label htmlFor="asset-image-upload">
+                        <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
+                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                          Upload Asset Image
+                        </button>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Common Document Sections for All Categories */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  {[{
+                    label: 'Manuals Upload',
+                    id: 'manuals-upload',
+                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}ManualsUpload`,
+                    accept: '.pdf,.doc,.docx,.txt'
+                  }, {
+                    label: 'Insurance Details',
+                    id: 'insurance-upload',
+                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}InsuranceDetails`,
+                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                  }, {
+                    label: 'Purchase Invoice',
+                    id: 'invoice-upload',
+                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}PurchaseInvoice`,
+                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                  }, {
+                    label: 'Other Documents',
+                    id: 'other-upload',
+                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}OtherDocuments`,
+                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                  }
+                  // , {
+                  //   label: 'AMC Documents',
+                  //   id: 'amc-upload',
+                  //   category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}Amc`,
+                  //   accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                  // }
+                ].map(field => (
+                    <div key={field.id}>
+                      <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <input 
+                          type="file" 
+                          multiple 
+                          accept={field.accept} 
+                          onChange={e => handleFileUpload(field.category, e.target.files)} 
+                          className="hidden" 
+                          id={field.id} 
+                        />
+                        <label htmlFor={field.id} className="cursor-pointer block">
+                          <div className="flex items-center justify-center space-x-2 mb-2">
+                            <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
+                            <span className="text-gray-500 text-xs sm:text-sm">
+                              {attachments[field.category]?.length > 0 ? `${attachments[field.category].length} file(s) selected` : 'No file chosen'}
+                            </span>
+                          </div>
+                        </label>
+                        {attachments[field.category]?.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {attachments[field.category].map((file, index) => (
+                              <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                                <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                                <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-2">
+                          <label htmlFor={field.id}>
+                            <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
+                              <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                              Upload Files
+                            </button>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>}
+
+            </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">

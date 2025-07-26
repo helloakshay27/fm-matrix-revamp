@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
+import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig'
 
 // Create configured axios instance
 export const apiClient = axios.create({
@@ -30,5 +30,24 @@ apiClient.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+export const apiClientUtil = {
+  put: async <T>(endpoint: string, data: any): Promise<T> => {
+    const response = await fetch(getFullUrl(endpoint), {
+      method: 'PUT',
+      headers: {
+        Authorization: getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return response.json()
+  },
+}
 
 export default apiClient

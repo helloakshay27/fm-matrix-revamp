@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Plus, Filter, Download, X, Loader2, CalendarIcon, Clock, AlertCircle, Trash2, Upload } from 'lucide-react';
+import { Eye, Plus, Filter, Download, X, Loader2, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from "@/components/ui/calendar";
@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const exportColumns = [
   { id: 'selectAll', label: 'Select All' },
@@ -115,6 +116,21 @@ const muiTheme = createTheme({
   },
 });
 
+const getStatusBadgeVariant = (status: string) => {
+  switch (status) {
+    case 'Confirmed':
+      return 'success';
+    case 'Pending':
+      return 'warning';
+    case 'Cancelled':
+      return 'destructive';
+    case 'Completed':
+      return 'default'; // Custom styling applied for blue
+    default:
+      return 'default';
+  }
+};
+
 const BookingListDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -123,21 +139,20 @@ const BookingListDashboard = () => {
 
   const { data: bookings = [], loading, error } = useAppSelector((state) => state.facilityBookings);
 
-  const [bookingData, setBookingData] = useState(bookings)
-  const [facilities, setFacilities] = useState([])
+  const [bookingData, setBookingData] = useState(bookings);
+  const [facilities, setFacilities] = useState([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'bookedBy']);
   const [exportLoading, setExportLoading] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [filters, setFilters] = useState({
     facilityName: '',
     status: '',
     scheduledDateRange: '',
     createdOnDateRange: '',
   });
-
-  // Separate state for scheduled date and created on date
   const [scheduledDateFrom, setScheduledDateFrom] = useState<Date | undefined>();
   const [scheduledDateTo, setScheduledDateTo] = useState<Date | undefined>();
   const [createdOnDateFrom, setCreatedOnDateFrom] = useState<Date | undefined>();
@@ -145,6 +160,7 @@ const BookingListDashboard = () => {
   const [isScheduledDatePickerOpen, setIsScheduledDatePickerOpen] = useState(false);
   const [isCreatedOnDatePickerOpen, setIsCreatedOnDatePickerOpen] = useState(false);
 
+  // Fetch facilities
   useEffect(() => {
     const fetchFacilities = async () => {
       try {
@@ -155,18 +171,52 @@ const BookingListDashboard = () => {
         });
         setFacilities(response.data.facility_setups);
       } catch (error) {
-        console.log(error)
+        console.error('Error fetching facilities:', error);
+        toast.error('Failed to fetch facilities');
       }
-    }
+    };
 
-    fetchFacilities()
-  }, [])
+    fetchFacilities();
+  }, [baseUrl, token]);
 
+  // Update booking data when bookings change
   useEffect(() => {
     if (bookings) {
-      setBookingData(bookings)
+      setBookingData(bookings);
     }
-  }, [bookings])
+  }, [bookings]);
+
+  // Fetch initial bookings data
+  useEffect(() => {
+    dispatch(fetchFacilityBookingsData());
+  }, [dispatch]);
+
+  // Handle status change with API call
+  const handleStatusChange = async (bookingId: number, newStatus: string) => {
+    setStatusUpdating(bookingId);
+    try {
+      await axios.patch(
+        `https://${baseUrl}/pms/admin/bookings/${bookingId}`,
+        { current_status: newStatus.toLowerCase() },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setBookingData((prevData) =>
+        prevData.map((booking) =>
+          booking.id === bookingId ? { ...booking, bookingStatus: newStatus } : booking
+        )
+      );
+      toast.success(`Booking ${bookingId} status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast.error('Failed to update booking status');
+    } finally {
+      setStatusUpdating(null);
+    }
+  };
 
   const handleScheduledDateRangeSelect = (range: { from?: Date; to?: Date }) => {
     if (range?.from) {
@@ -217,10 +267,10 @@ const BookingListDashboard = () => {
   };
 
   const handleApplyFilters = async () => {
-    const formatedScheduleStartDate = scheduledDateFrom ? format(new Date(scheduledDateFrom), "MM/dd/yyyy") : null
-    const formatedScheduleEndDate = scheduledDateTo ? format(new Date(scheduledDateTo), "MM/dd/yyyy") : null
-    const formatedCreatedStartDate = createdOnDateFrom ? format(new Date(createdOnDateFrom), "MM/dd/yyyy") : null
-    const formatedCreatedEndDate = createdOnDateTo ? format(new Date(createdOnDateTo), "MM/dd/yyyy") : null
+    const formatedScheduleStartDate = scheduledDateFrom ? format(new Date(scheduledDateFrom), "MM/dd/yyyy") : null;
+    const formatedScheduleEndDate = scheduledDateTo ? format(new Date(scheduledDateTo), "MM/dd/yyyy") : null;
+    const formatedCreatedStartDate = createdOnDateFrom ? format(new Date(createdOnDateFrom), "MM/dd/yyyy") : null;
+    const formatedCreatedEndDate = createdOnDateTo ? format(new Date(createdOnDateTo), "MM/dd/yyyy") : null;
 
     const filterParams = {
       "q[facility_id_in]": filters.facilityName,
@@ -231,7 +281,7 @@ const BookingListDashboard = () => {
       ...(formatedScheduleStartDate && formatedScheduleEndDate && {
         "q[date_range1]": `${formatedScheduleStartDate} - ${formatedScheduleEndDate}`,
       }),
-    }
+    };
 
     const queryString = new URLSearchParams(filterParams).toString();
 
@@ -248,12 +298,14 @@ const BookingListDashboard = () => {
         id: item.id,
         scheduledDate: item.startdate.split("T")[0],
         scheduledTime: item.show_schedule_24_hour,
-        source: item.source
-      }))
-      setBookingData(updatedResponse)
+        source: item.source,
+      }));
+      setBookingData(updatedResponse);
       setIsFilterModalOpen(false);
+      toast.success('Filters applied successfully');
     } catch (error) {
-      console.log(error)
+      console.error('Error applying filters:', error);
+      toast.error('Failed to apply filters');
     }
   };
 
@@ -268,11 +320,8 @@ const BookingListDashboard = () => {
     setScheduledDateTo(undefined);
     setCreatedOnDateFrom(undefined);
     setCreatedOnDateTo(undefined);
+    toast.info('Filters reset');
   };
-
-  useEffect(() => {
-    dispatch(fetchFacilityBookingsData());
-  }, [dispatch]);
 
   const handleAddBooking = () => {
     navigate('/vas/booking/add');
@@ -281,10 +330,43 @@ const BookingListDashboard = () => {
   const renderCell = (item: BookingData, columnKey: string) => {
     switch (columnKey) {
       case 'bookingStatus':
+        if (statusUpdating === item.id) {
+          return <Loader2 className="w-4 h-4 animate-spin" />;
+        }
         return (
-          <Badge variant={getStatusBadgeVariant(item.bookingStatus)}>
-            {item.bookingStatus}
-          </Badge>
+          <Select
+            value={item.bookingStatus}
+            onValueChange={(newStatus) => handleStatusChange(item.id, newStatus)}
+            disabled={statusUpdating === item.id}
+          >
+            <SelectTrigger className="w-[140px] border-none bg-transparent flex justify-center items-center [&>svg]:hidden">
+              <SelectValue asChild>
+                <Badge
+                  variant={getStatusBadgeVariant(item.bookingStatus)}
+                  className={cn(
+                    'cursor-pointer',
+                    item.bookingStatus === 'Completed' && 'bg-blue-500 hover:bg-blue-600 text-white'
+                  )}
+                >
+                  {item.bookingStatus}
+                </Badge>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {['Pending', 'Confirmed', 'Cancelled', 'Completed'].map((status) => (
+                <SelectItem key={status} value={status}>
+                  <Badge
+                    variant={getStatusBadgeVariant(status)}
+                    className={cn(
+                      status === 'Completed' && 'bg-blue-500 hover:bg-blue-600 text-white'
+                    )}
+                  >
+                    {status}
+                  </Badge>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
       default:
         return item[columnKey as keyof BookingData];
@@ -300,19 +382,6 @@ const BookingListDashboard = () => {
       <Eye className="w-4 h-4" />
     </Button>
   );
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'Confirmed':
-        return 'default';
-      case 'Pending':
-        return 'secondary';
-      case 'Cancelled':
-        return 'destructive';
-      default:
-        return 'default';
-    }
-  };
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({
@@ -349,6 +418,7 @@ const BookingListDashboard = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      toast.success('File downloaded successfully');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Error downloading file');
@@ -364,7 +434,7 @@ const BookingListDashboard = () => {
       onClick: handleDownload,
       variant: 'outline' as const,
       loading: exportLoading,
-    }
+    },
   ];
 
   return (
@@ -416,7 +486,7 @@ const BookingListDashboard = () => {
         }
       />
 
-      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen} >
+      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
         <DialogContent className="sm:max-w-md [&>button]:hidden">
           <ThemeProvider theme={muiTheme}>
             <div>
@@ -444,11 +514,11 @@ const BookingListDashboard = () => {
                     InputLabelProps={{ shrink: true }}
                   >
                     <MenuItem value="">Select Facility</MenuItem>
-                    {
-                      facilities.map((facility) => (
-                        <MenuItem key={facility.id} value={facility.id}>{facility.fac_name}</MenuItem>
-                      ))
-                    }
+                    {facilities.map((facility) => (
+                      <MenuItem key={facility.id} value={facility.id}>
+                        {facility.fac_name}
+                      </MenuItem>
+                    ))}
                   </TextField>
 
                   <TextField
@@ -464,6 +534,7 @@ const BookingListDashboard = () => {
                     <MenuItem value="confirmed">Confirmed</MenuItem>
                     <MenuItem value="pending">Pending</MenuItem>
                     <MenuItem value="cancelled">Cancelled</MenuItem>
+                    <MenuItem value="completed">Completed</MenuItem>
                   </TextField>
                 </div>
 
@@ -488,7 +559,7 @@ const BookingListDashboard = () => {
                           />
                         </div>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto top-[50%] p-0 bg-white border shadow-lg z-50" align="start" >
+                      <PopoverContent className="w-auto top-[50%] p-0 bg-white border shadow-lg z-50" align="start">
                         <div className="p-4">
                           <Calendar
                             mode="range"
@@ -620,13 +691,13 @@ const BookingListDashboard = () => {
             </div>
           </ThemeProvider>
         </DialogContent>
-      </ Dialog>
+      </Dialog>
 
       <ExportByCentreModal
         isOpen={isExportByCentreModalOpen}
         onClose={() => setIsExportByCentreModalOpen(false)}
       />
-    </div >
+    </div>
   );
 };
 

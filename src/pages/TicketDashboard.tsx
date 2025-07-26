@@ -16,7 +16,8 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
-import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix } from '@/services/ticketAnalyticsAPI';
+import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData } from '@/services/ticketAnalyticsAPI';
+import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
 import { useToast } from '@/hooks/use-toast';
 
 // Sortable Chart Item Component
@@ -53,8 +54,8 @@ export const TicketDashboard = () => {
   } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
-  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
+  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix', 'unitCategoryWise', 'responseTat', 'resolutionTat']);
+  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix', 'unitCategoryWise', 'responseTat', 'resolutionTat']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,6 +87,9 @@ export const TicketDashboard = () => {
   const [categoryAnalyticsData, setCategoryAnalyticsData] = useState<TicketCategoryData[]>([]);
   const [statusAnalyticsData, setStatusAnalyticsData] = useState<TicketStatusData | null>(null);
   const [agingMatrixAnalyticsData, setAgingMatrixAnalyticsData] = useState<TicketAgingMatrix | null>(null);
+  const [unitCategorywiseData, setUnitCategorywiseData] = useState<UnitCategorywiseData | null>(null);
+  const [responseTATData, setResponseTATData] = useState<ResponseTATData | null>(null);
+  const [resolutionTATReportData, setResolutionTATReportData] = useState<ResolutionTATReportData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   
   const [ticketSummary, setTicketSummary] = useState({
@@ -112,15 +116,28 @@ export const TicketDashboard = () => {
   const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
     try {
-      const [categoryData, statusData, agingData] = await Promise.all([
+      const [
+        categoryData, 
+        statusData, 
+        agingData, 
+        unitCategoryData, 
+        responseTATData, 
+        resolutionTATData
+      ] = await Promise.all([
         ticketAnalyticsAPI.getTicketsCategorywiseData(startDate, endDate),
         ticketAnalyticsAPI.getTicketStatusData(startDate, endDate),
-        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate)
+        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate),
+        ticketAnalyticsAPI.getUnitCategorywiseData(startDate, endDate),
+        ticketAnalyticsAPI.getResponseTATData(startDate, endDate),
+        ticketAnalyticsAPI.getResolutionTATReportData(startDate, endDate)
       ]);
       
       setCategoryAnalyticsData(categoryData);
       setStatusAnalyticsData(statusData);
       setAgingMatrixAnalyticsData(agingData);
+      setUnitCategorywiseData(unitCategoryData);
+      setResponseTATData(responseTATData);
+      setResolutionTATReportData(resolutionTATData);
       
       toast({
         title: "Success",
@@ -926,9 +943,9 @@ export const TicketDashboard = () => {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                   <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Two Donut Charts */}
+                    {/* Top Row - Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
+                      {chartOrder.filter(id => ['statusChart', 'reactiveChart', 'unitCategoryWise', 'responseTat'].includes(id)).map(chartId => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
@@ -1029,12 +1046,35 @@ export const TicketDashboard = () => {
                             </div>
                           </SortableChartItem>;
                         }
+
+                        if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
+                          return <SortableChartItem key={chartId} id={chartId}>
+                            <TicketAnalyticsCard
+                              title="Unit Category Wise"
+                              data={unitCategorywiseData}
+                              type="unitCategoryWise"
+                              className="h-full"
+                            />
+                          </SortableChartItem>
+                        }
+
+                        if (chartId === 'responseTat' && visibleSections.includes('responseTat')) {
+                          return <SortableChartItem key={chartId} id={chartId}>
+                            <TicketAnalyticsCard
+                              title="Response TAT"
+                              data={responseTATData}
+                              type="tatResponse"
+                              className="h-full"
+                            />
+                          </SortableChartItem>
+                        }
+
                         return null;
                       })}
                     </div>
 
                     {/* Bottom Charts - Category and Aging Matrix */}
-                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix'].includes(id)).map(chartId => {
+                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix', 'resolutionTat'].includes(id)).map(chartId => {
                       if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
                         return <SortableChartItem key={chartId} id={chartId}>
                           <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
@@ -1130,6 +1170,43 @@ export const TicketDashboard = () => {
                           </div>
                         </SortableChartItem>;
                       }
+                      
+                      // Unit Category Wise Chart
+                      if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
+                        return <SortableChartItem key={chartId} id={chartId}>
+                          <TicketAnalyticsCard
+                            title="Unit Category Wise"
+                            data={unitCategorywiseData}
+                            type="unitCategoryWise"
+                            className="bg-white border border-gray-200 rounded-lg"
+                          />
+                        </SortableChartItem>;
+                      }
+                      
+                      // Response TAT Chart
+                      if (chartId === 'responseTat' && visibleSections.includes('responseTat')) {
+                        return <SortableChartItem key={chartId} id={chartId}>
+                          <TicketAnalyticsCard
+                            title="Response & Resolution TAT"
+                            data={responseTATData}
+                            type="tatResponse"
+                            className="bg-white border border-gray-200 rounded-lg"
+                          />
+                        </SortableChartItem>;
+                      }
+                      
+                      // Resolution TAT Chart
+                      if (chartId === 'resolutionTat' && visibleSections.includes('resolutionTat')) {
+                        return <SortableChartItem key={chartId} id={chartId}>
+                          <TicketAnalyticsCard
+                            title="Top 5 Resolution TAT Categories"
+                            data={resolutionTATReportData}
+                            type="tatResolution"
+                            className="bg-white border border-gray-200 rounded-lg"
+                          />
+                        </SortableChartItem>;
+                      }
+                      
                       return null;
                     })}
                   </div>

@@ -484,22 +484,31 @@ export const AMCDetailsPage = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow className="bg-white">
-                        <TableCell>{amcDetails.asset_name ? `${amcDetails.asset_name}` : '—'}</TableCell>
-                        <TableCell>—</TableCell>
-                        <TableCell>No</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 text-xs rounded ${amcDetails.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {amcDetails.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </TableCell>
-                      </TableRow>
+                      {amcDetails.amc_assets?.length > 0 ? (
+                        amcDetails.amc_assets.map((asset) => (
+                          <TableRow key={asset.id} className="bg-white">
+                            <TableCell>{asset.asset_name || '—'}</TableCell>
+                            <TableCell>{asset.asset_id || '—'}</TableCell>
+                            <TableCell>No</TableCell>
+                            <TableCell>
+                              <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Active</span>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-sm text-gray-500">
+                            No assets found
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
+
         </Tabs>
       </div>
 
