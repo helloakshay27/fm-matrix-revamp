@@ -9,6 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 interface ScheduleFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  filters?: {
+    activityName: string;
+    type: string;
+    category: string;
+  };
+  onApplyFilters?: (filters: { activityName: string; type: string; category: string; }) => void;
+  onResetFilters?: () => void;
 }
 
 const fieldStyles = {

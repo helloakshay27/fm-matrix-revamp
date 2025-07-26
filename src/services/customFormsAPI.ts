@@ -40,7 +40,7 @@ export interface TransformedScheduleData {
   createdOn: string;
 }
 
-export const fetchCustomForms = async (): Promise<CustomFormsResponse> => {
+export const fetchCustomForms = async (params?: any): Promise<CustomFormsResponse> => {
   const response = await apiClient.get('/pms/custom_forms.json');
   return response.data;
 };

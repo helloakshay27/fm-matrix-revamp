@@ -13,9 +13,10 @@ interface AssetStatsProps {
     in_store: number;
     dispose: number;
   };
+  onCardClick?: (filterType: string) => void;
 }
 
-export const AssetStats: React.FC<AssetStatsProps> = ({ stats }) => {
+export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) => {
   const statData = [
     { label: "Total Assets", value: stats.total, icon: <Package className="w-6 h-6 text-[#C72030]" /> },
     { label: "Total Value", value: stats.total_value, icon: <DollarSign className="w-6 h-6 text-[#C72030]" /> },

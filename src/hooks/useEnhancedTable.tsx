@@ -23,13 +23,15 @@ export interface UseEnhancedTableProps<T> {
   columns: ColumnConfig[];
   defaultSort?: SortState;
   storageKey?: string;
+  initialColumnVisibility?: Record<string, boolean>;
 }
 
 export function useEnhancedTable<T extends Record<string, any>>({
   data,
   columns,
   defaultSort = { column: null, direction: null },
-  storageKey
+  storageKey,
+  initialColumnVisibility
 }: UseEnhancedTableProps<T>) {
   // Initialize column visibility from localStorage or defaults
   const getInitialVisibility = useCallback(() => {

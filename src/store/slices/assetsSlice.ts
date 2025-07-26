@@ -43,6 +43,7 @@ interface AssetsState {
   filters: AssetFilters
   // Backward compatibility for existing code
   data: Asset[]
+  totalValue?: number
 }
 
 const initialState: AssetsState = {

@@ -20,6 +20,7 @@ interface AssetDataTableProps {
   handleImport: () => void;
   onFilterOpen: () => void;
   onSearch: (searchTerm: string) => void;
+  onRefreshData?: () => void;
 }
 
 export const AssetDataTable: React.FC<AssetDataTableProps> = ({

@@ -3,13 +3,23 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Download } from 'lucide-react';
 
-const DonutChartGrid = () => {
-  const assetStatusData = [
+interface DonutChartGridProps {
+  assetStatusData?: Array<{ name: string; value: number; color: string; }>;
+  assetTypeData?: Array<{ name: string; value: number; color: string; }>;
+  loading?: boolean;
+}
+
+const DonutChartGrid: React.FC<DonutChartGridProps> = ({
+  assetStatusData: propAssetStatusData,
+  assetTypeData: propAssetTypeData, 
+  loading = false
+}) => {
+  const assetStatusData = propAssetStatusData || [
     { name: 'In Use', value: 3, color: '#c6b692' },
     { name: 'Breakdown', value: 2, color: '#d8dcdd' }
   ];
 
-  const assetTypeData = [
+  const assetTypeData = propAssetTypeData || [
     { name: 'IT Equipment', value: 1, color: '#d8dcdd' },
     { name: 'Non-IT Equipment', value: 4, color: '#c6b692' }
   ];

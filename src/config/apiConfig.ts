@@ -76,6 +76,10 @@ export const API_CONFIG = {
     TASK_SUB_GROUPS: '/pms/assets/get_asset_group_sub_group.json', // Will append ?group_id=
     TICKETS_SUMMARY: '/pms/admin/ticket_summary',
     TICKETS_EXPORT_EXCEL: '/pms/admin/complaints.xlsx',
+    // Asset dashboard endpoints
+    ASSET_STATISTICS: '/pms/asset_statistics.json',
+    ASSET_STATUS: '/pms/asset_status.json',
+    ASSET_DISTRIBUTIONS: '/pms/asset_distributions.json',
   },
 } as const
 

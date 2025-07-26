@@ -1261,7 +1261,16 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={{
+                total: data.length,
+                total_value: totalValue?.toString() || '0',
+                nonItAssets: data.filter(asset => !asset.asset_type).length,
+                itAssets: data.filter(asset => asset.asset_type).length,
+                inUse: data.filter(asset => asset.status === 'in_use').length,
+                breakdown: data.filter(asset => asset.status === 'breakdown').length,
+                in_store: data.filter(asset => asset.status === 'in_storage').length,
+                dispose: data.filter(asset => asset.status === 'disposed').length,
+              }} onCardClick={handleStatCardClick} />
 
               {/* <AssetActions
                 searchTerm={searchTerm}
