@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -200,13 +199,13 @@ export const ViewSchedulePage = () => {
           >
             Set Approval
           </Button> */}
-          <Button 
+          {/* <Button 
             onClick={handleViewPerformance}
             variant="outline" 
             className="border-[#C72030] text-[#C72030]"
           >
             View Performance
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -358,8 +357,8 @@ export const ViewSchedulePage = () => {
                         </Select>
                       </FormControl>
                     </div>
-                    <div className="space-y-2 flex items-center gap-4 pt-6">
-                      <div className="flex items-center space-x-2">
+                    <div className="space-y-2 flex items-center  gap-4">
+                      <div className="flex items-start space-x-2">
                         <Checkbox 
                           checked={task.required === 'true'} 
                           disabled 
@@ -367,7 +366,7 @@ export const ViewSchedulePage = () => {
                         />
                         <Label className="text-gray-400">Mandatory</Label>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-start space-x-2 m-0">
                         <Checkbox 
                           checked={task.is_reading === 'true'} 
                           disabled 
@@ -375,6 +374,127 @@ export const ViewSchedulePage = () => {
                         />
                         <Label className="text-gray-400">Reading</Label>
                       </div>
+                    </div>
+                    
+                    {/* Conditional Value Sections */}
+                    <div className="col-span-3">
+                      {task.type === 'dropdown' && Array.isArray(task.values) && task.values.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+                            <Label className="block text-sm font-semibold mb-2 text-gray-700">Enter Value</Label>
+                            {task.values.map((value, valueIndex) => (
+                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
+                                <input
+                                  value={value.label}
+                                  readOnly
+                                  disabled
+                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
+                                />
+                                <select
+                                  value={value.type}
+                                  disabled
+                                  className="w-20 bg-white border border-gray-300 rounded px-2 py-2 text-gray-700 text-sm"
+                                >
+                                  <option value="positive">P</option>
+                                  <option value="negative">N</option>
+                                </select>
+                                {task.values.length > 1 && (
+                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {task.type === 'radio-group' && Array.isArray(task.values) && task.values.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <Label className="text-sm font-semibold text-gray-700">Selected</Label>
+                              <Label className="text-sm font-semibold text-gray-700">Enter Value</Label>
+                            </div>
+                            {task.values.map((value, valueIndex) => (
+                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
+                                <input
+                                  type="radio"
+                                  name={`radio-${index}`}
+                                  checked={valueIndex === 0}
+                                  disabled
+                                  className="text-red-600"
+                                  readOnly
+                                />
+                                <input
+                                  value={value.label}
+                                  readOnly
+                                  disabled
+                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
+                                />
+                                <select
+                                  value={value.type}
+                                  disabled
+                                  className="w-20 bg-white border border-gray-300 rounded px-2 py-2 text-gray-700 text-sm"
+                                >
+                                  <option value="positive">P</option>
+                                  <option value="negative">N</option>
+                                </select>
+                                {task.values.length > 1 && (
+                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {task.type === 'checkbox' && Array.isArray(task.values) && task.values.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <Label className="text-sm font-semibold text-gray-700">Selected</Label>
+                              <Label className="text-sm font-semibold text-gray-700">Enter Value</Label>
+                            </div>
+                            {task.values.map((value, valueIndex) => (
+                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
+                                <input
+                                  type="checkbox"
+                                  checked={valueIndex === 0}
+                                  disabled
+                                  className="text-red-600"
+                                  readOnly
+                                />
+                                <input
+                                  value={value.label}
+                                  readOnly
+                                  disabled
+                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
+                                />
+                                {task.values.length > 1 && (
+                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {task.type === 'options-inputs' && Array.isArray(task.values) && task.values.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+                            <Label className="block text-sm font-semibold mb-2 text-gray-700 text-center">Enter Value</Label>
+                            {task.values.map((value, valueIndex) => (
+                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
+                                <input
+                                  value={value.label}
+                                  readOnly
+                                  disabled
+                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
+                                />
+                                {task.values.length > 1 && (
+                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

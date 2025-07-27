@@ -32,12 +32,21 @@ interface ServiceDetailsData {
   associated_assets?: Array<{ name: string; tag: string }>;
 }
 
+interface AssetNode {
+  id: string;
+  name: string;
+  meter_tag_type?: string;
+  breakdown?: boolean;
+  children?: AssetNode[];
+}
+
 export const ServiceDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const { data: serviceData, loading, error } = useAppSelector((state) => state.serviceDetails);
   const [showAssociateModal, setShowAssociateModal] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -58,6 +67,134 @@ export const ServiceDetailsPage = () => {
     } catch {
       return '—';
     }
+  };
+
+  // Static assets as fallback
+  const staticAssets: AssetNode[] = [
+    {
+      id: '1',
+      name: 'Service ',
+      meter_tag_type: 'Generator',
+      breakdown: false,
+      children: [
+        {
+          id: '1-1',
+          name: 'Fuel Pump',
+          meter_tag_type: 'Pump',
+          breakdown: true,
+        },
+        {
+          id: '1-2',
+          name: 'Cooling System',
+          meter_tag_type: 'Cooler',
+          breakdown: false,
+          children: [
+            {
+              id: '1-2-1',
+              name: 'Radiator',
+              meter_tag_type: 'Component',
+              breakdown: false,
+            },
+            {
+              id: '1-2-2',
+              name: 'Fan',
+              meter_tag_type: 'Component',
+              breakdown: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: '2',
+      name: 'HVAC System',
+      meter_tag_type: 'HVAC',
+      breakdown: false,
+      children: [
+        {
+          id: '2-1',
+          name: 'Compressor',
+          meter_tag_type: 'Component',
+          breakdown: false,
+        },
+      ],
+    },
+  ];
+
+  // Transform flat associated_assets into a tree structure
+  const buildAssetTree = (assets: Array<{ name: string; tag: string }>): AssetNode[] => {
+    // For simplicity, create top-level nodes with no children
+    // In a real app, use parent-child relationships if available
+    return assets.map((asset, index) => ({
+      id: `${index + 1}`,
+      name: asset.name || asset.tag,
+      meter_tag_type: asset.tag,
+      breakdown: Math.random() > 0.7, // Randomly mark some as breakdown for demo
+    }));
+  };
+
+  // Placeholder openModal function
+  const openModal = (assetId: string, assetName: string) => {
+    setSelectedAsset({ id: assetId, name: assetName });
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setSelectedAsset(null);
+  };
+
+  // Render asset node recursively
+  const renderAssetNode = (node: AssetNode, level: number = 0) => {
+    const isBreakdown = node.breakdown === true;
+
+    return (
+      <div key={node.id} className="flex flex-col items-center">
+        <div className="flex flex-col items-center">
+          <div
+            className={`
+              flex flex-col items-center justify-center p-4 rounded-lg cursor-pointer 
+              min-w-[180px] min-h-[80px] text-center transition-all
+              ${isBreakdown
+                ? 'bg-red-500 text-white shadow-red-200'
+                : 'bg-gradient-to-b from-white to-gray-50 shadow-lg hover:shadow-xl'
+              } border border-gray-200 shadow-lg
+            `}
+            onClick={() => openModal(node.id, node.name)}
+          >
+            <span className="font-semibold text-sm">
+              {node.name}
+            </span>
+            {node.meter_tag_type && (
+              <span className={`text-xs mt-2 px-2 py-1 rounded-full ${isBreakdown
+                  ? 'bg-red-400 text-white'
+                  : 'bg-blue-100 text-blue-800'
+                }`}>
+                {node.meter_tag_type}
+              </span>
+            )}
+          </div>
+
+          {node.children && node.children.length > 0 && (
+            <div className="w-0.5 h-8 bg-gray-300" />
+          )}
+        </div>
+
+        {node.children && node.children.length > 0 && (
+          <div className="relative">
+            <div className="absolute left-0 right-0 -top-4 h-4 flex items-center justify-center">
+              <div className="w-full h-0.5 bg-gray-300" />
+            </div>
+            <div className="flex gap-12 relative pt-4">
+              {node.children.map((child, index) => (
+                <div key={child.id} className="flex-1">
+                  {renderAssetNode(child, level + 1)}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   // If loading, show loading state
@@ -82,9 +219,11 @@ export const ServiceDetailsPage = () => {
     );
   }
 
-  // Extract data from API response
-  const details: ServiceDetailsData | null = serviceData as ServiceDetailsData;
-  console.log(details);
+  // Extract data from API response, use static assets if none from API
+  const details: ServiceDetailsData = {
+    ...(serviceData as ServiceDetailsData),
+    associated_assets: serviceData?.associated_assets?.length ? serviceData.associated_assets : staticAssets,
+  };
 
   if (!details) {
     return (
@@ -133,8 +272,7 @@ export const ServiceDetailsPage = () => {
       {/* Tab Section with Matching UI */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="location-detail" className="w-full">
-          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg text-sm"
-          >
+          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg text-sm">
             <TabsTrigger
               value="location-detail"
               className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
@@ -283,14 +421,13 @@ export const ServiceDetailsPage = () => {
                           const url = window.URL.createObjectURL(blob);
                           const link = document.createElement('a');
                           link.href = url;
-                          link.download = `Document_${doc.id}`; // Use id-based name or adjust as needed
+                          link.download = `Document_${doc.id}`;
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
                           window.URL.revokeObjectURL(url);
                         } catch (error) {
                           console.error('Error downloading file:', error);
-                          // Fallback to direct download on error
                           const fallbackLink = document.createElement('a');
                           fallbackLink.href = doc.document;
                           fallbackLink.download = `Document_${doc.id || 'unknown'}`;
@@ -323,46 +460,19 @@ export const ServiceDetailsPage = () => {
                   <>
                     <div className="w-48 h-48 bg-gray-200 mx-auto mb-4 flex items-center justify-center">
                       <img
+                        id="qrImage"
                         src={details.qr_code}
                         alt="QR Code"
                         className="w-40 h-40 object-contain"
                       />
                     </div>
                     <Button
-                      onClick={async () => {
-                        const token = localStorage.getItem('token');
-                        const baseUrl = localStorage.getItem('baseUrl');
-                        if (!token) return alert('User is not authenticated.');
-                        try {
-                          const response = await fetch(
-                            `https://${baseUrl}/pms/services/qr_codes.pdf?service_ids=[${details.id}]`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                                Accept: 'application/pdf',
-                              },
-                            }
-                          );
-                          if (!response.ok) throw new Error('Failed to fetch QR code');
-                          const contentType = response.headers.get('Content-Type') || '';
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const extension = contentType.includes('pdf')
-                            ? 'pdf'
-                            : contentType.includes('jpeg')
-                              ? 'jpg'
-                              : 'png';
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `qr_code_service_${details.id}.${extension}`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          window.URL.revokeObjectURL(url);
-                        } catch (err) {
-                          console.error('QR Code download failed:', err);
-                          alert('Failed to download QR code');
-                        }
+                      onClick={() => {
+                        const imgElement = document.getElementById('qrImage') as HTMLImageElement;
+                        if (!imgElement) return alert('QR image not found.');
+
+                        const imageURL = imgElement.src;
+                        window.open(imageURL, '_blank');
                       }}
                       className="bg-[#C72030] mb-4 text-white hover:bg-[#C72030]/90"
                     >
@@ -386,16 +496,11 @@ export const ServiceDetailsPage = () => {
                 </div>
                 <h2 className="text-lg font-[700]">ASSOCIATED ASSETS</h2>
               </div>
-              <div className="flex flex-wrap gap-2 p-4">
+              <div className="p-4">
                 {details.associated_assets?.length > 0 ? (
-                  details.associated_assets.map((asset: any, index: number) => (
-                    <Button
-                      key={index}
-                      className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                    >
-                      {asset.name || asset.tag}
-                    </Button>
-                  ))
+                  <div className="flex justify-center">
+                    {buildAssetTree(details.associated_assets).map((asset) => renderAssetNode(asset))}
+                  </div>
                 ) : (
                   <div className="text-sm text-gray-600">—</div>
                 )}
@@ -408,8 +513,29 @@ export const ServiceDetailsPage = () => {
       {/* Associate Service Modal */}
       <AssociateServiceModal
         isOpen={showAssociateModal}
-        onClose={() => setShowAssociateModal(false)}
+        onClose={() => {
+          setShowAssociateModal(false);
+          if (id) dispatch(fetchServiceDetails(id)); // Refresh data after modal close
+        }}
+        serviceId={id || ''}
       />
+
+      {/* Asset Detail Modal */}
+      {/* {selectedAsset && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-lg font-bold mb-4">Asset Details</h2>
+            <p><strong>ID:</strong> {selectedAsset.id}</p>
+            <p><strong>Name:</strong> {selectedAsset.name}</p>
+            <Button
+              className="mt-4 bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              onClick={closeModal}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )} */}
     </div>
   );
 };
