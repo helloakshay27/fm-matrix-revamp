@@ -283,6 +283,33 @@ export const AMCDashboard = () => {
         fetchAMCAnalyticsData(startDate, endDate);
     }, []);
 
+      const handleTotalAMCClick = () => {
+    setFilter(null);
+    setAmcTypeFilter(null);
+    setStartDateFilter(null);
+    setEndDateFilter(null);
+    setCurrentPage(1);
+    fetchFilteredAMCs(null, 1);
+  };
+
+  const handleActiveAMCClick = () => {
+    setFilter('active');
+    setCurrentPage(1);
+    fetchFilteredAMCs('active', 1);
+  };
+
+  const handleInactiveAMCClick = () => {
+    setFilter('inactive');
+    setCurrentPage(1);
+    fetchFilteredAMCs('inactive', 1);
+  };
+
+  const handleFlaggedAMCClick = () => {
+    setFilter('flagged');
+    setCurrentPage(1);
+    fetchFilteredAMCs('flagged', 1);
+  };
+
     return (
         <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
             <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
