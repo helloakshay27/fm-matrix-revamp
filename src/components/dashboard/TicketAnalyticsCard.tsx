@@ -83,11 +83,18 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
         break;
 
       case 'ticket_status':
-        if (typeof data === 'object') {
-          const statusData = Object.entries(data).map(([key, value]) => ({
-            name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            value: value as number
-          }));
+        if (typeof data === 'object' && data !== null) {
+          // Filter out non-numeric values and 'info' keys
+          const statusData = Object.entries(data)
+            .filter(([key, value]) => key !== 'info' && typeof value === 'number')
+            .map(([key, value]) => ({
+              name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              value: value as number
+            }));
+
+          if (statusData.length === 0) {
+            return <div className="text-center text-analytics-muted py-8">No status data available</div>;
+          }
 
           return (
             <div className="space-y-4">
