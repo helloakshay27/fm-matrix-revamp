@@ -25,6 +25,10 @@ import { getToken } from '@/utils/auth';
 import { getFullUrl } from '@/config/apiConfig';
 import { TaskFilterDialog, TaskFilters } from '@/components/TaskFilterDialog';
 import { taskService } from '@/services/taskService';
+import { taskAnalyticsAPI, TechnicalChecklistResponse, NonTechnicalChecklistResponse, TopTenChecklistResponse, SiteWiseChecklistResponse } from '@/services/taskAnalyticsAPI';
+import { TaskAnalyticsCard } from '@/components/TaskAnalyticsCard';
+import { TaskAnalyticsFilterDialog } from '@/components/TaskAnalyticsFilterDialog';
+import { BarChart3 } from 'lucide-react';
 
 
 interface TaskRecord {
@@ -135,6 +139,18 @@ export const ScheduledTaskDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [showTaskFilter, setShowTaskFilter] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<TaskFilters>({});
+
+  // Analytics states
+  const [showAnalyticsFilter, setShowAnalyticsFilter] = useState(false);
+  const [analyticsDateRange, setAnalyticsDateRange] = useState({
+    startDate: new Date(new Date().getFullYear() - 1, 0, 1),
+    endDate: new Date()
+  });
+  const [technicalData, setTechnicalData] = useState<TechnicalChecklistResponse | null>(null);
+  const [nonTechnicalData, setNonTechnicalData] = useState<NonTechnicalChecklistResponse | null>(null);
+  const [topTenData, setTopTenData] = useState<TopTenChecklistResponse | null>(null);
+  const [siteWiseData, setSiteWiseData] = useState<SiteWiseChecklistResponse | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -332,6 +348,42 @@ export const ScheduledTaskDashboard = () => {
     }
   };
 
+  // Analytics functions
+  const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
+    setAnalyticsLoading(true);
+    try {
+      const [technical, nonTechnical, topTen, siteWise] = await Promise.all([
+        taskAnalyticsAPI.getTechnicalChecklistData(startDate, endDate),
+        taskAnalyticsAPI.getNonTechnicalChecklistData(startDate, endDate),
+        taskAnalyticsAPI.getTopTenChecklistData(startDate, endDate),
+        taskAnalyticsAPI.getSiteWiseChecklistData(startDate, endDate)
+      ]);
+
+      setTechnicalData(technical);
+      setNonTechnicalData(nonTechnical);
+      setTopTenData(topTen);
+      setSiteWiseData(siteWise);
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    setAnalyticsDateRange({ startDate, endDate });
+    fetchAnalyticsData(startDate, endDate);
+  };
+
+  // Load analytics data when tab is selected
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      fetchAnalyticsData(analyticsDateRange.startDate, analyticsDateRange.endDate);
+    }
+  }, [activeTab]);
+
   const selectionActions = [
     { label: 'Assign Task', icon: Play },
     { label: 'Change Status', icon: CheckCircle },
@@ -347,7 +399,7 @@ export const ScheduledTaskDashboard = () => {
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+        <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
           <TabsTrigger
             value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
@@ -361,6 +413,13 @@ export const ScheduledTaskDashboard = () => {
           >
             <CalendarIcon className="w-4 h-4" />
             Calendar
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytics"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Analytics
           </TabsTrigger>
         </TabsList>
 
@@ -560,6 +619,65 @@ export const ScheduledTaskDashboard = () => {
             }}
           />
         </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          {/* Filter Section */}
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Task Analytics</h2>
+            <Button
+              variant="outline"
+              onClick={() => setShowAnalyticsFilter(true)}
+              className="flex items-center gap-2"
+            >
+              <FilterIcon className="w-4 h-4" />
+              Filter
+            </Button>
+          </div>
+
+          {analyticsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-gray-500">Loading analytics...</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Technical Checklist */}
+              {technicalData && (
+                <TaskAnalyticsCard
+                  title="Technical Checklist"
+                  data={technicalData.response}
+                  type="technical"
+                />
+              )}
+
+              {/* Non-Technical Checklist */}
+              {nonTechnicalData && (
+                <TaskAnalyticsCard
+                  title="Non-Technical Checklist"
+                  data={nonTechnicalData.response}
+                  type="nonTechnical"
+                />
+              )}
+
+              {/* Top Ten Checklist */}
+              {topTenData && (
+                <TaskAnalyticsCard
+                  title="Top 10 Checklist Types"
+                  data={topTenData.response}
+                  type="topTen"
+                />
+              )}
+
+              {/* Site Wise Checklist */}
+              {siteWiseData && (
+                <TaskAnalyticsCard
+                  title="Site-wise Checklist Status"
+                  data={siteWiseData.response}
+                  type="siteWise"
+                />
+              )}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Selection Panel */}
@@ -588,6 +706,12 @@ export const ScheduledTaskDashboard = () => {
         dateTo={dateTo}
         searchTaskId={searchTaskId}
         searchChecklist={searchChecklist}
+      />
+
+      <TaskAnalyticsFilterDialog
+        isOpen={showAnalyticsFilter}
+        onClose={() => setShowAnalyticsFilter(false)}
+        onApplyFilters={handleAnalyticsFilterApply}
       />
     </div>
   );
